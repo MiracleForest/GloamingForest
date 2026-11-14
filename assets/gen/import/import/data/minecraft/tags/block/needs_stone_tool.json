@@ -1,9 +1,9 @@
 {
   "values": [
-    "twilightforest:underbrick",
-    "twilightforest:cracked_underbrick",
-    "twilightforest:mossy_underbrick",
-    "twilightforest:underbrick_floor",
-    "twilightforest:iron_ladder"
+    "gloamingforest:underbrick",
+    "gloamingforest:cracked_underbrick",
+    "gloamingforest:mossy_underbrick",
+    "gloamingforest:underbrick_floor",
+    "gloamingforest:iron_ladder"
   ]
 }

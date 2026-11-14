@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.mosquito_swarm.base": {
+    "animation.gloamingforest.mosquito_swarm.base": {
       "loop": true,
       "bones": {
         "core": {

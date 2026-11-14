@@ -1,0 +1,35 @@
+{
+  "parent": "gloamingforest:root",
+  "criteria": {
+    "quest_ram_complete": {
+      "trigger": "gloamingforest:complete_quest_ram"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.quest_ram.desc",
+      "with": [
+        {
+          "translate": "entity.gloamingforest.quest_ram"
+        }
+      ]
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:quest_ram_trophy"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.quest_ram"
+    }
+  },
+  "requirements": [
+    [
+      "quest_ram_complete"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  },
+  "sends_telemetry_event": true
+}

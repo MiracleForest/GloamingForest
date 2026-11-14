@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.tiny_bird.base": {
+    "animation.gloamingforest.tiny_bird.base": {
       "loop": true,
       "bones": {
         "head": {

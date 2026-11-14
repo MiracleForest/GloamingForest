@@ -7,7 +7,7 @@
 // Java does (LootTable#fill: stacks split over the free slots, shuffled), with one random for the
 // roll and the spreading (the context's seed, 0 = random).
 //
-//     gf::loot::fill("twilightforest:chests/hill_1", ctx, container.getContainerSize(),
+//     gf::loot::fill("gloamingforest:chests/hill_1", ctx, container.getContainerSize(),
 //                    [&](int i) -> ItemStack const& { return container.getItem(i); },
 //                    [&](int i, ItemStack const& s) { container.setItem(i, s); });
 

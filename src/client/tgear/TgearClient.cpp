@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/TravellersClientEvents.java
-//   src/main/java/twilightforest/client/overlay/ItemDisplayOverlay.java
-//   src/main/java/twilightforest/client/overlay/display/{ClockDisplay,CompassDisplay,MapDisplay,MoonDialDisplay,SimpleTextDisplay}.java
-//   src/main/java/twilightforest/client/renderer/block/RedThreadRenderer.java
-//   src/main/java/twilightforest/client/model/entity/RedThreadModel.java
-//   src/main/java/twilightforest/client/model/item/TravellersGearItemModel.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorItem.java
-//   src/main/java/twilightforest/init/TFKeyBinds.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/TravellersClientEvents.java
+//   src/main/java/gloamingforest/client/overlay/ItemDisplayOverlay.java
+//   src/main/java/gloamingforest/client/overlay/display/{ClockDisplay,CompassDisplay,MapDisplay,MoonDialDisplay,SimpleTextDisplay}.java
+//   src/main/java/gloamingforest/client/renderer/block/RedThreadRenderer.java
+//   src/main/java/gloamingforest/client/model/entity/RedThreadModel.java
+//   src/main/java/gloamingforest/client/model/item/TravellersGearItemModel.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorItem.java
+//   src/main/java/gloamingforest/init/TFKeyBinds.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U11 in the client mod: TF's four key bindings (zoom Z, swap hotbar V, map cycle C, red thread
+// U11 in the client mod: upstream's four key bindings (zoom Z, swap hotbar V, map cycle C, red thread
 // vision unbound), the goggles' zoom (FOV x 0.3 and the slower turn while the key is held, synced with
 // "tgear.goggles_zoom"), the item display HUD (ItemDisplayOverlay), the red thread (RedThreadRenderer:
 // the connections and corner connections, full bright through walls while the vision is on or red
 // thread is held), the worn models' state (gloves on the vest, the belt on swap-hotbar wings, the
 // goggles' "down" texture while zooming, the first-person glove overlay) as molang variables the
 // attachables read, the gear's item icons (broken texture, modifier overlays: TravellersGearItemModel)
-// and TF's tooltip (Shift descriptions under each modifier).
+// and upstream's tooltip (Shift descriptions under each modifier).
 #ifdef GF_CLIENT
 
 #include <algorithm>
@@ -118,7 +118,7 @@ constexpr char kZoomKey[]   = "tgear.zoom";
 constexpr char kSwapKey[]   = "tgear.swap_hotbar";
 constexpr char kCycleKey[]  = "tgear.item_display_map_cycle";
 constexpr char kThreadKey[] = "tgear.red_thread_vision";
-constexpr char kCategory[]  = "key.twilightforest.categories.travellers_gear";
+constexpr char kCategory[]  = "key.gloamingforest.categories.travellers_gear";
 
 struct ClientState {
     std::atomic<bool> zooming{false};     ///< is_using_goggles_zoom_modifier (local)
@@ -177,7 +177,7 @@ void tickZoom(Player& player) {
     st().zooming = zoom;
     // player.playSound: the zooming player hears it at once, nobody else
     if (auto* c = currentClient())
-        c->playUI(zoom ? "item.twilightforest.travellers_goggles.zoom_in" : "item.twilightforest.travellers_goggles.zoom_out", 1.f, 1.f);
+        c->playUI(zoom ? "item.gloamingforest.travellers_goggles.zoom_in" : "item.gloamingforest.travellers_goggles.zoom_out", 1.f, 1.f);
     float fov    = baseFov() * z;
     feature::net::client::send("tgear.goggles_zoom", {{"zoom", zoom}, {"fov", fov}});
     log().info("tgear: zoom {} (fov x{} = {})", zoom ? "in" : "out", zoom ? z : 1.f, zoom ? fov : 0.f);
@@ -207,7 +207,7 @@ void tickGloveOverlay() {
 
 // ---- stealth (TravellersClientEvents#handleStealth) -------------------------------------------------------
 
-/// Every frame TF makes each crouching stealth wearer invisible on the client at once (the server's
+/// Every frame upstream makes each crouching stealth wearer invisible on the client at once (the server's
 /// hidden Invisibility follows). Per client tick here: the players of the client's level that crouch with
 /// active stealth are made invisible; once they stop, their invisibility goes back to their effects.
 void tickStealth(Player& local) {
@@ -266,19 +266,19 @@ struct Widget {
 
 bool natural(Dimension const& dim) {
     auto id = static_cast<int>(dim.getDimensionId());
-    return id == 0 || gf::world::isTwilight(dim);
+    return id == 0 || gf::world::isGloaming(dim);
 }
 
-/// Level#getDayTime with the dimension type's fixed_time (the Twilight Forest: 13000).
+/// Level#getDayTime with the dimension type's fixed_time (the Gloaming Forest: 13000).
 std::int64_t dayTime(Player const& player) {
-    if (gf::world::isTwilight(player.getDimension()))
+    if (gf::world::isGloaming(player.getDimension()))
         if (auto fixed = gf::world::fixedTime()) return *fixed;
     return player.getLevel().getTime();
 }
 
 /// Level#getMoonPhase: dimensionType.moonPhase(getDayTime()) = (dayTime / 24000 % 8 + 8) % 8 over the
 /// level's own day time: the dimension type's fixed_time only changes timeOfDay (ClockDisplay applies
-/// it, MoonDialDisplay does not), so the Twilight Forest follows the day count like the overworld.
+/// it, MoonDialDisplay does not), so the Gloaming Forest follows the day count like the overworld.
 int moonPhase(Player const& player) { return core::tgear::moonPhaseOf(player.getLevel().getTime()); }
 
 /// MoonDialItem#getMoonPhase outside a natural dimension: "unknown_fools" on April 1st (local date).
@@ -350,7 +350,7 @@ std::string compassText(Player const& player, nlohmann::json const& item) {
         int x = l->value("x", 0), y = l->value("y", 0), z = l->value("z", 0);
         int dist = std::abs(feet.x - x) + std::abs(feet.y - y) + std::abs(feet.z - z);
         auto pos = std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
-        return ctr("travellers_gear.modifier.twilightforest.item_display.compass.lodestone", "%s (%s blocks away)", pos, std::to_string(dist));
+        return ctr("travellers_gear.modifier.gloamingforest.item_display.compass.lodestone", "%s (%s blocks away)", pos, std::to_string(dist));
     }
     return std::to_string(feet.x) + ", " + std::to_string(feet.y) + ", " + std::to_string(feet.z);
 }
@@ -404,13 +404,13 @@ void drawWidgets(screen::Canvas& canvas) {
             break;
         case core::tgear::DisplayType::Clock:
             w.text  = natural(dim) ? core::tgear::clockText(dayTime(*player), use24Hours())
-                                   : ctr("travellers_gear.modifier.twilightforest.item_display.clock.unknown", "Time Unknown");
+                                   : ctr("travellers_gear.modifier.gloamingforest.item_display.clock.unknown", "Time Unknown");
             w.width = canvas.textWidth(w.text) + (natural(dim) ? 10 : 0);
             break;
         case core::tgear::DisplayType::MoonDial:
-            w.text  = natural(dim) ? ctr("item.twilightforest.moon_dial.phase_" + std::to_string(moonPhase(*player)), "")
-                                   : aprilFools() ? ctr("item.twilightforest.moon_dial.phase_unknown_fools", "Moon phase indeterminate")
-                                                  : ctr("item.twilightforest.moon_dial.phase_unknown", "Moon phase indeterminate");
+            w.text  = natural(dim) ? ctr("item.gloamingforest.moon_dial.phase_" + std::to_string(moonPhase(*player)), "")
+                                   : aprilFools() ? ctr("item.gloamingforest.moon_dial.phase_unknown_fools", "Moon phase indeterminate")
+                                                  : ctr("item.gloamingforest.moon_dial.phase_unknown", "Moon phase indeterminate");
             w.width = canvas.textWidth(w.text) + 10;
             break;
         default: continue;
@@ -445,11 +445,11 @@ void drawWidgets(screen::Canvas& canvas) {
                 if (w.type == core::tgear::DisplayType::Clock) {
                     int k = core::tgear::clockFrame(dayTime(*player));
                     uv    = {k % 2 * 8, k / 2 % 2 * 8};
-                    tex   = "textures/twilightforest/gui/time";
+                    tex   = "textures/gloamingforest/gui/time";
                     texW  = 16;
                 } else {
                     uv   = core::tgear::moonIconUv(moonPhase(*player));
-                    tex  = "textures/twilightforest/gui/moon";
+                    tex  = "textures/gloamingforest/gui/moon";
                     texW = 32;
                 }
                 ui::blit(canvas, tex, {x0 + (half - 5 - std::floor(tw / 2)) * scale, y, 8 * scale, 8 * scale}, static_cast<float>(uv[0]), static_cast<float>(uv[1]), 8, 8, texW, 16);
@@ -467,7 +467,7 @@ void drawWidgets(screen::Canvas& canvas) {
 
 // ---- red thread (RedThreadRenderer + RedThreadModel) ------------------------------------------------------
 
-constexpr char const* kFaceStates[6]     = {"twilightforest:down", "twilightforest:up", "twilightforest:north", "twilightforest:south", "twilightforest:west", "twilightforest:east"};
+constexpr char const* kFaceStates[6]     = {"gloamingforest:down", "gloamingforest:up", "gloamingforest:north", "gloamingforest:south", "gloamingforest:west", "gloamingforest:east"};
 constexpr int         kFaceOffsets[6][3] = {{0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {-1, 0, 0}, {1, 0, 0}};
 enum Face { Down, Up, North, South, West, East };
 enum Part { Center, PUp, PDown, PLeft, PRight };
@@ -511,8 +511,8 @@ Vec3 placeOnFace(int face, Vec3 const& m) {
     return Vec3{xyz.x + x2, xyz.y + y2, xyz.z + z1};
 }
 
-/// TF's red_thread.png (32 x 32, ARGB per texel), read from the resource pack's tf-derived texel table
-/// (textures/twilightforest/entity/tgear/tf-derived/red_thread_texels.json): the connections are drawn
+/// upstream's red_thread.png (32 x 32, ARGB per texel), read from the resource pack's tf-derived texel table
+/// (textures/gloamingforest/entity/tgear/tf-derived/red_thread_texels.json): the connections are drawn
 /// texel by texel as coloured quads (the colour materials draw vertex colours; the textured immediate
 /// path sampled grey on 1.26.51, docs/units/tgear.md).
 struct ThreadTexels {
@@ -674,7 +674,7 @@ std::optional<ext::tgear::client::IconLayers> gearIcon(ItemStack const& stack) {
     return layers;
 }
 
-/// ClientRegistrationEvents: the red thread item's twilightforest:size property (count >= 32: 1, >= 16:
+/// ClientRegistrationEvents: the red thread item's gloamingforest:size property (count >= 32: 1, >= 16:
 /// 0.5, >= 4: 0.25) picks red_thread_bundle_2 / _1 / _0.
 std::optional<ext::tgear::client::IconLayers> threadIcon(ItemStack const& stack) {
     int n = items::countOf(stack);
@@ -686,10 +686,10 @@ std::optional<ext::tgear::client::IconLayers> threadIcon(ItemStack const& stack)
 
 // ---- tooltip (TravellersArmorItem#appendHoverText) ----------------------------------------------------------
 
-/// TF's lines under the name (the server writes no lore for players with the client mod): the
+/// upstream's lines under the name (the server writes no lore for players with the client mod): the
 /// abilities, each inserted modifier with its description lines while Shift is held, the empty slots,
 /// the gloves' "Cosmetic", "Hold Shift for info" while Shift is up and something has a description,
-/// and the stored items (the belt's container, the goggles' display; TF's tooltip images).
+/// and the stored items (the belt's container, the goggles' display; upstream's tooltip images).
 void describe(ItemStack const& stack, std::vector<std::string>& lines) {
     auto locale = clientLocale();
     bool shift  = shiftDown();
@@ -706,7 +706,7 @@ void describe(ItemStack const& stack, std::vector<std::string>& lines) {
     }
     int slots = tg::modifierSlots(items::idOf(stack));
     for (int i = static_cast<int>(inserted.size()); i < slots; ++i) lines.push_back("§f- §8" + ctr("travellers_gear.modifier.empty", "Empty"));
-    if (items::idOf(stack) == tg::ids::kGloves) lines.push_back("§7" + ctr("item.twilightforest.travellers_gloves.desc", "Cosmetic"));
+    if (items::idOf(stack) == tg::ids::kGloves) lines.push_back("§7" + ctr("item.gloamingforest.travellers_gloves.desc", "Cosmetic"));
     if (!shift) {
         bool described = false;
         for (auto const& list : {abilities, inserted})

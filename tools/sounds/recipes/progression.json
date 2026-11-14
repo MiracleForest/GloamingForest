@@ -1,5 +1,5 @@
 {
-  "about": "U14's original sounds (rendered with the synth toolkit's renderer; U14 owns no TF sound_event row, so tools/sounds/synth.ps1 does not render this file: docs/units/progression.md, 'Challenge sound', gives the command). gf.progression.challenge_complete stands in for Mojang's ui.toast.challenge_complete (All Rights Reserved, no Bedrock counterpart): an original glockenspiel arpeggio resolving on a bell chord.",
+  "about": "U14's original sounds (rendered with the synth toolkit's renderer; U14 owns no upstream sound_event row, so tools/sounds/synth.ps1 does not render this file: docs/units/progression.md, 'Challenge sound', gives the command). gf.progression.challenge_complete stands in for Mojang's ui.toast.challenge_complete (All Rights Reserved, no Bedrock counterpart): an original glockenspiel arpeggio resolving on a bell chord.",
   "files": {
     "ui/challenge_complete": {
       "track": {

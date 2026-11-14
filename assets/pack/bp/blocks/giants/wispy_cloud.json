@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:wispy_cloud",
+      "identifier": "gloamingforest:wispy_cloud",
       "menu_category": {
         "category": "construction"
       }

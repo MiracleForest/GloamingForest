@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.carminite_ghastling.base": {
+    "animation.gloamingforest.carminite_ghastling.base": {
       "loop": true,
       "bones": {
         "body": {

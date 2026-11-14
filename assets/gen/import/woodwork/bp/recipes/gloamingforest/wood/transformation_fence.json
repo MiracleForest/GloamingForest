@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/transformation_fence"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#S#", "#S#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:transformation_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:transformation_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:transformation_fence",
+      "count": 3
+    }
+  }
+}

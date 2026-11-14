@@ -1,7 +1,7 @@
 # Travellers' Gear movement (U12): the server half of the twelve movement modifiers, with simulated
 # players (src/feature/tgmove/TgMoveTests.cpp): modifier activity and broken gear, the double jump
 # (Jump Boost II from the wings, slimy boost, safe fall +2, once per airtime, restored on landing),
-# TF's anti-abuse validator (2 free, snap back, disconnect at 5; refused companion packets), the
+# upstream's anti-abuse validator (2 free, snap back, disconnect at 5; refused companion packets), the
 # sidestep (1.6 push, 40 tick cooldown, ready sound, not crouching), the glide (fall distance v^2/2g,
 # off without the modifier, the vanilla Slow Falling fallback), step up (+0.5, off crouching), slimy
 # soles (cancelled landing, sqrt(0.5) bounce, sneaking lands), unrestrained (slowdown immunity),

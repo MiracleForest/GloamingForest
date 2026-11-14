@@ -1,0 +1,10 @@
+{
+  "values": [
+    "gloamingforest:skull_chest",
+    "gloamingforest:keepsake_casket",
+    {
+      "id": "gravestone:gravestone",
+      "required": false
+    }
+  ]
+}

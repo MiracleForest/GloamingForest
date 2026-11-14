@@ -1,9 +1,9 @@
 {
   "tf_block_blank": {
-    "textures": "textures/twilightforest/block/blank"
+    "textures": "textures/gloamingforest/block/blank"
   },
   "tf_block_towerwood": {
-    "textures": "textures/twilightforest/block/towerwood"
+    "textures": "textures/gloamingforest/block/towerwood"
   },
   "tf_vanilla_block_oak_leaves": {
     "textures": "textures/blocks/leaves_oak_carried"

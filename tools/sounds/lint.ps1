@@ -1,25 +1,25 @@
 <#
 .SYNOPSIS
-  Sound lint (unit F3, audit A7): the assembled sound definitions against TF's 328 events and 9 tracks.
+  Sound lint (unit F3, audit A7): the assembled sound definitions against upstream's 328 events and 9 tracks.
 
 .DESCRIPTION
   Reads an assembled mod directory (tools/assemble.ps1 -Check writes build/assemble-check; the build
   writes bin/<target>/GloamingForest) and the recipes, and checks:
 
-    events    every event of TF's inventory (tools/sounds/baseline/inventory.json, 328) is in the
-              resource pack's sounds/sound_definitions.json with TF's variant count; every sound file a
+    events    every event of upstream's inventory (tools/sounds/baseline/inventory.json, 328) is in the
+              resource pack's sounds/sound_definitions.json with upstream's variant count; every sound file a
               definition names is a file of the pack (.ogg) or of Bedrock's vanilla resource packs
               (-Vanilla, their contents.json); every packed .ogg is an Ogg stream.
     design    how each event sounds: "refined" (its owner's recipe, tools/sounds/recipes[.d]/<u>.json,
               defines the event or a file / patch it plays), "baseline" (F3's name-derived design from
-              tools/sounds/baseline/<u>.json only: the placeholder level), "vanilla" (TF plays a vanilla
+              tools/sounds/baseline/<u>.json only: the placeholder level), "vanilla" (upstream plays a vanilla
               sound: Bedrock's own file of it). Printed per owner; -MaxBaseline fails when more events
               than that are baseline-only.
-    music     TF's 9 tracks (tools/sounds/baseline/music/*.json) each have U10's composition
+    music     upstream's 9 tracks (tools/sounds/baseline/music/*.json) each have U10's composition
               (tools/sounds/music/<track>.json), not the baseline placeholder; the music events and the
               biome music of sounds/music_definitions.json are defined.
 
-  Never opens TF's audio (rule R10).
+  Never opens upstream's audio (rule R10).
 
   Exit code 0 = OK, 1 = a check failed (listed), 2 = no assembled directory.
 
@@ -113,7 +113,7 @@ function Get-Design([string]$e, [int]$depth = 0) {
     $kinds = @()
     foreach ($v in @($def['variants'])) {
         if ($v.Contains('vanilla')) { $kinds += 'vanilla'; continue }
-        if ($v.Contains('event')) { $kinds += Get-Design (($v['event']) -replace '^twilightforest:', '') ($depth + 1); continue }
+        if ($v.Contains('event')) { $kinds += Get-Design (($v['event']) -replace '^gloamingforest:', '') ($depth + 1); continue }
         if ($v.Contains('file')) {
             $f = $v['file']
             if ($refFiles.Contains($f)) { $kinds += 'refined'; continue }
@@ -150,7 +150,7 @@ $unverified = 0
 
 function Test-SoundName([string]$event, [string]$name) {
     foreach ($ext in '.ogg', '.fsb', '.wav') { if ($packFiles.Contains("$name$ext")) { return } }
-    if ($name -like 'sounds/twilightforest/*') { Problem "${event}: $name is not in the pack"; return }
+    if ($name -like 'sounds/gloamingforest/*') { Problem "${event}: $name is not in the pack"; return }
     if ($vanillaFiles.Count) {
         foreach ($ext in '.ogg', '.fsb', '.wav') { if ($vanillaFiles.Contains("$name$ext")) { return } }
         Problem "${event}: $name is neither in the pack nor in Bedrock's vanilla resource packs"
@@ -165,14 +165,14 @@ foreach ($e in $inventory.Keys) {
     if (-not $defs.Contains($e)) { Problem "$e (owner $u) is not in sound_definitions.json"; continue }
     $sounds = @($defs[$e]['sounds'])
     $want = @($inventory[$e]['variants']).Count
-    if ($sounds.Count -ne $want) { Problem "${e}: $($sounds.Count) sounds, TF plays $want" }
+    if ($sounds.Count -ne $want) { Problem "${e}: $($sounds.Count) sounds, upstream plays $want" }
     foreach ($s in $sounds) { Test-SoundName $e $(if ($s -is [string]) { $s } else { $s['name'] }) }
     $design = Get-Design $e
     $byOwner[$u][$design]++
     if ($design -eq 'baseline') { $baselineEvents += $e }
 }
 foreach ($e in $defs.Keys) {
-    if (-not $inventory.Contains($e) -and $e -like '*twilightforest*') { Problem "$e is defined but is not one of TF's sound events" }
+    if (-not $inventory.Contains($e) -and $e -like '*gloamingforest*') { Problem "$e is defined but is not one of upstream's sound events" }
 }
 
 # every packed .ogg is an Ogg stream
@@ -190,14 +190,14 @@ if ($bad -gt 5) { Problem "$bad packed .ogg files are not Ogg streams in total (
 # ---- music ---------------------------------------------------------------------------------------------------
 $tracks = @(Get-ChildItem (Join-Path $root 'tools/sounds/baseline/music') -Filter *.json | ForEach-Object BaseName | Sort-Object)
 $placeholders = @($tracks | Where-Object { -not (Test-Path (Join-Path $root "tools/sounds/music/$_.json")) })
-if ($tracks.Count -ne 9) { Problem "$($tracks.Count) baseline tracks, TF has 9" }
+if ($tracks.Count -ne 9) { Problem "$($tracks.Count) baseline tracks, upstream has 9" }
 foreach ($t in $placeholders) { Problem "track $t is still the baseline placeholder (U10: tools/sounds/music/$t.json)" }
 $md = Join-Path $rp 'sounds/music_definitions.json'
 if (Test-Path $md) {
     $music = Read-Json $md
     foreach ($b in $music.Keys) {
         $ev = $music[$b]['event_name']
-        if ($ev -and $ev -like '*twilightforest*' -and -not $defs.Contains($ev)) { Problem "music_definitions.json ${b}: $ev is not defined" }
+        if ($ev -and $ev -like '*gloamingforest*' -and -not $defs.Contains($ev)) { Problem "music_definitions.json ${b}: $ev is not defined" }
     }
 }
 
@@ -205,7 +205,7 @@ if (Test-Path $md) {
 $tot = [ordered]@{ refined = 0; baseline = 0; vanilla = 0 }
 foreach ($u in $byOwner.Keys) { foreach ($k in 'refined', 'baseline', 'vanilla') { $tot[$k] += $byOwner[$u][$k] } }
 Write-Host "[sound-lint] $Out"
-Write-Host "[sound-lint] $($inventory.Count) TF events: $($tot.refined) refined by their owner, $($tot.vanilla) vanilla, $($tot.baseline) baseline-only (F3's name-derived design); $($tracks.Count - $placeholders.Count)/$($tracks.Count) tracks composed"
+Write-Host "[sound-lint] $($inventory.Count) upstream events: $($tot.refined) refined by their owner, $($tot.vanilla) vanilla, $($tot.baseline) baseline-only (F3's name-derived design); $($tracks.Count - $placeholders.Count)/$($tracks.Count) tracks composed"
 foreach ($u in $byOwner.Keys) {
     $o = $byOwner[$u]
     if ($o.baseline) { Write-Host ("             {0,-15} {1,3} refined {2,3} vanilla {3,3} baseline" -f $u, $o.refined, $o.vanilla, $o.baseline) }

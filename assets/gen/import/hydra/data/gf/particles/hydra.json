@@ -1,5 +1,5 @@
 {
-  "twilightforest:huge_smoke": {
+  "gloamingforest:huge_smoke": {
     "textures": [
       "minecraft:particle/generic_7",
       "minecraft:particle/generic_6",
@@ -11,7 +11,7 @@
       "minecraft:particle/generic_0"
     ]
   },
-  "twilightforest:large_flame": {
+  "gloamingforest:large_flame": {
     "textures": ["minecraft:particle/flame"]
   }
 }

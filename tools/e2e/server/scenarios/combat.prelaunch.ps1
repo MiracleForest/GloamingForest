@@ -1,9 +1,9 @@
 # F10 (combat): before the server boots, add a throw-away behavior pack with probe chest blocks
-# that have the chest type / facing states of TF's chests ("gf_combat:type" single / left / right,
+# that have the chest type / facing states of upstream's chests ("gf_combat:type" single / left / right,
 # "gf_combat:facing"): gf_combat:chest keeps its slots in block data (combat.inventory_chest_rules
 # pairs two halves into a double chest), gf_combat:native_chest has minecraft:block_entity (format
 # 1.26.50, spikes S3 / S7), so the inventory contract's native backend (a game container in its
-# block actor) is tested whatever TF's chests use (combat.inventory_native_*). The pack lives only in
+# block actor) is tested whatever upstream's chests use (combat.inventory_native_*). The pack lives only in
 # this run's slot; nothing ships.
 $pack = Join-Path $script:SlotDir "plugins\$script:ModName\behavior_packs\GloamingForest_Combat_Probe_BP"
 New-Item -ItemType Directory -Force (Join-Path $pack 'blocks') | Out-Null

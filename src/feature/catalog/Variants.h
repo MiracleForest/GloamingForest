@@ -3,7 +3,7 @@
 // Creative entry variants of the catalog (F9, contract "data"; next to F0's Catalog.h, which A8 may
 // fold this into).
 //
-// TF's tabs list a few items twice, the second time as a stack with data
+// upstream's tabs list a few items twice, the second time as a stack with data
 // (TFCreativeTabs#createGlassSwordAndLoreVer: the glass sword, then its creative-only lore version).
 // The behavior pack's item_catalog lists item ids only, so the owner of the item registers the
 // variant here: a second creative entry of the item, right after the item's own entry in its group,
@@ -12,7 +12,7 @@
 // inventory shows and gives it. An entry with the same data that is already there is not added
 // again. Register at static init or in install().
 //
-//     gf::catalog::addVariant("twilightforest:glass_sword", "lore", [](ItemStack& s) {
+//     gf::catalog::addVariant("gloamingforest:glass_sword", "lore", [](ItemStack& s) {
 //         gf::item::setData(s, "infinite_glass_sword", true); ... });
 
 #include <functional>

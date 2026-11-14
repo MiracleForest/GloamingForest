@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U28's contract extension (rule R18, for A8 to fold into F12's client.render in W2b): a client-side
 // material-instance swap. A block definition is one for every client, and a per-position colour
 // (F12's tint::registerBlock) needs a tint method on the material, which vanilla clients would
 // multiply with a biome colour. So a block's definition names a "baked" texture without a tint
-// method (what vanilla clients draw: TF's texture times its item colour), and the client mod, when
+// method (what vanilla clients draw: upstream's texture times its item colour), and the client mod, when
 // it resolves the block's materials (ClientBlockPipeline::MaterialRepository::initializeMaterials),
 // swaps that texture for the untinted one with a tint method, which F12's tint resolver colours per
 // position. Block items (minecraft:item_visual) are never swapped.

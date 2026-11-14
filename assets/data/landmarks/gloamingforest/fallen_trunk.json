@@ -1,0 +1,91 @@
+{
+  "key": "gloamingforest:fallen_trunk",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/fallen_trunk.json",
+  "structure": {
+    "big_trunk_length": {
+      "max_inclusive": 28,
+      "min_inclusive": 22,
+      "type": "minecraft:uniform"
+    },
+    "biomes": "#gloamingforest:valid_hollow_tree_biomes",
+    "chest_loot_table": "gloamingforest:fallen_trunk_loot",
+    "length": {
+      "max_inclusive": 24,
+      "min_inclusive": 17,
+      "type": "minecraft:uniform"
+    },
+    "log": {
+      "state": {
+        "Name": "gloamingforest:gloaming_oak_log",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "type": "minecraft:simple_state_provider"
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "surface_structures",
+    "type": "gloamingforest:fallen_trunk"
+  },
+  "fixed_decoration_clearance": {
+    "chunk_clearance_radius": 0,
+    "allow_biome_surface_decorations": false,
+    "allow_biome_underground_decorations": true,
+    "allow_biome_vegetation": true,
+    "adjust_structure_elevation": false
+  },
+  "structure_set": {
+    "id": "gloamingforest:fallen_trunk",
+    "placement": {
+      "exclusion_zone": {
+        "chunk_count": 1,
+        "other_set": "gloamingforest:hollow_tree"
+      },
+      "frequency": 0.8,
+      "salt": 1275623845,
+      "separation": 5,
+      "spacing": 7,
+      "spread_type": "triangular",
+      "type": "gloamingforest:avoid_landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:fallen_trunk",
+        "weight": 1
+      }
+    ]
+  }
+}

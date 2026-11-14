@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U11's internal interfaces between its server files (and its selftests). Not a contract.
 #pragma once
 
@@ -29,7 +29,7 @@ namespace gf::feature::tgear {
 [[nodiscard]] bool                     mergeRecipeMatches(recipes::CraftingGrid const& grid);
 [[nodiscard]] std::optional<ItemStack> mergeRecipeAssemble(recipes::CraftingGrid const& grid);
 void                                   registerRecipes();
-/// Fires twilightforest:add_modifier for the crafted marks in the player's inventory.
+/// Fires gloamingforest:add_modifier for the crafted marks in the player's inventory.
 void fireCraftedTriggers(Player& player);
 
 // ---- WornModel.cpp ---------------------------------------------------------------------------------

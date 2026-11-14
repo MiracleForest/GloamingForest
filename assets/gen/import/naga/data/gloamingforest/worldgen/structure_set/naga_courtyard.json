@@ -1,0 +1,12 @@
+{
+  "placement": {
+    "type": "gloamingforest:landmark_grid",
+    "structure_grid_lock": "gloamingforest:naga_courtyard"
+  },
+  "structures": [
+    {
+      "structure": "gloamingforest:naga_courtyard",
+      "weight": 1
+    }
+  ]
+}

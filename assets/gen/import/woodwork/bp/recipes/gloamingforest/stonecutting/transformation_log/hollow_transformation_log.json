@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/transformation_log/hollow_transformation_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:transformation_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:transformation_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hollow_transformation_log"
+    }
+  }
+}

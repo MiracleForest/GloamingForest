@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFCreativeTabs.java
-//   src/main/java/twilightforest/config/TFCommonConfig.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFCreativeTabs.java
+//   src/main/java/gloamingforest/config/TFCommonConfig.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -41,31 +41,31 @@ using Enchants = std::vector<std::pair<char const*, int>>;
 /// TFCreativeTabs EQUIPMENT: generateGearWithEnchants(item, enchantments...).
 std::vector<std::pair<char const*, Enchants>> const& gearWithEnchants() {
     static std::vector<std::pair<char const*, Enchants>> const table{
-        {"twilightforest:ironwood_helmet", {{"aqua_affinity", 1}}},
-        {"twilightforest:ironwood_chestplate", {{"protection", 1}}},
-        {"twilightforest:ironwood_leggings", {{"protection", 1}}},
-        {"twilightforest:ironwood_boots", {{"feather_falling", 1}}},
-        {"twilightforest:ironwood_sword", {{"knockback", 1}}},
-        {"twilightforest:ironwood_shovel", {{"unbreaking", 1}}},
-        {"twilightforest:ironwood_pickaxe", {{"efficiency", 1}}},
-        {"twilightforest:ironwood_axe", {{"fortune", 1}}},
-        {"twilightforest:ironwood_hoe", {{"efficiency", 1}}},
-        {"twilightforest:steeleaf_helmet", {{"projectile_protection", 2}}},
-        {"twilightforest:steeleaf_chestplate", {{"blast_protection", 2}}},
-        {"twilightforest:steeleaf_leggings", {{"fire_protection", 2}}},
-        {"twilightforest:steeleaf_boots", {{"feather_falling", 2}}},
-        {"twilightforest:steeleaf_sword", {{"looting", 2}}},
-        {"twilightforest:steeleaf_shovel", {{"efficiency", 2}}},
-        {"twilightforest:steeleaf_pickaxe", {{"fortune", 2}}},
-        {"twilightforest:steeleaf_axe", {{"efficiency", 2}}},
-        {"twilightforest:steeleaf_hoe", {{"fortune", 2}}},
-        {"twilightforest:mazebreaker_pickaxe", {{"efficiency", 4}, {"unbreaking", 3}, {"fortune", 2}}},
-        {"twilightforest:yeti_helmet", {{"protection", 2}}},
-        {"twilightforest:yeti_chestplate", {{"protection", 2}}},
-        {"twilightforest:yeti_leggings", {{"protection", 2}}},
-        {"twilightforest:yeti_boots", {{"protection", 2}, {"feather_falling", 4}}},
-        {"twilightforest:naga_chestplate", {{"fire_protection", 3}}},
-        {"twilightforest:naga_leggings", {{"protection", 3}}},
+        {"gloamingforest:ironwood_helmet", {{"aqua_affinity", 1}}},
+        {"gloamingforest:ironwood_chestplate", {{"protection", 1}}},
+        {"gloamingforest:ironwood_leggings", {{"protection", 1}}},
+        {"gloamingforest:ironwood_boots", {{"feather_falling", 1}}},
+        {"gloamingforest:ironwood_sword", {{"knockback", 1}}},
+        {"gloamingforest:ironwood_shovel", {{"unbreaking", 1}}},
+        {"gloamingforest:ironwood_pickaxe", {{"efficiency", 1}}},
+        {"gloamingforest:ironwood_axe", {{"fortune", 1}}},
+        {"gloamingforest:ironwood_hoe", {{"efficiency", 1}}},
+        {"gloamingforest:steeleaf_helmet", {{"projectile_protection", 2}}},
+        {"gloamingforest:steeleaf_chestplate", {{"blast_protection", 2}}},
+        {"gloamingforest:steeleaf_leggings", {{"fire_protection", 2}}},
+        {"gloamingforest:steeleaf_boots", {{"feather_falling", 2}}},
+        {"gloamingforest:steeleaf_sword", {{"looting", 2}}},
+        {"gloamingforest:steeleaf_shovel", {{"efficiency", 2}}},
+        {"gloamingforest:steeleaf_pickaxe", {{"fortune", 2}}},
+        {"gloamingforest:steeleaf_axe", {{"efficiency", 2}}},
+        {"gloamingforest:steeleaf_hoe", {{"fortune", 2}}},
+        {"gloamingforest:mazebreaker_pickaxe", {{"efficiency", 4}, {"unbreaking", 3}, {"fortune", 2}}},
+        {"gloamingforest:yeti_helmet", {{"protection", 2}}},
+        {"gloamingforest:yeti_chestplate", {{"protection", 2}}},
+        {"gloamingforest:yeti_leggings", {{"protection", 2}}},
+        {"gloamingforest:yeti_boots", {{"protection", 2}, {"feather_falling", 4}}},
+        {"gloamingforest:naga_chestplate", {{"fire_protection", 3}}},
+        {"gloamingforest:naga_leggings", {{"protection", 3}}},
     };
     return table;
 }

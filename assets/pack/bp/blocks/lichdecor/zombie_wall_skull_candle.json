@@ -2,25 +2,25 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:zombie_wall_skull_candle",
+      "identifier": "gloamingforest:zombie_wall_skull_candle",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:candles": [
+        "gloamingforest:candles": [
           0,
           1,
           2,
           3,
           4
         ],
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
           "east"
         ],
-        "twilightforest:lighting": [
+        "gloamingforest:lighting": [
           "none",
           "normal",
           "dim",
@@ -36,12 +36,12 @@
         "explosion_resistance": 5
       },
       "minecraft:geometry": {
-        "identifier": "geometry.twilightforest.lichdecor.wall_skull_candle_human",
+        "identifier": "geometry.gloamingforest.lichdecor.wall_skull_candle_human",
         "bone_visibility": {
-          "candles_1": "q.block_state('twilightforest:candles') <= 1",
-          "candles_2": "q.block_state('twilightforest:candles') == 2",
-          "candles_3": "q.block_state('twilightforest:candles') == 3",
-          "candles_4": "q.block_state('twilightforest:candles') == 4"
+          "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+          "candles_2": "q.block_state('gloamingforest:candles') == 2",
+          "candles_3": "q.block_state('gloamingforest:candles') == 3",
+          "candles_4": "q.block_state('gloamingforest:candles') == 4"
         }
       },
       "minecraft:material_instances": {
@@ -82,7 +82,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -94,7 +94,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -106,7 +106,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -118,7 +118,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -130,7 +130,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'none'",
+        "condition": "q.block_state('gloamingforest:lighting') == 'none'",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -145,7 +145,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') != 'none'",
+        "condition": "q.block_state('gloamingforest:lighting') != 'none'",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -160,49 +160,49 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 1",
+        "condition": "q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 1",
         "components": {
           "minecraft:light_emission": 1
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 2) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 1)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 2) || (q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 1)",
         "components": {
           "minecraft:light_emission": 2
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 1) || (q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 3)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 1) || (q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 3)",
         "components": {
           "minecraft:light_emission": 3
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 4) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 2)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 4) || (q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 2)",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 2) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 3)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 2) || (q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 3)",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:light_emission": 8
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 3",
+        "condition": "q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 3",
         "components": {
           "minecraft:light_emission": 9
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:light_emission": 12
         }

@@ -1,4 +1,4 @@
-// Tests of U15's atmosphere maths (src/core/atmosphere): TF's TwilightForestRenderInfo,
+// Tests of U15's atmosphere maths (src/core/atmosphere): upstream's GloamingForestRenderInfo,
 // TFSkyRenderer, FogHandler, TFWeatherRenderer, IntervalUtils and the aurora shader.
 
 #include <gtest/gtest.h>
@@ -39,19 +39,19 @@ TEST(Atmosphere, FogColour) {
 
 TEST(Atmosphere, BiomeLooks) {
     EXPECT_EQ(biomeLooks().size(), 22u);
-    auto spooky = biomeLook("twilightforest:spooky_forest");
+    auto spooky = biomeLook("gloamingforest:spooky_forest");
     ASSERT_TRUE(spooky);
     EXPECT_EQ(spooky->fog, 0x827391u);
-    EXPECT_EQ(biomeLook("twilightforest:glacier")->sky, 0x130D28u);
+    EXPECT_EQ(biomeLook("gloamingforest:glacier")->sky, 0x130D28u);
     EXPECT_FALSE(biomeLook("minecraft:plains"));
 }
 
 TEST(Atmosphere, NearFog) {
-    EXPECT_TRUE(isFoggyAt("twilightforest:spooky_forest", 100));
-    EXPECT_TRUE(isFoggyAt("twilightforest:dark_forest", 20));
-    EXPECT_FALSE(isFoggyAt("twilightforest:dark_forest", 20.5));
-    EXPECT_TRUE(isFoggyAt("twilightforest:dark_forest_center", 5));
-    EXPECT_FALSE(isFoggyAt("twilightforest:forest", 5));
+    EXPECT_TRUE(isFoggyAt("gloamingforest:spooky_forest", 100));
+    EXPECT_TRUE(isFoggyAt("gloamingforest:dark_forest", 20));
+    EXPECT_FALSE(isFoggyAt("gloamingforest:dark_forest", 20.5));
+    EXPECT_TRUE(isFoggyAt("gloamingforest:dark_forest_center", 5));
+    EXPECT_FALSE(isFoggyAt("gloamingforest:forest", 5));
 }
 
 TEST(Atmosphere, VanillaFogPlanes) {
@@ -111,13 +111,13 @@ TEST(Atmosphere, FogSmoothingByFrames) {
 }
 
 TEST(Atmosphere, BirthdaySplash) {
-    EXPECT_EQ(birthdaySplash(2026), "Happy 15th birthday to the Twilight Forest!");
-    EXPECT_EQ(birthdaySplash(2012), "Happy 1st birthday to the Twilight Forest!");
-    EXPECT_EQ(birthdaySplash(2013), "Happy 2nd birthday to the Twilight Forest!");
-    EXPECT_EQ(birthdaySplash(2014), "Happy 3rd birthday to the Twilight Forest!");
-    EXPECT_EQ(birthdaySplash(2022), "Happy 11th birthday to the Twilight Forest!");
-    EXPECT_EQ(birthdaySplash(2032), "Happy 21st birthday to the Twilight Forest!");
-    EXPECT_EQ(birthdaySplash(2123), "Happy 112th birthday to the Twilight Forest!");
+    EXPECT_EQ(birthdaySplash(2026), "Happy 15th birthday to the Gloaming Forest!");
+    EXPECT_EQ(birthdaySplash(2012), "Happy 1st birthday to the Gloaming Forest!");
+    EXPECT_EQ(birthdaySplash(2013), "Happy 2nd birthday to the Gloaming Forest!");
+    EXPECT_EQ(birthdaySplash(2014), "Happy 3rd birthday to the Gloaming Forest!");
+    EXPECT_EQ(birthdaySplash(2022), "Happy 11th birthday to the Gloaming Forest!");
+    EXPECT_EQ(birthdaySplash(2032), "Happy 21st birthday to the Gloaming Forest!");
+    EXPECT_EQ(birthdaySplash(2123), "Happy 112th birthday to the Gloaming Forest!");
 }
 
 TEST(Atmosphere, Stars) {
@@ -154,14 +154,14 @@ TEST(Atmosphere, WeatherBasics) {
     EXPECT_FLOAT_EQ(rx, -0.4f);
     EXPECT_FLOAT_EQ(rz, 0.3f);
     EXPECT_TRUE(std::isnan(rainOffset(0, 0).first));
-    EXPECT_EQ(effectFor("twilightforest:frost", false), Effect::Blizzard);
-    EXPECT_EQ(effectFor("twilightforest:hunger", false), Effect::Mosquito);
-    EXPECT_EQ(effectFor("twilightforest:fire", false), Effect::Ashes);
-    EXPECT_EQ(effectFor("twilightforest:darkness", true), Effect::DarkStream);
-    EXPECT_EQ(effectFor("twilightforest:darkness", false), Effect::None);
-    EXPECT_EQ(effectFor("twilightforest:acid_rain", false), Effect::BigRain);
-    EXPECT_EQ(effectFor("twilightforest:unknown", true), Effect::None);
-    EXPECT_STREQ(textureOf(Effect::Blizzard), "textures/twilightforest/environment/blizzard");
+    EXPECT_EQ(effectFor("gloamingforest:frost", false), Effect::Blizzard);
+    EXPECT_EQ(effectFor("gloamingforest:hunger", false), Effect::Mosquito);
+    EXPECT_EQ(effectFor("gloamingforest:fire", false), Effect::Ashes);
+    EXPECT_EQ(effectFor("gloamingforest:darkness", true), Effect::DarkStream);
+    EXPECT_EQ(effectFor("gloamingforest:darkness", false), Effect::None);
+    EXPECT_EQ(effectFor("gloamingforest:acid_rain", false), Effect::BigRain);
+    EXPECT_EQ(effectFor("gloamingforest:unknown", true), Effect::None);
+    EXPECT_STREQ(textureOf(Effect::Blizzard), "textures/gloamingforest/environment/blizzard");
     EXPECT_EQ(weatherRange(true), 10);
     EXPECT_EQ(weatherRange(false), 5);
     EXPECT_EQ(lockedSpan(10, 10, -32), (std::pair{0, 20}));
@@ -171,7 +171,7 @@ TEST(Atmosphere, WeatherBasics) {
 
 TEST(Atmosphere, LockedColumns) {
     ColumnInput in{.x = 3, .z = -2, .minY = 0, .maxY = 20, .ticks = 1000, .partialTicks = 0.5f, .camX = 0.5, .camY = 10.2, .camZ = 0.5, .range = 10};
-    auto        b = lockedColumn(in, "twilightforest:frost");
+    auto        b = lockedColumn(in, "gloamingforest:frost");
     ASSERT_TRUE(b);
     EXPECT_EQ(b->effect, Effect::Blizzard);
     EXPECT_TRUE(b->fullBright);
@@ -181,22 +181,22 @@ TEST(Atmosphere, LockedColumns) {
     float d = std::sqrt(3.0f * 3.0f + 2.0f * 2.0f) / 10.0f;
     EXPECT_NEAR(b->alpha, (1 - d * d) * 0.3f + 0.5f, 1e-5f);
     // the same column twice is the same column (seeded per column)
-    auto b2 = lockedColumn(in, "twilightforest:frost");
+    auto b2 = lockedColumn(in, "gloamingforest:frost");
     EXPECT_FLOAT_EQ(b->u0, b2->u0);
     // the quad faces the camera: its width is 1 block, perpendicular to the camera direction
     float wx = b->x1 - b->x0, wz = b->z1 - b->z0;
     EXPECT_NEAR(std::sqrt(wx * wx + wz * wz), 1.0f, 1e-4f);
     EXPECT_NEAR(wx * 3.0f + wz * -2.0f, 0.0f, 1e-4f);
 
-    auto m = lockedColumn(in, "twilightforest:hunger");
+    auto m = lockedColumn(in, "gloamingforest:hunger");
     ASSERT_TRUE(m);
     EXPECT_FLOAT_EQ(m->alpha, 1.0f);
     EXPECT_LE(m->color.r, 0.3f);
-    auto a = lockedColumn(in, "twilightforest:fire");
+    auto a = lockedColumn(in, "gloamingforest:fire");
     ASSERT_TRUE(a);
     EXPECT_GE(a->color.r, 0.8f);
     EXPECT_FLOAT_EQ(a->color.r, a->color.b); // grey
-    auto r = lockedColumn(in, "twilightforest:acid_rain");
+    auto r = lockedColumn(in, "gloamingforest:acid_rain");
     ASSERT_TRUE(r);
     EXPECT_FALSE(r->fullBright);
     // darkness: streams in about half the columns, never moving sideways
@@ -205,7 +205,7 @@ TEST(Atmosphere, LockedColumns) {
         for (int z = -10; z <= 10; ++z) {
             ColumnInput c = in;
             c.x = x, c.z = z;
-            if (auto s = lockedColumn(c, "twilightforest:darkness")) {
+            if (auto s = lockedColumn(c, "gloamingforest:darkness")) {
                 ++streams;
                 EXPECT_FLOAT_EQ(s->u0, 0.0f);
             }
@@ -215,8 +215,8 @@ TEST(Atmosphere, LockedColumns) {
     // the camera's own column draws nothing (NaN in Java)
     ColumnInput own = in;
     own.x = 0, own.z = 0;
-    EXPECT_FALSE(lockedColumn(own, "twilightforest:frost"));
-    EXPECT_FALSE(lockedColumn(in, "twilightforest:nothing"));
+    EXPECT_FALSE(lockedColumn(own, "gloamingforest:frost"));
+    EXPECT_FALSE(lockedColumn(in, "gloamingforest:nothing"));
     auto s = sparkleColumn(in);
     ASSERT_TRUE(s);
     EXPECT_EQ(s->effect, Effect::Sparkles);
@@ -350,7 +350,7 @@ TEST(Atmosphere, UnderVoidPlate) {
 }
 
 TEST(Atmosphere, ResourceLocations) {
-    EXPECT_EQ(parseResourceLocation("twilightforest:glacier"), "twilightforest:glacier");
+    EXPECT_EQ(parseResourceLocation("gloamingforest:glacier"), "gloamingforest:glacier");
     EXPECT_EQ(parseResourceLocation("plains"), "minecraft:plains");
     EXPECT_EQ(parseResourceLocation("my.mod-x:some/path_1"), "my.mod-x:some/path_1");
     EXPECT_FALSE(parseResourceLocation("bad/ns:path"));
@@ -358,7 +358,7 @@ TEST(Atmosphere, ResourceLocations) {
     EXPECT_FALSE(parseResourceLocation("a:b:c"));
     EXPECT_FALSE(parseResourceLocation(""));
     EXPECT_EQ(bedrockBiomeName("minecraft:plains"), "plains");
-    EXPECT_EQ(bedrockBiomeName("twilightforest:glacier"), "twilightforest:glacier");
+    EXPECT_EQ(bedrockBiomeName("gloamingforest:glacier"), "gloamingforest:glacier");
 }
 
 TEST(Atmosphere, RainSplashes) {

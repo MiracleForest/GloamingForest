@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/templates/TemplateFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/DruidHutFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/SimpleWellFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/FancyWellFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/GroveRuinsFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/StoneCircleFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/GraveyardFeature.java
-//   src/main/java/twilightforest/world/components/feature/config/SwizzleConfig.java
-//   src/main/java/twilightforest/util/features/FeatureLogic.java (isBlockOk / isBlockNotOk / isAreaClear)
-//   src/main/java/twilightforest/loot/TFLootTables.java (generateLootContainer / generateChestContents)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/templates/TemplateFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/DruidHutFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/SimpleWellFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/FancyWellFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/GroveRuinsFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/StoneCircleFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/GraveyardFeature.java
+//   src/main/java/gloamingforest/world/components/feature/config/SwizzleConfig.java
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java (isBlockOk / isBlockNotOk / isAreaClear)
+//   src/main/java/gloamingforest/loot/TFLootTables.java (generateLootContainer / generateChestContents)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's template features (docs/spec/questcamps.md 4): the druid hut (and its basement), the simple
+// upstream's template features (docs/spec/questcamps.md 4): the druid hut (and its basement), the simple
 // and fancy wells, the grove ruins and the stone circle (TemplateFeature, drawing from the region's
 // random), and the graveyard (its own snapping and the feature random). Templates are U19's original
 // designs (assets/structures/questcamps/feature/**).
@@ -51,8 +51,8 @@ thread_local FeatureReport tReport;
 
 // ---- helpers -------------------------------------------------------------------------------------------------
 
-/// The template standing in for TF's "twilightforest:feature/<path>" (TF's own id, R1).
-std::string tid(std::string const& path) { return "twilightforest:feature/" + path; }
+/// The template standing in for upstream's "gloamingforest:feature/<path>" (upstream's own id, R1).
+std::string tid(std::string const& path) { return "gloamingforest:feature/" + path; }
 
 cq::Rot toCore(Rotation r) { return static_cast<cq::Rot>(st::rotationIndex(r)); }
 cq::Mir toCore(Mirror m) { return static_cast<cq::Mir>(static_cast<int>(m)); }
@@ -84,14 +84,14 @@ BlockPos zeroPosition(BlockPos const& pos, Mirror mirror, Rotation rotation, int
 /// StructureTemplate#getSize(rotation).
 cq::Vec3i templateSize(st::templates::Template const& t, Rotation r) { return cq::rotatedSize(cq::Vec3i{t.sizeX, t.sizeY, t.sizeZ}, toCore(r)); }
 
-/// FeatureLogic.isBlockNotOk: liquids, bedrock, giant blocks, #twilightforest:clouds, hardened dark leaves.
+/// FeatureLogic.isBlockNotOk: liquids, bedrock, giant blocks, #gloamingforest:clouds, hardened dark leaves.
 bool blockNotOk(Block const& b) {
     if (st::blocks::isLiquid(b)) return true;
     auto const& id = st::blocks::id(b);
-    if (id == "minecraft:bedrock" || id == "twilightforest:hardened_dark_leaves") return true;
-    if (id == "twilightforest:giant_cobblestone" || id == "twilightforest:giant_log" || id == "twilightforest:giant_leaves" || id == "twilightforest:giant_obsidian")
+    if (id == "minecraft:bedrock" || id == "gloamingforest:hardened_dark_leaves") return true;
+    if (id == "gloamingforest:giant_cobblestone" || id == "gloamingforest:giant_log" || id == "gloamingforest:giant_leaves" || id == "gloamingforest:giant_obsidian")
         return true;
-    return st::blocks::inTag(b, "twilightforest:clouds");
+    return st::blocks::inTag(b, "gloamingforest:clouds");
 }
 /// FeatureLogic.isBlockOk: BlockState#isSolid.
 bool blockOk(Block const& b) { return st::blocks::blocksMotion(b); }
@@ -152,7 +152,7 @@ std::string dirName(Orientation d) { return st::blocks::directionName(d); }
 
 // ---- SwizzleConfig ---------------------------------------------------------------------------------------------
 
-/// The members of a twilight:wood_palettes tag ("#twilightforest:common") in file order.
+/// The members of a gloaming:wood_palettes tag ("#gloamingforest:common") in file order.
 std::mutex&                                       paletteMutex() {
     static std::mutex m;
     return m;
@@ -167,7 +167,7 @@ std::vector<std::string> paletteTag(std::string tag) {
     auto&           cache = paletteCache();
     if (auto it = cache.find(tag); it != cache.end()) return it->second;
     std::vector<std::string> out;
-    for (auto const& f : data::list("tags/twilight/wood_palettes")) {
+    for (auto const& f : data::list("tags/gloaming/wood_palettes")) {
         if (f.id() != tag) continue;
         auto doc = data::read(f.path);
         for (auto const& v : doc.value("values", Json::array())) {
@@ -183,7 +183,7 @@ std::vector<std::string> paletteTag(std::string tag) {
 /// one WoodPaletteSwizzle per target palette with a weighted palette tag and a random member of it.
 void buildAddProcessors(std::vector<std::string>& processors, st::RandomSource& random, Json const& config) {
     auto rules = config.value("preprocessing_rules", Json::array());
-    if (!rules.empty()) processors.push_back(Json{{"processor_type", "twilightforest:state_transfiguring"}, {"rules", rules}}.dump());
+    if (!rules.empty()) processors.push_back(Json{{"processor_type", "gloamingforest:state_transfiguring"}, {"rules", rules}}.dump());
     auto choices = config.value("palette_choices", Json::array());
     int  total   = 0;
     for (auto const& c : choices) total += c.value("weight", 1);
@@ -203,7 +203,7 @@ void buildAddProcessors(std::vector<std::string>& processors, st::RandomSource& 
         if (members.empty()) continue;
         auto replacement = members[static_cast<std::size_t>(random.nextInt(static_cast<int>(members.size())))];
         processors.push_back(
-            Json{{"processor_type", "twilightforest:wood_swizzle"}, {"target_palette", target}, {"replacement_palette", replacement}}.dump());
+            Json{{"processor_type", "gloamingforest:wood_swizzle"}, {"target_palette", target}, {"replacement_palette", replacement}}.dump());
     }
 }
 
@@ -268,7 +268,7 @@ void druidMarkers(st::Region& region, BlockPos const& pos, std::string const& s,
     if (s == "spawner") {
         // removeBlock and the spawner both succeed inside the region: a skeleton druid spawner
         region.setBlock(pos, st::blocks::air(), 3);
-        st::blockentities::spawner(region, pos, "twilightforest:skeleton_druid", Json::object());
+        st::blockentities::spawner(region, pos, "gloamingforest:skeleton_druid", Json::object());
         return;
     }
     if (s.starts_with("loot") && s.size() >= 6) {
@@ -280,7 +280,7 @@ void druidMarkers(st::Region& region, BlockPos const& pos, std::string const& s,
         Orientation d = s[4] == 'W' ? Orientation::West : s[4] == 'E' ? Orientation::East : s[4] == 'S' ? Orientation::South : Orientation::North;
         auto const& chest = st::blocks::java(trapped ? "minecraft:trapped_chest" : "minecraft:chest",
                                              Json{{"facing", dirName(turned(rotation, mirror, d))}, {"type", type}, {"waterlogged", "false"}});
-        lootContainer(region, pos, chest, s.back() == 'J' ? "twilightforest:chests/hut_junk" : "twilightforest:chests/basement");
+        lootContainer(region, pos, chest, s.back() == 'J' ? "gloamingforest:chests/hut_junk" : "gloamingforest:chests/basement");
         tReport.chests++;
         return;
     }
@@ -296,7 +296,7 @@ void druidMarkers(st::Region& region, BlockPos const& pos, std::string const& s,
         case 'S': facing = dirName(turned(rotation, mirror, Orientation::South)); break;
         default: facing = "up"; break;
         }
-        lootContainer(region, pos, st::blocks::java("minecraft:barrel", Json{{"facing", facing}, {"open", "false"}}), "twilightforest:chests/hut_junk");
+        lootContainer(region, pos, st::blocks::java("minecraft:barrel", Json{{"facing", facing}, {"open", "false"}}), "gloamingforest:chests/hut_junk");
         tReport.chests++;
         return;
     }
@@ -330,8 +330,8 @@ TemplateFeature druidHut(Json const& config) {
         pos = relative(pos, turned(rotation, mirror, Orientation::East));
         settings.processors.clear();
         buildAddProcessors(settings.processors, random, config);
-        settings.processors.push_back("twilightforest:cobble_variants");
-        settings.processors.push_back("twilightforest:stone_brick_variants");
+        settings.processors.push_back("gloamingforest:cobble_variants");
+        settings.processors.push_back("gloamingforest:stone_brick_variants");
         tReport.basement = id;
         placeWithMarkers(f2, id, region, pos, settings, random);
     };
@@ -349,7 +349,7 @@ void simpleWellMarkers(st::Region& region, BlockPos const& pos, std::string cons
     region.setBlock(pos, st::blocks::air(), 3);
     char        c   = s.size() > 4 ? s[4] : 'N';
     Orientation dir = turned(rotation, mirror, c == 'W' ? Orientation::West : c == 'E' ? Orientation::East : c == 'S' ? Orientation::South : Orientation::North);
-    lootContainer(region, pos, st::blocks::java("minecraft:barrel", Json{{"facing", dirName(dir)}, {"open", "false"}}), "twilightforest:well");
+    lootContainer(region, pos, st::blocks::java("minecraft:barrel", Json{{"facing", dirName(dir)}, {"open", "false"}}), "gloamingforest:well");
     tReport.chests++;
     if (random.nextBoolean()) return;
     region.setBlock(relative(pos, dir), st::blocks::java("minecraft:hopper", Json{{"facing", dirName(st::opposite(dir))}, {"enabled", "true"}}), 16 | 2);
@@ -358,7 +358,7 @@ void simpleWellMarkers(st::Region& region, BlockPos const& pos, std::string cons
 void fancyWellMarkers(st::Region& region, BlockPos const& pos, std::string const& s, Rotation, Mirror, st::RandomSource&) {
     if (!s.starts_with("loot")) return;
     region.setBlock(pos, st::blocks::air(), 3);
-    lootContainer(region, pos, st::blocks::java("minecraft:barrel", Json{{"facing", "up"}, {"open", "false"}}), "twilightforest:fancy_well");
+    lootContainer(region, pos, st::blocks::java("minecraft:barrel", Json{{"facing", "up"}, {"open", "false"}}), "gloamingforest:fancy_well");
     tReport.chests++;
 }
 
@@ -375,7 +375,7 @@ TemplateFeature well(Json const& config, bool fancy) {
         auto const* t = st::templates::get(bottom);
         if (!t) return;
         BlockPos pos{placementPos.x, placementPos.y - t->sizeY, placementPos.z};
-        settings.processors.push_back("twilightforest:smart_grass");
+        settings.processors.push_back("gloamingforest:smart_grass");
         placeWithMarkers(TemplateFeature{.processMarkers = markers}, bottom, region, pos, settings, random);
     };
     return f;
@@ -386,14 +386,14 @@ TemplateFeature well(Json const& config, bool fancy) {
 TemplateFeature groveRuins() {
     TemplateFeature f;
     f.getTemplate    = [](st::RandomSource& random) { return tid(random.nextBoolean() ? "ruins/grove_pillar" : "ruins/grove_arch"); };
-    f.modifySettings = [](std::vector<std::string>& p, st::RandomSource&) { p.push_back("twilightforest:stone_brick_variants"); };
+    f.modifySettings = [](std::vector<std::string>& p, st::RandomSource&) { p.push_back("gloamingforest:stone_brick_variants"); };
     return f;
 }
 
 TemplateFeature stoneCircle() {
     TemplateFeature f;
     f.getTemplate    = [](st::RandomSource&) { return tid("ruins/stone_circle"); };
-    f.modifySettings = [](std::vector<std::string>& p, st::RandomSource&) { p.push_back("twilightforest:cobble_variants"); };
+    f.modifySettings = [](std::vector<std::string>& p, st::RandomSource&) { p.push_back("gloamingforest:cobble_variants"); };
     return f;
 }
 
@@ -452,7 +452,7 @@ bool placeGraveyard(st::Region& region, BlockPos const& pos, st::RandomSource& r
     tReport.rotation     = rotation;
     tReport.mirror       = mirror;
 
-    settings.processors.push_back("twilightforest:web"); // shared: the graves and the trap get it too
+    settings.processors.push_back("gloamingforest:web"); // shared: the graves and the trap get it too
     std::vector<std::pair<BlockPos, std::string>> data;
     st::ext::placeTemplate(tid("graveyard/graveyard"), region, placementPos, placementPos, settings, rand, flags);
     for (auto& m : st::ext::filterDataMarkers(tid("graveyard/graveyard"), placementPos, settings, rand)) data.push_back(std::move(m));
@@ -482,19 +482,19 @@ bool placeGraveyard(st::Region& region, BlockPos const& pos, st::RandomSource& r
             placement = BlockPos{placement.x + trapOff.x, placement.y + trapOff.y, placement.z + trapOff.z};
             st::ext::placeTemplate(tid("graveyard/grave_trap"), region, placement, placement, settings, rand, flags);
         }
-        // TF's quirk: the trap's markers are filtered at the base's placement position, placed or not
+        // upstream's quirk: the trap's markers are filtered at the base's placement position, placed or not
         for (auto& m : st::ext::filterDataMarkers(tid("graveyard/grave_trap"), placementPos, settings, rand)) data.push_back(std::move(m));
         BlockPos chest{placement.x + chestloc.x, placement.y + chestloc.y, placement.z + chestloc.z};
         if (region.setBlock(chest, chestState, flags)) {
             std::int64_t seed = static_cast<std::int64_t>(static_cast<std::uint64_t>(region.seed()) * static_cast<std::uint64_t>(static_cast<std::int64_t>(chest.x)) +
                                                           static_cast<std::uint64_t>(static_cast<std::int64_t>(chest.y))) ^
                                 static_cast<std::int64_t>(chest.z);
-            st::blockentities::lootTable(region, chest, "twilightforest:graveyard", seed);
+            st::blockentities::lootTable(region, chest, "gloamingforest:graveyard", seed);
             region.setBlock(BlockPos{chest.x, chest.y - 1, chest.z}, st::blocks::java("minecraft:mossy_cobblestone"), 3);
             tReport.chests++;
         }
         // a wraith at the placement's block corner (finalizeMobSpawn STRUCTURE)
-        st::blockentities::entity(region, placement.x, placement.y, placement.z, "twilightforest:wraith", Json::object());
+        st::blockentities::entity(region, placement.x, placement.y, placement.z, "gloamingforest:wraith", Json::object());
         tReport.wraiths++;
     }
 
@@ -502,7 +502,7 @@ bool placeGraveyard(st::Region& region, BlockPos const& pos, st::RandomSource& r
         tReport.markers.push_back(s);
         if (s != "spawner") continue;
         region.setBlock(p, st::blocks::air(), 3);
-        if (rand.nextInt(4) == 0) st::blockentities::spawner(region, p, "twilightforest:rising_zombie", Json::object());
+        if (rand.nextInt(4) == 0) st::blockentities::spawner(region, p, "gloamingforest:rising_zombie", Json::object());
     }
     return true;
 }
@@ -514,19 +514,19 @@ void installFeatures() {
             std::lock_guard lock(paletteMutex());
             paletteCache().clear();
         });
-    ff::registerType("twilightforest:druid_hut", [](ff::FeatureContext const& c) {
+    ff::registerType("gloamingforest:druid_hut", [](ff::FeatureContext const& c) {
         return placeDruidHut(c.region, c.origin, st::ext::worldRandom(c.region), c.config);
     });
-    ff::registerType("twilightforest:simple_well", [](ff::FeatureContext const& c) {
+    ff::registerType("gloamingforest:simple_well", [](ff::FeatureContext const& c) {
         return placeSimpleWell(c.region, c.origin, st::ext::worldRandom(c.region), c.config);
     });
-    ff::registerType("twilightforest:fancy_well", [](ff::FeatureContext const& c) {
+    ff::registerType("gloamingforest:fancy_well", [](ff::FeatureContext const& c) {
         return placeFancyWell(c.region, c.origin, st::ext::worldRandom(c.region), c.config);
     });
-    ff::registerType("twilightforest:grove_ruins", [](ff::FeatureContext const& c) { return placeGroveRuins(c.region, c.origin, st::ext::worldRandom(c.region)); });
-    ff::registerType("twilightforest:stone_circle", [](ff::FeatureContext const& c) { return placeStoneCircle(c.region, c.origin, st::ext::worldRandom(c.region)); });
+    ff::registerType("gloamingforest:grove_ruins", [](ff::FeatureContext const& c) { return placeGroveRuins(c.region, c.origin, st::ext::worldRandom(c.region)); });
+    ff::registerType("gloamingforest:stone_circle", [](ff::FeatureContext const& c) { return placeStoneCircle(c.region, c.origin, st::ext::worldRandom(c.region)); });
     // GraveyardFeature draws from the feature context's random (ctx.random())
-    ff::registerType("twilightforest:graveyard", [](ff::FeatureContext const& c) { return placeGraveyard(c.region, c.origin, c.random); });
+    ff::registerType("gloamingforest:graveyard", [](ff::FeatureContext const& c) { return placeGraveyard(c.region, c.origin, c.random); });
 }
 
 } // namespace gf::feature::questcamps

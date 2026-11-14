@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/MoonwormQueenItem.java
-//   src/main/java/twilightforest/entity/projectile/MoonwormShot.java
-//   src/main/java/twilightforest/item/recipe/MoonwormQueenRepairRecipe.java
-//   src/main/java/twilightforest/dispenser/TFDispenserBehaviors.java (moonworm queen)
-//   src/main/java/twilightforest/dispenser/DamageableStackDispenseBehavior.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/MoonwormQueenItem.java
+//   src/main/java/gloamingforest/entity/projectile/MoonwormShot.java
+//   src/main/java/gloamingforest/item/recipe/MoonwormQueenRepairRecipe.java
+//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java (moonworm queen)
+//   src/main/java/gloamingforest/dispenser/DamageableStackDispenseBehavior.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:moonworm_queen places U6's twilightforest:moonworm block (by id) like a block
-// item and, held for more than 12 ticks, shoots twilightforest:moonworm_shot (a TFThrowable,
+// gloamingforest:moonworm_queen places U6's gloamingforest:moonworm block (by id) like a block
+// item and, held for more than 12 ticks, shoots gloamingforest:moonworm_shot (a TFThrowable,
 // gravity 0.03) that sticks a moonworm where it lands. The repair recipe
-// (twilightforest:moonworm_queen_repair_recipe: one damaged queen and 1..8 torchberries) is a
+// (gloamingforest:moonworm_queen_repair_recipe: one damaged queen and 1..8 torchberries) is a
 // special crafting recipe on the BP layouts moonworm_queen_repair_recipe_1.._8.
 
 #include "feature/weapons/Weapons.h"
@@ -56,7 +56,7 @@ int gMoonwormsPlaced = 0; ///< selftests
 namespace {
 
 constexpr int  kFiringTime = 12;
-constexpr char kFailedLoot[] = "twilightforest:blocks/moonworm_failed_to_place";
+constexpr char kFailedLoot[] = "gloamingforest:blocks/moonworm_failed_to_place";
 constexpr char const* kFaces[] = {"down", "up", "north", "south", "west", "east"};
 constexpr int kDx[] = {0, 0, 0, 0, -1, 1}, kDy[] = {-1, 1, 0, 0, 0, 0}, kDz[] = {0, 0, -1, 1, 0, 0};
 
@@ -67,7 +67,7 @@ bool canSurvive(BlockSource& region, BlockPos const& pos, int face) {
 }
 
 bool placeMoonworm(BlockSource& region, BlockPos const& pos, int face) {
-    auto const* b = game::blockWithStates(kMoonworm, Json{{"twilightforest:facing", kFaces[face]}});
+    auto const* b = game::blockWithStates(kMoonworm, Json{{"gloamingforest:facing", kFaces[face]}});
     if (!b) b = game::blockWithStates(kMoonworm, Json{{"facing_direction", face}});
     if (!b) b = game::blockWith(kMoonworm);
     if (!b || !game::setBlock(region, pos, *b)) return false;
@@ -99,10 +99,10 @@ bool onHitBlock(Actor& shot, BlockPos const& hit, int face) {
     bool     ok = game::replaceable(region, pos) && id != "minecraft:fire" && id != "minecraft:soul_fire" && id != "minecraft:lava" &&
               id != "minecraft:flowing_lava" && canSurvive(region, pos, face);
     if (ok && placeMoonworm(region, pos, face)) {
-        gf::fx::sound(shot.getDimension(), "item.twilightforest.moonworm.squish", Vec3{hit.x + .5f, hit.y + .5f, hit.z + .5f}, 1.0F, 1.0F);
+        gf::fx::sound(shot.getDimension(), "item.gloamingforest.moonworm.squish", Vec3{hit.x + .5f, hit.y + .5f, hit.z + .5f}, 1.0F, 1.0F);
     } else {
         failedDrops(shot);
-        gf::fx::sound(shot.getDimension(), "block.twilightforest.bug.squish", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, 1.0F, 1.0F);
+        gf::fx::sound(shot.getDimension(), "block.gloamingforest.bug.squish", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, 1.0F, 1.0F);
     }
     squishParticles(shot);
     return true;
@@ -116,9 +116,9 @@ bool onHitEntity(Actor& shot, Actor& target) {
         }
     } else {
         float dmg = world::random().nextInt(3) == 0 ? 1.0F : 0.0F;
-        gf::combat::hurt(target, dmg, "twilightforest:moonworm", gf::projectile::ext::owner(shot), &shot);
+        gf::combat::hurt(target, dmg, "gloamingforest:moonworm", gf::projectile::ext::owner(shot), &shot);
         failedDrops(shot);
-        gf::fx::sound(shot.getDimension(), "block.twilightforest.bug.squish", target.getFeetPos(), 1.0F, 1.0F);
+        gf::fx::sound(shot.getDimension(), "block.gloamingforest.bug.squish", target.getFeetPos(), 1.0F, 1.0F);
     }
     squishParticles(shot);
     return true;
@@ -179,7 +179,7 @@ void registerMoonworm() {
                     if (used <= kFiringTime || stack.getDamageValue() + 1 >= max) return;
                     if (!gf::projectile::shoot(player, kMoonwormShot, lookOf(player), 1.5F, 1.0F)) return;
                     hurtButDontBreak(stack, 2, &player);
-                    gf::fx::sound(player.getDimension(), "item.twilightforest.moonworm.squish", player.getFeetPos(), 1.0F, 1.0F);
+                    gf::fx::sound(player.getDimension(), "item.gloamingforest.moonworm.squish", player.getFeetPos(), 1.0F, 1.0F);
                 },
         }
     );
@@ -220,15 +220,15 @@ void registerMoonworm() {
         Vec3 pos{at.x + 0.5f + 0.7f * kDx[facing], at.y + 0.5f + 0.7f * kDy[facing] - (kDy[facing] == 0 ? 0.125f : 0.0f), at.z + 0.5f + 0.7f * kDz[facing]};
         if (!world::shootFrom(region, pos, kMoonwormShot, dispenseDir(facing), 1.1F, 18.0F)) return false;
         hurtButDontBreak(stack, 1, nullptr);
-        gf::fx::sound(region.getDimension(), "item.twilightforest.moonworm.squish", Vec3{at.x + .5f, at.y + .5f, at.z + .5f}, 1.0F, 1.0F);
+        gf::fx::sound(region.getDimension(), "item.gloamingforest.moonworm.squish", Vec3{at.x + .5f, at.y + .5f, at.z + .5f}, 1.0F, 1.0F);
         return true;
     });
     // MoonwormQueenRepairRecipe (BP layouts: 1..8 torchberries)
     gf::recipes::registerSpecialCrafting(
-        "twilightforest:moonworm_queen_repair_recipe", [](gf::recipes::CraftingGrid const& g) { return moonwormRepairMatches(g.slots); },
+        "gloamingforest:moonworm_queen_repair_recipe", [](gf::recipes::CraftingGrid const& g) { return moonwormRepairMatches(g.slots); },
         [](gf::recipes::CraftingGrid const& g) { return moonwormRepairAssemble(g.slots); }
     );
-    for (int n = 1; n <= 8; ++n) gf::recipes::ext::addSpecialLayout("twilightforest:moonworm_queen_repair_recipe", "twilightforest:moonworm_queen_repair_recipe_" + std::to_string(n));
+    for (int n = 1; n <= 8; ++n) gf::recipes::ext::addSpecialLayout("gloamingforest:moonworm_queen_repair_recipe", "gloamingforest:moonworm_queen_repair_recipe_" + std::to_string(n));
 }
 
 } // namespace gf::feature::weapons

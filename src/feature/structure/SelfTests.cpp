@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of the structure kit (rule R12: "structure.*", testPos dx 5700..5799).
 //
@@ -132,7 +132,7 @@ public:
             for (int z = box.minZ; z <= box.maxZ; z++)
                 for (int x = box.minX; x <= box.maxX; x++) {
                     auto const& b = getBlock(BlockPos{x, y, z});
-                    // TF blocks count as air (their states are F1's, a table that may still grow; tests name them where it matters)
+                    // upstream blocks count as air (their states are F1's, a table that may still grow; tests name them where it matters)
                     if (!b.getTypeName().starts_with("minecraft:")) h.add(x - box.minX, y - box.minY, z - box.minZ, "minecraft:air");
                     else h.add(x - box.minX, y - box.minY, z - box.minZ, b.getTypeName(), game::statesOf(b));
                 }
@@ -295,7 +295,7 @@ std::string const& fixtureId() {
 /// (courtyard_terrace), smooth stone (smooth_stone_variants), grass on dirt, under stone and next to
 /// podzol / mycelium / grass (smart_grass), full and partial blocks over solid, partial and
 /// replaceable world blocks (soft_replace), a spawner without spawn data (spawner_processor) and
-/// TF's nagastone (nagastone_variants).
+/// upstream's nagastone (nagastone_variants).
 constexpr BlockPos kTargetsOrigin{10, 64, 0};
 
 std::string const& processorTargetsId() {
@@ -309,8 +309,8 @@ std::string const& processorTargetsId() {
             state("minecraft:grass_block", {{"snowy", "false"}}),
             state("minecraft:spawner"),
             state("minecraft:stone_bricks"),
-            state("twilightforest:etched_nagastone"),
-            state("twilightforest:nagastone_pillar", {{"axis", "y"}}),
+            state("gloamingforest:etched_nagastone"),
+            state("gloamingforest:nagastone_pillar", {{"axis", "y"}}),
             state("minecraft:cobblestone"),
             state("minecraft:oak_planks"),
             state("minecraft:stone_brick_stairs", {{"facing", "north"}, {"half", "bottom"}, {"waterlogged", "false"}}),
@@ -453,10 +453,10 @@ GF_REGISTER_SELFTEST("structure.piece_coordinates", [](Context& ctx) {
     ctx.check(vanilla.getWorldPos(1, 2, 3) == BlockPos(103, 12, 201), "vanilla EAST");
     // TFStructureComponentOld#getWorldX/Z and setOrientation
     TestPiece north(box, Orientation::North), south(box, Orientation::South), west(box, Orientation::West), east(box, Orientation::East), none(box, std::nullopt);
-    ctx.check(north.getWorldPos(1, 2, 3) == BlockPos(108, 12, 211) && north.rotation == Rotation::None, "TF NORTH");
-    ctx.check(south.getWorldPos(1, 2, 3) == BlockPos(101, 12, 203) && south.rotation == Rotation::Clockwise180, "TF SOUTH");
-    ctx.check(west.getWorldPos(1, 2, 3) == BlockPos(106, 12, 201) && west.rotation == Rotation::Counterclockwise90, "TF WEST");
-    ctx.check(east.getWorldPos(1, 2, 3) == BlockPos(103, 12, 213) && east.rotation == Rotation::Clockwise90, "TF EAST");
+    ctx.check(north.getWorldPos(1, 2, 3) == BlockPos(108, 12, 211) && north.rotation == Rotation::None, "upstream NORTH");
+    ctx.check(south.getWorldPos(1, 2, 3) == BlockPos(101, 12, 203) && south.rotation == Rotation::Clockwise180, "upstream SOUTH");
+    ctx.check(west.getWorldPos(1, 2, 3) == BlockPos(106, 12, 201) && west.rotation == Rotation::Counterclockwise90, "upstream WEST");
+    ctx.check(east.getWorldPos(1, 2, 3) == BlockPos(103, 12, 213) && east.rotation == Rotation::Clockwise90, "upstream EAST");
     ctx.check(none.getWorldPos(1, 2, 3) == BlockPos(1, 2, 3), "no orientation: world coordinates");
     ctx.check(bases::ComponentOld::getComponentToAddBoundingBox2(10, 20, 30, -1, 0, -2, 5, 6, 7, Orientation::West) == BlockBox::of(5, 20, 29, 12, 26, 34),
               "getComponentToAddBoundingBox2 WEST");
@@ -601,35 +601,35 @@ GF_REGISTER_SELFTEST("structure.template_world", [](Context& ctx) -> ll::coro::C
 GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
     auto const* t = templates::parsed(fixtureId());
     ctx.require(t != nullptr, "fixture");
-    // every TF processor (and the vanilla ones TF's data uses) on the fixture, seeded
+    // every upstream processor (and the vanilla ones upstream's data uses) on the fixture, seeded
     std::vector<std::pair<std::string, Json>> cases{
-        {"box_cutting", Json{{"processor_type", "twilightforest:box_cutting"}, {"boxes", Json::array({Json::array({0, 64, 0, 1, 65, 4})})}}},
-        {"cobble_variants", Json{{"processor_type", "twilightforest:cobble_variants"}}},
-        {"courtyard_terrace", Json{{"processor_type", "twilightforest:courtyard_terrace"}}},
-        {"infest_blocks", Json{{"processor_type", "twilightforest:infest_blocks"}}},
-        {"nagastone_variants", Json{{"processor_type", "twilightforest:nagastone_variants"}}},
-        {"smart_grass", Json{{"processor_type", "twilightforest:smart_grass"}}},
-        {"smooth_stone_variants", Json{{"processor_type", "twilightforest:smooth_stone_variants"}}},
-        {"soft_replace", Json{{"processor_type", "twilightforest:soft_replace"}}},
+        {"box_cutting", Json{{"processor_type", "gloamingforest:box_cutting"}, {"boxes", Json::array({Json::array({0, 64, 0, 1, 65, 4})})}}},
+        {"cobble_variants", Json{{"processor_type", "gloamingforest:cobble_variants"}}},
+        {"courtyard_terrace", Json{{"processor_type", "gloamingforest:courtyard_terrace"}}},
+        {"infest_blocks", Json{{"processor_type", "gloamingforest:infest_blocks"}}},
+        {"nagastone_variants", Json{{"processor_type", "gloamingforest:nagastone_variants"}}},
+        {"smart_grass", Json{{"processor_type", "gloamingforest:smart_grass"}}},
+        {"smooth_stone_variants", Json{{"processor_type", "gloamingforest:smooth_stone_variants"}}},
+        {"soft_replace", Json{{"processor_type", "gloamingforest:soft_replace"}}},
         {"spawner_processor",
-         Json{{"processor_type", "twilightforest:spawner_processor"},
+         Json{{"processor_type", "gloamingforest:spawner_processor"},
               {"range", 6},
               {"start_delay_factor", 0.25},
               {"entity_width_max", 0.8},
               {"entities", Json::array({Json{{"data", {{"entity", {{"id", "minecraft:skeleton"}}}}}, {"weight", 3}},
                                         Json{{"data", {{"entity", {{"id", "minecraft:spider"}}}}}, {"weight", 1}}})}}},
         {"state_transfiguring",
-         Json{{"processor_type", "twilightforest:state_transfiguring"},
+         Json{{"processor_type", "gloamingforest:state_transfiguring"},
               {"rules", Json::array({Json{{"input_predicate", {{"predicate_type", "minecraft:random_block_match"}, {"block", "minecraft:stone_bricks"}, {"probability", 0.5}}},
                                           {"location_predicate", {{"predicate_type", "minecraft:always_true"}}},
                                           {"output_state", {{"Name", "minecraft:mossy_stone_bricks"}}}}})}}},
-        {"stone_brick_variants", Json{{"processor_type", "twilightforest:stone_brick_variants"}}},
-        {"targeted_rot", Json{{"processor_type", "twilightforest:targeted_rot"}, {"blocks_to_rot", Json::array({state("minecraft:stone_bricks")})}, {"integrity", 0.5}}},
-        {"update_marking", Json{{"processor_type", "twilightforest:update_marking"}, {"mark_updates", Json::array({"minecraft:oak_fence"})}}},
-        {"vertical_decay", Json{{"processor_type", "twilightforest:vertical_decay"}, {"decay_blocks", Json::array({"minecraft:stone_bricks"})}, {"decay_chance", 0.3}}},
-        {"web", Json{{"processor_type", "twilightforest:web"}}},
-        {"wood_multiswizzle", Json{{"processor_type", "twilightforest:wood_multiswizzle"}, {"palettes", Json::array({Json::array({"minecraft:oak", "minecraft:dark_oak"})})}}},
-        {"wood_swizzle", Json{{"processor_type", "twilightforest:wood_swizzle"}, {"target_palette", "minecraft:oak"}, {"replacement_palette", "minecraft:spruce"}}},
+        {"stone_brick_variants", Json{{"processor_type", "gloamingforest:stone_brick_variants"}}},
+        {"targeted_rot", Json{{"processor_type", "gloamingforest:targeted_rot"}, {"blocks_to_rot", Json::array({state("minecraft:stone_bricks")})}, {"integrity", 0.5}}},
+        {"update_marking", Json{{"processor_type", "gloamingforest:update_marking"}, {"mark_updates", Json::array({"minecraft:oak_fence"})}}},
+        {"vertical_decay", Json{{"processor_type", "gloamingforest:vertical_decay"}, {"decay_blocks", Json::array({"minecraft:stone_bricks"})}, {"decay_chance", 0.3}}},
+        {"web", Json{{"processor_type", "gloamingforest:web"}}},
+        {"wood_multiswizzle", Json{{"processor_type", "gloamingforest:wood_multiswizzle"}, {"palettes", Json::array({Json::array({"minecraft:oak", "minecraft:dark_oak"})})}}},
+        {"wood_swizzle", Json{{"processor_type", "gloamingforest:wood_swizzle"}, {"target_palette", "minecraft:oak"}, {"replacement_palette", "minecraft:spruce"}}},
         {"rule", Json{{"processor_type", "minecraft:rule"},
                       {"rules", Json::array({Json{{"input_predicate", {{"predicate_type", "minecraft:block_match"}, {"block", "minecraft:cobblestone"}}},
                                                   {"location_predicate", {{"predicate_type", "minecraft:always_true"}}},
@@ -662,7 +662,7 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
         run.hash = mem.hash(BlockBox{-2, 62, -2, 17, 70, 7});
         return run;
     };
-    // what a placement put where (the later block wins; TF blocks as air, as in the hashes), by
+    // what a placement put where (the later block wins; upstream blocks as air, as in the hashes), by
     // y, then z, then x
     auto blocksOf = [](Run const& r) {
         std::map<std::tuple<int, int, int>, std::string> m;
@@ -729,7 +729,7 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
     softCheck(13, 64, 3, "minecraft:oak_planks", "a plant is replaced");
     softCheck(14, 64, 3, "minecraft:stone_bricks", "a full block goes over a slab");
     softCheck(12, 64, 4, "minecraft:oak_fence", "no stairs over a fence");
-    // spawner_processor: TF always rolls the spawn data (and the delay from MinSpawnDelay 200)
+    // spawner_processor: upstream always rolls the spawn data (and the delay from MinSpawnDelay 200)
     bool spawnerChecked = false;
     for (auto const& p : runs["spawner_processor"].placed) {
         if (!p.block || !blocks::is(*p.block, "minecraft:spawner")) continue;
@@ -743,24 +743,24 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
     ctx.check(spawnerChecked, "the targets' spawner was processed");
     // update_marking changes nothing here (Bedrock updates shapes itself)
     ctx.check(runs["update_marking"].hash == plain.hash, "update_marking places the template unchanged");
-    // nagastone_variants on TF's nagastone (F1's blocks; they hash as air): the targets' etched
+    // nagastone_variants on upstream's nagastone (F1's blocks; they hash as air): the targets' etched
     // nagastone and pillars become mossy or cracked as Java's processing order draws them, keeping
     // their states (FeaturePlacers.transferAllStateKeys), and vanilla blocks stay
-    ctx.require(blocks::isRegisteredBlock("twilightforest:etched_nagastone") && blocks::isRegisteredBlock("twilightforest:nagastone_pillar") &&
-                    blocks::isRegisteredBlock("twilightforest:cracked_etched_nagastone") && blocks::isRegisteredBlock("twilightforest:mossy_nagastone_pillar"),
-                "TF's nagastone blocks are registered");
+    ctx.require(blocks::isRegisteredBlock("gloamingforest:etched_nagastone") && blocks::isRegisteredBlock("gloamingforest:nagastone_pillar") &&
+                    blocks::isRegisteredBlock("gloamingforest:cracked_etched_nagastone") && blocks::isRegisteredBlock("gloamingforest:mossy_nagastone_pillar"),
+                "upstream's nagastone blocks are registered");
     std::string nagastone;
     for (auto const& p : runs["nagastone_variants"].placed)
         if (p.block && blocks::id(*p.block).find("nagastone") != std::string::npos)
             nagastone += std::to_string(p.pos.x) + "," + std::to_string(p.pos.y) + "," + std::to_string(p.pos.z) + ":" + blocks::id(*p.block) + ";";
     checkGolden(ctx, "nagastone_variants_blocks", nagastone);
     ctx.check(runs["nagastone_variants"].hash == plain.hash, "nagastone_variants leaves vanilla blocks alone");
-    auto const* etched = blocks::fromJava("twilightforest:etched_nagastone");
+    auto const* etched = blocks::fromJava("gloamingforest:etched_nagastone");
     for (auto const& p : runs["nagastone_variants"].placed)
-        if (p.block && etched && blocks::id(*p.block) == "twilightforest:cracked_etched_nagastone")
+        if (p.block && etched && blocks::id(*p.block) == "gloamingforest:cracked_etched_nagastone")
             ctx.check(blocks::javaProperty(*p.block, "facing") == blocks::javaProperty(*etched, "facing"),
                       "the cracked etched nagastone keeps the etched nagastone's facing");
-    ctx.check(processorTypes().size() >= 24, "17 TF + 7 vanilla processor types registered (" + std::to_string(processorTypes().size()) + ")");
+    ctx.check(processorTypes().size() >= 24, "17 upstream + 7 vanilla processor types registered (" + std::to_string(processorTypes().size()) + ")");
 });
 
 // ---- a feature's random shared by its placements (TemplateFeature, GraveyardFeature) ------------------------------
@@ -807,7 +807,7 @@ GF_REGISTER_SELFTEST("structure.shared_random", [](Context& ctx) {
         MemoryRegion     mem;
         JavaRandom       random(0x5eed);
         TemplateSettings settings;
-        settings.processors = {Json{{"processor_type", "twilightforest:stone_brick_variants"}}.dump()};
+        settings.processors = {Json{{"processor_type", "gloamingforest:stone_brick_variants"}}.dump()};
         BlockPos hut{30, 64, 0}, basement{30, 60, 0};
         ctx.check(ext::placeTemplate(sharedHutId(marker), mem, hut, hut, settings, random), "the hut places");
         auto found = ext::filterDataMarkers(sharedHutId(marker), hut, settings, random);
@@ -841,12 +841,12 @@ GF_REGISTER_SELFTEST("structure.shared_random", [](Context& ctx) {
     ctx.check(list("minecraft:piston", {{"extended", "false"}, {"facing", "up"}}) == 0 && list("minecraft:sticky_piston", {{"extended", "true"}, {"facing", "up"}}) == 1,
               "a retracted piston is a full block, an extended one is not (list 0 / 1)");
     ctx.check(list("minecraft:stone_slab", {{"type", "double"}}) == 0 && list("minecraft:stone_slab", {{"type", "bottom"}}) == 1 &&
-                  list("twilightforest:aurora_slab", {{"type", "double"}}) == 0,
+                  list("gloamingforest:aurora_slab", {{"type", "double"}}) == 0,
               "a double slab is a full block, a single one is not");
-    ctx.check(list("twilightforest:pink_castle_door", {{"vanish", "false"}, {"active", "false"}}) == 0 &&
-                  list("twilightforest:pink_castle_door", {{"vanish", "true"}, {"active", "false"}}) == 1 &&
-                  list("twilightforest:reappearing_block", {{"vanished", "false"}, {"active", "false"}}) == 0 &&
-                  list("twilightforest:reappearing_block", {{"vanished", "true"}, {"active", "false"}}) == 1,
+    ctx.check(list("gloamingforest:pink_castle_door", {{"vanish", "false"}, {"active", "false"}}) == 0 &&
+                  list("gloamingforest:pink_castle_door", {{"vanish", "true"}, {"active", "false"}}) == 1 &&
+                  list("gloamingforest:reappearing_block", {{"vanished", "false"}, {"active", "false"}}) == 0 &&
+                  list("gloamingforest:reappearing_block", {{"vanished", "true"}, {"active", "false"}}) == 1,
               "a vanished castle door or reappearing block has no collision shape (list 1)");
     ctx.check(list("minecraft:chest", Json::object()) == 2 && list("minecraft:stone_bricks", Json::object()) == 0, "block entities in list 2, full blocks in list 0");
 });
@@ -882,7 +882,7 @@ GF_REGISTER_SELFTEST("structure.java_lists", [](Context& ctx) {
     ctx.check(bad == 0, std::to_string(bad) + " vanilla states in another list than Java's: " + mismatches);
 });
 
-// ---- TF marker handlers and jigsaw pieces ----------------------------------------------------------------------------
+// ---- upstream marker handlers and jigsaw pieces ----------------------------------------------------------------------------
 
 namespace {
 
@@ -911,19 +911,19 @@ void registerJigsawFixtures() {
     roomB["jigsaw"]   = Json::array({Json{{"pos", {0, 1, 1}}, {"front", "west"}, {"pool", "gf_test:structure/jig/rooms"}, {"name", "gf_test:door"},
                                           {"target", "gf_test:door"}}});
     for (auto const* doc : {&start, &roomA, &roomB}) templates::add(*doc);
-    // a TF marker handler list in the shape of camp_marker_handlers, with vanilla blocks
+    // an upstream marker handler list in the shape of camp_marker_handlers, with vanilla blocks
     Json handlers = Json::array({Json{
-        {"type", "twilightforest:rotation"},
+        {"type", "gloamingforest:rotation"},
         {"rotated",
-         {{"type", "twilightforest:handler_switch"},
+         {{"type", "gloamingforest:handler_switch"},
           {"element_processor",
            {{"seat",
-             {{"type", "twilightforest:block_placement"},
+             {{"type", "gloamingforest:block_placement"},
               {"block_state",
                {{"type", "minecraft:weighted_state_provider"},
                 {"entries", Json::array({Json{{"data", state("minecraft:oak_stairs", {{"facing", "north"}})}, {"weight", 1}},
                                          Json{{"data", state("minecraft:air")}, {"weight", 1}}})}}}}},
-            {"lamp", {{"type", "twilightforest:loot"}, {"loot_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:barrel", {{"facing", "up"}})}}}, {"loot_table", "gf_test:chests/fixture_chest"}}}}}}}}});
+            {"lamp", {{"type", "gloamingforest:loot"}, {"loot_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:barrel", {{"facing", "up"}})}}}, {"loot_table", "gf_test:chests/fixture_chest"}}}}}}}}});
     markers::addList("gf_test:structure/handlers", handlers);
     pools::addDefinition("gf_test:structure/jig/start",
                          Json{{"gf_test:structure/jig/start", {{"weight", 1}, {"marker_handlers", "gf_test:structure/handlers"}}}});
@@ -932,7 +932,7 @@ void registerJigsawFixtures() {
                          Json{{"gf_test:structure/jig/rooms",
                                {{"weight", 2},
                                 {"randomized_processors",
-                                 Json::array({Json::array({Json{{"data", {{"processor_type", "twilightforest:wood_swizzle"}, {"target_palette", "minecraft:oak"},
+                                 Json::array({Json::array({Json{{"data", {{"processor_type", "gloamingforest:wood_swizzle"}, {"target_palette", "minecraft:oak"},
                                                                           {"replacement_palette", "minecraft:birch"}}},
                                                                 {"weight", 1}},
                                                            Json{{"data", {{"processor_type", "minecraft:nop"}}}, {"weight", 1}}})})}}}});
@@ -994,7 +994,7 @@ GF_REGISTER_SELFTEST("structure.palettes_selectors", [](Context& ctx) {
     ctx.check(blocks::is(palettes::apply("minecraft:birch", blocks::java("minecraft:oak_planks"), r), "minecraft:birch_planks"), "planks to birch");
     ctx.check(&palettes::apply("minecraft:birch", blocks::java("minecraft:stone"), r) == &blocks::java("minecraft:stone"), "stone stays stone");
     ctx.check(selectors::ids().size() == 6, "6 random block selectors");
-    auto* stones = selectors::get("twilightforest:stronghold_stones");
+    auto* stones = selectors::get("gloamingforest:stronghold_stones");
     ctx.require(stones != nullptr, "stronghold stones");
     std::map<std::string, int> seen;
     for (int i = 0; i < 400; i++) seen[blocks::id(stones->next(r, 0, 0, 0, true))]++;
@@ -1016,12 +1016,12 @@ GF_REGISTER_SELFTEST("structure.speleothems", [](Context& ctx) {
     JavaRandom random(99);
     int        placed = 0;
     for (int i = 0; i < 6; i++) {
-        placed += speleothems::place(mem, BlockPos{-6 + i * 2, 79, 0}, "twilightforest:large_hollow_hill", random, true) ? 1 : 0;
-        placed += speleothems::place(mem, BlockPos{-6 + i * 2, 63, 4}, "twilightforest:troll_cave", random, false) ? 1 : 0;
+        placed += speleothems::place(mem, BlockPos{-6 + i * 2, 79, 0}, "gloamingforest:large_hollow_hill", random, true) ? 1 : 0;
+        placed += speleothems::place(mem, BlockPos{-6 + i * 2, 63, 4}, "gloamingforest:troll_cave", random, false) ? 1 : 0;
     }
     ctx.check(placed > 0, "speleothems grow (" + std::to_string(placed) + ")");
     checkGolden(ctx, "speleothems", mem.hash(BlockBox{-8, 60, -8, 8, 84, 8}));
-    auto lattice = speleothems::lattice("twilightforest:small_hollow_hill");
+    auto lattice = speleothems::lattice("gloamingforest:small_hollow_hill");
     auto points  = speleothems::latticePositions(lattice, BlockBox{0, 0, 0, 15, 0, 15}, 0);
     std::string text;
     for (auto const& p : points) text += std::to_string(p.x) + "," + std::to_string(p.z) + ";";
@@ -1052,7 +1052,7 @@ GF_REGISTER_SELFTEST("structure.maze", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("structure.hollow_hill", [](Context& ctx) {
     MemoryRegion      mem;
-    bases::HollowHill hill("twilightforest:TFHill", 0, 1, 0, 0, 0, "twilightforest:small_hollow_hill");
+    bases::HollowHill hill("gloamingforest:TFHill", 0, 1, 0, 0, 0, "gloamingforest:small_hollow_hill");
     ctx.check(hill.getOrientation() == std::optional<Orientation>(Orientation::South), "hills face south");
     // a stone dome with water in it, so the drain and the speleothems have work
     BlockBox box = hill.bbox;
@@ -1066,7 +1066,7 @@ GF_REGISTER_SELFTEST("structure.hollow_hill", [](Context& ctx) {
     hill.postProcess(mem, random, box, BlockPos{0, 0, 0});
     checkGolden(ctx, "hollow_hill_small", mem.hash(BlockBox{box.minX, box.minY - 1, box.minZ, box.maxX, box.maxY + 1, box.maxZ}));
     auto saved  = hill.save();
-    bases::HollowHill back("twilightforest:TFHill", 0, 1, 0, 0, 0, "x");
+    bases::HollowHill back("gloamingforest:TFHill", 0, 1, 0, 0, 0, "x");
     back.load(saved);
     ctx.check(back.save() == saved, "a hill saves and loads back");
 });
@@ -1088,7 +1088,7 @@ GF_REGISTER_SELFTEST("structure.tower", [](Context& ctx) {
     }
     std::string layout;
     for (auto const& [t, n] : types) layout += t + "=" + std::to_string(n) + " ";
-    ctx.check(types["twilightforest:TFLTWin"] > 0, "wings grow from the main tower");
+    ctx.check(types["gloamingforest:TFLTWin"] > 0, "wings grow from the main tower");
     ctx.check(types.size() >= 4, "wings, beards and roofs (" + layout + ")");
     checkGolden(ctx, "tower_layout", layout + std::to_string(all.minX) + "," + std::to_string(all.minZ) + "," + std::to_string(all.maxX) + "," +
                                          std::to_string(all.maxY) + "," + std::to_string(all.maxZ));
@@ -1100,10 +1100,10 @@ GF_REGISTER_SELFTEST("structure.tower", [](Context& ctx) {
     checkGolden(ctx, "tower_blocks", mem.hash(all));
     // persistence of a wing
     for (auto const& p : pieces)
-        if (p->typeId == "twilightforest:TFLTWin") {
+        if (p->typeId == "gloamingforest:TFLTWin") {
             auto&           wing = static_cast<bases::TowerWing&>(*p);
             auto            saved = wing.save();
-            bases::TowerWing copy("twilightforest:TFLTWin", 0, 0, 0, 0, 3, 6, Orientation::North);
+            bases::TowerWing copy("gloamingforest:TFLTWin", 0, 0, 0, 0, 3, 6, Orientation::North);
             copy.load(saved);
             ctx.check(copy.save() == saved, "a tower wing saves and loads back");
             break;
@@ -1114,7 +1114,7 @@ GF_REGISTER_SELFTEST("structure.component_helpers", [](Context& ctx) {
     MemoryRegion mem;
     TestPiece    piece(BlockBox{0, 64, 0, 9, 70, 9}, Orientation::East);
     piece.surroundBlockCardinalRotated(mem, blocks::java("minecraft:oak_stairs"), 4, 1, 4, piece.bbox);
-    piece.placeTreasureAtCurrentPosition(mem, 2, 1, 2, "twilightforest:hill_1", piece.bbox);
+    piece.placeTreasureAtCurrentPosition(mem, 2, 1, 2, "gloamingforest:hill_1", piece.bbox);
     piece.setSpawner(mem, 6, 1, 6, piece.bbox, "minecraft:zombie");
     BlockPos chest = piece.getWorldPos(2, 1, 2);
     ctx.check(blocks::is(mem.getBlock(chest), "minecraft:chest"), "a treasure chest stands");
@@ -1335,7 +1335,7 @@ std::string boxText(double const* b) {
     return buf;
 }
 
-/// The box of a painting is TF's box for its block and facing: the same center and the same width
+/// The box of a painting is upstream's box for its block and facing: the same center and the same width
 /// and height (Bedrock insets a painting's box by 1/32 at each edge).
 bool sameBox(double const* actual, double const* tf, Orientation facing) {
     for (int i = 0; i < 3; i++)
@@ -1364,7 +1364,7 @@ std::string const& paintingTemplateId() {
 } // namespace
 
 GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // TF's spot check on a scratch region: blocks in the painting's box refuse it
+    // upstream's spot check on a scratch region: blocks in the painting's box refuse it
     {
         MemoryRegion mem;
         auto         kebab = paintings::byId("minecraft:kebab");
@@ -1385,7 +1385,7 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
         auto placeable = paintings::tag("minecraft:placeable");
         ctx.check(placeable.size() == 46 && placeable.front().id == "minecraft:kebab", "minecraft:placeable in the tag's order (" +
                                                                                            std::to_string(placeable.size()) + ")");
-        ctx.check(paintings::ofSizeOrSmaller("twilightforest:tower_paintings", 1, 1).size() == 8, "eight 1x1 tower paintings");
+        ctx.check(paintings::ofSizeOrSmaller("gloamingforest:tower_paintings", 1, 1).size() == 8, "eight 1x1 tower paintings");
         // a painting entity of a template is placed on its block: pos as a center (Java's saved
         // entity position) without block_pos is refused, block_pos is the block
         auto bad = makeTemplate("gf_test:structure/bad_painting", {state("minecraft:air")}, {{"..", ".."}, {"..", ".."}});
@@ -1409,16 +1409,16 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     auto     kebabVariant   = *paintings::byId("minecraft:kebab");
     auto     baroqueVariant = *paintings::byId("minecraft:baroque");
     // which block Bedrock's placement position is: the box the game gives a painting placed from
-    // the covered block and from the wall block, against TF's box for the covered block
+    // the covered block and from the wall block, against upstream's box for the covered block
     {
         double tf[6];
         paintings::boundingBox(front, Orientation::South, kebabVariant, tf);
         auto covered = blockentities::paintingBoxFor(front, Orientation::South, "kebab");
         auto wall    = blockentities::paintingBoxFor(BlockPos{front.x, front.y, front.z - 1}, Orientation::South, "kebab");
-        ctx.info("TF box " + boxText(tf) + "; placed from the covered block " + (covered ? boxText(covered->data()) : std::string("-")) +
+        ctx.info("upstream box " + boxText(tf) + "; placed from the covered block " + (covered ? boxText(covered->data()) : std::string("-")) +
                  ", from the wall " + (wall ? boxText(wall->data()) : std::string("-")));
         auto used = blockentities::paintingBoxFor(blockentities::paintingPlacement(front, Orientation::South), Orientation::South, "kebab");
-        ctx.check(used && sameBox(used->data(), tf, Orientation::South), "the placement position F7 gives the game yields TF's box");
+        ctx.check(used && sameBox(used->data(), tf, Orientation::South), "the placement position F7 gives the game yields upstream's box");
     }
     int before = 0;
     {
@@ -1427,18 +1427,18 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
             for (int y = wallBox.minY; y <= wallBox.maxY; y++) (void)region.setBlock(BlockPos{x, y, wallBox.minZ}, blocks::java("minecraft:stone"), 2);
         before = static_cast<int>(paintingsIn(*source, area).size());
         ctx.check(paintings::tryHang(region, front, Orientation::South, kebabVariant), "a painting hangs on the wall");
-        // TF's check reads ProtoChunk entities only: in a live world it does not see the painting
+        // upstream's check reads ProtoChunk entities only: in a live world it does not see the painting
         // that hangs there (the game refuses the overlapping one, which drops as an item)
         ctx.check(paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:aztec")),
-                  "TF's spot check does not see a painting that hangs in a loaded chunk");
+                  "upstream's spot check does not see a painting that hangs in a loaded chunk");
         ctx.check(!paintings::occupied(region, front), "nor does EntityUtil.getEntitiesInAABB in a loaded chunk");
-        // TF's check passes without a wall (TF hangs it and it drops off as an item); the game
+        // upstream's check passes without a wall (upstream hangs it and it drops off as an item); the game
         // hangs nothing, so the item drops at once
-        ctx.check(paintings::tryHang(region, noWall, Orientation::South, kebabVariant), "TF's spot check ignores the wall");
+        ctx.check(paintings::tryHang(region, noWall, Orientation::South, kebabVariant), "upstream's spot check ignores the wall");
         ctx.check(paintingsIn(*source, BlockBox{noWall.x, noWall.y, noWall.z, noWall.x, noWall.y, noWall.z}).empty(), "no painting hangs without a wall");
         // the camp's painting marker handler: LichBossRoom.placePainting(pos, random, 1, placeable, 1, 1, rotation.rotate(NORTH))
         JavaRandom random(77);
-        Json       handler{{"type", "twilightforest:painting"}, {"paintings", "minecraft:placeable"}};
+        Json       handler{{"type", "gloamingforest:painting"}, {"paintings", "minecraft:placeable"}};
         BlockPos   marker{area.minX + 5, area.minY + 1, area.minZ + 2};
         ctx.check(markers::handle(handler, "painting", marker, region, random, area, Rotation::Clockwise180), "the painting marker hangs a 1x1 painting");
         // a 2 x 2 painting of a template placed with a rotation hangs on the template's wall
@@ -1467,12 +1467,12 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(!overlapDrop.empty(), "the overlapping painting dropped as a painting item");
     for (auto* a : overlapDrop) a->despawn();
     if (kebab) {
-        // where it hangs: TF's box for the requested block
+        // where it hangs: upstream's box for the requested block
         double tf[6];
         paintings::boundingBox(front, Orientation::South, kebabVariant, tf);
         AABB const& b = kebab->getAABB();
         double      actual[6]{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
-        ctx.check(sameBox(actual, tf, Orientation::South), "the kebab hangs where TF hangs it: " + boxText(actual) + ", TF " + boxText(tf));
+        ctx.check(sameBox(actual, tf, Orientation::South), "the kebab hangs where upstream hangs it: " + boxText(actual) + ", upstream " + boxText(tf));
         auto d = blockentities::describePainting(*kebab);
         ctx.check(d && d->block == front && d->facing == Orientation::South && d->variant == "minecraft:kebab", "the painting reads back as its block, facing and variant");
         // structure_util capture keeps it: the template's painting entity names the block it covers
@@ -1493,7 +1493,7 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
         paintings::boundingBox(templatePainting, Orientation::West, baroqueVariant, tf);
         AABB const& b = baroque->getAABB();
         double      actual[6]{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
-        ctx.check(sameBox(actual, tf, Orientation::West), "the rotated template painting covers its block, facing west: " + boxText(actual) + ", TF " + boxText(tf));
+        ctx.check(sameBox(actual, tf, Orientation::West), "the rotated template painting covers its block, facing west: " + boxText(actual) + ", upstream " + boxText(tf));
     }
     auto dropped = itemsIn(*source, BlockBox{noWall.x - 1, noWall.y - 1, noWall.z - 1, noWall.x + 1, noWall.y + 1, noWall.z + 1}, "minecraft:painting");
     ctx.check(!dropped.empty(), "the painting the game refused dropped as a painting item");
@@ -1518,7 +1518,7 @@ GF_REGISTER_SELFTEST("structure.painting_rules", [](Context& ctx) -> ll::coro::C
         for (int y = area.minY; y <= area.minY + 1; y++) (void)game::setBlock(*source, BlockPos{x, y, wall.z}, blocks::java("minecraft:stone"));
     {
         BlockSourceRegion region(*source, covered);
-        ctx.require(paintings::tryHang(region, covered, Orientation::South, paintings::byId("minecraft:kebab")), "TF's spot check takes the spot");
+        ctx.require(paintings::tryHang(region, covered, Orientation::South, paintings::byId("minecraft:kebab")), "upstream's spot check takes the spot");
     }
     co_await ctx.ticks(1);
     source = ctx.region();
@@ -1569,7 +1569,7 @@ GF_REGISTER_SELFTEST("structure.painting_rules", [](Context& ctx) -> ll::coro::C
     painting->despawn();
 });
 
-// ---- TF marker handlers and template markers in the world --------------------------------------------------------------
+// ---- upstream marker handlers and template markers in the world --------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto area = co_await ctx.flatArea(5750, 8, 4);
@@ -1582,28 +1582,28 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
     BlockPos   notRack{area.minX + 5, area.minY, area.minZ + 1};
     {
         BlockSourceRegion region(*source, lootPos);
-        // twilightforest:loot: the container, then its loot table (RandomizableContainer)
-        Json loot{{"type", "twilightforest:loot"},
+        // gloamingforest:loot: the container, then its loot table (RandomizableContainer)
+        Json loot{{"type", "gloamingforest:loot"},
                   {"loot_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:barrel", {{"facing", "up"}})}}},
                   {"loot_table", "gf_test:chests/fixture_chest"}};
         ctx.check(markers::handle(loot, "", lootPos, region, random, area, Rotation::None), "the loot marker places its container");
         ctx.check(game::blockIdAt(*source, lootPos) == "minecraft:barrel", "a barrel stands");
         ctx.check(holdsFixtureLoot(*source, lootPos), "the barrel got the loot table (rolled by the loot contract when unpacked)");
-        // twilightforest:drying_rack: only a DryingRackBlock is placed
-        Json notARack{{"type", "twilightforest:drying_rack"},
+        // gloamingforest:drying_rack: only a DryingRackBlock is placed
+        Json notARack{{"type", "gloamingforest:drying_rack"},
                       {"drying_rack_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:oak_planks")}}},
-                      {"loot_table", "twilightforest:camp_drying_rack"}};
+                      {"loot_table", "gloamingforest:camp_drying_rack"}};
         ctx.check(!markers::handle(notARack, "", notRack, region, random, area, Rotation::None) && game::blockIdAt(*source, notRack) == "minecraft:air",
                   "the drying rack marker refuses a block that is not a drying rack");
-        // TF's drying rack (F1's block): placed turned with the rotation (BlockState#rotate), then
+        // upstream's drying rack (F1's block): placed turned with the rotation (BlockState#rotate), then
         // DryingRackBlockEntity#fillFromLootTable keeps the last stack the table rolls
-        ctx.require(blocks::isRegisteredBlock("twilightforest:birch_drying_rack"), "TF's drying rack is registered");
-        Json rack{{"type", "twilightforest:drying_rack"},
+        ctx.require(blocks::isRegisteredBlock("gloamingforest:birch_drying_rack"), "upstream's drying rack is registered");
+        Json rack{{"type", "gloamingforest:drying_rack"},
                   {"drying_rack_block",
-                   {{"type", "minecraft:simple_state_provider"}, {"state", state("twilightforest:birch_drying_rack", {{"facing", "north"}})}}},
-                  {"loot_table", "twilightforest:camp_drying_rack"}};
+                   {{"type", "minecraft:simple_state_provider"}, {"state", state("gloamingforest:birch_drying_rack", {{"facing", "north"}})}}},
+                  {"loot_table", "gloamingforest:camp_drying_rack"}};
         ctx.check(markers::handle(rack, "", rackPos, region, random, area, Rotation::Clockwise90) &&
-                      game::blockIdAt(*source, rackPos) == "twilightforest:birch_drying_rack",
+                      game::blockIdAt(*source, rackPos) == "gloamingforest:birch_drying_rack",
                   "the drying rack marker places the rack");
         auto facing = blocks::javaProperty(source->getBlock(rackPos), "facing");
         ctx.check(facing == std::optional<std::string>("east"), "the rack faces north turned clockwise: east (" + facing.value_or("none") + ")");
@@ -1612,7 +1612,7 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
             auto stack = h->get(game::globalPos(*source, rackPos), 0);
             ctx.check(!stack.isNull(), "the rack holds the stack its loot table rolled (" + std::string(stack.isNull() ? "empty" : stack.getTypeName()) + ")");
         } else {
-            ctx.info("no gf::inventory storage for twilightforest:birch_drying_rack yet (U4): the rack's fill from its loot table is not checked");
+            ctx.info("no gf::inventory storage for gloamingforest:birch_drying_rack yet (U4): the rack's fill from its loot table is not checked");
         }
     }
 });
@@ -1694,7 +1694,7 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(furnaceActor && furnaceActor->getType() == BlockActorType::Furnace, "the furnace's block actor");
     {
         auto& slots = static_cast<Container&>(static_cast<FurnaceBlockActor&>(*furnaceActor));
-        auto  scale = game::items::make("twilightforest:naga_scale", 3, 0);
+        auto  scale = game::items::make("gloamingforest:naga_scale", 3, 0);
         auto  coal  = game::items::make("minecraft:coal", 5, 0);
         ctx.require(scale && coal, "the furnace's items");
         slots.setItem(0, *scale);
@@ -1720,7 +1720,7 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
     for (auto const& [item, n] : uncommonOnly) uncommonList += item + "=" + std::to_string(n) + " ";
     // the fixture table rolls common items (fixture items, sticks, diamonds): the naga scales in the
     // furnace are counted, each other item exactly when it is not common
-    ctx.check(uncommonOnly.contains("twilightforest:naga_scale") && uncommonOnly["twilightforest:naga_scale"] == 3,
+    ctx.check(uncommonOnly.contains("gloamingforest:naga_scale") && uncommonOnly["gloamingforest:naga_scale"] == 3,
               "count_loot without common items counts the furnace's naga scales (" + uncommonList + ")");
     for (auto const& [item, n] : counts) {
         auto stack = game::items::make(item, 1, 0);
@@ -1734,11 +1734,11 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(counted > 8 && counted == inPieces,
               "count_loot counts the chest, both hoppers and the furnace in the shell (" + list + "), not the chest outside the pieces");
     ctx.check(holdsFixtureLoot(*source, abovePorch), "the chest outside the pieces still unpacks its own loot");
-    // ItemStack#getRarity: TF's UNCOMMON items (a table here), TWILIGHT trophies and banner
+    // ItemStack#getRarity: upstream's UNCOMMON items (a table here), GLOAMING trophies and banner
     // patterns (F9's rarity), the fiery block's UNCOMMON item; 1.21.1's rarities (Items): banner
     // patterns, music discs, the elytra, the heavy core and the trident are not common, trial keys,
     // the ominous bottle and the globe banner pattern are; sticks are common
-    for (auto const* id : {"twilightforest:naga_scale", "twilightforest:naga_trophy", "twilightforest:naga_banner_pattern", "twilightforest:fiery_block",
+    for (auto const* id : {"gloamingforest:naga_scale", "gloamingforest:naga_trophy", "gloamingforest:naga_banner_pattern", "gloamingforest:fiery_block",
                            "minecraft:creeper_banner_pattern", "minecraft:mojang_banner_pattern", "minecraft:flow_banner_pattern", "minecraft:music_disc_cat",
                            "minecraft:elytra", "minecraft:heavy_core", "minecraft:trident"}) {
         auto stack = game::items::make(id, 1, 0);
@@ -1930,15 +1930,15 @@ GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::Coro
         }
 });
 
-// ---- TF's sinister spawner in a template keeps its block ---------------------------------------------------------------
+// ---- upstream's sinister spawner in a template keeps its block ---------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // SpawnerProcessor handles TF's sinister spawner as it handles the vanilla one; the template's
+    // SpawnerProcessor handles upstream's sinister spawner as it handles the vanilla one; the template's
     // block stays a sinister spawner and its block entity (F8's) loads the processed spawner data
     // (BaseSpawner#load); the kit keeps what F8's spawner does not carry (generic.scale, custom
     // spawn rules) with the block for its spawns.
-    std::string const blockId = "twilightforest:sinister_spawner";
-    ctx.require(blocks::isRegisteredBlock(blockId), "TF's sinister spawner is registered");
+    std::string const blockId = "gloamingforest:sinister_spawner";
+    ctx.require(blocks::isRegisteredBlock(blockId), "upstream's sinister spawner is registered");
     float const scale = 0.8f / 1.4f; // entity_width_max 0.8 over the spider's width
     // a second sinister spawner whose template data has what BaseSpawner#load and
     // SinisterSpawnerLogic#load read besides SpawnData: SpawnPotentials, EntityScanRange and
@@ -2069,7 +2069,7 @@ GF_REGISTER_SELFTEST("structure.spawner_load", [](Context& ctx) {
     auto particles = [&](Json list) { return load(Json{{"ParticleOptions", std::move(list)}}).particles; };
     using Ids      = std::vector<std::string>;
     ctx.check(load(Json::object()).particles.empty(), "no ParticleOptions: no particles (the old ones are cleared)");
-    ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, Json{{"type", "twilightforest:firefly"}}})) == Ids{"minecraft:flame", "twilightforest:firefly"},
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, Json{{"type", "gloamingforest:firefly"}}})) == Ids{"minecraft:flame", "gloamingforest:firefly"},
               "a list of particle compounds loads");
     ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, Json{{"type", "minecraft:flame"}}})) == Ids{"minecraft:flame"},
               "a repeated particle is kept once (a set)");
@@ -2081,8 +2081,8 @@ GF_REGISTER_SELFTEST("structure.spawner_load", [](Context& ctx) {
     ctx.check(particles(Json::array({Json{{"type", "minecraft:no_such_particle"}}})).empty(), "an unknown particle type fails the list");
     ctx.check(particles(Json::array({Json{{"type", "minecraft:block"}, {"block_state", {{"Name", "minecraft:stone"}}}},
                                      Json{{"type", "minecraft:item"}, {"item", {{"id", "minecraft:stick"}}}},
-                                     Json{{"type", "twilightforest:fallen_leaf"}, {"r", 1}, {"g", 2}, {"b", 3}}})) ==
-                  Ids{"minecraft:block", "minecraft:item", "twilightforest:fallen_leaf"},
+                                     Json{{"type", "gloamingforest:fallen_leaf"}, {"r", 1}, {"g", 2}, {"b", 3}}})) ==
+                  Ids{"minecraft:block", "minecraft:item", "gloamingforest:fallen_leaf"},
               "block, item and leaf particles load with their options");
     ctx.check(particles(Json::array({Json{{"type", "minecraft:item"}, {"item", "minecraft:air"}}})).empty(), "an item particle of air fails the list");
     ctx.check(load(Json{{"EntityScanRange", 9}, {"SpawnRange", 2}}).entityScanRange == 9, "EntityScanRange loads over the SpawnRange");
@@ -2140,7 +2140,7 @@ void registerTerrainPools() {
                          Json{{"gf_test:structure/jig/rooms",
                                {{"weight", 2},
                                 {"randomized_processors",
-                                 Json::array({Json::array({Json{{"data", {{"processor_type", "twilightforest:wood_swizzle"}, {"target_palette", "minecraft:oak"},
+                                 Json::array({Json::array({Json{{"data", {{"processor_type", "gloamingforest:wood_swizzle"}, {"target_palette", "minecraft:oak"},
                                                                           {"replacement_palette", "minecraft:birch"}}},
                                                                 {"weight", 1}},
                                                            Json{{"data", {{"processor_type", "minecraft:nop"}}}, {"weight", 1}}})})}}},
@@ -2455,7 +2455,7 @@ GF_REGISTER_SELFTEST("structure.spawner_rules", [](Context& ctx) -> ll::coro::Co
         auto entry = Json::parse(ext::compileSpawnerProcessor(2, 0.8f, {{"minecraft:cow", 1}}));
         ctx.check(entry.value("start_delay_factor", 0.0f) == 0.25f && entry.value("range", 0) == 2 && entry.value("entity_width_max", 0.0f) == 0.8f,
                   "SpawnerProcessor.compile: range, start delay factor and entity_width_max");
-        processors::Instance p{"twilightforest:spawner_processor", entry};
+        processors::Instance p{"gloamingforest:spawner_processor", entry};
         MemoryRegion         mem;
         BlockInfo            info{BlockPos{0, 64, 0}, &blocks::java("minecraft:spawner"), Json{{"marker", "spawner"}}};
         TemplateSettings     settings;
@@ -2573,7 +2573,7 @@ GF_REGISTER_SELFTEST("structure.template_entities", [](Context& ctx) -> ll::coro
 // ---- a scaled mob keeps its size across a save and load (tools/e2e/server/scenarios/structure.ps1) ---------------------
 
 GF_REGISTER_SELFTEST("structure.scale_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // Only armed by `/twilightforest structure_util scale_probe` (the server scenario, before a
+    // Only armed by `/gloamingforest structure_util scale_probe` (the server scenario, before a
     // restart): then a scaled calf is left in a glass pen and recorded; after the restart this
     // test loads it, measures it, makes the game set its size from its definition again (it grows
     // up: the adult's collision box) and checks that the kit, watching the mob since it loaded,
@@ -2707,8 +2707,8 @@ GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::C
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5775)), "test area loaded");
     auto* source = ctx.region();
     ctx.require(source != nullptr, "block source");
-    std::string const decay = R"({"processor_type":"twilightforest:vertical_decay","decay_blocks":["minecraft:mossy_cobblestone_wall"],"decay_chance":1.0})";
-    std::string const mark  = R"({"processor_type":"twilightforest:update_marking","mark_updates":["minecraft:cobblestone_wall"]})";
+    std::string const decay = R"({"processor_type":"gloamingforest:vertical_decay","decay_blocks":["minecraft:mossy_cobblestone_wall"],"decay_chance":1.0})";
+    std::string const mark  = R"({"processor_type":"gloamingforest:update_marking","mark_updates":["minecraft:cobblestone_wall"]})";
     BlockPos          marked{area.minX + 1, area.minY, area.minZ + 1};
     BlockPos          plain{area.minX + 1, area.minY, area.minZ + 3};
     std::size_t       before = blockentities::pending();
@@ -2764,7 +2764,7 @@ GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::C
 // ---- queued work survives a restart (tools/e2e/server/scenarios/structure.ps1) -----------------------------------------
 
 GF_REGISTER_SELFTEST("structure.pending_read", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // `/twilightforest structure_util pending_probe` queued a job in an unloaded chunk before the
+    // `/gloamingforest structure_util pending_probe` queued a job in an unloaded chunk before the
     // restart; the job (persisted in gf:structure:pending) runs once its chunk is loaded
     auto probe = game::db::get("gf:structure:probe");
     if (!probe) {

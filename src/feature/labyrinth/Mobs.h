@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U23 (labyrinth): the Minotaur, the Minoshroom boss and the Maze Slime (unit-internal).
@@ -11,9 +11,9 @@ class Mob;
 
 namespace gf::feature::labyrinth::mobs {
 
-inline constexpr char kMinotaur[]   = "twilightforest:minotaur";
-inline constexpr char kMinoshroom[] = "twilightforest:minoshroom";
-inline constexpr char kMazeSlime[]  = "twilightforest:maze_slime";
+inline constexpr char kMinotaur[]   = "gloamingforest:minotaur";
+inline constexpr char kMinoshroom[] = "gloamingforest:minoshroom";
+inline constexpr char kMazeSlime[]  = "gloamingforest:maze_slime";
 
 void install();
 

@@ -4,7 +4,7 @@
 // files (no other unit includes this header, rule R2).
 //
 // Blocks: candelabra, skull candles (6 floor + 6 wall), ominous fire, 17 ominous candles, brazier,
-// sinister spawner (+ /tf sinister_spawner), chiseled canopy bookshelf (Death Tome spawner), skull
+// sinister spawner (+ /gloamingforest sinister_spawner), chiseled canopy bookshelf (Death Tome spawner), skull
 // chest, wrought iron fence, terrorcotta arcs / curves / lines, coronation carpet; items wrought
 // iron bar, magic painting, 6 skull candle items; the magic painting entity. Room templates are in
 // tools/structures/lichdecor (assets/structures/lich/rooms).
@@ -55,13 +55,13 @@ enum class Lighting { None, Normal, Dim, Ominous };
 
 // ---- block state helpers --------------------------------------------------------------------------
 
-/// Value text of state `name` (without the "twilightforest:" prefix, which is added) of `block`
+/// Value text of state `name` (without the "gloamingforest:" prefix, which is added) of `block`
 /// ("" when absent). Vanilla states ("minecraft:..." or plain names) are looked up as given when
 /// the prefixed one is missing.
 [[nodiscard]] std::string state(Block const& block, std::string_view name);
 [[nodiscard]] int         intStateOr(Block const& block, std::string_view name, int fallback);
 [[nodiscard]] bool        boolState(Block const& block, std::string_view name);
-/// `block` with `changes` ({"lighting": "dim", "candles": 2}; names without the "twilightforest:"
+/// `block` with `changes` ({"lighting": "dim", "candles": 2}; names without the "gloamingforest:"
 /// prefix get it) applied to its current states (nullptr: unknown state or value).
 [[nodiscard]] Block const* withStates(Block const& block, Json const& changes);
 /// Sets `block` with `changes` at `pos` (false: unknown state).
@@ -105,7 +105,7 @@ void popResource(BlockSource& region, BlockPos const& pos, ItemStack const& stac
 [[nodiscard]] std::string vanillaCandle(int color);
 /// The colour index of a vanilla candle id (-1: not a vanilla candle).
 [[nodiscard]] int candleColorOf(std::string_view vanillaCandleId);
-/// The ominous twin of colour index 0..16 ("twilightforest:ominous_candle", "twilightforest:ominous_red_candle").
+/// The ominous twin of colour index 0..16 ("gloamingforest:ominous_candle", "gloamingforest:ominous_red_candle").
 [[nodiscard]] std::string ominousCandle(int color);
 /// The colour index of an ominous candle id (-1: not one).
 [[nodiscard]] int ominousColorOf(std::string_view ominousCandleId);

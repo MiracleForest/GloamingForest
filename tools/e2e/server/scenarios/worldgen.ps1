@@ -4,7 +4,7 @@
 # biome writes (the custom probe biome of worldgen.prelaunch.ps1, a height-varying layout zoomed
 # per block into a live chunk, timed), the stage order (blankets at surface time, structure steps
 # at every decoration step with Java's structure registry seeds, the plain Pieces stage once),
-# carvers, the spawn engine (Java's default spawn checks), TF's landmark rules (controlled spawns
+# carvers, the spawn engine (Java's default spawn checks), upstream's landmark rules (controlled spawns
 # and no_structure over a start F6 forced) and the block / biome tags (gf::tags of F9), the dev functions run
 # through /function, a server map over custom / vanilla biome columns, the 200-chunk generation
 # timing of the whole pipeline and, when F4's dimension exists, the in-dimension generator run
@@ -43,12 +43,12 @@ $rules = $log | Select-String -Pattern 'worldgen landmark rules: (forced starts 
 if (-not $rules) { throw 'worldgen.landmark_rules did not check the forced starts' }
 Write-Step "landmark rules: $($rules.Matches[0].Groups[1].Value)"
 
-# The generator in the Twilight Forest: required once the dimension exists (F4 installs it, and the
+# The generator in the Gloaming Forest: required once the dimension exists (F4 installs it, and the
 # generator hook logs that it took over the dimension's generator); otherwise a distinct skip line.
 $gen = $log | Select-String -Pattern 'worldgen generator: (in-dimension run: .*|skipped, .*)' | Select-Object -Last 1
 if (-not $gen) { throw 'no worldgen generator line (neither an in-dimension run nor the skip)' }
-$dimension = [bool](Get-ServerLog | Select-String -Pattern 'Twilight Forest generator installed' -Quiet)
-if ($dimension -and $gen.Line -notmatch 'in-dimension run') { throw 'the Twilight Forest generator is installed but worldgen.generator did not run in the dimension' }
+$dimension = [bool](Get-ServerLog | Select-String -Pattern 'Gloaming Forest generator installed' -Quiet)
+if ($dimension -and $gen.Line -notmatch 'in-dimension run') { throw 'the Gloaming Forest generator is installed but worldgen.generator did not run in the dimension' }
 Write-Step $gen.Matches[0].Value
 # in the dimension the generator writes the biome source's biome (the probe, which the prelaunch
 # installed) into the chunks it makes: the regression guard of spike S2's server half

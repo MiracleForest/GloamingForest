@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/woods/WoodPalette.java
-//   src/main/java/twilightforest/world/components/structures/util/SimpleRandomBlockSelector.java
-//   src/main/java/twilightforest/world/components/structures/selectors/CastleRandomBlockSelectorFactory.java
-//   src/main/java/twilightforest/world/components/structures/selectors/IceTowerRandomBlockSelectorFactory.java
-//   src/main/java/twilightforest/world/components/structures/selectors/KnightStonesRandomBlockSelectorFactory.java
-//   src/main/java/twilightforest/world/components/structures/selectors/MazestoneRandomBlockSelectoryFactory.java
-//   src/main/java/twilightforest/world/components/structures/selectors/StrongholdStonesRandomBlockSelectorFactory.java
-//   src/main/java/twilightforest/world/components/structures/selectors/TowerwoodRandomBlockSelectorFactory.java
-//   src/main/java/twilightforest/util/WorldUtil.java (getRandomElementWithWeights)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/woods/WoodPalette.java
+//   src/main/java/gloamingforest/world/components/structures/util/SimpleRandomBlockSelector.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/CastleRandomBlockSelectorFactory.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/IceTowerRandomBlockSelectorFactory.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/KnightStonesRandomBlockSelectorFactory.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/MazestoneRandomBlockSelectoryFactory.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/StrongholdStonesRandomBlockSelectorFactory.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/TowerwoodRandomBlockSelectorFactory.java
+//   src/main/java/gloamingforest/util/WorldUtil.java (getRandomElementWithWeights)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/structure/Internal.h"
@@ -134,21 +134,21 @@ std::map<std::string, std::unique_ptr<BlockSelector>>& all() {
     static std::map<std::string, std::unique_ptr<BlockSelector>> table = [] {
         std::map<std::string, std::unique_ptr<BlockSelector>> t;
         auto add = [&](char const* id, std::vector<std::pair<std::string, float>> e) { t[id] = std::make_unique<SimpleRandomBlockSelector>(std::move(e)); };
-        add("twilightforest:castle",
-            {{"twilightforest:worn_castle_brick", 0.1F}, {"twilightforest:cracked_castle_brick", 0.1F}, {"twilightforest:castle_brick", 0.8F}});
-        add("twilightforest:ice_tower", {{"twilightforest:aurora_block", 1.0F}});
-        add("twilightforest:knight_stones",
-            {{"twilightforest:cracked_underbrick", 0.2F}, {"twilightforest:mossy_underbrick", 0.3F}, {"twilightforest:underbrick", 0.5F}});
-        add("twilightforest:mazestone",
-            {{"twilightforest:mossy_mazestone", 0.2F}, {"twilightforest:cracked_mazestone", 0.3F}, {"twilightforest:mazestone_brick", 0.5F}});
-        add("twilightforest:stronghold_stones", {{"minecraft:cracked_stone_bricks", 0.2F},
+        add("gloamingforest:castle",
+            {{"gloamingforest:worn_castle_brick", 0.1F}, {"gloamingforest:cracked_castle_brick", 0.1F}, {"gloamingforest:castle_brick", 0.8F}});
+        add("gloamingforest:ice_tower", {{"gloamingforest:aurora_block", 1.0F}});
+        add("gloamingforest:knight_stones",
+            {{"gloamingforest:cracked_underbrick", 0.2F}, {"gloamingforest:mossy_underbrick", 0.3F}, {"gloamingforest:underbrick", 0.5F}});
+        add("gloamingforest:mazestone",
+            {{"gloamingforest:mossy_mazestone", 0.2F}, {"gloamingforest:cracked_mazestone", 0.3F}, {"gloamingforest:mazestone_brick", 0.5F}});
+        add("gloamingforest:stronghold_stones", {{"minecraft:cracked_stone_bricks", 0.2F},
                                                  {"minecraft:mossy_stone_bricks", 0.3F},
                                                  {"minecraft:infested_stone_bricks", 0.05F},
                                                  {"minecraft:stone_bricks", 0.45F}});
-        add("twilightforest:towerwood", {{"twilightforest:cracked_towerwood", 0.1F},
-                                         {"twilightforest:mossy_towerwood", 0.1F},
-                                         {"twilightforest:infested_towerwood", 0.025F},
-                                         {"twilightforest:towerwood", 0.775F}});
+        add("gloamingforest:towerwood", {{"gloamingforest:cracked_towerwood", 0.1F},
+                                         {"gloamingforest:mossy_towerwood", 0.1F},
+                                         {"gloamingforest:infested_towerwood", 0.025F},
+                                         {"gloamingforest:towerwood", 0.775F}});
         return t;
     }();
     return table;

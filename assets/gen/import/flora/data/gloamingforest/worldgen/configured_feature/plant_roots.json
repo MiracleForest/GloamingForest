@@ -1,0 +1,8 @@
+{
+  "type": "gloamingforest:underground_plants",
+  "config": {
+    "state": {
+      "Name": "gloamingforest:root_strand"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-block.twilightforest.blue_force_field=Mavi Güç Alanı
-block.twilightforest.brown_thorns=Dikenler
-tile.twilightforest:blue_force_field.name=Mavi Güç Alanı
-tile.twilightforest:brown_thorns.name=Dikenler
+block.gloamingforest.blue_force_field=Mavi Güç Alanı
+block.gloamingforest.brown_thorns=Dikenler
+tile.gloamingforest:blue_force_field.name=Mavi Güç Alanı
+tile.gloamingforest:brown_thorns.name=Dikenler

@@ -2,14 +2,14 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:equipment/fortification_scepter_1"
+      "identifier": "gloamingforest:equipment/fortification_scepter_1"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:fortification_scepter"
+        "item": "gloamingforest:fortification_scepter"
       },
       {
         "item": "minecraft:golden_apple"
@@ -19,7 +19,7 @@
       "context": "AlwaysUnlocked"
     },
     "result": {
-      "item": "twilightforest:fortification_scepter"
+      "item": "gloamingforest:fortification_scepter"
     }
   }
 }

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:mushgloom",
+      "identifier": "gloamingforest:mushgloom",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:mushgloom.name"
+        "value": "tile.gloamingforest:mushgloom.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:mushgloom",
+        "block": "gloamingforest:mushgloom",
         "replace_block_item": true
       }
     }

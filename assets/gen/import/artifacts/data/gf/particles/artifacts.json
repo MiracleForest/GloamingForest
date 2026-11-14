@@ -1,5 +1,8 @@
 {
-  "twilightforest:magic_effect": {
+  "gloamingforest:gloaming_orb": {
+    "textures": ["textures/gloamingforest/particle/gloaming_orb"]
+  },
+  "gloamingforest:magic_effect": {
     "textures": [
       "minecraft:particle/effect_7",
       "minecraft:particle/effect_6",
@@ -11,10 +14,7 @@
       "minecraft:particle/effect_0"
     ]
   },
-  "twilightforest:shield_break": {
-    "textures": ["textures/twilightforest/particle/shield_break"]
-  },
-  "twilightforest:twilight_orb": {
-    "textures": ["textures/twilightforest/particle/twilight_orb"]
+  "gloamingforest:shield_break": {
+    "textures": ["textures/gloamingforest/particle/shield_break"]
   }
 }

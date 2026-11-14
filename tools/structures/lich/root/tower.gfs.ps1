@@ -1,10 +1,10 @@
-# U21 (lich): the central lich tower (original GloamingForest designs at TF's template ids, rule R19):
+# U21 (lich): the central lich tower (original GloamingForest designs at upstream's template ids, rule R19):
 # foyer, base, trim, slice, boss room, boss boundary, boss roof and the foyer shelves.
 . (Join-Path $PSScriptRoot '../LichLib.ps1')
 
 $W = 13; $C = 6; $Cut = 2
-$NS = 'twilightforest:lich_tower/'
-# the templates TF's code names directly (no template definition): GloamingForest ids
+$NS = 'gloamingforest:lich_tower/'
+# the templates upstream's code names directly (no template definition): GloamingForest ids
 $GNS = 'gf:lich_tower/'
 
 # ---- tower_foyer: the entrance hall in front of the tower ---------------------------------------------
@@ -90,9 +90,9 @@ for ($i = 0; $i -lt 12; $i++) {
     $cell = $path[[int][Math]::Floor($i * $path.Count / 12)]
     $y = [int][Math]::Floor($i / 2)
     $type = if ($i % 2 -eq 0) { 'bottom' } else { 'top' }
-    Set-GftBlock $t $cell[0] $y $cell[1] 'twilightforest:twilight_oak_slab' @{ type = $type }
+    Set-GftBlock $t $cell[0] $y $cell[1] 'gloamingforest:gloaming_oak_slab' @{ type = $type }
     $next = $path[([int][Math]::Floor($i * $path.Count / 12) + 1) % $path.Count]
-    Set-GftBlock $t $next[0] $y $next[1] 'twilightforest:twilight_oak_slab' @{ type = $type }
+    Set-GftBlock $t $next[0] $y $next[1] 'gloamingforest:gloaming_oak_slab' @{ type = $type }
 }
 # windows and wing doors
 foreach ($j in @(@(12, 1, 6, 'east'), @(0, 1, 6, 'west'), @(6, 1, 0, 'north'), @(6, 1, 12, 'south'))) {
@@ -114,7 +114,7 @@ Set-LichLayer $t 0 $B 6 'minecraft:stone_bricks' 'minecraft:polished_andesite'
 Set-LichLayer $t 0 15 4 'minecraft:chiseled_stone_bricks' 'minecraft:stone_bricks' 5 5
 for ($y = 1; $y -lt $BH; $y++) { Set-LichWallCourse $t $y $B 6 ($y % 4 -eq 0) }
 foreach ($y in 4, 5, 9, 10) { foreach ($p in @(@(12, 0), @(12, 24), @(0, 12), @(24, 12))) { Set-GftBlock $t $p[0] $y $p[1] 'minecraft:iron_bars' } }
-Set-GftBlock $t $BC 5 $BC 'twilightforest:lich_boss_spawner'
+Set-GftBlock $t $BC 5 $BC 'gloamingforest:lich_boss_spawner'
 Add-GftJigsaw $t $BC 0 $BC -Front down -Top north -Name 'gf:lich_tower/tower_below'
 Add-GftJigsaw $t $BC ($BH - 1) $BC -Front up -Top north -Name 'gf:lich_tower/boss_room_top' -Target 'gf:lich_tower/tower_below'
 foreach ($m in @(@(12, 3, 1, 'south'), @(12, 3, 23, 'north'), @(1, 3, 12, 'east'), @(23, 3, 12, 'west'))) { Add-GftDataMarker $t $m[0] $m[1] $m[2] "$($m[3]):3:3" }

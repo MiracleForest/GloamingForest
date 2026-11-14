@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/quest/QuestReloadListener.java
-//   src/main/java/twilightforest/entity/passive/quest/ram/QuestingRamContext.java
-//   src/main/java/twilightforest/entity/passive/quest/ram/QuestingRamCurrentContext.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/quest/QuestReloadListener.java
+//   src/main/java/gloamingforest/entity/passive/quest/ram/QuestingRamContext.java
+//   src/main/java/gloamingforest/entity/passive/quest/ram/QuestingRamCurrentContext.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The quest of the Questing Ram (registry twilight/quests, entry twilightforest:questing_ram): which
+// The quest of the Questing Ram (registry gloaming/quests, entry gloamingforest:questing_ram): which
 // item each of the 16 dye colours asks for, and the reward table. A quest that does not name all 16
 // colours is refused (QuestingRamContext#validate) and the fallback (the 16 wools) stays.
 
@@ -30,7 +30,7 @@ namespace {
 Quest fallback() {
     Quest q;
     for (int i = 0; i < 16; ++i) q.items[static_cast<std::size_t>(i)] = Json{{"item", "minecraft:" + std::string(cq::kDyeNames[static_cast<std::size_t>(i)]) + "_wool"}};
-    q.reward = "twilightforest:entities/questing_ram_rewards";
+    q.reward = "gloamingforest:entities/questing_ram_rewards";
     return q;
 }
 
@@ -54,8 +54,8 @@ Quest quest() { return *snapshot(); }
 
 void reloadQuest() {
     Quest q = fallback();
-    for (auto const& f : data::list("twilight/quests")) {
-        if (f.id() != "twilightforest:questing_ram") continue;
+    for (auto const& f : data::list("gloaming/quests")) {
+        if (f.id() != "gloamingforest:questing_ram") continue;
         auto doc = data::read(f.path);
         if (!doc.is_object() || !doc.contains("items") || !doc["items"].is_object()) {
             gf::log().warn("questcamps: {} has no items; the fallback quest stays", f.id());

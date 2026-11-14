@@ -6,7 +6,7 @@
 # with the x-sign check: the blue cube must sit on the red one), then shows the HUD again with F1
 # (out/models/hud_back.png: the hotbar is back). Every F1 press is checked with the client-only
 # selftest models.client_hud (the game's own hide-GUI option) and repeated when the game missed it.
-# Open every screenshot and compare the models with TF's textures. Last, the client's content log:
+# Open every screenshot and compare the models with upstream's textures. Last, the client's content log:
 # the two canaries of the preview pack must be reported (the log is captured), and any other error or
 # warning (geometry, animation Molang, attachables, render controllers, client entities, items, JSON)
 # fails the run; out/models/content-log.txt keeps every entry. The harness puts the instance's own options

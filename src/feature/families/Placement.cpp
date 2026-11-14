@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TFHorizontalBlock.java
-//   src/main/java/twilightforest/block/MiniatureStructureBlock.java
-//   src/main/java/twilightforest/block/BanisterBlock.java
-//   src/main/java/twilightforest/block/EtchedNagastoneBlock.java
-//   src/main/java/twilightforest/block/StrongholdShieldBlock.java
-//   src/main/java/twilightforest/block/DirectionalRotatedPillarBlock.java
-//   src/main/java/twilightforest/block/BinaryRotatedBlock.java
-//   src/main/java/twilightforest/block/ConnectableRotatedPillarBlock.java
-//   src/main/java/twilightforest/block/TFBushBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TFHorizontalBlock.java
+//   src/main/java/gloamingforest/block/MiniatureStructureBlock.java
+//   src/main/java/gloamingforest/block/BanisterBlock.java
+//   src/main/java/gloamingforest/block/EtchedNagastoneBlock.java
+//   src/main/java/gloamingforest/block/StrongholdShieldBlock.java
+//   src/main/java/gloamingforest/block/DirectionalRotatedPillarBlock.java
+//   src/main/java/gloamingforest/block/BinaryRotatedBlock.java
+//   src/main/java/gloamingforest/block/ConnectableRotatedPillarBlock.java
+//   src/main/java/gloamingforest/block/TFBushBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -142,13 +142,13 @@ void placeButton(Placing const& p) {
 void placePillar(Placing const& p, Entry const& e) {
     // Java RotatedPillarBlock.getStateForPlacement: the clicked face's axis
     Json s{{state::Axis, axisName(axisOf(p.c.face >= 0 && p.c.face < 6 ? p.c.face : Up))}};
-    // TF DirectionalRotatedPillarBlock: reversed when the clicked face points to the negative side
-    if (e.str("class") == "DirectionalRotatedPillarBlock") s["twilightforest:reversed"] = p.c.face == Down || p.c.face == North || p.c.face == West;
+    // upstream DirectionalRotatedPillarBlock: reversed when the clicked face points to the negative side
+    if (e.str("class") == "DirectionalRotatedPillarBlock") s["gloamingforest:reversed"] = p.c.face == Down || p.c.face == North || p.c.face == West;
     setStates(p.region, p.pos, s);
 }
 
 void placeConnectablePillar(Placing const& p, Entry const& e) {
-    // TF ConnectableRotatedPillarBlock.getStateForPlacement: the axis and the four sides (up and
+    // upstream ConnectableRotatedPillarBlock.getStateForPlacement: the axis and the four sides (up and
     // down follow in updateShape)
     int  axis = axisOf(p.c.face >= 0 && p.c.face < 6 ? p.c.face : Up);
     Json s{{state::Axis, axisName(axis)}};
@@ -217,7 +217,7 @@ void onPlace(ia::PlaceContext const& c) {
     case Family::Horizontal: placeHorizontal(p, *e); break;
     case Family::Directional: placeDirectional(p, *e); break;
     case Family::BinaryRotated:
-        // TF BinaryRotatedBlock: rotated when the player looks along z
+        // upstream BinaryRotatedBlock: rotated when the player looks along z
         setStates(*region, bp, {{state::Rotated, axisOf(lookDir(c.player)) == 2}});
         break;
     case Family::Leaves:

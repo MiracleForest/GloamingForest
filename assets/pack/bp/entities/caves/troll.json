@@ -2,16 +2,16 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:troll",
+      "identifier": "gloamingforest:troll",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:rock": { "type": "int", "range": [0, 6], "default": 0, "client_sync": true }
+        "gloamingforest:rock": { "type": "int", "range": [0, 6], "default": 0, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "troll", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "troll", "monster", "mob"] },
       "minecraft:collision_box": { "width": 1.4, "height": 2.4 },
       "minecraft:health": { "value": 30, "max": 30 },
       "minecraft:movement": { "value": 0.25 },
@@ -40,7 +40,7 @@
       "minecraft:conditional_bandwidth_optimization": {}
     },
     "events": {
-      "gf:show_rock": { "set_property": { "twilightforest:rock": 2 } }
+      "gf:show_rock": { "set_property": { "gloamingforest:rock": 2 } }
     }
   }
 }

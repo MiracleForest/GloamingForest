@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/loot/LootingEnchantNumberProvider.java
-//   src/main/java/twilightforest/loot/MultiplayerBasedAdditionLootFunction.java
-//   src/main/java/twilightforest/loot/MultiplayerBasedNumberProvider.java
-//   src/main/java/twilightforest/loot/conditions/ModExistsCondition.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/loot/LootingEnchantNumberProvider.java
+//   src/main/java/gloamingforest/loot/MultiplayerBasedAdditionLootFunction.java
+//   src/main/java/gloamingforest/loot/MultiplayerBasedNumberProvider.java
+//   src/main/java/gloamingforest/loot/conditions/ModExistsCondition.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The loot table interpreter (contract "loot", F10): Minecraft 1.21.1's loot table format as TF's
+// The loot table interpreter (contract "loot", F10): Minecraft 1.21.1's loot table format as upstream's
 // 634 tables use it, with Java's evaluation order and random calls (LootTable#getRandomItemsRaw,
 // LootPool#addRandomItems / addRandomItem, the entry containers, number providers, conditions and
-// functions), plus TF's twilightforest:multiplayer_rolls / looting_rolls number providers, the
-// twilightforest:multiplayer_addition function and the twilightforest:mod_exists condition.
+// functions), plus upstream's gloamingforest:multiplayer_rolls / looting_rolls number providers, the
+// gloamingforest:multiplayer_addition function and the gloamingforest:mod_exists condition.
 // Conditions and functions of other units (is_minion, giant_pick_used, uncrafting_table_enabled,
 // ...) come from gf::loot::registerCondition / registerFunction; an unknown one warns once and
 // fails (conditions) or does nothing (functions).
@@ -21,11 +21,11 @@
 // Bedrock bundle's dynamic container (minecraft:bundle_contents; other components go to the item
 // data "components"); enchant_with_levels runs Java's EnchantmentHelper#selectEnchantment on the
 // loot random with 1.21.1's enchantment definitions (weights, cost ranges, primary / supported
-// items, exclusive sets) and TF's 4, and #minecraft:on_random_loot as vanilla's data lists it;
+// items, exclusive sets) and upstream's 4, and #minecraft:on_random_loot as vanilla's data lists it;
 // the item sets are the enchantable item tags when gf::tags has them, else the Bedrock item's
-// enchant slots with TF's tag changes; enchant_randomly picks from the options (absent: the whole
+// enchant slots with upstream's tag changes; enchant_randomly picks from the options (absent: the whole
 // registry) in registry order; set_enchantments sets the levels (0 removes); entity predicates'
-// type_specific slime size reads the Bedrock variant (1, 2, 4) of slimes, magma cubes and TF's
+// type_specific slime size reads the Bedrock variant (1, 2, 4) of slimes, magma cubes and upstream's
 // maze slime; set_name keeps a translatable name's key in the item data ("name_key") and the
 // server language's text as the custom name.
 
@@ -246,7 +246,7 @@ float numberFloat(Json const& n, Eval& e) {
         return nextFloatBetween(e.random, min, max);
     }
     if (t == "minecraft:binomial") return static_cast<float>(binomial(n, e));
-    if (t == "twilightforest:multiplayer_rolls") {
+    if (t == "gloamingforest:multiplayer_rolls") {
         Json def = n.contains("default_rolls") ? n["default_rolls"] : Json{{"type", "minecraft:uniform"}, {"min", n.value("min", 0)}, {"max", n.value("max", 0)}};
         Json per = n.contains("per_player_rolls") ? n["per_player_rolls"] : Json(0);
         // MultiplayerBasedNumberProvider#getFloat
@@ -260,7 +260,7 @@ float numberFloat(Json const& n, Eval& e) {
         }
         return numberFloat(def, e);
     }
-    if (t == "twilightforest:looting_rolls") {
+    if (t == "gloamingforest:looting_rolls") {
         // LootingEnchantNumberProvider#getFloat: the attacker's level of the enchantment + base
         Json  base = n.value("base_value", Json(0));
         auto  ench = withNs(n.value("enchantment", std::string{"minecraft:looting"}));
@@ -291,7 +291,7 @@ namespace {
 
 int numberInt(Json const& n, Eval& e) {
     // NumberProvider#getInt is Math.round(getFloat) unless overridden: ConstantValue (plain numbers
-    // too), TF's MultiplayerBasedNumberProvider and LootingEnchantNumberProvider inherit it
+    // too), upstream's MultiplayerBasedNumberProvider and LootingEnchantNumberProvider inherit it
     if (n.is_number()) return javaRound(n.get<float>());
     if (n.is_object()) {
         auto t = typeOf(n);
@@ -425,11 +425,11 @@ bool entityPredicate(Actor* a, Json const& p, Eval& e) {
     if (auto ts = p.find("type_specific"); ts != p.end() && ts->is_object()) {
         auto t = withNs(ts->value("type", std::string{}));
         if (t == "minecraft:slime") {
-            // SlimePredicate: a Slime (Java's Slime class: slimes, magma cubes, TF's maze slime)
+            // SlimePredicate: a Slime (Java's Slime class: slimes, magma cubes, upstream's maze slime)
             // whose size is in range. Bedrock keeps a slime's size in its variant (1, 2, 4), and
-            // so does TF's maze slime; a size that can't be read fails.
+            // so does upstream's maze slime; a size that can't be read fails.
             auto id = a->getTypeName();
-            if (id != "minecraft:slime" && id != "minecraft:magma_cube" && id != "twilightforest:maze_slime") return false;
+            if (id != "minecraft:slime" && id != "minecraft:magma_cube" && id != "gloamingforest:maze_slime") return false;
             int size = slimeSize(*a);
             if (size <= 0) return false;
             if (ts->contains("size") && !intInRange((*ts)["size"], size)) return false;
@@ -462,7 +462,7 @@ bool blockStateMatches(Block const* block, Json const& props) {
     for (auto const& [name, want] : props.items()) {
         std::string wantText = want.is_string() ? want.get<std::string>() : want.dump();
         std::string have;
-        for (auto const& key : {name, "twilightforest:" + name, "minecraft:" + name}) {
+        for (auto const& key : {name, "gloamingforest:" + name, "minecraft:" + name}) {
             if (auto it = states.find(key); it != states.end()) {
                 have = it->second;
                 break;
@@ -535,7 +535,7 @@ bool condition(Json const& c, Eval& e) {
         if (p.contains("direct_entity") && !entityPredicate(e.ctx.direct, p["direct_entity"], e)) return false;
         if (auto tagsList = p.find("tags"); tagsList != p.end() && tagsList->is_array()) {
             for (auto const& t : *tagsList) {
-                // gf::combat's damage type tags (TF's memberships built in, then gf::tags)
+                // gf::combat's damage type tags (upstream's memberships built in, then gf::tags)
                 bool in = !e.ctx.damageType.empty() && combat::damageTypeHasTag(e.ctx.damageType, withNs(t.value("id", std::string{})));
                 if (in != t.value("expected", true)) return false;
             }
@@ -580,7 +580,7 @@ void setEnchantLevel(ItemStack& stack, std::string const& javaId, int level) {
     level = std::clamp(level, 0, 255);
     int t = bedrockEnchant(javaId);
     if (t < 0) {
-        enchant::set(stack, javaId, level); // TF's enchantments (gf::enchant, F9; 0 removes)
+        enchant::set(stack, javaId, level); // upstream's enchantments (gf::enchant, F9; 0 removes)
         return;
     }
     auto type = static_cast<Enchant::Type>(t);
@@ -612,9 +612,9 @@ void upgradeEnchant(ItemStack& stack, std::string const& javaId, int level) {
     setEnchantLevel(stack, javaId, level);
 }
 
-// ---- Java's enchantments (1.21.1 Enchantments#bootstrap and TF's 4 data files) ---------------------
+// ---- Java's enchantments (1.21.1 Enchantments#bootstrap and upstream's 4 data files) ---------------------
 
-/// The item sets of the enchantments (the item tags minecraft:enchantable/* and TF's).
+/// The item sets of the enchantments (the item tags minecraft:enchantable/* and upstream's).
 enum class Cat {
     None, Armor, FootArmor, LegArmor, ChestArmor, HeadArmor, Sword, SharpWeapon, Weapon, FireAspect, Mining, MiningLoot,
     Durability, Bow, Crossbow, Trident, Fishing, Mace, Equippable, Vanishing, BlockAndChain, Scepters
@@ -641,14 +641,14 @@ char const* tagOf(Cat c) {
     case Cat::Mace: return "minecraft:enchantable/mace";
     case Cat::Equippable: return "minecraft:enchantable/equippable";
     case Cat::Vanishing: return "minecraft:enchantable/vanishing";
-    case Cat::BlockAndChain: return "twilightforest:enchantable/block_and_chain";
-    case Cat::Scepters: return "twilightforest:scepters";
+    case Cat::BlockAndChain: return "gloamingforest:enchantable/block_and_chain";
+    case Cat::Scepters: return "gloamingforest:scepters";
     default: return "";
     }
 }
 
 /// The item's set when the item tags are not loaded: the Bedrock enchant slots of the item (what
-/// the vanilla tags list), with TF's changes to the vanilla tags (data/minecraft/tags/item/
+/// the vanilla tags list), with upstream's changes to the vanilla tags (data/minecraft/tags/item/
 /// enchantable: the block and chain mines, the fiery and ice swords take no fire aspect, the
 /// phantom armour no curse of vanishing).
 bool inCategoryBySlots(ItemStack const& stack, std::string const& id, Cat c) {
@@ -666,9 +666,9 @@ bool inCategoryBySlots(ItemStack const& stack, std::string const& id, Cat c) {
     case Cat::Sword: return has(S::Sword);
     case Cat::SharpWeapon: return has(S::Sword) || has(S::Axe);
     case Cat::Weapon: return has(S::Sword) || has(S::Axe) || has(S::HeavyWeapon);
-    case Cat::FireAspect: return (has(S::Sword) || has(S::HeavyWeapon)) && id != "twilightforest:fiery_sword" && id != "twilightforest:ice_sword";
-    case Cat::Mining: return has(S::GDigging) || has(S::Shears) || id == "twilightforest:block_and_chain";
-    case Cat::MiningLoot: return has(S::GDigging) || id == "twilightforest:block_and_chain";
+    case Cat::FireAspect: return (has(S::Sword) || has(S::HeavyWeapon)) && id != "gloamingforest:fiery_sword" && id != "gloamingforest:ice_sword";
+    case Cat::Mining: return has(S::GDigging) || has(S::Shears) || id == "gloamingforest:block_and_chain";
+    case Cat::MiningLoot: return has(S::GDigging) || id == "gloamingforest:block_and_chain";
     case Cat::Durability: return damageable;
     case Cat::Bow: return has(S::Bow);
     case Cat::Crossbow: return has(S::Crossbow);
@@ -677,12 +677,12 @@ bool inCategoryBySlots(ItemStack const& stack, std::string const& id, Cat c) {
     case Cat::Mace: return has(S::HeavyWeapon);
     case Cat::Equippable: return has(S::GArmor) || has(S::Elytra) || has(S::CosmeticHead);
     case Cat::Vanishing:
-        return (damageable || has(S::Compass) || has(S::CosmeticHead) || has(S::GArmor) || has(S::Elytra)) && id != "twilightforest:phantom_helmet"
-            && id != "twilightforest:phantom_chestplate";
-    case Cat::BlockAndChain: return id == "twilightforest:block_and_chain";
+        return (damageable || has(S::Compass) || has(S::CosmeticHead) || has(S::GArmor) || has(S::Elytra)) && id != "gloamingforest:phantom_helmet"
+            && id != "gloamingforest:phantom_chestplate";
+    case Cat::BlockAndChain: return id == "gloamingforest:block_and_chain";
     case Cat::Scepters:
-        return id == "twilightforest:twilight_scepter" || id == "twilightforest:lifedrain_scepter" || id == "twilightforest:zombie_scepter"
-            || id == "twilightforest:fortification_scepter";
+        return id == "gloamingforest:gloaming_scepter" || id == "gloamingforest:lifedrain_scepter" || id == "gloamingforest:zombie_scepter"
+            || id == "gloamingforest:fortification_scepter";
     default: return false;
     }
 }
@@ -786,11 +786,11 @@ std::vector<JavaEnchantment> const& javaEnchantments() {
             {"minecraft:wind_burst", 2, 3, 15, 9, 65, 9, Cat::Mace, Cat::None, {}},
             {"minecraft:mending", 2, 1, 25, 25, 75, 25, Cat::Durability, Cat::None, {}},
             {"minecraft:vanishing_curse", 1, 1, 25, 0, 50, 0, Cat::Vanishing, Cat::None, {}},
-            // TF's (data/twilightforest/enchantment)
-            {"twilightforest:chill_aura", 1, 3, 5, 9, 20, 9, Cat::Armor, Cat::ChestArmor, {"minecraft:thorns", "twilightforest:fire_react"}},
-            {"twilightforest:destruction", 1, 3, 5, 9, 20, 9, Cat::BlockAndChain, Cat::None, {}},
-            {"twilightforest:fire_react", 1, 3, 5, 9, 20, 9, Cat::Armor, Cat::ChestArmor, {"minecraft:thorns", "twilightforest:chill_aura"}},
-            {"twilightforest:renewal", 1, 1, 5, 9, 20, 9, Cat::Scepters, Cat::None, {}},
+            // upstream's (data/gloamingforest/enchantment)
+            {"gloamingforest:chill_aura", 1, 3, 5, 9, 20, 9, Cat::Armor, Cat::ChestArmor, {"minecraft:thorns", "gloamingforest:fire_react"}},
+            {"gloamingforest:destruction", 1, 3, 5, 9, 20, 9, Cat::BlockAndChain, Cat::None, {}},
+            {"gloamingforest:fire_react", 1, 3, 5, 9, 20, 9, Cat::Armor, Cat::ChestArmor, {"minecraft:thorns", "gloamingforest:chill_aura"}},
+            {"gloamingforest:renewal", 1, 1, 5, 9, 20, 9, Cat::Scepters, Cat::None, {}},
         };
         std::sort(list.begin(), list.end(), [](JavaEnchantment const& a, JavaEnchantment const& b) {
             std::string_view x = a.id, y = b.id;
@@ -820,7 +820,7 @@ bool canEnchantWith(ItemStack const& stack, std::string const& javaId) {
     return e && e->canEnchant(stack);
 }
 
-/// The enchantments of a tag as vanilla 1.21.1's data lists them (TF adds none), in the tag's order.
+/// The enchantments of a tag as vanilla 1.21.1's data lists them (upstream adds none), in the tag's order.
 std::vector<std::string> builtinEnchantmentTag(std::string const& tag) {
     static std::vector<std::string> const nonTreasure{
         "minecraft:protection",     "minecraft:fire_protection", "minecraft:feather_falling", "minecraft:blast_protection",
@@ -1027,7 +1027,7 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         return stack;
     }
     if (id == "minecraft:enchant_randomly") {
-        // the options' enchantments (absent: the whole registry, vanilla's and TF's 4, in registry
+        // the options' enchantments (absent: the whole registry, vanilla's and upstream's 4, in registry
         // order)
         std::vector<std::string> options;
         for (auto const* ench : enchantmentPool(f.value("options", Json{}))) options.emplace_back(ench->id);
@@ -1145,13 +1145,13 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         Json bs     = Json::object();
         for (auto const& p : f.value("properties", Json::array())) {
             auto name = p.get<std::string>();
-            for (auto const& key : {name, "twilightforest:" + name, "minecraft:" + name})
+            for (auto const& key : {name, "gloamingforest:" + name, "minecraft:" + name})
                 if (auto it = states.find(key); it != states.end()) bs[name] = it->second;
         }
         if (!bs.empty()) game::items::setData(stack, "block_state", bs);
         return stack;
     }
-    if (id == "twilightforest:multiplayer_addition") {
+    if (id == "gloamingforest:multiplayer_addition") {
         // MultiplayerBasedAdditionLootFunction#run
         if (adjustsLootRolls()) {
             int qualified = qualifiedPlayers(e.ctx.thisEntity);

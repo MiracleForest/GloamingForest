@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:naga_chestplate",
+      "identifier": "gloamingforest:naga_chestplate",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:naga_chestplate.name"
+        "value": "item.gloamingforest:naga_chestplate.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -32,13 +32,13 @@
         "repair_items": [
           {
             "items": [
-              "twilightforest:naga_scale"
+              "gloamingforest:naga_scale"
             ],
             "repair_amount": "query.max_durability * 0.25"
           },
           {
             "items": [
-              "twilightforest:naga_chestplate"
+              "gloamingforest:naga_chestplate"
             ],
             "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
           }

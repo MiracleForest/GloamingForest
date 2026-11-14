@@ -1,106 +1,106 @@
 {
-  "twilightforest:block.twilightforest.generic.annihilation": {
+  "gloamingforest:block.gloamingforest.generic.annihilation": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.generic.annihilation",
+    "subtitle": "subtitles.gloamingforest.block.generic.annihilation",
     "sounds": [
       {
         "event": "block.fire.extinguish"
       }
     ]
   },
-  "twilightforest:item.twilightforest.block_and_chain.collide": {
+  "gloamingforest:item.gloamingforest.block_and_chain.collide": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.block_and_chain.collide",
+    "subtitle": "subtitles.gloamingforest.item.block_and_chain.collide",
     "sounds": [
       {
         "event": "block.anvil.land"
       }
     ]
   },
-  "twilightforest:item.twilightforest.block_and_chain.fire": {
+  "gloamingforest:item.gloamingforest.block_and_chain.fire": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.block_and_chain.fire",
+    "subtitle": "subtitles.gloamingforest.item.block_and_chain.fire",
     "sounds": [
       {
         "event": "entity.arrow.shoot"
       }
     ]
   },
-  "twilightforest:item.twilightforest.block_and_chain.hit": {
+  "gloamingforest:item.gloamingforest.block_and_chain.hit": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.block_and_chain.hit",
+    "subtitle": "subtitles.gloamingforest.item.block_and_chain.hit",
     "sounds": [
       {
         "event": "entity.iron_golem.attack"
       }
     ]
   },
-  "twilightforest:item.twilightforest.fan.whoosh": {
+  "gloamingforest:item.gloamingforest.fan.whoosh": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.fan.whoosh",
+    "subtitle": "subtitles.gloamingforest.item.fan.whoosh",
     "sounds": [
       {
         "file": "random/breath"
       }
     ]
   },
-  "twilightforest:item.twilightforest.glass_sword.break": {
+  "gloamingforest:item.gloamingforest.glass_sword.break": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.glass_sword.break",
+    "subtitle": "subtitles.gloamingforest.item.glass_sword.break",
     "sounds": [
       {
         "event": "block.glass.break"
       }
     ]
   },
-  "twilightforest:item.twilightforest.ice_bomb.fired": {
+  "gloamingforest:item.gloamingforest.ice_bomb.fired": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.ice_bomb.fired",
+    "subtitle": "subtitles.gloamingforest.item.ice_bomb.fired",
     "sounds": [
       {
         "event": "entity.arrow.shoot"
       }
     ]
   },
-  "twilightforest:item.twilightforest.knightmetal_shield.shatter": {
+  "gloamingforest:item.gloamingforest.knightmetal_shield.shatter": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.knightmetal_shield.shatter",
+    "subtitle": "subtitles.gloamingforest.item.knightmetal_shield.shatter",
     "sounds": [
       {
         "event": "entity.zombie.attack_iron_door"
       }
     ]
   },
-  "twilightforest:item.twilightforest.lamp.burn": {
+  "gloamingforest:item.gloamingforest.lamp.burn": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.lamp.burn",
+    "subtitle": "subtitles.gloamingforest.item.lamp.burn",
     "sounds": [
       {
         "event": "entity.ghast.shoot"
       }
     ]
   },
-  "twilightforest:item.twilightforest.magnet.grab": {
+  "gloamingforest:item.gloamingforest.magnet.grab": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.magnet.grab",
+    "subtitle": "subtitles.gloamingforest.item.magnet.grab",
     "sounds": [
       {
         "event": "item.chorus_fruit.teleport"
       }
     ]
   },
-  "twilightforest:item.twilightforest.moonworm.squish": {
+  "gloamingforest:item.gloamingforest.moonworm.squish": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.moonworm.squish",
+    "subtitle": "subtitles.gloamingforest.item.moonworm.squish",
     "sounds": [
       {
         "event": "entity.slime.squish_small"
       }
     ]
   },
-  "twilightforest:item.twilightforest.transformation_powder.use": {
+  "gloamingforest:item.gloamingforest.transformation_powder.use": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.transformation_powder.use",
+    "subtitle": "subtitles.gloamingforest.item.transformation_powder.use",
     "sounds": [
       {
         "event": "entity.zombie_villager.cure"

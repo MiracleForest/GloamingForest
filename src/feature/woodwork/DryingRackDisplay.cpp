@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/renderer/block/DryingRackRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/renderer/block/DryingRackRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -9,7 +9,7 @@
 // client runs, so each rack holding an item gets a display entity (gloamingforest:drying_rack_item:
 // no body, no collision, invulnerable) that holds the item in its hand bone, placed where the
 // renderer draws it: 0.4 towards the rack's facing side, 0.5 high for a block, 0.325 for
-// #twilightforest:lower_on_drying_rack, else 0.45, turned with the rack. Vanilla clients and the
+// #gloamingforest:lower_on_drying_rack, else 0.45, turned with the rack. Vanilla clients and the
 // client mod see the same entity. Its unique id is kept in the rack's block data
 // ("drying_rack_display"); the entity goes when the rack empties or the rack goes.
 
@@ -74,7 +74,7 @@ std::pair<Vec3, float> placement(BlockPos const& pos, std::string const& facing,
     auto id   = game::items::idOf(item);
     double y  = 0.45;
     if (item.mBlock) y = 0.5; // a 3D block model
-    else if (tags::has(tags::Registry::Item, "twilightforest:lower_on_drying_rack", id)) y = 0.325;
+    else if (tags::has(tags::Registry::Item, "gloamingforest:lower_on_drying_rack", id)) y = 0.325;
     if (id.ends_with("_banner")) y -= 0.4;
     else if (id == "minecraft:shield") y -= 0.1;
     // Direction#toYRot: south 0, west 90, north 180, east 270
@@ -124,7 +124,7 @@ void refresh(GlobalPos const& gp) {
         missingSince().erase(gp);
         return;
     }
-    auto [where, yaw] = placement(pos, stateOf(region->getBlock(pos), "twilightforest:facing"), r->item);
+    auto [where, yaw] = placement(pos, stateOf(region->getBlock(pos), "gloamingforest:facing"), r->item);
     std::int64_t stored = displayIdAt(*region, pos);
     Actor*       a      = entityById(stored);
     if (a && (!a->isAlive() || a->getTypeName() != kDisplayType)) a = nullptr;
@@ -188,13 +188,13 @@ Json rackEntry(GlobalPos const& gp) {
     if (!region->hasChunksAt(pos, 0, false)) return nullptr;
     auto r = at(gp);
     if (!r || game::items::isEmpty(r->item)) return nullptr;
-    auto facing = stateOf(region->getBlock(pos), "twilightforest:facing");
+    auto facing = stateOf(region->getBlock(pos), "gloamingforest:facing");
     auto id     = game::items::idOf(r->item);
     return Json{
         {"pos", posJson(gp)},
         {"facing", facing.empty() ? "north" : facing},
         {"item", game::items::toJson(r->item)},
-        {"lower", tags::has(tags::Registry::Item, "twilightforest:lower_on_drying_rack", id)},
+        {"lower", tags::has(tags::Registry::Item, "gloamingforest:lower_on_drying_rack", id)},
         {"display", displayIdAt(*region, pos)},
     };
 }

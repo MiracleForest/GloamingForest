@@ -1,14 +1,14 @@
 {
-  "twilightforest:fallen_leaf": {
-    "textures": ["textures/twilightforest/particle/fallen_leaf"]
+  "gloamingforest:fallen_leaf": {
+    "textures": ["textures/gloamingforest/particle/fallen_leaf"]
   },
-  "twilightforest:firefly": {
-    "textures": ["textures/twilightforest/particle/firefly"]
+  "gloamingforest:firefly": {
+    "textures": ["textures/gloamingforest/particle/firefly"]
   },
-  "twilightforest:particle_spawner_firefly": {
-    "textures": ["textures/twilightforest/particle/firefly"]
+  "gloamingforest:particle_spawner_firefly": {
+    "textures": ["textures/gloamingforest/particle/firefly"]
   },
-  "twilightforest:wandering_firefly": {
-    "textures": ["textures/twilightforest/particle/firefly"]
+  "gloamingforest:wandering_firefly": {
+    "textures": ["textures/gloamingforest/particle/firefly"]
   }
 }

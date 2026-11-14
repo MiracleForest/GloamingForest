@@ -1,29 +1,29 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/layer/BiomeDensitySource.java
-//   src/main/java/twilightforest/world/components/biomesources/TFBiomeProvider.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainColumn.java
-//   src/main/java/twilightforest/init/custom/BiomeLayerStack.java
-//   src/main/java/twilightforest/init/custom/BiomeLayerTypes.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/layer/BiomeDensitySource.java
+//   src/main/java/gloamingforest/world/components/biomesources/TFBiomeProvider.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainColumn.java
+//   src/main/java/gloamingforest/init/custom/BiomeLayerStack.java
+//   src/main/java/gloamingforest/init/custom/BiomeLayerTypes.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // U1 `biomes`, pure part (gf-core, gtested against the F13 oracle goldens in tests/biomes/):
-// TF's biome layer stack (registry `twilightforest:biome_layer_stack`, built from its JSON exactly
-// as TF's codecs read it), the terrain grid (registry `twilightforest:biome_terrain_data`:
+// upstream's biome layer stack (registry `gloamingforest:biome_layer_stack`, built from its JSON exactly
+// as upstream's codecs read it), the terrain grid (registry `gloamingforest:biome_terrain_data`:
 // TerrainColumn per key biome) and the biome source on top of them (BiomeDensitySource /
 // TFBiomeProvider): the main (key) biome of a quart column, the noise biome of a quart (the
 // column's vertical layers), the terrain blend (sampleTerrain) and the possible biomes in Java's
 // order (FeatureSorter's feature indices depend on it).
 //
-//     auto stacks = BiomeLayerStacks::fromJson({{"twilightforest:random_forest_biomes", j1}, ...});
+//     auto stacks = BiomeLayerStacks::fromJson({{"gloamingforest:random_forest_biomes", j1}, ...});
 //     BiomeProvider provider(gridJson, stacks, worldSeed);
-//     provider.mainBiome(qx, qz);          // "twilightforest:dark_forest"
-//     provider.noiseBiome(qx, qy, qz);     // "twilightforest:underground" below the column
+//     provider.mainBiome(qx, qz);          // "gloamingforest:dark_forest"
+//     provider.noiseBiome(qx, qy, qz);     // "gloamingforest:underground" below the column
 //
-// Thread-safe: every layer keeps a lock-free cache of its samples (TF's LazyArea cache, which does
+// Thread-safe: every layer keeps a lock-free cache of its samples (upstream's LazyArea cache, which does
 // not change results); providers are evaluated on the engine's generation worker threads.
 
 #include <cstdint>
@@ -63,7 +63,7 @@ public:
     [[nodiscard]] virtual BiomeKey get(int x, int z) const = 0;
 };
 
-/// The registry `twilightforest:biome_layer_stack` (id -> layer JSON).
+/// The registry `gloamingforest:biome_layer_stack` (id -> layer JSON).
 struct LayerStackRegistry {
     std::map<std::string, Json> entries;
 };
@@ -78,7 +78,7 @@ struct LayerStackRegistry {
 buildLayer(Json const& layer, LayerStackRegistry const& registry, BiomeNames& names, std::int64_t seed);
 
 /// TerrainColumn: a key biome, its vertical biome layers (quart elevation -> biome) and its
-/// terrain values (TF ships constant density functions).
+/// terrain values (upstream ships constant density functions).
 struct TerrainColumn {
     std::string                                key;
     std::vector<std::pair<double, std::string>> layers; ///< ascending elevation

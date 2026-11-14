@@ -2,14 +2,14 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:emperors_cloth_recipe_armor"
+      "identifier": "gloamingforest:emperors_cloth_recipe_armor"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:emperors_cloth"
+        "item": "gloamingforest:emperors_cloth"
       },
       {
         "tag": "minecraft:is_armor"
@@ -19,7 +19,7 @@
       "context": "AlwaysUnlocked"
     },
     "result": {
-      "item": "twilightforest:emperors_cloth"
+      "item": "gloamingforest:emperors_cloth"
     }
   }
 }

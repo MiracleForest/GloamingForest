@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The structure kit's Xoroshiro128++ source (WorldGenRegion#getRandom) against Minecraft 1.21.1:
 // XoroshiroGolden.inc is the output of oracle/XoroshiroOracle.java, run against the 1.21.1 server

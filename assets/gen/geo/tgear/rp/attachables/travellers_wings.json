@@ -2,17 +2,17 @@
   "format_version": "1.10.0",
   "minecraft:attachable": {
     "description": {
-      "identifier": "twilightforest:travellers_wings",
+      "identifier": "gloamingforest:travellers_wings",
       "materials": {
         "default": "armor",
         "enchanted": "armor_enchanted"
       },
       "textures": {
-        "default": "textures/twilightforest/models/armor/travellers_layer_2",
+        "default": "textures/gloamingforest/models/armor/travellers_layer_2",
         "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
-        "default": "geometry.twilightforest.travellers_armor.wings"
+        "default": "geometry.gloamingforest.travellers_armor.wings"
       },
       "scripts": {
         "parent_setup": "variable.leg_layer_visible = 0.0;"

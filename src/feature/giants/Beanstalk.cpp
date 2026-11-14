@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/MagicBeansItem.java
-//   src/main/java/twilightforest/block/GrowingBeanstalkBlock.java
-//   src/main/java/twilightforest/block/entity/GrowingBeanstalkBlockEntity.java
-//   src/main/java/twilightforest/block/UberousSoilBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/MagicBeansItem.java
+//   src/main/java/gloamingforest/block/GrowingBeanstalkBlock.java
+//   src/main/java/gloamingforest/block/entity/GrowingBeanstalkBlockEntity.java
+//   src/main/java/gloamingforest/block/UberousSoilBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -99,7 +99,7 @@ public:
         if (auto const* b = defaultBlock("minecraft:air")) set(x, y, z, *b);
     }
     void setLeaves(int x, int y, int z, int distance) override {
-        if (auto const* b = game::blockWithStates(id::BeanstalkLeaves, {{"twilightforest:distance", distance}})) set(x, y, z, *b);
+        if (auto const* b = game::blockWithStates(id::BeanstalkLeaves, {{"gloamingforest:distance", distance}})) set(x, y, z, *b);
     }
 
 private:
@@ -128,7 +128,7 @@ void loadGrowers() {
 }
 
 /// The client-side part of GrowingBeanstalkBlockEntity#tick for ticks < 100: dust of the solid
-/// block below random points around the grower (20 a tick like TF; Java draws them on each client, here
+/// block below random points around the grower (20 a tick like upstream; Java draws them on each client, here
 /// they are sent as block particles).
 void rumbleDust(BlockSource& region, BlockPos const& pos) {
     auto& r = random();
@@ -211,7 +211,7 @@ void flushGrowers() {
 bool isMushroom(std::string const& bid) {
     return bid == "minecraft:brown_mushroom" || bid == "minecraft:red_mushroom" || bid == "minecraft:crimson_fungus" || bid == "minecraft:warped_fungus";
 }
-bool isMushgloom(std::string const& bid) { return bid == "twilightforest:mushgloom"; }
+bool isMushgloom(std::string const& bid) { return bid == "gloamingforest:mushgloom"; }
 bool isCrop(Block const& b, std::string const& bid) { return b.isCropBlock() || tags::has(tags::Registry::Block, "minecraft:crops", bid); }
 /// Java's BushBlock subclasses that are bonemealable: saplings, flowers, grass, berry bushes.
 bool isBush(std::string const& bid) {
@@ -219,7 +219,7 @@ bool isBush(std::string const& bid) {
     if (bid == "minecraft:short_grass" || bid == "minecraft:tall_grass" || bid == "minecraft:fern" || bid == "minecraft:large_fern" || bid == "minecraft:sweet_berry_bush"
         || bid == "minecraft:sapling" || bid == "minecraft:grass")
         return true;
-    return bid.rfind("twilightforest:", 0) == 0 && (bid.find("sapling") != std::string::npos || bid.find("bush") != std::string::npos);
+    return bid.rfind("gloamingforest:", 0) == 0 && (bid.find("sapling") != std::string::npos || bid.find("bush") != std::string::npos);
 }
 bool isMoss(std::string const& bid) { return bid == "minecraft:moss_block"; }
 
@@ -251,7 +251,7 @@ void bonemealParticles(BlockSource& region, BlockPos const& pos) {
                      {{"spread", {0.4, 0.4, 0.4}}});
 }
 
-/// The server's next tick: 15 bone meals on the plant (with a fake player in TF).
+/// The server's next tick: 15 bone meals on the plant (with a fake player in upstream).
 void bonemealLater(int dim, BlockPos pos) {
     ia::nextTick([dim, pos] {
         auto* region = game::regionOf(dim);
@@ -290,7 +290,7 @@ void growMushgloom(BlockSource& region, BlockPos const& pos) {
         BlockSource& mRegion;
         int          mCx, mCz;
     } live(region, pos);
-    if (!gf::features::place("twilightforest:mushroom/big_mushgloom", live, pos, random())) game::setBlock(region, pos, *before);
+    if (!gf::features::place("gloamingforest:mushroom/big_mushgloom", live, pos, random())) game::setBlock(region, pos, *before);
 }
 
 void spreadTo(BlockSource& region, BlockPos const& pos) {
@@ -313,7 +313,7 @@ bool useMagicBeans(Player& player, ItemStack& stack, BlockSource& region, BlockP
         player.sendInventory(false);
     }
     startGrower(region, above);
-    gf::fx::sound(region.getDimension(), "block.twilightforest.beanstalk.grow", Vec3{soil.x + .5f, soil.y + .5f, soil.z + .5f}, 4.0f, 1.0f);
+    gf::fx::sound(region.getDimension(), "block.gloamingforest.beanstalk.grow", Vec3{soil.x + .5f, soil.y + .5f, soil.z + .5f}, 4.0f, 1.0f);
     gf::stats::award(player, std::string("minecraft:used:") + id::MagicBeans);
     gf::log().info("giants: magic beans planted at {} {} {}", above.x, above.y, above.z);
     return true;

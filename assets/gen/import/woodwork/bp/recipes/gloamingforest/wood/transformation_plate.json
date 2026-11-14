@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/transformation_plate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:transformation_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:transformation_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:transformation_pressure_plate"
+    }
+  }
+}

@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:tropical_fish_jerky",
+      "identifier": "gloamingforest:tropical_fish_jerky",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:tropical_fish_jerky.name"
+        "value": "item.gloamingforest:tropical_fish_jerky.name"
       },
       "minecraft:tags": {
         "tags": [

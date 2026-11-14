@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of U19's pure parts (src/core/questcamps/Questcamps.h), translated from QuestRam,
-// QuestRamModel, TemplateFeature and GraveyardFeature (TeamTwilight/twilightforest @ 9e40a757,
+// QuestRamModel, TemplateFeature and GraveyardFeature (upstream commit 9e40a757,
 // LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 

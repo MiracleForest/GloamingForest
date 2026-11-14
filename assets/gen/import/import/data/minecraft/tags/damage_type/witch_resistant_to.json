@@ -1,10 +1,10 @@
 {
   "values": [
-    "twilightforest:lich_bolt",
-    "twilightforest:lich_bomb",
-    "twilightforest:leaf_brain",
-    "twilightforest:lost_words",
-    "twilightforest:schooled",
-    "twilightforest:acid_rain"
+    "gloamingforest:lich_bolt",
+    "gloamingforest:lich_bomb",
+    "gloamingforest:leaf_brain",
+    "gloamingforest:lost_words",
+    "gloamingforest:schooled",
+    "gloamingforest:acid_rain"
   ]
 }

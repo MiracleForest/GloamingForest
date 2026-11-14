@@ -1,0 +1,43 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:berry_medley"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:bowl"
+      },
+      {
+        "item": "gloamingforest:raspberry"
+      },
+      {
+        "item": "gloamingforest:blueberry"
+      },
+      {
+        "item": "gloamingforest:blackberry"
+      },
+      {
+        "item": "gloamingforest:maloberry"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:blackberry"
+      },
+      {
+        "item": "gloamingforest:blueberry"
+      },
+      {
+        "item": "gloamingforest:maloberry"
+      },
+      {
+        "item": "gloamingforest:raspberry"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:berry_medley"
+    }
+  }
+}

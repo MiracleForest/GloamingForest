@@ -80,12 +80,12 @@ std::atomic<int> gForms{0};
 
 Json screenData() {
     Json items = Json::object();
-    // flat items (0, 4, 8) and block items (2: a vanilla block, 6: a TF block): the client scenario
+    // flat items (0, 4, 8) and block items (2: a vanilla block, 6: an upstream block): the client scenario
     // checks the block items cover their slots (no sliver)
     if (auto s = game::items::make("minecraft:map")) items["0"] = game::items::toJson(*s);
     if (auto s = game::items::make("minecraft:cobblestone")) items["2"] = game::items::toJson(*s); // one: no count over the icon
     if (auto s = game::items::make("minecraft:compass")) items["4"] = game::items::toJson(*s);
-    if (auto s = game::items::make("twilightforest:twilight_oak_planks")) items["6"] = game::items::toJson(*s);
+    if (auto s = game::items::make("gloamingforest:gloaming_oak_planks")) items["6"] = game::items::toJson(*s);
     if (auto s = game::items::make("minecraft:oak_sapling", 3)) items["8"] = game::items::toJson(*s);
     return Json{{"clicks", gClicks.load()}, {"items", items}};
 }
@@ -606,7 +606,7 @@ void openFormFallback(Player& player) {
     ui::form(
         player,
         trFor(player, "gf.ui.fixture.title", "GloamingForest UI fixture"),
-        trFor(player, "gf.ui.fixture.form_body", "The form fallback of a TF screen for vanilla clients."),
+        trFor(player, "gf.ui.fixture.form_body", "The form fallback of an upstream screen for vanilla clients."),
         {
             {.text = trFor(player, "gf.ui.fixture.button_click", "Click"), .icon = "textures/items/map_filled", .onClick = [](Player&) { ++gClicks; }},
             {.text = trFor(player, "gf.ui.fixture.button_close", "Close"), .icon = "", .onClick = {}},
@@ -620,7 +620,7 @@ Json dduiDocument() {
         {"elements",
          Json::array({
              {{"type", "header"}, {"text", "DDUI fallback"}},
-             {{"type", "label"}, {"text", "The DDUI fallback of a TF screen for vanilla clients."}},
+             {{"type", "label"}, {"text", "The DDUI fallback of an upstream screen for vanilla clients."}},
              {{"type", "toggle"}, {"id", "toggle"}, {"text", "Toggle"}, {"value", true}},
              {{"type", "slider"}, {"id", "slider"}, {"text", "Slider"}, {"min", 0}, {"max", 10}, {"step", 1}, {"value", 3}},
              {{"type", "button"}, {"id", "ok"}, {"text", "OK"}},

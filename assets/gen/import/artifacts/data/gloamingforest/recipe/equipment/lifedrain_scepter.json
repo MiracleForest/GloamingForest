@@ -1,0 +1,10 @@
+{
+  "type": "gloamingforest:scepter_repair",
+  "durability": 9,
+  "repair_ingredients": [
+    {
+      "item": "minecraft:fermented_spider_eye"
+    }
+  ],
+  "scepter": "gloamingforest:lifedrain_scepter"
+}

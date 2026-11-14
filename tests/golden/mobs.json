@@ -1,10 +1,10 @@
 {
   "format": 1,
   "kind": "mobs",
-  "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
-  "note": "Every twilightforest entity type: EntityType properties, DefaultAttributes base values, and the attributes (base, value with modifiers), health, armor and experience reward range (min/max of 256 draws) of an instance made with EntityType#create (before finalizeSpawn, so no difficulty or spawn-time changes). Default TF config.",
+  "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
+  "note": "Every gloamingforest entity type: EntityType properties, DefaultAttributes base values, and the attributes (base, value with modifiers), health, armor and experience reward range (min/max of 256 draws) of an instance made with EntityType#create (before finalizeSpawn, so no difficulty or spawn-time changes). Default upstream config.",
   "entities": {
-    "twilightforest:adherent": {
+    "gloamingforest:adherent": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 2.200000047683716,
@@ -69,7 +69,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:alpha_yeti": {
+    "gloamingforest:alpha_yeti": {
       "category": "monster",
       "width": 3.799999952316284,
       "height": 5.0,
@@ -134,7 +134,7 @@
       "experienceMin": 317,
       "experienceMax": 317
     },
-    "twilightforest:armored_giant": {
+    "gloamingforest:armored_giant": {
       "category": "monster",
       "width": 2.4000000953674316,
       "height": 7.199999809265137,
@@ -199,7 +199,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:bighorn_sheep": {
+    "gloamingforest:bighorn_sheep": {
       "category": "creature",
       "width": 0.8999999761581421,
       "height": 1.2999999523162842,
@@ -262,7 +262,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:blockchain_goblin": {
+    "gloamingforest:blockchain_goblin": {
       "category": "monster",
       "width": 0.8999999761581421,
       "height": 1.399999976158142,
@@ -327,7 +327,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:boar": {
+    "gloamingforest:boar": {
       "category": "creature",
       "width": 0.8999999761581421,
       "height": 0.8999999761581421,
@@ -390,7 +390,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:carminite_broodling": {
+    "gloamingforest:carminite_broodling": {
       "category": "monster",
       "width": 0.699999988079071,
       "height": 0.5,
@@ -455,7 +455,7 @@
       "experienceMin": 3,
       "experienceMax": 3
     },
-    "twilightforest:carminite_ghastguard": {
+    "gloamingforest:carminite_ghastguard": {
       "category": "monster",
       "width": 4.0,
       "height": 6.0,
@@ -518,7 +518,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:carminite_ghastling": {
+    "gloamingforest:carminite_ghastling": {
       "category": "monster",
       "width": 1.100000023841858,
       "height": 1.5,
@@ -581,7 +581,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:carminite_golem": {
+    "gloamingforest:carminite_golem": {
       "category": "monster",
       "width": 1.399999976158142,
       "height": 2.9000000953674316,
@@ -646,10 +646,10 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:chain_block": {"category": "misc", "width": 0.6000000238418579, "height": 0.6000000238418579, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 1, "created": true, "eyeHeight": 0.5100000500679016, "living": false},
-    "twilightforest:charm_effect": {"category": "misc", "width": 0.0, "height": 0.0, "fireImmune": true, "canSummon": false, "clientTrackingRange": 16, "updateInterval": 2147483647, "created": true, "eyeHeight": 0.0, "living": false},
-    "twilightforest:cube_of_annihilation": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 1, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
-    "twilightforest:death_tome": {
+    "gloamingforest:chain_block": {"category": "misc", "width": 0.6000000238418579, "height": 0.6000000238418579, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 1, "created": true, "eyeHeight": 0.5100000500679016, "living": false},
+    "gloamingforest:charm_effect": {"category": "misc", "width": 0.0, "height": 0.0, "fireImmune": true, "canSummon": false, "clientTrackingRange": 16, "updateInterval": 2147483647, "created": true, "eyeHeight": 0.0, "living": false},
+    "gloamingforest:cube_of_annihilation": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 1, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
+    "gloamingforest:death_tome": {
       "category": "monster",
       "width": 0.75,
       "height": 1.5,
@@ -716,7 +716,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:deer": {
+    "gloamingforest:deer": {
       "category": "creature",
       "width": 0.699999988079071,
       "height": 1.7999999523162842,
@@ -779,7 +779,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:dwarf_rabbit": {
+    "gloamingforest:dwarf_rabbit": {
       "category": "creature",
       "width": 0.4000000059604645,
       "height": 0.4000000059604645,
@@ -842,8 +842,8 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:falling_ice": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 3, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
-    "twilightforest:fire_beetle": {
+    "gloamingforest:falling_ice": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 3, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
+    "gloamingforest:fire_beetle": {
       "category": "monster",
       "width": 1.100000023841858,
       "height": 0.5,
@@ -908,7 +908,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:giant_miner": {
+    "gloamingforest:giant_miner": {
       "category": "monster",
       "width": 2.4000000953674316,
       "height": 7.199999809265137,
@@ -973,7 +973,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:harbinger_cube": {
+    "gloamingforest:harbinger_cube": {
       "category": "monster",
       "width": 1.899999976158142,
       "height": 2.4000000953674316,
@@ -1038,7 +1038,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:hedge_spider": {
+    "gloamingforest:hedge_spider": {
       "category": "monster",
       "width": 1.399999976158142,
       "height": 0.8999999761581421,
@@ -1103,7 +1103,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:helmet_crab": {
+    "gloamingforest:helmet_crab": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 1.100000023841858,
@@ -1168,7 +1168,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:hostile_wolf": {
+    "gloamingforest:hostile_wolf": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 0.8500000238418579,
@@ -1233,7 +1233,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:hydra": {
+    "gloamingforest:hydra": {
       "category": "monster",
       "width": 16.0,
       "height": 12.0,
@@ -1296,9 +1296,9 @@
       "experienceMin": 511,
       "experienceMax": 511
     },
-    "twilightforest:hydra_mortar": {"category": "misc", "width": 0.75, "height": 0.75, "fireImmune": true, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.6375000476837158, "living": false},
-    "twilightforest:ice_arrow": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 1, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
-    "twilightforest:ice_crystal": {
+    "gloamingforest:hydra_mortar": {"category": "misc", "width": 0.75, "height": 0.75, "fireImmune": true, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.6375000476837158, "living": false},
+    "gloamingforest:ice_arrow": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 1, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
+    "gloamingforest:ice_crystal": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 1.7999999523162842,
@@ -1363,8 +1363,8 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:ice_snowball": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:king_spider": {
+    "gloamingforest:ice_snowball": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:king_spider": {
       "category": "monster",
       "width": 1.600000023841858,
       "height": 1.600000023841858,
@@ -1429,7 +1429,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:knight_phantom": {
+    "gloamingforest:knight_phantom": {
       "category": "monster",
       "width": 1.25,
       "height": 2.5,
@@ -1494,7 +1494,7 @@
       "experienceMin": 93,
       "experienceMax": 93
     },
-    "twilightforest:kobold": {
+    "gloamingforest:kobold": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 1.100000023841858,
@@ -1559,7 +1559,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:lich": {
+    "gloamingforest:lich": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 2.5,
@@ -1590,9 +1590,9 @@
         "minecraft:generic.water_movement_efficiency": 0.0,
         "neoforge:nametag_distance": 64.0,
         "neoforge:swim_speed": 1.0,
-        "twilightforest:clone_count": 2.0,
-        "twilightforest:max_shield_strength": 6.0,
-        "twilightforest:minion_count": 9.0
+        "gloamingforest:clone_count": 2.0,
+        "gloamingforest:max_shield_strength": 6.0,
+        "gloamingforest:minion_count": 9.0
       },
       "created": true,
       "eyeHeight": 1.9500000476837158,
@@ -1620,9 +1620,9 @@
         "minecraft:generic.water_movement_efficiency": {"base": 0.0, "value": 0.0},
         "neoforge:nametag_distance": {"base": 64.0, "value": 64.0},
         "neoforge:swim_speed": {"base": 1.0, "value": 1.0},
-        "twilightforest:clone_count": {"base": 2.0, "value": 2.0},
-        "twilightforest:max_shield_strength": {"base": 6.0, "value": 6.0},
-        "twilightforest:minion_count": {"base": 9.0, "value": 9.0}
+        "gloamingforest:clone_count": {"base": 2.0, "value": 2.0},
+        "gloamingforest:max_shield_strength": {"base": 6.0, "value": 6.0},
+        "gloamingforest:minion_count": {"base": 9.0, "value": 9.0}
       },
       "maxHealth": 100.0,
       "health": 100.0,
@@ -1630,9 +1630,9 @@
       "experienceMin": 217,
       "experienceMax": 217
     },
-    "twilightforest:lich_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 2, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:lich_bomb": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:lich_minion": {
+    "gloamingforest:lich_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 2, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:lich_bomb": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:lich_minion": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 1.9500000476837158,
@@ -1699,7 +1699,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:lower_goblin_knight": {
+    "gloamingforest:lower_goblin_knight": {
       "category": "monster",
       "width": 0.699999988079071,
       "height": 1.100000023841858,
@@ -1764,7 +1764,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:loyal_zombie": {
+    "gloamingforest:loyal_zombie": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 1.9500000476837158,
@@ -1827,8 +1827,8 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:magic_painting": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 10, "updateInterval": 2147483647, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
-    "twilightforest:maze_slime": {
+    "gloamingforest:magic_painting": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 10, "updateInterval": 2147483647, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
+    "gloamingforest:maze_slime": {
       "category": "monster",
       "width": 0.5199999809265137,
       "height": 0.5199999809265137,
@@ -1893,7 +1893,7 @@
       "experienceMin": 0,
       "experienceMax": 0
     },
-    "twilightforest:minoshroom": {
+    "gloamingforest:minoshroom": {
       "category": "monster",
       "width": 1.4900000095367432,
       "height": 2.5,
@@ -1958,7 +1958,7 @@
       "experienceMin": 100,
       "experienceMax": 100
     },
-    "twilightforest:minotaur": {
+    "gloamingforest:minotaur": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 2.0999999046325684,
@@ -2023,7 +2023,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:mist_wolf": {
+    "gloamingforest:mist_wolf": {
       "category": "monster",
       "width": 1.399999976158142,
       "height": 1.899999976158142,
@@ -2088,8 +2088,8 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:moonworm_shot": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:mosquito_swarm": {
+    "gloamingforest:moonworm_shot": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:mosquito_swarm": {
       "category": "monster",
       "width": 0.699999988079071,
       "height": 1.899999976158142,
@@ -2154,7 +2154,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:naga": {
+    "gloamingforest:naga": {
       "category": "monster",
       "width": 2.0,
       "height": 3.0,
@@ -2219,8 +2219,8 @@
       "experienceMin": 217,
       "experienceMax": 217
     },
-    "twilightforest:nature_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 5, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:penguin": {
+    "gloamingforest:nature_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 5, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:penguin": {
       "category": "creature",
       "width": 0.5,
       "height": 0.8999999761581421,
@@ -2283,7 +2283,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:pinch_beetle": {
+    "gloamingforest:pinch_beetle": {
       "category": "monster",
       "width": 1.2000000476837158,
       "height": 0.5,
@@ -2348,7 +2348,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:plateau_boss": {
+    "gloamingforest:plateau_boss": {
       "category": "monster",
       "width": 1.0,
       "height": 1.0,
@@ -2413,8 +2413,8 @@
       "experienceMin": 647,
       "experienceMax": 647
     },
-    "twilightforest:protection_box": {"category": "misc", "width": 0.0, "height": 0.0, "fireImmune": true, "canSummon": false, "clientTrackingRange": 80, "updateInterval": 3, "created": true, "eyeHeight": 0.0, "living": false},
-    "twilightforest:quest_ram": {
+    "gloamingforest:protection_box": {"category": "misc", "width": 0.0, "height": 0.0, "fireImmune": true, "canSummon": false, "clientTrackingRange": 80, "updateInterval": 3, "created": true, "eyeHeight": 0.0, "living": false},
+    "gloamingforest:quest_ram": {
       "category": "creature",
       "width": 1.25,
       "height": 2.9000000953674316,
@@ -2477,7 +2477,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:raven": {
+    "gloamingforest:raven": {
       "category": "creature",
       "width": 0.30000001192092896,
       "height": 0.5,
@@ -2540,7 +2540,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:redcap": {
+    "gloamingforest:redcap": {
       "category": "monster",
       "width": 0.8999999761581421,
       "height": 1.399999976158142,
@@ -2605,7 +2605,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:redcap_sapper": {
+    "gloamingforest:redcap_sapper": {
       "category": "monster",
       "width": 0.8999999761581421,
       "height": 1.399999976158142,
@@ -2670,7 +2670,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:rising_zombie": {
+    "gloamingforest:rising_zombie": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 1.9500000476837158,
@@ -2737,7 +2737,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:roving_cube": {
+    "gloamingforest:roving_cube": {
       "category": "monster",
       "width": 1.2000000476837158,
       "height": 2.0999999046325684,
@@ -2802,8 +2802,8 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:seeker_arrow": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 1, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
-    "twilightforest:skeleton_druid": {
+    "gloamingforest:seeker_arrow": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 1, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
+    "gloamingforest:skeleton_druid": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 1.9900000095367432,
@@ -2868,8 +2868,8 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:slider": {"category": "misc", "width": 0.9800000190734863, "height": 0.9800000190734863, "fireImmune": false, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 1, "created": true, "eyeHeight": 0.8330000638961792, "living": false},
-    "twilightforest:slime_beetle": {
+    "gloamingforest:slider": {"category": "misc", "width": 0.9800000190734863, "height": 0.9800000190734863, "fireImmune": false, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 1, "created": true, "eyeHeight": 0.8330000638961792, "living": false},
+    "gloamingforest:slime_beetle": {
       "category": "monster",
       "width": 0.8999999761581421,
       "height": 0.5,
@@ -2934,8 +2934,8 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:slime_blob": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:snow_guardian": {
+    "gloamingforest:slime_blob": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 3, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:snow_guardian": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 1.7999999523162842,
@@ -3000,7 +3000,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:snow_queen": {
+    "gloamingforest:snow_queen": {
       "category": "monster",
       "width": 0.699999988079071,
       "height": 2.5,
@@ -3067,7 +3067,7 @@
       "experienceMin": 317,
       "experienceMax": 317
     },
-    "twilightforest:squirrel": {
+    "gloamingforest:squirrel": {
       "category": "creature",
       "width": 0.30000001192092896,
       "height": 0.5,
@@ -3130,7 +3130,7 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:stable_ice_core": {
+    "gloamingforest:stable_ice_core": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 1.7999999523162842,
@@ -3195,7 +3195,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:swarm_spider": {
+    "gloamingforest:swarm_spider": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 0.4000000059604645,
@@ -3260,10 +3260,10 @@
       "experienceMin": 2,
       "experienceMax": 2
     },
-    "twilightforest:thrown_block": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 2, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
-    "twilightforest:thrown_ice": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 2, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
-    "twilightforest:thrown_wep": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 3, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
-    "twilightforest:tiny_bird": {
+    "gloamingforest:thrown_block": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 2, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
+    "gloamingforest:thrown_ice": {"category": "misc", "width": 1.0, "height": 1.0, "fireImmune": true, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 2, "created": true, "eyeHeight": 0.8500000238418579, "living": false},
+    "gloamingforest:thrown_wep": {"category": "misc", "width": 0.5, "height": 0.5, "fireImmune": false, "canSummon": true, "clientTrackingRange": 80, "updateInterval": 3, "created": true, "eyeHeight": 0.42500001192092896, "living": false},
+    "gloamingforest:tiny_bird": {
       "category": "creature",
       "width": 0.30000001192092896,
       "height": 0.30000001192092896,
@@ -3326,8 +3326,8 @@
       "experienceMin": 1,
       "experienceMax": 3
     },
-    "twilightforest:tome_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 5, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:towerwood_borer": {
+    "gloamingforest:tome_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 5, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:towerwood_borer": {
       "category": "monster",
       "width": 0.4000000059604645,
       "height": 0.30000001192092896,
@@ -3392,7 +3392,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:troll": {
+    "gloamingforest:troll": {
       "category": "monster",
       "width": 1.399999976158142,
       "height": 2.4000000953674316,
@@ -3457,7 +3457,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:unstable_ice_core": {
+    "gloamingforest:unstable_ice_core": {
       "category": "monster",
       "width": 0.800000011920929,
       "height": 1.7999999523162842,
@@ -3522,7 +3522,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:upper_goblin_knight": {
+    "gloamingforest:upper_goblin_knight": {
       "category": "monster",
       "width": 1.100000023841858,
       "height": 1.2999999523162842,
@@ -3587,7 +3587,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:ur_ghast": {
+    "gloamingforest:ur_ghast": {
       "category": "monster",
       "width": 14.0,
       "height": 18.0,
@@ -3650,8 +3650,8 @@
       "experienceMin": 317,
       "experienceMax": 317
     },
-    "twilightforest:wand_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 5, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
-    "twilightforest:winter_wolf": {
+    "gloamingforest:wand_bolt": {"category": "misc", "width": 0.25, "height": 0.25, "fireImmune": false, "canSummon": true, "clientTrackingRange": 150, "updateInterval": 5, "created": true, "eyeHeight": 0.21250000596046448, "living": false},
+    "gloamingforest:winter_wolf": {
       "category": "monster",
       "width": 1.399999976158142,
       "height": 1.899999976158142,
@@ -3716,7 +3716,7 @@
       "experienceMin": 5,
       "experienceMax": 5
     },
-    "twilightforest:wraith": {
+    "gloamingforest:wraith": {
       "category": "monster",
       "width": 0.6000000238418579,
       "height": 2.0999999046325684,
@@ -3781,7 +3781,7 @@
       "experienceMin": 0,
       "experienceMax": 0
     },
-    "twilightforest:yeti": {
+    "gloamingforest:yeti": {
       "category": "monster",
       "width": 1.399999976158142,
       "height": 2.4000000953674316,

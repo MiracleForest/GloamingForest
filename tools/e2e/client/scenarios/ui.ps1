@@ -6,9 +6,9 @@
 #
 # local / remote-mod: the fixture (client/ui/Fixture.cpp) draws a HUD layer, two toasts
 #   (LockedBiomeToast's and MissingAdvancementToast's colours; hidden with the GUI, F1), world-space
-#   lines and geometry, fog / sky / cloud providers, a TF-style ContainerScreen, item renderers in
-#   an item frame (Fixed) and on the head (Head) and TF map decorations on a held and a framed map
-#   (a conquered icon with TF's red X, the player icon on top); the fixture keys J (bound at mod load)
+#   lines and geometry, fog / sky / cloud providers, an upstream-style ContainerScreen, item renderers in
+#   an item frame (Fixed) and on the head (Head) and upstream map decorations on a held and a framed map
+#   (a conquered icon with upstream's red X, the player icon on top); the fixture keys J (bound at mod load)
 #   and K (registered late) must reach the server, a /particle and a gf::fx::particle (F10's
 #   fx.particle, through F12's native sink: velocity and count) with the fixture's native particle
 #   must run its factory, a jump must give JumpPressed / LeftGround / Landed edges, a movement rule
@@ -160,7 +160,7 @@ function Assert-UiCellCube([System.Drawing.Bitmap]$bmp, $g, $e, [string]$what, [
 }
 
 # The fixture screen's flat items (0: map, 4: compass) cover their slots; its block items (2:
-# cobblestone, 6: twilight oak planks, a TF block) are isometric cubes.
+# cobblestone, 6: gloaming oak planks, an upstream block) are isometric cubes.
 function Assert-UiSlotItems([string]$png, [string]$layout) {
     if ($layout -notmatch 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') { throw "no layout in '$layout'" }
     $px = [double]$Matches[1]; $py = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
@@ -173,14 +173,14 @@ function Assert-UiSlotItems([string]$png, [string]$layout) {
             $report += "$($s.what) covers $cover"
             if ($cover -lt 0.6) { throw "slot $($s.slot), $($s.what), covers only $cover of its width in $(Split-Path $png -Leaf)" }
         }
-        foreach ($s in @(@{ slot = 2; empty = 1; what = 'cobblestone (block)' }, @{ slot = 6; empty = 5; what = 'twilight oak planks (block)' })) {
+        foreach ($s in @(@{ slot = 2; empty = 1; what = 'cobblestone (block)' }, @{ slot = 6; empty = 5; what = 'gloaming oak planks (block)' })) {
             $report += Assert-UiCellCube $bmp (Get-UiSlotGeometry $bmp $px $py $gw $gh $s.slot) (Get-UiSlotGeometry $bmp $px $py $gw $gh $s.empty) "slot $($s.slot), $($s.what)," $png
         }
         Write-Step "slot items: $($report -join '; ')"
     } finally { $bmp.Dispose() }
 }
 # The fixture HUD layer's cells (from its 'hud layer drawn ... cells=x,y gui=WxH' line): cobblestone,
-# an empty cell, twilight oak planks, 18 GUI pixels apart; both blocks are GUI cubes.
+# an empty cell, gloaming oak planks, 18 GUI pixels apart; both blocks are GUI cubes.
 function Assert-UiHudCubes([string]$png, [string]$line) {
     if ($line -notmatch 'cells=([-\d.]+),([-\d.]+) gui=([\d.]+)x([\d.]+)') { throw "no cells in '$line'" }
     $cx = [double]$Matches[1]; $cy = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
@@ -189,7 +189,7 @@ function Assert-UiHudCubes([string]$png, [string]$line) {
     try {
         $empty = Get-UiCell $bmp ($cx + 18) $cy $gw $gh
         $a = Assert-UiCellCube $bmp (Get-UiCell $bmp $cx $cy $gw $gh) $empty 'HUD cobblestone' $png
-        $b = Assert-UiCellCube $bmp (Get-UiCell $bmp ($cx + 36) $cy $gw $gh) $empty 'HUD twilight oak planks' $png
+        $b = Assert-UiCellCube $bmp (Get-UiCell $bmp ($cx + 36) $cy $gw $gh) $empty 'HUD gloaming oak planks' $png
         Write-Step "HUD block items: $a; $b"
     } finally { $bmp.Dispose() }
 }
@@ -289,7 +289,7 @@ function Invoke-UiFixture([string]$mode) {
     # the cell right of the HUD panel: ui::Blend::Invert (the crosshair material) over the world
     Wait-UiLine 'ui: sprite drawn with the inverting crosshair blend' 30 0 | Out-Null   # once per game session
     $shot = Save-Screenshot "$mode-hud-toast-world"
-    # the HUD layer's block items (drawn after the game's UI pass): a vanilla and a TF block, cubes
+    # the HUD layer's block items (drawn after the game's UI pass): a vanilla and an upstream block, cubes
     Assert-UiHudCubes $shot $hud
 
     # Java's ToastComponent draws nothing while the GUI is hidden (F1)
@@ -317,7 +317,7 @@ function Invoke-UiFixture([string]$mode) {
     $open = Wait-LogLine 'screen opened: GloamingForest UI fixture' 30 -Since $mark
     Start-Sleep -Seconds 2
     $shot = Save-Screenshot "$mode-screen"
-    # block items (cobblestone, twilight oak planks) cover their slots like the flat ones (map, compass)
+    # block items (cobblestone, gloaming oak planks) cover their slots like the flat ones (map, compass)
     Assert-UiSlotItems $shot $open
     # a click on container slot 4 (the compass) reaches the server's screen type
     if ($open -match 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') {
@@ -333,7 +333,7 @@ function Invoke-UiFixture([string]$mode) {
     Invoke-UiTest 'ui.fixture_hide' | Out-Null
 }
 
-# Item renderers in an item frame (Fixed) and on the head (Head), TF decorations on a held map.
+# Item renderers in an item frame (Fixed) and on the head (Head), upstream decorations on a held map.
 function Invoke-UiItems([string]$mode) {
     $mark = Get-LogMark
     Invoke-UiTest 'ui.fixture_frame' | Out-Null
@@ -341,7 +341,7 @@ function Invoke-UiItems([string]$mode) {
     Wait-UiStage $mark
     Wait-UiLine 'ui fixture: item frame item drawn' 20 $mark | Out-Null
     # the stage's block renderer (fixture block, left of the frame: the fixture geometry lit by the
-    # block above, tracked from its built render chunk) and the twilight oak leaves right of it, tinted
+    # block above, tracked from its built render chunk) and the gloaming oak leaves right of it, tinted
     # from the game's foliage (red and blue swapped): both must run
     if (-not $remote -or (Test-ClientTrace)) {
         $block = Wait-UiLine '^(?!\[host\]).*ui fixture: stage block renderer drawn at' 20 $mark
@@ -390,7 +390,7 @@ function Invoke-UiItems([string]$mode) {
     Focus-Game
     Press-VK 0x74; Start-Sleep -Milliseconds 400; Press-VK 0x74   # F5 twice: third person, front
     Wait-UiLine 'ui fixture: head item drawn' 20 $mark | Out-Null
-    # render::hideArmor (TF's emperor's cloth): the fixture's rule hides the worn chestplate with the
+    # render::hideArmor (upstream's emperor's cloth): the fixture's rule hides the worn chestplate with the
     # fixture's data key. On 1.26.51 the v2 actor renderer does not ask DataDrivenModel::
     # shouldRenderAttachableOnActor; F12 takes the hidden stack out of the wearer's armour for the frame
     # instead (src/client/render/ArmorV2.cpp; docs/spikes/S5.md, Audit round 2): the screenshot below

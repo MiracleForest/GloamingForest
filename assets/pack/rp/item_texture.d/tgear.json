@@ -1,155 +1,155 @@
 {
   "tf_tgear_boots_broken": {
-    "textures": "textures/twilightforest/item/travellers_boots_broken"
+    "textures": "textures/gloamingforest/item/travellers_boots_broken"
   },
   "tf_tgear_goggles_broken": {
-    "textures": "textures/twilightforest/item/travellers_goggles_broken"
+    "textures": "textures/gloamingforest/item/travellers_goggles_broken"
   },
   "tf_tgear_mod_boots_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/auto_repair"
   },
   "tf_tgear_mod_boots_broken_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/broken/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/broken/auto_repair"
   },
   "tf_tgear_mod_boots_broken_slimy_soles": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/broken/slimy_soles"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/broken/slimy_soles"
   },
   "tf_tgear_mod_boots_broken_straight_ahead": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/broken/straight_ahead"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/broken/straight_ahead"
   },
   "tf_tgear_mod_boots_broken_unrestrained": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/broken/unrestrained"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/broken/unrestrained"
   },
   "tf_tgear_mod_boots_broken_water_walk": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/broken/water_walk"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/broken/water_walk"
   },
   "tf_tgear_mod_boots_slimy_soles": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/slimy_soles"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/slimy_soles"
   },
   "tf_tgear_mod_boots_straight_ahead": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/straight_ahead"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/straight_ahead"
   },
   "tf_tgear_mod_boots_unrestrained": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/unrestrained"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/unrestrained"
   },
   "tf_tgear_mod_boots_water_walk": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/boots/water_walk"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/boots/water_walk"
   },
   "tf_tgear_mod_goggles_all_night_goggles": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/all_night_goggles"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/all_night_goggles"
   },
   "tf_tgear_mod_goggles_aquatic_agility": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/aquatic_agility"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/aquatic_agility"
   },
   "tf_tgear_mod_goggles_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/auto_repair"
   },
   "tf_tgear_mod_goggles_broken_all_night_goggles": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/broken/all_night_goggles"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/broken/all_night_goggles"
   },
   "tf_tgear_mod_goggles_broken_aquatic_agility": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/broken/aquatic_agility"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/broken/aquatic_agility"
   },
   "tf_tgear_mod_goggles_broken_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/broken/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/broken/auto_repair"
   },
   "tf_tgear_mod_goggles_broken_item_display": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/broken/item_display"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/broken/item_display"
   },
   "tf_tgear_mod_goggles_broken_red_thread_vision": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/broken/red_thread_vision"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/broken/red_thread_vision"
   },
   "tf_tgear_mod_goggles_item_display": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/item_display"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/item_display"
   },
   "tf_tgear_mod_goggles_red_thread_vision": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/goggles/red_thread_vision"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/goggles/red_thread_vision"
   },
   "tf_tgear_mod_vest_arrow_magnetism": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/arrow_magnetism"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/arrow_magnetism"
   },
   "tf_tgear_mod_vest_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/auto_repair"
   },
   "tf_tgear_mod_vest_broken_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/broken/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/broken/auto_repair"
   },
   "tf_tgear_mod_vest_broken_efficient_eater": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/broken/efficient_eater"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/broken/efficient_eater"
   },
   "tf_tgear_mod_vest_broken_gloves": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/broken/gloves"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/broken/gloves"
   },
   "tf_tgear_mod_vest_broken_perfect_dodge": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/broken/perfect_dodge"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/broken/perfect_dodge"
   },
   "tf_tgear_mod_vest_broken_stealth": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/broken/stealth"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/broken/stealth"
   },
   "tf_tgear_mod_vest_efficient_eater": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/efficient_eater"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/efficient_eater"
   },
   "tf_tgear_mod_vest_gloves": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/gloves"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/gloves"
   },
   "tf_tgear_mod_vest_haste": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/haste"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/haste"
   },
   "tf_tgear_mod_vest_perfect_dodge": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/perfect_dodge"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/perfect_dodge"
   },
   "tf_tgear_mod_vest_stealth": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/vest/stealth"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/vest/stealth"
   },
   "tf_tgear_mod_wings_agile_ranger": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/agile_ranger"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/agile_ranger"
   },
   "tf_tgear_mod_wings_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/auto_repair"
   },
   "tf_tgear_mod_wings_broken_agile_ranger": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/broken/agile_ranger"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/broken/agile_ranger"
   },
   "tf_tgear_mod_wings_broken_auto_repair": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/broken/auto_repair"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/broken/auto_repair"
   },
   "tf_tgear_mod_wings_broken_double_jump": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/broken/double_jump"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/broken/double_jump"
   },
   "tf_tgear_mod_wings_broken_gradual_glide": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/broken/gradual_glide"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/broken/gradual_glide"
   },
   "tf_tgear_mod_wings_broken_side_step": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/broken/side_step"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/broken/side_step"
   },
   "tf_tgear_mod_wings_broken_swap_hotbar": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/broken/swap_hotbar"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/broken/swap_hotbar"
   },
   "tf_tgear_mod_wings_double_jump": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/double_jump"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/double_jump"
   },
   "tf_tgear_mod_wings_gradual_glide": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/gradual_glide"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/gradual_glide"
   },
   "tf_tgear_mod_wings_side_step": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/side_step"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/side_step"
   },
   "tf_tgear_mod_wings_swap_hotbar": {
-    "textures": "textures/twilightforest/item/travellers_modifiers/wings/swap_hotbar"
+    "textures": "textures/gloamingforest/item/travellers_modifiers/wings/swap_hotbar"
   },
   "tf_tgear_red_thread_bundle_0": {
-    "textures": "textures/twilightforest/item/red_thread_bundle_0"
+    "textures": "textures/gloamingforest/item/red_thread_bundle_0"
   },
   "tf_tgear_red_thread_bundle_1": {
-    "textures": "textures/twilightforest/item/red_thread_bundle_1"
+    "textures": "textures/gloamingforest/item/red_thread_bundle_1"
   },
   "tf_tgear_red_thread_bundle_2": {
-    "textures": "textures/twilightforest/item/red_thread_bundle_2"
+    "textures": "textures/gloamingforest/item/red_thread_bundle_2"
   },
   "tf_tgear_vest_broken": {
-    "textures": "textures/twilightforest/item/travellers_vest_broken"
+    "textures": "textures/gloamingforest/item/travellers_vest_broken"
   },
   "tf_tgear_wings_broken": {
-    "textures": "textures/twilightforest/item/travellers_wings_broken"
+    "textures": "textures/gloamingforest/item/travellers_wings_broken"
   }
 }

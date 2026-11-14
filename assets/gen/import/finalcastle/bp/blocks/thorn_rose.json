@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:thorn_rose",
+      "identifier": "gloamingforest:thorn_rose",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["up", "north", "south", "west", "east", "down"]
+        "gloamingforest:facing": ["up", "north", "south", "west", "east", "down"]
       }
     },
     "components": {
@@ -39,7 +39,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'down'",
+        "condition": "q.block_state('gloamingforest:facing') == 'down'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {
@@ -62,7 +62,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {
@@ -85,7 +85,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {
@@ -108,7 +108,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {
@@ -131,7 +131,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'up'",
+        "condition": "q.block_state('gloamingforest:facing') == 'up'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {
@@ -154,7 +154,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {

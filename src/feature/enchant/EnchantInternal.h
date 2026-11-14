@@ -33,7 +33,7 @@ namespace gf::enchant::internal {
 /// anvil hook's path; `creative`: the player builds instantly (no supported-items check). `joined`:
 /// how many of the second item's custom enchantments joined (AnvilMenu's "flag2").
 int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative = false, int* joined = nullptr);
-/// The grindstone: removes every custom enchantment (none of TF's is a curse). True when any was.
+/// The grindstone: removes every custom enchantment (none of upstream's is a curse). True when any was.
 bool grind(ItemStack& stack);
 /// The experience the grindstone gives for the custom enchantments (Java: the min cost of each).
 [[nodiscard]] int grindExperience(ItemStack const& stack);

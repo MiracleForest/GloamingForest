@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U30's only door into W0 internals (rule R18 extension request, for A8 to fold in W2b).

@@ -1,0 +1,8 @@
+{
+  "comparator_output": 15,
+  "description": {
+    "translate": "jukebox_song.gloamingforest.steps"
+  },
+  "length_in_seconds": 195.0,
+  "sound_event": "gloamingforest:music_disc.gloamingforest.steps"
+}

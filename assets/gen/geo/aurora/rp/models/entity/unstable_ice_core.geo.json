@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.unstable_ice_core",
+        "identifier": "geometry.gloamingforest.unstable_ice_core",
         "texture_width": 32,
         "texture_height": 32,
         "visible_bounds_width": 1.5,

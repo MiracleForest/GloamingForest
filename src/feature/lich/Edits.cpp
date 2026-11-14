@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerWingRoom.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichPerimeterFence.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerMagicGallery.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerWingRoom.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichPerimeterFence.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerMagicGallery.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U21 (lich): the server-thread half of the lich tower's markers (Pending.h): the block entity
-// contents and the entities TF's pieces add while the chunk generates. The piece rolls every
-// random value as TF does and queues the result; these appliers write it once the chunk is loaded.
+// contents and the entities upstream's pieces add while the chunk generates. The piece rolls every
+// random value as upstream does and queues the result; these appliers write it once the chunk is loaded.
 
 #include <cmath>
 #include <string>
@@ -263,8 +263,8 @@ void registerEdits() {
     pending::registerKind("sinister", [](BlockSource& region, BlockPos const& pos, Json const& d) {
         auto s = gf::boss::ext::sinisterSpawner(region, pos);
         if (!s) return true;
-        s->particles = {"twilightforest:ominous_flame"};
-        s->lootTable = "twilightforest:blocks/ominous_spawner_drops";
+        s->particles = {"gloamingforest:ominous_flame"};
+        s->lootTable = "gloamingforest:blocks/ominous_spawner_drops";
         if (d.contains("range")) s->spawnRange = d["range"].get<int>();
         s->entityScanRange = d.contains("scan") ? d["scan"].get<int>() : s->spawnRange;
         if (s->potentials.empty() && d.contains("entity")) s->potentials = {{d["entity"].get<std::string>(), 1}};
@@ -281,7 +281,7 @@ void registerEdits() {
     // LichTowerMagicGallery: the gallery's magic painting (U22's entity, the variant named after
     // the gallery; its direction the piece's rotation of south)
     pending::registerKind("magic_painting", [](BlockSource& region, BlockPos const& pos, Json const& d) {
-        Actor* painting = spawnActor(region, "twilightforest:magic_painting", Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f});
+        Actor* painting = spawnActor(region, "gloamingforest:magic_painting", Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f});
         if (!painting) return true; // U22's entity is not there: nothing to hang (one warning per id)
         ge::data(*painting, "variant")   = d.value("variant", std::string());
         ge::data(*painting, "direction") = d.value("direction", std::string("south"));

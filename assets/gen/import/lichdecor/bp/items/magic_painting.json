@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:magic_painting",
+      "identifier": "gloamingforest:magic_painting",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:magic_painting.name"
+        "value": "item.gloamingforest:magic_painting.name"
       }
     }
   }

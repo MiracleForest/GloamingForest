@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:trollvidr",
+      "identifier": "gloamingforest:trollvidr",
       "menu_category": {
         "category": "construction"
       }
@@ -53,9 +53,9 @@
               "minecraft:andesite",
               "minecraft:tuff",
               "minecraft:deepslate",
-              "twilightforest:trollvidr",
-              "twilightforest:trollber",
-              "twilightforest:unripe_trollber"
+              "gloamingforest:trollvidr",
+              "gloamingforest:trollber",
+              "gloamingforest:unripe_trollber"
             ]
           }
         ]

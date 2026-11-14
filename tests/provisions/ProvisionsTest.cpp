@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of src/core/provisions/Provisions.h (translated from TF 4.8's TFItems, Experiment115Block,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of src/core/provisions/Provisions.h (translated from upstream 4.8's TFItems, Experiment115Block,
 // FrostedEffect, EntityEvents, TFEnchantments, TFJukeboxSongs and ChainBlockItem; LGPL-2.1-or-later
 // code, see the header of Provisions.h).
 #include <gtest/gtest.h>
@@ -10,23 +10,23 @@ using namespace gf::core::provisions;
 
 TEST(ProvisionsFood, TableHasTfValues) {
     EXPECT_EQ(foods().size(), 23u);
-    auto const* chop = food("twilightforest:hydra_chop");
+    auto const* chop = food("gloamingforest:hydra_chop");
     ASSERT_NE(chop, nullptr);
     EXPECT_EQ(chop->nutrition, 18);
     EXPECT_FLOAT_EQ(chop->saturation, 2.0f);
     EXPECT_EQ(chop->effects[0].effect, "minecraft:regeneration");
     EXPECT_EQ(chop->effects[0].ticks, 100);
-    auto const* strog = food("twilightforest:meef_stroganoff");
+    auto const* strog = food("gloamingforest:meef_stroganoff");
     ASSERT_NE(strog, nullptr);
     EXPECT_TRUE(strog->alwaysEdible);
     EXPECT_TRUE(strog->bowl);
     EXPECT_EQ(strog->effects[0].ticks, 3600);
     EXPECT_EQ(strog->effects[1].effect, "minecraft:strength");
     EXPECT_EQ(strog->effects[1].ticks, 2400);
-    EXPECT_TRUE(food("twilightforest:moss_soup")->bowl);
-    EXPECT_FLOAT_EQ(food("twilightforest:chicken_jerky")->saturation, 1.075f);
-    EXPECT_EQ(food("twilightforest:tropical_fish_jerky")->nutrition, 2);
-    EXPECT_EQ(food("twilightforest:stale_bread"), nullptr);
+    EXPECT_TRUE(food("gloamingforest:moss_soup")->bowl);
+    EXPECT_FLOAT_EQ(food("gloamingforest:chicken_jerky")->saturation, 1.075f);
+    EXPECT_EQ(food("gloamingforest:tropical_fish_jerky")->nutrition, 2);
+    EXPECT_EQ(food("gloamingforest:stale_bread"), nullptr);
     EXPECT_FLOAT_EQ(saturationOf(6, 0.6f), 7.2f);
 }
 

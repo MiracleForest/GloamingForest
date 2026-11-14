@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:carminite_broodling",
+      "identifier": "gloamingforest:carminite_broodling",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/towerbroodling"
+        "default": "textures/gloamingforest/entity/towerbroodling"
       },
       "geometry": {
         "default": "geometry.spider.v1.8"

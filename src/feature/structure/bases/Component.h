@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponent.java
-//   src/main/java/twilightforest/world/components/structures/TFStructureDecorator.java
-//   src/main/java/twilightforest/world/components/structures/UtilityPiece.java
-//   src/main/java/twilightforest/world/components/structures/SpawnIndexProvider.java
-//   src/main/java/twilightforest/world/components/structures/util/SortablePiece.java
-//   src/main/java/twilightforest/world/components/structures/util/ProgressionPiece.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java
+//   src/main/java/gloamingforest/world/components/structures/TFStructureDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/UtilityPiece.java
+//   src/main/java/gloamingforest/world/components/structures/SpawnIndexProvider.java
+//   src/main/java/gloamingforest/world/components/structures/util/SortablePiece.java
+//   src/main/java/gloamingforest/world/components/structures/util/ProgressionPiece.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). The root of
-// TF's piece hierarchy: TFStructureComponent (spawn index, decorator, progression protection), the
+// upstream's piece hierarchy: TFStructureComponent (spawn index, decorator, progression protection), the
 // decorator block sets and the utility piece. Declarations only: the behaviour is F7's, translated
 // from the Java files above (bases/Bases.cpp holds the neutral stubs until then).
 //
@@ -81,7 +81,7 @@ public:
     void               load(Json const& data) override;
 
 protected:
-    /// TFStructureComponent#placeBlock: also schedules the post-processing TF's list of blocks needs
+    /// TFStructureComponent#placeBlock: also schedules the post-processing upstream's list of blocks needs
     /// (fences, torches, ladders, stairs, chests, liquids, force fields, thorns, gravel ...).
     void placeBlockScheduled(Region& region, Block const& block, int x, int y, int z, BlockBox const& sbb);
     /// setInvisibleTextEntity (debug text displays; no-op unless debugging).
@@ -96,7 +96,7 @@ public:
     [[nodiscard]] virtual int getSortKey() const = 0;
 };
 
-/// UtilityPiece ("twilightforest:TFUtilityPiece"): an empty piece that only reserves a box;
+/// UtilityPiece ("gloamingforest:TFUtilityPiece"): an empty piece that only reserves a box;
 /// `allowFeatures` (saved "allow_features") lets decoration generate inside it.
 class UtilityPiece : public Piece {
 public:

@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
-// U14, client mod: the advancement screen with TF's tab ("progression.advancements"), drawn as
+// U14, client mod: the advancement screen with upstream's tab ("progression.advancements"), drawn as
 // Java's AdvancementsScreen lays it out (window 252 x 140, the tree inside at (9, 18), 234 x 113,
 // the tab above the window with the root's icon, the selected tab's title at (8, 6) in 0x404040,
 // as AdvancementsScreen#renderWindow; "Advancements" without a tab); the tab's background
-// is the root's (TF's mazestone_large_brick), tiled 16 x 16 and scrolled with the tree; nodes sit
+// is the root's (upstream's mazestone_large_brick), tiled 16 x 16 and scrolled with the tree; nodes sit
 // at (floor(x * 28), floor(y * 27)) of the server's TreeNodePosition layout, connected by Java's
 // black-outlined white lines. Hovering a node (AdvancementWidget#isMouseOver: its 27 x 27 cell, a
 // hidden node only once earned) dims the tree (fade up to 0.3) and draws AdvancementWidget's

@@ -2,23 +2,23 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:carminite_golem",
+      "identifier": "gloamingforest:carminite_golem",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/carminitegolem"
+        "default": "textures/gloamingforest/entity/carminitegolem"
       },
       "geometry": {
-        "default": "geometry.twilightforest.carminite_golem"
+        "default": "geometry.gloamingforest.carminite_golem"
       },
       "render_controllers": [
         "controller.render.default"
       ],
       "animations": {
-        "base": "animation.twilightforest.carminite_golem.base",
-        "attack": "animation.twilightforest.carminite_golem.attack",
-        "sway": "animation.twilightforest.carminite_golem.sway"
+        "base": "animation.gloamingforest.carminite_golem.base",
+        "attack": "animation.gloamingforest.carminite_golem.attack",
+        "sway": "animation.gloamingforest.carminite_golem.sway"
       },
       "scripts": {
         "animate": [

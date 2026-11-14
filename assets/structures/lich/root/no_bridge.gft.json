@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/no_bridge",
+  "id": "gloamingforest:lich_tower/no_bridge",
   "size": [1, 3, 1],
   "palette": [
     {"Name":"minecraft:structure_void"},

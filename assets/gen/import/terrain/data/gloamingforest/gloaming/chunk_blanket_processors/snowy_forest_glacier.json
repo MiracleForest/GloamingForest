@@ -1,0 +1,19 @@
+{
+  "type": "gloamingforest:glacier",
+  "biome_mask": [
+    "gloamingforest:glacier"
+  ],
+  "body_block": {
+    "type": "minecraft:simple_state_provider",
+    "state": {
+      "Name": "minecraft:packed_ice"
+    }
+  },
+  "height": 32,
+  "top_block": {
+    "type": "minecraft:simple_state_provider",
+    "state": {
+      "Name": "minecraft:ice"
+    }
+  }
+}

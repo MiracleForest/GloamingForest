@@ -1,11 +1,11 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/gallery/music_in_the_mire",
+  "id": "gloamingforest:lich_tower/gallery/music_in_the_mire",
   "size": [9, 7, 13],
   "palette": [
     {"Name":"minecraft:structure_void"},
-    {"Name":"twilightforest:canopy_planks"},
+    {"Name":"gloamingforest:canopy_planks"},
     {"Name":"minecraft:mossy_stone_bricks"},
     {"Name":"minecraft:air"},
     {"Name":"minecraft:green_carpet"},

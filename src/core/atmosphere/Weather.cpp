@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/renderer/TFWeatherRenderer.java
-//   src/main/java/twilightforest/util/IntervalUtils.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java
+//   src/main/java/gloamingforest/util/IntervalUtils.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 
@@ -19,17 +19,17 @@ namespace gf::core::atmosphere {
 char const* textureOf(Effect effect) {
     switch (effect) {
     case Effect::Blizzard:
-        return "textures/twilightforest/environment/blizzard";
+        return "textures/gloamingforest/environment/blizzard";
     case Effect::Mosquito:
-        return "textures/twilightforest/environment/mosquitoes";
+        return "textures/gloamingforest/environment/mosquitoes";
     case Effect::Ashes:
-        return "textures/twilightforest/environment/ashes";
+        return "textures/gloamingforest/environment/ashes";
     case Effect::DarkStream:
-        return "textures/twilightforest/environment/darkstream";
+        return "textures/gloamingforest/environment/darkstream";
     case Effect::BigRain:
-        return "textures/twilightforest/environment/bigrain";
+        return "textures/gloamingforest/environment/bigrain";
     case Effect::Sparkles:
-        return "textures/twilightforest/environment/sparkles";
+        return "textures/gloamingforest/environment/sparkles";
     default:
         return "";
     }
@@ -55,11 +55,11 @@ char const* nameOf(Effect effect) {
 }
 
 Effect effectFor(std::string_view enforcement, bool darkRoll) {
-    if (enforcement == "twilightforest:frost") return Effect::Blizzard;
-    if (enforcement == "twilightforest:hunger") return Effect::Mosquito;
-    if (enforcement == "twilightforest:fire") return Effect::Ashes;
-    if (enforcement == "twilightforest:darkness") return darkRoll ? Effect::DarkStream : Effect::None;
-    if (enforcement == "twilightforest:acid_rain") return Effect::BigRain;
+    if (enforcement == "gloamingforest:frost") return Effect::Blizzard;
+    if (enforcement == "gloamingforest:hunger") return Effect::Mosquito;
+    if (enforcement == "gloamingforest:fire") return Effect::Ashes;
+    if (enforcement == "gloamingforest:darkness") return darkRoll ? Effect::DarkStream : Effect::None;
+    if (enforcement == "gloamingforest:acid_rain") return Effect::BigRain;
     return Effect::None;
 }
 
@@ -125,7 +125,7 @@ std::optional<std::pair<int, int>> lockedSpan(int py, int range, int minBuild) {
 std::optional<Column> lockedColumn(ColumnInput const& in, std::string_view enforcement) {
     jrand::LegacyRandom random(0);
     random.setSeed(columnSeed(in.x, in.z));
-    bool   dark   = enforcement == "twilightforest:darkness" && random.nextBoolean();
+    bool   dark   = enforcement == "gloamingforest:darkness" && random.nextBoolean();
     Effect effect = effectFor(enforcement, dark);
     if (effect == Effect::None) return std::nullopt;
     if (in.x == floorInt(in.camX) && in.z == floorInt(in.camZ)) return std::nullopt; // NaN corners

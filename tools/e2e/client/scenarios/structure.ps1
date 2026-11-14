@@ -13,7 +13,7 @@ if ($script:Mode -eq 'local') {
     # placed at the player's feet on the flat world, then looked at from the south-east
     Invoke-Teleport '/tp @s 0 -60 0'
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest structure_util place "gf_test:structure/fixture" 0 0'
+    Invoke-Chat '/gloamingforest structure_util place "gf_test:structure/fixture" 0 0'
     Wait-LogLine 'structure_util place gf_test:structure/fixture' 30 -Since $mark | Out-Null
     Invoke-Teleport '/tp @s 6 -56 10 149 25'
     Start-Sleep -Seconds 2
@@ -21,7 +21,7 @@ if ($script:Mode -eq 'local') {
 
     Invoke-Teleport '/tp @s 40 -60 40'
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest structure_util jigsaw "gf_test:structure/jig/start" 4'
+    Invoke-Chat '/gloamingforest structure_util jigsaw "gf_test:structure/jig/start" 4'
     Wait-LogLine 'structure_util jigsaw gf_test:structure/jig/start: \d+ pieces' 30 -Since $mark | Out-Null
     Invoke-Teleport '/tp @s 56 -53 58 140 18'
     Start-Sleep -Seconds 2
@@ -32,7 +32,7 @@ if ($script:Mode -eq 'local') {
     Invoke-Teleport '/tp @s 120 -60 -80'
     Start-Sleep -Seconds 2
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest structure_util piece tower'
+    Invoke-Chat '/gloamingforest structure_util piece tower'
     Wait-LogLine 'structure_util piece tower: \d+ pieces' 60 -Since $mark | Out-Null
     Invoke-Chat '/gamemode spectator'
     Invoke-Chat '/effect @s night_vision 300 1 true'
@@ -48,7 +48,7 @@ if ($script:Mode -eq 'local') {
     Invoke-Teleport '/tp @s 260 -50 -80'
     Start-Sleep -Seconds 2
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest structure_util piece hill'
+    Invoke-Chat '/gloamingforest structure_util piece hill'
     Wait-LogLine 'structure_util piece hill: \d+ pieces' 60 -Since $mark | Out-Null
     # (the hill's box is [246,-53,-94 .. 282,-44,-58]: the cave is around its center)
     Invoke-Teleport '/tp @s 264 -48 -64 180 12'

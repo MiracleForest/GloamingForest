@@ -1,0 +1,10 @@
+{
+  "banister": "gloamingforest:canopy_banister",
+  "button": "gloamingforest:canopy_button",
+  "fence": "gloamingforest:canopy_fence",
+  "gate": "gloamingforest:canopy_fence_gate",
+  "planks": "gloamingforest:canopy_planks",
+  "plate": "gloamingforest:canopy_pressure_plate",
+  "slab": "gloamingforest:canopy_slab",
+  "stairs": "gloamingforest:canopy_stairs"
+}

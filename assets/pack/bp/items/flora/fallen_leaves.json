@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:fallen_leaves",
+      "identifier": "gloamingforest:fallen_leaves",
       "menu_category": {
         "category": "construction"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:fallen_leaves.name"
+        "value": "tile.gloamingforest:fallen_leaves.name"
       }
     }
   }

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U18 (minorlandmarks), testPos dx 1800..1899 (rule R12):
 //   minorlandmarks.hedge_damage          the hedge's contact and punch damage, spiders spared
 //   minorlandmarks.hollow_hill_layout    the three hills in memory (golden hashes), the TFHill tag
@@ -99,11 +99,11 @@ public:
         }
         return minY();
     }
-    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "twilightforest:forest"; }
+    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "gloamingforest:forest"; }
     [[nodiscard]] std::int64_t seed() const override { return mSeed; }
     [[nodiscard]] int          dimension() const override { return -1; } // scratch: no block entity work
 
-    /// The golden volume hash of `box` (snapshotVolume's order and text; TF blocks by id only).
+    /// The golden volume hash of `box` (snapshotVolume's order and text; upstream blocks by id only).
     [[nodiscard]] std::string hash(BlockBox const& box) const {
         core::VolumeHasher h;
         for (int y = box.minY; y <= box.maxY; y++)
@@ -123,10 +123,10 @@ public:
         }
         return n;
     }
-    /// The plants in `box` (TF's moss patch, grass, ferns, seagrass) that cannot stay where a feature
+    /// The plants in `box` (upstream's moss patch, grass, ferns, seagrass) that cannot stay where a feature
     /// put them (F5's BlockState#canSurvive), as "id at x y z" lines.
     [[nodiscard]] std::vector<std::string> floatingPlants(BlockBox const& box) {
-        static constexpr std::string_view kPlants[] = {"twilightforest:moss_patch", "minecraft:short_grass", "minecraft:tallgrass", "minecraft:fern", "minecraft:seagrass"};
+        static constexpr std::string_view kPlants[] = {"gloamingforest:moss_patch", "minecraft:short_grass", "minecraft:tallgrass", "minecraft:fern", "minecraft:seagrass"};
         std::vector<std::string>          out;
         std::vector<std::pair<BlockPos, Block const*>> plants;
         for (auto const& [k, b] : mBlocks) {
@@ -353,7 +353,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hedge_damage", [](Context& ctx) -> ll::coro
     int hp3 = ctx.player().getHealth();
     co_await ctx.ticks(25);
     ctx.check(ctx.player().getHealth() >= hp3, "no more pricks once the player stops (" + std::to_string(hp3) + " -> " + std::to_string(ctx.player().getHealth()) + ")");
-    ctx.check(isSpiderType("twilightforest:hedge_spider") && isSpiderType("minecraft:cave_spider") && !isSpiderType("minecraft:zombie"),
+    ctx.check(isSpiderType("gloamingforest:hedge_spider") && isSpiderType("minecraft:cave_spider") && !isSpiderType("minecraft:zombie"),
               "Spider and its subclasses are spared");
 });
 
@@ -403,7 +403,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hedge_maze_layout", [](Context& ctx) {
              std::to_string(chests) + " chests");
     ctx.check(hedges > 1500, "the maze walls are hedges");
     ctx.check(lanterns >= 8 + 5, "8 entrance lanterns and one per room at least");
-    // a room's chest may land on its spawner (TF checks only for a chest there)
+    // a room's chest may land on its spawner (upstream checks only for a chest there)
     ctx.check(spawners >= 3 && spawners <= 5, "a spawner in each of the 5 rooms");
     ctx.check(chests >= 5 && chests <= 10, "1-2 chests per room");
     ctx.info("hedge maze blocks: " + mem.histogram(box));
@@ -435,7 +435,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hedge_maze_world", [](Context& ctx) -> ll::
     ctx.check(chests >= 5, "the rooms' chests in the world");
     ctx.check(hedges > 1500, "the hedge walls in the world");
     auto desc = gf::landmark::descriptor(kHedgeMaze);
-    ctx.check(desc && desc->icon == "twilightforest:hedge_maze", "the hedge maze map icon");
+    ctx.check(desc && desc->icon == "gloamingforest:hedge_maze", "the hedge maze map icon");
     gf::log().info("minorlandmarks: hedge maze placed at {} {} {}", box.minX, box.minY, box.minZ);
 });
 
@@ -453,9 +453,9 @@ GF_REGISTER_SELFTEST("minorlandmarks.hollow_tree_layout", [](Context& ctx) {
         placeByChunks(mem, pieces, 99);
         ctx.info("hollow tree: ground " + std::to_string(groundSize) + " blocks, after " + std::to_string(mem.size()) + ", trunk box y " + std::to_string(pieces.front()->bbox.minY) + ".." +
                  std::to_string(pieces.front()->bbox.maxY));
-        int logs   = mem.count(all, "twilightforest:twilight_oak_log");
-        int wood   = mem.count(all, "twilightforest:twilight_oak_wood");
-        int leaves = mem.count(all, "twilightforest:twilight_oak_leaves");
+        int logs   = mem.count(all, "gloamingforest:gloaming_oak_log");
+        int wood   = mem.count(all, "gloamingforest:gloaming_oak_wood");
+        int leaves = mem.count(all, "gloamingforest:gloaming_oak_leaves");
         ctx.info("hollow tree r" + std::to_string(radius) + ": " + std::to_string(logs) + " logs, " + std::to_string(wood) + " wood, " + std::to_string(leaves) + " leaves");
         ctx.check(logs > 48 && wood > 0 && leaves > 0, "radius " + std::to_string(radius) + ": trunk, branches and leaves");
         ctx.info("hollow tree blocks: " + mem.histogram(all));
@@ -479,7 +479,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hollow_tree_sapling", [](Context& ctx) -> l
     for (int dx = -5; dx <= 5; dx++)
         for (int dz = -5; dz <= 5; dz++)
             for (int dy = 0; dy < 32; dy++)
-                if (game::blockIdAt(*region, BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}) == "twilightforest:twilight_oak_log") ++logs;
+                if (game::blockIdAt(*region, BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}) == "gloamingforest:gloaming_oak_log") ++logs;
     ctx.check(logs > 32, "the hollow trunk stands at the sapling (" + std::to_string(logs) + " logs)");
     (void)gf::landmark::ext::forgetStartForTest(game::globalPos(*region, pos), kHollowTree);
 });
@@ -503,10 +503,10 @@ GF_REGISTER_SELFTEST("minorlandmarks.fallen_trunk", [](Context& ctx) {
         placeByChunks(mem, pieces, 5);
         ctx.info("fallen trunk r" + std::to_string(c.radius) + " box " + std::to_string(box.minX) + "," + std::to_string(box.minY) + "," + std::to_string(box.minZ) + " .. " +
                  std::to_string(box.maxX) + "," + std::to_string(box.maxY) + "," + std::to_string(box.maxZ) + ": ground " + std::to_string(groundSize) + " blocks, after " +
-                 std::to_string(mem.size()) + "; log block " + st::blocks::java("twilightforest:twilight_oak_log").getTypeName());
-        int logs = mem.count(box, "twilightforest:twilight_oak_log");
+                 std::to_string(mem.size()) + "; log block " + st::blocks::java("gloamingforest:gloaming_oak_log").getTypeName());
+        int logs = mem.count(box, "gloamingforest:gloaming_oak_log");
         ctx.info("fallen trunk r" + std::to_string(c.radius) + ": " + std::to_string(logs) + " logs, " + std::to_string(mem.count(grow(box, 1), "minecraft:mob_spawner")) +
-                 " spawners, " + std::to_string(mem.count(grow(box, 4), "twilightforest:twilight_oak_chest")) + " chests");
+                 " spawners, " + std::to_string(mem.count(grow(box, 4), "gloamingforest:gloaming_oak_chest")) + " chests");
         ctx.check(logs > c.length, "radius " + std::to_string(c.radius) + ": the trunk's logs");
         ctx.info("fallen trunk blocks: " + mem.histogram(grow(box, 1)));
         checkGolden(ctx, "fallen_trunk_r" + std::to_string(c.radius), mem.hash(grow(box, 4)));
@@ -529,20 +529,20 @@ GF_REGISTER_SELFTEST("minorlandmarks.features", [](Context& ctx) {
         bool        withStone = false;
         char const* layerBelow = nullptr; ///< the block of the ground's second layer (y - 1)
     };
-    Json woodRoots{{"type", "twilightforest:wood_roots"},
-                   {"config", {{"root_block", simpleProvider("twilightforest:root")}, {"root_ore", simpleProvider("twilightforest:liveroot_block")}}}};
+    Json woodRoots{{"type", "gloamingforest:wood_roots"},
+                   {"config", {{"root_block", simpleProvider("gloamingforest:root")}, {"root_ore", simpleProvider("gloamingforest:liveroot_block")}}}};
     std::vector<Case> cases = {
-        {"block_spike", "twilightforest:outside_stalagmite", 0, false, false, "twilightforest:deadrock"}, // only #supports_stalagmites holds one
-        {"dark_forest_placer", "twilightforest:dark_grass", 0},
-        {"fallen_hollow_log", "twilightforest:hollow_log", 0},
-        {"fallen_small_log", "twilightforest:tf_oak_fallen_log", 0},
-        {"foundation", "twilightforest:foundation", 0},
-        {"hollow_stump", "twilightforest:hollow_stump", 0},
-        {"lampposts", "twilightforest:pumpkin_lamppost", 0},
-        {"monolith", "twilightforest:monolith", 0},
-        {"mycelium_blob", "twilightforest:mycelium_blob", 0},
-        {"small_lake", "twilightforest:water_lake", 0},
-        {"webs", "twilightforest:webs", 0, true},
+        {"block_spike", "gloamingforest:outside_stalagmite", 0, false, false, "gloamingforest:deadrock"}, // only #supports_stalagmites holds one
+        {"dark_forest_placer", "gloamingforest:dark_grass", 0},
+        {"fallen_hollow_log", "gloamingforest:hollow_log", 0},
+        {"fallen_small_log", "gloamingforest:tf_oak_fallen_log", 0},
+        {"foundation", "gloamingforest:foundation", 0},
+        {"hollow_stump", "gloamingforest:hollow_stump", 0},
+        {"lampposts", "gloamingforest:pumpkin_lamppost", 0},
+        {"monolith", "gloamingforest:monolith", 0},
+        {"mycelium_blob", "gloamingforest:mycelium_blob", 0},
+        {"small_lake", "gloamingforest:water_lake", 0},
+        {"webs", "gloamingforest:webs", 0, true},
         {"wood_roots", woodRoots, 30, false, true},
     };
     for (auto const& c : cases) {
@@ -564,9 +564,9 @@ GF_REGISTER_SELFTEST("minorlandmarks.features", [](Context& ctx) {
                 // a canopy of leaves over logs for the webs
                 for (int x = -4; x <= 4; x++)
                     for (int z = -4; z <= 4; z++) {
-                        mem.setBlock(BlockPos{x, 12, z}, st::blocks::java("twilightforest:twilight_oak_leaves", Json{{"persistent", "true"}}), 2);
+                        mem.setBlock(BlockPos{x, 12, z}, st::blocks::java("gloamingforest:gloaming_oak_leaves", Json{{"persistent", "true"}}), 2);
                         if (x == 0 && z == 0)
-                            for (int y = 1; y < 12; y++) mem.setBlock(BlockPos{x, y, z}, st::blocks::java("twilightforest:twilight_oak_log"), 2);
+                            for (int y = 1; y < 12; y++) mem.setBlock(BlockPos{x, y, z}, st::blocks::java("gloamingforest:gloaming_oak_log"), 2);
                     }
             }
             core::jrand::LegacyRandom random(seed);
@@ -576,7 +576,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.features", [](Context& ctx) {
             if (placed) {
                 seedUsed = seed;
                 hash     = mem.hash(BlockBox{-24, c.groundY - 30, -24, 24, c.groundY + 30, 24});
-                // TF's features place their plants on what they built (no survival check of their own):
+                // upstream's features place their plants on what they built (no survival check of their own):
                 // none of them may be left hanging
                 auto floating = mem.floatingPlants(BlockBox{-24, c.groundY - 30, -24, 24, c.groundY + 30, 24});
                 ctx.check(floating.empty(), std::string(c.name) + ": no plant left floating" + (floating.empty() ? std::string{} : " (" + floating.front() + ", " + std::to_string(floating.size()) + " in all)"));
@@ -588,9 +588,9 @@ GF_REGISTER_SELFTEST("minorlandmarks.features", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("minorlandmarks.monolith_ravens", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // MonolithFeature spawns a raven only above y 0: the Twilight Forest's test area is
-    if (!co_await ctx.inTwilight()) {
-        ctx.info("NOT RUN: no Twilight Forest dimension");
+    // MonolithFeature spawns a raven only above y 0: the Gloaming Forest's test area is
+    if (!co_await ctx.inGloaming()) {
+        ctx.info("NOT RUN: no Gloaming Forest dimension");
         co_return;
     }
     auto area   = co_await ctx.flatArea(1880, 16, 32);
@@ -602,7 +602,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.monolith_ravens", [](Context& ctx) -> ll::c
         st::BlockSourceRegion live(*region, origin);
         for (int seed = 1; seed <= 20 && !placed; seed++) {
             core::jrand::LegacyRandom random(seed);
-            placed = gf::features::kit::placeConfigured(Json("twilightforest:monolith"), live, origin, random);
+            placed = gf::features::kit::placeConfigured(Json("gloamingforest:monolith"), live, origin, random);
         }
     }
     ctx.require(placed, "the monolith was placed");
@@ -618,7 +618,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.monolith_ravens", [](Context& ctx) -> ll::c
             }
     ctx.check(obsidian >= 4 * 5 && lapis == 1, "a 2x2 obsidian pillar with one lapis block on top (" + std::to_string(obsidian) + ", " + std::to_string(lapis) + ")");
     co_await ctx.ticks(20);
-    auto sel = "@e[type=twilightforest:raven,x=" + std::to_string(origin.x) + ",y=" + std::to_string(origin.y) + ",z=" + std::to_string(origin.z) + ",r=40]";
+    auto sel = "@e[type=gloamingforest:raven,x=" + std::to_string(origin.x) + ",y=" + std::to_string(origin.y) + ",z=" + std::to_string(origin.z) + ",r=40]";
     auto r   = selftest::runServerCommand("testfor " + sel, area_dim);
     ctx.check(r.successCount >= 1, "ravens spawned next to the monolith (" + r.messages + ")");
     (void)selftest::runServerCommand("kill " + sel, area_dim);
@@ -634,9 +634,9 @@ GF_REGISTER_SELFTEST("minorlandmarks.registered", [](Context& ctx) {
         ctx.check(st::loadPiece(probe) != nullptr, std::string(type) + ": piece factory");
     }
     auto hill = gf::landmark::descriptor(kSmallHill);
-    ctx.check(hill && hill->icon == "twilightforest:small_hollow_hill", "the small hill's map icon");
+    ctx.check(hill && hill->icon == "gloamingforest:small_hollow_hill", "the small hill's map icon");
     auto large = gf::landmark::descriptor(kLargeHill);
-    ctx.check(large && large->extra.value("speleothem_config", std::string{}) == "twilightforest:large_hollow_hill", "the large hill's speleothem config");
+    ctx.check(large && large->extra.value("speleothem_config", std::string{}) == "gloamingforest:large_hollow_hill", "the large hill's speleothem config");
 });
 
 // ---- client acceptance (post-merge BeDD run; not part of the server scenario's checks) ------------------------

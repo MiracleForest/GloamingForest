@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:cube_talisman",
+      "identifier": "gloamingforest:cube_talisman",
       "menu_category": {
         "category": "none"
       }
@@ -14,12 +14,12 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:cube_talisman.name"
+        "value": "item.gloamingforest:cube_talisman.name"
       },
       "minecraft:tags": {
         "tags": [
           "randomium:blacklist",
-          "twilightforest:wip"
+          "gloamingforest:wip"
         ]
       },
       "minecraft:allow_off_hand": true

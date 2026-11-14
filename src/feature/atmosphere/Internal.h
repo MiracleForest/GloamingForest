@@ -12,7 +12,7 @@ class Player;
 namespace gf::feature::atmosphere {
 
 /// The vanilla fallback of one player (PlayerFogPacket): the stack for the player's biome and
-/// height in the Twilight Forest (or empty elsewhere), sent when it changed since the last send.
+/// height in the Gloaming Forest (or empty elsewhere), sent when it changed since the last send.
 /// `biomeOverride` replaces the biome at the player (selftests). Returns true when a packet went out.
 bool updateFog(Player& player, std::optional<std::string> const& biomeOverride = std::nullopt);
 /// The fog stack last sent to a player (nullopt: none sent yet).

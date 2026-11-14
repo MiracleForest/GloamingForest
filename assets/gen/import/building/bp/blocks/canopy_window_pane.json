@@ -2,15 +2,15 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:canopy_window_pane",
+      "identifier": "gloamingforest:canopy_window_pane",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {
@@ -21,16 +21,16 @@
         "explosion_resistance": 1.5
       },
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.canopy_window_pane.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.canopy_window_pane.multipart",
         "bone_visibility": {
-          "part1": "q.block_state('twilightforest:north')",
-          "part2": "!q.block_state('twilightforest:north')",
-          "part3": "q.block_state('twilightforest:south')",
-          "part4": "!q.block_state('twilightforest:south')",
-          "part5": "q.block_state('twilightforest:west')",
-          "part6": "!q.block_state('twilightforest:west')",
-          "part7": "q.block_state('twilightforest:east')",
-          "part8": "!q.block_state('twilightforest:east')"
+          "part1": "q.block_state('gloamingforest:north')",
+          "part2": "!q.block_state('gloamingforest:north')",
+          "part3": "q.block_state('gloamingforest:south')",
+          "part4": "!q.block_state('gloamingforest:south')",
+          "part5": "q.block_state('gloamingforest:west')",
+          "part6": "!q.block_state('gloamingforest:west')",
+          "part7": "q.block_state('gloamingforest:east')",
+          "part8": "!q.block_state('gloamingforest:east')"
         }
       },
       "minecraft:material_instances": {
@@ -38,7 +38,7 @@
           "texture": "tf_block_canopy_window",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_canopy_window": {
+        "t_gloamingforest_block_canopy_window": {
           "texture": "tf_block_canopy_window",
           "render_method": "alpha_test"
         }

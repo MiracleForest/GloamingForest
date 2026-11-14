@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/tent/duo_tent",
+  "id": "gloamingforest:camp/tent/duo_tent",
   "size": [7, 5, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -20,12 +20,12 @@
     [2, 1], [1, 6], [2, 1], [1, 6], [2, 1], [1, 52]
   ],
   "markers": [
-    {"pos":[3,0,5],"marker":"loot","data":{"table":"twilightforest:camp_tent"}},
+    {"pos":[3,0,5],"marker":"loot","data":{"table":"gloamingforest:camp_tent"}},
     {"pos":[2,0,5],"marker":"data","data":{"metadata":"tent_pot@north"}},
     {"pos":[4,0,5],"marker":"data","data":{"metadata":"camp_armor_rack@north"}},
     {"pos":[3,1,4],"marker":"data","data":{"metadata":"painting@north"}}
   ],
   "jigsaw": [
-    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/tent","target":""}
+    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/tent","target":""}
   ]
 }

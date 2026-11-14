@@ -1,12 +1,12 @@
 {
   "remove": [
-    "twilightforest:yeti_helmet",
-    "twilightforest:travellers_goggles",
-    "twilightforest:travellers_vest",
-    "twilightforest:travellers_gloves",
-    "twilightforest:travellers_belt",
-    "twilightforest:travellers_wings",
-    "twilightforest:travellers_boots"
+    "gloamingforest:yeti_helmet",
+    "gloamingforest:travellers_goggles",
+    "gloamingforest:travellers_vest",
+    "gloamingforest:travellers_gloves",
+    "gloamingforest:travellers_belt",
+    "gloamingforest:travellers_wings",
+    "gloamingforest:travellers_boots"
   ],
   "values": []
 }

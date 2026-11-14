@@ -1,25 +1,25 @@
 {
-  "block.twilightforest.door.activate": {
+  "block.gloamingforest.door.activate": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.door.activate",
+    "subtitle": "subtitles.gloamingforest.block.door.activate",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.door.reappear": {
+  "block.gloamingforest.door.reappear": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.door.reappear",
+    "subtitle": "subtitles.gloamingforest.block.door.reappear",
     "sounds": [
       {
         "name": "sounds/random/fizz"
       }
     ]
   },
-  "block.twilightforest.door.vanish": {
+  "block.gloamingforest.door.vanish": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.door.vanish",
+    "subtitle": "subtitles.gloamingforest.block.door.vanish",
     "sounds": [
       {
         "name": "sounds/random/fizz"

@@ -10,12 +10,12 @@
 // src/feature/families/Hoppers.cpp shows the game's hoppers the native container (the data-driven
 // block actor of minecraft:block_entity, F10's backend) of a block that is visible here: by default
 // every block declared chest-like (the inventory contract's Declared::chest, ChestBlock's rules:
-// TF's chests and trapped chests, which tools/families declares); any other block only when a unit
+// upstream's chests and trapped chests, which tools/families declares); any other block only when a unit
 // says so (Java: a Container block entity that is not a chest, such as the skull chest or the
 // keepsake casket), and a unit may hide a chest-like one (Java: not a Container). Blocks whose slots
 // are in block data (no minecraft:block_entity) stay invisible whatever is set here.
 //
-//     gf::families_ext::setHopperVisible("twilightforest:keepsake_casket", true);
+//     gf::families_ext::setHopperVisible("gloamingforest:keepsake_casket", true);
 
 #include <string>
 

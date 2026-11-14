@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "hanging_sign",
+  "key": {
+    "#": {
+      "item": "gloamingforest:stripped_mining_log"
+    },
+    "|": {
+      "item": "minecraft:chain"
+    }
+  },
+  "pattern": [
+    "| |",
+    "###",
+    "###"
+  ],
+  "result": {
+    "count": 6,
+    "id": "gloamingforest:mining_hanging_sign"
+  }
+}

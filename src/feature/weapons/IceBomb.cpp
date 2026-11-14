@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/IceBombItem.java
-//   src/main/java/twilightforest/entity/projectile/IceBomb.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/IceBombItem.java
+//   src/main/java/gloamingforest/entity/projectile/IceBomb.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:ice_bomb throws twilightforest:thrown_ice (also thrown by U27's alpha yeti, by
+// gloamingforest:ice_bomb throws gloamingforest:thrown_ice (also thrown by U27's alpha yeti, by
 // string): a TFThrowable with gravity 0.025 until it lands. On a block it freezes the terrain
 // around (radius 2, then 3 at tick 99) and stays 100 ticks, freezing the living things in
 // +-3 / +-2 / +-3 every 20 ticks; yetis become two blocks of ice.
@@ -72,7 +72,7 @@ void terrainEffect(BlockSource& region, BlockPos const& pos) {
     if (id == "minecraft:water" || id == "minecraft:flowing_water") setId(region, pos, "minecraft:ice");
     if (id == "minecraft:lava" && game::intState(b, "liquid_depth").value_or(0) == 0) setId(region, pos, "minecraft:obsidian");
     if (region.getBlock(pos).isAir() && snowSurvives(region, pos)) setId(region, pos, "minecraft:snow_layer");
-    if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:ice_bomb_replaceables", id)) setId(region, pos, snowSurvives(region, pos) ? "minecraft:snow_layer" : "minecraft:air");
+    if (gf::tags::has(gf::tags::Registry::Block, "gloamingforest:ice_bomb_replaceables", id)) setId(region, pos, snowSurvives(region, pos) ? "minecraft:snow_layer" : "minecraft:air");
     if (id == "minecraft:snow_layer") {
         int h = game::intState(b, "height").value_or(0);
         if (h < 7)
@@ -84,7 +84,7 @@ void terrainEffect(BlockSource& region, BlockPos const& pos) {
 void inflict(Actor& bomb, Actor& entity, int mult) {
     if (freezeImmune(entity)) return;
     float dmg = (freezeHurtsExtra(entity) ? 5.0F : 1.0F) * static_cast<float>(mult);
-    gf::combat::hurt(entity, dmg, "twilightforest:frozen", gf::projectile::ext::owner(bomb), &bomb);
+    gf::combat::hurt(entity, dmg, "gloamingforest:frozen", gf::projectile::ext::owner(bomb), &bomb);
     chillAura(entity, 100 * mult, 0, true);
 }
 
@@ -96,7 +96,7 @@ void hitNearby(Actor& bomb) {
     auto& region = bomb.getDimensionBlockSource();
     for (auto* e : world::actorsIn(region, static_cast<int>(bomb.getDimensionId()), box)) {
         if (!e || e == owner || !isLiving(*e) || !e->isAlive()) continue;
-        if (e->getTypeName() == "twilightforest:yeti") {
+        if (e->getTypeName() == "gloamingforest:yeti") {
             auto p = game::blockPosOf(e->getFeetPos());
             setId(region, p, "minecraft:ice");
             setId(region, BlockPos{p.x, p.y + 1, p.z}, "minecraft:ice");
@@ -133,7 +133,7 @@ void tick(Actor& bomb) {
         auto pos   = bomb.getPosition();
         // makeIceZone, client part: 16 snow_guardian particles in a 3.5 radius
         for (int i = 0; i < 16; ++i)
-            gf::fx::particle(bomb.getDimension(), "twilightforest:snow_guardian",
+            gf::fx::particle(bomb.getDimension(), "gloamingforest:snow_guardian",
                              Vec3{pos.x + (world::diffF(r)) * 3.5F, pos.y + (world::diffF(r)) * 3.5F, pos.z + (world::diffF(r)) * 3.5F});
         if (zone == 99) iceTerrain(bomb.getDimensionBlockSource(), pos, 3);
         if (zone % 20 == 0) hitNearby(bomb);
@@ -145,10 +145,10 @@ void tick(Actor& bomb) {
         }
     } else {
         auto* owner = gf::projectile::ext::owner(bomb);
-        int   n     = owner && owner->getTypeName() == "twilightforest:alpha_yeti" ? 2 : 5;
+        int   n     = owner && owner->getTypeName() == "gloamingforest:alpha_yeti" ? 2 : 5;
         auto  pos   = bomb.getPosition();
         for (int i = 0; i < n; ++i)
-            gf::fx::particle(bomb.getDimension(), "twilightforest:snow_guardian",
+            gf::fx::particle(bomb.getDimension(), "gloamingforest:snow_guardian",
                              Vec3{static_cast<float>(pos.x + 0.5 * (world::diffD(r))), static_cast<float>(pos.y + 0.5 * (world::diffD(r)) + 0.5),
                                   static_cast<float>(pos.z + 0.5 * (world::diffD(r)))});
     }
@@ -164,7 +164,7 @@ void iceTerrain(BlockSource& region, Vec3 const& pos, int range) {
 void registerIceBomb() {
     gf::projectile::registerType(kThrownIce, {.gravity = 0.025F, .drag = 0.99F, .onHitEntity = onHitEntity, .onHitBlock = onHitBlock, .tick = tick});
     gf::item::registerItem(kIceBomb, {.use = [](Player& player, ItemStack& stack) {
-                                          gf::fx::sound(player.getDimension(), "item.twilightforest.ice_bomb.fired", player.getFeetPos(), 0.5F,
+                                          gf::fx::sound(player.getDimension(), "item.gloamingforest.ice_bomb.fired", player.getFeetPos(), 0.5F,
                                                         0.4F / (world::random().nextFloat() * 0.4F + 0.8F));
                                           if (!player.isCreative()) stack.remove(1);
                                           // shootFromRotation(xRot, yRot, -5, 1.25, 1): the pitch offset bends only y

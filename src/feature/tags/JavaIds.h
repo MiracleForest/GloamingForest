@@ -1,7 +1,7 @@
 #pragma once
 
-// Java -> Bedrock ids of the vanilla content TF's data names (F9 owns this table for its data
-// runtimes: tags, data maps and recipes). TF's tag, data map and recipe files are Java data: their
+// Java -> Bedrock ids of the vanilla content upstream's data names (F9 owns this table for its data
+// runtimes: tags, data maps and recipes). upstream's tag, data map and recipe files are Java data: their
 // `minecraft:` ids are Java's (minecraft:dirt_path, minecraft:nether_bricks, minecraft:cobweb,
 // minecraft:zombified_piglin, ...), while the game and every caller of gf::tags / gf::datamaps /
 // gf::recipes use Bedrock ids (minecraft:grass_path, minecraft:nether_brick, minecraft:web,

@@ -17,7 +17,7 @@
 #
 # A room of size n (3, 5, 7, 9) is n x n inside, w = n + 2 outside: floor at y 0, ceiling at y h - 1.
 
-$script:NS = 'twilightforest:lich_tower/'
+$script:NS = 'gloamingforest:lich_tower/'
 
 # Ladder offsets of each size (Tower.cpp ladderPlacements) and their spots: the interior row by the
 # south wall, the ladder facing north (hung on the south wall), never the centre column.
@@ -214,7 +214,7 @@ function Add-RoomCounter($t, [string]$side, [string[]]$labels, [string]$block = 
 }
 
 # A carpet runner across the floor (coronation carpet by default).
-function Add-RoomCarpet($t, [string]$block = 'twilightforest:coronation_carpet', [int]$inset = 1) {
+function Add-RoomCarpet($t, [string]$block = 'gloamingforest:coronation_carpet', [int]$inset = 1) {
     for ($x = 1 + $inset; $x -le $t.N - $inset; $x++) {
         for ($z = 1 + $inset; $z -le $t.N - $inset; $z++) {
             if (Test-RoomFree $t $x 1 $z) { Set-GftBlock $t $x 1 $z $block }
@@ -223,16 +223,16 @@ function Add-RoomCarpet($t, [string]$block = 'twilightforest:coronation_carpet',
 }
 
 # A pillar from the floor to the ceiling.
-function Add-RoomPillar($t, [int]$x, [int]$z, [string]$block = 'twilightforest:twisted_stone_pillar') {
+function Add-RoomPillar($t, [int]$x, [int]$z, [string]$block = 'gloamingforest:twisted_stone_pillar') {
     for ($y = 1; $y -le $t.H - 2; $y++) { Set-RoomBlock $t $x $y $z $block }
 }
 
 # A mezzanine of canopy slabs at height y around the walls (depth cells), with a vanilla ladder up.
-function Add-RoomMezzanine($t, [int]$y, [int]$depth = 1, [string]$rail = 'twilightforest:wrought_iron_fence') {
+function Add-RoomMezzanine($t, [int]$y, [int]$depth = 1, [string]$rail = 'gloamingforest:wrought_iron_fence') {
     for ($x = 1; $x -le $t.N; $x++) {
         for ($z = 1; $z -le $t.N; $z++) {
             $edge = [Math]::Min([Math]::Min($x - 1, ($z - 1)), [Math]::Min($t.N - $x, $t.N - $z))
-            if ($edge -lt $depth) { Set-RoomBlock $t $x $y $z 'twilightforest:canopy_slab' $script:TopSlab }
+            if ($edge -lt $depth) { Set-RoomBlock $t $x $y $z 'gloamingforest:canopy_slab' $script:TopSlab }
             elseif ($edge -eq $depth -and $rail) { Set-RoomBlock $t $x ($y + 1) $z $rail @{ post = 'post' } }
         }
     }

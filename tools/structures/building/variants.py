@@ -1,6 +1,6 @@
-# GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-# U5 (building): TF's random block model variants (the generated blockstates of TF 4.8,
-# src/generated/resources/assets/twilightforest/blockstates/<block>.json) as Bedrock texture
+# GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+# U5 (building): upstream's random block model variants (the generated blockstates of upstream 4.8,
+# src/generated/resources/assets/gloamingforest/blockstates/<block>.json) as Bedrock texture
 # variations:
 #
 #   python tools/structures/building/variants.py           # writes the files below
@@ -20,7 +20,7 @@
 # the face's atlas key, so one variant index means the same model on every face. Faces use Java's
 # default UV frames (FaceBakery), which Bedrock's full block faces share.
 #
-# The derived textures are TF textures turned or mirrored: CC BY-NC-SA 4.0 (tf-derived/SOURCES.json).
+# The derived textures are upstream textures turned or mirrored: CC BY-NC-SA 4.0 (tf-derived/SOURCES.json).
 # The towerwood blocks keep their tint (ColorHandler, client mod) on placed blocks; their block
 # items get an untinted item visual (ColorHandler returns -1 without a position: inventory items are
 # drawn untinted).
@@ -37,10 +37,10 @@ GEN = os.path.join(ROOT, "assets", "gen", "import")
 OUT_TEX = os.path.join(ROOT, "assets", "pack", "rp", "textures", "blocks", "building", "tf-derived")
 TEX_PATH = "textures/blocks/building/tf-derived/"
 OUT_BLOCKS = os.path.join(ROOT, "assets", "pack", "bp", "blocks", "building")
-TF_TEX = "src/main/resources/assets/twilightforest/textures/block/"
-NS = "twilightforest:"
+TF_TEX = "src/main/resources/assets/gloamingforest/textures/block/"
+NS = "gloamingforest:"
 
-# blockstate variants: (texture, x, y, flipped); the textures of TF's models
+# blockstate variants: (texture, x, y, flipped); the textures of upstream's models
 ROT10 = [(0, 0), (0, 90), (0, 180), (90, 0), (90, 90), (90, 180), (180, 0), (180, 90), (180, 180), (270, 270)]
 VARIANTS = {
     "towerwood": [("towerwood", 0, 0, False), ("towerwood", 0, 0, True)],
@@ -209,7 +209,7 @@ def apply(img, t):
 
 def source_png(tex):
     for unit in sorted(os.listdir(GEN)):
-        p = os.path.join(GEN, unit, "rp", "textures", "twilightforest", "block", tex + ".png")
+        p = os.path.join(GEN, unit, "rp", "textures", "gloamingforest", "block", tex + ".png")
         if os.path.exists(p):
             return p
     raise FileNotFoundError(tex)
@@ -234,7 +234,7 @@ def outputs():
     def texture(tex, t):
         name = tex + NAMES[t]
         if not NAMES[t]:
-            return "textures/twilightforest/block/" + tex
+            return "textures/gloamingforest/block/" + tex
         path = os.path.join(OUT_TEX, name + ".png")
         if path not in files:
             img = read_png(source_png(tex))
@@ -264,7 +264,7 @@ def outputs():
             # ColorHandler: no tint without a position (the block item in the inventory, in hand)
             untinted = {k: v for k, v in mats["*"].items() if k != "tint_method"}
             untinted["texture"] = "tf_building_icon_" + block
-            terrain["tf_building_icon_" + block] = {"textures": "textures/twilightforest/block/" + block}
+            terrain["tf_building_icon_" + block] = {"textures": "textures/gloamingforest/block/" + block}
             comps["minecraft:item_visual"] = {
                 "geometry": comps.get("minecraft:geometry", "minecraft:geometry.full_block"),
                 "material_instances": {"*": untinted},

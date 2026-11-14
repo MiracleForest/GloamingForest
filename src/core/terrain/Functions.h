@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/chunkgenerators/FocusedDensityFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/HollowHillFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/SqrtDensityFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TanhHillFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainColumn.java
-//   src/main/java/twilightforest/world/components/layer/BiomeDensitySource.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/chunkgenerators/FocusedDensityFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/HollowHillFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/SqrtDensityFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TanhHillFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainColumn.java
+//   src/main/java/gloamingforest/world/components/layer/BiomeDensitySource.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U2 (terrain): TF's own density function types and the biome terrain blending
+// U2 (terrain): upstream's own density function types and the biome terrain blending
 // (BiomeDensitySource#sampleTerrain), bit-exact with Java's float / double split (pure C++, gf-core;
 // gtested in tests/terrain). The box density (BoxDensityFunction) is F6's
 // core/landmark/Clearance.h (combinedBoxDensity); everything else of the package is here.
@@ -47,7 +47,7 @@ inline constexpr float kPi = 3.1415927F; ///< Mth.PI
 } // namespace jmth
 
 // ---- density function types ---------------------------------------------------------------------------
-/// twilightforest:focused (FocusedDensityFunction), all float.
+/// gloamingforest:focused (FocusedDensityFunction), all float.
 struct Focused {
     float centerX = 0, bottomY = 0, centerZ = 0, radius = 1, nearValue = 0, farValue = 0;
     /// FocusedDensityFunction.fromPos: the block's center.
@@ -57,7 +57,7 @@ struct Focused {
     [[nodiscard]] double maxValue() const { return radius; }
 };
 
-/// twilightforest:hollow_hill (HollowHillFunction), all float; a negative radius bowls the field.
+/// gloamingforest:hollow_hill (HollowHillFunction), all float; a negative radius bowls the field.
 struct HollowHill {
     float centerX = 0, bottomY = 0, centerZ = 0, radius = 1, heightScale = 1;
     [[nodiscard]] static HollowHill fromPos(int x, int y, int z, float radius, float heightScale);
@@ -65,7 +65,7 @@ struct HollowHill {
     [[nodiscard]] double compute(float dX, float dY, float dZ) const;
 };
 
-/// twilightforest:coord_min / coord_max (AbsoluteDifferenceFunction.Min / .Max).
+/// gloamingforest:coord_min / coord_max (AbsoluteDifferenceFunction.Min / .Max).
 struct AbsoluteDifference {
     bool   isMax = false;
     double max = 0, centerX = 0, centerZ = 0;
@@ -91,7 +91,7 @@ struct DensityData {
 };
 
 /// A TerrainColumn's terrain numbers (its depth / scale / weight are constant density functions in
-/// TF's data) and its vertical biome layers.
+/// upstream's data) and its vertical biome layers.
 struct TerrainColumn {
     std::string                   keyBiome;
     double                        depth = 0, scale = 0, weight = 0;

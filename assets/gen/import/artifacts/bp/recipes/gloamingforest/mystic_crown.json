@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:mystic_crown"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["ttt", "t t", "ttt"],
+    "key": {
+      "t": {
+        "item": "gloamingforest:crown_splinter"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:crown_splinter"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mystic_crown"
+    }
+  }
+}

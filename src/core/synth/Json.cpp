@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Contract "synth" (F3): a small JSON reader for patches, tracks and render jobs.
 #include "core/synth/Json.h"
 

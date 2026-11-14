@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:minotaur",
+      "identifier": "gloamingforest:minotaur",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/minotaur"
+        "default": "textures/gloamingforest/entity/minotaur"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.minotaur"

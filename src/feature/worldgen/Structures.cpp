@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFStructures.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFStructures.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -11,7 +11,7 @@
 // FileToIdConverter#listMatchingResources, a TreeMap from MultiPackResourceManager#listResources,
 // whose ResourceLocation#compareTo compares the file path first, then the namespace), so the
 // order is the file paths "worldgen/structure/<path>.json" sorted, then the namespaces. Minecraft
-// 1.21.1's 34 structures and TF 4.8's 21 (src/generated/resources/data/twilightforest/worldgen/
+// 1.21.1's 34 structures and upstream 4.8's 21 (src/generated/resources/data/gloamingforest/worldgen/
 // structure, the registrations of TFStructures#bootstrap) are built in, with the steps of their
 // JSON; any other structure JSON under <mod>/data/<ns>/worldgen/structure is added (and a JSON
 // of a built-in id wins for its step).
@@ -71,29 +71,29 @@ constexpr Builtin kVanilla[] = {
     {"minecraft:village_taiga", DecorationStep::SurfaceStructures},
 };
 
-// TF 4.8: src/generated/resources/data/twilightforest/worldgen/structure/*.json "step"
-constexpr Builtin kTwilight[] = {
-    {"twilightforest:aurora_palace", DecorationStep::SurfaceStructures},
-    {"twilightforest:camp", DecorationStep::SurfaceStructures},
-    {"twilightforest:dark_tower", DecorationStep::SurfaceStructures},
-    {"twilightforest:fallen_trunk", DecorationStep::SurfaceStructures},
-    {"twilightforest:final_castle", DecorationStep::SurfaceStructures},
-    {"twilightforest:giant_house", DecorationStep::TopLayerModification},
-    {"twilightforest:hedge_maze", DecorationStep::SurfaceStructures},
-    {"twilightforest:hollow_tree", DecorationStep::SurfaceStructures},
-    {"twilightforest:hydra_lair", DecorationStep::SurfaceStructures},
-    {"twilightforest:knight_stronghold", DecorationStep::UndergroundStructures},
-    {"twilightforest:labyrinth", DecorationStep::UndergroundStructures},
-    {"twilightforest:large_hollow_hill", DecorationStep::SurfaceStructures},
-    {"twilightforest:lich_tower", DecorationStep::SurfaceStructures},
-    {"twilightforest:medium_hollow_hill", DecorationStep::SurfaceStructures},
-    {"twilightforest:mushroom_tower", DecorationStep::SurfaceStructures},
-    {"twilightforest:naga_courtyard", DecorationStep::SurfaceStructures},
-    {"twilightforest:quest_grove", DecorationStep::SurfaceStructures},
-    {"twilightforest:small_hollow_hill", DecorationStep::SurfaceStructures},
-    {"twilightforest:swamp_hollow_tree", DecorationStep::SurfaceStructures},
-    {"twilightforest:troll_cave", DecorationStep::UndergroundStructures},
-    {"twilightforest:yeti_cave", DecorationStep::SurfaceStructures},
+// upstream 4.8: src/generated/resources/data/gloamingforest/worldgen/structure/*.json "step"
+constexpr Builtin kGloaming[] = {
+    {"gloamingforest:aurora_palace", DecorationStep::SurfaceStructures},
+    {"gloamingforest:camp", DecorationStep::SurfaceStructures},
+    {"gloamingforest:dark_tower", DecorationStep::SurfaceStructures},
+    {"gloamingforest:fallen_trunk", DecorationStep::SurfaceStructures},
+    {"gloamingforest:final_castle", DecorationStep::SurfaceStructures},
+    {"gloamingforest:giant_house", DecorationStep::TopLayerModification},
+    {"gloamingforest:hedge_maze", DecorationStep::SurfaceStructures},
+    {"gloamingforest:hollow_tree", DecorationStep::SurfaceStructures},
+    {"gloamingforest:hydra_lair", DecorationStep::SurfaceStructures},
+    {"gloamingforest:knight_stronghold", DecorationStep::UndergroundStructures},
+    {"gloamingforest:labyrinth", DecorationStep::UndergroundStructures},
+    {"gloamingforest:large_hollow_hill", DecorationStep::SurfaceStructures},
+    {"gloamingforest:lich_tower", DecorationStep::SurfaceStructures},
+    {"gloamingforest:medium_hollow_hill", DecorationStep::SurfaceStructures},
+    {"gloamingforest:mushroom_tower", DecorationStep::SurfaceStructures},
+    {"gloamingforest:naga_courtyard", DecorationStep::SurfaceStructures},
+    {"gloamingforest:quest_grove", DecorationStep::SurfaceStructures},
+    {"gloamingforest:small_hollow_hill", DecorationStep::SurfaceStructures},
+    {"gloamingforest:swamp_hollow_tree", DecorationStep::SurfaceStructures},
+    {"gloamingforest:troll_cave", DecorationStep::UndergroundStructures},
+    {"gloamingforest:yeti_cave", DecorationStep::SurfaceStructures},
 };
 
 /// GenerationStep.Decoration#getSerializedName -> ordinal (-1: unknown).
@@ -130,7 +130,7 @@ std::shared_ptr<Registry const> registry() {
     if (cached && cached->dataGeneration == data.generation) return cached;
     std::map<std::string, int> all; // id -> step
     for (auto const& b : kVanilla) all[b.id] = static_cast<int>(b.step);
-    for (auto const& b : kTwilight) all[b.id] = static_cast<int>(b.step);
+    for (auto const& b : kGloaming) all[b.id] = static_cast<int>(b.step);
     for (auto const& [id, json] : data.structures) {
         int step = stepOf(json.value("step", std::string()));
         if (step < 0) {

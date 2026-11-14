@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:cracked_underbrick",
+      "identifier": "gloamingforest:cracked_underbrick",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {

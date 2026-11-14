@@ -2,32 +2,32 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:lower_goblin_knight",
+      "identifier": "gloamingforest:lower_goblin_knight",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/doublegoblin"
+        "default": "textures/gloamingforest/entity/doublegoblin"
       },
       "geometry": {
-        "default": "geometry.twilightforest.lower_goblin_knight"
+        "default": "geometry.gloamingforest.lower_goblin_knight"
       },
       "render_controllers": [
-        "controller.render.twilightforest.lower_goblin_knight"
+        "controller.render.gloamingforest.lower_goblin_knight"
       ],
       "animations": {
-        "base": "animation.twilightforest.lower_goblin_knight.base",
-        "unridden": "animation.twilightforest.lower_goblin_knight.unridden",
-        "unarmored": "animation.twilightforest.lower_goblin_knight.unarmored"
+        "base": "animation.gloamingforest.lower_goblin_knight.base",
+        "unridden": "animation.gloamingforest.lower_goblin_knight.unridden",
+        "unarmored": "animation.gloamingforest.lower_goblin_knight.unarmored"
       },
       "scripts": {
         "animate": [
           "base",
           {
-            "unridden": "!q.property('twilightforest:ridden')"
+            "unridden": "!q.property('gloamingforest:ridden')"
           },
           {
-            "unarmored": "!q.property('twilightforest:armor') && !q.property('twilightforest:ridden')"
+            "unarmored": "!q.property('gloamingforest:armor') && !q.property('gloamingforest:ridden')"
           }
         ]
       },

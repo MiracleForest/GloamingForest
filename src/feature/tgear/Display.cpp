@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGogglesItem.java
-//   src/main/java/twilightforest/components/item/ItemDisplayContents.java
-//   src/main/java/twilightforest/network/CycleMapSlotPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGogglesItem.java
+//   src/main/java/gloamingforest/components/item/ItemDisplayContents.java
+//   src/main/java/gloamingforest/network/CycleMapSlotPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -131,7 +131,7 @@ bool cycleMapSlot(Player& player) {
     setDisplay(head, *d);
     player.setArmor(SharedTypes::Legacy::ArmorSlot::Head, head);
     player.sendInventory(false);
-    char const* sound = newIndex == -1 ? "item.twilightforest.travellers_gear.cycle_maps_empty" : "item.twilightforest.travellers_gear.cycle_maps";
+    char const* sound = newIndex == -1 ? "item.gloamingforest.travellers_gear.cycle_maps_empty" : "item.gloamingforest.travellers_gear.cycle_maps";
     fx::soundTo(player, sound, 1.f, 1.f);
     lastCycle() = sound;
     log().info("tgear: {} cycled the item display map to {}", player.getRealName(), newIndex);
@@ -200,11 +200,11 @@ void tickDisplayMap(Player& player) {
                 if (auto packet = mapItem.getUpdatePacket(map, player.getLevel(), player)) packet->sendTo(player);
             }
         } else if (auto const* b = gf::item::internal::behaviourOf(id); b && b->inventoryTick) {
-            // TF's own maps (magic, maze, ore: MapItem subclasses, another unit's registered items):
+            // upstream's own maps (magic, maze, ore: MapItem subclasses, another unit's registered items):
             // their inventory tick as the selected item, the wearer carrying it
             b->inventoryTick(map, player, -1, true);
         }
-        // whatever the tick wrote to the stack (map data, TF's map state) is kept in the display: TF's
+        // whatever the tick wrote to the stack (map data, upstream's map state) is kept in the display: upstream's
         // maps at once, a vanilla map's own data at most once a second (the cached stack keeps it between)
         bool vanilla = id == "minecraft:filled_map";
         if (!vanilla || player.getLevel().getCurrentTick().tickID % 20 == 0) {
@@ -426,12 +426,12 @@ void openDisplayForm(Player& player) {
                                setDisplay(g, *dd);
                                p.setSelectedItem(g);
                                p.sendInventory(false);
-                               fx::soundTo(p, now == -1 ? "item.twilightforest.travellers_gear.cycle_maps_empty" : "item.twilightforest.travellers_gear.cycle_maps", 1.f, 1.f);
+                               fx::soundTo(p, now == -1 ? "item.gloamingforest.travellers_gear.cycle_maps_empty" : "item.gloamingforest.travellers_gear.cycle_maps", 1.f, 1.f);
                            }});
     std::string body;
     for (int i = 0; i < core::tgear::kDisplaySlots; ++i)
         if (!d->items[i].is_null()) body += "- " + items::displayName(items::fromJson(d->items[i])) + (i == d->chosenMapSlot ? " *" : "") + "\n";
-    if (body.empty()) body = tr("travellers_gear.modifier.twilightforest.item_display.description", "Right-click items on the Goggles to add displays");
+    if (body.empty()) body = tr("travellers_gear.modifier.gloamingforest.item_display.description", "Right-click items on the Goggles to add displays");
     ui::form(player, modifierName(ids::kItemDisplay), body, std::move(buttons));
 }
 

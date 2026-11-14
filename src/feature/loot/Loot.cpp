@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFLoot.java
-//   src/main/java/twilightforest/loot/conditions/ModExistsCondition.java
-//   src/main/java/twilightforest/loot/TFLootTables.java (the container / entity drops use)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFLoot.java
+//   src/main/java/gloamingforest/loot/conditions/ModExistsCondition.java
+//   src/main/java/gloamingforest/loot/TFLootTables.java (the container / entity drops use)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Contract "loot" (F10, rule R5): tables, rolls, the global modifiers, containers and drops.
 //
-// - Tables are the Java data pack files <mod>/data/<ns>/loot_table/<path>.json (F1 imports TF's
+// - Tables are the Java data pack files <mod>/data/<ns>/loot_table/<path>.json (F1 imports upstream's
 //   634; units' own data lands there too), parsed once per world; LootEval.cpp interprets them.
 // - roll(): a seeded LootContext uses Java's LegacyRandomSource (RandomSource.create(seed)) like
 //   LootTable#fill; seed 0 is random. Global modifiers (NeoForge IGlobalLootModifier) run after
@@ -19,19 +19,19 @@
 //   emptied by a hopper or broken, and one RandomizableBlockActorContainerBase#unPackLootTable
 //   hook rolls the Java table into it with LootTable#fill's slot spreading. Custom container
 //   blocks get it through gf::inventory's setLootTable.
-// - Entity drops: a mob that dies rolls <ns>:entities/<path> when that Java table exists (TF's
+// - Entity drops: a mob that dies rolls <ns>:entities/<path> when that Java table exists (upstream's
 //   entities; vanilla mobs keep Bedrock's drops) and drops it in the death tick (Java's
 //   LivingEntity#dropFromLootTable, the dead mob in the context); the onEntityDrops handlers then
 //   see those stacks plus every item the game itself spawned for the death (Bedrock's loot of
 //   vanilla mobs, equipment; Java's captured LivingDropsEvent list) and may change them: changed
 //   drops replace the item entities. Bedrock spawns a mob's own loot right after `die` returns, so
 //   only this merge waits for the next tick.
-// - Block drops: blocks of the twilightforest namespace drop from <ns>:blocks/<path> (survives
-//   explosion, silk touch, fortune, shears ...), and nothing without that table (TF's
+// - Block drops: blocks of the gloamingforest namespace drop from <ns>:blocks/<path> (survives
+//   explosion, silk touch, fortune, shears ...), and nothing without that table (upstream's
 //   noLootTable() blocks); other blocks keep Bedrock's drops, run through the global modifiers
-//   (TF's fiery pickaxe smelting, giant pickaxe grouping) when any is registered. Bedrock's silk
+//   (upstream's fiery pickaxe smelting, giant pickaxe grouping) when any is registered. Bedrock's silk
 //   touch break pops the block itself without BlockType::spawnResources: a Block::playerDestroy
-//   hook suppresses those items for TF blocks and rolls the Java table instead.
+//   hook suppresses those items for upstream blocks and rolls the Java table instead.
 
 #include "feature/loot/Loot.h"
 
@@ -323,7 +323,7 @@ bool readAdjuster() {
         }
         if (v.is_number_integer()) return v.get<int>() == 1 || v.get<int>() == 3;
     }
-    return false; // TF's default NONE
+    return false; // upstream's default NONE
 }
 } // namespace
 
@@ -455,7 +455,7 @@ bool isVanillaLootContainer(BlockActor const& actor) {
     case BlockActorType::ShulkerBox:
     case BlockActorType::Dispenser:
     case BlockActorType::Dropper:
-    case BlockActorType::DecoratedPot: return true; // DecoratedPotBlockEntity is a RandomizableContainer (TF's camp pots)
+    case BlockActorType::DecoratedPot: return true; // DecoratedPotBlockEntity is a RandomizableContainer (upstream's camp pots)
     default: return false;
     }
 }
@@ -484,7 +484,7 @@ Block const* facingBlock(std::string const& blockId, int facing) {
         if (auto const* b = game::blockWithStates(blockId, {{"facing_direction", facing}})) return b;
         static constexpr int direction[] = {0, 0, 2, 0, 1, 3}; // Bedrock direction: 0 S, 1 W, 2 N, 3 E
         if (auto const* b = game::blockWithStates(blockId, {{"direction", direction[facing]}})) return b;
-        if (auto const* b = game::blockWithStates(blockId, {{"twilightforest:facing", names[facing]}})) return b;
+        if (auto const* b = game::blockWithStates(blockId, {{"gloamingforest:facing", names[facing]}})) return b;
     }
     return game::blockWith(blockId);
 }
@@ -691,7 +691,7 @@ void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t kille
     }
     auto const& type    = dead.getTypeName();
     auto        tableId = tableIdFor(type, "entities");
-    // TF's entities drop from their Java table (doMobLoot off: none, Java's dropAllDeathLoot)
+    // upstream's entities drop from their Java table (doMobLoot off: none, Java's dropAllDeathLoot)
     bool own = type.rfind("minecraft:", 0) != 0 && table(tableId) != nullptr && gameRule(GameRules::GameRulesIndex::DoMobLoot, true);
     if (!own && !anyHandler) return;
     auto level  = ll::service::getLevel();
@@ -735,7 +735,7 @@ std::size_t pendingDeathCount() { return pendingDeaths().size(); }
 namespace gf::loot {
 namespace {
 
-/// A TF block broken by a player with a silk touch tool (Block::playerDestroy): Bedrock's silk touch
+/// An upstream block broken by a player with a silk touch tool (Block::playerDestroy): Bedrock's silk touch
 /// path pops the block itself without spawnResources, so its items are suppressed and the Java
 /// table rolls instead.
 struct SilkBreak {
@@ -745,10 +745,10 @@ struct SilkBreak {
 };
 thread_local SilkBreak* tSilkBreak = nullptr;
 
-/// Rolls a TF block's Java table and pops the stacks; a block without a table drops nothing.
+/// Rolls an upstream block's Java table and pops the stacks; a block without a table drops nothing.
 void dropTfBlock(BlockSource& region, BlockPos const& pos, Block const& block, std::string const& tableId, ItemStack const* tool,
                  Actor const* actor, std::optional<float> radius) {
-    if (!table(tableId)) return; // TF's noLootTable(): nothing (never Bedrock's own drops)
+    if (!table(tableId)) return; // upstream's noLootTable(): nothing (never Bedrock's own drops)
     LootContext ctx;
     ctx.region     = &region;
     ctx.origin     = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
@@ -799,8 +799,8 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     using namespace gf::loot;
     auto const& id = getTypeName();
-    bool        tf = id.rfind("twilightforest:", 0) == 0;
-    // vanilla blocks go through the global modifiers only when they are mined with a tool (TF's
+    bool        tf = id.rfind("gloamingforest:", 0) == 0;
+    // vanilla blocks go through the global modifiers only when they are mined with a tool (upstream's
     // modifiers are tool effects) and keep no block actor data (shulker boxes, banners, beds keep
     // the game's own drops)
     bool modifiable = !tf && hasGlobalModifiers() && !static_cast<ItemStack const&>(dropsContext.mUsedItem).isNull()
@@ -818,7 +818,7 @@ LL_TYPE_INSTANCE_HOOK(
     std::optional<float> radius;
     if (dropsContext.mCause == ResourceDropsCause::Explosion && dropsContext.mExplosionRadius > 0) radius = dropsContext.mExplosionRadius;
     auto const* tool = &static_cast<ItemStack const&>(dropsContext.mUsedItem);
-    if (tf) return dropTfBlock(region, pos, block, std::string("twilightforest:blocks/") + id.substr(15), tool, actorContext, radius);
+    if (tf) return dropTfBlock(region, pos, block, std::string("gloamingforest:blocks/") + id.substr(15), tool, actorContext, radius);
     // vanilla blocks: Bedrock's drops through the global modifiers
     LootContext ctx;
     ctx.region     = &region;
@@ -832,8 +832,8 @@ LL_TYPE_INSTANCE_HOOK(
     for (auto const& s : drops) BlockType::popResource(region, pos, s, actorContext);
 }
 
-// A player's break of a TF block with a silk touch tool: Bedrock pops the block itself (no
-// spawnResources); those items are suppressed and the Java table rolls (TF's thorns, experiment 115
+// A player's break of an upstream block with a silk touch tool: Bedrock pops the block itself (no
+// spawnResources); those items are suppressed and the Java table rolls (upstream's thorns, experiment 115
 // and stronghold shield drop nothing, others what their table gives under silk touch).
 LL_TYPE_INSTANCE_HOOK(
     LootPlayerDestroyHook,
@@ -846,7 +846,7 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     using namespace gf::loot;
     auto const& id = getTypeName();
-    if (player.isClientSide() || id.rfind("twilightforest:", 0) != 0) return origin(player, pos);
+    if (player.isClientSide() || id.rfind("gloamingforest:", 0) != 0) return origin(player, pos);
     ItemStack const tool = player.getCarriedItem(); // a copy: the break may wear the tool out
     if (tool.isNull() || EnchantUtils::getEnchantLevel(Enchant::Type::SilkTouch, tool) <= 0) return origin(player, pos);
     SilkBreak  silk;
@@ -859,7 +859,7 @@ LL_TYPE_INSTANCE_HOOK(
     origin(player, pos);
     tSilkBreak = previous;
     if (silk.reached || silk.suppressed == 0) return; // the table rolled, or the game popped nothing (creative)
-    dropTfBlock(player.getDimensionBlockSource(), pos, *this, std::string("twilightforest:blocks/") + id.substr(15), &tool, &player, std::nullopt);
+    dropTfBlock(player.getDimensionBlockSource(), pos, *this, std::string("gloamingforest:blocks/") + id.substr(15), &tool, &player, std::nullopt);
 }
 
 // Item entities spawned while a mob dies (gf::loot::DropCapture, the death pipeline): the game's
@@ -876,7 +876,7 @@ LL_TYPE_INSTANCE_HOOK(
     Vec3 const&      pos,
     int              throwTime
 ) {
-    // Bedrock's silk touch pop of a TF block (LootPlayerDestroyHook): the Java table rolls instead
+    // Bedrock's silk touch pop of an upstream block (LootPlayerDestroyHook): the Java table rolls instead
     if (gf::loot::tSilkBreak && gf::loot::tSilkBreak->inside == 0) {
         ++gf::loot::tSilkBreak->suppressed;
         return nullptr;
@@ -942,10 +942,10 @@ public:
                     return ia::Result::Pass;
                 }, ia::priority::High);
             }
-            // ModExistsCondition: GloamingForest is TF and Minecraft (docs/spec deviations)
-            registerCondition("twilightforest:mod_exists", [](LootContext const&, Json const& config, RandomSource&) {
+            // ModExistsCondition: GloamingForest is upstream and Minecraft (docs/spec deviations)
+            registerCondition("gloamingforest:mod_exists", [](LootContext const&, Json const& config, RandomSource&) {
                 auto mod = config.value("mod_id", std::string{});
-                return mod == "twilightforest" || mod == "minecraft";
+                return mod == "gloamingforest" || mod == "minecraft";
             });
         }
     }

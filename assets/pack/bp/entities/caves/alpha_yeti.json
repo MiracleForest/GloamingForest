@@ -2,17 +2,17 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:alpha_yeti",
+      "identifier": "gloamingforest:alpha_yeti",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:rampaging": { "type": "bool", "default": false, "client_sync": true },
-        "twilightforest:tired": { "type": "bool", "default": false, "client_sync": true }
+        "gloamingforest:rampaging": { "type": "bool", "default": false, "client_sync": true },
+        "gloamingforest:tired": { "type": "bool", "default": false, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "alpha_yeti", "boss", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "alpha_yeti", "boss", "monster", "mob"] },
       "minecraft:collision_box": { "width": 3.8, "height": 5.0 },
       "minecraft:health": { "value": 200, "max": 200 },
       "minecraft:movement": { "value": 0.38 },
@@ -42,8 +42,8 @@
       "minecraft:conditional_bandwidth_optimization": {}
     },
     "events": {
-      "gf:show_rampage": { "set_property": { "twilightforest:rampaging": true } },
-      "gf:show_tired": { "set_property": { "twilightforest:tired": true } }
+      "gf:show_rampage": { "set_property": { "gloamingforest:rampaging": true } },
+      "gf:show_tired": { "set_property": { "gloamingforest:tired": true } }
     }
   }
 }

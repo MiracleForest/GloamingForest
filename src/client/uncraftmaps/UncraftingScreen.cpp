@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/UncraftingScreen.java
-//   src/main/java/twilightforest/network/SyncUncraftingTableConfigPacket.java (client handler)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/UncraftingScreen.java
+//   src/main/java/gloamingforest/network/SyncUncraftingTableConfigPacket.java (client handler)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The uncrafting table's screen with the client mod ("uncraftmaps.uncrafting"): TF's
+// The uncrafting table's screen with the client mod ("uncraftmaps.uncrafting"): upstream's
 // guigoblintinkering.png frame (176 x 166) drawn 1:1, the slots at Java's positions, the ghost
 // ingredients of the uncrafting matrix in the assembly slots under their grey (or red: broken)
 // overlay, the two costs, the six cycle buttons from the texture, the mouse wheel regions, the
@@ -43,7 +43,7 @@ using screen::Button;
 using screen::Json;
 using screen::Rect;
 
-constexpr char  kTexture[]  = "textures/twilightforest/gui/guigoblintinkering";
+constexpr char  kTexture[]  = "textures/gloamingforest/gui/guigoblintinkering";
 constexpr char  kScreen[]   = "uncraftmaps.uncrafting";
 constexpr char  kGui[]      = "uncraftmaps.gui";
 constexpr char  kSync[]     = "uncraftmaps.sync_config";
@@ -135,12 +135,12 @@ public:
     void init() override {
         add<WheelArea>([this] { return !mData.value("disableIngredientSwitching", false); });
         auto tip = [](char const* key, char const* fallback) { return ctr(key, fallback); };
-        mButtons.push_back(&add<CycleButton>(Rect{40, 22, 14, 9}, 176.f, 0.f, true, 0, tip("container.twilightforest.uncrafting_table.cycle_next_uncraft", "Next Uncrafting Recipe")));
-        mButtons.push_back(&add<CycleButton>(Rect{40, 55, 14, 9}, 176.f, 0.f, false, 1, tip("container.twilightforest.uncrafting_table.cycle_back_uncraft", "Previous Uncrafting Recipe")));
-        mButtons.push_back(&add<CycleButton>(Rect{27, 56, 8, 6}, 176.f, 41.f, true, 2, tip("container.twilightforest.uncrafting_table.cycle_next_ingredient", "Next Uncrafting Ingredients")));
-        mButtons.push_back(&add<CycleButton>(Rect{27, 63, 8, 6}, 176.f, 41.f, false, 3, tip("container.twilightforest.uncrafting_table.cycle_back_ingredient", "Previous Uncrafting Ingredients")));
-        mButtons.push_back(&add<CycleButton>(Rect{121, 22, 14, 9}, 176.f, 0.f, true, 4, tip("container.twilightforest.uncrafting_table.cycle_next_recipe", "Next Crafting Recipe")));
-        mButtons.push_back(&add<CycleButton>(Rect{121, 55, 14, 9}, 176.f, 0.f, false, 5, tip("container.twilightforest.uncrafting_table.cycle_back_recipe", "Previous Crafting Recipe")));
+        mButtons.push_back(&add<CycleButton>(Rect{40, 22, 14, 9}, 176.f, 0.f, true, 0, tip("container.gloamingforest.uncrafting_table.cycle_next_uncraft", "Next Uncrafting Recipe")));
+        mButtons.push_back(&add<CycleButton>(Rect{40, 55, 14, 9}, 176.f, 0.f, false, 1, tip("container.gloamingforest.uncrafting_table.cycle_back_uncraft", "Previous Uncrafting Recipe")));
+        mButtons.push_back(&add<CycleButton>(Rect{27, 56, 8, 6}, 176.f, 41.f, true, 2, tip("container.gloamingforest.uncrafting_table.cycle_next_ingredient", "Next Uncrafting Ingredients")));
+        mButtons.push_back(&add<CycleButton>(Rect{27, 63, 8, 6}, 176.f, 41.f, false, 3, tip("container.gloamingforest.uncrafting_table.cycle_back_ingredient", "Previous Uncrafting Ingredients")));
+        mButtons.push_back(&add<CycleButton>(Rect{121, 22, 14, 9}, 176.f, 0.f, true, 4, tip("container.gloamingforest.uncrafting_table.cycle_next_recipe", "Next Crafting Recipe")));
+        mButtons.push_back(&add<CycleButton>(Rect{121, 55, 14, 9}, 176.f, 0.f, false, 5, tip("container.gloamingforest.uncrafting_table.cycle_back_recipe", "Previous Crafting Recipe")));
         onData(mData);
         log().info("client screen: uncraftmaps.uncrafting opened");
     }
@@ -206,15 +206,15 @@ public:
             c.fill({x, y, 16, 16}, kHover);
         }
         // renderLabels
-        c.text(6, 6, mData.value("title", ctr("container.twilightforest.uncrafting_table", "Uncrafting Table")), kLabel, Align::Left, false);
+        c.text(6, 6, mData.value("title", ctr("container.gloamingforest.uncrafting_table", "Uncrafting Table")), kLabel, Align::Left, false);
         if (mData.value("disableUncrafting", false))
-            c.text(6, 72, ctr("container.twilightforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config"), kDarkRed, Align::Left, false);
+            c.text(6, 72, ctr("container.gloamingforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config"), kDarkRed, Align::Left, false);
         else c.text(7, 72, ctr("container.inventory", "Inventory"), kLabel, Align::Left, false);
         // renderTooltip (the cursor stack hides them)
         if (cursor && !cursor->isNull()) return;
         std::vector<std::string> tip;
         if (hovered == 0 && mInput && mData.value("inputBanned", false)) {
-            tip = {"§c" + ctr("container.twilightforest.uncrafting_table.disabled_item", "Uncrafting this item is disabled.")};
+            tip = {"§c" + ctr("container.gloamingforest.uncrafting_table.disabled_item", "Uncrafting this item is disabled.")};
         } else if (hovered >= 11 && hovered < 20 && !mAssembly[static_cast<std::size_t>(hovered - 11)] && mGhost[static_cast<std::size_t>(hovered - 11)]) {
             tip = ui::hoverLines(*mGhost[static_cast<std::size_t>(hovered - 11)]);
         } else if (hovered >= 0) {

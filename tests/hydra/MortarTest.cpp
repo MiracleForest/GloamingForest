@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of the hydra mortar's hit boxes (src/core/hydra/Mortar.h).
 
 #include "core/hydra/Mortar.h"

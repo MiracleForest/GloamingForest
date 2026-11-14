@@ -1,0 +1,45 @@
+{
+  "parent": "gloamingforest:hill1",
+  "criteria": {
+    "redcap": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:redcap_sapper",
+              "location": {
+                "structures": "gloamingforest:medium_hollow_hill"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.hill2.desc",
+      "with": [
+        {
+          "translate": "entity.gloamingforest.redcap_sapper"
+        }
+      ]
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:ironwood_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.hill2"
+    }
+  },
+  "requirements": [
+    [
+      "redcap"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

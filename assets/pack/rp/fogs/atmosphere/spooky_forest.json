@@ -2,7 +2,7 @@
   "format_version": "1.16.100",
   "minecraft:fog_settings": {
     "description": {
-      "identifier": "twilightforest:spooky_forest"
+      "identifier": "gloamingforest:spooky_forest"
     },
     "distance": {
       "air": {

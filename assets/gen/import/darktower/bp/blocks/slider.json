@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:slider",
+      "identifier": "gloamingforest:slider",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"],
-        "twilightforest:delay": [0, 1, 2, 3]
+        "gloamingforest:axis": ["y", "x", "z"],
+        "gloamingforest:delay": [0, 1, 2, 3]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
         "explosion_resistance": 50
       },
       "minecraft:map_color": "#976d4d",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_slider_v",
@@ -46,9 +46,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 0",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -77,9 +77,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 1",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -108,9 +108,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 2",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -139,9 +139,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 3",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -170,9 +170,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 0",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_v",
@@ -201,9 +201,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 1",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_v",
@@ -232,9 +232,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 2",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_v",
@@ -263,9 +263,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 3",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_v",
@@ -294,9 +294,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 0",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -325,9 +325,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 1",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -356,9 +356,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 2",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",
@@ -387,9 +387,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 3",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_slider_h_90",

@@ -2,22 +2,22 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:mist_wolf",
+      "identifier": "gloamingforest:mist_wolf",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:aggressive": {
+        "gloamingforest:aggressive": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:has_target": {
+        "gloamingforest:has_target": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:brightness": {
+        "gloamingforest:brightness": {
           "type": "int",
           "range": [
             0,
@@ -31,7 +31,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "mist_wolf",
           "tf_hostile_wolf",
           "monster",

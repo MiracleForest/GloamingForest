@@ -1,6 +1,6 @@
 {
   "tf_item_magic_beans": {
-    "textures": "textures/twilightforest/item/magic_beans"
+    "textures": "textures/gloamingforest/item/magic_beans"
   },
   "tf_vanilla_item_stone_pickaxe": {
     "textures": "textures/items/stone_pickaxe"

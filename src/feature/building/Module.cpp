@@ -36,7 +36,7 @@ void refreshBlockTypes(char const* why) {
 namespace {
 
 struct BuildingModule {
-    // TF's banner patterns join Bedrock's registry after the vanilla ones, before a world exists, so
+    // upstream's banner patterns join Bedrock's registry after the vanilla ones, before a world exists, so
     // both builds give them the same ids (vanilla count + 0..8). BDS: at load (the vanilla registry is
     // built). Client: LeviLamina loads mods before the game's static initialisers, so the registry is
     // still empty at load and the patterns join at install (game start, no world yet). Banners carry
@@ -48,7 +48,7 @@ struct BuildingModule {
     void install() {
         if (!bannerPatternsRegistered()) {
             int n = registerBannerPatterns();
-            if (n < 0) log().error("building: the banner pattern registry is empty at install: TF patterns not registered");
+            if (n < 0) log().error("building: the banner pattern registry is empty at install: upstream patterns not registered");
             else log().info("building: {} banner patterns registered", n);
         }
         logBannerIds();
@@ -73,7 +73,7 @@ struct BuildingModule {
                 static std::uint32_t   tick = 0;
                 static BlockType const* last = nullptr;
                 if (tick++ % 20 != 0) return;
-                auto type = BlockType::tryGetFromRegistry(HashedString("twilightforest:rope"));
+                auto type = BlockType::tryGetFromRegistry(HashedString("gloamingforest:rope"));
                 BlockType const* now = type ? &*type : nullptr;
                 // a new registry may reuse the old type's address: its missing Scaffolding bit
                 // tells it apart

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:tower_key",
+      "identifier": "gloamingforest:tower_key",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:tower_key.name"
+        "value": "item.gloamingforest:tower_key.name"
       },
       "minecraft:tags": {
-        "tags": ["twilightforest:kept_on_death"]
+        "tags": ["gloamingforest:kept_on_death"]
       }
     }
   }

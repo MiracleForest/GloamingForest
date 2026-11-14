@@ -1,0 +1,26 @@
+{
+  "values": [
+    "gloamingforest:clearing",
+    "gloamingforest:dense_forest",
+    "gloamingforest:dense_mushroom_forest",
+    "gloamingforest:firefly_forest",
+    "gloamingforest:forest",
+    "gloamingforest:mushroom_forest",
+    "gloamingforest:oak_savannah",
+    "gloamingforest:spooky_forest",
+    "gloamingforest:enchanted_forest",
+    "gloamingforest:dense_mushroom_forest",
+    "gloamingforest:lake",
+    "gloamingforest:stream",
+    "gloamingforest:underground",
+    "gloamingforest:swamp",
+    "gloamingforest:fire_swamp",
+    "gloamingforest:dark_forest",
+    "gloamingforest:dark_forest_center",
+    "gloamingforest:snowy_forest",
+    "gloamingforest:glacier",
+    "gloamingforest:highlands",
+    "gloamingforest:thornlands",
+    "gloamingforest:final_plateau"
+  ]
+}

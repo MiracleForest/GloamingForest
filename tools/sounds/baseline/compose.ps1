@@ -3,10 +3,10 @@
   Contract "synth" (F3): composes the baseline music tracks tools/sounds/baseline/music/<track>.json.
 
 .DESCRIPTION
-  TF's nine tracks (music discs and the Twilight Forest music event) are All Rights Reserved and
+  upstream's nine tracks (music discs and the Gloaming Forest music event) are All Rights Reserved and
   never opened (rule R10). This script writes original placeholder compositions for the tracker
-  (src/core/synth/Sequencer.h) with the TF track lengths (data/twilightforest/jukebox_song,
-  length_in_seconds) so jukeboxes and comparators keep TF's timing. Each track gets its own key,
+  (src/core/synth/Sequencer.h) with the upstream track lengths (data/gloamingforest/jukebox_song,
+  length_in_seconds) so jukeboxes and comparators keep upstream's timing. Each track gets its own key,
   mode, tempo, progression and instruments; melodies come from a seeded walk over chord tones.
   U10 (provisions) composes the real soundtrack in tools/sounds/music/<track>.json, which takes
   precedence over these.
@@ -47,7 +47,7 @@ function Degree([int]$rootMidi, $mode, [int]$deg) {
     return $rootMidi + 12 * $oct + $mode[$i]
 }
 
-# track designs: TF names and lengths, original musical choices
+# track designs: upstream names and lengths, original musical choices
 $tracks = [ordered]@{
     radiance      = @{ length = 123; bpm = 76; key = 62; mode = 'ionian'; prog = 0, 5, 3, 4; progB = 3, 4, 2, 5; lead = 'bell'; arp = 'harp'; pad = 'pad'; drums = $false; seed = 11 }
     steps         = @{ length = 195; bpm = 92; key = 57; mode = 'aeolian'; prog = 0, 6, 5, 4; progB = 3, 0, 4, 4; lead = 'flute'; arp = 'pluck'; pad = 'pad'; drums = $true; seed = 23 }
@@ -149,7 +149,7 @@ foreach ($name in $tracks.Keys) {
         shaker = [ordered]@{ patch = 'music/shaker'; gain = -16 }
     }
     $track = [ordered]@{
-        about       = "Baseline placeholder for TF's '$name' ($($t.length) s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/$name.json."
+        about       = "Baseline placeholder for upstream's '$name' ($($t.length) s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/$name.json."
         rate        = 22050
         quality     = 0.25
         seed        = $t.seed

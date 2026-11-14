@@ -1,7 +1,7 @@
-# U14 (progression): the client side of TF's advancements. Screenshots:
+# U14 (progression): the client side of upstream's advancements. Screenshots:
 #   advancement-tree.png     the advancement screen after the demo grants (root, progress_naga,
-#                            hedge, hill1, twilight_hunter, progress_lich, naga_armors): the client
-#                            mod's native tree laid out by TreeNodePosition (TF's tab, mazestone
+#                            hedge, hill1, gloaming_hunter, progress_lich, naga_armors): the client
+#                            mod's native tree laid out by TreeNodePosition (upstream's tab, mazestone
 #                            background, gold earned frames, grey unearned ones two levels deep,
 #                            the connecting lines; local, remote-mod), the form list on a vanilla
 #                            client (remote-vanilla)
@@ -19,11 +19,11 @@
 #                            U14's synthesized challenge sound (gf.progression.challenge_complete) plays.
 #   challenge-toast-title.png  2.5 s in (client mod): the title's two lines centred in the toast,
 #                            faded in
-#   locked-biome-toast.png   TF's LockedBiomeToast after the 60-step countdown in the dark forest
+#   locked-biome-toast.png   upstream's LockedBiomeToast after the 60-step countdown in the dark forest
 #                            (client mod: lich tower miniature, yellow "Biome Locked!", white "Check
 #                            your advancements"); on a vanilla client the server's toast after the
 #                            same countdown in the swamp (text only)
-# Compare them with TF's advancement screen (vanilla's window with the tab's title at 8,6, TF's
+# Compare them with upstream's advancement screen (vanilla's window with the tab's title at 8,6, upstream's
 # mazestone tab background), Java's AdvancementToast (icon at 8,8, text at 30,7 and 30,18) and
 # LockedBiomeToast (the advancement toast frame, icon at 6,8, text at 25,7 and 25,18).
 #
@@ -66,7 +66,7 @@ try {
         Update-LeviLog
         $cells = @(Get-LeviLog -Since $mark | Select-String -Pattern 'client screen: progression\.advancements cell (\S+) at ([\d.]+) ([\d.]+)')
         $target = $null
-        foreach ($want in @(@('twilightforest:hill1', 'Redcap'), @('twilightforest:progress_merge', 'Hydra'), @('twilightforest:progress_lich', 'Lich'), @('twilightforest:naga_armors', 'Naga'))) {
+        foreach ($want in @(@('gloamingforest:hill1', 'Redcap'), @('gloamingforest:progress_merge', 'Hydra'), @('gloamingforest:progress_lich', 'Lich'), @('gloamingforest:naga_armors', 'Naga'))) {
             $hit = $cells | Where-Object { $_.Matches[0].Groups[1].Value -eq $want[0] } | Select-Object -Last 1
             if ($hit) { $target = @($want[0], $want[1], $hit); break }
         }
@@ -105,7 +105,7 @@ try {
     $mark = Get-LogMark
     Invoke-Checked 'progression.demo_toast' | Out-Null
     if (Test-ClientTrace) {
-        try { Wait-LogLine 'client toast: advancement twilightforest:progress_labyrinth \(goal\)' 20 -Since $mark | Out-Null }
+        try { Wait-LogLine 'client toast: advancement gloamingforest:progress_labyrinth \(goal\)' 20 -Since $mark | Out-Null }
         catch { $failures.Add('the client mod showed no advancement toast') }
     }
     Start-Sleep -Milliseconds 1500
@@ -116,9 +116,9 @@ try {
     $mark = Get-LogMark
     Invoke-Checked 'progression.demo_challenge_toast' | Out-Null
     if (Test-ClientTrace) {
-        try { Wait-LogLine 'client toast: twilightforest:experiment_115_115 drawn in slot \d' 20 -Since $mark | Out-Null }
+        try { Wait-LogLine 'client toast: gloamingforest:experiment_115_115 drawn in slot \d' 20 -Since $mark | Out-Null }
         catch { $failures.Add('the client mod drew no challenge toast') }
-        try { Wait-LogLine 'client toast: challenge sound gf.progression.challenge_complete for twilightforest:experiment_115_115' 10 -Since $mark | Out-Null }
+        try { Wait-LogLine 'client toast: challenge sound gf.progression.challenge_complete for gloamingforest:experiment_115_115' 10 -Since $mark | Out-Null }
         catch { $failures.Add('the challenge toast played no challenge sound') }
         Start-Sleep -Milliseconds 1000
         Save-Screenshot 'challenge-toast' | Out-Null
@@ -139,7 +139,7 @@ try {
         Start-Sleep -Seconds 6
         $mark = Get-LogMark
         Invoke-Checked 'progression.client_locked_toast' | Out-Null
-        try { Wait-LogLine 'client toast: locked biome \(twilightforest:lich_tower_miniature_structure\)' 10 -Since $mark | Out-Null }
+        try { Wait-LogLine 'client toast: locked biome \(gloamingforest:lich_tower_miniature_structure\)' 10 -Since $mark | Out-Null }
         catch { $failures.Add('the client mod showed no locked biome toast') }
         Save-Screenshot 'locked-biome-toast' | Out-Null
     } else {

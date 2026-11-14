@@ -5,7 +5,7 @@
 #   of worldgen.prelaunch.ps1 (magenta sky, grass, water and fog in its client biome file) 3000
 #   blocks east, minecraft:desert (a vanilla biome with its own grass and water colours, painted the
 #   same way) 3000 blocks south;
-# - with F4's dimension: fresh Twilight Forest chunks the generator writes the probe into, and,
+# - with F4's dimension: fresh Gloaming Forest chunks the generator writes the probe into, and,
 #   as the control, fresh chunks it writes minecraft:desert into.
 # At each place a screenshot is taken and worldgen.custom_biome_view logs the biome the server and
 # the client's own level hold under the player: they must be the same.
@@ -96,19 +96,19 @@ if ($script:Mode -eq 'local') {
     if (Get-LeviLog -Since $genMark | Select-String -Pattern 'worldgen generator view: the biome source gives' -Quiet) {
         Start-Sleep -Seconds 12
         Save-Screenshot 'generated_probe' | Out-Null
-        Write-BiomeView 'generated probe (Twilight Forest)' 'gf_test:worldgen_probe'
+        Write-BiomeView 'generated probe (Gloaming Forest)' 'gf_test:worldgen_probe'
         Invoke-Chat '/tag @s add gf_worldgen_gen_desert'
         Start-Sleep -Milliseconds 800
         $g2 = Invoke-SelfTest 'worldgen.generator_view'
         if ($g2.Fail -gt 0) { throw 'worldgen.generator_view (desert) failed' }
         Start-Sleep -Seconds 12
         Save-Screenshot 'generated_desert' | Out-Null
-        Write-BiomeView 'generated desert (Twilight Forest)' 'minecraft:desert'
+        Write-BiomeView 'generated desert (Gloaming Forest)' 'minecraft:desert'
         $gr = Invoke-SelfTest 'worldgen.generator_view_restore'
         if ($gr.Fail -gt 0) { throw 'worldgen.generator_view_restore failed' }
         Start-Sleep -Seconds 5
     } else {
-        Write-Step 'no Twilight Forest dimension (F4): the generator path was not viewed'
+        Write-Step 'no Gloaming Forest dimension (F4): the generator path was not viewed'
     }
     Invoke-Chat '/tag @s remove gf_worldgen_biome_show'
 } else {

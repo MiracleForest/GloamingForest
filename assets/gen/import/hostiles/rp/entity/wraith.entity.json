@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:wraith",
+      "identifier": "gloamingforest:wraith",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/wraith"
+        "default": "textures/gloamingforest/entity/wraith"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.wraith"

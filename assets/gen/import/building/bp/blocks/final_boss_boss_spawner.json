@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:final_boss_boss_spawner",
+      "identifier": "gloamingforest:final_boss_boss_spawner",
       "menu_category": {
         "category": "none"
       }

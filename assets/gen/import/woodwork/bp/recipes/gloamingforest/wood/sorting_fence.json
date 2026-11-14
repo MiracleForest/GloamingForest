@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_fence"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#S#", "#S#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:sorting_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_fence",
+      "count": 3
+    }
+  }
+}

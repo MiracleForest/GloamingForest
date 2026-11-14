@@ -20,16 +20,16 @@ class Mob;
 namespace gf::feature::finalcastle::mobs {
 
 namespace id {
-inline constexpr char Adherent[]      = "twilightforest:adherent";
-inline constexpr char HarbingerCube[] = "twilightforest:harbinger_cube";
-inline constexpr char RovingCube[]    = "twilightforest:roving_cube";
-inline constexpr char PlateauBoss[]   = "twilightforest:plateau_boss";
-inline constexpr char BossSpawner[]   = "twilightforest:final_boss_boss_spawner";
-inline constexpr char NatureBolt[]    = "twilightforest:nature_bolt";
-inline constexpr char FinalCastle[]   = "twilightforest:final_castle";
-inline constexpr char CanopyChest[]   = "twilightforest:canopy_chest";
-inline constexpr char Annihilate[]    = "twilightforest:annihilate";
-/// The helper actors of the WIP texts (not TF content: GloamingForest's helper namespace).
+inline constexpr char Adherent[]      = "gloamingforest:adherent";
+inline constexpr char HarbingerCube[] = "gloamingforest:harbinger_cube";
+inline constexpr char RovingCube[]    = "gloamingforest:roving_cube";
+inline constexpr char PlateauBoss[]   = "gloamingforest:plateau_boss";
+inline constexpr char BossSpawner[]   = "gloamingforest:final_boss_boss_spawner";
+inline constexpr char NatureBolt[]    = "gloamingforest:nature_bolt";
+inline constexpr char FinalCastle[]   = "gloamingforest:final_castle";
+inline constexpr char CanopyChest[]   = "gloamingforest:canopy_chest";
+inline constexpr char Annihilate[]    = "gloamingforest:annihilate";
+/// The helper actors of the WIP texts (not upstream content: GloamingForest's helper namespace).
 inline constexpr char WipText[]  = "gloamingforest:final_castle_text";
 inline constexpr char WipPunch[] = "gloamingforest:final_castle_punch";
 /// The template marker of the gazebo (FinalCastleBossGazeboComponent.INTERACTION_TAG).
@@ -65,7 +65,7 @@ void installWip();
 void queueWip(worldgen::Region& region, BlockPos const& pos);
 /// Spawns the queued carriers whose chunk is loaded now (also run every few ticks).
 void flushWip();
-/// TF's removeCastleTextIfAttacked on the punch carrier `punch`: removes the text carriers inside its
+/// upstream's removeCastleTextIfAttacked on the punch carrier `punch`: removes the text carriers inside its
 /// box, then the punch carrier (deferred to the next tick).
 void punch(Actor& punchCarrier);
 /// Text carriers / punch carriers queued, not yet spawned.

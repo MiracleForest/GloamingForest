@@ -1,12 +1,12 @@
 // Java oracle goldens for the random sources and noises of src/core/{jrand,noise} (F5).
 //
 // tests/golden/rng.json and tests/golden/noise.json are dumped by the Java oracle (F13,
-// tools/oracle) from Minecraft 1.21.1's own classes running TF 4.8 on NeoForge. Every case of both
+// tools/oracle) from Minecraft 1.21.1's own classes running upstream 4.8 on NeoForge. Every case of both
 // files is recomputed here with the C++ implementation and must match exactly: integers equal,
 // doubles with the same bit pattern (the goldens hold Java's shortest round-trip form, which
 // nlohmann reads back exactly), floats widened to double. The density goldens belong to U1 / U2
-// (they need TF's biome-driven density types); only what the vanilla density primitives decide
-// alone is checked here (the constant router entries and the clamp bounds of TF's final density).
+// (they need upstream's biome-driven density types); only what the vanilla density primitives decide
+// alone is checked here (the constant router entries and the clamp bounds of upstream's final density).
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS // std::getenv (GF_GOLDEN_DIR)
 #endif
@@ -539,19 +539,19 @@ TEST(WorldgenOracleGolden, NoiseNormalLegacyNetherBiome) {
 TEST(WorldgenOracleGolden, DensityRouterConstantsAndClampBounds) {
     ASSERT_FALSE(goldenDir().empty()) << "tests/golden not found (set GF_GOLDEN_DIR)";
     fs::path root     = goldenDir().parent_path().parent_path();
-    fs::path imported = root / "assets/gen/import/terrain/data/twilightforest/worldgen";
-    json     settings = readJson(imported / "noise_settings/twilight_noise_gen.json");
-    ASSERT_TRUE(settings.is_object() && settings.contains("noise_router")) << "TF's imported noise settings (" << imported.generic_string() << ")";
+    fs::path imported = root / "assets/gen/import/terrain/data/gloamingforest/worldgen";
+    json     settings = readJson(imported / "noise_settings/gloaming_noise_gen.json");
+    ASSERT_TRUE(settings.is_object() && settings.contains("noise_router")) << "upstream's imported noise settings (" << imported.generic_string() << ")";
     json const& router = settings.at("noise_router");
 
-    // TF's biome-driven terrain (U1 / U2) is not part of this check: its references resolve to 0;
+    // upstream's biome-driven terrain (U1 / U2) is not part of this check: its references resolve to 0;
     // the vanilla noises only need parameters to compile (min / max do not depend on them)
     noise::Density::Resolver res;
     res.density = [&](std::string const& id) -> std::optional<json> {
-        if (id == "twilightforest:raw_biome_terrain" || id == "twilightforest:raw_biome_noise") return json(0.0);
+        if (id == "gloamingforest:raw_biome_terrain" || id == "gloamingforest:raw_biome_noise") return json(0.0);
         auto colon = id.find(':');
         auto file  = imported / "density_function" / (id.substr(colon + 1) + ".json");
-        if (id.compare(0, colon, "twilightforest") != 0 || !fs::exists(file)) return std::nullopt;
+        if (id.compare(0, colon, "gloamingforest") != 0 || !fs::exists(file)) return std::nullopt;
         return readJson(file);
     };
     res.noise = [](std::string const& id) -> std::optional<noise::NoiseParameters> {
@@ -569,7 +569,7 @@ TEST(WorldgenOracleGolden, DensityRouterConstantsAndClampBounds) {
         std::string at   = f.path().filename().string();
         Diffs       d;
         for (auto const& [name, entry] : g.at("router").items()) {
-            ASSERT_TRUE(router.contains(name)) << at << ": router entry " << name << " not in TF's noise settings";
+            ASSERT_TRUE(router.contains(name)) << at << ": router entry " << name << " not in upstream's noise settings";
             auto fn = noise::Density::fromJson(router.at(name), seed, res);
             ASSERT_TRUE(fn.has_value()) << at << ": " << name << " compiles";
             d.sameDouble(fn->minValue(), entry.at("min").get<double>(), at + " " + name + " minValue");

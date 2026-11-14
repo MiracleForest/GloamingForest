@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // F10 selftests: the side rules of container blocks (feature/ext/combat/InventoryFaces.h) as the
-// game's hoppers meet them, and the loot table of a decorated pot (TF's camp pots,
+// game's hoppers meet them, and the loot table of a decorated pot (upstream's camp pots,
 // TemplateMarkerHandlers#tentPot: LootMarkerHandler(DECORATED_POT, CAMP_POT)).
 
 #include <optional>
@@ -30,7 +30,7 @@ namespace {
 using gf::selftest::Context;
 namespace items = gf::game::items;
 
-constexpr char kChest[] = "twilightforest:twilight_oak_chest";
+constexpr char kChest[] = "gloamingforest:gloaming_oak_chest";
 
 Container* hopperAt(BlockSource& region, BlockPos const& pos) {
     auto* a = region.getBlockEntity(pos);
@@ -56,7 +56,7 @@ struct RulesScope {
 GF_REGISTER_SELFTEST("combat.inventory_faces", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace ie = gf::inventory::ext;
     if (!gf::game::blockWith(kChest)) {
-        ctx.info("no TF chests in this build: skipped");
+        ctx.info("no upstream chests in this build: skipped");
         co_return;
     }
     // the pure rule first
@@ -90,7 +90,7 @@ GF_REGISTER_SELFTEST("combat.inventory_faces", [](Context& ctx) -> ll::coro::Cor
             return true;
         },
     });
-    ctx.require(ctx.setBlock(c, kChest), "a twilight oak chest");
+    ctx.require(ctx.setBlock(c, kChest), "a gloaming oak chest");
     co_await ctx.ticks(1);
     auto* chest = gf::inventory::nativeContainer(region, gf::game::blockPos(c));
     ctx.require(chest != nullptr, "the chest's native container");

@@ -1,0 +1,36 @@
+{
+  "parent": "gloamingforest:maze_map",
+  "criteria": {
+    "ore_map": {
+      "conditions": {
+        "recipe_id": "gloamingforest:ore_map"
+      },
+      "trigger": "minecraft:recipe_crafted"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.ore_map.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.filled_ore_map"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:filled_ore_map"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.ore_map"
+    }
+  },
+  "requirements": [
+    [
+      "ore_map"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

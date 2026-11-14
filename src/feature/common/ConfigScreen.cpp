@@ -1,11 +1,11 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/feature/common/ConfigScreen.cpp), LGPL-3.0-or-later.
-// The config screen (contract "mod"): `/twilightforest config [section]` lists the config sections
+// The config screen (contract "mod"): `/gloamingforest config [section]` lists the config sections
 // (`config/<section>.json`, one per unit, rule R13) and edits their entries in game. It replaces
-// TF's NeoForge config screen. Companions get the native screen (client/screen/base/ConfigScreen.cpp:
+// upstream's NeoForge config screen. Companions get the native screen (client/screen/base/ConfigScreen.cpp:
 // a scrolled list of the entries with toggles for booleans and text boxes for numbers and text,
 // reset to default), vanilla players a form. Everybody may look; changing a value needs operator
 // permission. A change writes the section's file and reloads every config as
-// `/twilightforest reload` does.
+// `/gloamingforest reload` does.
 
 #include <cmath>
 

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Java oracle of tests/structure/XoroshiroTest.cpp: runs Minecraft 1.21.1's own
 // XoroshiroRandomSource and positional factories (the WorldGenRegion random of

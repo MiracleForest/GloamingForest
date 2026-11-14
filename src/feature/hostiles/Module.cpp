@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/RegistrationEvents.java (registerSpawnPlacements)
-//   src/main/java/twilightforest/entity/monster/HostileWolf.java (checkWolfSpawnRules)
-//   src/main/java/twilightforest/entity/monster/WinterWolf.java (canSpawnHere)
-//   src/main/java/twilightforest/entity/monster/HedgeSpider.java (canSpawn)
-//   src/main/java/twilightforest/entity/monster/SwarmSpider.java (getCanSpawnHere)
-//   src/main/java/twilightforest/entity/monster/SkeletonDruid.java (checkDruidSpawnRules)
-//   src/main/java/twilightforest/entity/monster/Wraith.java (checkMonsterSpawnRules)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/RegistrationEvents.java (registerSpawnPlacements)
+//   src/main/java/gloamingforest/entity/monster/HostileWolf.java (checkWolfSpawnRules)
+//   src/main/java/gloamingforest/entity/monster/WinterWolf.java (canSpawnHere)
+//   src/main/java/gloamingforest/entity/monster/HedgeSpider.java (canSpawn)
+//   src/main/java/gloamingforest/entity/monster/SwarmSpider.java (getCanSpawnHere)
+//   src/main/java/gloamingforest/entity/monster/SkeletonDruid.java (checkDruidSpawnRules)
+//   src/main/java/gloamingforest/entity/monster/Wraith.java (checkMonsterSpawnRules)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -45,7 +45,7 @@ bool hedgeOrDark(BlockSource& region, BlockPos const& pos, Rnd& random) { return
 bool druidLight(BlockSource& region, BlockPos const& pos, Rnd& random) {
     auto pair = region.getBrightnessPair(pos);
     if (static_cast<int>(pair.sky->mValue) > random.nextInt(32)) return false;
-    return maxLocalRawBrightness(region, pos) <= random.nextInt(12); // TF - rand(8) -> rand(12)
+    return maxLocalRawBrightness(region, pos) <= random.nextInt(12); // upstream - rand(8) -> rand(12)
 }
 
 bool notPeaceful() { return difficulty() != 0; }
@@ -69,7 +69,7 @@ void installSpawns() {
     registerMonster(id::MistWolf, 1.4, 1.9, monster);
     // WinterWolf#canSpawnHere, Java's precedence kept: (not peaceful && snowy forest) || dark enough
     registerMonster(id::WinterWolf, 1.4, 1.9, [](BlockSource& r, std::string const&, BlockPos const& p, SpawnReason, Rnd& random) {
-        return (notPeaceful() && gf::worldgen::biomeAt(p) == "twilightforest:snowy_forest") || darkEnough(r, p, random);
+        return (notPeaceful() && gf::worldgen::biomeAt(p) == "gloamingforest:snowy_forest") || darkEnough(r, p, random);
     });
     registerMonster(id::KingSpider, 1.6, 1.6, monster);
     // HedgeSpider#canSpawn: no checkMobSpawnRules

@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/cut_mazestone/decorative_mazestone"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:cut_mazestone"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:cut_mazestone"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:decorative_mazestone"
+    }
+  }
+}

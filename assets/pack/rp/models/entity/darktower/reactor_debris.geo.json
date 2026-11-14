@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_west",
+        "identifier": "geometry.gloamingforest.darktower.debris_west",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,
@@ -53,7 +53,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_east",
+        "identifier": "geometry.gloamingforest.darktower.debris_east",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,
@@ -103,7 +103,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_down",
+        "identifier": "geometry.gloamingforest.darktower.debris_down",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,
@@ -153,7 +153,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_up",
+        "identifier": "geometry.gloamingforest.darktower.debris_up",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,
@@ -203,7 +203,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_north",
+        "identifier": "geometry.gloamingforest.darktower.debris_north",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,
@@ -253,7 +253,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_south",
+        "identifier": "geometry.gloamingforest.darktower.debris_south",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,
@@ -303,7 +303,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_west_strip",
+        "identifier": "geometry.gloamingforest.darktower.debris_west_strip",
         "texture_width": 16,
         "texture_height": 512,
         "visible_bounds_width": 2,
@@ -353,7 +353,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_east_strip",
+        "identifier": "geometry.gloamingforest.darktower.debris_east_strip",
         "texture_width": 16,
         "texture_height": 512,
         "visible_bounds_width": 2,
@@ -403,7 +403,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_down_strip",
+        "identifier": "geometry.gloamingforest.darktower.debris_down_strip",
         "texture_width": 16,
         "texture_height": 512,
         "visible_bounds_width": 2,
@@ -453,7 +453,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_up_strip",
+        "identifier": "geometry.gloamingforest.darktower.debris_up_strip",
         "texture_width": 16,
         "texture_height": 512,
         "visible_bounds_width": 2,
@@ -503,7 +503,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_north_strip",
+        "identifier": "geometry.gloamingforest.darktower.debris_north_strip",
         "texture_width": 16,
         "texture_height": 512,
         "visible_bounds_width": 2,
@@ -553,7 +553,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.darktower.debris_south_strip",
+        "identifier": "geometry.gloamingforest.darktower.debris_south_strip",
         "texture_width": 16,
         "texture_height": 512,
         "visible_bounds_width": 2,

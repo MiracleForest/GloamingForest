@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-//   src/main/java/twilightforest/util/RotationUtil.java (ROTATIONS)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+//   src/main/java/gloamingforest/util/RotationUtil.java (ROTATIONS)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -25,7 +25,7 @@ inline constexpr std::array<structure::Rotation, 4> kRotations{structure::Rotati
 /// Mth.sqrt(float).
 [[nodiscard]] inline float javaSqrt(float f) { return static_cast<float>(std::sqrt(static_cast<double>(f))); }
 
-/// java.awt.Rectangle#intersects of the (minX, minZ, maxX - minX, maxZ - minZ) rectangles TF builds
+/// java.awt.Rectangle#intersects of the (minX, minZ, maxX - minX, maxZ - minZ) rectangles upstream builds
 /// from two boxes (an empty width or height never intersects).
 [[nodiscard]] inline bool awtIntersects(structure::BlockBox const& a, structure::BlockBox const& b) {
     long long tw = a.maxX - a.minX, th = a.maxZ - a.minZ, rw = b.maxX - b.minX, rh = b.maxZ - b.minZ;

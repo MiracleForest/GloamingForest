@@ -1,7 +1,7 @@
 #pragma once
 
 // The development fixture's own assets (client/ui/Fixture.cpp), built into the mod so that they never
-// ship in the resource pack: the GUI skin (an original 256 x 256 texture with the layout of TF's
+// ship in the resource pack: the GUI skin (an original 256 x 256 texture with the layout of upstream's
 // container GUIs), the texture of the fixture geometry (32 x 32) and the geometry itself. The fixture
 // writes the textures next to the test data and draws them as file textures (client/render/TexturePath.h).
 // Client build only.

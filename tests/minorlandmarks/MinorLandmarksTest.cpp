@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/minorlandmarks (U18): translate, the voxel line, the hedge maze rooms, the
 // hollow hill terraformer, the fallen trunk geometry, hole and mounds, the lake shape and the
 // foundation wall rotations.

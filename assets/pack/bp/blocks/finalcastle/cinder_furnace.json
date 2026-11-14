@@ -2,18 +2,18 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:cinder_furnace",
+      "identifier": "gloamingforest:cinder_furnace",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
           "east"
         ],
-        "twilightforest:lit": [
+        "gloamingforest:lit": [
           false,
           true
         ]
@@ -66,7 +66,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -111,7 +111,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -156,7 +156,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -201,7 +201,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -246,7 +246,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -291,7 +291,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -336,7 +336,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -381,7 +381,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:lit')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:lit')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

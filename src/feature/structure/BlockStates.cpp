@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
-// Java block states -> Bedrock blocks for the structure kit: TF's structure code and its
+// Java block states -> Bedrock blocks for the structure kit: upstream's structure code and its
 // templates name vanilla blocks by their Java ids and Java properties (facing, half, type,
 // axis, ...). This maps ids that differ on Bedrock, turns the properties into the Bedrock states
 // of the block (whichever of the known encodings the block has), and rotates / mirrors Bedrock
-// blocks the way BlockState#rotate / #mirror turn Java ones. TF's own blocks keep their ids; their
+// blocks the way BlockState#rotate / #mirror turn Java ones. upstream's own blocks keep their ids; their
 // properties are matched by name against the frozen Bedrock states (docs/spec/blockstates.md):
 // "<ns>:<property>", "<property>", and the vanilla traits for facing / axis / slab halves.
 #include "feature/structure/Internal.h"
@@ -949,7 +949,7 @@ std::unordered_set<std::string> idSet(std::initializer_list<char const*> javaIds
 }
 
 // Vanilla 1.21.1 tag membership the kit needs when gf::tags does not know a tag (Bedrock has no
-// Java tags); TF's own additions to these tags come through gf::tags.
+// Java tags); upstream's own additions to these tags come through gf::tags.
 std::unordered_map<std::string, std::unordered_set<std::string>> const& builtinTags() {
     static std::unordered_map<std::string, std::unordered_set<std::string>> const table = [] {
         std::unordered_map<std::string, std::unordered_set<std::string>> t;
@@ -975,10 +975,10 @@ std::unordered_map<std::string, std::unordered_set<std::string>> const& builtinT
                    "minecraft:glow_lichen", "minecraft:light", "minecraft:tall_grass", "minecraft:large_fern", "minecraft:structure_void",
                    "minecraft:void_air", "minecraft:cave_air", "minecraft:bubble_column", "minecraft:warped_roots", "minecraft:nether_sprouts",
                    "minecraft:crimson_roots", "minecraft:hanging_roots"});
-        t["twilightforest:supports_stalagmites"] =
-            idSet({"twilightforest:deadrock", "twilightforest:cracked_deadrock", "twilightforest:weathered_deadrock", "minecraft:packed_ice"});
-        t["twilightforest:worldgen_replaceables"] = t["minecraft:lush_ground_replaceable"];
-        for (auto const& s : t["minecraft:replaceable_by_trees"]) t["twilightforest:worldgen_replaceables"].insert(s);
+        t["gloamingforest:supports_stalagmites"] =
+            idSet({"gloamingforest:deadrock", "gloamingforest:cracked_deadrock", "gloamingforest:weathered_deadrock", "minecraft:packed_ice"});
+        t["gloamingforest:worldgen_replaceables"] = t["minecraft:lush_ground_replaceable"];
+        for (auto const& s : t["minecraft:replaceable_by_trees"]) t["gloamingforest:worldgen_replaceables"].insert(s);
         return t;
     }();
     return table;
@@ -990,7 +990,7 @@ bool inTag(Block const& block, std::string_view tag) {
     auto const& bid = block.getTypeName();
     std::string t(tag);
     if (tags::has(tags::Registry::Block, t, bid)) return true;
-    if (t == "minecraft:leaves" || t == "minecraft:replaceable_by_trees" || t == "twilightforest:worldgen_replaceables") {
+    if (t == "minecraft:leaves" || t == "minecraft:replaceable_by_trees" || t == "gloamingforest:worldgen_replaceables") {
         if (hasFlag(block, BlockProperty::Leaves) || bid.ends_with("leaves")) return true;
     }
     auto const& table = builtinTags();
@@ -1009,7 +1009,7 @@ bool canBeReplaced(Block const& block) {
 }
 
 bool worldGenReplaceable(Block const& block) {
-    return (canBeReplaced(block) || inTag(block, "twilightforest:worldgen_replaceables")) && !inTag(block, "minecraft:features_cannot_replace");
+    return (canBeReplaced(block) || inTag(block, "gloamingforest:worldgen_replaceables")) && !inTag(block, "minecraft:features_cannot_replace");
 }
 
 bool replaceableByStructures(Block const& block) {

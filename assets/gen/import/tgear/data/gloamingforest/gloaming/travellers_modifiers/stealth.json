@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:stealth_crouching": {}
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.stealth.description"
+    }
+  ],
+  "equipment_slots": "chest"
+}

@@ -1,12 +1,12 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/deco/pen",
+  "id": "gloamingforest:camp/deco/pen",
   "size": [7, 2, 8],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:twilight_oak_fence"},
+    {"Name":"gloamingforest:gloaming_oak_fence"},
     {"Name":"minecraft:oak_fence_gate","Properties":{"facing":"north","in_wall":"false","open":"false","powered":"false"}},
     {"Name":"minecraft:hay_block","Properties":{"axis":"x"}},
     {"Name":"minecraft:water_cauldron","Properties":{"level":"3"}}
@@ -16,6 +16,6 @@
     [1, 56]
   ],
   "jigsaw": [
-    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
+    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
   ]
 }

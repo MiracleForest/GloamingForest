@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/resources/data/twilightforest/function/give_3_shields.mcfunction
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/resources/data/gloamingforest/function/give_3_shields.mcfunction
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract extension of U9 (rule R18, docs/spec/artifacts.md 4): TF's function
-// twilightforest:give_3_shields ("twilightforest shield @p add 3 false") as a Bedrock function.
-// A pack function cannot name /twilightforest (BDS parses functions before the mod's commands
+// Contract extension of U9 (rule R18, docs/spec/artifacts.md 4): upstream's function
+// gloamingforest:give_3_shields ("gloamingforest shield @p add 3 false") as a Bedrock function.
+// A pack function cannot name /gloamingforest (BDS parses functions before the mod's commands
 // exist) and Bedrock functions have no namespace, so the module writes
-// functions/twilightforest/give_3_shields.mcfunction into the mod's behavior pack when the mod
-// loads; it runs as `/function twilightforest/give_3_shields`:
-//     execute as @p run scriptevent twilightforest:give_3_shields
+// functions/gloamingforest/give_3_shields.mcfunction into the mod's behavior pack when the mod
+// loads; it runs as `/function gloamingforest/give_3_shields`:
+//     execute as @p run scriptevent gloamingforest:give_3_shields
 // and the ScriptEventCommand hook answers that message id by adding 3 permanent shields to the
 // entity running it (Java's @p: the nearest player; none: nothing happens). Every other message id
 // passes on (F4's and F5's hooks do the same; A8 folds the three into one dispatcher).
@@ -36,12 +36,12 @@ namespace gf::feature::artifacts::ext {
 
 namespace {
 
-constexpr char kEvent[] = "twilightforest:give_3_shields";
+constexpr char kEvent[] = "gloamingforest:give_3_shields";
 
-constexpr char kFunction[] = R"(# twilightforest:give_3_shields (The Twilight Forest 4.8): "twilightforest shield @p add 3 false".
-# Bedrock's function cannot name the mod's /twilightforest command: the mod answers the scriptevent
+constexpr char kFunction[] = R"(# gloamingforest:give_3_shields (the upstream 4.8): "gloamingforest shield @p add 3 false".
+# Bedrock's function cannot name the mod's /gloamingforest command: the mod answers the scriptevent
 # by adding 3 permanent fortification shields to the nearest player.
-execute as @p run scriptevent twilightforest:give_3_shields
+execute as @p run scriptevent gloamingforest:give_3_shields
 )";
 
 std::atomic<int> gRuns{0};
@@ -115,7 +115,7 @@ private:
         if (mDone) return;
         mDone = true;
         try {
-            auto dir = Mod::getInstance().getSelf().getModDir() / "behavior_packs" / "GloamingForest_BP" / "functions" / "twilightforest";
+            auto dir = Mod::getInstance().getSelf().getModDir() / "behavior_packs" / "GloamingForest_BP" / "functions" / "gloamingforest";
             if (!std::filesystem::is_directory(dir.parent_path().parent_path())) {
                 gf::log().warn("artifacts: behavior pack not found, give_3_shields not written ({})", dir.generic_string());
                 return;

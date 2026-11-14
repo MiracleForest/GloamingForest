@@ -1,8 +1,8 @@
 // GloamingForest import tool (contract "import", unit F1): consistency checks that do not trust the
 // generator. The block states are compared with a hand-written golden (tools/import/expected-states.json,
-// read by hand from TF's createBlockStateDefinition overrides), both as parsed from the Java code and as
+// read by hand from upstream's createBlockStateDefinition overrides), both as parsed from the Java code and as
 // written into the generated BP block files (after the overrides); the rotation of every variant permutation
-// is compared with TF's blockstate file. A failed check fails the run, -Check included.
+// is compared with upstream's blockstate file. A failed check fails the run, -Check included.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -23,7 +23,7 @@ namespace GfImport
             return ReadJson(f)["classes"];
         }
 
-        /// <summary>The Java properties parsed from TF's classes against the hand-written golden.</summary>
+        /// <summary>The Java properties parsed from upstream's classes against the hand-written golden.</summary>
         public void CheckJavaStates()
         {
             var exp = ExpectedStates();
@@ -45,12 +45,12 @@ namespace GfImport
         }
 
         /// <summary>The states of the generated BP block files (after the overrides) against the golden, and the
-        /// rotation of every variant permutation against TF's blockstate file.</summary>
+        /// rotation of every variant permutation against upstream's blockstate file.</summary>
         public void CheckEmittedBlocks()
         {
             var exp = ExpectedStates();
             if (exp == null) return;
-            string bsDir = Path.Combine(GenRes, "assets", "twilightforest", "blockstates");
+            string bsDir = Path.Combine(GenRes, "assets", "gloamingforest", "blockstates");
             int checkedRotations = 0, checkedFamilyTags = 0;
             // the families data entries (after the overrides), by block id (duplicates are errors there)
             var familyEntries = FamilyEntries();
@@ -66,8 +66,8 @@ namespace GfImport
                 var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes))["minecraft:block"];
                 // a family block's params.tags (the kit's format-free input) are the tags of its skeleton file
                 J fam = null;
-                if (bi.Family != null && !familyEntries.TryGetValue("twilightforest:" + bi.Id, out fam))
-                    Errors.Add("data/gf/families: no entry for the family block twilightforest:" + bi.Id + " (" + bi.Family + ")");
+                if (bi.Family != null && !familyEntries.TryGetValue("gloamingforest:" + bi.Id, out fam))
+                    Errors.Add("data/gf/families: no entry for the family block gloamingforest:" + bi.Id + " (" + bi.Family + ")");
                 else if (fam != null && !familyTagOverrides.Contains(bi.Id))
                 {
                     var pt = fam["params"] != null ? fam["params"]["tags"] : null;
@@ -75,7 +75,7 @@ namespace GfImport
                     var want = BlockTagsIn(doc["components"]).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     var have = (pt != null && pt.IsArr ? pt.A.Select(x => x.AsString()) : Enumerable.Empty<string>()).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!want.SequenceEqual(have))
-                        Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags [" + string.Join(", ", have) + "], its bp/blocks file has [" + string.Join(", ", want) + "] (the skeleton follows params.tags, SyncFamilyTags)");
+                        Errors.Add("data/gf/families: gloamingforest:" + bi.Id + " params.tags [" + string.Join(", ", have) + "], its bp/blocks file has [" + string.Join(", ", want) + "] (the skeleton follows params.tags, SyncFamilyTags)");
                     checkedFamilyTags++;
                 }
                 var states = doc["description"]["states"];
@@ -83,7 +83,7 @@ namespace GfImport
                 var e = exp[bi.Chain[0]];
                 if (e != null)
                 {
-                    var want = e.A.Select(x => x.AsString()).Where(x => !DroppedStates.Contains(x)).Select(x => "twilightforest:" + x).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var want = e.A.Select(x => x.AsString()).Where(x => !DroppedStates.Contains(x)).Select(x => "gloamingforest:" + x).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     // a unit's override may add states (rule R1: add only), never drop one
                     var missing = want.Except(got).ToList();
                     if (missing.Count > 0) Errors.Add("bp/blocks/" + bi.Id + ".json lacks the state(s) " + string.Join(", ", missing));
@@ -105,8 +105,8 @@ namespace GfImport
                     var state = new Dictionary<string, string>(StringComparer.Ordinal);
                     if (states != null)
                         foreach (var sk in states.Keys)
-                            if (sk.StartsWith("twilightforest:", StringComparison.Ordinal) && states[sk].IsArr && states[sk].A.Count > 0)
-                                state[sk.Substring("twilightforest:".Length)] = StateText(states[sk].A[0]);
+                            if (sk.StartsWith("gloamingforest:", StringComparison.Ordinal) && states[sk].IsArr && states[sk].A.Count > 0)
+                                state[sk.Substring("gloamingforest:".Length)] = StateText(states[sk].A[0]);
                     foreach (var kv in kvs) state[kv.Key] = kv.Value;
                     var rot = Rotation(doc["components"]);
                     try
@@ -126,17 +126,17 @@ namespace GfImport
                     }
                     string want = ((360 - x) % 360) + "," + ((360 - y) % 360) + ",0";
                     string have = rot ?? "0,0,0";
-                    if (have != want) Errors.Add("bp/blocks/" + bi.Id + ".json: variant '" + key + "' has rotation [" + have + "], TF's blockstate gives [" + want + "]");
+                    if (have != want) Errors.Add("bp/blocks/" + bi.Id + ".json: variant '" + key + "' has rotation [" + have + "], upstream's blockstate gives [" + want + "]");
                     checkedRotations++;
                 }
             }
-            Log.Add(checkedRotations + " variant rotations checked against TF's blockstates; block states checked against tools/import/expected-states.json; "
+            Log.Add(checkedRotations + " variant rotations checked against upstream's blockstates; block states checked against tools/import/expected-states.json; "
                 + checkedFamilyTags + " family blocks' params.tags checked against their skeleton files");
         }
 
         /// <summary>The behaviour values of the generated BP block files (after the overrides) and their RP sounds against
         /// the hand-written golden tools/import/expected-behaviour.json: hardness, explosion resistance and map colour (per
-        /// state where TF makes them state-dependent) and sound.</summary>
+        /// state where upstream makes them state-dependent) and sound.</summary>
         J expectedBehaviour;
         bool expectedBehaviourRead;
 
@@ -178,8 +178,8 @@ namespace GfImport
                 var defaults = new Dictionary<string, string>(StringComparer.Ordinal);
                 if (declared != null)
                     foreach (var sk in declared.Keys)
-                        if (sk.StartsWith("twilightforest:", StringComparison.Ordinal) && declared[sk].IsArr && declared[sk].A.Count > 0)
-                            defaults[sk.Substring("twilightforest:".Length)] = StateText(declared[sk].A[0]);
+                        if (sk.StartsWith("gloamingforest:", StringComparison.Ordinal) && declared[sk].IsArr && declared[sk].A.Count > 0)
+                            defaults[sk.Substring("gloamingforest:".Length)] = StateText(declared[sk].A[0]);
                 var cases = e["cases"] != null ? e["cases"].A.ToList() : new List<J> { J.Obj() };
                 foreach (var c in cases)
                 {
@@ -187,7 +187,7 @@ namespace GfImport
                     if (c["state"] != null)
                         foreach (var k in c["state"].Keys)
                         {
-                            if (!defaults.ContainsKey(k)) Errors.Add("tools/import/expected-behaviour.json: " + id + " has no state twilightforest:" + k);
+                            if (!defaults.ContainsKey(k)) Errors.Add("tools/import/expected-behaviour.json: " + id + " has no state gloamingforest:" + k);
                             state[k] = StateText(c["state"][k]);
                         }
                     string where = "bp/blocks/" + id + ".json" + (c["state"] != null ? " " + c["state"].ToCompact() : "");
@@ -203,8 +203,8 @@ namespace GfImport
                     if (h != null)
                     {
                         string want = h.IsStr ? "false" : J.Obj().Set("seconds_to_destroy", Math.Round(h.AsDouble(), 4)).ToCompact();
-                        // the hardness only: an owner's per-item speeds (item_specific_speeds: e.g. TF's shears speed on
-                        // berry bushes, ShearsItem.getDestroySpeed) are no hardness and are not TF's Properties
+                        // the hardness only: an owner's per-item speeds (item_specific_speeds: e.g. upstream's shears speed on
+                        // berry bushes, ShearsItem.getDestroySpeed) are no hardness and are not upstream's Properties
                         J hardnessOnly = mining;
                         if (mining != null && mining.Kind == JKind.Object && mining.Has("item_specific_speeds"))
                         {
@@ -212,7 +212,7 @@ namespace GfImport
                             hardnessOnly.Remove("item_specific_speeds");
                         }
                         string have = hardnessOnly != null ? hardnessOnly.ToCompact() : "(none)";
-                        if (want != have) Errors.Add(where + ": minecraft:destructible_by_mining " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
+                        if (want != have) Errors.Add(where + ": minecraft:destructible_by_mining " + have + ", upstream gives " + want + " (" + e["source"].AsString() + ")");
                         checkedValues++;
                     }
                     var r = c["resistance"] ?? e["resistance"];
@@ -221,7 +221,7 @@ namespace GfImport
                         // the golden is in Java units; the JSON value is Java's x ExplosionJsonPerJava (Blocks.ExplosionComponent)
                         string want = r.IsStr ? "false" : J.Obj().Set("explosion_resistance", Math.Round(r.AsDouble() * ExplosionJsonPerJava, 4)).ToCompact();
                         string have = explosion != null ? explosion.ToCompact() : "(none)";
-                        if (want != have) Errors.Add(where + ": minecraft:destructible_by_explosion " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
+                        if (want != have) Errors.Add(where + ": minecraft:destructible_by_explosion " + have + ", upstream gives " + want + " (" + e["source"].AsString() + ")");
                         checkedValues++;
                     }
                     var mc = c["mapColor"] ?? e["mapColor"];
@@ -229,7 +229,7 @@ namespace GfImport
                     {
                         string have = mapColor != null ? mapColor.AsString() : null, want = null;
                         if (mc.Kind != JKind.Null && !MapColors.TryGetValue(mc.AsString(), out want)) want = "?" + mc.AsString();
-                        if (have != want) Errors.Add(where + ": minecraft:map_color " + (have ?? "(none)") + ", TF gives " + (mc.Kind == JKind.Null ? "none" : mc.AsString()) + " (" + e["source"].AsString() + ")");
+                        if (have != want) Errors.Add(where + ": minecraft:map_color " + (have ?? "(none)") + ", upstream gives " + (mc.Kind == JKind.Null ? "none" : mc.AsString()) + " (" + e["source"].AsString() + ")");
                         checkedValues++;
                     }
                 }
@@ -240,11 +240,11 @@ namespace GfImport
                     var wantTools = e["tools"].A.Select(t => BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     var haveTools = tags.Where(k => BedrockToolTag.Values.Contains(k)).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!wantTools.SequenceEqual(haveTools))
-                        Errors.Add("bp/blocks/" + id + ".json: tool tags [" + string.Join(", ", haveTools) + "], TF gives [" + string.Join(", ", wantTools) + "] (" + e["source"].AsString() + ")");
+                        Errors.Add("bp/blocks/" + id + ".json: tool tags [" + string.Join(", ", haveTools) + "], upstream gives [" + string.Join(", ", wantTools) + "] (" + e["source"].AsString() + ")");
                     string wantTier = e["tier"] != null ? BedrockTierTag[e["tier"].AsString()] : "(none)";
                     var haveTiers = tags.Where(k => BedrockTierTag.Values.Contains(k)).ToList();
                     string haveTier = haveTiers.Count == 0 ? "(none)" : string.Join(", ", haveTiers);
-                    if (wantTier != haveTier) Errors.Add("bp/blocks/" + id + ".json: tier tag " + haveTier + ", TF gives " + wantTier + " (" + e["source"].AsString() + ")");
+                    if (wantTier != haveTier) Errors.Add("bp/blocks/" + id + ".json: tier tag " + haveTier + ", upstream gives " + wantTier + " (" + e["source"].AsString() + ")");
                     checkedValues += 2;
                 }
                 if (e["requiresTool"] != null)
@@ -253,7 +253,7 @@ namespace GfImport
                     bool have = Harvests.TryGetValue(id, out hv) && hv.RequiresTool;
                     bool want = e["requiresTool"].Kind == JKind.Bool && e["requiresTool"].B;
                     if (have != want)
-                        Errors.Add("data/gf/import/harvest.json: twilightforest:" + id + " requiresTool " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
+                        Errors.Add("data/gf/import/harvest.json: gloamingforest:" + id + " requiresTool " + have + ", upstream gives " + want + " (" + e["source"].AsString() + ")");
                     checkedValues++;
                 }
                 // the RP sound (rp/blocks.d fragment of the owner) and the root map colour
@@ -261,12 +261,12 @@ namespace GfImport
                 string sound = null;
                 if (files.TryGetValue("rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", out rp))
                 {
-                    var entry = J.Parse(Encoding.UTF8.GetString(rp.Bytes))["twilightforest:" + id];
+                    var entry = J.Parse(Encoding.UTF8.GetString(rp.Bytes))["gloamingforest:" + id];
                     if (entry != null && entry["sound"] != null) sound = entry["sound"].AsString();
                 }
                 if (e["sound"] != null)
                 {
-                    // TF's own sound types by the golden's soundTypes (javaType -> the pack's type, written by hand), the
+                    // upstream's own sound types by the golden's soundTypes (javaType -> the pack's type, written by hand), the
                     // vanilla ones by the engine type of Blocks.SoundMap
                     string javaSound = e["sound"].AsString(), want;
                     if (javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
@@ -277,14 +277,14 @@ namespace GfImport
                         if (named.Count == 0) Errors.Add("tools/import/expected-behaviour.json: " + id + " has sound " + javaSound + ", which no soundTypes entry names as its javaType");
                     }
                     else want = BedrockSound(javaSound);
-                    if (want != null && sound != want) Errors.Add("rp/blocks.d: twilightforest:" + id + " sound " + (sound ?? "(none)") + ", TF gives " + javaSound + " -> " + want);
+                    if (want != null && sound != want) Errors.Add("rp/blocks.d: gloamingforest:" + id + " sound " + (sound ?? "(none)") + ", upstream gives " + javaSound + " -> " + want);
                     checkedValues++;
                 }
             }
             Log.Add(checkedValues + " behaviour values of " + golden.Keys.Count() + " blocks checked against tools/import/expected-behaviour.json");
         }
 
-        /// <summary>TF's own sound types as written to the rp/sounds.json.d fragments (after the overrides) against the
+        /// <summary>upstream's own sound types as written to the rp/sounds.json.d fragments (after the overrides) against the
         /// hand-written soundTypes of tools/import/expected-behaviour.json, independent of the generator: every golden
         /// type is defined by exactly one fragment, with volume and pitch 1 and exactly the golden's events (the sound
         /// event, its volume and pitch, or "" for a silent one; "default" silent) in block_sounds and
@@ -326,7 +326,7 @@ namespace GfImport
             foreach (var id in golden.Keys)
             {
                 var g = golden[id];
-                // a hand-written entry: {javaType, blocks: [TF block paths], block_sounds, interactive_sounds}
+                // a hand-written entry: {javaType, blocks: [upstream block paths], block_sounds, interactive_sounds}
                 if (!g.IsObj) { Errors.Add("tools/import/expected-behaviour.json: soundTypes " + id + " is not an object: " + g.ToCompact()); continue; }
                 var gBlocks = g["blocks"];
                 if (gBlocks != null && !(gBlocks.IsArr && gBlocks.A.All(x => x.IsStr)))
@@ -350,15 +350,15 @@ namespace GfImport
                     string sound = null;
                     if (BlockInfos.TryGetValue(b, out bi) && Out.TryGetValue(NameOf(bi.Owner), out files) && files.TryGetValue("rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", out rp))
                     {
-                        var entry = J.Parse(Encoding.UTF8.GetString(rp.Bytes))["twilightforest:" + b];
+                        var entry = J.Parse(Encoding.UTF8.GetString(rp.Bytes))["gloamingforest:" + b];
                         if (entry != null && entry["sound"] != null) sound = entry["sound"].AsString();
                     }
-                    if (sound != id) Errors.Add("rp/blocks.d: twilightforest:" + b + " sound " + (sound ?? "(none)") + ", TF gives " + (g["javaType"] != null ? g["javaType"].AsString() : "?") + " -> " + id);
+                    if (sound != id) Errors.Add("rp/blocks.d: gloamingforest:" + b + " sound " + (sound ?? "(none)") + ", upstream gives " + (g["javaType"] != null ? g["javaType"].AsString() : "?") + " -> " + id);
                 }
             }
             foreach (var id in defined.Keys)
                 if (golden[id] == null) Errors.Add("sound type " + id + " (" + string.Join(", ", defined[id].Select(d => d.Item1)) + ") has no entry in tools/import/expected-behaviour.json soundTypes");
-            Log.Add(checkedEvents + " sound type events of " + golden.Keys.Count() + " TF sound type(s) checked against tools/import/expected-behaviour.json");
+            Log.Add(checkedEvents + " sound type events of " + golden.Keys.Count() + " upstream sound type(s) checked against tools/import/expected-behaviour.json");
         }
 
         /// <summary>One sound type entry ({volume, pitch, events}) against the golden's events ({event: [sound, volume,
@@ -388,7 +388,7 @@ namespace GfImport
                 n++;
                 if (w.IsStr)
                 {
-                    if (!(h.IsStr && h.S == w.S)) Errors.Add(where + ": event " + ev + " " + h.ToCompact() + ", TF plays " + (w.S == "" ? "nothing (\"\")" : w.ToCompact()));
+                    if (!(h.IsStr && h.S == w.S)) Errors.Add(where + ": event " + ev + " " + h.ToCompact() + ", upstream plays " + (w.S == "" ? "nothing (\"\")" : w.ToCompact()));
                     continue;
                 }
                 if (!w.IsArr || w.A.Count != 3 || !w.A[0].IsStr || !w.A[1].IsNum || !w.A[2].IsNum)
@@ -401,7 +401,7 @@ namespace GfImport
                 bool ok = h.IsObj && h["sound"] != null && h["sound"].AsString() == ws && near(num(h["volume"]), wv) && near(num(h["pitch"]), wp)
                     && h.Keys.All(k => k == "sound" || k == "volume" || k == "pitch");
                 if (!ok)
-                    Errors.Add(where + ": event " + ev + " " + h.ToCompact() + ", TF plays " + J.Obj().Set("sound", ws).Set("volume", wv).Set("pitch", wp).ToCompact());
+                    Errors.Add(where + ": event " + ev + " " + h.ToCompact() + ", upstream plays " + J.Obj().Set("sound", ws).Set("volume", wv).Set("pitch", wp).ToCompact());
             }
             return n;
         }
@@ -443,13 +443,13 @@ namespace GfImport
             var ands = SplitTop(cond, "&&");
             if (ands.Count > 1) return ands.All(a => Holds(Unwrap(a), bi, state));
             cond = Unwrap(cond);
-            var m = System.Text.RegularExpressions.Regex.Match(cond, @"^(!?)q\.block_state\('twilightforest:([^']+)'\)(?:\s*==\s*'?([^']*)'?)?$");
+            var m = System.Text.RegularExpressions.Regex.Match(cond, @"^(!?)q\.block_state\('gloamingforest:([^']+)'\)(?:\s*==\s*'?([^']*)'?)?$");
             if (!m.Success) throw new Exception("cannot evaluate condition term '" + cond + "' of " + bi.Id);
             string v;
             // a condition on a state the file does not declare (an override renamed or dropped it) is an error, not a
             // permutation that never applies
             if (!state.TryGetValue(m.Groups[2].Value, out v))
-                throw new Exception("a permutation condition names twilightforest:" + m.Groups[2].Value + ", which the block does not declare ('" + cond + "')");
+                throw new Exception("a permutation condition names gloamingforest:" + m.Groups[2].Value + ", which the block does not declare ('" + cond + "')");
             if (m.Groups[3].Success && m.Groups[3].Value.Length > 0) return v == m.Groups[3].Value;
             bool b = v == "true";
             return m.Groups[1].Value == "!" ? !b : b;

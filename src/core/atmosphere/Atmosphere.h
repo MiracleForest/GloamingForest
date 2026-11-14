@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/TwilightForestRenderInfo.java
-//   src/main/java/twilightforest/client/renderer/TFSkyRenderer.java
-//   src/main/java/twilightforest/client/event/FogHandler.java
-//   src/main/java/twilightforest/client/renderer/TFWeatherRenderer.java
-//   src/main/java/twilightforest/util/IntervalUtils.java
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java
-//   src/main/resources/assets/twilightforest/shaders/core/aurora/aurora.fsh
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/GloamingForestRenderInfo.java
+//   src/main/java/gloamingforest/client/renderer/TFSkyRenderer.java
+//   src/main/java/gloamingforest/client/event/FogHandler.java
+//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java
+//   src/main/java/gloamingforest/util/IntervalUtils.java
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java
+//   src/main/resources/assets/gloamingforest/shaders/core/aurora/aurora.fsh
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U15 (atmosphere): the game-independent maths of the Twilight Forest's sky, fog, locked-biome
+// U15 (atmosphere): the game-independent maths of the Gloaming Forest's sky, fog, locked-biome
 // weather and aurora. The client (src/client/atmosphere) feeds it the camera, biomes and time and
 // draws what it returns; the server (src/feature/atmosphere) uses the fog rules for the vanilla
 // fallback (PlayerFogPacket). Everything here is pure C++ and gtested (tests/atmosphere).
@@ -39,37 +39,37 @@ struct Vec3f {
     float x = 0, y = 0, z = 0;
 };
 
-// ---- biome look (TF's biome JSON: sky_color and fog_color, docs/spec/biomes.md section 6) ----------------
+// ---- biome look (upstream's biome JSON: sky_color and fog_color, docs/spec/biomes.md section 6) ----------------
 
 struct BiomeLook {
     char const* id;
     unsigned    sky; ///< 0xRRGGBB
     unsigned    fog; ///< 0xRRGGBB
 };
-/// The 22 Twilight Forest biomes and their sky / fog colours.
+/// The 22 Gloaming Forest biomes and their sky / fog colours.
 [[nodiscard]] std::vector<BiomeLook> const& biomeLooks();
-/// The look of `biomeId` (nullopt: not a Twilight Forest biome).
+/// The look of `biomeId` (nullopt: not a Gloaming Forest biome).
 [[nodiscard]] std::optional<BiomeLook> biomeLook(std::string_view biomeId);
 [[nodiscard]] Rgb rgbOf(unsigned rgb);
 
-// ---- dimension effects (TwilightForestRenderInfo) ---------------------------------------------------------
+// ---- dimension effects (GloamingForestRenderInfo) ---------------------------------------------------------
 
-/// DimensionSpecialEffects cloud height of the "twilightforest:renderer" effects.
+/// DimensionSpecialEffects cloud height of the "gloamingforest:renderer" effects.
 inline constexpr float kCloudHeight = 128.0f;
-/// The dimension's fixed time (twilight_forest_type.json fixed_time).
+/// The dimension's fixed time (gloaming_forest_type.json fixed_time).
 inline constexpr long long kFixedTime = 13000;
 
 /// DimensionType#timeOfDay: the celestial angle 0..1 of a day time.
 [[nodiscard]] float timeOfDay(long long dayTime);
 /// ClientLevel's daylight factor of the fog / sky colour: clamp(cos(timeOfDay * 2 pi) * 2 + 0.5, 0, 1).
 [[nodiscard]] float daylight(float timeOfDay);
-/// TwilightForestRenderInfo#getBrightnessDependentFogColor.
+/// GloamingForestRenderInfo#getBrightnessDependentFogColor.
 [[nodiscard]] Rgb brightnessDependentFogColor(Rgb biomeFog, float daylight);
 /// ClientLevel#getSkyColor without the lightning flash: the (blended) biome sky colour times the
 /// daylight, greyed by the rain (towards 0.6 x its luminance by rain * 0.75) and the thunder
 /// (towards 0.2 x its luminance by thunder * 0.75).
 [[nodiscard]] Rgb skyColor(Rgb biomeSky, float daylight, float rainLevel, float thunderLevel);
-/// The frame's fog colour as FogRenderer#setupColor makes it in the Twilight Forest (FogType.NONE):
+/// The frame's fog colour as FogRenderer#setupColor makes it in the Gloaming Forest (FogType.NONE):
 /// the (blended) biome fog colour through getBrightnessDependentFogColor, pulled towards the sky
 /// colour (skyColor) by the render distance (`renderDistanceChunks`), no sunrise colour; then
 /// darkened by the rain (red and green x (1 - rain * 0.5), blue x (1 - rain * 0.4)) and the thunder
@@ -108,12 +108,12 @@ template <class Fetch>
 /// fog.glsl's linear_fog value (1.21.1): 0 up to `start`, smoothstep(start, end, distance) up to
 /// `end`, 1 beyond (the share of the fog colour mixed in).
 [[nodiscard]] float linearFogValue(float distance, float start, float end);
-/// TwilightForestRenderInfo#isFoggyAt (Java's near fog): the spooky forest at any height, the dark
+/// GloamingForestRenderInfo#isFoggyAt (Java's near fog): the spooky forest at any height, the dark
 /// forest and its center at y <= 20.
 [[nodiscard]] bool isFoggyAt(std::string_view biomeId, double playerY);
 [[nodiscard]] bool isSpooky(std::string_view biomeId);
 /// ClientLevel#getCloudColor at a celestial angle (`timeOfDay`), rain level and thunder level:
-/// white darkened by the daylight (TwilightForestRenderInfo has no sunrise colour, so the clouds
+/// white darkened by the daylight (GloamingForestRenderInfo has no sunrise colour, so the clouds
 /// get no sunset tint).
 [[nodiscard]] Rgb cloudColor(float timeOfDay, float rainLevel, float thunderLevel);
 /// The void plate of TFSkyRenderer (LevelRenderer's dark buffer: buildSkyDisc(-16) moved up by 12):
@@ -126,7 +126,7 @@ template <class Fetch>
 /// stars in the world pass, where the plate cannot cover them: they are left out instead).
 [[nodiscard]] bool underVoidPlate(Vec3f dir);
 /// A vertex of the fogged void plate: its position (camera relative, as voidPlateQuads) and the
-/// share of the sky fog colour TF's position shader mixes into its black (linear_fog of the dark
+/// share of the sky fog colour upstream's position shader mixes into its black (linear_fog of the dark
 /// buffer's own vertex, cylindrical distance: max(length(xz), |y|) at y -16).
 struct FoggedVertex {
     Vec3f pos;
@@ -136,7 +136,7 @@ struct FoggedVertex {
 /// vertex with its fog value for the sky fog planes `fogStart`..`fogEnd`: drawn opaque, black at
 /// the centre and the fog colour towards the horizon, as Java's dark buffer is.
 [[nodiscard]] std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float fogEnd, int rings);
-/// TF's sky seen in the direction dir (unit vector), as TFSkyRenderer draws it over the clear colour:
+/// upstream's sky seen in the direction dir (unit vector), as TFSkyRenderer draws it over the clear colour:
 /// the vanilla sky disc (y 16 above the camera, radius 512) in the sky colour, fogged by the sky fog
 /// (ogStart..ogEnd, cylindrical distance of the disc's vertex: max(length(xz), 16)); the fog
 /// colour (FogRenderer's clear colour) where the disc does not reach (at and below the horizon).
@@ -149,7 +149,7 @@ struct FoggedVertex {
 /// The same biome id as Bedrock spells it: vanilla biomes have no "minecraft:" prefix there.
 [[nodiscard]] std::string bedrockBiomeName(std::string_view resourceLocation);
 
-/// ClientGameEvents#customizeSplashes: "Happy <ordinal> birthday to the Twilight Forest!" for
+/// ClientGameEvents#customizeSplashes: "Happy <ordinal> birthday to the Gloaming Forest!" for
 /// `year` (year - 2011, ordinal as Java's RuleBasedNumberFormat ORDINAL in English: 1st, 2nd, 11th).
 [[nodiscard]] std::string birthdaySplash(int year);
 
@@ -172,7 +172,7 @@ class FogSmoother {
 public:
     /// One frame of the sky fog (FogMode.FOG_SKY); nullopt: vanilla (chunk not loaded yet).
     /// `frames` > 1 (or a fraction) applies that many frames of smoothing at once (the client
-    /// steps by the time since its last step, in frames of 1/60 s); 1 is exactly TF's lerp.
+    /// steps by the time since its last step, in frames of 1/60 s); 1 is exactly upstream's lerp.
     std::optional<FogPlanes> sky(FogPlanes vanilla, bool spooky, bool chunkLoaded, float frames = 1.0f);
     /// One frame of the terrain fog.
     std::optional<FogPlanes> terrain(FogPlanes vanilla, bool spooky, bool chunkLoaded, float frames = 1.0f);
@@ -203,10 +203,10 @@ private:
 // ---- locked-biome weather (TFWeatherRenderer) -------------------------------------------------------------
 
 enum class Effect { None, Blizzard, Mosquito, Ashes, DarkStream, BigRain, Sparkles };
-/// The texture of an effect (resource pack path, TF's textures/environment/<name>.png).
+/// The texture of an effect (resource pack path, upstream's textures/environment/<name>.png).
 [[nodiscard]] char const* textureOf(Effect effect);
 [[nodiscard]] char const* nameOf(Effect effect);
-/// The enforcement of a restriction ("twilightforest:frost", ...) to TF's RenderType; darkness
+/// The enforcement of a restriction ("gloamingforest:frost", ...) to upstream's RenderType; darkness
 /// draws a stream in half the columns (random.nextBoolean() after the column seed, `darkRoll`).
 [[nodiscard]] Effect effectFor(std::string_view enforcement, bool darkRoll);
 /// The weather column seed (vanilla rain): x * x * 3121 + x * 45238971 ^ z * z * 418711 + z * 13761.

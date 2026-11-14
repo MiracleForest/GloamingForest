@@ -1,7 +1,7 @@
 {
   "format_version": "1.10.0",
   "render_controllers": {
-    "controller.render.twilightforest.lich": {
+    "controller.render.gloamingforest.lich": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -20,7 +20,7 @@
         }
       ]
     },
-    "controller.render.twilightforest.lich_clone": {
+    "controller.render.gloamingforest.lich_clone": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -42,7 +42,7 @@
         }
       ]
     },
-    "controller.render.twilightforest.lich_clone_eyes": {
+    "controller.render.gloamingforest.lich_clone_eyes": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -65,7 +65,7 @@
         }
       ]
     },
-    "controller.render.twilightforest.death_tome": {
+    "controller.render.gloamingforest.death_tome": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -84,7 +84,7 @@
         }
       ]
     },
-    "controller.render.twilightforest.rising_zombie": {
+    "controller.render.gloamingforest.rising_zombie": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -99,14 +99,14 @@
           "*": true
         },
         {
-          "rightLeg": "query.property('twilightforest:rising_ticks') > 40"
+          "rightLeg": "query.property('gloamingforest:rising_ticks') > 40"
         },
         {
-          "leftLeg": "query.property('twilightforest:rising_ticks') > 40"
+          "leftLeg": "query.property('gloamingforest:rising_ticks') > 40"
         }
       ]
     },
-    "controller.render.twilightforest.lich_minion": {
+    "controller.render.gloamingforest.lich_minion": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -120,7 +120,7 @@
         "r": "0.0",
         "g": "0.5",
         "b": "0.0",
-        "a": "query.property('twilightforest:strong') ? 0.75 : 0.5"
+        "a": "query.property('gloamingforest:strong') ? 0.75 : 0.5"
       }
     }
   }

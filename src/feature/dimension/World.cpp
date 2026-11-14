@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFDimension.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFDimension.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -100,16 +100,16 @@ namespace gf::world {
 
 namespace dim = feature::dimension;
 
-std::optional<DimensionType> twilight() {
-    int id = dim::twilightId();
+std::optional<DimensionType> gloaming() {
+    int id = dim::gloamingId();
     if (id < 0) return std::nullopt;
     return DimensionType(id);
 }
 
-bool isTwilight(Dimension const& dimension) { return dim::isTwilightDimension(dimension); }
+bool isGloaming(Dimension const& dimension) { return dim::isGloamingDimension(dimension); }
 
-bool isTwilight(DimensionType dimension) {
-    int id = dim::twilightId();
+bool isGloaming(DimensionType dimension) {
+    int id = dim::gloamingId();
     return id >= 0 && static_cast<int>(dimension) == id;
 }
 

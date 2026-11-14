@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:swarm_spider",
+      "identifier": "gloamingforest:swarm_spider",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "swarm_spider", "monster", "mob"]
+        "family": ["gloamingforest", "swarm_spider", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.8,

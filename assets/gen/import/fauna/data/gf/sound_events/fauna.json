@@ -1,32 +1,32 @@
 {
-  "twilightforest:entity.twilightforest.bighorn_sheep.ambient": {
+  "gloamingforest:entity.gloamingforest.bighorn_sheep.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.bighorn_sheep.ambient",
     "sounds": [
       {
         "event": "entity.sheep.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.bighorn_sheep.death": {
+  "gloamingforest:entity.gloamingforest.bighorn_sheep.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.death",
+    "subtitle": "subtitles.gloamingforest.entity.bighorn_sheep.death",
     "sounds": [
       {
         "event": "entity.sheep.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.bighorn_sheep.hurt": {
+  "gloamingforest:entity.gloamingforest.bighorn_sheep.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.bighorn_sheep.hurt",
     "sounds": [
       {
         "event": "entity.sheep.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.bighorn_sheep.step": {
+  "gloamingforest:entity.gloamingforest.bighorn_sheep.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -35,34 +35,34 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.boar.ambient": {
+  "gloamingforest:entity.gloamingforest.boar.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.boar.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.boar.ambient",
     "sounds": [
       {
         "event": "entity.pig.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.boar.death": {
+  "gloamingforest:entity.gloamingforest.boar.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.boar.death",
+    "subtitle": "subtitles.gloamingforest.entity.boar.death",
     "sounds": [
       {
         "event": "entity.pig.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.boar.hurt": {
+  "gloamingforest:entity.gloamingforest.boar.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.boar.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.boar.hurt",
     "sounds": [
       {
         "event": "entity.pig.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.boar.step": {
+  "gloamingforest:entity.gloamingforest.boar.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -71,9 +71,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.deer.ambient": {
+  "gloamingforest:entity.gloamingforest.deer.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.deer.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.deer.ambient",
     "sounds": [
       {
         "file": "mob/deer/idle1"
@@ -86,18 +86,18 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.deer.death": {
+  "gloamingforest:entity.gloamingforest.deer.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.deer.death",
+    "subtitle": "subtitles.gloamingforest.entity.deer.death",
     "sounds": [
       {
         "file": "mob/deer/death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.deer.eat": {
+  "gloamingforest:entity.gloamingforest.deer.eat": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.deer.eat",
+    "subtitle": "subtitles.gloamingforest.entity.deer.eat",
     "sounds": [
       {
         "file": "entity/horse/eat1"
@@ -116,9 +116,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.deer.hurt": {
+  "gloamingforest:entity.gloamingforest.deer.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.deer.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.deer.hurt",
     "sounds": [
       {
         "file": "mob/deer/hurt1"
@@ -128,36 +128,36 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.dwarf_rabbit.ambient": {
+  "gloamingforest:entity.gloamingforest.dwarf_rabbit.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.dwarf_rabbit.ambient",
     "sounds": [
       {
         "event": "entity.rabbit.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.dwarf_rabbit.death": {
+  "gloamingforest:entity.gloamingforest.dwarf_rabbit.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.death",
+    "subtitle": "subtitles.gloamingforest.entity.dwarf_rabbit.death",
     "sounds": [
       {
         "event": "entity.rabbit.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.dwarf_rabbit.hurt": {
+  "gloamingforest:entity.gloamingforest.dwarf_rabbit.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.dwarf_rabbit.hurt",
     "sounds": [
       {
         "event": "entity.rabbit.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.kobold.ambient": {
+  "gloamingforest:entity.gloamingforest.kobold.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.kobold.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.kobold.ambient",
     "sounds": [
       {
         "file": "mob/kobold/ambient1"
@@ -179,9 +179,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.kobold.death": {
+  "gloamingforest:entity.gloamingforest.kobold.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.kobold.death",
+    "subtitle": "subtitles.gloamingforest.entity.kobold.death",
     "sounds": [
       {
         "file": "mob/kobold/death1"
@@ -194,9 +194,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.kobold.hurt": {
+  "gloamingforest:entity.gloamingforest.kobold.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.kobold.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.kobold.hurt",
     "sounds": [
       {
         "file": "mob/kobold/hurt1"
@@ -209,159 +209,159 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.kobold.munch": {
+  "gloamingforest:entity.gloamingforest.kobold.munch": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.kobold.munch",
+    "subtitle": "subtitles.gloamingforest.entity.kobold.munch",
     "sounds": [
       {
         "event": "entity.generic.eat"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.mosquito.ambient": {
+  "gloamingforest:entity.gloamingforest.mosquito.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.mosquito.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.mosquito.ambient",
     "sounds": [
       {
         "file": "mob/mosquito/animals132"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.alpha_yeti": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.alpha_yeti": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.alpha_yeti",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.alpha_yeti",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.alpha_yeti.growl",
+        "event": "gloamingforest:entity.gloamingforest.alpha_yeti.growl",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.carminite_golem": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.carminite_golem": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.carminite_golem",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.carminite_golem",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.carminite_golem.hurt",
+        "event": "gloamingforest:entity.gloamingforest.carminite_golem.hurt",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.death_tome": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.death_tome": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.death_tome",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.death_tome",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.death_tome.ambient",
+        "event": "gloamingforest:entity.gloamingforest.death_tome.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.hostile_wolf": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.hostile_wolf": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hostile_wolf",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.hostile_wolf",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.hostile_wolf.ambient",
+        "event": "gloamingforest:entity.gloamingforest.hostile_wolf.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.hydra": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.hydra": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hydra",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.hydra",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.hydra.growl",
+        "event": "gloamingforest:entity.gloamingforest.hydra.growl",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.ice_core": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.ice_core": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.ice_core",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.ice_core",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.ice.ambient",
+        "event": "gloamingforest:entity.gloamingforest.ice.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.kobold": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.kobold": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.kobold",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.kobold",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.kobold.ambient",
+        "event": "gloamingforest:entity.gloamingforest.kobold.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.minotaur": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.minotaur": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.minotaur",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.minotaur",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.minotaur.ambient",
+        "event": "gloamingforest:entity.gloamingforest.minotaur.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.mosquito": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.mosquito": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.mosquito",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.mosquito",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.mosquito.ambient",
+        "event": "gloamingforest:entity.gloamingforest.mosquito.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.naga": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.naga": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.naga",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.naga",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.naga.hiss",
+        "event": "gloamingforest:entity.gloamingforest.naga.hiss",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.redcap": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.redcap": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.redcap",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.redcap",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.redcap.ambient",
+        "event": "gloamingforest:entity.gloamingforest.redcap.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.parrot.imitate.wraith": {
+  "gloamingforest:entity.gloamingforest.parrot.imitate.wraith": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.wraith",
+    "subtitle": "subtitles.gloamingforest.entity.parrot.imitate.wraith",
     "sounds": [
       {
-        "event": "twilightforest:entity.twilightforest.wraith.ambient",
+        "event": "gloamingforest:entity.gloamingforest.wraith.ambient",
         "volume": 0.6,
         "pitch": 1.8
       }
     ]
   },
-  "twilightforest:entity.twilightforest.penguin.ambient": {
+  "gloamingforest:entity.gloamingforest.penguin.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.penguin.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.penguin.ambient",
     "sounds": [
       {
         "file": "mob/penguin/idle1"
@@ -386,27 +386,27 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.penguin.death": {
+  "gloamingforest:entity.gloamingforest.penguin.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.penguin.death",
+    "subtitle": "subtitles.gloamingforest.entity.penguin.death",
     "sounds": [
       {
         "file": "mob/penguin/death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.penguin.hurt": {
+  "gloamingforest:entity.gloamingforest.penguin.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.penguin.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.penguin.hurt",
     "sounds": [
       {
         "file": "mob/penguin/hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.raven.caw": {
+  "gloamingforest:entity.gloamingforest.raven.caw": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.raven.caw",
+    "subtitle": "subtitles.gloamingforest.entity.raven.caw",
     "sounds": [
       {
         "file": "mob/raven/caw1"
@@ -416,9 +416,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.raven.squawk": {
+  "gloamingforest:entity.gloamingforest.raven.squawk": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.raven.squawk",
+    "subtitle": "subtitles.gloamingforest.entity.raven.squawk",
     "sounds": [
       {
         "file": "mob/raven/squawk1"
@@ -428,9 +428,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.squirrel.ambient": {
+  "gloamingforest:entity.gloamingforest.squirrel.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.squirrel.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.squirrel.ambient",
     "sounds": [
       {
         "file": "mob/squirrel/idle1"
@@ -449,27 +449,27 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.squirrel.death": {
+  "gloamingforest:entity.gloamingforest.squirrel.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.squirrel.death",
+    "subtitle": "subtitles.gloamingforest.entity.squirrel.death",
     "sounds": [
       {
         "file": "mob/squirrel/death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.squirrel.hurt": {
+  "gloamingforest:entity.gloamingforest.squirrel.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.squirrel.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.squirrel.hurt",
     "sounds": [
       {
         "file": "mob/squirrel/hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.tiny_bird.chirp": {
+  "gloamingforest:entity.gloamingforest.tiny_bird.chirp": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.tiny_bird.chirp",
+    "subtitle": "subtitles.gloamingforest.entity.tiny_bird.chirp",
     "sounds": [
       {
         "file": "mob/tiny_bird/chirp1"
@@ -482,9 +482,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.tiny_bird.hurt": {
+  "gloamingforest:entity.gloamingforest.tiny_bird.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.tiny_bird.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.tiny_bird.hurt",
     "sounds": [
       {
         "file": "mob/tiny_bird/hurt1"
@@ -494,9 +494,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.tiny_bird.song": {
+  "gloamingforest:entity.gloamingforest.tiny_bird.song": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.tiny_bird.song",
+    "subtitle": "subtitles.gloamingforest.entity.tiny_bird.song",
     "sounds": [
       {
         "file": "mob/tiny_bird/song1"
@@ -506,9 +506,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.tiny_bird.takeoff": {
+  "gloamingforest:entity.gloamingforest.tiny_bird.takeoff": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.tiny_bird.takeoff",
+    "subtitle": "subtitles.gloamingforest.entity.tiny_bird.takeoff",
     "sounds": [
       {
         "event": "entity.bat.takeoff"

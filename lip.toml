@@ -4,7 +4,7 @@ version = "0.1.0"
 
 [info]
 name = "GloamingForest"
-description = "The Twilight Forest for Minecraft Bedrock Edition (unofficial port of The Twilight Forest 4.8)"
+description = "The Gloaming Forest: a dimension of dark woods, landmarks and bosses for Minecraft Bedrock Edition"
 tags = ["adventure", "world-generation", "dimension"]
 
 # GloamingForest is compiled against one LeviLamina line at a time, so every supported line is a

@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFItems.java
-//   src/main/java/twilightforest/block/Experiment115Block.java
-//   src/main/java/twilightforest/potions/FrostedEffect.java
-//   src/main/java/twilightforest/init/TFJukeboxSongs.java
-//   src/main/java/twilightforest/item/ChainBlockItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/block/Experiment115Block.java
+//   src/main/java/gloamingforest/potions/FrostedEffect.java
+//   src/main/java/gloamingforest/init/TFJukeboxSongs.java
+//   src/main/java/gloamingforest/item/ChainBlockItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/provisions/Provisions.h"
@@ -17,29 +17,29 @@ namespace gf::core::provisions {
 
 std::array<Food, 23> const& foods() {
     static std::array<Food, 23> const table{{
-        {"twilightforest:raw_venison", 2, 0.3f},
-        {"twilightforest:cooked_venison", 6, 0.6f},
-        {"twilightforest:raw_meef", 2, 0.2f},
-        {"twilightforest:cooked_meef", 7, 0.6f},
-        {"twilightforest:meef_stroganoff", 14, 1.2f, true, true, {{{"minecraft:fire_resistance", 3600, 0}, {"minecraft:strength", 2400, 0}}}},
-        {"twilightforest:hydra_chop", 18, 2.0f, false, false, {{{"minecraft:regeneration", 100, 0}, {}}}},
-        {"twilightforest:maze_wafer", 4, 0.6f},
-        {"twilightforest:berry_medley", 5, 0.6f, false, true},
-        {"twilightforest:moss_soup", 5, 0.6f, false, true},
-        {"twilightforest:shika_senbei", 4, 1.0f},
-        {"twilightforest:monster_jerky", 4, 0.275f},
-        {"twilightforest:beef_jerky", 6, 1.18f},
-        {"twilightforest:pork_jerky", 6, 1.18f},
-        {"twilightforest:venison_jerky", 6, 1.18f},
-        {"twilightforest:meef_jerky", 6, 1.18f},
-        {"twilightforest:chicken_jerky", 4, 1.075f},
-        {"twilightforest:mutton_jerky", 4, 1.35f},
-        {"twilightforest:salmon_jerky", 4, 1.35f},
-        {"twilightforest:rabbit_jerky", 4, 0.925f},
-        {"twilightforest:cod_jerky", 4, 0.875f},
-        {"twilightforest:tropical_fish_jerky", 2, 0.6f},
-        {"twilightforest:fugu_jerky", 2, 0.6f},
-        {"twilightforest:experiment_115", 4, 0.3f},
+        {"gloamingforest:raw_venison", 2, 0.3f},
+        {"gloamingforest:cooked_venison", 6, 0.6f},
+        {"gloamingforest:raw_meef", 2, 0.2f},
+        {"gloamingforest:cooked_meef", 7, 0.6f},
+        {"gloamingforest:meef_stroganoff", 14, 1.2f, true, true, {{{"minecraft:fire_resistance", 3600, 0}, {"minecraft:strength", 2400, 0}}}},
+        {"gloamingforest:hydra_chop", 18, 2.0f, false, false, {{{"minecraft:regeneration", 100, 0}, {}}}},
+        {"gloamingforest:maze_wafer", 4, 0.6f},
+        {"gloamingforest:berry_medley", 5, 0.6f, false, true},
+        {"gloamingforest:moss_soup", 5, 0.6f, false, true},
+        {"gloamingforest:shika_senbei", 4, 1.0f},
+        {"gloamingforest:monster_jerky", 4, 0.275f},
+        {"gloamingforest:beef_jerky", 6, 1.18f},
+        {"gloamingforest:pork_jerky", 6, 1.18f},
+        {"gloamingforest:venison_jerky", 6, 1.18f},
+        {"gloamingforest:meef_jerky", 6, 1.18f},
+        {"gloamingforest:chicken_jerky", 4, 1.075f},
+        {"gloamingforest:mutton_jerky", 4, 1.35f},
+        {"gloamingforest:salmon_jerky", 4, 1.35f},
+        {"gloamingforest:rabbit_jerky", 4, 0.925f},
+        {"gloamingforest:cod_jerky", 4, 0.875f},
+        {"gloamingforest:tropical_fish_jerky", 2, 0.6f},
+        {"gloamingforest:fugu_jerky", 2, 0.6f},
+        {"gloamingforest:experiment_115", 4, 0.3f},
     }};
     return table;
 }

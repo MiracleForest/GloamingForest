@@ -1,42 +1,42 @@
 {
-  "twilightforest:extended_snow_warning": {
+  "gloamingforest:extended_snow_warning": {
     "textures": [
-      "textures/twilightforest/particle/snow_0",
-      "textures/twilightforest/particle/snow_1",
-      "textures/twilightforest/particle/snow_2",
-      "textures/twilightforest/particle/snow_3"
+      "textures/gloamingforest/particle/snow_0",
+      "textures/gloamingforest/particle/snow_1",
+      "textures/gloamingforest/particle/snow_2",
+      "textures/gloamingforest/particle/snow_3"
     ]
   },
-  "twilightforest:ice_beam": {
+  "gloamingforest:ice_beam": {
     "textures": [
-      "textures/twilightforest/particle/snow_0",
-      "textures/twilightforest/particle/snow_1",
-      "textures/twilightforest/particle/snow_2",
-      "textures/twilightforest/particle/snow_3"
+      "textures/gloamingforest/particle/snow_0",
+      "textures/gloamingforest/particle/snow_1",
+      "textures/gloamingforest/particle/snow_2",
+      "textures/gloamingforest/particle/snow_3"
     ]
   },
-  "twilightforest:snow": {
+  "gloamingforest:snow": {
     "textures": [
-      "textures/twilightforest/particle/snow_0",
-      "textures/twilightforest/particle/snow_1",
-      "textures/twilightforest/particle/snow_2",
-      "textures/twilightforest/particle/snow_3"
+      "textures/gloamingforest/particle/snow_0",
+      "textures/gloamingforest/particle/snow_1",
+      "textures/gloamingforest/particle/snow_2",
+      "textures/gloamingforest/particle/snow_3"
     ]
   },
-  "twilightforest:snow_guardian": {
+  "gloamingforest:snow_guardian": {
     "textures": [
-      "textures/twilightforest/particle/snow_0",
-      "textures/twilightforest/particle/snow_1",
-      "textures/twilightforest/particle/snow_2",
-      "textures/twilightforest/particle/snow_3"
+      "textures/gloamingforest/particle/snow_0",
+      "textures/gloamingforest/particle/snow_1",
+      "textures/gloamingforest/particle/snow_2",
+      "textures/gloamingforest/particle/snow_3"
     ]
   },
-  "twilightforest:snow_warning": {
+  "gloamingforest:snow_warning": {
     "textures": [
-      "textures/twilightforest/particle/snow_0",
-      "textures/twilightforest/particle/snow_1",
-      "textures/twilightforest/particle/snow_2",
-      "textures/twilightforest/particle/snow_3"
+      "textures/gloamingforest/particle/snow_0",
+      "textures/gloamingforest/particle/snow_1",
+      "textures/gloamingforest/particle/snow_2",
+      "textures/gloamingforest/particle/snow_3"
     ]
   }
 }

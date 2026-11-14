@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:pinch_beetle",
+      "identifier": "gloamingforest:pinch_beetle",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "pinch_beetle", "monster", "mob"]
+        "family": ["gloamingforest", "pinch_beetle", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 1.2,

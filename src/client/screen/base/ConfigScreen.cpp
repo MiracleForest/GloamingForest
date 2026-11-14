@@ -1,6 +1,6 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/client/screen/ConfigScreen.cpp), LGPL-3.0-or-later.
 // Native config screen (contract "mod"): the config GUI for GloamingForest's `config/<section>.json`
-// files, opened by `/twilightforest config` (server type "common.config", feature/common/ConfigScreen.cpp).
+// files, opened by `/gloamingforest config` (server type "common.config", feature/common/ConfigScreen.cpp).
 // The first page lists the sections; a section page lists its entries (scroll with the wheel),
 // booleans as On / Off toggles, numbers and text as text boxes (Enter applies), and a reset
 // button on entries that differ from their default. Changes go to the server, which checks the

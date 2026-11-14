@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/UrGhast.java
-//   src/main/java/twilightforest/entity/ai/goal/UrGhastFlightGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/UrGhastAttackGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/UrGhastLookGoal.java
-//   src/main/java/twilightforest/entity/projectile/UrGhastFireball.java
-//   src/main/java/twilightforest/entity/monster/CarminiteGhastguard.java
-//   src/main/java/twilightforest/entity/monster/CarminiteGhastling.java
-//   src/main/java/twilightforest/loot/conditions/IsMinionCondition.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/UrGhast.java
+//   src/main/java/gloamingforest/entity/ai/goal/UrGhastFlightGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/UrGhastAttackGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/UrGhastLookGoal.java
+//   src/main/java/gloamingforest/entity/projectile/UrGhastFireball.java
+//   src/main/java/gloamingforest/entity/monster/CarminiteGhastguard.java
+//   src/main/java/gloamingforest/entity/monster/CarminiteGhastling.java
+//   src/main/java/gloamingforest/loot/conditions/IsMinionCondition.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Bedrock: the Ur-Ghast is a native flyer (F8's NoClip move control and wanted position until it
 // reaches its first flight point, then Java's noPhysics is cleared by the BP event
 // "solid") with its goals translated below. The carminite ghastguard and ghastling run
-// TF's goals natively too (GhastguardHomedFlightGoal, GhastguardRandomFlyGoal, Ghast.GhastLookGoal,
+// upstream's goals natively too (GhastguardHomedFlightGoal, GhastguardRandomFlyGoal, Ghast.GhastLookGoal,
 // GhastguardAttackGoal, NearestAttackableTargetGoal) with vanilla's GhastMoveControl, as their BP
 // has no navigation or vanilla AI. The Ur-Ghast's fireballs are vanilla minecraft:fireball actors
 // whose impact this unit runs one step ahead (UrGhastFireball#onHit: 16 fireball damage to the
@@ -107,7 +107,7 @@ struct UrState {
 constexpr char kTantrumChannel[] = "darktower.urghast";
 constexpr double kTantrumTrackingRange = 80.0 * 16.0;
 
-/// U15 (atmosphere) draws the Twilight Forest weather (F12's sky provider) and raises its Ur-Ghast
+/// U15 (atmosphere) draws the Gloaming Forest weather (F12's sky provider) and raises its Ur-Ghast
 /// rain splashes from "atmosphere.ur_ghast" {"active": bool}, which it wants on change (its unit
 /// header). Per companion: the Ur-Ghasts in a tantrum it tracks; true when the first one starts, false
 /// when the last one ends, dies or goes out of its view. Strings only (rule R2); a client without U15
@@ -175,11 +175,11 @@ std::unordered_map<std::int64_t, UrState>& states() {
 UrState& stateOf(Actor& a) { return states()[uidOf(a)]; }
 
 void syncVisuals(Mob& m, UrState const& s) {
-    ge::setProperty(m, "twilightforest:tantrum", s.phase.tantrum);
-    ge::setProperty(m, "twilightforest:attack_timer", std::clamp(s.attackTimer, -40, 20));
-    ge::setProperty(m, "twilightforest:charging", s.charging);
+    ge::setProperty(m, "gloamingforest:tantrum", s.phase.tantrum);
+    ge::setProperty(m, "gloamingforest:attack_timer", std::clamp(s.attackTimer, -40, 20));
+    ge::setProperty(m, "gloamingforest:charging", s.charging);
     bool target = m.mTargetId->rawID != -1 && actorById(m.mTargetId->rawID) != nullptr;
-    ge::setProperty(m, "twilightforest:attack_status", target && !s.phase.tantrum ? 1 : 0);
+    ge::setProperty(m, "gloamingforest:attack_status", target && !s.phase.tantrum ? 1 : 0);
 }
 
 Actor* targetOf(Mob& m) {
@@ -669,10 +669,10 @@ void attackGoal(Mob& m, UrState& s) {
         s.prevAttackTimer = s.attackTimer;
         ++s.attackTimer;
         lookAtPitch(m, *t, 500.0f); // setLookAt(target, 10, getMaxHeadXRot()): UrGhast returns 500
-        if (s.attackTimer == 10) soundAt(region, m.getFeetPos(), "entity.twilightforest.ur_ghast.warn", 10.0f, voicePitch());
+        if (s.attackTimer == 10) soundAt(region, m.getFeetPos(), "entity.gloamingforest.ur_ghast.warn", 10.0f, voicePitch());
         if (s.attackTimer == 20) {
             if (!s.phase.tantrum) {
-                soundAt(region, m.getFeetPos(), "entity.twilightforest.ur_ghast.shoot", 10.0f, voicePitch());
+                soundAt(region, m.getFeetPos(), "entity.gloamingforest.ur_ghast.shoot", 10.0f, voicePitch());
                 spitFireball(m);
                 s.prevAttackTimer = s.attackTimer;
             }
@@ -730,7 +730,7 @@ void doTantrumDamageEffects(Mob& m) {
         if (a->isPlayer()) {
             auto fp = a->getFeetPos();
             if (region.canSeeSkyFromBelowWater(BlockPos{int(std::floor(fp.x)), int(std::floor(fp.y)), int(std::floor(fp.z))}))
-                combat::hurt(*a, 3.0f, "twilightforest:ghast_tear", &m, &m);
+                combat::hurt(*a, 3.0f, "gloamingforest:ghast_tear", &m, &m);
         } else if (typeOf(*a) == id::Ghastling) {
             push(*a, Vec3{0.0f, 1.0f, 0.0f});
         }
@@ -789,7 +789,7 @@ void urTick(Actor& self) {
     if (s.phase.tantrum) {
         m->setTarget(nullptr);
         if (--s.nextTantrumCry <= 0) {
-            soundAt(region, self.getFeetPos(), "entity.twilightforest.ur_ghast.tantrum", 16.0f, voicePitch());
+            soundAt(region, self.getFeetPos(), "entity.gloamingforest.ur_ghast.tantrum", 16.0f, voicePitch());
             s.nextTantrumCry = 20 + random().nextInt(30);
         }
         if (s.tickCount % 10 == 0) doTantrumDamageEffects(*m);
@@ -807,7 +807,7 @@ void urTick(Actor& self) {
         Vec3  p = self.getFeetPos();
         float w = b.max.x - b.min.x, h = b.max.y - b.min.y;
         auto& r = random();
-        vanillaParticle(region, "twilightforest:boss_tear", Vec3{float(p.x + (r.nextDouble() - 0.5) * w * 0.75), float(p.y + r.nextDouble() * h * 0.5), float(p.z + (r.nextDouble() - 0.5) * w * 0.75)});
+        vanillaParticle(region, "gloamingforest:boss_tear", Vec3{float(p.x + (r.nextDouble() - 0.5) * w * 0.75), float(p.y + r.nextDouble() * h * 0.5), float(p.z + (r.nextDouble() - 0.5) * w * 0.75)});
     }
     syncTantrum(self, s);
     syncVisuals(*m, s);
@@ -987,7 +987,7 @@ void ghastMove(Mob& m) {
     }
 }
 
-/// GhastguardRandomFlyGoal (the homed flight goal never starts: TF sets no restriction point on
+/// GhastguardRandomFlyGoal (the homed flight goal never starts: upstream sets no restriction point on
 /// these ghasts, so isMobWithinHomeArea is always true).
 void randomFlyGoal(Mob& m, GhastState& g) {
     bool canUse;
@@ -1048,7 +1048,7 @@ void ghastAttackGoal(Mob& m, GhastState& g) {
         g.attackTimer = g.prevAttackTimer = 0; // start
     } else if (!canUse) {
         g.attackRunning = false; // stop: setCharging(false)
-        ge::setProperty(m, "twilightforest:charging", false);
+        ge::setProperty(m, "gloamingforest:charging", false);
         return;
     }
     auto&       region = m.getDimensionBlockSource();
@@ -1058,10 +1058,10 @@ void ghastAttackGoal(Mob& m, GhastState& g) {
         g.prevAttackTimer = g.attackTimer;
         ++g.attackTimer;
         lookAtPitch(m, *t, 500.0f); // CarminiteGhastguard#getMaxHeadXRot
-        if (g.attackTimer == 10) soundAt(region, m.getFeetPos(), ("entity.twilightforest." + kind + ".warn").c_str(), 10.0f, pitch());
+        if (g.attackTimer == 10) soundAt(region, m.getFeetPos(), ("entity.gloamingforest." + kind + ".warn").c_str(), 10.0f, pitch());
         if (g.attackTimer == 20) {
             if (shouldAttack(m, *t)) {
-                soundAt(region, m.getFeetPos(), ("entity.twilightforest." + kind + ".shoot").c_str(), 10.0f, pitch());
+                soundAt(region, m.getFeetPos(), ("entity.gloamingforest." + kind + ".shoot").c_str(), 10.0f, pitch());
                 ghastSpitFireball(m, *t);
                 g.prevAttackTimer = g.attackTimer;
             }
@@ -1071,7 +1071,7 @@ void ghastAttackGoal(Mob& m, GhastState& g) {
         g.prevAttackTimer = g.attackTimer;
         --g.attackTimer;
     }
-    ge::setProperty(m, "twilightforest:charging", g.attackTimer > 10);
+    ge::setProperty(m, "gloamingforest:charging", g.attackTimer > 10);
 }
 
 void ghastSpawn(Actor& self) {
@@ -1095,10 +1095,10 @@ void ghastTick(Actor& self) {
     lookGoal(*m);
     if (full) ghastAttackGoal(*m, g);
     // CarminiteGhastguard#customServerAiStep: the attack timer for the renderer's squash
-    ge::setProperty(self, "twilightforest:attack_timer", std::clamp(g.attackTimer, -40, 20));
+    ge::setProperty(self, "gloamingforest:attack_timer", std::clamp(g.attackTimer, -40, 20));
     // ATTACK_STATUS: 1 while it has a target it would attack (the renderer's open eyes)
     auto* t = targetOf(*m);
-    ge::setProperty(self, "twilightforest:attack_status", t && shouldAttack(*m, *t) ? 1 : 0);
+    ge::setProperty(self, "gloamingforest:attack_status", t && shouldAttack(*m, *t) ? 1 : 0);
     // aiStep: redstone dust half the time
     auto& region = self.getDimensionBlockSource();
     if (random().nextBoolean()) {
@@ -1182,16 +1182,16 @@ void makeBossMinion(Mob& g) {
 void install() {
     gf::boss::registerBoss({
         .entityId        = id::UrGhast,
-        .homeStructure   = "twilightforest:dark_tower",
-        .lootTable       = "twilightforest:entities/ur_ghast",
-        .deathChestBlock = "twilightforest:dark_chest",
+        .homeStructure   = "gloamingforest:dark_tower",
+        .lootTable       = "gloamingforest:entities/ur_ghast",
+        .deathChestBlock = "gloamingforest:dark_chest",
         .bar             = {.rgb = 0xFF0000},
         .deathTicks      = kDeathTicks,
     });
     gf::boss::ext::setHomeRadius(id::UrGhast, kHomeRadius);
     // UrGhastSpawnerBlockEntity#anyPlayerInRange: the nearest player within 9 must also stand above
     // the spawner's y - 4 (else nothing spawns yet)
-    gf::boss::registerSpawner({.blockId  = "twilightforest:ur_ghast_boss_spawner",
+    gf::boss::registerSpawner({.blockId  = "gloamingforest:ur_ghast_boss_spawner",
                                .entityId = id::UrGhast,
                                .range    = 9,
                                .particle = "minecraft:dust",
@@ -1240,7 +1240,7 @@ void install() {
                         redstoneDust(region, Vec3{float(at.x + x), float(at.y + y), float(at.z + z)});
                     }
                 }
-                ge::setProperty(boss, "twilightforest:death_time", std::min(deathTime, 90));
+                ge::setProperty(boss, "gloamingforest:death_time", std::min(deathTime, 90));
             },
     });
     ge::registerType(id::UrGhast, {
@@ -1341,7 +1341,7 @@ void install() {
         return combat::Verdict::Pass;
     });
     // IsMinionCondition (inverse) of entities/carminite_ghastling: a minion ghastling drops nothing
-    // (the condition's owner registers no twilightforest:is_minion yet: the table's pool has it
+    // (the condition's owner registers no gloamingforest:is_minion yet: the table's pool has it
     // inlined away, tools/import/overrides/darktower.json)
     gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const&) {
         if (typeOf(dead) == id::Ghastling && gf::boss::isMinion(dead)) drops.clear();

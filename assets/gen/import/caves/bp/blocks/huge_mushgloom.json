@@ -2,17 +2,17 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:huge_mushgloom",
+      "identifier": "gloamingforest:huge_mushgloom",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:down": [true, false],
-        "twilightforest:east": [true, false],
-        "twilightforest:north": [true, false],
-        "twilightforest:south": [true, false],
-        "twilightforest:up": [true, false],
-        "twilightforest:west": [true, false]
+        "gloamingforest:down": [true, false],
+        "gloamingforest:east": [true, false],
+        "gloamingforest:north": [true, false],
+        "gloamingforest:south": [true, false],
+        "gloamingforest:up": [true, false],
+        "gloamingforest:west": [true, false]
       }
     },
     "components": {
@@ -26,20 +26,20 @@
       "minecraft:light_emission": 5,
       "minecraft:map_color": "#d87f33",
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.huge_mushgloom.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.huge_mushgloom.multipart",
         "bone_visibility": {
-          "part0": "!q.block_state('twilightforest:north')",
-          "part1": "q.block_state('twilightforest:north')",
-          "part2": "!q.block_state('twilightforest:south')",
-          "part3": "q.block_state('twilightforest:south')",
-          "part4": "!q.block_state('twilightforest:west')",
-          "part5": "q.block_state('twilightforest:west')",
-          "part6": "!q.block_state('twilightforest:east')",
-          "part7": "q.block_state('twilightforest:east')",
-          "part8": "!q.block_state('twilightforest:up')",
-          "part9": "q.block_state('twilightforest:up')",
-          "part10": "!q.block_state('twilightforest:down')",
-          "part11": "q.block_state('twilightforest:down')"
+          "part0": "!q.block_state('gloamingforest:north')",
+          "part1": "q.block_state('gloamingforest:north')",
+          "part2": "!q.block_state('gloamingforest:south')",
+          "part3": "q.block_state('gloamingforest:south')",
+          "part4": "!q.block_state('gloamingforest:west')",
+          "part5": "q.block_state('gloamingforest:west')",
+          "part6": "!q.block_state('gloamingforest:east')",
+          "part7": "q.block_state('gloamingforest:east')",
+          "part8": "!q.block_state('gloamingforest:up')",
+          "part9": "q.block_state('gloamingforest:up')",
+          "part10": "!q.block_state('gloamingforest:down')",
+          "part11": "q.block_state('gloamingforest:down')"
         }
       },
       "minecraft:material_instances": {
@@ -47,11 +47,11 @@
           "texture": "tf_block_huge_gloom_inside",
           "render_method": "opaque"
         },
-        "t_twilightforest_block_huge_gloom_cap": {
+        "t_gloamingforest_block_huge_gloom_cap": {
           "texture": "tf_block_huge_gloom_cap",
           "render_method": "opaque"
         },
-        "t_twilightforest_block_huge_gloom_inside": {
+        "t_gloamingforest_block_huge_gloom_inside": {
           "texture": "tf_block_huge_gloom_inside",
           "render_method": "opaque"
         }

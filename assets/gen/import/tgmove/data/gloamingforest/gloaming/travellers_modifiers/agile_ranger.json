@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:agile_ranger_modifier": 5.0
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.agile_ranger.description"
+    }
+  ],
+  "equipment_slots": "legs"
+}

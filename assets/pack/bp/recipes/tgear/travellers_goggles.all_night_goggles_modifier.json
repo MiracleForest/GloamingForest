@@ -2,7 +2,7 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shaped": {
     "description": {
-      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_goggles/all_night_goggles_modifier"
+      "identifier": "gloamingforest:add_modifier_to_travellers_gear/travellers_goggles/all_night_goggles_modifier"
     },
     "tags": [
       "crafting_table"
@@ -14,7 +14,7 @@
     ],
     "key": {
       "G": {
-        "item": "twilightforest:travellers_goggles"
+        "item": "gloamingforest:travellers_goggles"
       },
       "M": {
         "item": "minecraft:phantom_membrane"
@@ -25,11 +25,11 @@
     },
     "unlock": [
       {
-        "item": "twilightforest:travellers_goggles"
+        "item": "gloamingforest:travellers_goggles"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_goggles"
+      "item": "gloamingforest:travellers_goggles"
     }
   }
 }

@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMazeTower13Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDamagedTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleWreckedTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/DestroyArea.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceSideTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceBottomTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBellTower21Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleFoundation13Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleFoundation13ComponentThorns.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBellFoundation21Component.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMazeTower13Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDamagedTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleWreckedTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/DestroyArea.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceSideTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceBottomTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBellTower21Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleFoundation13Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleFoundation13ComponentThorns.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBellFoundation21Component.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -401,7 +401,7 @@ Block const& MazeTower13::doorColor() const {
 // ==== FinalCastleDamagedTowerComponent / FinalCastleWreckedTowerComponent =======================================
 
 DamagedTower::DamagedTower(std::string typeId, RandomSource& rand, int i, int x, int y, int z, Orientation direction)
-: MazeTower13(std::move(typeId), rand, i, x, y, z, id::YellowRune, direction) {} // TODO in TF: change rune color
+: MazeTower13(std::move(typeId), rand, i, x, y, z, id::YellowRune, direction) {} // TODO in upstream: change rune color
 
 DamagedTower::DamagedTower(std::string typeId) : MazeTower13(std::move(typeId)) {}
 
@@ -702,7 +702,7 @@ void Bridge::postProcess(Region& region, RandomSource& rand, BlockBox const& sbb
     // span
     randomFill(region, sbb, 0, 0, 0, length, 1, 6, false, rand, randomBlocks);
     // rails
-    Block const& castlePillar = J("twilightforest:bold_castle_brick_pillar", Json{{"axis", "x"}});
+    Block const& castlePillar = J("gloamingforest:bold_castle_brick_pillar", Json{{"axis", "x"}});
     fill(region, sbb, 0, 2, 0, length, 2, 0, castlePillar, castlePillar, false);
     fill(region, sbb, 0, 2, 6, length, 2, 6, castlePillar, castlePillar, false);
     // supports
@@ -784,7 +784,7 @@ void ThornFoundation::makeThornVine(Region& region, RandomSource& decoRNG, Rotat
     int twist    = decoRNG.nextInt(4);
     int twistMod = 3 + decoRNG.nextInt(3);
 
-    Block const& thorns = J("twilightforest:brown_thorns");
+    Block const& thorns = J("gloamingforest:brown_thorns");
     while (!isDeadrock(getBlockStateFromPosRotated(region, x, y, z, sbb, rotation)) && worldY(y) > 90) {
         setBlockStateRotated(region, thorns, x, y, z, rotation, sbb);
         // twist vines around the center block
@@ -845,10 +845,10 @@ void ThornFoundation::makeThornBranch(Region& region, int x, int y, int z, Rotat
             // go out that far
             Rotation     added  = st::addRotation(st::addRotation(dir, rotation), this->rotation);
             char const*  axis   = added == Rotation::None || added == Rotation::Clockwise180 ? "x" : "z";
-            Block const& thorns = J("twilightforest:green_thorns", Json{{"axis", axis}});
+            Block const& thorns = J("gloamingforest:green_thorns", Json{{"axis", axis}});
             if (i > 0) setBlockStateRotated(region, thorns, x + (dx * i), y, z + (dz * i), rotation, sbb);
             // go up that far
-            setBlockStateRotated(region, J("twilightforest:green_thorns", Json{{"axis", "y"}}), destX, y + i, destZ, rotation, sbb);
+            setBlockStateRotated(region, J("gloamingforest:green_thorns", Json{{"axis", "y"}}), destX, y + i, destZ, rotation, sbb);
             // go back half that far
             if (i > (dist / 2)) setBlockStateRotated(region, thorns, x + (dx * i), y + dist - 1, z + (dz * i), rotation, sbb);
         }

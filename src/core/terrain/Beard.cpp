@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponentOld.java
-//   src/main/java/twilightforest/world/components/structures/TwilightJigsawPiece.java
-//   src/main/java/twilightforest/world/components/structures/HedgeMazeComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/KnightStrongholdComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardTerrace.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/*.java
-//   src/main/java/twilightforest/init/TFStructurePieceTypes.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentOld.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java
+//   src/main/java/gloamingforest/world/components/structures/HedgeMazeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/KnightStrongholdComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardTerrace.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/*.java
+//   src/main/java/gloamingforest/init/TFStructurePieceTypes.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/terrain/Beard.h"
@@ -30,7 +30,7 @@ std::string lower(std::string s) {
     return s;
 }
 
-/// How a TF piece type answers the beardifier.
+/// How an upstream piece type answers the beardifier.
 enum class Rule {
     Plain,        ///< a plain StructurePiece / TemplateStructurePiece: the structure's adaptation
     OldNone,      ///< TFStructureComponentOld's default: NONE
@@ -40,7 +40,7 @@ enum class Rule {
     BeardBox3,    ///< BEARD_BOX, ground delta 3 (CourtyardTerrace and its hedge)
     Bury,         ///< BURY, ground delta 0 (protected stronghold pieces, troll cave, final castle dungeon rooms)
     ModifierNone, ///< a PieceBeardifierModifier answering NONE (the other lich tower pieces)
-    Jigsaw,       ///< TwilightJigsawPiece: "terrain_adaptation" / "ground_offset" of its tag
+    Jigsaw,       ///< GloamingJigsawPiece: "terrain_adaptation" / "ground_offset" of its tag
     WingBeard,    ///< LichTowerWingBeard: "gen_ground" ? BEARD_BOX : NONE, ground delta 4
     YardBox,      ///< LichYardBox: "dirt_mix" ? BEARD_BOX : NONE, ground delta 0
 };
@@ -149,7 +149,7 @@ TerrainAdjustment adjustmentOf(std::string const& name) { return core::landmark:
 std::optional<PieceBeard> tfPieceBeard(std::string const& typeId, BlockBox const& box, nlohmann::json const& tag) {
     auto        colon = typeId.find(':');
     std::string ns    = colon == std::string::npos ? std::string("minecraft") : lower(typeId.substr(0, colon));
-    if (ns != "twilightforest") return std::nullopt;
+    if (ns != "gloamingforest") return std::nullopt;
     auto it = rules().find(lower(typeId.substr(colon + 1)));
     if (it == rules().end()) return std::nullopt;
     auto modifier = [&](TerrainAdjustment a, int delta) { return PieceBeard{true, a, box, delta}; };

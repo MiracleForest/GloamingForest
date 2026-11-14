@@ -1,9 +1,9 @@
 # U21 (lich): the lich tower's yard (original designs, rule R19): the graves beside the paths
-# (TF's template pool twilightforest:lich_tower/grave: grave, grave_ajar, grave_open) and the
+# (upstream's template pool gloamingforest:lich_tower/grave: grave, grave_ajar, grave_open) and the
 # perimeter fence pieces LichPerimeterFence strings from the end of the path to the wing trims
-# (outer_fence_1 .. outer_fence_7; TF's code names them, so they carry GloamingForest ids).
+# (outer_fence_1 .. outer_fence_7; upstream's code names them, so they carry GloamingForest ids).
 . (Join-Path $PSScriptRoot '../LichLib.ps1')
-$NS  = 'twilightforest:lich_tower/'
+$NS  = 'gloamingforest:lich_tower/'
 $GNS = 'gf:lich_tower/'
 
 # ---- graves -----------------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ New-LichGrave 'grave' {
     param($t)
     Set-GftBox $t 1 2 1 1 2 3 'minecraft:stone_brick_slab' @{ type = 'bottom' }
     Set-GftBlock $t 1 0 2 'minecraft:chest' @{ facing = 'north' }
-    Add-GftMarker $t 1 0 2 'loot' @{ table = 'twilightforest:chests/tower_grave_lower' }
+    Add-GftMarker $t 1 0 2 'loot' @{ table = 'gloamingforest:chests/tower_grave_lower' }
 }
 # the lid pushed back: the hole at the foot shows the chest
 New-LichGrave 'grave_ajar' {
@@ -40,7 +40,7 @@ New-LichGrave 'grave_ajar' {
     Set-GftBlock $t 1 2 1 'minecraft:air'
     Set-GftBlock $t 1 1 1 'minecraft:air'
     Set-GftBlock $t 1 0 1 'minecraft:chest' @{ facing = 'north' }
-    Add-GftMarker $t 1 0 1 'loot' @{ table = 'twilightforest:chests/tower_grave_upper' }
+    Add-GftMarker $t 1 0 1 'loot' @{ table = 'gloamingforest:chests/tower_grave_upper' }
     Set-GftBlock $t 0 2 1 'minecraft:cobblestone_slab' @{ type = 'bottom' }
 }
 # dug up: an open pit with the earth heaped beside it
@@ -49,7 +49,7 @@ New-LichGrave 'grave_open' {
     Set-GftBox $t 1 1 1 1 1 3 'minecraft:air'
     Set-GftBox $t 1 2 1 1 2 3 'minecraft:air'
     Set-GftBlock $t 1 0 3 'minecraft:chest' @{ facing = 'north' }
-    Add-GftMarker $t 1 0 3 'loot' @{ table = 'twilightforest:chests/tower_grave_lower' }
+    Add-GftMarker $t 1 0 3 'loot' @{ table = 'gloamingforest:chests/tower_grave_lower' }
     Set-GftBlock $t 0 2 2 'minecraft:coarse_dirt'
     Set-GftBlock $t 2 2 1 'minecraft:coarse_dirt'
     Set-GftBlock $t 2 2 3 'minecraft:dirt'
@@ -77,8 +77,8 @@ function New-LichFence([int]$n) {
         Set-GftBlock $t $x 2 0 'minecraft:stone_brick_wall'
         # the iron fence: posts (a zombie may be leashed to one) on the middle course
         $post = if (($x % 2) -eq 1) { 'post' } else { 'none' }
-        Set-GftBlock $t $x 3 0 'twilightforest:wrought_iron_fence' @{ post = $post }
-        Set-GftBlock $t $x 4 0 'twilightforest:wrought_iron_fence' @{ post = 'capped' }
+        Set-GftBlock $t $x 3 0 'gloamingforest:wrought_iron_fence' @{ post = $post }
+        Set-GftBlock $t $x 4 0 'gloamingforest:wrought_iron_fence' @{ post = 'capped' }
     }
     Add-GftJigsaw $t $n 1 0 -Front down -Top north -Name 'gf:lich_tower/fence_edge_left' -Target 'gf:lich_tower/fence_edge_right'
     Add-GftJigsaw $t 0 1 0 -Front down -Top north -Name 'gf:lich_tower/fence_edge_right' -Target 'gf:lich_tower/fence_edge_left'

@@ -1,28 +1,28 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerOutbuildingComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerBeardComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerBeardAttachedComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofAttachedSlabComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofFenceComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofGableForwardsComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofPointyComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofPointyOverhangComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofSlabComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofSlabForwardsComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofStairsOverhangComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerOutbuildingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerBeardComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerBeardAttachedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofAttachedSlabComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofFenceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofGableForwardsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofPointyComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofPointyOverhangComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofSlabComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofSlabForwardsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofStairsOverhangComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). The 16
-// classes of TF's old lich tower ("TFLT*" piece types): the wing with its openings, stairs,
+// classes of upstream's old lich tower ("TFLT*" piece types): the wing with its openings, stairs,
 // windows, floors and decorations, its main / bridge / outbuilding variants, the beards under it
 // and the roofs on it. They are the base of the dark tower (U26), the aurora palace and the
 // mushroom tower (U28); those units subclass them and override the virtual members, as in Java.
@@ -40,7 +40,7 @@ namespace gf::structure::bases {
 
 class TowerRoof;
 
-/// TowerWingComponent ("twilightforest:TFLTWin").
+/// TowerWingComponent ("gloamingforest:TFLTWin").
 class TowerWing : public ComponentOld {
 public:
     /// TowerWingComponent(type, i, x, y, z, pSize, pHeight, direction): a size x height x size wing.
@@ -148,7 +148,7 @@ protected:
     std::array<bool, 4>   openingTowards{false, false, true, false};
 };
 
-/// TowerMainComponent ("twilightforest:TFLTMai"): the lich tower's main wing with the lich room.
+/// TowerMainComponent ("gloamingforest:TFLTMai"): the lich tower's main wing with the lich room.
 class TowerMain : public TowerWing {
 public:
     TowerMain(RandomSource& random, int genDepth, int x, int y, int z);
@@ -170,7 +170,7 @@ protected:
     virtual void decorateTorches(Region& region, RandomSource& random, int floorLevel, BlockBox const& sbb);
 };
 
-/// TowerBridgeComponent ("twilightforest:TFLTBri"): a short bridge that leads to a new wing.
+/// TowerBridgeComponent ("gloamingforest:TFLTBri"): a short bridge that leads to a new wing.
 class TowerBridge : public TowerWing {
 public:
     TowerBridge(int genDepth, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -185,7 +185,7 @@ protected:
     int dHeight = 0; ///< the destination wing's height
 };
 
-/// TowerOutbuildingComponent ("twilightforest:TFLTOut"): a ground-level outbuilding wing.
+/// TowerOutbuildingComponent ("gloamingforest:TFLTOut"): a ground-level outbuilding wing.
 class TowerOutbuilding : public TowerWing {
 public:
     TowerOutbuilding(int genDepth, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -195,7 +195,7 @@ public:
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerBeardComponent ("twilightforest:TFLTBea"): the stepped pyramid under a freestanding wing.
+/// TowerBeardComponent ("gloamingforest:TFLTBea"): the stepped pyramid under a freestanding wing.
 class TowerBeard : public ComponentOld {
 public:
     TowerBeard(std::string typeId, int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -212,7 +212,7 @@ protected:
     int height = 0; ///< size / 2
 };
 
-/// TowerBeardAttachedComponent ("twilightforest:TFLTBA"): the beard under a wing attached to a wall.
+/// TowerBeardAttachedComponent ("gloamingforest:TFLTBA"): the beard under a wing attached to a wall.
 class TowerBeardAttached : public TowerBeard {
 public:
     TowerBeardAttached(int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -222,7 +222,7 @@ protected:
     virtual void makeAttachedBeard(Region& region, RandomSource& random, BlockBox const& sbb);
 };
 
-/// TowerRoofComponent ("twilightforest:TFLTRoo"): the roof base (no blocks of its own).
+/// TowerRoofComponent ("gloamingforest:TFLTRoo"): the roof base (no blocks of its own).
 class TowerRoof : public ComponentOld {
 public:
     TowerRoof(std::string typeId, int genDepth, int x, int y, int z);
@@ -246,14 +246,14 @@ protected:
     int height = 0;
 };
 
-/// TowerRoofFenceComponent ("twilightforest:TFLTRF"): a fence ring, the last-resort roof.
+/// TowerRoofFenceComponent ("gloamingforest:TFLTRF"): a fence ring, the last-resort roof.
 class TowerRoofFence : public TowerRoof {
 public:
     TowerRoofFence(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofGableForwardsComponent ("twilightforest:TFLTRGF").
+/// TowerRoofGableForwardsComponent ("gloamingforest:TFLTRGF").
 class TowerRoofGableForwards : public TowerRoof {
 public:
     TowerRoofGableForwards(int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -261,7 +261,7 @@ public:
     [[nodiscard]] virtual int slopeChangeForSize() const;
 };
 
-/// TowerRoofPointyComponent ("twilightforest:TFLTRP").
+/// TowerRoofPointyComponent ("gloamingforest:TFLTRP").
 class TowerRoofPointy : public TowerRoof {
 public:
     TowerRoofPointy(std::string typeId, int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -269,13 +269,13 @@ public:
     [[nodiscard]] virtual int slopeChangeForSize() const;
 };
 
-/// TowerRoofPointyOverhangComponent ("twilightforest:TFLTRPO").
+/// TowerRoofPointyOverhangComponent ("gloamingforest:TFLTRPO").
 class TowerRoofPointyOverhang : public TowerRoofPointy {
 public:
     TowerRoofPointyOverhang(int genDepth, TowerWing const& wing, int x, int y, int z);
 };
 
-/// TowerRoofSlabComponent ("twilightforest:TFLTRS").
+/// TowerRoofSlabComponent ("gloamingforest:TFLTRS").
 class TowerRoofSlab : public TowerRoof {
 public:
     TowerRoofSlab(std::string typeId, int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -286,28 +286,28 @@ protected:
     virtual void makeConnectedCap(Region& region, Block const& slabType, Block const& woodType, BlockBox const& sbb);
 };
 
-/// TowerRoofAttachedSlabComponent ("twilightforest:TFLTRAS").
+/// TowerRoofAttachedSlabComponent ("gloamingforest:TFLTRAS").
 class TowerRoofAttachedSlab : public TowerRoofSlab {
 public:
     TowerRoofAttachedSlab(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofSlabForwardsComponent ("twilightforest:TFLTRSF").
+/// TowerRoofSlabForwardsComponent ("gloamingforest:TFLTRSF").
 class TowerRoofSlabForwards : public TowerRoofSlab {
 public:
     TowerRoofSlabForwards(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofStairsComponent ("twilightforest:TFLTRSt").
+/// TowerRoofStairsComponent ("gloamingforest:TFLTRSt").
 class TowerRoofStairs : public TowerRoof {
 public:
     TowerRoofStairs(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofStairsOverhangComponent ("twilightforest:TFLTRStO").
+/// TowerRoofStairsOverhangComponent ("gloamingforest:TFLTRStO").
 class TowerRoofStairsOverhang : public TowerRoof {
 public:
     TowerRoofStairsOverhang(int genDepth, TowerWing const& wing, int x, int y, int z);

@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:hollow_oak_log",
+      "identifier": "gloamingforest:hollow_oak_log",
       "menu_category": {
         "category": "construction",
         "group": "minecraft:itemGroup.name.wood"
@@ -10,10 +10,10 @@
     },
     "components": {
       "minecraft:display_name": {
-        "value": "item.twilightforest:hollow_oak_log.name"
+        "value": "item.gloamingforest:hollow_oak_log.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:hollow_oak_log_horizontal"
+        "block": "gloamingforest:hollow_oak_log_horizontal"
       },
       "minecraft:fuel": {
         "duration": 15

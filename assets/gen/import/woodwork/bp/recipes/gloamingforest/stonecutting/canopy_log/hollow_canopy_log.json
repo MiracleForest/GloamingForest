@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/canopy_log/hollow_canopy_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:canopy_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:canopy_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hollow_canopy_log"
+    }
+  }
+}

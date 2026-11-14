@@ -1,11 +1,11 @@
 {
   "values": [
-    "#twilightforest:twilight_oak_logs",
-    "#twilightforest:canopy_logs",
-    "#twilightforest:mangrove_logs",
-    "#twilightforest:timewood_logs",
-    "#twilightforest:transwood_logs",
-    "#twilightforest:mining_logs",
-    "#twilightforest:sortwood_logs"
+    "#gloamingforest:gloaming_oak_logs",
+    "#gloamingforest:canopy_logs",
+    "#gloamingforest:mangrove_logs",
+    "#gloamingforest:timewood_logs",
+    "#gloamingforest:transwood_logs",
+    "#gloamingforest:mining_logs",
+    "#gloamingforest:sortwood_logs"
   ]
 }

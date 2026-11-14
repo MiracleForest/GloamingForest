@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:maloberry_bush",
+      "identifier": "gloamingforest:maloberry_bush",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:age": [0, 1, 2, 3],
-        "twilightforest:layers": [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        "gloamingforest:age": [0, 1, 2, 3],
+        "gloamingforest:layers": [0, 1, 2, 3, 4, 5, 6, 7, 8]
       }
     },
     "components": {
@@ -28,7 +28,7 @@
         "catch_chance_modifier": 4,
         "destroy_chance_modifier": 25
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_0",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_0",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_maloberry_bush",
@@ -51,9 +51,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -75,9 +75,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -103,9 +103,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -131,9 +131,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -159,9 +159,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -183,9 +183,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -207,9 +207,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -231,9 +231,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -255,9 +255,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -273,9 +273,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -297,9 +297,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -325,9 +325,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -353,9 +353,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -381,9 +381,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -409,9 +409,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -437,9 +437,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -461,9 +461,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -485,9 +485,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -503,9 +503,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -527,9 +527,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -549,9 +549,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -571,9 +571,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -593,9 +593,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -615,9 +615,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -637,9 +637,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -659,9 +659,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush",
@@ -681,7 +681,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 8",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -719,9 +719,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -743,9 +743,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -765,9 +765,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -787,9 +787,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -809,9 +809,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -831,9 +831,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -853,9 +853,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -875,9 +875,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_maloberry_bush_ripe",
@@ -897,7 +897,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 8",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

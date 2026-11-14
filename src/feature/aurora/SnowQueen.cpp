@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/SnowQueen.java
-//   src/main/java/twilightforest/entity/boss/SnowQueenIceShield.java
-//   src/main/java/twilightforest/entity/ai/goal/HoverBaseGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/HoverSummonGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/HoverThenDropGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/HoverBeamGoal.java
-//   src/main/java/twilightforest/block/entity/spawner/SnowQueenSpawnerBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/SnowQueen.java
+//   src/main/java/gloamingforest/entity/boss/SnowQueenIceShield.java
+//   src/main/java/gloamingforest/entity/ai/goal/HoverBaseGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/HoverSummonGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/HoverThenDropGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/HoverBeamGoal.java
+//   src/main/java/gloamingforest/block/entity/spawner/SnowQueenSpawnerBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The Snow Queen on F8's boss kit: the SUMMON / DROP / BEAM phases (not saved, as TF: a reloaded
+// The Snow Queen on F8's boss kit: the SUMMON / DROP / BEAM phases (not saved, as upstream: a reloaded
 // queen starts over in SUMMON), the three hover goals, the seven ice shields (F8 parts), the ice
 // crystal minions, the ice beam and the client effects (sent through gf::fx). Her phase and beam
 // flag are entity properties, which the resource pack's animations read on every client.
@@ -108,8 +108,8 @@ Queen& stateOf(Actor& self) {
     auto [it, fresh] = queens().try_emplace(uidOf(self));
     if (fresh) {
         // the constructor calls setCurrentPhase(SUMMON)
-        gf::entity::setProperty(self, "twilightforest:phase", 0);
-        gf::entity::setProperty(self, "twilightforest:beam", false);
+        gf::entity::setProperty(self, "gloamingforest:phase", 0);
+        gf::entity::setProperty(self, "gloamingforest:beam", false);
     }
     return it->second;
 }
@@ -118,13 +118,13 @@ void setBreathing(Actor& self, bool flag) {
     auto& q = stateOf(self);
     if (q.breathing == flag) return;
     q.breathing = flag;
-    gf::entity::setProperty(self, "twilightforest:beam", flag);
+    gf::entity::setProperty(self, "gloamingforest:beam", flag);
 }
 
 void setCurrentPhase(Actor& self, Phase phase) {
     auto& q = stateOf(self);
     q.phase = phase;
-    gf::entity::setProperty(self, "twilightforest:phase", static_cast<int>(phase));
+    gf::entity::setProperty(self, "gloamingforest:phase", static_cast<int>(phase));
     if (phase == Phase::Summon) q.summonsRemaining = MAX_SUMMONS;
     if (phase == Phase::Drop) {
         q.successfulDrops = 0;
@@ -276,7 +276,7 @@ bool doHurtTarget(Mob& self, Actor& target) {
     auto  ref    = self.getAttribute(SharedAttributes::ATTACK_DAMAGE());
     if (auto const* inst = static_cast<AttributeInstance const*>(ref.mPtr)) damage = inst->mCurrentValue;
     damage += EnchantUtils::getMeleeDamageBonus(target, self);
-    char const* type = stateOf(self).phase == Phase::Drop ? "twilightforest:squish" : "minecraft:mob_attack";
+    char const* type = stateOf(self).phase == Phase::Drop ? "gloamingforest:squish" : "minecraft:mob_attack";
     return gf::combat::hurt(target, damage, type, &self, &self);
 }
 
@@ -734,13 +734,13 @@ public:
             AABB cb = boxOf(*e);
             if (cb.contains(src)) {
                 if (0.0 < hitDist || hitDist == 0.0) {
-                    gf::combat::hurt(*e, BREATH_DAMAGE, "twilightforest:chilling_breath", &m, &m);
+                    gf::combat::hurt(*e, BREATH_DAMAGE, "gloamingforest:chilling_breath", &m, &m);
                     hitDist = 0.0;
                 }
             } else if (auto hit = clip(cb, src, dest)) {
                 double d = std::sqrt((hit->x - src.x) * (hit->x - src.x) + (hit->y - src.y) * (hit->y - src.y) + (hit->z - src.z) * (hit->z - src.z));
                 if (d < hitDist || hitDist == 0.0) {
-                    gf::combat::hurt(*e, BREATH_DAMAGE, "twilightforest:chilling_breath", &m, &m);
+                    gf::combat::hurt(*e, BREATH_DAMAGE, "gloamingforest:chilling_breath", &m, &m);
                     hitDist = d;
                 }
             }
@@ -793,7 +793,7 @@ void applyShieldCollisions(Mob& self) {
             }
             if (doHurtTarget(self, *collided)) {
                 fe::push(*collided, Vec3{0, 0.4f, 0});
-                gf::fx::sound(self.getDimension(), "entity.twilightforest.snow_queen.attack", feet(self), 1.0F, 1.0F);
+                gf::fx::sound(self.getDimension(), "entity.gloamingforest.snow_queen.attack", feet(self), 1.0F, 1.0F);
             }
         }
     }
@@ -821,7 +821,7 @@ void queenTick(Actor& actor) {
     recordArrows(*self);
     // the shields' angle is 60 x i + tick x 5 (shieldAngle): the client entity turns its shield
     // geometry from this anchor and its own clock (snow_queen.entity.json, v.shield_t)
-    if (self->mTickCount % 20 == 0) gf::entity::setProperty(*self, "twilightforest:shield_tick", static_cast<int>(self->mTickCount % 72));
+    if (self->mTickCount % 20 == 0) gf::entity::setProperty(*self, "gloamingforest:shield_tick", static_cast<int>(self->mTickCount % 72));
 
     // switch phases
     if (q.phase == Phase::Summon && q.summonsRemaining == 0 && countMyMinions(*self) <= 0) setCurrentPhase(*self, Phase::Drop);
@@ -857,7 +857,7 @@ bool queenHurt(Actor& actor, float&, std::string const&, Actor*) {
     if (part.starts_with("shield_")) {
         // SnowQueenIceShield#hurt: blocked, with the break sound (a piercing arrow never gets here:
         // it passes the shield, see installSnowQueen)
-        gf::fx::sound(actor.getDimension(), "entity.twilightforest.snow_queen.break", feet(actor), 1.0F, (rr() * 0.7F + 1.0F) * 2.0F);
+        gf::fx::sound(actor.getDimension(), "entity.gloamingforest.snow_queen.break", feet(actor), 1.0F, (rr() * 0.7F + 1.0F) * 2.0F);
         return false;
     }
     // BEAM's damage counts once the hurt went through (SnowQueen#hurt: result && phase == BEAM):
@@ -906,7 +906,7 @@ int pierceLevel(Actor& projectile) {
 void installSnowQueen() {
     gf::entity::ext::setFlyingSpeed(kSnowQueen, 0.23);
     gf::entity::ext::onBreathAttack(kSnowQueen, [](Mob& breather, Actor& target) {
-        gf::combat::hurt(target, BREATH_DAMAGE, "twilightforest:chilling_breath", &breather, &breather);
+        gf::combat::hurt(target, BREATH_DAMAGE, "gloamingforest:chilling_breath", &breather, &breather);
     });
     gf::entity::registerType(kSnowQueen, {
         .onSpawn = queenSpawn,
@@ -941,7 +941,7 @@ void installSnowQueen() {
             // of every arrow of this shooter near the shield (piercing or not): the one whose flight
             // (its motion now, or the one recorded at the queen's last tick, before the engine
             // stopped it) crosses the shield's box first, else the nearest one. A plain arrow there
-            // means a plain hit (blocked as TF), even with a piercing one nearby.
+            // means a plain hit (blocked as upstream), even with a piercing one nearby.
             AABB         b = d.victim.getAABB();
             AABB         near{Vec3{b.min.x - 3.0f, b.min.y - 3.0f, b.min.z - 3.0f}, Vec3{b.max.x + 3.0f, b.max.y + 3.0f, b.max.z + 3.0f}};
             AABB         hitBox{Vec3{b.min.x - 0.3f, b.min.y - 0.3f, b.min.z - 0.3f}, Vec3{b.max.x + 0.3f, b.max.y + 0.3f, b.max.z + 0.3f}};
@@ -1019,8 +1019,8 @@ void installSnowQueen() {
     gf::boss::registerBoss({
         .entityId        = kSnowQueen,
         .homeStructure   = kAuroraPalace,
-        .lootTable       = "twilightforest:entities/snow_queen",
-        .deathChestBlock = "twilightforest:twilight_oak_chest",
+        .lootTable       = "gloamingforest:entities/snow_queen",
+        .deathChestBlock = "gloamingforest:gloaming_oak_chest",
         .bar             = {.rgb = 0x8CF0F0},
     });
     gf::boss::ext::setHomeRadius(kSnowQueen, 20);
@@ -1035,7 +1035,7 @@ void installSnowQueen() {
             }
         },
     });
-    gf::boss::registerSpawner({.blockId = "twilightforest:snow_queen_boss_spawner", .entityId = kSnowQueen, .range = 9, .particle = "twilightforest:snow"});
+    gf::boss::registerSpawner({.blockId = "gloamingforest:snow_queen_boss_spawner", .entityId = kSnowQueen, .range = 9, .particle = "gloamingforest:snow"});
 }
 
 /// The current phase (selftests): 0 summon, 1 drop, 2 beam; -1 when the queen has no state yet.

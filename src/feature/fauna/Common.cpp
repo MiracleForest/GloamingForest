@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/TinyBirdVariant.java
-//   src/main/java/twilightforest/entity/passive/DwarfRabbitVariant.java
-//   src/main/java/twilightforest/init/custom/TinyBirdVariants.java
-//   src/main/java/twilightforest/init/custom/DwarfRabbitVariants.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/TinyBirdVariant.java
+//   src/main/java/gloamingforest/entity/passive/DwarfRabbitVariant.java
+//   src/main/java/gloamingforest/init/custom/TinyBirdVariants.java
+//   src/main/java/gloamingforest/init/custom/DwarfRabbitVariants.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U16's shared helpers: the random source, biome and difficulty lookups, BP events, the colour and
 // variant state of the bighorn, tiny bird and dwarf rabbit, Java's eye heights and the variant
-// registries (data/twilightforest/twilight/{tiny_bird,dwarf_rabbit}_variant/*.json, TF's datapack
+// registries (data/gloamingforest/gloaming/{tiny_bird,dwarf_rabbit}_variant/*.json, upstream's datapack
 // registries; the Bedrock index of an entry is its place in the resource pack's texture arrays).
 #include "feature/fauna/Fauna.h"
 
@@ -77,7 +77,7 @@ BlockPos blockPosOf(Actor const& actor) {
 
 std::string biomeIdAt(Actor& actor) {
     auto pos = blockPosOf(actor);
-    if (gf::world::isTwilight(actor.getDimension())) {
+    if (gf::world::isGloaming(actor.getDimension())) {
         auto id = gf::worldgen::biomeAt(pos);
         if (!id.empty()) return id;
     }
@@ -105,7 +105,7 @@ float javaEyeHeight(std::string const& type) {
 // ---- variant registries ---------------------------------------------------------------------------
 
 struct Registry {
-    std::string                     dir;      ///< "twilight/tiny_bird_variant"
+    std::string                     dir;      ///< "gloaming/tiny_bird_variant"
     std::vector<std::string>        order;    ///< the RP texture array order (Bedrock index)
     std::string                     fallback; ///< the synced default
     std::vector<core::fauna::Variant> entries;
@@ -118,8 +118,8 @@ std::mutex& registryMutex() {
 }
 
 Registry& registryOf(std::string const& entityId) {
-    static Registry tiny{"twilight/tiny_bird_variant", {"twilightforest:blue", "twilightforest:brown", "twilightforest:gold", "twilightforest:red"}, "twilightforest:red", {}, false};
-    static Registry rabbit{"twilight/dwarf_rabbit_variant", {"twilightforest:brown", "twilightforest:dutch", "twilightforest:white"}, "twilightforest:brown", {}, false};
+    static Registry tiny{"gloaming/tiny_bird_variant", {"gloamingforest:blue", "gloamingforest:brown", "gloamingforest:gold", "gloamingforest:red"}, "gloamingforest:red", {}, false};
+    static Registry rabbit{"gloaming/dwarf_rabbit_variant", {"gloamingforest:brown", "gloamingforest:dutch", "gloamingforest:white"}, "gloamingforest:brown", {}, false};
     return entityId == kTinyBird ? tiny : rabbit;
 }
 
@@ -160,7 +160,7 @@ void load(Registry& r) {
             r.entries.push_back(std::move(it->second));
             found.erase(it);
         } else {
-            // the registry data is missing: TF's bootstrap entry (no biome filter)
+            // the registry data is missing: upstream's bootstrap entry (no biome filter)
             r.entries.push_back(core::fauna::Variant{id, "", true, {}});
         }
     }

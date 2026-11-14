@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:wood/smoked_cracked_towerwood"
+    },
+    "tags": ["smoker"],
+    "input": "gloamingforest:towerwood",
+    "output": "gloamingforest:cracked_towerwood",
+    "unlock": [
+      {
+        "item": "gloamingforest:towerwood"
+      }
+    ]
+  }
+}

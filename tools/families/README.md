@@ -2,7 +2,7 @@
 
 `tools/families` turns family data into Bedrock block definitions at assemble time, and
 `src/feature/families` gives the blocks their Java behaviour. A unit declares its blocks in
-`assets/data/families/<unit>.json` (assembled into `data/gf/families/`); F1 imports TF's own as
+`assets/data/families/<unit>.json` (assembled into `data/gf/families/`); F1 imports upstream's own as
 `assets/gen/import/<unit>/data/gf/families/<unit>.json`. The fixture families of the selftests live in
 `fixtures/families.json` (gf_test ids, development builds only).
 
@@ -21,8 +21,8 @@ copy the build already generated.
 
 ```json
 [
-  {"id": "twilightforest:canopy_stairs", "family": "stairs", "params": {"class": "StairBlock", "base": "twilightforest:canopy_planks"}},
-  {"id": "twilightforest:mason_jar", "family": "snowloggable"}
+  {"id": "gloamingforest:canopy_stairs", "family": "stairs", "params": {"class": "StairBlock", "base": "gloamingforest:canopy_planks"}},
+  {"id": "gloamingforest:mason_jar", "family": "snowloggable"}
 ]
 ```
 
@@ -31,8 +31,8 @@ ones. An unknown family is skipped with a warning. A modifier is either an entry
 `mason_jar` line above) or, F1's form, a name in `params.traits` of the shape entry:
 
 ```json
-{"id": "twilightforest:canopy_slab", "family": "slab", "params": {"class": "SlabBlock", "traits": ["waterloggable"]}}
-{"id": "twilightforest:hollow_oak_log_climbable", "family": "horizontal", "params": {"class": "ClimbableHollowLogBlock", "traits": ["climbable"]}}
+{"id": "gloamingforest:canopy_slab", "family": "slab", "params": {"class": "SlabBlock", "traits": ["waterloggable"]}}
+{"id": "gloamingforest:hollow_oak_log_climbable", "family": "horizontal", "params": {"class": "ClimbableHollowLogBlock", "traits": ["climbable"]}}
 ```
 
 `traits` may name `waterloggable`, `snowloggable`, `climbable` and `lightable`; `connected_texture`
@@ -45,7 +45,7 @@ pillar log wood leaves cross sapling potted sign wall_sign hanging_sign wall_han
 trapped_chest horizontal directional binary_rotated wall_pillar connectable_pillar
 connected_texture`. Modifiers: `waterloggable snowloggable climbable lightable`.
 
-F1's form (TF's Java class picks the variant):
+F1's form (upstream's Java class picks the variant):
 
 | family | params.class | the kit's family |
 |---|---|---|
@@ -68,7 +68,7 @@ Every family:
 | `hardness`, `resistance`, `map_color`, `light`, `loot`, `tool` | base components (otherwise the skeleton's) |
 | `tags` | F1's import: the block's Bedrock block tags, free of any format (see Block tags) |
 | `menu_category` | when there is no skeleton |
-| `sound` | the Bedrock block sound in `blocks.json` (default per family), for a block that has none yet: TF's sound types (`twilightforest.jar`, TFSoundTypes) and the blocks using them come from F1's import (`rp/blocks.d`, `rp/sounds.json.d`), which the kit leaves alone |
+| `sound` | the Bedrock block sound in `blocks.json` (default per family), for a block that has none yet: upstream's sound types (`gloamingforest.jar`, TFSoundTypes) and the blocks using them come from F1's import (`rp/blocks.d`, `rp/sounds.json.d`), which the kit leaves alone |
 | `components` | raw Bedrock components merged last (their tags join the block's tags, see Block tags) |
 | `waterlogged` / `waterloggable` | adds the waterloggable modifier |
 | `traits` | F1's modifiers of the entry (`["waterloggable", "climbable"]`) |
@@ -79,21 +79,21 @@ Per family:
 |---|---|
 | `fence` | `wooden` (default true; Java's WOODEN_FENCES tag) |
 | `door`, `trapdoor` | `block_set` (`iron`: iron sounds, not opened by hand), `open_by_hand` |
-| `button` | `ticks` (default 30, TF's wooden buttons), `arrows` (wooden: true), `block_set` (`stone`, `iron`, `gold`) |
+| `button` | `ticks` (default 30, upstream's wooden buttons), `arrows` (wooden: true), `block_set` (`stone`, `iron`, `gold`) |
 | `pressure_plate` | `sensitivity` (`everything` / `mobs`), `block_set` |
-| `log`, `wood`, `pillar` | `stripped` (default: TF's STRIPPABLES, RegistrationEvents) |
+| `log`, `wood`, `pillar` | `stripped` (default: upstream's STRIPPABLES, RegistrationEvents) |
 | `horizontal` | `placement`: `opposite` (default; TFHorizontalBlock), `look` (BanisterBlock), `none` (ClimbableHollowLogBlock) |
 | `directional` | `placement`: `nearest_opposite` (default; DirectionalBlock), `nearest` (EtchedNagastoneBlock), `nearest_y_flipped` (StrongholdShieldBlock), `none` |
-| `leaves` | `tint` (Bedrock tint method by biome; default: TF's ColorHandler where Bedrock has one), `tint_color` (`#rrggbb`: a colour Java always uses, the texture pre-tinted in `terrain_texture.json`; default: TF's beanstalk and thorn leaves). TF's time, transformation, mining, sorting and rainbow oak leaves get a tint method: the client mod draws ColorHandler's colour per position through `gf::client::tint`, `log` (counts as a log for leaf distance, on any family). A tinted leaf takes Bedrock's grey image of a `_carried` vanilla texture |
-| `sapling` | `grower`: Java's TreeGrower `{feature, secondary_feature, secondary_chance, mega_feature, secondary_mega_feature, flowers_feature, secondary_flowers_feature}` or TF's StructureTreeGrower `{structure}` (default: TFTreeGrowers by sapling id); `feature`: a grower with one tree. A unit's own grower: `src/feature/ext/families/Growers.h` |
-| `potted` | `plant` (default: `potted_<x>` -> `<x>`, TF's thorn pots from RegistrationEvents), `special` (TF's SpecialFlowerPotBlock keeps the plant) |
-| `sign`, `hanging_sign` | `wall` (default: `<x>_sign` -> `<x>_wall_sign`, `<x>_hanging_sign` -> `<x>_wall_hanging_sign`); `gui_texture`: what the native editor draws the sign with (default: `textures/twilightforest/entity/signs/<wood>`, hanging signs `textures/twilightforest/gui/hanging_signs/<wood>`) |
+| `leaves` | `tint` (Bedrock tint method by biome; default: upstream's ColorHandler where Bedrock has one), `tint_color` (`#rrggbb`: a colour Java always uses, the texture pre-tinted in `terrain_texture.json`; default: upstream's beanstalk and thorn leaves). Upstream's time, transformation, mining, sorting and rainbow oak leaves get a tint method: the client mod draws ColorHandler's colour per position through `gf::client::tint`, `log` (counts as a log for leaf distance, on any family). A tinted leaf takes Bedrock's grey image of a `_carried` vanilla texture |
+| `sapling` | `grower`: Java's TreeGrower `{feature, secondary_feature, secondary_chance, mega_feature, secondary_mega_feature, flowers_feature, secondary_flowers_feature}` or upstream's StructureTreeGrower `{structure}` (default: TFTreeGrowers by sapling id); `feature`: a grower with one tree. A unit's own grower: `src/feature/ext/families/Growers.h` |
+| `potted` | `plant` (default: `potted_<x>` -> `<x>`, upstream's thorn pots from RegistrationEvents), `special` (upstream's SpecialFlowerPotBlock keeps the plant) |
+| `sign`, `hanging_sign` | `wall` (default: `<x>_sign` -> `<x>_wall_sign`, `<x>_hanging_sign` -> `<x>_wall_hanging_sign`); `gui_texture`: what the native editor draws the sign with (default: `textures/gloamingforest/entity/signs/<wood>`, hanging signs `textures/gloamingforest/gui/hanging_signs/<wood>`) |
 | `wall_sign`, `wall_hanging_sign` | `standing` (the reverse) |
 | `chest`, `trapped_chest` | `layout`: `legacy` for Bedrock's pre-1.15 chest textures (fixtures) |
 | `connectable_pillar` | `width` (default 16; thorns 10) |
 | `connected_texture` | `connects_to` (block ids, default: itself), `faces` (default all), `render_on_disabled_faces` (default true) |
 | `cross` | `shape` (selection box, block pixels) |
-| `snowloggable` | `snow_texture`, `shape` (the plant's outline for the hit test). A skeleton that has Java's shapes per state and `layers` (F1's TF bushes) keeps them; otherwise the kit adds the snow's boxes per layer count |
+| `snowloggable` | `snow_texture`, `shape` (the plant's outline for the hit test). A skeleton that has Java's shapes per state and `layers` (F1's upstream bushes) keeps them; otherwise the kit adds the snow's boxes per layer count |
 | `lightable` | `light_levels` `{normal, dim, ominous}` |
 
 ## Sound events
@@ -111,17 +111,17 @@ which the selftest `families.sound_events` accepts as it is.
 
 ## States
 
-As `docs/spec/blockstates.md` (F1, rule R1): every Java property `p` is `twilightforest:p` with
+As `docs/spec/blockstates.md` (F1, rule R1): every Java property `p` is `gloamingforest:p` with
 Java's values (booleans `[false, true]`, integers `0..n`, enums by name); no placement traits: the
 runtime sets them on placement as Java's `getStateForPlacement` does. The states the kit adds that
-no Java block declares are in its own namespace, so a TF block keeps exactly its frozen
-`twilightforest:*` states (F1's `import.blocks` checks that): `gloamingforest:lid` (chests: the lid's
+no Java block declares are in its own namespace, so an upstream block keeps exactly its frozen
+`gloamingforest:*` states (F1's `import.blocks` checks that): `gloamingforest:lid` (chests: the lid's
 angle in 22.5 degree steps, 0..4, moved by the runtime as Java's ChestLidController),
 `gloamingforest:open_count` (trapped chests: the players inside, their signal),
 `gloamingforest:<direction>` and `gloamingforest:corner_<a>_<b>` (connected textures). Java's own
-SnowLoggable / LightableBlock properties `twilightforest:layers` / `twilightforest:lighting` are added
+SnowLoggable / LightableBlock properties `gloamingforest:layers` / `gloamingforest:lighting` are added
 to snowloggable / lightable blocks that lack them. A lightable block keeps the light per state of F1's
-skeleton (TF's `lightLevel`) unless the data gives `light_levels`.
+skeleton (upstream's `lightLevel`) unless the data gives `light_levels`.
 
 ## Chests are containers
 
@@ -146,7 +146,7 @@ the kit writes the tags in the form of each document's format (below). `run.ps1`
 fails when a generated chest lacks `minecraft:block_entity` or one of its tags, or when a document
 carries a tag form its format refuses.
 
-As in Java (TF's chests are vanilla `ChestBlock` / `TrappedChestBlock`, so
+As in Java (upstream's chests are vanilla `ChestBlock` / `TrappedChestBlock`, so
 `HopperBlockEntity#getContainerAt` finds their `ChestBlockEntity`), hoppers fill a chest from above
 and from its sides and empty it from below, hopper minecarts empty the chest above their rail and
 droppers drop into the chest they face: `src/feature/families/Hoppers.cpp` hands the game's hopper
@@ -158,7 +158,7 @@ first free slot), the blocked rule ignored (`ChestBlock#getContainer(.., true)`)
 table rolls on the hopper's first look (`RandomizableContainer#unpackLootTable(null)`). The lookup
 reaches the native containers of the blocks hoppers may reach
 (`src/feature/ext/families/Hoppers.h`): by default every block the inventory contract declares
-chest-like (`Declared::chest`, so TF's chests); a unit opts another Container block entity of Java in
+chest-like (`Declared::chest`, so upstream's chests); a unit opts another Container block entity of Java in
 (the skull chest, the keepsake casket: `gf::families_ext::setHopperVisible(id, true)`) or hides one
 (`false`). A block kept in block data stays invisible to hoppers whatever is set. A lookup stays
 cheap for hoppers that look every tick: what it found at a position (visible or not, the halves and
@@ -234,7 +234,7 @@ other unit may define them, as a duplicate key fails the lang merge):
 | `container.chest`, `container.chestDouble` | the chest family's container titles (ChestBlockEntity#getDefaultName, CompoundContainer), declared in `data/gf/containers/families.json`; F10's inventory contract falls back to the same keys without defining them |
 | `sign.edit`, `hanging_sign.edit` | the sign editor's title (AbstractSignEditScreen): the client mod's native editor and the server's text for a vanilla client's form |
 
-They are vanilla Minecraft's (not TF's) UI strings, taken verbatim from Java Edition 1.21.1's own
+They are vanilla Minecraft's (not upstream's) UI strings, taken verbatim from Java Edition 1.21.1's own
 language files (Mojang's 1.21.1 asset index) for the 29 Bedrock locales; Bedrock's `nb_NO` uses
 Java's `no_no`. Bedrock ships the same short strings under `sign.edit` / `container.chest`. Their
 provenance is recorded here and in the PR that added them (#31) for the licence review.

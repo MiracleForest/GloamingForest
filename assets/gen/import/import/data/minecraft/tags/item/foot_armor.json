@@ -1,11 +1,11 @@
 {
   "values": [
-    "twilightforest:ironwood_boots",
-    "twilightforest:steeleaf_boots",
-    "twilightforest:knightmetal_boots",
-    "twilightforest:arctic_boots",
-    "twilightforest:yeti_boots",
-    "twilightforest:fiery_boots",
-    "twilightforest:travellers_boots"
+    "gloamingforest:ironwood_boots",
+    "gloamingforest:steeleaf_boots",
+    "gloamingforest:knightmetal_boots",
+    "gloamingforest:arctic_boots",
+    "gloamingforest:yeti_boots",
+    "gloamingforest:fiery_boots",
+    "gloamingforest:travellers_boots"
   ]
 }

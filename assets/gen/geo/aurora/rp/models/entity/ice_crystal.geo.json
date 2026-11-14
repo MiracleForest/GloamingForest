@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.ice_crystal",
+        "identifier": "geometry.gloamingforest.ice_crystal",
         "texture_width": 32,
         "texture_height": 32,
         "visible_bounds_width": 1.5,

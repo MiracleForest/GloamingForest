@@ -21,7 +21,7 @@ namespace gf::loot {
 [[nodiscard]] Json const* table(std::string const& id);
 /// Registers (or with null removes) a table by JSON (selftest fixtures).
 void registerTable(std::string const& id, Json table);
-/// Forgets the cached table files (a world change, /twilightforest reload).
+/// Forgets the cached table files (a world change, /gloamingforest reload).
 void clearCache();
 
 /// Rolls `table` (already parsed) without the global modifiers.
@@ -61,7 +61,7 @@ private:
 /// or for a mob that died this tick when `spawner` is that mob.
 void captureSpawnedItem(Actor const& item, Actor const* spawner);
 
-/// A mob died (the death pipeline, right after the game's `die`): its Java loot table (TF
+/// A mob died (the death pipeline, right after the game's `die`): its Java loot table (upstream
 /// entities) drops now; on the next tick, once the game has spawned the mob's own loot, the
 /// onEntityDrops handlers see every item entity of the death (the Java table's, `gameDrops` from
 /// `die`, and the later ones with the mob as the spawner); `killerId` is the killing player's
@@ -90,7 +90,7 @@ inline constexpr char kBundleIdTag[] = "bundle_id";
 [[nodiscard]] std::optional<std::vector<ItemStack>> bundleContents(ItemStack const& stack);
 
 /// The size of a slime-like entity (Java's Slime#getSize): Bedrock keeps it in the variant (1, 2,
-/// 4) of slimes and magma cubes, and TF's maze slime does the same; <= 0 when unknown.
+/// 4) of slimes and magma cubes, and upstream's maze slime does the same; <= 0 when unknown.
 [[nodiscard]] int slimeSize(Actor const& actor);
 /// EnchantmentHelper#selectEnchantment over the enchantments of `options` (a tag "#...", an id, a
 /// list; null: the registry): the Java ids and levels picked (selftests).
@@ -100,7 +100,7 @@ inline constexpr char kBundleIdTag[] = "bundle_id";
 
 /// Java enchantment id -> Bedrock Enchant::Type value (-1 unknown).
 [[nodiscard]] int bedrockEnchant(std::string const& javaId);
-/// The level of a Java enchantment on a stack (vanilla on Bedrock enchants, TF ones through gf::enchant).
+/// The level of a Java enchantment on a stack (vanilla on Bedrock enchants, upstream ones through gf::enchant).
 [[nodiscard]] int enchantLevel(ItemStack const& stack, std::string const& javaId);
 
 } // namespace gf::loot

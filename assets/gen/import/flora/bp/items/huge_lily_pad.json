@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:huge_lily_pad",
+      "identifier": "gloamingforest:huge_lily_pad",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:huge_lily_pad.name"
+        "value": "tile.gloamingforest:huge_lily_pad.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:huge_lily_pad",
+        "block": "gloamingforest:huge_lily_pad",
         "replace_block_item": true
       }
     }

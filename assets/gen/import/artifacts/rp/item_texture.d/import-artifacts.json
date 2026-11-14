@@ -1,50 +1,50 @@
 {
   "tf_item_charm_of_keeping_1": {
-    "textures": "textures/twilightforest/item/charm_of_keeping_1"
+    "textures": "textures/gloamingforest/item/charm_of_keeping_1"
   },
   "tf_item_charm_of_keeping_2": {
-    "textures": "textures/twilightforest/item/charm_of_keeping_2"
+    "textures": "textures/gloamingforest/item/charm_of_keeping_2"
   },
   "tf_item_charm_of_keeping_3": {
-    "textures": "textures/twilightforest/item/charm_of_keeping_3"
+    "textures": "textures/gloamingforest/item/charm_of_keeping_3"
   },
   "tf_item_charm_of_life_1": {
-    "textures": "textures/twilightforest/item/charm_of_life_1"
+    "textures": "textures/gloamingforest/item/charm_of_life_1"
   },
   "tf_item_charm_of_life_2": {
-    "textures": "textures/twilightforest/item/charm_of_life_2"
+    "textures": "textures/gloamingforest/item/charm_of_life_2"
   },
   "tf_item_crown_splinter": {
-    "textures": "textures/twilightforest/item/crown_splinter"
+    "textures": "textures/gloamingforest/item/crown_splinter"
   },
   "tf_item_emperors_cloth": {
-    "textures": "textures/twilightforest/item/emperors_cloth"
+    "textures": "textures/gloamingforest/item/emperors_cloth"
   },
   "tf_item_exanimate_powder": {
-    "textures": "textures/twilightforest/item/exanimate_powder"
+    "textures": "textures/gloamingforest/item/exanimate_powder"
   },
   "tf_item_fortification_scepter": {
-    "textures": "textures/twilightforest/item/fortification_scepter"
+    "textures": "textures/gloamingforest/item/fortification_scepter"
   },
   "tf_item_four_leaf_clover": {
-    "textures": "textures/twilightforest/item/four_leaf_clover"
+    "textures": "textures/gloamingforest/item/four_leaf_clover"
+  },
+  "tf_item_gloaming_scepter": {
+    "textures": "textures/gloamingforest/item/gloaming_scepter"
   },
   "tf_item_lifedrain_scepter": {
-    "textures": "textures/twilightforest/item/lifedrain_scepter"
+    "textures": "textures/gloamingforest/item/lifedrain_scepter"
   },
   "tf_item_moon_dial_full": {
-    "textures": "textures/twilightforest/item/moon_dial/full"
+    "textures": "textures/gloamingforest/item/moon_dial/full"
   },
   "tf_item_ore_meter": {
-    "textures": "textures/twilightforest/item/ore_meter"
+    "textures": "textures/gloamingforest/item/ore_meter"
   },
   "tf_item_pocket_watch": {
-    "textures": "textures/twilightforest/item/pocket_watch"
-  },
-  "tf_item_twilight_scepter": {
-    "textures": "textures/twilightforest/item/twilight_scepter"
+    "textures": "textures/gloamingforest/item/pocket_watch"
   },
   "tf_item_zombie_scepter": {
-    "textures": "textures/twilightforest/item/zombie_scepter"
+    "textures": "textures/gloamingforest/item/zombie_scepter"
   }
 }

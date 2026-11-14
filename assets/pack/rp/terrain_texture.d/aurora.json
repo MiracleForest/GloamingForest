@@ -1,51 +1,51 @@
 {
   "tf_block_aurora_block_1": {
-    "textures": "textures/twilightforest/block/aurora_block_1"
+    "textures": "textures/gloamingforest/block/aurora_block_1"
   },
   "tf_block_aurora_block_2": {
-    "textures": "textures/twilightforest/block/aurora_block_2"
+    "textures": "textures/gloamingforest/block/aurora_block_2"
   },
   "tf_block_aurora_block_3": {
-    "textures": "textures/twilightforest/block/aurora_block_3"
+    "textures": "textures/gloamingforest/block/aurora_block_3"
   },
   "tf_block_aurora_block_4": {
-    "textures": "textures/twilightforest/block/aurora_block_4"
+    "textures": "textures/gloamingforest/block/aurora_block_4"
   },
   "tf_block_aurora_block_5": {
-    "textures": "textures/twilightforest/block/aurora_block_5"
+    "textures": "textures/gloamingforest/block/aurora_block_5"
   },
   "tf_block_aurora_block_6": {
-    "textures": "textures/twilightforest/block/aurora_block_6"
+    "textures": "textures/gloamingforest/block/aurora_block_6"
   },
   "tf_block_aurora_block_7": {
-    "textures": "textures/twilightforest/block/aurora_block_7"
+    "textures": "textures/gloamingforest/block/aurora_block_7"
   },
   "tf_block_aurora_block_8": {
-    "textures": "textures/twilightforest/block/aurora_block_8"
+    "textures": "textures/gloamingforest/block/aurora_block_8"
   },
   "tf_block_aurora_block_9": {
-    "textures": "textures/twilightforest/block/aurora_block_9"
+    "textures": "textures/gloamingforest/block/aurora_block_9"
   },
   "tf_block_aurora_block_10": {
-    "textures": "textures/twilightforest/block/aurora_block_10"
+    "textures": "textures/gloamingforest/block/aurora_block_10"
   },
   "tf_block_aurora_block_11": {
-    "textures": "textures/twilightforest/block/aurora_block_11"
+    "textures": "textures/gloamingforest/block/aurora_block_11"
   },
   "tf_block_aurora_block_12": {
-    "textures": "textures/twilightforest/block/aurora_block_12"
+    "textures": "textures/gloamingforest/block/aurora_block_12"
   },
   "tf_block_aurora_block_13": {
-    "textures": "textures/twilightforest/block/aurora_block_13"
+    "textures": "textures/gloamingforest/block/aurora_block_13"
   },
   "tf_block_aurora_block_14": {
-    "textures": "textures/twilightforest/block/aurora_block_14"
+    "textures": "textures/gloamingforest/block/aurora_block_14"
   },
   "tf_block_aurora_block_15": {
-    "textures": "textures/twilightforest/block/aurora_block_15"
+    "textures": "textures/gloamingforest/block/aurora_block_15"
   },
   "tf_block_auroralized_glass": {
-    "textures": "textures/twilightforest/block/auroralized_glass"
+    "textures": "textures/gloamingforest/block/auroralized_glass"
   },
   "tf_aurora_ct_base": {
     "textures": "textures/blocks/aurora/ct_base"
@@ -56,7 +56,7 @@
   "tf_aurora_item_aurora_pillar": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/aurora_pillar",
+        "path": "textures/gloamingforest/block/aurora_pillar",
         "tint_color": "#73e6c3"
       }
     ]
@@ -64,7 +64,7 @@
   "tf_aurora_item_aurora_pillar_top": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/aurora_pillar_top",
+        "path": "textures/gloamingforest/block/aurora_pillar_top",
         "tint_color": "#73e6c3"
       }
     ]
@@ -72,7 +72,7 @@
   "tf_aurora_item_aurora_slab_side": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/aurora_slab_side",
+        "path": "textures/gloamingforest/block/aurora_slab_side",
         "tint_color": "#73e6c3"
       }
     ]
@@ -80,7 +80,7 @@
   "tf_aurora_item_auroralized_glass": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/auroralized_glass",
+        "path": "textures/gloamingforest/block/auroralized_glass",
         "tint_color": "#73e6c3"
       }
     ]
@@ -136,7 +136,7 @@
   "tf_aurora_baked_aurora_pillar": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/aurora_pillar",
+        "path": "textures/gloamingforest/block/aurora_pillar",
         "tint_color": "#73e6c3"
       }
     ]
@@ -144,7 +144,7 @@
   "tf_aurora_baked_aurora_pillar_top": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/aurora_pillar_top",
+        "path": "textures/gloamingforest/block/aurora_pillar_top",
         "tint_color": "#73e6c3"
       }
     ]
@@ -152,7 +152,7 @@
   "tf_aurora_baked_aurora_slab_side": {
     "textures": [
       {
-        "path": "textures/twilightforest/block/aurora_slab_side",
+        "path": "textures/gloamingforest/block/aurora_slab_side",
         "tint_color": "#73e6c3"
       }
     ]

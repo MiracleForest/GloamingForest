@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/KnightPhantom.java
-//   src/main/java/twilightforest/entity/ai/goal/PhantomWatchAndAttackGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/PhantomUpdateFormationAndMoveGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/PhantomAttackStartGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/PhantomThrowWeaponGoal.java
-//   src/main/java/twilightforest/block/entity/spawner/KnightPhantomSpawnerBlockEntity.java
-//   src/main/java/twilightforest/entity/projectile/ThrownWep.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/KnightPhantom.java
+//   src/main/java/gloamingforest/entity/ai/goal/PhantomWatchAndAttackGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/PhantomUpdateFormationAndMoveGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/PhantomAttackStartGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/PhantomThrowWeaponGoal.java
+//   src/main/java/gloamingforest/block/entity/spawner/KnightPhantomSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/entity/projectile/ThrownWep.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -74,9 +74,9 @@ constexpr int   kHomeRadius    = 30;
 constexpr float kSmallRadius   = 2.5F;
 constexpr float kLargeRadius   = 8.5F;
 constexpr char  kData[]        = "knight_phantom";
-constexpr char  kSword[]       = "twilightforest:knightmetal_sword";
-constexpr char  kAxe[]         = "twilightforest:knightmetal_axe";
-constexpr char  kPick[]        = "twilightforest:knightmetal_pickaxe";
+constexpr char  kSword[]       = "gloamingforest:knightmetal_sword";
+constexpr char  kAxe[]         = "gloamingforest:knightmetal_axe";
+constexpr char  kPick[]        = "gloamingforest:knightmetal_pickaxe";
 
 constexpr int kDuration[] = {90, 180, 90, 180, 90, 180, 180, 180, 180, 10, 50, 50};
 
@@ -176,7 +176,7 @@ void setNumber(Mob& m, Knight& k, int number) {
     case 2: setWeapon(m, kPick); break;
     default: break;
     }
-    ge::setProperty(m, "twilightforest:number", std::clamp(number, 0, 15));
+    ge::setProperty(m, "gloamingforest:number", std::clamp(number, 0, 15));
     persist(m, k);
 }
 
@@ -221,7 +221,7 @@ void updateMyNumber(Mob& m, Knight& k) {
 void setCharging(Mob& m, Knight& k, bool flag) {
     bool changed = k.charging != flag;
     k.charging   = flag;
-    ge::setProperty(m, "twilightforest:charging", flag);
+    ge::setProperty(m, "gloamingforest:charging", flag);
     // refreshDimensions: 1.75 x 4.0 while charging, else 1.25 x 2.5
     if (changed) event(m, flag ? "charging" : "not_charging");
 }
@@ -232,7 +232,7 @@ void switchToFormation(Mob& m, Knight& k, Formation formation) {
     k.ticksProgress = 0;
     updateMyNumber(m, k);
     setCharging(m, k, formation == Formation::AttackPlayerStart || formation == Formation::AttackPlayerAttack);
-    ge::setProperty(m, "twilightforest:formation", static_cast<int>(formation));
+    ge::setProperty(m, "gloamingforest:formation", static_cast<int>(formation));
     persist(m, k);
 }
 
@@ -311,11 +311,11 @@ public:
                 doHurtTarget(*m, *target);
             }
         }
-        bool shield = game::items::idOf(m->getOffhandSlot()) == "twilightforest:knightmetal_shield";
+        bool shield = game::items::idOf(m->getOffhandSlot()) == "gloamingforest:knightmetal_shield";
         bool raise  = shield && k.formation != Formation::AttackPlayerAttack && mIsGuard;
         if (raise != k.guarding) {
             k.guarding = raise;
-            ge::setProperty(*m, "twilightforest:guarding", raise);
+            ge::setProperty(*m, "gloamingforest:guarding", raise);
         }
         if (mIsGuard) {
             if (mGuardCoolDownTime <= 180) ++mGuardCoolDownTime;
@@ -504,7 +504,7 @@ public:
 bool doHurtTarget(Mob& knight, Actor& target) {
     auto& k = stateOf(knight);
     // EntityUtil.properlyApplyCustomDamageSource(this, entity, haunt damage by this, null)
-    return gf::combat::hurt(target, attackDamage(knight, k), "twilightforest:haunt", &knight, &knight);
+    return gf::combat::hurt(target, attackDamage(knight, k), "gloamingforest:haunt", &knight, &knight);
 }
 
 void launchAxeAt(Mob& knight, Actor& target) {
@@ -523,7 +523,7 @@ void launchAxeAt(Mob& knight, Actor& target) {
     double tz               = tp.z - sz;
     float  r1               = random.nextFloat();
     float  r2               = random.nextFloat();
-    playSound(knight, "entity.twilightforest.knight_phantom.axe", 1.0F, (r1 - r2) * 0.2F + 0.4F);
+    playSound(knight, "entity.gloamingforest.knight_phantom.axe", 1.0F, (r1 - r2) * 0.2F + 0.4F);
     Actor* projectile = gf::projectile::shoot(knight, id::ThrownWep, Vec3{static_cast<float>(tx), static_cast<float>(ty), static_cast<float>(tz)}, 0.75F, 1.0F,
                                               Json{{"item", kAxe}, {"damage", 6.0}, {"gravity", 0.001}});
     if (projectile) projectile->moveTo(Vec3{static_cast<float>(sx), static_cast<float>(sy), static_cast<float>(sz)}, knight.getRotation());
@@ -533,7 +533,7 @@ void launchPicks(Mob& knight) {
     auto& random = fe::randomOf(knight);
     float r1     = random.nextFloat();
     float r2     = random.nextFloat();
-    playSound(knight, "entity.twilightforest.knight_phantom.pickaxe", 1.0F, (r1 - r2) * 0.2F + 0.4F);
+    playSound(knight, "entity.gloamingforest.knight_phantom.pickaxe", 1.0F, (r1 - r2) * 0.2F + 0.4F);
     auto   p      = knight.getFeetPos();
     auto   b      = knight.getAABB();
     double height = b.max.y - b.min.y;
@@ -603,17 +603,17 @@ void postmortem(Mob& boss, std::string const& damageType, Actor* killer) {
         auto*    region = game::regionOf(home->pos.dim);
         treasurePos     = region && game::replaceable(*region, below) ? below : h;
     }
-    for (auto& s : gf::boss::ext::rollLoot(boss, "twilightforest:entities/knight_phantom_defeated", damageType, killer)) items.push_back(s);
+    for (auto& s : gf::boss::ext::rollLoot(boss, "gloamingforest:entities/knight_phantom_defeated", damageType, killer)) items.push_back(s);
     auto list = gf::boss::ext::availableSlots(random);
     gf::boss::ext::shuffleAndSplitItems(items, static_cast<int>(list.size()), random);
     giveKnightLoot(boss, items, list, boss.getFeetPos());
     // trigger criteria for killing every phantom in a group
     if (killer && killer->isPlayer()) {
-        gf::progression::trigger(static_cast<Player&>(*killer), "twilightforest:kill_all_phantoms");
+        gf::progression::trigger(static_cast<Player&>(*killer), "gloamingforest:kill_all_phantoms");
         for (auto* p : fe::playersNear(dim, Vec3{treasurePos.x + 0.5f, treasurePos.y + 0.5f, treasurePos.z + 0.5f}, 64.0)) {
             auto pp = p->getFeetPos();
             if (std::abs(pp.x - (treasurePos.x + 0.5)) <= 32.5 && std::abs(pp.y - (treasurePos.y + 0.5)) <= 32.5 && std::abs(pp.z - (treasurePos.z + 0.5)) <= 32.5)
-                gf::progression::trigger(*p, "twilightforest:kill_all_phantoms");
+                gf::progression::trigger(*p, "gloamingforest:kill_all_phantoms");
         }
     }
     // mark the stronghold as defeated
@@ -638,7 +638,7 @@ void tickDeath(Mob& m, int deathTime) {
         auto p = m.getFeetPos();
         m.moveTo(Vec3{p.x, p.y + 0.015f, p.z}, m.getRotation());
     }
-    ge::setProperty(m, "twilightforest:dying_visible", visible);
+    ge::setProperty(m, "gloamingforest:dying_visible", visible);
     // the hitbox goes away for the second part of the animation
     if (deathTime >= kDyingTicks && !k.untouchable) {
         k.untouchable = true;
@@ -685,7 +685,7 @@ void tickDeath(Mob& m, int deathTime) {
                     float fx = random.nextFloat(), fy = random.nextFloat(), fz = random.nextFloat();
                     gf::fx::particle(m.getDimension(), "minecraft:item", Vec3{p.x + (fx - 0.5f) * width, p.y + fy * (h - 0.75f) + 0.5f, p.z + (fz - 0.5f) * width},
                                      Vec3{0.0f, -0.1f, 0.0f}, 1,
-                                     Json{{"item", random.nextBoolean() ? "twilightforest:phantom_helmet" : kSword}});
+                                     Json{{"item", random.nextBoolean() ? "gloamingforest:phantom_helmet" : kSword}});
                 }
             }
         } else {
@@ -711,8 +711,8 @@ void onSpawn(Actor& self) {
     if (!loaded) {
         // finalizeSpawn: populateDefaultEquipmentSlots
         setWeapon(*m, kSword);
-        if (auto s = game::items::make("twilightforest:phantom_chestplate")) m->setItemSlot(Slot::Torso, *s);
-        if (auto s = game::items::make("twilightforest:phantom_helmet")) m->setItemSlot(Slot::Head, *s);
+        if (auto s = game::items::make("gloamingforest:phantom_chestplate")) m->setItemSlot(Slot::Torso, *s);
+        if (auto s = game::items::make("gloamingforest:phantom_helmet")) m->setItemSlot(Slot::Head, *s);
         // KnightPhantomSpawnerBlockEntity#spawnMyBoss: setNumber(i) after the spawn
         if (auto const& n = ge::data(self, "knight_phantom:number"); n.is_number_integer()) setNumber(*m, k, n.get<int>());
     } else {
@@ -721,10 +721,10 @@ void onSpawn(Actor& self) {
     }
     // setRestrictionPoint: the charge position starts at home
     if (auto h = ge::home(*m); h && !loaded) k.chargePos = BlockPos{h->pos.x, h->pos.y, h->pos.z};
-    ge::setProperty(*m, "twilightforest:charging", k.charging);
-    ge::setProperty(*m, "twilightforest:formation", static_cast<int>(k.formation));
+    ge::setProperty(*m, "gloamingforest:charging", k.charging);
+    ge::setProperty(*m, "gloamingforest:formation", static_cast<int>(k.formation));
     if (k.charging) event(*m, "charging");
-    gf::boss::bar(*m).setName(gf::tr("entity.twilightforest.knight_phantom.plural", "Knight Phantoms"));
+    gf::boss::bar(*m).setName(gf::tr("entity.gloamingforest.knight_phantom.plural", "Knight Phantoms"));
     gf::boss::bar(*m).setVisible(k.number == 0);
     auto uid = fe::uidOf(self);
     ge::addGoal(*m, 0, std::make_shared<WatchAndAttackGoal>(uid));
@@ -820,15 +820,15 @@ void install() {
     gf::boss::registerBoss({
         .entityId        = id::KnightPhantom,
         .homeStructure   = id::Stronghold,
-        .lootTable       = "twilightforest:entities/knight_phantom",
-        .deathChestBlock = "twilightforest:dark_chest",
+        .lootTable       = "gloamingforest:entities/knight_phantom",
+        .deathChestBlock = "gloamingforest:dark_chest",
         .bar             = {.rgb = 0x86BF37},
         .deathTicks      = kDyingTicks + kParticleTicks,
     });
     gf::boss::ext::setHomeRadius(id::KnightPhantom, kHomeRadius);
     // KnightPhantomSpawnerBlockEntity: the boss kit's KnightPhantoms variant (nearest player within 9
     // above y - 2; six knights on a circle of 4, knight 5 shielded on hard, numbered by their slot)
-    gf::boss::registerSpawner({.blockId = id::Spawner, .entityId = id::KnightPhantom, .range = 9, .particle = "twilightforest:ominous_flame"});
+    gf::boss::registerSpawner({.blockId = id::Spawner, .entityId = id::KnightPhantom, .range = 9, .particle = "gloamingforest:ominous_flame"});
     gf::boss::ext::setLifecycle(id::KnightPhantom, {
                                                        .postmortem             = postmortem,
                                                        .tickDeath              = tickDeath,
@@ -878,7 +878,7 @@ void install() {
                                                              if (!isKnight(target) && &target != owner) {
                                                                  bool pick = init.value("item", std::string{}) == kPick;
                                                                  gf::combat::hurt(target, static_cast<float>(init.value("damage", 6.0)),
-                                                                                  pick ? "twilightforest:thrown_pickaxe" : "twilightforest:thrown_axe");
+                                                                                  pick ? "gloamingforest:thrown_pickaxe" : "gloamingforest:thrown_axe");
                                                              }
                                                              thrownSmoke(projectile);
                                                              return true;
@@ -895,7 +895,7 @@ void install() {
                                                              float g    = static_cast<float>(init.value("gravity", 0.001));
                                                              auto  v    = gf::projectile::ext::velocity(projectile);
                                                              gf::projectile::ext::setVelocity(projectile, Vec3{v.x, v.y - g, v.z});
-                                                             ge::setProperty(projectile, "twilightforest:pickaxe", init.value("item", std::string{}) == kPick);
+                                                             ge::setProperty(projectile, "gloamingforest:pickaxe", init.value("item", std::string{}) == kPick);
                                                          },
                                                  });
     game::db::onWorldClosed([] { states().clear(); });

@@ -2,7 +2,7 @@
 
 // Contract extension of F8 (rule R18: new files only, folded into the W0 headers by A8 in W2b).
 // What the entity and projectile contracts lack for registrations that come and go, and for the
-// projectile impacts TF's events change (NeoForge's ProjectileImpactEvent):
+// projectile impacts upstream's events change (NeoForge's ProjectileImpactEvent):
 //
 //   gf::entity::ext     a handle for a behaviour registration and its removal. Registrations of one
 //                       type add up (gf::entity::registerType too): every hook of every registration
@@ -20,7 +20,7 @@
 //     auto h = gf::entity::ext::addBehaviour("minecraft:wolf", {.tick = ...});
 //     gf::entity::ext::removeBehaviour(h);
 //
-//     // inside a gf::combat::onIncoming handler that parries a TF projectile (EntityEvents#onParryProjectile)
+//     // inside a gf::combat::onIncoming handler that parries an upstream projectile (EntityEvents#onParryProjectile)
 //     gf::projectile::ext::setVelocity(*d.direct, look * speed);
 //     gf::projectile::ext::setOwner(*d.direct, &player);
 //     gf::projectile::ext::cancelImpact(*d.direct);

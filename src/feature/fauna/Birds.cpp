@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/FlyingBird.java
-//   src/main/java/twilightforest/entity/passive/Bird.java
-//   src/main/java/twilightforest/entity/passive/TinyBird.java
-//   src/main/java/twilightforest/entity/passive/Raven.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/FlyingBird.java
+//   src/main/java/gloamingforest/entity/passive/Bird.java
+//   src/main/java/gloamingforest/entity/passive/TinyBird.java
+//   src/main/java/gloamingforest/entity/passive/Raven.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U16's flying birds (tiny bird, raven): FlyingBird's landed flag (DATA_BIRDFLAGS bit 0, the
-// twilightforest:landed property the client animations read, and the BP groups "landed" (the
+// gloamingforest:landed property the client animations read, and the BP groups "landed" (the
 // walking goals) / "flying"), take-off when spooked, in water or at random over unlandable ground,
-// and the flight (Bat#customServerAiStep with TF's edits) steered natively every tick; Bird#aiStep's
+// and the flight (Bat#customServerAiStep with upstream's edits) steered natively every tick; Bird#aiStep's
 // slow fall; the tiny bird's variant (finalizeSpawn by biome, the saved "variant" string) and its
 // ambient sound (TinyBird#getAmbientSound: the song 1 time in 20, else a chirp).
 #include <cmath>
@@ -105,7 +105,7 @@ void setYaw(Mob& mob, float yaw) {
     mob.setYBodyRotation(yaw);
 }
 
-/// FlyingBird#customServerAiStep, flying: the Bat's flight with TF's edits.
+/// FlyingBird#customServerAiStep, flying: the Bat's flight with upstream's edits.
 void fly(Mob& bird, BirdState& s) {
     auto& region = bird.getDimensionBlockSource();
     auto& r      = fe::randomOf(bird);
@@ -117,7 +117,7 @@ void fly(Mob& bird, BirdState& s) {
         if (!region.getBlock(t).isAir() || t.y <= region.getMinHeight()) s.target.reset();
     }
     auto motion = bird.getPosDelta();
-    // TF - no drowning birds
+    // upstream - no drowning birds
     if (bird.isInWater() || fluidAt(region, BlockPos{here.x, here.y - 1, here.z})) {
         s.flightTime = 0;
         motion.y     = 0.1f;
@@ -136,7 +136,7 @@ void fly(Mob& bird, BirdState& s) {
     double rad = next * std::numbers::pi / 180.0;
     m[0] += -std::sin(rad) * 0.01;
     m[2] += std::cos(rad) * 0.01;
-    // TF - change chance 100 -> 10; change check to isLandable
+    // upstream - change chance 100 -> 10; change check to isLandable
     if (r.nextInt(10) == 0 && landable(region, BlockPos{here.x, here.y - 1, here.z})) {
         setBirdLanded(bird, true, false);
         m[1] = 0.0;
@@ -183,7 +183,7 @@ void birdTick(Actor& self) {
         if (r.nextInt(1000) < s.ambientTime++) {
             s.ambientTime = -80;
             if (!self.isSilent()) {
-                auto event = r.nextInt(20) == 0 ? "entity.twilightforest.tiny_bird.song" : "entity.twilightforest.tiny_bird.chirp";
+                auto event = r.nextInt(20) == 0 ? "entity.gloamingforest.tiny_bird.song" : "entity.gloamingforest.tiny_bird.chirp";
                 gf::fx::sound(self.getDimension(), event, self.getFeetPos(), 1.0f, cf::voicePitch(r, false));
             }
         }
@@ -199,10 +199,10 @@ void setBirdLanded(Actor& bird, bool landed, bool sound) {
     bool  was = s.landed;
     s.landed = landed;
     fireEvent(bird, landed ? "land" : "take_off");
-    gf::entity::setProperty(bird, "twilightforest:landed", landed);
+    gf::entity::setProperty(bird, "gloamingforest:landed", landed);
     if (!landed) s.target.reset();
     if (was && !landed && sound && !bird.isSilent())
-        gf::fx::sound(bird.getDimension(), "entity.twilightforest.tiny_bird.takeoff", bird.getFeetPos(), 0.05f, cf::voicePitch(fe::randomOf(bird), false));
+        gf::fx::sound(bird.getDimension(), "entity.gloamingforest.tiny_bird.takeoff", bird.getFeetPos(), 0.05f, cf::voicePitch(fe::randomOf(bird), false));
 }
 
 void installBirds() {

@@ -1,16 +1,16 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/5x5/curved_roof",
+  "id": "gloamingforest:lich_tower/5x5/curved_roof",
   "size": [7, 6, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},
-    {"Name":"twilightforest:twilight_oak_planks"},
-    {"Name":"twilightforest:twilight_oak_stairs","Properties":{"facing":"south","half":"bottom"}},
-    {"Name":"twilightforest:twilight_oak_stairs","Properties":{"facing":"north","half":"bottom"}},
-    {"Name":"twilightforest:twilight_oak_stairs","Properties":{"facing":"east","half":"bottom"}},
-    {"Name":"twilightforest:twilight_oak_stairs","Properties":{"facing":"west","half":"bottom"}},
-    {"Name":"twilightforest:twilight_oak_slab","Properties":{"type":"bottom"}},
+    {"Name":"gloamingforest:gloaming_oak_planks"},
+    {"Name":"gloamingforest:gloaming_oak_stairs","Properties":{"facing":"south","half":"bottom"}},
+    {"Name":"gloamingforest:gloaming_oak_stairs","Properties":{"facing":"north","half":"bottom"}},
+    {"Name":"gloamingforest:gloaming_oak_stairs","Properties":{"facing":"east","half":"bottom"}},
+    {"Name":"gloamingforest:gloaming_oak_stairs","Properties":{"facing":"west","half":"bottom"}},
+    {"Name":"gloamingforest:gloaming_oak_slab","Properties":{"type":"bottom"}},
     {"Name":"minecraft:lantern"}
   ],
   "blocks": [

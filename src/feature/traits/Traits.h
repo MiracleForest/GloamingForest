@@ -2,11 +2,11 @@
 
 // Contract "data", player traits (header owned by F0, implemented by F9).
 //
-// Boolean per-player flags that both sides need (TF's data attachments of that kind: banished,
+// Boolean per-player flags that both sides need (upstream's data attachments of that kind: banished,
 // shield visuals, giant pick in use, ...), persisted in the world DB and synced to the player's
 // client mod.
 //
-//     gf::traits::set(player, "twilightforest:banished", true);
+//     gf::traits::set(player, "gloamingforest:banished", true);
 
 #include <string>
 

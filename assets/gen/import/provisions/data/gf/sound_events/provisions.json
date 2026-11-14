@@ -1,5 +1,5 @@
 {
-  "twilightforest:music.twilightforest.twilight_forest": {
+  "gloamingforest:music.gloamingforest.gloaming_forest": {
     "category": "music",
     "sounds": [
       {
@@ -49,7 +49,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.findings": {
+  "gloamingforest:music_disc.gloamingforest.findings": {
     "category": "record",
     "sounds": [
       {
@@ -58,7 +58,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.home": {
+  "gloamingforest:music_disc.gloamingforest.home": {
     "category": "record",
     "sounds": [
       {
@@ -67,7 +67,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.maker": {
+  "gloamingforest:music_disc.gloamingforest.maker": {
     "category": "record",
     "sounds": [
       {
@@ -76,7 +76,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.motion": {
+  "gloamingforest:music_disc.gloamingforest.motion": {
     "category": "record",
     "sounds": [
       {
@@ -85,7 +85,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.radiance": {
+  "gloamingforest:music_disc.gloamingforest.radiance": {
     "category": "record",
     "sounds": [
       {
@@ -94,7 +94,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.steps": {
+  "gloamingforest:music_disc.gloamingforest.steps": {
     "category": "record",
     "sounds": [
       {
@@ -103,7 +103,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.superstitious": {
+  "gloamingforest:music_disc.gloamingforest.superstitious": {
     "category": "record",
     "sounds": [
       {
@@ -112,7 +112,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.thread": {
+  "gloamingforest:music_disc.gloamingforest.thread": {
     "category": "record",
     "sounds": [
       {
@@ -121,7 +121,7 @@
       }
     ]
   },
-  "twilightforest:music_disc.twilightforest.wayfarer": {
+  "gloamingforest:music_disc.gloamingforest.wayfarer": {
     "category": "record",
     "sounds": [
       {

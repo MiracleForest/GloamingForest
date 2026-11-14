@@ -1,2 +1,2 @@
-config.twilightforest.aurora_biomes=Shader de Biomas de Aurora
-config.twilightforest.aurora_biomes.tooltip=Define em quais biomas o efeito do shader aurora aparecerá. Deixe a lista vazia para desabilitar o efeito.
+config.gloamingforest.aurora_biomes=Shader de Biomas de Aurora
+config.gloamingforest.aurora_biomes.tooltip=Define em quais biomas o efeito do shader aurora aparecerá. Deixe a lista vazia para desabilitar o efeito.

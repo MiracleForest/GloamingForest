@@ -5,7 +5,7 @@
 // - neoforge:furnace_fuels {"burn_time": ticks}: the fuel value of an item in furnaces, smokers and
 //   blast furnaces (FurnaceBlockActor::getBurnDuration), scaled from coal's (Java's 1600 ticks) so
 //   it follows whatever unit and furnace speed the engine uses.
-// Entries of TF's items (and tags of them) only: vanilla items keep Bedrock's values. Both hooks run
+// Entries of upstream's items (and tags of them) only: vanilla items keep Bedrock's values. Both hooks run
 // on the server and in the client mod (its own composter / fuel slot checks); vanilla clients check
 // the fuel slot themselves, which needs the item's minecraft:fuel component in the behaviour pack
 // (F1's item import).

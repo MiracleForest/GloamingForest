@@ -2,16 +2,16 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:falling_ice",
+      "identifier": "gloamingforest:falling_ice",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:block": { "type": "int", "range": [0, 3], "default": 0, "client_sync": true }
+        "gloamingforest:block": { "type": "int", "range": [0, 3], "default": 0, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "falling_ice"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "falling_ice"] },
       "minecraft:collision_box": { "width": 1.0, "height": 1.0 },
       "minecraft:physics": { "has_gravity": false, "has_collision": false },
       "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },

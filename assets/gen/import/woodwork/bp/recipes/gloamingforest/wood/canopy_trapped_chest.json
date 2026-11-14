@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/canopy_trapped_chest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#C#", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:canopy_planks"
+      },
+      "C": {
+        "item": "minecraft:trapped_chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:canopy_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:canopy_trapped_chest",
+      "count": 2
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "parent": "gloamingforest:progress_yeti",
+  "criteria": {
+    "boots": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:arctic_boots",
+            "predicates": {
+              "gloamingforest:color": {}
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "chestplate": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:arctic_chestplate",
+            "predicates": {
+              "gloamingforest:color": {}
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "helmet": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:arctic_helmet",
+            "predicates": {
+              "gloamingforest:color": {}
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "leggings": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:arctic_leggings",
+            "predicates": {
+              "gloamingforest:color": {}
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.arctic_dyed.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:arctic_chestplate"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.arctic_dyed"
+    }
+  },
+  "requirements": [
+    [
+      "helmet"
+    ],
+    [
+      "chestplate"
+    ],
+    [
+      "leggings"
+    ],
+    [
+      "boots"
+    ]
+  ],
+  "rewards": {
+    "experience": 25
+  },
+  "sends_telemetry_event": true
+}

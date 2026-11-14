@@ -1,0 +1,95 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.mushgloom",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.1823, 0, 0],
+              "size": [20.3647, 16, 0],
+              "pivot": [0, 8, 0],
+              "rotation": [0, -45, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross"
+                }
+              }
+            },
+            {
+              "origin": [0, 0, -10.1823],
+              "size": [0, 16, 20.3647],
+              "pivot": [0, 8, 0],
+              "rotation": [0, -45, 0],
+              "uv": {
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross"
+                }
+              }
+            },
+            {
+              "origin": [-10.1823, 0, 0],
+              "size": [20.3647, 16, 0],
+              "pivot": [0, 8, 0],
+              "rotation": [0, -45, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross2"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross2"
+                }
+              }
+            },
+            {
+              "origin": [0, 0, -10.1823],
+              "size": [0, 16, 20.3647],
+              "pivot": [0, 8, 0],
+              "rotation": [0, -45, 0],
+              "uv": {
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross2"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "cross2"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

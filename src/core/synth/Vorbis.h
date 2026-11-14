@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Contract "synth" (F3): an Ogg Vorbis I encoder for the synthesized sounds.
 #pragma once
 

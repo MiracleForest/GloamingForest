@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:fluffy_cloud",
+      "identifier": "gloamingforest:fluffy_cloud",
       "menu_category": {
         "category": "construction"
       }

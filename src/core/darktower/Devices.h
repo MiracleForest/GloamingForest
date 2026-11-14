@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/entity/CarminiteBuilderBlockEntity.java
-//   src/main/java/twilightforest/block/entity/CarminiteReactorBlockEntity.java
-//   src/main/java/twilightforest/block/entity/AntibuilderBlockEntity.java
-//   src/main/java/twilightforest/block/SliderBlock.java
-//   src/main/java/twilightforest/entity/boss/UrGhast.java
-//   src/main/java/twilightforest/client/renderer/entity/CarminiteGhastRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/entity/CarminiteBuilderBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/CarminiteReactorBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/AntibuilderBlockEntity.java
+//   src/main/java/gloamingforest/block/SliderBlock.java
+//   src/main/java/gloamingforest/entity/boss/UrGhast.java
+//   src/main/java/gloamingforest/client/renderer/entity/CarminiteGhastRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -82,7 +82,7 @@ struct FakeBlock {
     int  dx, dy, dz;
     bool diamond;
 };
-/// The 26 fake blocks of the counter-5 transformation, in TF's order.
+/// The 26 fake blocks of the counter-5 transformation, in upstream's order.
 [[nodiscard]] std::array<FakeBlock, 26> const& reactorFakeBlocks();
 
 /// One block of drawBlob: the offset from the blob centre and the `fuzz` passed to transformBlock.
@@ -101,7 +101,7 @@ struct BlobCall {
     int  fuzz;
     bool nether; ///< nether transform
 };
-/// The drawBlob calls of `counter` (empty unless counter % 5 == 0), in TF's order.
+/// The drawBlob calls of `counter` (empty unless counter % 5 == 0), in upstream's order.
 [[nodiscard]] std::vector<BlobCall> reactorBlobCalls(int counter);
 /// The random secondary / tertiary burst offsets of a new block entity (the constructor's six
 /// nextBoolean calls and the mirroring).
@@ -125,7 +125,7 @@ struct AntiBlock {
     bool air = false;
     bool blocksMotion = false;
     bool unbreakable = false;  ///< destroy speed < 0
-    bool ignored = false;      ///< #twilightforest:antibuilder_ignores
+    bool ignored = false;      ///< #gloamingforest:antibuilder_ignores
 };
 /// What a scan asks the world to do at a position.
 struct AntiRevert {

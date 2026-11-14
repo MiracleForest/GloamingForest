@@ -2,24 +2,24 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:casket_repair_recipe"
+      "identifier": "gloamingforest:casket_repair_recipe"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:keepsake_casket"
+        "item": "gloamingforest:keepsake_casket"
       },
       {
-        "item": "twilightforest:charm_of_keeping_3"
+        "item": "gloamingforest:charm_of_keeping_3"
       }
     ],
     "unlock": {
       "context": "AlwaysUnlocked"
     },
     "result": {
-      "item": "twilightforest:keepsake_casket"
+      "item": "gloamingforest:keepsake_casket"
     }
   }
 }

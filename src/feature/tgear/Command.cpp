@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/command/TravellersGearCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/command/TravellersGearCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest travellers_gear add_modifier|remove_modifier <modifier> (permission 2): the checks
-// in TF's order (the registry key first, then validate(): a player, Travellers' Gear in the main
+// /gloamingforest travellers_gear add_modifier|remove_modifier <modifier> (permission 2): the checks
+// in upstream's order (the registry key first, then validate(): a player, Travellers' Gear in the main
 // hand, not an ability; then the add / remove checks). The modifier name is rendered once on the
-// server in the server's language with TF's default key names (docs/units/tgear.md: TF's dedicated
+// server in the server's language with upstream's default key names (docs/units/tgear.md: upstream's dedicated
 // server fails with NoClassDefFoundError for the three names with a key placeholder; GloamingForest
-// puts in the default binding). The ten commands.tffeature.* keys are F6's: tr with TF's English.
+// puts in the default binding). The ten commands.tffeature.* keys are F6's: tr with upstream's English.
 #include "feature/tgear/Command.h"
 
 #include "ll/api/command/CommandHandle.h"
@@ -88,7 +88,7 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
         auto  name      = ll::command::enum_name_v<ll::command::SoftEnum<tg::TravellersModifierKey>>;
         if (!registrar.tryRegisterSoftEnum(name, keys)) registrar.setSoftEnumValues(name, keys);
     }
-    // TF: requires(permission 2); /twilightforest itself is open to everyone (center, info)
+    // upstream: requires(permission 2); /gloamingforest itself is open to everyone (center, info)
     auto run = [](bool add, CommandOrigin const& origin, CommandOutput& output, std::string const& typed) {
         if (!gf::commands::isAdmin(origin)) return output.error("You need operator permission.");
         auto* player = gf::commands::playerOf(origin);
@@ -99,7 +99,7 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
         tg::broadcastToOps(player, r.message);
     };
     for (bool add : {true, false}) {
-        // the registry keys (suggested), then any other word, which TF reports as not a modifier
+        // the registry keys (suggested), then any other word, which upstream reports as not a modifier
         cmd.overload<tg::TravellersGearParams>()
             .text("travellers_gear")
             .text(add ? "add_modifier" : "remove_modifier")

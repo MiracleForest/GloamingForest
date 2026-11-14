@@ -1,0 +1,31 @@
+{
+  "parent": "gloamingforest:progress_hydra",
+  "criteria": {
+    "hydra_chop": {
+      "trigger": "gloamingforest:consume_hydra_chop_on_low_hunger"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.hydra_chop.desc",
+      "with": [
+        {
+          "translate": "entity.gloamingforest.hydra"
+        }
+      ]
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:hydra_chop"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.hydra_chop"
+    }
+  },
+  "requirements": [
+    [
+      "hydra_chop"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

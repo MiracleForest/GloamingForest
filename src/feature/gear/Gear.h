@@ -2,10 +2,10 @@
 
 // Contract "data", Travellers' Gear modifiers (header owned by F0, implemented by F9).
 //
-// TF's 24 travellers_modifiers (twilight/travellers_modifiers) are stored on the gear items; this
+// upstream's 24 travellers_modifiers (gloaming/travellers_modifiers) are stored on the gear items; this
 // is the query side used by U11 (equipment modifiers) and U12 (movement modifiers).
 //
-//     int lvl = gf::gear::level(player, "twilightforest:double_jump");
+//     int lvl = gf::gear::level(player, "gloamingforest:double_jump");
 
 #include <map>
 #include <string>

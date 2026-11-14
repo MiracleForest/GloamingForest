@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_plate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:sorting_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_pressure_plate"
+    }
+  }
+}

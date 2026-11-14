@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:blue_castle_door",
+      "identifier": "gloamingforest:blue_castle_door",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:active": [false, true],
-        "twilightforest:vanish": [false, true]
+        "gloamingforest:active": [false, true],
+        "gloamingforest:vanish": [false, true]
       }
     },
     "components": {
@@ -30,7 +30,7 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:active') && !q.block_state('twilightforest:vanish')",
+        "condition": "!q.block_state('gloamingforest:active') && !q.block_state('gloamingforest:vanish')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -44,7 +44,7 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:active') && q.block_state('twilightforest:vanish')",
+        "condition": "!q.block_state('gloamingforest:active') && q.block_state('gloamingforest:vanish')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -58,7 +58,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active') && !q.block_state('twilightforest:vanish')",
+        "condition": "q.block_state('gloamingforest:active') && !q.block_state('gloamingforest:vanish')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -72,7 +72,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active') && q.block_state('twilightforest:vanish')",
+        "condition": "q.block_state('gloamingforest:active') && q.block_state('gloamingforest:vanish')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

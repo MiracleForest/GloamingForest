@@ -21,7 +21,7 @@ class Region;
 
 namespace gf::feature::lich::tower {
 
-/// Registers the landmark generator of twilightforest:lich_tower and the piece types.
+/// Registers the landmark generator of gloamingforest:lich_tower and the piece types.
 void registerTower();
 
 /// One piece of a test layout.

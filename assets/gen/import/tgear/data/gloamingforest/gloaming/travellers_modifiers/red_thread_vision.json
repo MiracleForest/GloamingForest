@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:red_thread_vision": {}
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.red_thread_vision.description"
+    }
+  ],
+  "equipment_slots": "head"
+}

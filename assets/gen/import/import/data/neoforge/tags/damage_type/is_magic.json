@@ -1,18 +1,18 @@
 {
   "values": [
-    "twilightforest:lich_bolt",
-    "twilightforest:lich_bomb",
-    "twilightforest:chilling_breath",
-    "twilightforest:reactor",
-    "twilightforest:haunt",
-    "twilightforest:frozen",
-    "twilightforest:leaf_brain",
-    "twilightforest:lost_words",
-    "twilightforest:schooled",
-    "twilightforest:snowball_fight",
-    "twilightforest:twilight_scepter",
-    "twilightforest:lifedrain",
-    "twilightforest:acid_rain",
-    "twilightforest:ominous_fire"
+    "gloamingforest:lich_bolt",
+    "gloamingforest:lich_bomb",
+    "gloamingforest:chilling_breath",
+    "gloamingforest:reactor",
+    "gloamingforest:haunt",
+    "gloamingforest:frozen",
+    "gloamingforest:leaf_brain",
+    "gloamingforest:lost_words",
+    "gloamingforest:schooled",
+    "gloamingforest:snowball_fight",
+    "gloamingforest:gloaming_scepter",
+    "gloamingforest:lifedrain",
+    "gloamingforest:acid_rain",
+    "gloamingforest:ominous_fire"
   ]
 }

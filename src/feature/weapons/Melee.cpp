@@ -1,22 +1,22 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/IceSwordItem.java
-//   src/main/java/twilightforest/item/GlassSwordItem.java
-//   src/main/java/twilightforest/item/KnightmetalShieldItem.java
-//   src/main/java/twilightforest/events/EntityEvents.java (onParryProjectile)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/IceSwordItem.java
+//   src/main/java/gloamingforest/item/GlassSwordItem.java
+//   src/main/java/gloamingforest/item/KnightmetalShieldItem.java
+//   src/main/java/gloamingforest/events/EntityEvents.java (onParryProjectile)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The ice and glass swords (CustomDamageSwordItem attack numbers in their BP items plus the
-// fraction through attackBonus), the knightmetal shield and TF's shield parrying.
+// fraction through attackBonus), the knightmetal shield and upstream's shield parrying.
 //
 // The knightmetal shield is a BP item, which Bedrock's engine never treats as a shield: its
 // blocking is LivingEntity#isDamageSourceBlocked / #blockUsingShield here (gf::combat), raised by
 // using it (Java's right-click, the BLOCK animation) or, Bedrock's way, by sneaking with it in a
 // hand; either way after 5 ticks. Parrying (onParryProjectile): a projectile hitting a player who
 // raised a shield at most shieldParryTicksArrow ticks ago is sent back along the player's look
-// (AIM_DEFLECT) and does no damage; TF's projectiles always, others with parryNonTwilightAttacks.
+// (AIM_DEFLECT) and does no damage; upstream's projectiles always, others with parryNonGloamingAttacks.
 
 #include "feature/weapons/Weapons.h"
 
@@ -78,8 +78,8 @@ bool glassHit(ItemStack& stack, Actor& target, Actor& attacker) {
     // EnchantmentHelper#processDurabilityChange: Unbreaking keeps the point with 1 - 1 / (lvl + 1)
     int unbreaking = EnchantUtils::getEnchantLevel(Enchant::Type::Unbreaking, stack);
     if (unbreaking > 0 && world::random().nextInt(unbreaking + 1) > 0) return false;
-    gf::progression::trigger(player, "twilightforest:broke_glass_sword");
-    gf::fx::sound(player.getDimension(), "item.twilightforest.glass_sword.break", player.getFeetPos(), 1.0F, 0.5F);
+    gf::progression::trigger(player, "gloamingforest:broke_glass_sword");
+    gf::fx::sound(player.getDimension(), "item.gloamingforest.glass_sword.break", player.getFeetPos(), 1.0F, 0.5F);
     stack = ItemStack::EMPTY_ITEM();
     if (game::items::idOf(player.getCarriedItem()) == kGlassSword) player.setCarriedItem(ItemStack::EMPTY_ITEM());
     player.sendInventory(false);
@@ -115,12 +115,12 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
     bool projectile = direct && !isLiving(*direct);
     if (projectile && ticks <= config().shieldParryTicksArrow) {
         bool tf = gf::projectile::ext::isProjectile(*direct);
-        if (tf || config().parryNonTwilightAttacks) {
+        if (tf || config().parryNonGloamingAttacks) {
             auto   v     = tf ? gf::projectile::ext::velocity(*direct) : direct->getPosDelta();
             double speed = std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z);
             auto   look  = lookOf(player);
             Vec3   nv{static_cast<float>(look.x * speed), static_cast<float>(look.y * speed), static_cast<float>(look.z * speed)};
-            // TF's projectiles: the kit's ProjectileImpactEvent#setCanceled and Projectile#setOwner
+            // upstream's projectiles: the kit's ProjectileImpactEvent#setCanceled and Projectile#setOwner
             // (AIM_DEFLECT; the blocker owns the projectile from now on)
             if (tf) {
                 gf::projectile::ext::setVelocity(*direct, nv);
@@ -165,18 +165,18 @@ void registerSwords() {
             .hurtEnemy =
                 [](ItemStack&, Actor& target, Actor&) {
                     chillAura(target, 200, 2, true);
-                    hitParticles(target, "twilightforest:snow", {}, true);
+                    hitParticles(target, "gloamingforest:snow", {}, true);
                     return true;
                 },
             // ICE: attack 3.5 + sword 3 + 1 = 7.5; the BP item's damage gives 7 (6 + the player's 1)
             .attackBonus = [](ItemStack const&, Actor&, Player&) { return 0.5F; },
-            .repairWith  = [](ItemStack const&, ItemStack const& m) { return gf::tags::has(gf::tags::Registry::Item, "twilightforest:repairs_ice_tools", game::items::idOf(m)); },
+            .repairWith  = [](ItemStack const&, ItemStack const& m) { return gf::tags::has(gf::tags::Registry::Item, "gloamingforest:repairs_ice_tools", game::items::idOf(m)); },
         }
     );
     gf::item::registerItem(kGlassSword, {.hurtEnemy = glassHit, .repairWith = [](ItemStack const&, ItemStack const&) { return false; }});
     gf::item::ext::setRarity(kGlassSword, gf::item::ext::Rarity::Uncommon);
     gf::item::addTooltip(kGlassSword, [](ItemStack const& stack, std::vector<std::string>& lines, Player const*) {
-        if (!gf::item::getData(stack, kInfiniteGlassKey).is_null()) lines.push_back("§7" + gf::tr("item.twilightforest.glass_sword.desc", "Creative Mode-only"));
+        if (!gf::item::getData(stack, kInfiniteGlassKey).is_null()) lines.push_back("§7" + gf::tr("item.gloamingforest.glass_sword.desc", "Creative Mode-only"));
     });
 }
 

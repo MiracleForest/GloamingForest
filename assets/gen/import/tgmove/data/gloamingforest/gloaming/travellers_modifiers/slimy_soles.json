@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:slimy_soles_coefficient": 0.5
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.slimy_soles.description"
+    }
+  ],
+  "equipment_slots": "feet"
+}

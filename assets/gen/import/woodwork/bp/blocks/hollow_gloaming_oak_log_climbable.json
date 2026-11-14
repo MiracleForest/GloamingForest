@@ -1,0 +1,708 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "gloamingforest:hollow_gloaming_oak_log_climbable",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:variant": ["vine", "ladder", "ladder_waterlogged"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10
+      },
+      "minecraft:tags": ["minecraft:is_axe_item_destructible"],
+      "minecraft:map_color": "#8f7748",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 5
+      },
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_gloaming_oak_log",
+          "render_method": "alpha_test"
+        },
+        "climbable": {
+          "texture": "tf_vanilla_block_vine",
+          "render_method": "alpha_test"
+        },
+        "inner": {
+          "texture": "tf_block_stripped_gloaming_oak_log",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_gloaming_oak_log",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_gloaming_oak_log_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 180, 0]
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:collision_box": [
+        {
+          "origin": [-8, 0, 7],
+          "size": [16, 16, 1]
+        },
+        {
+          "origin": [-8, 0, -8],
+          "size": [16, 16, 1]
+        },
+        {
+          "origin": [7, 0, -7],
+          "size": [1, 16, 14]
+        },
+        {
+          "origin": [-8, 0, -7],
+          "size": [1, 16, 14]
+        }
+      ]
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [7, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-7, 0, -8],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-7, 0, 7],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [7, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-7, 0, -8],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-7, 0, 7],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [7, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-7, 0, -8],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-7, 0, 7],
+              "size": [14, 16, 1]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, 7],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [7, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, 7],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [7, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, 7],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [7, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -7],
+              "size": [1, 16, 14]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, 7],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [7, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, 7],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [7, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, 7],
+              "size": [16, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -7],
+              "size": [1, 16, 14]
+            },
+            {
+              "origin": [7, 0, -7],
+              "size": [1, 16, 14]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [7, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-7, 0, 7],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-7, 0, -8],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [7, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-7, 0, 7],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-7, 0, -8],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_gloaming_oak_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_gloaming_oak_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [7, 0, -8],
+              "size": [1, 16, 16]
+            },
+            {
+              "origin": [-7, 0, 7],
+              "size": [14, 16, 1]
+            },
+            {
+              "origin": [-7, 0, -8],
+              "size": [14, 16, 1]
+            }
+          ],
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

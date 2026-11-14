@@ -1,0 +1,28 @@
+{
+  "values": [
+    "gloamingforest:castle_brick",
+    "gloamingforest:worn_castle_brick",
+    "gloamingforest:cracked_castle_brick",
+    "gloamingforest:mossy_castle_brick",
+    "gloamingforest:castle_roof_tile",
+    "gloamingforest:thick_castle_brick",
+    "gloamingforest:bold_castle_brick_tile",
+    "gloamingforest:bold_castle_brick_pillar",
+    "gloamingforest:encased_castle_brick_tile",
+    "gloamingforest:encased_castle_brick_pillar",
+    "gloamingforest:castle_brick_stairs",
+    "gloamingforest:worn_castle_brick_stairs",
+    "gloamingforest:cracked_castle_brick_stairs",
+    "gloamingforest:mossy_castle_brick_stairs",
+    "gloamingforest:encased_castle_brick_stairs",
+    "gloamingforest:bold_castle_brick_stairs",
+    "gloamingforest:pink_castle_rune_brick",
+    "gloamingforest:yellow_castle_rune_brick",
+    "gloamingforest:blue_castle_rune_brick",
+    "gloamingforest:violet_castle_rune_brick",
+    "gloamingforest:pink_castle_door",
+    "gloamingforest:yellow_castle_door",
+    "gloamingforest:blue_castle_door",
+    "gloamingforest:violet_castle_door"
+  ]
+}

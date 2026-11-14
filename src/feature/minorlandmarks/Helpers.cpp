@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/features/FeatureLogic.java
-//   src/main/java/twilightforest/loot/TFLootTables.java
-//   src/main/java/twilightforest/block/HedgeBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java
+//   src/main/java/gloamingforest/loot/TFLootTables.java
+//   src/main/java/gloamingforest/block/HedgeBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -73,7 +73,7 @@ cml::Pos toPos(BlockPos const& p) { return {p.x, p.y, p.z}; }
 
 bool treesReplaceable(Block const& block) {
     // FeatureLogic#isReplaceable(state, true)
-    return (st::blocks::canBeReplaced(block) || st::blocks::inTag(block, "twilightforest:worldgen_replaceables") || st::blocks::inTag(block, "minecraft:flowers"))
+    return (st::blocks::canBeReplaced(block) || st::blocks::inTag(block, "gloamingforest:worldgen_replaceables") || st::blocks::inTag(block, "minecraft:flowers"))
         && !st::blocks::inTag(block, "minecraft:features_cannot_replace");
 }
 
@@ -111,10 +111,10 @@ void placeSpawnerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, st
 }
 
 bool isSpiderType(std::string const& entityId) {
-    // net.minecraft.world.entity.monster.Spider and its subclasses (CaveSpider, TF's HedgeSpider,
+    // net.minecraft.world.entity.monster.Spider and its subclasses (CaveSpider, upstream's HedgeSpider,
     // SwarmSpider, KingSpider, CarminiteBroodling)
-    static constexpr std::string_view kSpiders[] = {"minecraft:spider", "minecraft:cave_spider", "twilightforest:hedge_spider",
-                                                    "twilightforest:swarm_spider", "twilightforest:king_spider", "twilightforest:carminite_broodling"};
+    static constexpr std::string_view kSpiders[] = {"minecraft:spider", "minecraft:cave_spider", "gloamingforest:hedge_spider",
+                                                    "gloamingforest:swarm_spider", "gloamingforest:king_spider", "gloamingforest:carminite_broodling"};
     return std::find(std::begin(kSpiders), std::end(kSpiders), entityId) != std::end(kSpiders);
 }
 

@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/EnforcedHomePoint.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/EnforcedHomePoint.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -658,12 +658,12 @@ LL_TYPE_INSTANCE_HOOK(EntitySetTargetHook, ll::memory::HookPriority::Normal, Mob
     origin(target);
 }
 
-// Entity#canUsePortal: TF's bosses (BaseTFBoss) and parts (HydraPart, NagaSegment, TFPart) never go
+// Entity#canUsePortal: upstream's bosses (BaseTFBoss) and parts (HydraPart, NagaSegment, TFPart) never go
 // through a portal, nor do the types marked with ext::setCanUsePortal (RisingZombie, ChainBlock,
-// CubeOfAnnihilation). Bedrock's portals and the Twilight portal ask the actor's
+// CubeOfAnnihilation). Bedrock's portals and the Gloaming portal ask the actor's
 // canChangeDimensionsUsingPortal: Mob, FallingBlockActor and Player override Actor's, every other
 // actor (projectiles, items, vehicles) answers with Actor's own; all three non-player ones are
-// hooked. (F4's Twilight portal lets an actor that carries a passenger through without asking it.)
+// hooked. (F4's Gloaming portal lets an actor that carries a passenger through without asking it.)
 LL_TYPE_INSTANCE_HOOK(EntityPortalHook, ll::memory::HookPriority::Normal, Mob, &Mob::$canChangeDimensionsUsingPortal, bool) {
     return gf::feature::entity::portalAllowed(*this) && origin(); // refused types never reach the engine's rule
 }

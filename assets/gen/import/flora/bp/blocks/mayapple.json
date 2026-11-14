@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mayapple",
+      "identifier": "gloamingforest:mayapple",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -20,7 +20,7 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.twilightforest.block.mayapple",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.mayapple",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_cloverpatch",

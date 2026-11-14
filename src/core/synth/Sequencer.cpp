@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Contract "synth" (F3): the tracker-style music sequencer.
 #include "core/synth/Sequencer.h"
 

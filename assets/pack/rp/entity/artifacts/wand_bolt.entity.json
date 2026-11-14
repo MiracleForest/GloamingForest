@@ -2,9 +2,9 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:wand_bolt",
+      "identifier": "gloamingforest:wand_bolt",
       "materials": { "default": "entity_emissive_alpha" },
-      "textures": { "default": "textures/twilightforest/particle/twilight_orb" },
+      "textures": { "default": "textures/gloamingforest/particle/gloaming_orb" },
       "geometry": { "default": "geometry.item_sprite" },
       "scripts": { "scale": "0.5", "animate": ["billboard"] },
       "animations": { "billboard": "animation.actor.billboard" },

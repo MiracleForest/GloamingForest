@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "gloamingforest:arctic_fur_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "gloamingforest:arctic_fur"
+  }
+}

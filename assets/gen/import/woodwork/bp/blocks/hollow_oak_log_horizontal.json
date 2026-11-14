@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:hollow_oak_log_horizontal",
+      "identifier": "gloamingforest:hollow_oak_log_horizontal",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["x", "z"],
-        "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+        "gloamingforest:axis": ["x", "z"],
+        "gloamingforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
       }
     },
     "components": {
@@ -24,7 +24,7 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 5
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_oak_log",
@@ -77,9 +77,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'empty'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'empty'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -123,9 +123,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'moss'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'moss'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -177,9 +177,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'moss_and_grass'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'moss_and_grass'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_plant",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_plant",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -235,9 +235,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'snow'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'snow'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -289,9 +289,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'waterlogged'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -335,9 +335,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'empty'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'empty'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -381,9 +381,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'moss'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'moss'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -435,9 +435,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'moss_and_grass'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'moss_and_grass'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_plant",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_plant",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -493,9 +493,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'snow'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'snow'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",
@@ -547,9 +547,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'waterlogged'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_oak_log",

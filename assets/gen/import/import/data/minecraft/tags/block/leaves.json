@@ -1,15 +1,15 @@
 {
   "values": [
-    "twilightforest:rainbow_oak_leaves",
-    "twilightforest:twilight_oak_leaves",
-    "twilightforest:canopy_leaves",
-    "twilightforest:mangrove_leaves",
-    "twilightforest:dark_leaves",
-    "twilightforest:time_leaves",
-    "twilightforest:transformation_leaves",
-    "twilightforest:mining_leaves",
-    "twilightforest:sorting_leaves",
-    "twilightforest:thorn_leaves",
-    "twilightforest:beanstalk_leaves"
+    "gloamingforest:rainbow_oak_leaves",
+    "gloamingforest:gloaming_oak_leaves",
+    "gloamingforest:canopy_leaves",
+    "gloamingforest:mangrove_leaves",
+    "gloamingforest:dark_leaves",
+    "gloamingforest:time_leaves",
+    "gloamingforest:transformation_leaves",
+    "gloamingforest:mining_leaves",
+    "gloamingforest:sorting_leaves",
+    "gloamingforest:thorn_leaves",
+    "gloamingforest:beanstalk_leaves"
   ]
 }

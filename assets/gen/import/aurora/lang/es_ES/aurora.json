@@ -1,8 +1,8 @@
 {
-  "block.twilightforest.aurora_block": "Bloque de aurora",
-  "block.twilightforest.aurora_pillar": "Pilar de aurora",
-  "block.twilightforest.aurora_slab": "Losa de aurora",
-  "block.twilightforest.auroralized_glass": "Cristal de aurora",
-  "entity.twilightforest.ice_crystal": "Cristal de Hielo",
-  "entity.twilightforest.ice_snowball": "Bola de Hielo"
+  "block.gloamingforest.aurora_block": "Bloque de aurora",
+  "block.gloamingforest.aurora_pillar": "Pilar de aurora",
+  "block.gloamingforest.aurora_slab": "Losa de aurora",
+  "block.gloamingforest.auroralized_glass": "Cristal de aurora",
+  "entity.gloamingforest.ice_crystal": "Cristal de Hielo",
+  "entity.gloamingforest.ice_snowball": "Bola de Hielo"
 }

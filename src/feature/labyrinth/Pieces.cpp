@@ -1,36 +1,36 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/LabyrinthStructure.java (getFirstPiece)
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRuinsComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeMoundComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeUpperEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeEntranceShaftComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomExitComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomBossComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomCollapseComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeMushRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomFountainComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomVaultComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomSpawnerChestsComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndChestComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndTrappedChestComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndTripwireChestComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndTorchesComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndFountainComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndFountainLavaComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndPaintingComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndRootsComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndShroomsComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeCorridorComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeCorridorIronFenceComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeCorridorRootsComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeCorridorShroomsComponent.java
-//   src/main/java/twilightforest/util/HugeMushroomUtil.java
-//   src/main/java/twilightforest/util/features/FeaturePlacers.java (replaceBlocksDome)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/LabyrinthStructure.java (getFirstPiece)
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRuinsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeMoundComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeUpperEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeEntranceShaftComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomExitComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomBossComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomCollapseComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeMushRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomFountainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomVaultComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomSpawnerChestsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndChestComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndTrappedChestComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndTripwireChestComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndTorchesComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndFountainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndFountainLavaComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndPaintingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndRootsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndShroomsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeCorridorComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeCorridorIronFenceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeCorridorRootsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeCorridorShroomsComponent.java
+//   src/main/java/gloamingforest/util/HugeMushroomUtil.java
+//   src/main/java/gloamingforest/util/features/FeaturePlacers.java (replaceBlocksDome)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/labyrinth/Pieces.h"
@@ -57,12 +57,12 @@ namespace {
 Block const& J(char const* id) { return blocks::java(id); }
 Block const& J(char const* id, Json const& props) { return blocks::java(id, props); }
 
-Block const& mazestone() { return J("twilightforest:mazestone"); }
-Block const& mazestoneBrick() { return J("twilightforest:mazestone_brick"); }
-Block const& mazestoneMosaic() { return J("twilightforest:mazestone_mosaic"); }
-Block const& mazestoneBorder() { return J("twilightforest:mazestone_border"); }
-Block const& decorativeMazestone() { return J("twilightforest:decorative_mazestone"); }
-Block const& cutMazestone() { return J("twilightforest:cut_mazestone"); }
+Block const& mazestone() { return J("gloamingforest:mazestone"); }
+Block const& mazestoneBrick() { return J("gloamingforest:mazestone_brick"); }
+Block const& mazestoneMosaic() { return J("gloamingforest:mazestone_mosaic"); }
+Block const& mazestoneBorder() { return J("gloamingforest:mazestone_border"); }
+Block const& decorativeMazestone() { return J("gloamingforest:decorative_mazestone"); }
+Block const& cutMazestone() { return J("gloamingforest:cut_mazestone"); }
 
 /// Direction.Plane.HORIZONTAL.getRandomDirection: {NORTH, EAST, SOUTH, WEST}[nextInt(4)].
 Orientation randomHorizontal(RandomSource& rand) { return static_cast<Orientation>(rand.nextInt(4)); }
@@ -288,7 +288,7 @@ EntranceShaft::EntranceShaft(int i, RandomSource& rand, int x, int y, int z)
 : ComponentOld(kEntranceShaft, i, BlockBox{x, std::min(y, kSeaLevel), z, x + 6 - 1, std::max(y, kSeaLevel), z + 6 - 1}) {
     setOrientation(randomHorizontal(rand));
     // postProcess's this.boundingBox.encapsulate(pos.setY(generator.getSeaLevel() - 9)), done once
-    // here: TF grows the shared piece's box in its first postProcess; the start's box (the level 2
+    // here: upstream grows the shared piece's box in its first postProcess; the start's box (the level 2
     // maze reaches lower) and the chunks the piece touches are the same either way, and no
     // generation thread writes the box
     bbox.minY = std::min(bbox.minY, kSeaLevel - 9);
@@ -380,7 +380,7 @@ void MinotaurMaze::configureMaze() {
     mMaze->wallBlockState   = &mazestoneBrick();
     mMaze->rootBlockState   = &decorativeMazestone();
     mMaze->pillarBlockState = &cutMazestone();
-    mMaze->wallBlocks       = ::gf::structure::selectors::get("twilightforest:mazestone");
+    mMaze->wallBlocks       = ::gf::structure::selectors::get("gloamingforest:mazestone");
     mMaze->torchRarity      = 0.05F;
     mMaze->tall             = 2;
     mMaze->head             = 1;
@@ -605,7 +605,7 @@ void Room::collapseRoom(Region& world, RandomSource& rand, BlockBox const& sbb) 
                 fillAir(world, sbb, x, gravel, z, x, gravel + 5, z);
             } else if (root > 0) {
                 fill(world, sbb, x, 5, z, x, 5 + root, z, J("minecraft:dirt"), air(), true);
-                fill(world, sbb, x, 5 - rand.nextInt(5), z, x, 5, z, J("twilightforest:root_strand"), air(), false);
+                fill(world, sbb, x, 5 - rand.nextInt(5), z, x, 5, z, J("gloamingforest:root_strand"), air(), false);
             } else if (rand.nextInt(dist + 1) > 0) {
                 // remove ceiling
                 fillAir(world, sbb, x, 5, z, x, 5, z);
@@ -898,7 +898,7 @@ void Cell::deadEndFountainLava(Region& world, BlockBox const& sbb) {
 void Cell::deadEndPainting(Region& world, BlockBox const& sbb) {
     // normal doorway
     deadEnd(world, sbb);
-    // torches (TF's painting is commented out)
+    // torches (upstream's painting is commented out)
     placeBlock(world, J("minecraft:wall_torch", Json{{"facing", "west"}}), 1, 3, 3, sbb);
     placeBlock(world, J("minecraft:wall_torch", Json{{"facing", "east"}}), 4, 3, 3, sbb);
 }
@@ -913,7 +913,7 @@ void Cell::deadEndRoots(Region& world, RandomSource& rand, BlockBox const& sbb) 
                 // place dirt above ceiling
                 placeBlock(world, J("minecraft:dirt"), x, 6, z, sbb);
                 // roots
-                for (int y = 6 - length; y < 6; y++) placeBlock(world, J("twilightforest:root_strand"), x, y, z, sbb);
+                for (int y = 6 - length; y < 6; y++) placeBlock(world, J("gloamingforest:root_strand"), x, y, z, sbb);
                 // occasional gravel
                 if (rand.nextInt(z + 1) > 1) {
                     placeBlock(world, J("minecraft:gravel"), x, 1, z, sbb);
@@ -979,7 +979,7 @@ void Cell::corridorRoots(Region& world, RandomSource& rand, BlockBox const& sbb)
                 // place dirt above ceiling
                 placeBlock(world, J("minecraft:dirt"), x, 6, z, sbb);
                 // roots
-                for (int y = 6 - length; y < 6; y++) placeBlock(world, J("twilightforest:root_strand"), x, y, z, sbb);
+                for (int y = 6 - length; y < 6; y++) placeBlock(world, J("gloamingforest:root_strand"), x, y, z, sbb);
                 // occasional gravel
                 if (rand.nextInt(freq + 1) > 1) {
                     placeBlock(world, J("minecraft:gravel"), x, 1, z, sbb);

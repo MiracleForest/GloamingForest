@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:root_strand",
+      "identifier": "gloamingforest:root_strand",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -20,7 +20,7 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.twilightforest.block.root_strand",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.root_strand",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_root_strand",

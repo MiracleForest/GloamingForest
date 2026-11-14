@@ -10,7 +10,7 @@
 namespace gf::core {
 
 /// Formats a translation string. Supports `{}` (next argument), `{0}`, `{1}`... (positional),
-/// Java's `%s` / `%d` / `%1$s` (TF's lang files use them), and `{{` / `}}` / `%%` escapes.
+/// Java's `%s` / `%d` / `%1$s` (upstream's lang files use them), and `{{` / `}}` / `%%` escapes.
 /// Never throws: unknown placeholders are kept verbatim.
 [[nodiscard]] std::string formatMessage(std::string_view fmt, std::span<std::string const> args);
 

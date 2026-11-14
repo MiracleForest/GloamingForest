@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichBossRoom.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerSegment.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichBossRoom.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerSegment.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -56,7 +56,7 @@ struct CandleSpot {
 
 /// LichTowerSegment#stairDecay: the index into the 8 VerticalDecayProcessors (0.025 .. 0.2), or -1
 /// for none (Mth.ceil((depth - 3) * 0.5) < 0); capped at 7 (Java caps at the length, 8, which would
-/// be out of range; TF towers never reach it: 15 segments go to depth 16 -> 7).
+/// be out of range; upstream towers never reach it: 15 segments go to depth 16 -> 7).
 [[nodiscard]] inline int stairDecayLevel(int genDepth) {
     int level = mthCeil((genDepth - 3) * 0.5);
     if (level < 0) return -1;

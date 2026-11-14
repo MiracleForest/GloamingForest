@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:copper_nugget",
+      "identifier": "gloamingforest:copper_nugget",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:copper_nugget.name"
+        "value": "item.gloamingforest:copper_nugget.name"
       },
       "minecraft:tags": {
         "tags": ["c:nuggets", "c:nuggets/copper"]

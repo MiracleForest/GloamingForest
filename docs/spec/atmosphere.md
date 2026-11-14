@@ -1,14 +1,14 @@
 # Sky, fog, weather and aurora (U15 `atmosphere`)
 
-Behaviour spec of unit **U15** (wave W1), translated from The Twilight Forest 4.8 (`9e40a757`, MC 1.21.1) by F16. It
+Behaviour spec of unit **U15** (wave W1), translated from the upstream 4.8 (`9e40a757`, MC 1.21.1) by F16. It
 is the checklist the U15 worker implements and the A6 audit compares against. Sections 1-5 are the behaviour; Appendix A
 lists every id U15 owns; Appendix B the strings.
 
 ## 1. Scope
 
-The Twilight Forest dimension's client presentation:
+The Gloaming Forest dimension's client presentation:
 
-- **Dimension special effects** `TwilightForestRenderInfo` (dimension type effects id `twilightforest:renderer`
+- **Dimension special effects** `GloamingForestRenderInfo` (dimension type effects id `gloamingforest:renderer`
   registered by F4's dimension type): cloud height 128, no sunrise colours, fog colour modulation, near fog in dark
   biomes, custom sky (stars only), custom weather.
 - **Sky** (`TFSkyRenderer`): no sun, no moon, no sunrise; always-bright stars; void horizon threshold.
@@ -17,8 +17,8 @@ The Twilight Forest dimension's client presentation:
   biomes whose progression restriction the viewer has not met; sparkles inside protected structure pieces; Ur-Ghast
   rain.
 - **Aurora** (`TFShaders.AURORA`, `ClientGameEvents.renderAurora`): the noise aurora plane in the biomes of client
-  config `client.auroraBiomes` (default `["twilightforest:glacier"]`, section `atmosphere`).
-- Damage type `twilightforest:acid_rain` and sound event `environment.twilightforest.acid_rain` (played by U14's
+  config `client.auroraBiomes` (default `["gloamingforest:glacier"]`, section `atmosphere`).
+- Damage type `gloamingforest:acid_rain` and sound event `environment.gloamingforest.acid_rain` (played by U14's
   acid-rain enforcement); net channels `atmosphere.*`.
 
 Not U15: biome sky/fog/water colours (U1 biome JSON), the dimension, time and portal (F4), restrictions and the
@@ -28,9 +28,9 @@ client frameworks (U15 registers its providers through F12).
 
 Contracts: client.world, client.render, progression, world.
 
-## 2. TF sources
+## 2. Upstream sources
 
-`client/TwilightForestRenderInfo.java`, `client/renderer/TFSkyRenderer.java`, `client/event/FogHandler.java`,
+`client/GloamingForestRenderInfo.java`, `client/renderer/TFSkyRenderer.java`, `client/event/FogHandler.java`,
 `client/renderer/TFWeatherRenderer.java`, `client/TFShaders.java`, `shaders/core/aurora/aurora.{vsh,fsh,json}`
 (resources), `client/event/ClientGameEvents.java` (`renderAurora`, aurora counter in `clientTick`, `killVignette`),
 `client/event/ClientRegistrationEvents.java` (dimension effects registration, `createStars`), `config/TFClientConfig.java`,
@@ -42,26 +42,26 @@ Contracts: client.world, client.render, progression, world.
 
 ### 3.1 Dimension effects
 
-`TwilightForestRenderInfo(cloudHeight 128.0, hasGround false, SkyType.NONE, forceBrightLightmap false,
+`GloamingForestRenderInfo(cloudHeight 128.0, hasGround false, SkyType.NONE, forceBrightLightmap false,
 constantAmbientLight false)`:
 - `getSunriseColor` -> null (no sunrise/sunset band).
 - Fog colour = biome fog colour x (daylight*0.94 + 0.06, daylight*0.94 + 0.06, daylight*0.91 + 0.09).
 - Near fog (`isFoggyAt`) when the viewer's biome is `spooky_forest` (any height), or `dark_forest` /
   `dark_forest_center` while the viewer is at y <= 20 (above y 20 only the spooky forest counts).
 - Sky, rain/snow rendering and rain ticking delegate to the renderers below.
-- The vanilla vignette is disabled in the Twilight Forest (`vignetteBrightness = 0`).
+- The vanilla vignette is disabled in the Gloaming Forest (`vignetteBrightness = 0`).
 
 ### 3.2 Sky (`TFSkyRenderer.renderSky`)
 
 1. Sky dome (vanilla sky buffer) in the level's sky colour at the camera.
 2. No sunrise fan, no sun, no moon.
 3. Stars always at full brightness: 3000 random quads from `RandomSource.create(10842)`, each at distance 100 in a
-   random direction with size 0.15..0.25, random roll (vanilla star algorithm with TF's seed and count), drawn without
+   random direction with size 0.15..0.25, random roll (vanilla star algorithm with upstream's seed and count), drawn without
    fog, white.
 4. Dark void plate (vanilla dark buffer at +12) only when the camera eye is below the dimension's minimum build height
-   (TF lowers the vanilla threshold from y 63 to the void at the bottom, -32 in the TF dimension).
+   (upstream lowers the vanilla threshold from y 63 to the void at the bottom, -32 in the upstream dimension).
 
-### 3.3 Fog (`FogHandler`, only in TF effects, fog type NONE)
+### 3.3 Fog (`FogHandler`, only in upstream effects, fog type NONE)
 
 - Sky fog: target far = vanilla far x 0.5 in `spooky_forest` else vanilla far; near = 0 in spooky forest else
   vanilla near. Terrain fog: far as above; near = far x 0.75 in spooky forest else vanilla near.
@@ -106,7 +106,7 @@ instead of `rain` on lava, magma or lit campfires; rain sounds `weather.rain.abo
 - Client tick: if the camera's biome is in `auroraBiomes` (parsed once; invalid ids warned and skipped) the aurora
   counter rises by 1 per tick, else falls by 1, clamped 0..60 (fade over 3 s); empty list disables it.
 - Render after weather when the counter > 0: one quad at y = 256 - camera y spanning +-2048 x (render distance / 32)
-  around the camera, colour white, alpha = counter / 60 x 0.5, shader `twilightforest:aurora/aurora` with uniforms
+  around the camera, colour white, alpha = counter / 60 x 0.5, shader `gloamingforest:aurora/aurora` with uniforms
   `SeedContext` = |biome zoom seed| and `PositionContext` = camera position.
 - Shader (fragment): uv = position.xz*2 - 1; 16-step ray march along (uv.x, 1, uv.y) with step 0.35/16, each sample
   = fixNoise(OpenSimplex2 (improve XY) of ((x + camX + seed/360)/512, (z + camZ + seed%360)/512, time*22.5)) weighted by
@@ -131,7 +131,7 @@ instead of `rain` on lava, magma or lit campfires; rain sounds `weather.rain.abo
 
 ## 5. Acceptance checklist (selftests `atmosphere.*`, dx 1500-1599; client screenshots)
 
-- In the TF dimension: no sun/moon, stars visible at all times (screenshot at noon and midnight vs TF reference).
+- In the upstream dimension: no sun/moon, stars visible at all times (screenshot at noon and midnight vs upstream reference).
 - Spooky forest fog halves the distance and smooths in/out; dark forest near fog below y 20.
 - Locked biome weather: blizzard in snowy forest before `progress_lich`, mosquitoes in swamp, ashes in fire swamp,
   dark streams in dark forest, big rain in highlands/thornlands/final plateau (screenshots); disappears after the
@@ -141,7 +141,7 @@ instead of `rain` on lava, magma or lit campfires; rain sounds `weather.rain.abo
 
 ## Appendix A: Owned ids (generated inventory)
 
-Every id this unit owns in `docs/spec/owners.tsv`, with the TF 4.8 data the W1 worker must reproduce. Registration statements are TF's own Java (`init/TF*.java`), condensed (namespaces such as `MapColor.` dropped); loot, recipe, tag, advancement and data rows are summarised from TF's generated JSON (`src/generated/resources`). Loot notation: `self` = drops the block itself when it survives the explosion; `alternatives(a → b)` = first matching child; `[if ...]` = conditions; `{...}` = functions. In summaries `mc:` is `minecraft:` and ids without a namespace are `twilightforest:`.
+Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data the W1 worker must reproduce. Registration statements are upstream's own Java (`init/upstream*.java`), condensed (namespaces such as `MapColor.` dropped); loot, recipe, tag, advancement and data rows are summarised from upstream's generated JSON (`src/generated/resources`). Loot notation: `self` = drops the block itself when it survives the explosion; `alternatives(a → b)` = first matching child; `[if ...]` = conditions; `{...}` = functions. In summaries `mc:` is `minecraft:` and ids without a namespace are `gloamingforest:`.
 
 | Kind | Count |
 |---|---|
@@ -171,31 +171,31 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the TF 4.8 data the W1 w
 
 ### Damage types (1)
 
-- `twilightforest:acid_rain`: `{"exhaustion":0.0,"message_id":"twilightforest.acid_rain","scaling":"when_caused_by_living_non_player"}` death.attack.twilightforest.acid_rain = "%1$s went dancing in the acid rain";
+- `gloamingforest:acid_rain`: `{"exhaustion":0.0,"message_id":"gloamingforest.acid_rain","scaling":"when_caused_by_living_non_player"}` death.attack.gloamingforest.acid_rain = "%1$s went dancing in the acid rain";
 
 ### Sound events (1)
 
-`sounds.json` content (vanilla `event` references can be played with the matching Bedrock vanilla sound; TF file names are listed only as names: the audio itself is All Rights Reserved and is re-synthesised by F3/the owner).
+`sounds.json` content (vanilla `event` references can be played with the matching Bedrock vanilla sound; upstream file names are listed only as names: the audio itself is All Rights Reserved and is re-synthesised by F3/the owner).
 
 | Event | Subtitle | sounds.json entries |
 |---|---|---|
-| `environment.twilightforest.acid_rain` | subtitles.twilightforest.environment.acid_rain = Acid rain scalds | event block.fire.extinguish |
+| `environment.gloamingforest.acid_rain` | subtitles.gloamingforest.environment.acid_rain = Acid rain scalds | event block.fire.extinguish |
 
 ### Config keys (1)
 
-See [config.md](config.md) for the section mapping; defaults and translation ids below are TF's.
+See [config.md](config.md) for the section mapping; defaults and translation ids below are upstream's.
 
-| TF key | Default | Translation id | English (config screen) |
+| Upstream key | Default | Translation id | English (config screen) |
 |---|---|---|---|
-| `client.auroraBiomes` | `List.of("twilightforest:glacier")` | `aurora_biomes` | Aurora Shader Biomes — Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect. |
+| `client.auroraBiomes` | `List.of("gloamingforest:glacier")` | `aurora_biomes` | Aurora Shader Biomes — Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect. |
 
 ## Appendix B: Strings (4 en_us keys owned)
 
-Keys already shown above (block/item/entity names, subtitles) are not repeated. The 29 Bedrock locales are generated from TF's lang files (R9); owners use these keys with the English text as fallback.
+Keys already shown above (block/item/entity names, subtitles) are not repeated. The 29 Bedrock locales are generated from upstream's lang files (R9); owners use these keys with the English text as fallback.
 
 | Key | English |
 |---|---|
-| `config.twilightforest.aurora_biomes` | Aurora Shader Biomes |
-| `config.twilightforest.aurora_biomes.button` | Edit Biomes |
-| `config.twilightforest.aurora_biomes.tooltip` | Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect. |
+| `config.gloamingforest.aurora_biomes` | Aurora Shader Biomes |
+| `config.gloamingforest.aurora_biomes.button` | Edit Biomes |
+| `config.gloamingforest.aurora_biomes.tooltip` | Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect. |
 

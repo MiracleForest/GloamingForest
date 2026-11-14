@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U2 (terrain), internal: the per-world generator state shared by the terrain, surface and blanket
@@ -34,7 +34,7 @@ using core::BlockBox;
 /// Config section "terrain" (rule R13; docs/spec/config.md).
 struct TerrainConfig {
     int  version = 1;
-    /// Generate new worlds with TF's "Skylight" preset (twilightforest:skylight_noise_gen: floating
+    /// Generate new worlds with upstream's "Skylight" preset (gloamingforest:skylight_noise_gen: floating
     /// islands over the void). Read when a world is first generated, then kept in the world
     /// (gf:terrain:skylight).
     bool skylight = false;
@@ -46,11 +46,11 @@ struct TerrainConfig {
     int showcaseHoldTicks = 0;
 };
 
-/// The data TF's terrain reads (from <mod>/data, loaded once).
+/// The data upstream's terrain reads (from <mod>/data, loaded once).
 struct Data {
-    nlohmann::json                         twilight, skylight; ///< noise settings
-    std::map<std::string, nlohmann::json>  densities;          ///< twilightforest:<path> -> density function
-    nlohmann::json                         biomeGrid;          ///< biome_terrain_data/twilightforest:biome_grid
+    nlohmann::json                         gloaming, skylight; ///< noise settings
+    std::map<std::string, nlohmann::json>  densities;          ///< gloamingforest:<path> -> density function
+    nlohmann::json                         biomeGrid;          ///< biome_terrain_data/gloamingforest:biome_grid
     std::map<std::string, nlohmann::json>  blankets;           ///< chunk_blanket_processors/<id>
 };
 [[nodiscard]] Data const& data();
@@ -167,7 +167,7 @@ struct HandoffCounts {
 /// The grid handoff's counters since the module loaded.
 [[nodiscard]] HandoffCounts handoffCounts();
 
-/// How far (in chunks) findSavedChunks looks around the Twilight Forest's entrances before it scans.
+/// How far (in chunks) findSavedChunks looks around the Gloaming Forest's entrances before it scans.
 inline constexpr int kSavedChunkProbeRadius = 16;
 struct SavedChunkProbe {
     bool        found   = false; ///< a saved chunk of the dimension exists
@@ -175,7 +175,7 @@ struct SavedChunkProbe {
     bool        scanned = false; ///< the whole chunk table was iterated
 };
 /// Whether dimension `dim` of the loaded world's DB holds a saved chunk (nullopt without a level): a
-/// world without a kept preset whose Twilight Forest has one stays twilight_noise_gen. Looks up the
+/// world without a kept preset whose Gloaming Forest has one stays gloaming_noise_gen. Looks up the
 /// version records of the chunks within kSavedChunkProbeRadius of the dimension's origin and of the
 /// world spawn's portal destination; only when none is there and `fullScan` iterates every chunk
 /// record (onWorldReady does that once per world, and only when the answer can change the preset).

@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/recipe/ScepterRepairRecipe.java
-//   src/main/java/twilightforest/item/recipe/EssenceRepairRecipe.java
-//   src/main/java/twilightforest/item/recipe/CasketRepairRecipe.java
-//   src/main/java/twilightforest/item/recipe/EmperorsClothRecipe.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/recipe/ScepterRepairRecipe.java
+//   src/main/java/gloamingforest/item/recipe/EssenceRepairRecipe.java
+//   src/main/java/gloamingforest/item/recipe/CasketRepairRecipe.java
+//   src/main/java/gloamingforest/item/recipe/EmperorsClothRecipe.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U9's four custom recipe types (rule R4) as F9 special crafting recipes. The data recipes
-// (twilightforest:scepter_repair JSON: scepter, repair_ingredients, durability) are loaded by the
+// (gloamingforest:scepter_repair JSON: scepter, repair_ingredients, durability) are loaded by the
 // type loader registered here; the crafting table offers them through BP recipes naming each layout
 // (assets/pack/bp/recipes/artifacts, feature/ext/item/Recipes.h):
 //   - equipment/<scepter>_<n>: a damaged scepter and n of its repair item (1..8); the zombie
@@ -38,10 +38,10 @@ namespace rc    = gf::recipes;
 
 namespace {
 
-constexpr char kScepterRepairType[] = "twilightforest:scepter_repair";
-constexpr char kEssenceRepair[]     = "twilightforest:essence_repair_recipe";
-constexpr char kCasketRepair[]      = "twilightforest:casket_repair_recipe";
-constexpr char kClothRecipe[]       = "twilightforest:emperors_cloth_recipe";
+constexpr char kScepterRepairType[] = "gloamingforest:scepter_repair";
+constexpr char kEssenceRepair[]     = "gloamingforest:essence_repair_recipe";
+constexpr char kCasketRepair[]      = "gloamingforest:casket_repair_recipe";
+constexpr char kClothRecipe[]       = "gloamingforest:emperors_cloth_recipe";
 
 int potionAuxOf(std::string const& javaId) {
     for (int aux = 0; aux < 64; ++aux)
@@ -156,7 +156,7 @@ bool essenceMatch(rc::CraftingGrid const& g, ItemStack* out) {
     bool             essence = false;
     for (auto const* s : filled(g)) {
         auto id = items::idOf(*s);
-        if (gf::tags::has(gf::tags::Registry::Item, "twilightforest:scepters", id) && s->isDamaged()) {
+        if (gf::tags::has(gf::tags::Registry::Item, "gloamingforest:scepters", id) && s->isDamaged()) {
             if (scepter) return false;
             scepter = s;
         } else if (id == kEssence) {
@@ -206,7 +206,7 @@ bool casketMatch(rc::CraftingGrid const& g, ItemStack* out) {
 
 bool clothApplicable(ItemStack const& s) {
     auto id = items::idOf(s);
-    return gf::tags::has(gf::tags::Registry::Item, "twilightforest:emperors_cloth_applicable", id) || gf::tags::has(gf::tags::Registry::Item, "c:armors", id)
+    return gf::tags::has(gf::tags::Registry::Item, "gloamingforest:emperors_cloth_applicable", id) || gf::tags::has(gf::tags::Registry::Item, "c:armors", id)
         || id == "minecraft:elytra";
 }
 
@@ -313,9 +313,9 @@ void registerRecipes() {
         });
     }
     // the scepter repairs, one special recipe per data recipe
-    static char const* const kScepters[] = {"twilight_scepter", "lifedrain_scepter", "zombie_scepter", "fortification_scepter"};
+    static char const* const kScepters[] = {"gloaming_scepter", "lifedrain_scepter", "zombie_scepter", "fortification_scepter"};
     for (char const* path : kScepters) {
-        std::string id = std::string("twilightforest:equipment/") + path;
+        std::string id = std::string("gloamingforest:equipment/") + path;
         rc::registerSpecialCrafting(
             id,
             [id](rc::CraftingGrid const& g) {

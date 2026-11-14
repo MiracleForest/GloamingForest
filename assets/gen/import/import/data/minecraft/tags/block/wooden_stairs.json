@@ -1,12 +1,12 @@
 {
   "values": [
-    "twilightforest:twilight_oak_stairs",
-    "twilightforest:canopy_stairs",
-    "twilightforest:mangrove_stairs",
-    "twilightforest:dark_stairs",
-    "twilightforest:time_stairs",
-    "twilightforest:transformation_stairs",
-    "twilightforest:mining_stairs",
-    "twilightforest:sorting_stairs"
+    "gloamingforest:gloaming_oak_stairs",
+    "gloamingforest:canopy_stairs",
+    "gloamingforest:mangrove_stairs",
+    "gloamingforest:dark_stairs",
+    "gloamingforest:time_stairs",
+    "gloamingforest:transformation_stairs",
+    "gloamingforest:mining_stairs",
+    "gloamingforest:sorting_stairs"
   ]
 }

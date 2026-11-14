@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:lich_trophy",
+      "identifier": "gloamingforest:lich_trophy",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:lich_trophy.name"
+        "value": "tile.gloamingforest:lich_trophy.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:lich_trophy",
+        "block": "gloamingforest:lich_trophy",
         "replace_block_item": true
       },
       "minecraft:wearable": {

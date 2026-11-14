@@ -2,7 +2,7 @@
 //
 // Pressed buttons and plates power vanilla redstone through their BP permutations
 // (minecraft:redstone_producer: 15, strongly the block they hang on; tools/families). This file
-// keeps the state: a button stays pressed for params.ticks (TF's wooden buttons: 30 ticks), arrows
+// keeps the state: a button stays pressed for params.ticks (upstream's wooden buttons: 30 ticks), arrows
 // keep a wooden button pressed, a plate is pressed while an entity is on it (params.sensitivity
 // "everything" / "mobs") and checked again every 20 ticks; both break when the block they hang on
 // is gone (canSurvive). Java keeps the scheduled release with the chunk: here a switch saved while
@@ -53,7 +53,7 @@ int attachedFace(Block const& b, Family family) {
     return opposite(facingOf(b));
 }
 
-/// Java BlockSetType sounds: TF's wood sets click as wooden buttons and plates (volume and pitch 1).
+/// Java BlockSetType sounds: upstream's wood sets click as wooden buttons and plates (volume and pitch 1).
 void clickSound(BlockSource& region, BlockPos const& pos, Entry const& e, bool on) {
     auto        set = e.str("block_set", "wood");
     std::string name;

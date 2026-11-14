@@ -1,6 +1,6 @@
-// Selftests of F9 (prefix "item.", no world positions): TF's data names vanilla content by Java id
+// Selftests of F9 (prefix "item.", no world positions): upstream's data names vanilla content by Java id
 // (tags/JavaIds.h); the recipe, tag and data map runtimes must hold ids the game's block, item and
-// entity registries know. item.recipes_java_ids reads TF's own recipes (F1's import) where the
+// entity registries know. item.recipes_java_ids reads upstream's own recipes (F1's import) where the
 // renaming matters; item.java_ids_registry resolves every Bedrock id of the tables and every vanilla
 // id the loaded recipes, tags and data maps produce.
 
@@ -101,7 +101,7 @@ struct Unknown {
 
 } // namespace
 
-// TF's own recipes name vanilla items by Java id: the runtime holds the game's.
+// upstream's own recipes name vanilla items by Java id: the runtime holds the game's.
 GF_REGISTER_SELFTEST("item.recipes_java_ids", [](Context& ctx) {
     // the parser and the owners' helpers (ext/item/Recipes.h)
     auto web = rc::ext::parseIngredient(JsonDoc{{"item", "minecraft:cobweb"}});
@@ -114,10 +114,10 @@ GF_REGISTER_SELFTEST("item.recipes_java_ids", [](Context& ctx) {
               "item_frame is frame, map is empty_map");
     ctx.check(gf::tags::ext::bedrockId("item", "minecraft:chain") == "minecraft:iron_chain" && gf::tags::ext::bedrockId("block", "minecraft:cobweb") == "minecraft:web",
               "tags::ext::bedrockId by registry");
-    // TF's data (F1's import), when it is in this build
-    auto const* glide = rc::byId("twilightforest:add_modifier_to_travellers_gear/travellers_wings/gradual_glide_modifier");
+    // upstream's data (F1's import), when it is in this build
+    auto const* glide = rc::byId("gloamingforest:add_modifier_to_travellers_gear/travellers_wings/gradual_glide_modifier");
     if (!glide) {
-        ctx.info("TF's recipe data is not in this build (F1's import): only the parser is checked");
+        ctx.info("upstream's recipe data is not in this build (F1's import): only the parser is checked");
         return;
     }
     ctx.require(glide->width == 3 && glide->height == 3 && glide->ingredients.size() == 9, "gradual_glide: the 3x3 pattern");
@@ -127,20 +127,20 @@ GF_REGISTER_SELFTEST("item.recipes_java_ids", [](Context& ctx) {
         char const* item;
         char const* what;
     };
-    for (auto const& c : {Case{"twilightforest:add_modifier_to_travellers_gear/travellers_boots/water_walk_modifier", "minecraft:waterlily", "water_walk: lily_pad"},
-                          Case{"twilightforest:add_modifier_to_travellers_gear/travellers_boots/slimy_soles_modifier", "minecraft:slime", "slimy_soles: slime_block"},
-                          Case{"twilightforest:add_modifier_to_travellers_gear/travellers_goggles/item_display_modifier", "minecraft:frame", "item_display: item_frame"},
-                          Case{"twilightforest:wood/canopy_hanging_sign", "minecraft:iron_chain", "the hanging signs: chain"},
-                          Case{"twilightforest:nagastone/nagastone_spiral", "minecraft:normal_stone_slab", "nagastone_spiral: stone_slab"}}) {
+    for (auto const& c : {Case{"gloamingforest:add_modifier_to_travellers_gear/travellers_boots/water_walk_modifier", "minecraft:waterlily", "water_walk: lily_pad"},
+                          Case{"gloamingforest:add_modifier_to_travellers_gear/travellers_boots/slimy_soles_modifier", "minecraft:slime", "slimy_soles: slime_block"},
+                          Case{"gloamingforest:add_modifier_to_travellers_gear/travellers_goggles/item_display_modifier", "minecraft:frame", "item_display: item_frame"},
+                          Case{"gloamingforest:wood/canopy_hanging_sign", "minecraft:iron_chain", "the hanging signs: chain"},
+                          Case{"gloamingforest:nagastone/nagastone_spiral", "minecraft:normal_stone_slab", "nagastone_spiral: stone_slab"}}) {
         auto const* r = rc::byId(c.recipe);
         ctx.check(r && takes(*r, c.item), std::string(c.what) + " takes Bedrock's " + c.item);
     }
-    auto const* bush = rc::byId("twilightforest:drying/sapling_to_dead_bush");
+    auto const* bush = rc::byId("gloamingforest:drying/sapling_to_dead_bush");
     ctx.check(bush && bush->resultItem == "minecraft:deadbush", "the drying recipe sapling_to_dead_bush gives minecraft:deadbush");
     auto made = rc::producing("minecraft:deadbush");
-    ctx.check(std::any_of(made.begin(), made.end(), [](auto const* r) { return r->id == "twilightforest:drying/sapling_to_dead_bush"; }), "producing(minecraft:deadbush) lists it");
+    ctx.check(std::any_of(made.begin(), made.end(), [](auto const* r) { return r->id == "gloamingforest:drying/sapling_to_dead_bush"; }), "producing(minecraft:deadbush) lists it");
     ctx.check(rc::producing("minecraft:dead_bush").empty(), "nothing produces the Java id");
-    auto const* arrow = rc::byId("twilightforest:uncrafting/tipped_arrow");
+    auto const* arrow = rc::byId("gloamingforest:uncrafting/tipped_arrow");
     ctx.check(arrow && arrow->resultItem == "minecraft:arrow", "the uncrafting recipe tipped_arrow uncrafts Bedrock's minecraft:arrow (the potion is its data value)");
 });
 

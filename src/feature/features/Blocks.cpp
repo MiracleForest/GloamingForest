@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFBlocks.java
-//   src/main/java/twilightforest/block/TFPlantBlock.java
-//   src/main/java/twilightforest/block/TFBushBlock.java
-//   src/main/java/twilightforest/block/BerryBushBlock.java
-//   src/main/java/twilightforest/block/DarkTowerBerryBushBlock.java
-//   src/main/java/twilightforest/block/OreBerryBlock.java
-//   src/main/java/twilightforest/block/MushgloomBlock.java
-//   src/main/java/twilightforest/block/MossPatchBlock.java
-//   src/main/java/twilightforest/block/FallenLeavesBlock.java
-//   src/main/java/twilightforest/block/TorchberryPlantBlock.java
-//   src/main/java/twilightforest/block/RootStrandBlock.java
-//   src/main/java/twilightforest/block/TrollRootBlock.java
-//   src/main/java/twilightforest/block/ThornRoseBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFBlocks.java
+//   src/main/java/gloamingforest/block/TFPlantBlock.java
+//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/BerryBushBlock.java
+//   src/main/java/gloamingforest/block/DarkTowerBerryBushBlock.java
+//   src/main/java/gloamingforest/block/OreBerryBlock.java
+//   src/main/java/gloamingforest/block/MushgloomBlock.java
+//   src/main/java/gloamingforest/block/MossPatchBlock.java
+//   src/main/java/gloamingforest/block/FallenLeavesBlock.java
+//   src/main/java/gloamingforest/block/TorchberryPlantBlock.java
+//   src/main/java/gloamingforest/block/RootStrandBlock.java
+//   src/main/java/gloamingforest/block/TrollRootBlock.java
+//   src/main/java/gloamingforest/block/ThornRoseBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -299,7 +299,7 @@ int mushroomBits(std::string const& bedrockId, std::map<std::string, bool> const
 /// Maps the Java properties of `javaId` onto the Bedrock states `slots` of `bedrockId`: the vanilla
 /// encodings of stairs (weirdo_direction, upside_down_bit), slabs (minecraft:vertical_half), walls
 /// (wall_connection_type_*, wall_post_bit), doors, trapdoors, gates, buttons, torches, rails, ...;
-/// TF's blocks by name ("<property>", "twilightforest:<property>"). Properties Bedrock recomputes
+/// upstream's blocks by name ("<property>", "gloamingforest:<property>"). Properties Bedrock recomputes
 /// itself (stair shape, fence / pane connections, chest halves) or keeps elsewhere (waterlogged:
 /// the liquid layer) are dropped without a warning.
 Json mapProperties(std::string const& javaId, std::string const& bedrockId, Json const& props, std::map<std::string, SlotType> const& slots) {
@@ -329,7 +329,7 @@ Json mapProperties(std::string const& javaId, std::string const& bedrockId, Json
         } else if (name == "axis") {
             if (has("pillar_axis")) set("pillar_axis", v);
             else if (has("portal_axis")) set("portal_axis", v);
-            else if (has("twilightforest:axis")) set("twilightforest:axis", v);
+            else if (has("gloamingforest:axis")) set("gloamingforest:axis", v);
             else if (has("minecraft:axis")) set("minecraft:axis", v);
         } else if (name == "half" && javaId == "minecraft:tall_seagrass") {
             set("sea_grass_type", v == "upper" ? "double_top" : "double_bot");
@@ -395,7 +395,7 @@ Json mapProperties(std::string const& javaId, std::string const& bedrockId, Json
                 if (auto it = d3.find(dir3); it != d3.end()) set("facing_direction", it->second);
             } else if (has("minecraft:facing_direction")) set("minecraft:facing_direction", dir3);
             else if (has("minecraft:block_face")) set("minecraft:block_face", dir3);
-            else if (has("twilightforest:facing")) set("twilightforest:facing", v);
+            else if (has("gloamingforest:facing")) set("gloamingforest:facing", v);
             else if (has("facing")) set("facing", v);
             else warnOnce(javaId + "#facing", "no Bedrock state for property facing of " + javaId);
         } else if (name == "open" && has("open_bit")) {
@@ -434,7 +434,7 @@ Json mapProperties(std::string const& javaId, std::string const& bedrockId, Json
             // the same name, or the name in the block's / the mod's namespace
             auto ns    = bedrockId.substr(0, bedrockId.find(':'));
             bool found = false;
-            for (auto const& candidate : {name, ns + ":" + name, std::string("twilightforest:") + name, std::string("minecraft:") + name}) {
+            for (auto const& candidate : {name, ns + ":" + name, std::string("gloamingforest:") + name, std::string("minecraft:") + name}) {
                 if (!found && has(candidate)) {
                     set(candidate, v);
                     found = true;
@@ -503,7 +503,7 @@ std::unordered_map<std::string, Block const*>& cache() {
 }
 
 /// BlockStateBase#canBeReplaced: the blocks built with BlockBehaviour.Properties#replaceable, by
-/// Java id. Vanilla 1.21.1's are the members of its minecraft:replaceable tag; TF's come from
+/// Java id. Vanilla 1.21.1's are the members of its minecraft:replaceable tag; upstream's come from
 /// TFBlocks (fiddlehead, fallen leaves, ominous fire, wispy cloud), which no tag lists.
 bool replaceableId(std::string const& javaId) {
     static std::unordered_set<std::string> const ids{
@@ -531,10 +531,10 @@ bool replaceableId(std::string const& javaId) {
         "minecraft:nether_sprouts",
         "minecraft:crimson_roots",
         "minecraft:hanging_roots",
-        "twilightforest:fiddlehead",
-        "twilightforest:fallen_leaves",
-        "twilightforest:ominous_fire",
-        "twilightforest:wispy_cloud",
+        "gloamingforest:fiddlehead",
+        "gloamingforest:fallen_leaves",
+        "gloamingforest:ominous_fire",
+        "gloamingforest:wispy_cloud",
     };
     return ids.contains(javaId);
 }
@@ -564,7 +564,7 @@ TagCache& tagCache() {
 
 /// kit::hasTag without the scope's cache.
 bool hasTagUncached(Block const& block, std::string_view tagIn) {
-    // gf::tags (F9): TF's tag data with the units' fragments, nested tags, and the vanilla members
+    // gf::tags (F9): upstream's tag data with the units' fragments, nested tags, and the vanilla members
     // of Minecraft 1.21.1's tags through its vanilla bridge (the data members its includes reach
     // too); it takes the game's (Bedrock) ids
     return tags::has(tags::Registry::Block, normalizeId(std::string(tagIn)), block.getTypeName());
@@ -693,7 +693,7 @@ bool hasTag(Block const& block, std::string_view tag) {
 }
 
 bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
-    // TF's blocks are JSON blocks, which answer no survival rule of their own: their Java classes'
+    // upstream's blocks are JSON blocks, which answer no survival rule of their own: their Java classes'
     if (auto rule = detail::survivalRule(block); rule != detail::Survival::Engine) return detail::survives(rule, region, pos, block);
     if (auto* src = blockSource(region)) return block.canSurvive(*src, pos);
     // in-memory regions: plants need a solid block below
@@ -747,10 +747,10 @@ bool waterSource(Block const& block) {
 /// BushBlock#mayPlaceOn: #minecraft:dirt or farmland.
 bool bushSoil(Block const& below) { return kit::hasTag(below, "minecraft:dirt") || below.getTypeName() == "minecraft:farmland"; }
 
-/// A TF block's facing (Bedrock "minecraft:facing_direction" / "twilightforest:facing"), "up" when none.
+/// An upstream block's facing (Bedrock "minecraft:facing_direction" / "gloamingforest:facing"), "up" when none.
 std::string facingOf(Block const& block) {
     auto states = game::statesOf(block);
-    for (char const* k : {"minecraft:facing_direction", "twilightforest:facing", "facing"})
+    for (char const* k : {"minecraft:facing_direction", "gloamingforest:facing", "facing"})
         if (auto it = states.find(k); it != states.end()) return it->second;
     return "up";
 }
@@ -784,17 +784,17 @@ bool survives(Survival rule, Region& region, BlockPos const& pos, Block const& b
     case Survival::FallenLeaves: // FallenLeavesBlock#canSurvive (Fluids.WATER: a source)
         return sturdyFace(below, 1) || waterSource(below);
     case Survival::Mushgloom: // MushgloomBlock#canSurvive
-        return sturdyFace(below, 1) || below.getTypeName() == "twilightforest:uberous_soil";
+        return sturdyFace(below, 1) || below.getTypeName() == "gloamingforest:uberous_soil";
     case Survival::Mushroom: // MushroomBlock#canSurvive (the brightness of a generation region is not known: below 13 assumed)
         return kit::hasTag(below, "minecraft:mushroom_grow_block") || kit::blocksMotion(below);
     case Survival::HangingPlant: // TFPlantBlock.canPlaceRootAt
-        return kit::hasTag(above, "twilightforest:plants_hang_on");
+        return kit::hasTag(above, "gloamingforest:plants_hang_on");
     case Survival::RootStrand: // RootStrandBlock#canSurvive
-        return kit::hasTag(above, "twilightforest:plants_hang_on") || &above.getBlockType() == &block.getBlockType();
+        return kit::hasTag(above, "gloamingforest:plants_hang_on") || &above.getBlockType() == &block.getBlockType();
     case Survival::TrollRoot: { // TrollRootBlock.canPlaceRootBelow(pos.above())
         auto const& a = above.getTypeName();
-        return kit::hasTag(above, "minecraft:base_stone_overworld") || a == "twilightforest:trollvidr" || a == "twilightforest:trollber" ||
-               a == "twilightforest:unripe_trollber";
+        return kit::hasTag(above, "minecraft:base_stone_overworld") || a == "gloamingforest:trollvidr" || a == "gloamingforest:trollber" ||
+               a == "gloamingforest:unripe_trollber";
     }
     case Survival::ThornRose: { // ThornRoseBlock#canSurvive: what it rests on (opposite its facing)
         static std::map<std::string, std::array<int, 4>> const dirs{{"down", {0, 1, 0, 0}},  {"up", {0, -1, 0, 1}},   {"north", {0, 0, 1, 2}},
@@ -804,7 +804,7 @@ bool survives(Survival rule, Region& region, BlockPos const& pos, Block const& b
         auto const& d    = it->second;
         auto const& rest = region.getBlock(offset(pos, d[0], d[1], d[2]));
         auto const& r    = rest.getTypeName();
-        return r == "twilightforest:brown_thorns" || r == "twilightforest:green_thorns" || sturdyFace(rest, d[3]);
+        return r == "gloamingforest:brown_thorns" || r == "gloamingforest:green_thorns" || sturdyFace(rest, d[3]);
     }
     case Survival::Waterlily: { // WaterlilyBlock#mayPlaceOn: water or ice below, no fluid here
         auto const& b   = below.getTypeName();
@@ -812,11 +812,11 @@ bool survives(Survival rule, Region& region, BlockPos const& pos, Block const& b
         return (waterSource(below) || ice) && !kit::isFluid(region.getBlock(pos));
     }
     case Survival::BerryBush: // TFBushBlock#canSurvive with BerryBushBlock#canBePlacedAt
-        return kit::hasTag(below, "twilightforest:tf_berry_bushes_survive") || matureBushBelow(below, block);
+        return kit::hasTag(below, "gloamingforest:tf_berry_bushes_survive") || matureBushBelow(below, block);
     case Survival::DarkTowerBerryBush:
-        return kit::hasTag(below, "twilightforest:dark_tower_berry_bushes_survive") || matureBushBelow(below, block);
+        return kit::hasTag(below, "gloamingforest:dark_tower_berry_bushes_survive") || matureBushBelow(below, block);
     case Survival::OreBerry: // OreBerryBlock (its brightness limit is not known in a generation region)
-        return kit::hasTag(below, "twilightforest:oreberry_bushes_survive") || matureBushBelow(below, block);
+        return kit::hasTag(below, "gloamingforest:oreberry_bushes_survive") || matureBushBelow(below, block);
     case Survival::Engine:
         break;
     }

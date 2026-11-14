@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:time_slab",
+      "identifier": "gloamingforest:time_slab",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:type": ["bottom", "top", "double"]
+        "gloamingforest:type": ["bottom", "top", "double"]
       }
     },
     "components": {
@@ -54,7 +54,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:type') == 'bottom'",
+        "condition": "q.block_state('gloamingforest:type') == 'bottom'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.slab",
           "minecraft:material_instances": {
@@ -89,7 +89,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:type') == 'double'",
+        "condition": "q.block_state('gloamingforest:type') == 'double'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -130,7 +130,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:type') == 'top'",
+        "condition": "q.block_state('gloamingforest:type') == 'top'",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.slab",
           "minecraft:material_instances": {

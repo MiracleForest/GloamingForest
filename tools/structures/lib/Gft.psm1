@@ -1,26 +1,26 @@
 # GloamingForest template DSL (contract "template", owner F7).
 #
-# TF's .nbt structure templates are All Rights Reserved (rule R10/R19): every template of
+# upstream's .nbt structure templates are All Rights Reserved (rule R10/R19): every template of
 # GloamingForest is an original design written with this DSL in tools/structures/<unit>/**/*.gfs.ps1
 # and built by tools/structures/build.ps1 into assets/structures/<unit>/**/*.gft.json.
 #
 # The .gft.json format (format "gloamingforest:template", format_version 1):
-#   id        "twilightforest:lich_tower/root/foyer" (the TF template it stands in for)
+#   id        "gloamingforest:lich_tower/root/foyer" (the upstream template it stands in for)
 #   size      [x, y, z]
 #   palette   [{"Name": java block id, "Properties": {java property: value}}, ...]
 #             "minecraft:structure_void" cells are not placed (they keep what is in the world)
 #   blocks    run-length [[palette index, count], ...] over y, then z, then x (x fastest)
 #   markers   [{"pos": [x, y, z], "marker": name, "data": {...}}]
-#               "data" with data.metadata: a TF data marker (handled by the piece / its
+#               "data" with data.metadata: an upstream data marker (handled by the piece / its
 #               template_marker_handler_list); any other name: block entity data of the block at
 #               pos ("loot" {table}, "spawner" {entity, Delay, MinSpawnDelay, ...}, "sign" {lines});
 #               a spawner's data goes to the block the template puts there (a vanilla spawner, or
-#               TF's sinister spawner, which keeps its block)
+#               upstream's sinister spawner, which keeps its block)
 #   jigsaw    [{"pos": [x, y, z], "front": dir, "top": dir, "pool", "name", "target", "priority"}]
 #   entities  [{"pos": [x, y, z], "id": entity id, "data": {...}}]
 #             data: "Rotation" [yaw, pitch] (turned with the placement as Entity#rotate / #mirror
 #             turn it) and "nbt" (the entity's saved Bedrock actor tag in SNBT, as
-#             /twilightforest structure_util capture writes it); no other field is applied, so
+#             /gloamingforest structure_util capture writes it); no other field is applied, so
 #             the validator refuses them
 #             a painting ("minecraft:painting") hangs on a block: "pos" is the block it covers
 #             (integers; Java's HangingEntity#pos, the block Painting#calculateBoundingBox starts
@@ -29,15 +29,15 @@
 #             variant ("minecraft:kebab"). Add-GftPainting writes both pos and block_pos.
 #
 # A script:
-#   $t = New-Gft -Id 'twilightforest:camp/tent/solo_tent' -Size 7, 5, 7
+#   $t = New-Gft -Id 'gloamingforest:camp/tent/solo_tent' -Size 7, 5, 7
 #   Set-GftBox $t 0 0 0 6 0 6 'minecraft:oak_planks'
 #   Set-GftLayer $t -Y 1 -Key @{ '#' = 'minecraft:light_gray_wool'; '.' = 'minecraft:air' } -Rows @(
 #       '#######',
 #       '#.....#' ...)
 #   Set-GftBlock $t 3 1 0 'minecraft:oak_stairs' @{ facing = 'south'; half = 'bottom' }
-#   Add-GftMarker $t 3 1 3 'loot' @{ table = 'twilightforest:camp_tent' }
+#   Add-GftMarker $t 3 1 3 'loot' @{ table = 'gloamingforest:camp_tent' }
 #   Add-GftDataMarker $t 1 1 1 'tent_pot@north'
-#   Add-GftJigsaw $t 3 0 6 -Front south -Pool 'twilightforest:camp/path' -Name 'twilightforest:camp/path' -Target 'twilightforest:camp/path'
+#   Add-GftJigsaw $t 3 0 6 -Front south -Pool 'gloamingforest:camp/path' -Name 'gloamingforest:camp/path' -Target 'gloamingforest:camp/path'
 #   Save-Gft $t            # hands the template to build.ps1 (once per template)
 
 Set-StrictMode -Version Latest
@@ -152,7 +152,7 @@ function Add-GftMarker {
     $Template.Markers.Add([ordered]@{ pos = @($X, $Y, $Z); marker = $Marker; data = $d })
 }
 
-# A TF data marker (STRUCTURE_BLOCK DATA mode "metadata").
+# An upstream data marker (STRUCTURE_BLOCK DATA mode "metadata").
 function Add-GftDataMarker {
     param($Template, [int]$X, [int]$Y, [int]$Z, [string]$Metadata)
     Add-GftMarker $Template $X $Y $Z 'data' @{ metadata = $Metadata }

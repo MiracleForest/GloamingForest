@@ -7,9 +7,9 @@
 // - Special crafting: the test BP recipe gf_test:fixture_item (two sticks in a column, assets/test)
 //   is registered as a special recipe: the matcher wants exactly two sticks, the assembler makes two
 //   fixture items carrying item data ("special"), the remainder is a stick in the first stick's slot
-//   (getRemainingItems). A data recipe of the same id and of a code-only TF type
-//   (twilightforest:casket_repair_recipe, as TF's special recipes have) shadows the BP recipe in the
-//   data index meanwhile, as TF's data does for its special recipes. The client puts the sticks into
+//   (getRemainingItems). A data recipe of the same id and of a code-only upstream type
+//   (gloamingforest:casket_repair_recipe, as upstream's special recipes have) shadows the BP recipe in the
+//   data index meanwhile, as upstream's data does for its special recipes. The client puts the sticks into
 //   a crafting table and takes the result: the request runs CraftHandlerCrafting ->
 //   _initCraftResults, Bedrock's own recipe check included.
 // - Anvil: an iron sword and an enchanted book, both with the fixture enchantment at level I, are
@@ -107,7 +107,7 @@ void clearOf(Player& p, std::string const& id) {
 } // namespace
 
 GF_REGISTER_SELFTEST("item.real_craft_arm", [](Context& ctx) {
-    rc::internal::setTestDataRecipe(kFixture, {{"type", "twilightforest:casket_repair_recipe"}, {"category", "misc"}});
+    rc::internal::setTestDataRecipe(kFixture, {{"type", "gloamingforest:casket_repair_recipe"}, {"category", "misc"}});
     rc::registerSpecialCrafting(
         kFixture,
         [](rc::CraftingGrid const& g) {

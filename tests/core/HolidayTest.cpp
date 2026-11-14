@@ -5,7 +5,7 @@
 using namespace gf::core::holiday;
 
 TEST(Holiday, HalloweenWeekBounds) {
-    // TF: strictly after October 19 and strictly before November 4
+    // upstream: strictly after October 19 and strictly before November 4
     EXPECT_FALSE(isHalloweenWeek({10, 19}));
     EXPECT_TRUE(isHalloweenWeek({10, 20}));
     EXPECT_TRUE(isHalloweenWeek({10, 31}));
@@ -15,9 +15,9 @@ TEST(Holiday, HalloweenWeekBounds) {
 }
 
 TEST(Holiday, Birthday) {
-    EXPECT_TRUE(isTwilightBirthday({8, 19}));
-    EXPECT_FALSE(isTwilightBirthday({8, 20}));
-    EXPECT_EQ(twilightAge(2026), 15);
+    EXPECT_TRUE(isGloamingBirthday({8, 19}));
+    EXPECT_FALSE(isGloamingBirthday({8, 20}));
+    EXPECT_EQ(gloamingAge(2026), 15);
     EXPECT_TRUE(isAprilFools({4, 1}));
     auto t = today();
     EXPECT_GE(t.month, 1);

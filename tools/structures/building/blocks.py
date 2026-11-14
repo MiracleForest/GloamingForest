@@ -1,8 +1,8 @@
-# GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-# Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-#   src/main/java/twilightforest/block/RopeBlock.java
-#   src/main/java/twilightforest/block/IronLadderBlock.java (LadderBlock's shapes)
-# Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+# GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+# Translated from the upstream 4.8 source (commit 9e40a757):
+#   src/main/java/gloamingforest/block/RopeBlock.java
+#   src/main/java/gloamingforest/block/IronLadderBlock.java (LadderBlock's shapes)
+# Copyright (c) the upstream authors (see NOTICE).
 # Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 # of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #
@@ -27,7 +27,7 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SKELETON = os.path.join(ROOT, "assets", "gen", "import", "building", "bp", "blocks")
 OUT = os.path.join(ROOT, "assets", "pack", "bp", "blocks", "building")
-NS = "twilightforest:"
+NS = "gloamingforest:"
 
 WATERLOGGABLE = {"detection_rules": [{"liquid_type": "water", "can_contain_liquid": True, "on_liquid_touches": "no_reaction"}]}
 
@@ -95,13 +95,13 @@ def ladder():
 def rune_brick(color):
     """castle_rune_brick_0: the castle brick with the rune layer (castleblock_magic_0) over it, tinted
     with the block's constant colour (ColorHandler; the atlas entry tf_building_rune_<color> of
-    trophies.py). TF picks one of eight rune layers per position (blockstate variants): the atlas
+    trophies.py). upstream picks one of eight rune layers per position (blockstate variants): the atlas
     entry's eight variations, picked per position by Bedrock."""
     doc = skeleton(color + "_castle_rune_brick")
     comps = doc["minecraft:block"]["components"]
     brick = {"texture": "tf_block_castle_brick", "render_method": "alpha_test"}
     runes = {"texture": "tf_building_rune_" + color, "render_method": "alpha_test"}
-    comps["minecraft:material_instances"] = {"*": brick, "t_twilightforest_block_castle_brick": brick,
+    comps["minecraft:material_instances"] = {"*": brick, "t_gloamingforest_block_castle_brick": brick,
                                               **{f: runes for f in ("north", "south", "east", "west", "up", "down")}}
     # Properties.ofFullCopy(CASTLE_BRICK): a full opaque block (the skeleton's 0 let light through)
     comps.pop("minecraft:light_dampening", None)
@@ -111,7 +111,7 @@ def rune_brick(color):
 # MiniatureStructureBlock models whose faces carry tintindex 1 (grass top and side overlay):
 # ColorHandler tints them with BiomeColors.getAverageFoliageColor (the client's own biome blend:
 # Bedrock's tint method "default_foliage", vanilla clients and the client mod alike)
-TINTED_MINIATURES = {"twilight_portal": ("grass", "grass_side"), "naga_courtyard": ("grass", "grass_side")}
+TINTED_MINIATURES = {"gloaming_portal": ("grass", "grass_side"), "naga_courtyard": ("grass", "grass_side")}
 
 
 def miniature(name):

@@ -2,7 +2,7 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:ice_arrow",
+      "identifier": "gloamingforest:ice_arrow",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
@@ -10,7 +10,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "ice_arrow",
           "inanimate"
         ]

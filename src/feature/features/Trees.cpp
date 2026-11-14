@@ -1,7 +1,7 @@
 // The tree feature of the interpreter (F5): Minecraft 1.21.1's TreeFeature with the vanilla trunk
 // placers (straight, fancy, giant), foliage placers (blob, bush, fancy, spruce, pine, mega_pine,
 // acacia), feature sizes (two / three layers) and decorators (trunk_vine, leave_vine, cocoa) that
-// The Twilight Forest's tree JSON uses; units add TF's own placers and decorators by id. Behaviour
+// The Gloaming Forest's tree JSON uses; units add upstream's own placers and decorators by id. Behaviour
 // compatible implementations, drawing from the random source in Java's order.
 #include <algorithm>
 #include <cmath>

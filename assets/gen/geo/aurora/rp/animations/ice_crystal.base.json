@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.ice_crystal.base": {
+    "animation.gloamingforest.ice_crystal.base": {
       "loop": true,
       "bones": {
         "spike_0": {

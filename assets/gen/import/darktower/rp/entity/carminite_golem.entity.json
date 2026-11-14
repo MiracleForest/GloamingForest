@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:carminite_golem",
+      "identifier": "gloamingforest:carminite_golem",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/carminitegolem"
+        "default": "textures/gloamingforest/entity/carminitegolem"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.carminite_golem"

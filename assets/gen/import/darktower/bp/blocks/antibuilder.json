@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:antibuilder",
+      "identifier": "gloamingforest:antibuilder",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -17,7 +17,7 @@
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:light_emission": 10,
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.antibuilder",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.antibuilder",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerdev_antibuilder",

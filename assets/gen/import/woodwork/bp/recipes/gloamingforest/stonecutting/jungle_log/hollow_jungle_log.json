@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/jungle_log/hollow_jungle_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "minecraft:jungle_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minecraft:jungle_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hollow_jungle_log"
+    }
+  }
+}

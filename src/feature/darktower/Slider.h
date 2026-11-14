@@ -1,7 +1,7 @@
 #pragma once
 
 // U26 (darktower): the sliding trap block (SliderBlock) and its moving entity (SlideBlock,
-// twilightforest:slider).
+// gloamingforest:slider).
 
 class Actor;
 class BlockPos;

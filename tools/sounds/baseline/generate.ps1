@@ -1,30 +1,30 @@
 <#
 .SYNOPSIS
-  Contract "synth" (F3): generates the baseline recipes tools/sounds/baseline/<unit>.json and TF's
+  Contract "synth" (F3): generates the baseline recipes tools/sounds/baseline/<unit>.json and upstream's
   sound event inventory (tools/sounds/baseline/inventory.json, src/feature/ext/synth/SoundEvents.inc).
 
 .DESCRIPTION
-  Reads TF's event inventory - the event names and the structure of
-  src/generated/resources/assets/twilightforest/sounds.json in the shared checkout
-  (%LOCALAPPDATA%\gf-tf, tools/tf/fetch.ps1; LGPL datagen output) and TF's entity classes - and
-  writes one recipe per owning unit (docs/spec/owners.tsv) with exactly TF's variants:
-    - each TF sound file becomes a synthesized file ("files") designed below from its name
-      (never from its audio: TF's .ogg files are All Rights Reserved and absent from the checkout);
-    - a vanilla event or file that TF plays becomes the Bedrock vanilla sound of the same name
+  Reads upstream's event inventory - the event names and the structure of
+  src/generated/resources/assets/gloamingforest/sounds.json in the shared checkout
+  (%LOCALAPPDATA%\gf-upstream\view, tools/upstream/fetch.ps1; LGPL datagen output) and upstream's entity classes - and
+  writes one recipe per owning unit (docs/spec/owners.tsv) with exactly upstream's variants:
+    - each upstream sound file becomes a synthesized file ("files") designed below from its name
+      (never from its audio: upstream's .ogg files are All Rights Reserved and absent from the checkout);
+    - a vanilla event or file that upstream plays becomes the Bedrock vanilla sound of the same name
       (tools/sounds/vanilla.json), or synthesized stand-ins where Bedrock has none;
-    - a reference to another TF event stays an alias ({"event": id});
-    - TF's per-entry volume, pitch and stream flags are kept on every kind of variant (a file, an
+    - a reference to another upstream event stays an alias ({"event": id});
+    - upstream's per-entry volume, pitch and stream flags are kept on every kind of variant (a file, an
       alias, each Bedrock file of a vanilla event), as Java multiplies them into the sounds an
       event reference picks;
-    - the category is the Bedrock counterpart of the SoundSource TF plays the event with
+    - the category is the Bedrock counterpart of the SoundSource upstream plays the event with
       (tools/sounds/categories.json, entity classes for mob sounds);
-    - TF's subtitle key is kept.
-  Every generated table names its TF sources, TF's copyright holders and licence (LGPL-2.1-or-later;
+    - upstream's subtitle key is kept.
+  Every generated table names its upstream sources, upstream's copyright holders and licence (LGPL-2.1-or-later;
   $TfAttribution in tools/sounds/lib/Inventory.ps1): the 'about' of the JSON files, the header of the .inc.
   The owning units refine their events in tools/sounds/recipes/<unit>.json (rule R3); this
   baseline guarantees nothing is silent.
 
-  The inventory is derived from TF's sounds.json alone (a separate flattening, not the recipes):
+  The inventory is derived from upstream's sounds.json alone (a separate flattening, not the recipes):
   tools/sounds/synth.ps1 fails when a rendered definition differs from it (variant count, volume,
   pitch, stream, subtitle, category), and the synth.definitions selftest checks the assembled
   resource pack against SoundEvents.inc. -Check verifies that the committed files match.
@@ -40,9 +40,9 @@ $root = (Resolve-Path "$PSScriptRoot/../../..").Path
 . (Join-Path $root 'tools/sounds/lib/SynthJson.ps1')
 . (Join-Path $root 'tools/sounds/lib/Inventory.ps1')
 
-$tf = if ($env:GF_TF_DIR) { $env:GF_TF_DIR } else { Join-Path $env:LOCALAPPDATA 'gf-tf' }
-$soundsJson = Join-Path $tf 'src/generated/resources/assets/twilightforest/sounds.json'
-if (-not (Test-Path $soundsJson)) { Write-Host "[baseline] TF checkout missing: pwsh tools/tf/fetch.ps1" -ForegroundColor Red; exit 1 }
+$tf = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
+$soundsJson = Join-Path $tf 'src/generated/resources/assets/gloamingforest/sounds.json'
+if (-not (Test-Path $soundsJson)) { Write-Host "[baseline] upstream checkout missing: pwsh tools/upstream/fetch.ps1" -ForegroundColor Red; exit 1 }
 $tfSounds   = Get-Content $soundsJson -Raw | ConvertFrom-Json -AsHashtable
 $vanilla    = Get-Content (Join-Path $root 'tools/sounds/vanilla.json') -Raw | ConvertFrom-Json -AsHashtable
 $categories = Get-Content (Join-Path $root 'tools/sounds/categories.json') -Raw | ConvertFrom-Json -AsHashtable
@@ -55,11 +55,11 @@ foreach ($line in Get-Content (Join-Path $root 'docs/spec/owners.tsv')) {
     if ($c.Count -ge 3 -and $c[0] -eq 'sound_event') { $owner[$c[1]] = $rules.units[$c[2]].name }
 }
 
-# ---- categories: the SoundSource of TF's call sites ------------------------------------------------------
-# Mob sounds play with the mob's getSoundSource(): no TF class overrides it, so it is the one of the
-# first vanilla class up the hierarchy (Monster and the vanilla monsters TF extends: HOSTILE; every
+# ---- categories: the SoundSource of upstream's call sites ------------------------------------------------------
+# Mob sounds play with the mob's getSoundSource(): no upstream class overrides it, so it is the one of the
+# first vanilla class up the hierarchy (Monster and the vanilla monsters upstream extends: HOSTILE; every
 # other Mob: NEUTRAL).
-$javaRoot = Join-Path $tf 'src/main/java/twilightforest'
+$javaRoot = Join-Path $tf 'src/main/java/gloamingforest'
 $super = @{}
 foreach ($f in Get-ChildItem $javaRoot -Recurse -Filter *.java) {
     $text = Get-Content -LiteralPath $f.FullName -Raw
@@ -92,7 +92,7 @@ function Get-Category([string]$e) {
         '^music\.' { return 'music' }
         '^block\.' { return 'block' }
         '^item\.' { return 'player' }
-        '^entity\.twilightforest\.([a-z_]+)\.' {
+        '^entity\.gloamingforest\.([a-z_]+)\.' {
             $m  = $Matches[1]
             $id = if ($categories.entities.Contains($m)) { $categories.entities[$m] } else { $m }
             $c  = Get-EntityCategory $id
@@ -102,7 +102,7 @@ function Get-Category([string]$e) {
     throw "no category for ${e}: add it to tools/sounds/categories.json"
 }
 
-# ---- sound design per TF file name (the baseline's creative part) ---------------------------------------
+# ---- sound design per upstream file name (the baseline's creative part) ---------------------------------------
 function P($patch, $params) {
     $sorted = [ordered]@{}
     foreach ($k in ($params.Keys | Sort-Object)) { $sorted[$k] = $params[$k] } # stable order (hash order varies per process)
@@ -205,15 +205,15 @@ function Get-Design([string]$path) {
         '^random/scepter/shield_break' { return P 'impact/knock_glass' @{ freq = 1600; count = 5; gap = 0.035; spread = 0.6 } }
         '^random/scepter/shield_stop' { return P 'magic/shimmer' @{ freq = 440; sparkle = 0.2 } }
         '^random/scepter/shield_use' { return P 'magic/shimmer' @{ freq = 660 } }
-        '^random/scepter/twilight_hit' { return P 'magic/zap' @{ pitch = [math]::Round(400 * $v, 2); len = 0.3; sweep = -12 } }
-        '^random/scepter/twilight_use' { return P 'magic/zap' @{ pitch = [math]::Round(700 * $v, 2); len = 0.5; sweep = 12 } }
+        '^random/scepter/gloaming_hit' { return P 'magic/zap' @{ pitch = [math]::Round(400 * $v, 2); len = 0.3; sweep = -12 } }
+        '^random/scepter/gloaming_use' { return P 'magic/zap' @{ pitch = [math]::Round(700 * $v, 2); len = 0.5; sweep = 12 } }
         '^random/scepter/zombie' { return P 'creature/growl' @{ pitch = 100; len = 1.0; size = 0.8 } }
         '^random/travellers/double_jump' { return P 'object/whoosh' @{ len = 0.3; f0 = 300; f1 = 2500 } }
         '^random/travellers/perfect_dodge' { return P 'object/whoosh' @{ len = 0.25; f0 = 2500; f1 = 600; q = 2.5 } }
         '^random/travellers/side_step_ready' { return P 'object/pop' @{ pitch = 1200 } }
         '^random/travellers/side_step' { return P 'object/whoosh' @{ len = 0.2; f0 = 800; f1 = 3000 } }
     }
-    throw "no baseline design for TF sound file '$path': add one to tools/sounds/baseline/generate.ps1"
+    throw "no baseline design for upstream sound file '$path': add one to tools/sounds/baseline/generate.ps1"
 }
 
 # The synthesized stand-ins of a vanilla.json entry: [{file, spec}] ("synth" is one spec or a list
@@ -235,7 +235,7 @@ function Get-VanillaCount($map) {
     return @($map).Count
 }
 
-# ---- TF's inventory: sounds.json flattened through event references (independent of the recipes) --------
+# ---- upstream's inventory: sounds.json flattened through event references (independent of the recipes) --------
 function Get-Attrs($s) {
     return @{
         volume = $(if ($s.Contains('volume')) { [double]$s.volume } else { 1.0 })
@@ -252,7 +252,7 @@ function Get-TfVariants([string]$e, [int]$depth = 0) {
         $a = Get-Attrs $s
         if ($s.Contains('type') -and $s.type -eq 'event') {
             $name = [string]$s.name
-            if ($name -like 'twilightforest:*') {
+            if ($name -like 'gloamingforest:*') {
                 # Java: the referenced event's sound, volume and pitch multiplied, stream if either streams
                 foreach ($x in Get-TfVariants $name.Substring(15) ($depth + 1)) {
                     $out += [ordered]@{ volume = $x.volume * $a.volume; pitch = $x.pitch * $a.pitch; stream = ($x.stream -or $a.stream) }
@@ -277,7 +277,7 @@ foreach ($u in ($owner.Values | Sort-Object -Unique)) {
     # W1 units own tools/sounds/recipes/<u>.json; the W0b owners the fragment path recipes.d/<u>.json (README)
     $refine = if ($waveOf[$u] -eq 'W1') { "tools/sounds/recipes/$u.json" } else { "tools/sounds/recipes.d/$u.json" }
     $recipes[$u] = [ordered]@{
-        about  = "Baseline sounds of $u, generated by tools/sounds/baseline/generate.ps1 from TF's event inventory: do not edit (refine in $refine). The sound designs are original; the events' ids, subtitle keys, categories, volumes, pitches and stream flags are TF's. $TfAttribution"
+        about  = "Baseline sounds of $u, generated by tools/sounds/baseline/generate.ps1 from upstream's event inventory: do not edit (refine in $refine). The sound designs are original; the events' ids, subtitle keys, categories, volumes, pitches and stream flags are upstream's. $TfAttribution"
         files  = [ordered]@{}
         events = [ordered]@{}
     }
@@ -291,7 +291,7 @@ function Add-File([string]$u, [string]$file, $spec) {
     }
 }
 
-# TF's volume, pitch and stream of an entry onto a variant
+# upstream's volume, pitch and stream of an entry onto a variant
 function Add-Attrs($variant, $s) {
     foreach ($k in 'volume', 'pitch') { if ($s.Contains($k)) { $variant[$k] = [double]$s[$k] } }
     if ($s.Contains('stream')) { $variant.stream = [bool]$s.stream }
@@ -299,12 +299,12 @@ function Add-Attrs($variant, $s) {
 }
 
 $inventory = [ordered]@{
-    about  = "TF's sound events (src/generated/resources/assets/twilightforest/sounds.json at 9e40a757), generated by tools/sounds/baseline/generate.ps1: do not edit. Per event: the owning unit, the Bedrock category of the SoundSource TF plays it with (tools/sounds/categories.json), TF's subtitle key and TF's variants flattened through event references (volume and pitch multiplied, stream if either streams; a vanilla event counts the Bedrock sounds it maps to in tools/sounds/vanilla.json). tools/sounds/synth.ps1 fails when a rendered definition differs. $TfAttribution"
+    about  = "upstream's sound events (src/generated/resources/assets/gloamingforest/sounds.json at 9e40a757), generated by tools/sounds/baseline/generate.ps1: do not edit. Per event: the owning unit, the Bedrock category of the SoundSource upstream plays it with (tools/sounds/categories.json), upstream's subtitle key and upstream's variants flattened through event references (volume and pitch multiplied, stream if either streams; a vanilla event counts the Bedrock sounds it maps to in tools/sounds/vanilla.json). tools/sounds/synth.ps1 fails when a rendered definition differs. $TfAttribution"
     events = [ordered]@{}
 }
 
 foreach ($e in ($tfSounds.Keys | Sort-Object)) {
-    if (-not $owner.ContainsKey($e)) { throw "TF event $e has no owner in docs/spec/owners.tsv" }
+    if (-not $owner.ContainsKey($e)) { throw "upstream event $e has no owner in docs/spec/owners.tsv" }
     $u   = $owner[$e]
     $def = $tfSounds[$e]
     $variants = @()
@@ -312,7 +312,7 @@ foreach ($e in ($tfSounds.Keys | Sort-Object)) {
         if ($s -is [string]) { $s = @{ name = $s } }
         $name = [string]$s.name
         if ($s.Contains('type') -and $s.type -eq 'event') {
-            if ($name -like 'twilightforest:*') { $variants += Add-Attrs ([ordered]@{ event = $name.Substring(15) }) $s; continue }
+            if ($name -like 'gloamingforest:*') { $variants += Add-Attrs ([ordered]@{ event = $name.Substring(15) }) $s; continue }
             $map = $vanilla.events[$name]
             if ($null -eq $map) { throw "vanilla event $name (in $e) is not mapped in tools/sounds/vanilla.json" }
             if ($map -is [Collections.IDictionary]) {
@@ -325,7 +325,7 @@ foreach ($e in ($tfSounds.Keys | Sort-Object)) {
             }
             continue
         }
-        if ($name -like 'twilightforest:*') {
+        if ($name -like 'gloamingforest:*') {
             $file = $name.Substring(15)
             Add-File $u $file (Get-Design $file)
             $variants += Add-Attrs ([ordered]@{ file = $file }) $s
@@ -380,7 +380,7 @@ foreach ($rel in $outputs.Keys) {
 }
 if ($Check) {
     if ($diffs) { exit 1 }
-    Write-Host "[baseline] -Check OK: $($recipes.Count) baseline recipes, the inventory and SoundEvents.inc match TF's sounds.json" -ForegroundColor Green
+    Write-Host "[baseline] -Check OK: $($recipes.Count) baseline recipes, the inventory and SoundEvents.inc match upstream's sounds.json" -ForegroundColor Green
     exit 0
 }
 $files = ($recipes.Values | ForEach-Object { $_.files.Count } | Measure-Object -Sum).Sum

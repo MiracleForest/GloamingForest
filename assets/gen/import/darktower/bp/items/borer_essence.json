@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:borer_essence",
+      "identifier": "gloamingforest:borer_essence",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:borer_essence.name"
+        "value": "item.gloamingforest:borer_essence.name"
       }
     }
   }

@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:skyberry",
+      "identifier": "gloamingforest:skyberry",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:skyberry.name"
+        "value": "item.gloamingforest:skyberry.name"
       },
       "minecraft:tags": {
         "tags": [

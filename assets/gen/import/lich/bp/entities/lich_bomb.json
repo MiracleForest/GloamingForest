@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:lich_bomb",
+      "identifier": "gloamingforest:lich_bomb",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "lich_bomb"]
+        "family": ["gloamingforest", "lich_bomb"]
       },
       "minecraft:collision_box": {
         "width": 0.25,

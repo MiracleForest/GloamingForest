@@ -1,0 +1,129 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.banister_short",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4],
+              "uv": {
+                "north": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 4],
+                  "material_instance": "texture"
+                },
+                "east": {
+                  "uv": [0, 8],
+                  "uv_size": [4, 4],
+                  "material_instance": "texture"
+                },
+                "south": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 4],
+                  "material_instance": "texture"
+                },
+                "west": {
+                  "uv": [12, 8],
+                  "uv_size": [4, 4],
+                  "material_instance": "texture"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -4],
+                  "material_instance": "texture"
+                },
+                "down": {
+                  "uv": [16, 4],
+                  "uv_size": [-16, -4],
+                  "material_instance": "texture"
+                }
+              }
+            },
+            {
+              "origin": [2.5, 0, 4.992],
+              "size": [3, 4, 3],
+              "uv": {
+                "north": {
+                  "uv": [0, 4],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "east": {
+                  "uv": [0, 4],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "south": {
+                  "uv": [0, 4],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "west": {
+                  "uv": [0, 4],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "down": {
+                  "uv": [5, 3],
+                  "uv_size": [-3, -3],
+                  "material_instance": "texture"
+                }
+              }
+            },
+            {
+              "origin": [-5.5, 0, 4.992],
+              "size": [3, 4, 3],
+              "uv": {
+                "north": {
+                  "uv": [0, 8],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "east": {
+                  "uv": [0, 8],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "south": {
+                  "uv": [0, 8],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "west": {
+                  "uv": [0, 8],
+                  "uv_size": [4, 3],
+                  "uv_rotation": 270,
+                  "material_instance": "texture"
+                },
+                "down": {
+                  "uv": [13, 3],
+                  "uv_size": [-3, -3],
+                  "material_instance": "texture"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

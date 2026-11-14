@@ -1,0 +1,24 @@
+{
+  "type": "large_hollow_hill",
+  "base_stalactites": [
+    "gloamingforest:entries/hill_stone_stalactite"
+  ],
+  "ore_chance": 0.2,
+  "ore_stalactites": [
+    "gloamingforest:entries/iron_stalactite",
+    "gloamingforest:entries/coal_stalactite",
+    "gloamingforest:entries/copper_stalactite",
+    "gloamingforest:entries/glowstone_stalactite",
+    "gloamingforest:entries/gold_stalactite",
+    "gloamingforest:entries/redstone_stalactite",
+    "gloamingforest:entries/diamond_stalactite",
+    "gloamingforest:entries/lapis_stalactite",
+    "gloamingforest:entries/emerald_stalactite"
+  ],
+  "replace": false,
+  "stalactite_chance": 1.0,
+  "stalagmite_chance": 0.8,
+  "stalagmites": [
+    "gloamingforest:entries/hill_stone_stalactite"
+  ]
+}

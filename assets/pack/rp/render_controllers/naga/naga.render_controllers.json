@@ -1,17 +1,17 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.naga": {
+    "controller.render.gloamingforest.naga": {
       "arrays": { "textures": { "Array.skins": ["Texture.default", "Texture.charging", "Texture.dazed"] } },
       "geometry": "Geometry.default",
       "materials": [{ "*": "Material.default" }],
-      "textures": ["Array.skins[query.property('twilightforest:dazed') ? 2 : ((query.property('twilightforest:charging') || !query.is_alive) ? 1 : 0)]"]
+      "textures": ["Array.skins[query.property('gloamingforest:dazed') ? 2 : ((query.property('gloamingforest:charging') || !query.is_alive) ? 1 : 0)]"]
     },
-    "controller.render.twilightforest.naga_segment": {
+    "controller.render.gloamingforest.naga_segment": {
       "geometry": "Geometry.default",
       "materials": [{ "*": "Material.default" }],
       "textures": ["Texture.default"],
-      "part_visibility": [{ "*": "query.property('twilightforest:active')" }]
+      "part_visibility": [{ "*": "query.property('gloamingforest:active')" }]
     }
   }
 }

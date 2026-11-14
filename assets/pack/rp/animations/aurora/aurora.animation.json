@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.ice_crystal.spikes": {
+    "animation.gloamingforest.ice_crystal.spikes": {
       "loop": true,
       "bones": {
         "spike_0": {
@@ -118,7 +118,7 @@
         }
       }
     },
-    "animation.twilightforest.unstable_ice_core.spikes": {
+    "animation.gloamingforest.unstable_ice_core.spikes": {
       "loop": true,
       "bones": {
         "spike_0": {
@@ -427,7 +427,7 @@
         }
       }
     },
-    "animation.twilightforest.stable_ice_core.spikes": {
+    "animation.gloamingforest.stable_ice_core.spikes": {
       "loop": true,
       "bones": {
         "spike_0": {
@@ -736,7 +736,7 @@
         }
       }
     },
-    "animation.twilightforest.snow_queen.beam_arms": {
+    "animation.gloamingforest.snow_queen.beam_arms": {
       "loop": true,
       "override_previous_animation": false,
       "bones": {
@@ -756,7 +756,7 @@
         }
       }
     },
-    "animation.twilightforest.snow_queen.arms_up": {
+    "animation.gloamingforest.snow_queen.arms_up": {
       "loop": true,
       "bones": {
         "rightArm": {
@@ -775,7 +775,7 @@
         }
       }
     },
-    "animation.twilightforest.snow_queen.shields": {
+    "animation.gloamingforest.snow_queen.shields": {
       "loop": true,
       "bones": {
         "shields": {
@@ -787,7 +787,7 @@
         }
       }
     },
-    "animation.twilightforest.ice_mob.bob": {
+    "animation.gloamingforest.ice_mob.bob": {
       "loop": true,
       "bones": {
         "root": {
@@ -799,7 +799,7 @@
         }
       }
     },
-    "animation.twilightforest.ice_crystal.bob": {
+    "animation.gloamingforest.ice_crystal.bob": {
       "loop": true,
       "bones": {
         "spike_0": {
@@ -916,7 +916,7 @@
         }
       }
     },
-    "animation.twilightforest.ice_core.bob": {
+    "animation.gloamingforest.ice_core.bob": {
       "loop": true,
       "bones": {
         "head": {
@@ -1040,7 +1040,7 @@
         }
       }
     },
-    "animation.twilightforest.unstable_ice_core.swell": {
+    "animation.gloamingforest.unstable_ice_core.swell": {
       "loop": true,
       "bones": {
         "root": {
@@ -1057,7 +1057,7 @@
         }
       }
     },
-    "animation.twilightforest.snow_queen.ice_beam": {
+    "animation.gloamingforest.snow_queen.ice_beam": {
       "loop": true,
       "animation_length": 0.05,
       "particle_effects": {
@@ -1067,7 +1067,7 @@
         }
       }
     },
-    "animation.twilightforest.snow_queen.drop_warning": {
+    "animation.gloamingforest.snow_queen.drop_warning": {
       "loop": true,
       "animation_length": 0.05,
       "particle_effects": {

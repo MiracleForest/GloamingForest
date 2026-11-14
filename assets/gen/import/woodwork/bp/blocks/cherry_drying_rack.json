@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:cherry_drying_rack",
+      "identifier": "gloamingforest:cherry_drying_rack",
       "menu_category": {
         "category": "construction",
         "group": "minecraft:itemGroup.name.fenceGate"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"]
+        "gloamingforest:facing": ["north", "south", "west", "east"]
       }
     },
     "components": {
@@ -20,7 +20,7 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#d1b1a1",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_cherry_planks",
@@ -46,9 +46,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_cherry_planks",
@@ -73,9 +73,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_cherry_planks",
@@ -100,9 +100,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_cherry_planks",
@@ -127,9 +127,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_cherry_planks",

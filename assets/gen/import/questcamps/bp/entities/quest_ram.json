@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:quest_ram",
+      "identifier": "gloamingforest:quest_ram",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "quest_ram", "creature", "mob"]
+        "family": ["gloamingforest", "quest_ram", "creature", "mob"]
       },
       "minecraft:collision_box": {
         "width": 1.25,

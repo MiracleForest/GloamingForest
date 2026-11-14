@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:wood/mangrove_button"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:mangrove_planks"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:mangrove_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mangrove_button"
+    }
+  }
+}

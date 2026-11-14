@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of TF's structure set placements (F6): LandmarkGridPlacement / AvoidLandmarkGridPlacement
-// (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later) and the vanilla random spread they
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of upstream's structure set placements (F6): LandmarkGridPlacement / AvoidLandmarkGridPlacement
+// (upstream commit 9e40a757, LGPL-2.1-or-later) and the vanilla random spread they
 // extend, against goldens of golden/grid_reference.js.
 #include <gtest/gtest.h>
 
@@ -26,19 +26,19 @@ Placement parse(char const* json) { return Placement::fromJson(nlohmann::json::p
 } // namespace
 
 TEST(LandmarkPlacement, ParsesTfStructureSets) {
-    auto lich = parse(R"({"type":"twilightforest:landmark_grid","structure_grid_lock":"twilightforest:lich_tower"})");
+    auto lich = parse(R"({"type":"gloamingforest:landmark_grid","structure_grid_lock":"gloamingforest:lich_tower"})");
     EXPECT_EQ(lich.kind, Kind::LandmarkGrid);
-    EXPECT_EQ(lich.gridLock, "twilightforest:lich_tower");
-    auto camp = parse(R"({"type":"twilightforest:avoid_landmark_grid","avoid_additional_structures":{"twilightforest:fallen_trunk":2,"twilightforest:hollow_tree":1},"salt":701432212,"separation":14,"spacing":18,"spread_type":"triangular"})");
+    EXPECT_EQ(lich.gridLock, "gloamingforest:lich_tower");
+    auto camp = parse(R"({"type":"gloamingforest:avoid_landmark_grid","avoid_additional_structures":{"gloamingforest:fallen_trunk":2,"gloamingforest:hollow_tree":1},"salt":701432212,"separation":14,"spacing":18,"spread_type":"triangular"})");
     EXPECT_EQ(camp.kind, Kind::AvoidLandmarkGrid);
     EXPECT_EQ(camp.spacing, 18);
     EXPECT_EQ(camp.separation, 14);
     EXPECT_EQ(camp.salt, 701432212);
     EXPECT_EQ(camp.spread, Spread::Triangular);
     ASSERT_EQ(camp.avoidAdditional.size(), 2u);
-    auto trunk = parse(R"({"type":"twilightforest:avoid_landmark_grid","exclusion_zone":{"chunk_count":1,"other_set":"twilightforest:hollow_tree"},"frequency":0.8,"salt":1275623845,"separation":5,"spacing":7,"spread_type":"triangular"})");
+    auto trunk = parse(R"({"type":"gloamingforest:avoid_landmark_grid","exclusion_zone":{"chunk_count":1,"other_set":"gloamingforest:hollow_tree"},"frequency":0.8,"salt":1275623845,"separation":5,"spacing":7,"spread_type":"triangular"})");
     ASSERT_TRUE(trunk.exclusionZone.has_value());
-    EXPECT_EQ(trunk.exclusionZone->otherSet, "twilightforest:hollow_tree");
+    EXPECT_EQ(trunk.exclusionZone->otherSet, "gloamingforest:hollow_tree");
     EXPECT_EQ(trunk.exclusionZone->chunkCount, 1);
     EXPECT_FLOAT_EQ(trunk.frequency, 0.8f);
     EXPECT_EQ(parse(R"({"type":"minecraft:concentric_rings"})").kind, Kind::Unknown);
@@ -64,8 +64,8 @@ TEST(LandmarkPlacement, PotentialChunkMatchesGoldens) {
 }
 
 TEST(LandmarkPlacement, LandmarkGridOnlyAtCentersAndByLock) {
-    auto any  = parse(R"({"type":"twilightforest:landmark_grid"})");
-    auto lich = parse(R"({"type":"twilightforest:landmark_grid","structure_grid_lock":"twilightforest:lich_tower"})");
+    auto any  = parse(R"({"type":"gloamingforest:landmark_grid"})");
+    auto lich = parse(R"({"type":"gloamingforest:landmark_grid","structure_grid_lock":"gloamingforest:lich_tower"})");
     long long seed = 20260521LL;
     int       centers = 0, liches = 0;
     for (int cx = -64; cx <= 64; ++cx) {
@@ -76,7 +76,7 @@ TEST(LandmarkPlacement, LandmarkGridOnlyAtCentersAndByLock) {
             bool l = isPlacementChunk(lich, seed, cx, cz, {});
             if (l) {
                 EXPECT_TRUE(c);
-                EXPECT_EQ(pickVariety(seed, cx, cz), "twilightforest:lich_tower");
+                EXPECT_EQ(pickVariety(seed, cx, cz), "gloamingforest:lich_tower");
                 ++liches;
             }
         }
@@ -84,12 +84,12 @@ TEST(LandmarkPlacement, LandmarkGridOnlyAtCentersAndByLock) {
     EXPECT_GT(centers, 0);
     EXPECT_LE(liches, centers);
     // the variety callback replaces the seed pick
-    auto alwaysLich = [](int, int) { return std::string("twilightforest:lich_tower"); };
+    auto alwaysLich = [](int, int) { return std::string("gloamingforest:lich_tower"); };
     EXPECT_TRUE(isPlacementChunk(lich, seed, 0, 0, alwaysLich));
 }
 
 TEST(LandmarkPlacement, AvoidLandmarkGridKeeps80BlocksFromCenters) {
-    auto hollow = parse(R"({"type":"twilightforest:avoid_landmark_grid","frequency":0.5,"salt":34481210,"separation":5,"spacing":7,"spread_type":"triangular"})");
+    auto hollow = parse(R"({"type":"gloamingforest:avoid_landmark_grid","frequency":0.5,"salt":34481210,"separation":5,"spacing":7,"spread_type":"triangular"})");
     long long seed = 20260521LL;
     int       placed = 0;
     for (int cx = -100; cx <= 100; ++cx) {
@@ -106,10 +106,10 @@ TEST(LandmarkPlacement, AvoidLandmarkGridKeeps80BlocksFromCenters) {
 }
 
 TEST(LandmarkPlacement, ExclusionZoneAndAvoidedSets) {
-    auto hollow = parse(R"({"type":"twilightforest:avoid_landmark_grid","frequency":0.5,"salt":34481210,"separation":5,"spacing":7,"spread_type":"triangular"})");
-    auto trunk  = parse(R"({"type":"twilightforest:avoid_landmark_grid","exclusion_zone":{"chunk_count":1,"other_set":"twilightforest:hollow_tree"},"frequency":0.8,"salt":1275623845,"separation":5,"spacing":7,"spread_type":"triangular"})");
-    auto camp   = parse(R"({"type":"twilightforest:avoid_landmark_grid","avoid_additional_structures":{"twilightforest:fallen_trunk":2,"twilightforest:hollow_tree":1},"salt":701432212,"separation":14,"spacing":18,"spread_type":"triangular"})");
-    std::map<std::string, Placement> sets{{"twilightforest:hollow_tree", hollow}, {"twilightforest:fallen_trunk", trunk}};
+    auto hollow = parse(R"({"type":"gloamingforest:avoid_landmark_grid","frequency":0.5,"salt":34481210,"separation":5,"spacing":7,"spread_type":"triangular"})");
+    auto trunk  = parse(R"({"type":"gloamingforest:avoid_landmark_grid","exclusion_zone":{"chunk_count":1,"other_set":"gloamingforest:hollow_tree"},"frequency":0.8,"salt":1275623845,"separation":5,"spacing":7,"spread_type":"triangular"})");
+    auto camp   = parse(R"({"type":"gloamingforest:avoid_landmark_grid","avoid_additional_structures":{"gloamingforest:fallen_trunk":2,"gloamingforest:hollow_tree":1},"salt":701432212,"separation":14,"spacing":18,"spread_type":"triangular"})");
+    std::map<std::string, Placement> sets{{"gloamingforest:hollow_tree", hollow}, {"gloamingforest:fallen_trunk", trunk}};
     SetLookup                        lookup = [&](std::string const& id) -> Placement const* {
         auto it = sets.find(id);
         return it == sets.end() ? nullptr : &it->second;
@@ -134,6 +134,6 @@ TEST(LandmarkPlacement, ExclusionZoneAndAvoidedSets) {
 }
 
 TEST(LandmarkPlacement, LocatePosIsTheChunkCorner) {
-    auto p = parse(R"({"type":"twilightforest:landmark_grid","locate_offset":[3,0,-2]})");
+    auto p = parse(R"({"type":"gloamingforest:landmark_grid","locate_offset":[3,0,-2]})");
     EXPECT_EQ(locatePos(p, 2, -1), (std::pair<int, int>{35, -18}));
 }

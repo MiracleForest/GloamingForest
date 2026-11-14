@@ -2,24 +2,24 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:naga_part",
+      "identifier": "gloamingforest:naga_part",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/nagasegment"
+        "default": "textures/gloamingforest/entity/nagasegment"
       },
       "geometry": {
-        "default": "geometry.twilightforest.naga_body"
+        "default": "geometry.gloamingforest.naga_body"
       },
       "scripts": {
         "scale": "2.0",
         "animate": ["pose"]
       },
       "animations": {
-        "pose": "animation.twilightforest.naga_segment.pose"
+        "pose": "animation.gloamingforest.naga_segment.pose"
       },
-      "render_controllers": ["controller.render.twilightforest.naga_segment"]
+      "render_controllers": ["controller.render.gloamingforest.naga_segment"]
     }
   }
 }

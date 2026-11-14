@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U25 (stronghold): helpers shared by the unit's mobs (see Util.h).
 #include "feature/stronghold/Util.h"
 

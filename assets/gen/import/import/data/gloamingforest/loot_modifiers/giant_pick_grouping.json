@@ -1,0 +1,9 @@
+{
+  "type": "gloamingforest:giant_block_grouping",
+  "conditions": [
+    {
+      "condition": "gloamingforest:giant_pick_used",
+      "entity": "this"
+    }
+  ]
+}

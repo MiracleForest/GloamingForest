@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Shared helpers of the landmark unit (F6): names, entity spawning, particles, and the test
 // fixture landmark. The fixture's lock and hint copy the lich tower's record of
-// The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757,
-// src/generated/resources/data/twilightforest/worldgen/structure/lich_tower.json; LGPL-2.1-or-later).
+// the upstream 4.8 source (commit 9e40a757,
+// src/generated/resources/data/gloamingforest/worldgen/structure/lich_tower.json; LGPL-2.1-or-later).
 #include <cctype>
 #include <filesystem>
 #include <mutex>
@@ -64,7 +64,7 @@ std::string prettyPath(std::string const& path) {
 
 std::string structureName(std::string const& key, Player const* player) {
     // Component.translatable("structure.<ns>.<path>").getString(): a key without a translation shows
-    // as itself (TF's structure.twilightforest.quest_island at a lake center, docs/spec/not-ported.md)
+    // as itself (upstream's structure.gloamingforest.quest_island at a lake center, docs/spec/not-ported.md)
     auto [ns, path] = splitKey(key);
     auto langKey    = "structure." + ns + "." + path;
     return player ? trFor(*player, langKey, langKey) : tr(langKey, langKey);
@@ -73,7 +73,7 @@ std::string structureName(std::string const& key, Player const* player) {
 std::string entityName(std::string const& id, Player const* player) {
     auto [ns, path] = splitKey(id);
     auto locale     = player ? localeOf(*player) : std::string{};
-    // Java's key (EntityType#getDescriptionId): TF's names, imported from TF's lang files per locale
+    // Java's key (EntityType#getDescriptionId): upstream's names, imported from upstream's lang files per locale
     auto javaKey = "entity." + ns + "." + path;
     if (hasTranslation(javaKey, locale)) return std::string(translate(javaKey, path, locale));
     // Bedrock's key: entity.<path>.name for vanilla entities, entity.<ns>:<path>.name otherwise, in the
@@ -200,14 +200,14 @@ bool registerFixture() {
     std::error_code ec;
     if (!std::filesystem::is_directory(Mod::getInstance().getSelf().getModDir() / "data" / "gf_test", ec)) return false;
     Info fixture = parseRecord(kFixtureKey, Json::parse(R"({
-        "type": "twilightforest:progression",
-        "advancements_required": ["twilightforest:progress_naga"],
+        "type": "gloamingforest:progression",
+        "advancements_required": ["gloamingforest:progress_naga"],
         "decoration_clearance": {"adjust_structure_elevation": false, "allow_biome_surface_decorations": false,
                                  "allow_biome_underground_decorations": true, "allow_biome_vegetation": false,
                                  "chunk_clearance_radius": 0.0},
-        "hint_creature": {"hint_mob": "twilightforest:kobold", "hint_item": {"id": "minecraft:written_book", "count": 1,
-            "components": {"minecraft:written_book_content": {"title": {"raw": "twilightforest.book.lichtower"},
-                "author": "twilightforest.book.author", "generation": 3, "resolved": true,
+        "hint_creature": {"hint_mob": "gloamingforest:kobold", "hint_item": {"id": "minecraft:written_book", "count": 1,
+            "components": {"minecraft:written_book_content": {"title": {"raw": "gloamingforest.book.lichtower"},
+                "author": "gloamingforest.book.author", "generation": 3, "resolved": true,
                 "pages": [{"raw": "1"}, {"raw": "2"}, {"raw": "3"}, {"raw": "4"}]}}}},
         "controlled_spawns": {"ambient_spawns": [], "water_spawns": [],
             "labelled_monster_spawns": {
@@ -219,13 +219,13 @@ bool registerFixture() {
     fixture.traits.landmarkTag      = true;
     fixture.traits.controlledSpawns = true;
     registerInfo(std::move(fixture));
-    // the same shape, conquerable without a lock (like TF's quest grove): never protects anything. No
+    // the same shape, conquerable without a lock (like upstream's quest grove): never protects anything. No
     // ControlledSpawns structure, so its spawn overrides (Structure#spawnOverrides) answer: monsters
     // in its pieces ("piece"), no ambient mobs anywhere in its box ("full"). The locked fixture cannot
     // carry an observable override: a ControlledSpawns start answers every category but monsters
     // itself, and its monster override would cover the shell's ground floor, which F5's
     // worldgen.landmark_rules checks for the biome's list
-    Info open = parseRecord(kOpenFixtureKey, Json::parse(R"({"type": "twilightforest:quest_grove", "step": "surface_structures",
+    Info open = parseRecord(kOpenFixtureKey, Json::parse(R"({"type": "gloamingforest:quest_grove", "step": "surface_structures",
         "spawn_overrides": {
             "monster": {"bounding_box": "piece", "spawns": [{"type": "minecraft:witch", "weight": 3, "minCount": 1, "maxCount": 1},
                                                              {"type": "minecraft:creeper", "weight": 7, "minCount": 2, "maxCount": 4}]},

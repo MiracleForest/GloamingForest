@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.maze_slime_small.death": {
+  "entity.gloamingforest.maze_slime_small.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.death",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.death",
     "sounds": [
       {
         "name": "sounds/mob/slime/small1"
@@ -20,9 +20,9 @@
       }
     ]
   },
-  "entity.twilightforest.maze_slime_small.hurt": {
+  "entity.gloamingforest.maze_slime_small.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.hurt",
     "sounds": [
       {
         "name": "sounds/mob/slime/small1"
@@ -41,9 +41,9 @@
       }
     ]
   },
-  "entity.twilightforest.maze_slime_small.squish": {
+  "entity.gloamingforest.maze_slime_small.squish": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.squish",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.squish",
     "sounds": [
       {
         "name": "sounds/mob/slime/small1"
@@ -62,9 +62,9 @@
       }
     ]
   },
-  "entity.twilightforest.maze_slime.death": {
+  "entity.gloamingforest.maze_slime.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.death",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.death",
     "sounds": [
       {
         "name": "sounds/mob/slime/big1"
@@ -80,9 +80,9 @@
       }
     ]
   },
-  "entity.twilightforest.maze_slime.hurt": {
+  "entity.gloamingforest.maze_slime.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.hurt",
     "sounds": [
       {
         "name": "sounds/mob/slime/big1"
@@ -98,9 +98,9 @@
       }
     ]
   },
-  "entity.twilightforest.maze_slime.squish": {
+  "entity.gloamingforest.maze_slime.squish": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.squish",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.squish",
     "sounds": [
       {
         "name": "sounds/mob/slime/big1"
@@ -116,9 +116,9 @@
       }
     ]
   },
-  "entity.twilightforest.minoshroom.ambient": {
+  "entity.gloamingforest.minoshroom.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.ambient",
     "sounds": [
       {
         "name": "sounds/mob/cow/say1"
@@ -134,18 +134,18 @@
       }
     ]
   },
-  "entity.twilightforest.minoshroom.attack": {
+  "entity.gloamingforest.minoshroom.attack": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.attack",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.attack",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/throw"
       }
     ]
   },
-  "entity.twilightforest.minoshroom.death": {
+  "entity.gloamingforest.minoshroom.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.death",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.death",
     "sounds": [
       {
         "name": "sounds/mob/cow/hurt1"
@@ -158,9 +158,9 @@
       }
     ]
   },
-  "entity.twilightforest.minoshroom.hurt": {
+  "entity.gloamingforest.minoshroom.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.hurt",
     "sounds": [
       {
         "name": "sounds/mob/cow/hurt1"
@@ -173,9 +173,9 @@
       }
     ]
   },
-  "entity.twilightforest.minoshroom.slam": {
+  "entity.gloamingforest.minoshroom.slam": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.slam",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.slam",
     "sounds": [
       {
         "name": "sounds/random/explode1"
@@ -191,7 +191,7 @@
       }
     ]
   },
-  "entity.twilightforest.minoshroom.step": {
+  "entity.gloamingforest.minoshroom.step": {
     "category": "hostile",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -209,9 +209,9 @@
       }
     ]
   },
-  "entity.twilightforest.minotaur.ambient": {
+  "entity.gloamingforest.minotaur.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.ambient",
     "sounds": [
       {
         "name": "sounds/mob/cow/say1"
@@ -227,18 +227,18 @@
       }
     ]
   },
-  "entity.twilightforest.minotaur.attack": {
+  "entity.gloamingforest.minotaur.attack": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.attack",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.attack",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/throw"
       }
     ]
   },
-  "entity.twilightforest.minotaur.death": {
+  "entity.gloamingforest.minotaur.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.death",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.death",
     "sounds": [
       {
         "name": "sounds/mob/cow/hurt1"
@@ -251,9 +251,9 @@
       }
     ]
   },
-  "entity.twilightforest.minotaur.hurt": {
+  "entity.gloamingforest.minotaur.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.hurt",
     "sounds": [
       {
         "name": "sounds/mob/cow/hurt1"
@@ -266,7 +266,7 @@
       }
     ]
   },
-  "entity.twilightforest.minotaur.step": {
+  "entity.gloamingforest.minotaur.step": {
     "category": "hostile",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [

@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/LabyrinthStructure.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/HollowHillFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/FocusedDensityFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/LabyrinthStructure.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/HollowHillFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/FocusedDensityFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -24,7 +24,7 @@ struct IPos {
 [[nodiscard]] IPos boxCenter(BlockBox const& box);
 
 /// HollowHillFunction(centerX, bottomY, centerZ, radius, heightScale) at a block (float maths with
-/// the Mth.cos table, as TF).
+/// the Mth.cos table, as upstream).
 [[nodiscard]] double hollowHill(float centerX, float bottomY, float centerZ, float radius, float heightScale, int x, int y, int z);
 /// FocusedDensityFunction(centerX, bottomY, centerZ, radius, near, far) at a block.
 [[nodiscard]] double focused(float centerX, float bottomY, float centerZ, float radius, float nearValue, float farValue, int x, int y, int z);
@@ -65,7 +65,7 @@ inline constexpr int kRooms        = 7;
 /// The ATTACK_DAMAGE modifier of a held axe: AxeItem.createAttributes(tier, 6, -3.x) = 6 + the
 /// tier's bonus (golden axe and gold minotaur axe 6, diamond minotaur axe 9; 0 for anything else).
 [[nodiscard]] float weaponModifier(char const* itemId);
-/// Minotaur#populateDefaultEquipmentSlots: "twilightforest:gold_minotaur_axe" when
+/// Minotaur#populateDefaultEquipmentSlots: "gloamingforest:gold_minotaur_axe" when
 /// (int)(roll / (effectiveDifficulty + 1)) == 0 (roll = nextInt(10)), else "minecraft:golden_axe".
 [[nodiscard]] char const* minotaurAxe(int roll, float effectiveDifficulty);
 /// MazeSlime#setSize: MAX_HEALTH size^2 with the double_health modifier (+2 x base) = 3 size^2.

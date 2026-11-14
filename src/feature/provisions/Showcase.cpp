@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U10 (provisions): the client e2e's showcase (provisions.real_arm / provisions.real_clear). It gives
 // every real player U10's items (the foods, stale bread, Experiment 115 and the discs) and frosted II,
 // and builds a row of Experiment 115 in its 16 states in front of them, for the screenshots of
@@ -66,7 +66,7 @@ GF_REGISTER_SELFTEST("provisions.real_arm", [](Context&) {
         };
         for (auto const& f : cp::foods()) put(std::string(f.id));
         put(fp::ids::kStaleBread);
-        for (auto const& s : cp::songs()) put("twilightforest:music_disc_" + std::string(s.track));
+        for (auto const& s : cp::songs()) put("gloamingforest:music_disc_" + std::string(s.track));
         p.sendInventory(false);
         gf::effects::apply(p, fp::ids::kFrosted, 20 * 60, 1);
         // Experiment 115 in its 16 states, 2 blocks ahead of the player on a stone floor

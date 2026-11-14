@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of the weapons' pure math (src/core/weapons/Weapons.h), against TF 4.8's Java.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of the weapons' pure math (src/core/weapons/Weapons.h), against upstream 4.8's Java.
 
 #include "core/weapons/Weapons.h"
 

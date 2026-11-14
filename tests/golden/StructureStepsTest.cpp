@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Golden tests of the Java oracle (unit F13) for tests/golden/structure_steps.json: Java's Structure
 // registry grouped by GenerationStep.Decoration, each group in registry stream order, the way
 // Minecraft 1.21.1's ChunkGenerator#applyBiomeDecoration walks it (a structure's index in its group is
 // the salt of setFeatureSeed(decorationSeed, index, step)). Compared with F6's pure decoration-step
-// table: core/landmark/Decoration (Minecraft's 34 structures, the registry order, slotOf) plus TF's
-// structures with the steps of their worldgen/structure JSON (assets/data/landmarks/twilightforest).
+// table: core/landmark/Decoration (Minecraft's 34 structures, the registry order, slotOf) plus upstream's
+// structures with the steps of their worldgen/structure JSON (assets/data/landmarks/gloamingforest).
 // Also compared: F5's built-in structure table (src/feature/worldgen/Structures.cpp kVanilla /
-// kTwilight), which worldgen::ext::structuresByStep / structureSlot sort into the runtime registry the
+// kGloaming), which worldgen::ext::structuresByStep / structureSlot sort into the runtime registry the
 // landmark starts are seeded with first.
 
 #include <gtest/gtest.h>
@@ -42,12 +42,12 @@ json const& golden() {
     return g;
 }
 
-// TF's structures: the key and the "step" of TF's worldgen/structure JSON (F6's landmark records).
+// upstream's structures: the key and the "step" of upstream's worldgen/structure JSON (F6's landmark records).
 // A record without a key or with an unknown step fails here, by file name, and is left out.
-std::vector<dec::Structure> twilightStructures() {
+std::vector<dec::Structure> gloamingStructures() {
     std::vector<dec::Structure> out;
     std::error_code             ec;
-    fs::path const              dir = repoDir() / "assets/data/landmarks/twilightforest";
+    fs::path const              dir = repoDir() / "assets/data/landmarks/gloamingforest";
     for (auto const& e : fs::directory_iterator(dir, ec)) {
         if (e.path().extension() != ".json") continue;
         auto const file = e.path().filename().string();
@@ -83,13 +83,13 @@ std::string snakeCase(std::string const& camel) {
     return out;
 }
 
-// F5's built-in table: the {"<id>", DecorationStep::<Step>} rows of kVanilla and kTwilight in
+// F5's built-in table: the {"<id>", DecorationStep::<Step>} rows of kVanilla and kGloaming in
 // src/feature/worldgen/Structures.cpp (feature code the gtests cannot link), steps by their
 // serialized names. Empty when the file or the arrays are not found.
 std::map<std::string, std::vector<std::pair<std::string, std::string>>> worldgenBuiltins() {
     std::map<std::string, std::vector<std::pair<std::string, std::string>>> out;
     std::string const src = readFile(repoDir() / "src/feature/worldgen/Structures.cpp");
-    for (char const* table : {"kVanilla", "kTwilight"}) {
+    for (char const* table : {"kVanilla", "kGloaming"}) {
         auto start = src.find(std::string("Builtin ") + table + "[]");
         if (start == std::string::npos) continue;
         auto end = src.find("};", start);
@@ -101,10 +101,10 @@ std::map<std::string, std::vector<std::pair<std::string, std::string>>> worldgen
     return out;
 }
 
-// F6's table of Java's Structure registry: Minecraft's structures and TF's.
+// F6's table of Java's Structure registry: Minecraft's structures and upstream's.
 std::vector<dec::Structure> landmarkRegistry() {
     auto registry = dec::vanillaStructures();
-    for (auto& s : twilightStructures()) registry.push_back(std::move(s));
+    for (auto& s : gloamingStructures()) registry.push_back(std::move(s));
     return registry;
 }
 
@@ -156,16 +156,16 @@ TEST(OracleStructureSteps, IsWellFormed) {
     EXPECT_EQ(grouped, order.size()) << "every structure in exactly one step";
 }
 
-TEST(OracleStructureSteps, CoversMinecraftAndTwilightForest) {
+TEST(OracleStructureSteps, CoversMinecraftAndGloamingForest) {
     REQUIRE_GOLDEN();
     std::map<std::string, int> stepOf;
     auto                       steps = goldenSteps();
     for (int s = 0; s < static_cast<int>(steps.size()); ++s)
         for (auto const& id : steps[s]) stepOf[id] = s;
 
-    // every vanilla structure and every TF landmark, at the step F6 has for it, and nothing else
-    auto const tf = twilightStructures();
-    ASSERT_EQ(tf.size(), 21u) << "TF 4.8's 21 structures (assets/data/landmarks/twilightforest)";
+    // every vanilla structure and every upstream landmark, at the step F6 has for it, and nothing else
+    auto const tf = gloamingStructures();
+    ASSERT_EQ(tf.size(), 21u) << "upstream 4.8's 21 structures (assets/data/landmarks/gloamingforest)";
     std::set<std::string> expected;
     for (auto const* list : {&dec::vanillaStructures(), &tf}) {
         for (auto const& s : *list) {
@@ -179,7 +179,7 @@ TEST(OracleStructureSteps, CoversMinecraftAndTwilightForest) {
         }
     }
     for (auto const& [id, s] : stepOf) EXPECT_TRUE(expected.contains(id)) << id << " (step " << dec::stepName(s) << ") is in Java's registry but not in F6's table";
-    EXPECT_EQ(stepOf.size(), dec::vanillaStructures().size() + tf.size()) << "Minecraft 1.21.1's 34 structures and TF 4.8's 21";
+    EXPECT_EQ(stepOf.size(), dec::vanillaStructures().size() + tf.size()) << "Minecraft 1.21.1's 34 structures and upstream 4.8's 21";
     EXPECT_EQ(stepOf.size(), golden().at("count").get<std::size_t>());
 }
 
@@ -230,10 +230,10 @@ TEST(OracleStructureSteps, MatchWorldgenBuiltinTable) {
 
     auto builtins = worldgenBuiltins();
     ASSERT_EQ(builtins["kVanilla"].size(), dec::vanillaStructures().size()) << "kVanilla rows in src/feature/worldgen/Structures.cpp: Minecraft 1.21.1's 34 structures";
-    ASSERT_EQ(builtins["kTwilight"].size(), 21u) << "kTwilight rows in src/feature/worldgen/Structures.cpp: TF 4.8's 21 structures";
+    ASSERT_EQ(builtins["kGloaming"].size(), 21u) << "kGloaming rows in src/feature/worldgen/Structures.cpp: upstream 4.8's 21 structures";
     std::set<std::string> seen;
     for (auto const& [table, rows] : builtins) {
-        std::string const ns = table == "kVanilla" ? "minecraft:" : "twilightforest:";
+        std::string const ns = table == "kVanilla" ? "minecraft:" : "gloamingforest:";
         for (auto const& [id, stepName] : rows) {
             EXPECT_TRUE(seen.insert(id).second) << id << " twice in F5's table";
             EXPECT_EQ(id.rfind(ns, 0), 0u) << id << " in " << table;

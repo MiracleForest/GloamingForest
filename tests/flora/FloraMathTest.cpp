@@ -1,4 +1,4 @@
-// U6 (flora): the pure arithmetic of TF's flora blocks against TF 4.8's formulas.
+// U6 (flora): the pure arithmetic of upstream's flora blocks against upstream 4.8's formulas.
 
 #include <gtest/gtest.h>
 

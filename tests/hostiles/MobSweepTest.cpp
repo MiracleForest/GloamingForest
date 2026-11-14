@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of the spawn sweep's table (src/core/hostiles/MobSweep.h) against F13's Java goldens: one row
 // per entity type of tests/golden/mobs.json with its attributes, box, fire immunity and summonability,
 // and the loot table flag from tests/golden/loot.json; the owners from docs/spec/owners.tsv.
@@ -60,7 +60,7 @@ TEST(MobSweep, MatchesJavaGoldens) {
         EXPECT_EQ(row.fireImmune, g.at("fireImmune").get<bool>());
         EXPECT_EQ(row.canSummon, g.at("canSummon").get<bool>());
         std::string const path = std::string(row.id).substr(std::string(row.id).find(':') + 1);
-        EXPECT_EQ(row.lootTable, loot.at("tables").contains("twilightforest:entities/" + path));
+        EXPECT_EQ(row.lootTable, loot.at("tables").contains("gloamingforest:entities/" + path));
         if (!living) {
             EXPECT_FALSE(row.peacefulDespawn);
             EXPECT_FALSE(row.hurtDeathSounds);

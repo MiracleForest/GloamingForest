@@ -1,11 +1,11 @@
 # Woodwork (U4): the wood sets and wooden furniture on BDS. The woodwork.* selftests: log stripping
-# for every TF log and wood, banister placement / axe cycle / un-extension, drying racks (add and
-# remove, the TF drying times, coral after 40 ticks, the default 6000 ticks, no drying while
+# for every upstream log and wood, banister placement / axe cycle / un-extension, drying racks (add and
+# remove, the upstream drying times, coral after 40 ticks, the default 6000 ticks, no drying while
 # waterlogged, the item dropped when the water comes or goes and when the rack breaks, automation
 # refused while drying), hollow logs (placement by face, moss / grass / snow / shovel / shears,
 # vine / ladder / shears, the climbable variant), the Java shapes of racks, banisters and hollow
 # logs, chest pairs, the trapped chest's signal, signs, every recipe with its unlock, fuel, the
-# boats (placed from the item, ridden, broken: the TF item; a crash landing: planks and sticks), the
+# boats (placed from the item, ridden, broken: the upstream item; a crash landing: planks and sticks), the
 # client mod's rack sync and the display entity (one, no drops); then a rack keeps drying across a
 # server restart.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null

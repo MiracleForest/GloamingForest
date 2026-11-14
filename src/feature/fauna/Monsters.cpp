@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/Kobold.java
-//   src/main/java/twilightforest/entity/monster/MosquitoSwarm.java
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/Kobold.java
+//   src/main/java/gloamingforest/entity/monster/MosquitoSwarm.java
 //   net/minecraft/world/entity/Mob.java (vanilla, aiStep's item pick-up)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U16's monsters. Their vanilla goals (float, leap, melee, stroll, look, hurt-by and the player
 // target, the run-away-with-bread avoidance) are the BP's behaviours (the kobold's player target and
-// avoidance test the bread in its hand); what is TF's own is native here:
+// avoidance test the bread in its hand); what is upstream's own is native here:
 //   - the kobold: PanicOnFlockDeathGoal (2.0) and FlockToSameKindGoal (1.0) from F8, SeekBreadGoal,
 //     the bread pick-up (Mob#aiStep + Kobold#pickUpItem: one bread in the hand, always dropped,
 //     the target forgotten), the munching (Kobold#aiStep: the eating timer by difficulty, the munch
 //     sound and the item particles of entity event 45), the PANICKED flag (the
-//     twilightforest:panicked property; the sweat drops) and its saved timers;
+//     gloamingforest:panicked property; the sweat drops) and its saved timers;
 //   - the mosquito swarm: Hunger on a hit (7 / 15 / 30 s by difficulty).
 #include <algorithm>
 #include <cmath>
@@ -59,10 +59,10 @@ using DropSlot                  = SharedTypes::Legacy::SlotWithDropChance;
 constexpr float kPreserveDrop    = 2.0f;   ///< Mob.PRESERVE_ITEM_DROP_CHANCE_THRESHOLD
 constexpr float kDefaultDrop     = 0.085f; ///< Mob.DEFAULT_EQUIPMENT_DROP_CHANCE
 
-/// #twilightforest:kobold_pacification_breads (minecraft:bread).
+/// #gloamingforest:kobold_pacification_breads (minecraft:bread).
 bool isBread(std::string const& id) {
     if (id.empty()) return false;
-    return id == "minecraft:bread" || gf::tags::has(gf::tags::Registry::Item, "twilightforest:kobold_pacification_breads", id);
+    return id == "minecraft:bread" || gf::tags::has(gf::tags::Registry::Item, "gloamingforest:kobold_pacification_breads", id);
 }
 
 bool holdsBread(Mob& kobold) { return isBread(game::items::idOf(kobold.getCarriedItem())); }
@@ -188,11 +188,11 @@ void koboldTick(Actor& self) {
     auto& shown = gf::entity::data(self, "fauna:panicked");
     if (!shown.is_boolean() || shown.get<bool>() != panic) {
         shown = panic;
-        gf::entity::setProperty(self, "twilightforest:panicked", panic);
+        gf::entity::setProperty(self, "gloamingforest:panicked", panic);
     }
     if (!self.isAlive()) return;
     auto& r = rng();
-    // the sweat drops (client side in TF; sent as particles here)
+    // the sweat drops (client side in upstream; sent as particles here)
     if (panic) {
         float w   = 0.8f;
         auto  p   = self.getFeetPos();
@@ -217,14 +217,14 @@ void koboldTick(Actor& self) {
     if (!panic) { // canEat: a food item, not panicked
         if (t.eatingTime <= 0) {
             // ItemStack#finishUsingItem -> LivingEntity#eat: the eating sound, the stack consumed
-            gf::fx::sound(self.getDimension(), "entity.twilightforest.kobold.munch", self.getFeetPos(), 1.0f, 1.0f + (r.nextFloat() - r.nextFloat()) * 0.4f);
+            gf::fx::sound(self.getDimension(), "entity.gloamingforest.kobold.munch", self.getFeetPos(), 1.0f, 1.0f + (r.nextFloat() - r.nextFloat()) * 0.4f);
             kobold->setCarriedItem(game::items::empty());
             kobold->sendInventory(false);
             log().info("fauna: kobold ate its {}", held);
         }
         // every 3 seconds chew some bread
         if (t.lastEatenBread > 60 && r.nextFloat() < 0.1f) {
-            gf::fx::sound(self.getDimension(), "entity.twilightforest.kobold.munch", self.getFeetPos(), 0.75f, 0.9f);
+            gf::fx::sound(self.getDimension(), "entity.gloamingforest.kobold.munch", self.getFeetPos(), 0.75f, 0.9f);
             munchParticles(*kobold, held);
             t.lastEatenBread = 0;
         }

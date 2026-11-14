@@ -2,13 +2,13 @@
 
 // Contract "enchant+effects", enchantments (header owned by F0, implemented by F9; spike S6).
 //
-// Bedrock has a fixed set of enchantment ids (vanilla clients know 42), so TF's four enchantments
+// Bedrock has a fixed set of enchantment ids (vanilla clients know 42), so upstream's four enchantments
 // (fire_react, chill_aura, destruction, renewal) live in the item's user data, with
 // server-written lore and the glint for vanilla clients and exact tooltips with the client mod.
 // F9 hooks the enchanting table, anvil, grindstone and enchanted books so they behave as on Java.
 //
-//     gf::enchant::registerType("twilightforest:fire_react", {.maxLevel = 3, .supportedItems = "#minecraft:enchantable/armor"});
-//     int lvl = gf::enchant::level(stack, "twilightforest:fire_react");
+//     gf::enchant::registerType("gloamingforest:fire_react", {.maxLevel = 3, .supportedItems = "#minecraft:enchantable/armor"});
+//     int lvl = gf::enchant::level(stack, "gloamingforest:fire_react");
 
 #include <map>
 #include <string>
@@ -24,7 +24,7 @@ struct Cost {
     int perLevelAboveFirst = 10;
 };
 
-/// The data of an enchantment (TF's data/twilightforest/enchantment/*.json).
+/// The data of an enchantment (upstream's data/gloamingforest/enchantment/*.json).
 struct Spec {
     int                      maxLevel = 1;
     int                      weight   = 1;
@@ -37,7 +37,7 @@ struct Spec {
     bool                     treasure     = false;
     bool                     tradeable    = true;
     bool                     discoverable = true;
-    std::string              nameKey;         ///< "enchantment.twilightforest.fire_react"
+    std::string              nameKey;         ///< "enchantment.gloamingforest.fire_react"
 };
 void registerType(std::string const& enchantmentId, Spec spec);
 

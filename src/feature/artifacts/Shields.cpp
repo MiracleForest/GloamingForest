@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/components/entity/FortificationShieldAttachment.java
-//   src/main/java/twilightforest/events/CapabilityEvents.java
-//   src/main/java/twilightforest/command/ShieldCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/components/entity/FortificationShieldAttachment.java
+//   src/main/java/gloamingforest/events/CapabilityEvents.java
+//   src/main/java/gloamingforest/command/ShieldCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Fortification shields (TF's attachment twilightforest:fortification_shields) on any living
+// Fortification shields (upstream's attachment gloamingforest:fortification_shields) on any living
 // entity: temporary shields expire one by one every 240 ticks, damage that does not bypass armour
 // is cancelled while any shield is left and breaks one outside the invulnerability frames.
 // Players keep theirs in the world DB ("gf:artifacts:shields:<uuid>"), other entities in their
 // entity data; the client mod draws the HUD from "artifacts.shields", vanilla players see the count
-// on the action bar. /twilightforest shield <target> set|add <amount> [<temp>] (permission 2).
+// on the action bar. /gloamingforest shield <target> set|add <amount> [<temp>] (permission 2).
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
@@ -147,7 +147,7 @@ void shieldBreakParticles(Actor& entity, Actor* attacker, Actor* direct) {
             double x = size * oz * h;
             double y = size * (r.nextDouble() - 0.5);
             double z = size * ox * -h;
-            particle(entity, "twilightforest:shield_break", Vec3{static_cast<float>(pos.x + x), static_cast<float>(pos.y + y), static_cast<float>(pos.z + z)},
+            particle(entity, "gloamingforest:shield_break", Vec3{static_cast<float>(pos.x + x), static_cast<float>(pos.y + y), static_cast<float>(pos.z + z)},
                      Vec3{static_cast<float>(x * 0.5), static_cast<float>(y * 0.5), static_cast<float>(z * 0.5)});
         }
     } else {
@@ -156,7 +156,7 @@ void shieldBreakParticles(Actor& entity, Actor* attacker, Actor* direct) {
             double x = r.nextDouble() - 0.5;
             double y = (r.nextDouble() - 0.5) * 0.25;
             double z = r.nextDouble() - 0.5;
-            particle(entity, "twilightforest:shield_break", Vec3{static_cast<float>(pos.x + x), static_cast<float>(pos.y + y), static_cast<float>(pos.z + z)},
+            particle(entity, "gloamingforest:shield_break", Vec3{static_cast<float>(pos.x + x), static_cast<float>(pos.y + y), static_cast<float>(pos.z + z)},
                      Vec3{static_cast<float>(x * 0.33), static_cast<float>(y * 0.33), static_cast<float>(z * 0.33)});
         }
     }
@@ -184,7 +184,7 @@ void tickAll() {
             if (e.shields.tick(invulnerable, wearsCrown(*a), tickCountOf(*a))) {
                 // FortificationShieldAttachment#breakShield(entity, true): the sound, no stat
                 auto& r = randomOf(*a);
-                playSound(*a, "entity.twilightforest.fortification_shield.expire", 1.0F, (r.nextFloat() - r.nextFloat()) * 0.3F + 1.0F);
+                playSound(*a, "entity.gloamingforest.fortification_shield.expire", 1.0F, (r.nextFloat() - r.nextFloat()) * 0.3F + 1.0F);
             }
             if (e.shields.left() != before) store(*a, e);
         }
@@ -215,9 +215,9 @@ void addShields(Actor& actor, int amount, bool temp) {
 void breakShield(Actor& actor, bool expired) {
     auto& e = entryOf(actor);
     e.shields.breakOne();
-    if (actor.isPlayer() && !expired) gf::stats::award(static_cast<Player&>(actor), "twilightforest:tf_shields_broken");
+    if (actor.isPlayer() && !expired) gf::stats::award(static_cast<Player&>(actor), "gloamingforest:tf_shields_broken");
     auto& r = randomOf(actor);
-    playSound(actor, expired ? "entity.twilightforest.fortification_shield.expire" : "entity.twilightforest.fortification_shield.break", 1.0F,
+    playSound(actor, expired ? "entity.gloamingforest.fortification_shield.expire" : "entity.gloamingforest.fortification_shield.break", 1.0F,
               (r.nextFloat() - r.nextFloat()) * 0.3F + 1.0F);
     store(actor, e);
 }

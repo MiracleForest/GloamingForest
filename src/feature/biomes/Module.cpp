@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/biomesources/TFBiomeProvider.java
-//   src/main/java/twilightforest/init/TFBiomes.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/biomesources/TFBiomeProvider.java
+//   src/main/java/gloamingforest/init/TFBiomes.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U1 `biomes`: installs TF's biome source (TFBiomeProvider over BiomeDensitySource) into F5's
+// U1 `biomes`: installs upstream's biome source (TFBiomeProvider over BiomeDensitySource) into F5's
 // worldgen pipeline, the biome order FeatureSorter uses, and the biomes' spawn tables.
 //
 // Bedrock: the 22 biomes are behavior pack biomes (assets/pack/bp/biomes/biomes/, climate and map
 // tints) with client biome files (assets/pack/rp/biomes/: sky, grass, foliage, water, fog
 // ids of assets/pack/rp/fogs/biomes/); F5's generator writes the zoomed biome of every block, so
-// vanilla clients draw them too. TF's position-dependent colours are drawn by the client mod
+// vanilla clients draw them too. upstream's position-dependent colours are drawn by the client mod
 // (src/client/biomes/Tints.cpp).
 
 #include <algorithm>
@@ -52,28 +52,28 @@ using core::biomes::Json;
 
 std::vector<std::string> const& biomeIds() {
     static std::vector<std::string> const ids = {
-        "twilightforest:clearing",
-        "twilightforest:dark_forest",
-        "twilightforest:dark_forest_center",
-        "twilightforest:dense_forest",
-        "twilightforest:dense_mushroom_forest",
-        "twilightforest:enchanted_forest",
-        "twilightforest:final_plateau",
-        "twilightforest:fire_swamp",
-        "twilightforest:firefly_forest",
-        "twilightforest:forest",
-        "twilightforest:glacier",
-        "twilightforest:highlands",
-        "twilightforest:highlands_underground",
-        "twilightforest:lake",
-        "twilightforest:mushroom_forest",
-        "twilightforest:oak_savannah",
-        "twilightforest:snowy_forest",
-        "twilightforest:spooky_forest",
-        "twilightforest:stream",
-        "twilightforest:swamp",
-        "twilightforest:thornlands",
-        "twilightforest:underground",
+        "gloamingforest:clearing",
+        "gloamingforest:dark_forest",
+        "gloamingforest:dark_forest_center",
+        "gloamingforest:dense_forest",
+        "gloamingforest:dense_mushroom_forest",
+        "gloamingforest:enchanted_forest",
+        "gloamingforest:final_plateau",
+        "gloamingforest:fire_swamp",
+        "gloamingforest:firefly_forest",
+        "gloamingforest:forest",
+        "gloamingforest:glacier",
+        "gloamingforest:highlands",
+        "gloamingforest:highlands_underground",
+        "gloamingforest:lake",
+        "gloamingforest:mushroom_forest",
+        "gloamingforest:oak_savannah",
+        "gloamingforest:snowy_forest",
+        "gloamingforest:spooky_forest",
+        "gloamingforest:stream",
+        "gloamingforest:swamp",
+        "gloamingforest:thornlands",
+        "gloamingforest:underground",
     };
     return ids;
 }
@@ -94,7 +94,7 @@ std::string const& biomeIdOf(Biome const& b) {
     return it->second.id;
 }
 
-bool isTfBiome(std::string_view id) { return id.starts_with("twilightforest:") && core::biomes::colors::water(id).has_value(); }
+bool isTfBiome(std::string_view id) { return id.starts_with("gloamingforest:") && core::biomes::colors::water(id).has_value(); }
 
 namespace {
 
@@ -109,7 +109,7 @@ Json readJson(fs::path const& p) {
     return Json::parse(in);
 }
 
-/// <mod>/data/twilightforest/twilight/{biome_layer_stack/*.json, biome_terrain_data/biome_grid.json}
+/// <mod>/data/gloamingforest/gloaming/{biome_layer_stack/*.json, biome_terrain_data/biome_grid.json}
 std::shared_ptr<SourceData const> loadSourceData() {
     auto data = std::make_shared<SourceData>();
     fs::path root;
@@ -122,7 +122,7 @@ std::shared_ptr<SourceData const> loadSourceData() {
     try {
         for (auto const& ns : fs::directory_iterator(root, ec)) {
             if (!ns.is_directory()) continue;
-            auto dir = ns.path() / "twilight" / "biome_layer_stack";
+            auto dir = ns.path() / "gloaming" / "biome_layer_stack";
             if (!fs::is_directory(dir, ec)) continue;
             for (auto const& f : fs::recursive_directory_iterator(dir, ec)) {
                 if (!f.is_regular_file() || f.path().extension() != ".json") continue;
@@ -130,12 +130,12 @@ std::shared_ptr<SourceData const> loadSourceData() {
                 data->stacks.entries[ns.path().filename().string() + ":" + rel.substr(0, rel.size() - 5)] = readJson(f.path());
             }
         }
-        data->grid = readJson(root / "twilightforest" / "twilight" / "biome_terrain_data" / "biome_grid.json");
+        data->grid = readJson(root / "gloamingforest" / "gloaming" / "biome_terrain_data" / "biome_grid.json");
         // a provider must build (a broken stack throws here, once, instead of on a worker thread)
         BiomeProvider probe(data->grid, data->stacks, 0);
         (void)probe.mainBiome(0, 0);
     } catch (std::exception const& e) {
-        gf::log().error("biomes: the Twilight Forest biome source is unavailable: {}", e.what());
+        gf::log().error("biomes: the Gloaming Forest biome source is unavailable: {}", e.what());
         return nullptr;
     }
     return data;
@@ -163,7 +163,7 @@ static int applyWaterColours() {
     if (!level) return 0;
     auto&                                  registry = level->getBiomeRegistry();
     int                                    n        = 0;
-    std::unordered_map<unsigned short, int> byId; // biome id -> TF's water (ARGB)
+    std::unordered_map<unsigned short, int> byId; // biome id -> upstream's water (ARGB)
     for (auto const& id : biomeIds()) {
         auto* biome = registry.lookupByName(id);
         auto  water = core::biomes::colors::water(id);
@@ -191,7 +191,7 @@ static int applyWaterColours() {
                 ++patched;
             }
         }
-        if (patched) gf::log().info("biomes: TF's water colours set in {} cached biome definitions", patched);
+        if (patched) gf::log().info("biomes: upstream's water colours set in {} cached biome definitions", patched);
     }
     return n;
 }
@@ -284,7 +284,7 @@ struct BiomesModule {
 private:
     static void setWaterColours() {
         int n = applyWaterColours();
-        gf::log().info("biomes: TF's water colours set on {} biomes", n);
+        gf::log().info("biomes: upstream's water colours set on {} biomes", n);
     }
 
     void tryInstall() {
@@ -303,7 +303,7 @@ private:
             return p ? p->mainBiome(blockX >> 2, blockZ >> 2) : std::string{};
         });
         registerSpawns();
-        gf::log().info("biomes: Twilight Forest biome source installed ({} layer stacks, {} biomes)", data->stacks.entries.size(), biomeIds().size());
+        gf::log().info("biomes: Gloaming Forest biome source installed ({} layer stacks, {} biomes)", data->stacks.entries.size(), biomeIds().size());
     }
 
     bool mInstalled       = false;

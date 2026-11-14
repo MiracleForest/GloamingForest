@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:cicada_jar"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:cicada"
+      },
+      {
+        "item": "gloamingforest:mason_jar"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:cicada"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:cicada_jar"
+    }
+  }
+}

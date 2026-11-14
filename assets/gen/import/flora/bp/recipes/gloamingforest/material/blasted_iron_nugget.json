@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:material/blasted_iron_nugget"
+    },
+    "tags": ["blast_furnace"],
+    "input": "gloamingforest:iron_berry",
+    "output": "minecraft:iron_nugget",
+    "unlock": [
+      {
+        "item": "gloamingforest:iron_berry"
+      }
+    ]
+  }
+}

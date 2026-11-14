@@ -1,5 +1,5 @@
 {
-  "type": "twilightforest:drying",
+  "type": "gloamingforest:drying",
   "ingredient": { "item": "gf_test:fixture_item" },
   "result": { "count": 1, "id": "minecraft:stick" },
   "time": 200

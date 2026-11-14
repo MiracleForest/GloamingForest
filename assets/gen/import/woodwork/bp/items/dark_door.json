@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:dark_door",
+      "identifier": "gloamingforest:dark_door",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:dark_door.name"
+        "value": "tile.gloamingforest:dark_door.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:dark_door",
+        "block": "gloamingforest:dark_door",
         "replace_block_item": true
       },
       "minecraft:fuel": {

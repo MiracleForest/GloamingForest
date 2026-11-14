@@ -2,7 +2,7 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shaped": {
     "description": {
-      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_boots/unrestrained_modifier"
+      "identifier": "gloamingforest:add_modifier_to_travellers_gear/travellers_boots/unrestrained_modifier"
     },
     "tags": [
       "crafting_table"
@@ -14,13 +14,13 @@
     ],
     "key": {
       "b": {
-        "item": "twilightforest:travellers_boots"
+        "item": "gloamingforest:travellers_boots"
       },
       "i": {
         "item": "minecraft:iron_ingot"
       },
       "k": {
-        "item": "twilightforest:knightmetal_ingot"
+        "item": "gloamingforest:knightmetal_ingot"
       },
       "n": {
         "item": "minecraft:iron_nugget"
@@ -28,11 +28,11 @@
     },
     "unlock": [
       {
-        "item": "twilightforest:travellers_boots"
+        "item": "gloamingforest:travellers_boots"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_boots"
+      "item": "gloamingforest:travellers_boots"
     }
   }
 }

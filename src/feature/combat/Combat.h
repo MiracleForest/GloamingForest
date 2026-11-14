@@ -4,14 +4,14 @@
 //
 // The single hurt hook of the mod (rule R8: no unit hooks Mob::hurt): incoming damage passes the
 // `onIncoming` handlers by priority (higher first) and may be changed or cancelled; `onDealt`
-// handlers hear about damage that was applied. TF's 40 damage types and their 70 death messages
+// handlers hear about damage that was applied. upstream's 40 damage types and their 70 death messages
 // are pre-registered from the imported data (DamageSources ASM equivalent).
 //
 //     gf::combat::onIncoming(0, [](gf::combat::DamageInfo& d) {
 //         if (d.type == "minecraft:fall" && wearsWings(d.victim)) return gf::combat::Verdict::Cancel;
 //         return gf::combat::Verdict::Pass;
 //     });
-//     gf::combat::hurt(target, 4.0f, "twilightforest:squished", attacker);
+//     gf::combat::hurt(target, 4.0f, "gloamingforest:squished", attacker);
 
 #include <functional>
 #include <string>
@@ -22,7 +22,7 @@ namespace gf::combat {
 
 struct DamageInfo {
     Actor&      victim;
-    std::string type;               ///< damage type id ("twilightforest:hydra_bite", "minecraft:fall")
+    std::string type;               ///< damage type id ("gloamingforest:hydra_bite", "minecraft:fall")
     Actor*      attacker = nullptr; ///< the responsible entity (causing entity)
     Actor*      direct   = nullptr; ///< the direct entity (projectile, ...)
     float       amount   = 0;

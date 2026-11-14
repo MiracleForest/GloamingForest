@@ -1,16 +1,16 @@
 #pragma once
 
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/SimplexNoiseHelper.java
-//   src/main/java/twilightforest/util/ColorUtil.java
-//   src/main/java/twilightforest/client/event/ColorHandler.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/SimplexNoiseHelper.java
+//   src/main/java/gloamingforest/util/ColorUtil.java
+//   src/main/java/gloamingforest/client/event/ColorHandler.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U5 (building): the towerwood colour (ColorHandler: towerwood, cracked and mossy towerwood; the
-// infested one is U26's block) from TF's own 3D simplex noise (SimplexNoiseHelper, Stefan
+// infested one is U26's block) from upstream's own 3D simplex noise (SimplexNoiseHelper, Stefan
 // Gustavson's public domain simplex noise in float precision) and ColorUtil#hsvToRGB. Pure C++.
 
 #include <cstdint>

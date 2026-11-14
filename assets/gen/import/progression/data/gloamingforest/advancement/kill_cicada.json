@@ -1,0 +1,31 @@
+{
+  "parent": "gloamingforest:root",
+  "criteria": {
+    "kill_cicada": {
+      "conditions": {
+        "bug": "gloamingforest:cicada"
+      },
+      "trigger": "gloamingforest:kill_bug"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancement.gloamingforest.kill_cicada.desc"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:cicada"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.kill_cicada"
+    }
+  },
+  "requirements": [
+    [
+      "kill_cicada"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

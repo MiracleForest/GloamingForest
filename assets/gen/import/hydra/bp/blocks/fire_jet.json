@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:fire_jet",
+      "identifier": "gloamingforest:fire_jet",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:state": ["idle", "popping", "flame", "timeout"]
+        "gloamingforest:state": ["idle", "popping", "flame", "timeout"]
       }
     },
     "components": {
@@ -53,7 +53,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:state') == 'flame'",
+        "condition": "q.block_state('gloamingforest:state') == 'flame'",
         "components": {
           "minecraft:light_emission": 15
         }

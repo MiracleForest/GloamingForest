@@ -1,0 +1,12 @@
+{
+  "advancements": [
+    "gloamingforest:progress_lich"
+  ],
+  "enforcement": "gloamingforest:frost",
+  "locked_biome_toast": {
+    "count": 1,
+    "id": "gloamingforest:lich_tower_miniature_structure"
+  },
+  "multiplier": 0.0,
+  "structure_key": "gloamingforest:yeti_cave"
+}

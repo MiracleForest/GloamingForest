@@ -1,0 +1,50 @@
+{
+  "parent": "gloamingforest:progress_naga",
+  "criteria": {
+    "chestplate": {
+      "conditions": {
+        "recipe_id": "gloamingforest:equipment/naga_chestplate"
+      },
+      "trigger": "minecraft:recipe_crafted"
+    },
+    "leggings": {
+      "conditions": {
+        "recipe_id": "gloamingforest:equipment/naga_leggings"
+      },
+      "trigger": "minecraft:recipe_crafted"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.naga_armors.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.naga_chestplate"
+        },
+        {
+          "translate": "item.gloamingforest.naga_leggings"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:naga_chestplate"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.naga_armors"
+    }
+  },
+  "requirements": [
+    [
+      "chestplate"
+    ],
+    [
+      "leggings"
+    ]
+  ],
+  "rewards": {
+    "experience": 25
+  },
+  "sends_telemetry_event": true
+}

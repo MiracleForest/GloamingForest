@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r0",
+        "identifier": "geometry.gloamingforest.building.alpha_yeti_trophy_r0",
         "texture_width": 256,
         "texture_height": 128,
         "visible_bounds_width": 3,
@@ -1419,7 +1419,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r1",
+        "identifier": "geometry.gloamingforest.building.alpha_yeti_trophy_r1",
         "texture_width": 256,
         "texture_height": 128,
         "visible_bounds_width": 3,
@@ -2835,7 +2835,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r2",
+        "identifier": "geometry.gloamingforest.building.alpha_yeti_trophy_r2",
         "texture_width": 256,
         "texture_height": 128,
         "visible_bounds_width": 3,
@@ -4251,7 +4251,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r3",
+        "identifier": "geometry.gloamingforest.building.alpha_yeti_trophy_r3",
         "texture_width": 256,
         "texture_height": 128,
         "visible_bounds_width": 3,

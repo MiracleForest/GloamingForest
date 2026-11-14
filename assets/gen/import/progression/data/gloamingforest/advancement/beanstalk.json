@@ -1,0 +1,63 @@
+{
+  "parent": "gloamingforest:progress_merge",
+  "criteria": {
+    "beans": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:magic_beans"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "use_beans": {
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": "gloamingforest:uberous_soil"
+              }
+            }
+          },
+          {
+            "condition": "minecraft:match_tool",
+            "predicate": {
+              "items": "gloamingforest:magic_beans"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:item_used_on_block"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.beanstalk.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.magic_beans"
+        }
+      ]
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:huge_stalk"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.beanstalk"
+    }
+  },
+  "requirements": [
+    [
+      "beans"
+    ],
+    [
+      "use_beans"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

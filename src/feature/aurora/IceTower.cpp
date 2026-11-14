@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerBossWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerRoofComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerBeardComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerDecorator.java
-//   src/main/java/twilightforest/world/components/structures/selectors/IceTowerRandomBlockSelectorFactory.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerBossWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerRoofComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerBeardComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/selectors/IceTowerRandomBlockSelectorFactory.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/aurora/IceTower.h"
@@ -36,17 +36,17 @@ using structure::bases::TowerWing;
 
 namespace {
 
-constexpr char kWing[]     = "twilightforest:TFITWin";
-constexpr char kMain[]     = "twilightforest:TFITMai";
-constexpr char kBoss[]     = "twilightforest:TFITBoss";
-constexpr char kEntrance[] = "twilightforest:TFITEnt";
-constexpr char kBridge[]   = "twilightforest:TFITBri";
-constexpr char kStairs[]   = "twilightforest:TFITSt";
-constexpr char kRoof[]     = "twilightforest:TFITRoof";
-constexpr char kBeard[]    = "twilightforest:TFITBea";
+constexpr char kWing[]     = "gloamingforest:TFITWin";
+constexpr char kMain[]     = "gloamingforest:TFITMai";
+constexpr char kBoss[]     = "gloamingforest:TFITBoss";
+constexpr char kEntrance[] = "gloamingforest:TFITEnt";
+constexpr char kBridge[]   = "gloamingforest:TFITBri";
+constexpr char kStairs[]   = "gloamingforest:TFITSt";
+constexpr char kRoof[]     = "gloamingforest:TFITRoof";
+constexpr char kBeard[]    = "gloamingforest:TFITBea";
 
-constexpr char kAuroraRoom[]  = "twilightforest:aurora_room";
-constexpr char kAuroraCache[] = "twilightforest:aurora_cache";
+constexpr char kAuroraRoom[]  = "gloamingforest:aurora_room";
+constexpr char kAuroraCache[] = "gloamingforest:aurora_cache";
 
 struct IceTowerDecoratorImpl final : Decorator {
     [[nodiscard]] std::string decoString() const override { return "DecoIceTower"; }
@@ -66,14 +66,14 @@ std::unique_ptr<Decorator> iceTowerDecorator() {
     auto d           = std::make_unique<IceTowerDecoratorImpl>();
     auto def         = structure::bases::defaultDecorator();
     d->roofState     = def->roofState; // TFStructureDecorator's default (IceTowerDecorator keeps it)
-    d->blockState    = &blocks::java("twilightforest:aurora_block");
+    d->blockState    = &blocks::java("gloamingforest:aurora_block");
     d->accentState   = &blocks::java("minecraft:birch_planks");
     d->fenceState    = &blocks::java("minecraft:oak_fence");
     d->stairState    = &blocks::java("minecraft:birch_stairs");
-    d->pillarState   = &blocks::java("twilightforest:aurora_pillar", Json{{"axis", "y"}});
+    d->pillarState   = &blocks::java("gloamingforest:aurora_pillar", Json{{"axis", "y"}});
     d->platformState = &blocks::java("minecraft:birch_slab");
     d->floorState    = &blocks::java("minecraft:birch_planks");
-    d->randomBlocks  = structure::selectors::get("twilightforest:ice_tower");
+    d->randomBlocks  = structure::selectors::get("gloamingforest:ice_tower");
     return d;
 }
 
@@ -158,7 +158,7 @@ bool IceTowerWing::makeTowerWing(PieceList& list, RandomSource& rand, int index,
         structure::bases::findCollisionPiece(list, BlockBox{sbb.minX, sbb.minY - grow, sbb.minZ, sbb.maxX, sbb.maxY + grow, sbb.maxZ});
     if (intersect && intersect != this) return false;
     for (auto const& p : list) {
-        // TF compares with this wing's rectangle, not the new wing's
+        // upstream compares with this wing's rectangle, not the new wing's
         if ((p->typeId == kEntrance || p->typeId == kBridge) && p.get() != this && awtIntersects(p->bbox, bbox)) return false;
     }
 
@@ -224,7 +224,7 @@ void IceTowerWing::makeFloorsForTower(Region& region, RandomSource& decoRNG, Blo
     for (auto const& o : openings) doors.push_back({o.x, o.y, o.z});
     auto plan = core::aurora::createFloorPlan(floors - 1, doors, decoRNG, [&] {
         auto c = structure::boxCenter(sbb);
-        gf::log().error("Unable to generate floor plan for aurora palace at {} {} {}. Please report mod version, coords, and seed to Twilight Forest devs", c.x,
+        gf::log().error("Unable to generate floor plan for aurora palace at {} {} {}. Please report mod version, coords, and seed to Gloaming Forest devs", c.x,
                         c.y, c.z);
     });
 
@@ -634,7 +634,7 @@ void IceTowerMain::addChildren(Piece& parent, PieceList& list, RandomSource& ran
         list.clear();
         if (keep) list.push_back(std::move(keep));
 
-        // the entrance: TF only handles the door it always has (x == 0); the other cases of its
+        // the entrance: upstream only handles the door it always has (x == 0); the other cases of its
         // towerBB arithmetic never happen
         BlockPos myDoor       = openings.front();
         BlockPos entranceDoor = myDoor;
@@ -715,7 +715,7 @@ void IceTowerBossWing::decorateTopFloor(Region& region, RandomSource& rand, int,
             int          thickness = rand.nextInt(2) + rand.nextInt(2);
             for (int y = 0; y < thickness; y++) placeBlock(region, ice, x, top - 1 - y, z, sbb);
         }
-    setBlockStateRotated(region, blocks::java("twilightforest:snow_queen_boss_spawner"), 7, top - 6, 7, Rotation::None, sbb);
+    setBlockStateRotated(region, blocks::java("gloamingforest:snow_queen_boss_spawner"), 7, top - 6, 7, Rotation::None, sbb);
     fillAir(region, sbb, 5, top - 3, 5, 9, top - 1, 9);
 }
 

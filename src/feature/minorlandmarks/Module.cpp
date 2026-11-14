@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // The U18 module (minorlandmarks): the hedge, the hollow hills, the hedge maze, the hollow trees,
-// the fallen trunks and TF's decorative feature types.
+// the fallen trunks and upstream's decorative feature types.
 
 #include "feature/minorlandmarks/Internal.h"
 #include "mod/Log.h"

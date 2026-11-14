@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/reversed/ironwood_block"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:ironwood_block"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:ironwood_block"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:ironwood_ingot",
+      "count": 9
+    }
+  }
+}

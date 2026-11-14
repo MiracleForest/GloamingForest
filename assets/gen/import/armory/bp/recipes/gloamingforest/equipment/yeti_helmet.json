@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/yeti_helmet"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "# #"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:alpha_yeti_fur"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:alpha_yeti_fur"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:yeti_helmet"
+    }
+  }
+}

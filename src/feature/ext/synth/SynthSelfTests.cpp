@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of the synthesized sounds (unit F3 "synth", prefix "synth.", testPos dx 5300..5399).
 //
-// synth.definitions  the assembled resource pack defines every TF sound event (328) as TF's inventory
-//                    says (SoundEvents.inc, generated from TF's sounds.json by
+// synth.definitions  the assembled resource pack defines every upstream sound event (328) as upstream's inventory
+//                    says (SoundEvents.inc, generated from upstream's sounds.json by
 //                    tools/sounds/baseline/generate.ps1, never from the recipes): the category of
-//                    TF's SoundSource, TF's subtitle key and TF's variants (count, volume, pitch,
+//                    upstream's SoundSource, upstream's subtitle key and upstream's variants (count, volume, pitch,
 //                    stream); every synthesized file exists and is a mono Ogg Vorbis stream; vanilla
 //                    references exist in the game's vanilla packs (client only).
 // synth.play_all     plays every event once, one per tick. On the client through the game's own sound
-//                    engine: an event it does not know fails, its subtitle must be TF's, a long
+//                    engine: an event it does not know fails, its subtitle must be upstream's, a long
 //                    synthesized sound must still be playing a quarter second later (a file the
 //                    engine cannot decode does not play) and the engine's volume and pitch must be
-//                    TF's. On the server through PlaySoundPacket (the path of gf::fx::sound) to every
+//                    upstream's. On the server through PlaySoundPacket (the path of gf::fx::sound) to every
 //                    real player; with none (a BDS without clients) it is skipped and says so.
 //
 // F3 owns no feature directory (docs/spec/owners.tsv): these tests live in the unit's extension
@@ -73,13 +73,13 @@ namespace {
 
 using gf::selftest::Context;
 
-// ---- TF's inventory (SoundEvents.inc) ---------------------------------------------------------------------
+// ---- upstream's inventory (SoundEvents.inc) ---------------------------------------------------------------------
 
 struct SoundEvent {
     char const* id;
     char const* owner;
     char const* category;
-    char const* subtitle; // "" when TF gives none
+    char const* subtitle; // "" when upstream gives none
     int         count;    // variants
 };
 
@@ -257,10 +257,10 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) -> ll::coro::CoroTask
         if (std::find(std::begin(kCategories), std::end(kCategories), cat) == std::end(kCategories)) {
             problem(std::string(ev.id) + ": bad category '" + cat + "'");
         } else if (cat != ev.category) {
-            problem(std::string(ev.id) + ": category '" + cat + "', TF plays it as '" + ev.category + "'");
+            problem(std::string(ev.id) + ": category '" + cat + "', upstream plays it as '" + ev.category + "'");
         }
         auto sub = def.value("subtitle", std::string{});
-        if (sub != ev.subtitle) problem(std::string(ev.id) + ": subtitle '" + sub + "', TF's is '" + ev.subtitle + "'");
+        if (sub != ev.subtitle) problem(std::string(ev.id) + ": subtitle '" + sub + "', upstream's is '" + ev.subtitle + "'");
         if (!sub.empty()) ++subtitles;
         auto const& sounds = def.contains("sounds") ? def["sounds"] : nlohmann::json::array();
         if (!sounds.is_array() || sounds.empty()) {
@@ -273,18 +273,18 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) -> ll::coro::CoroTask
         auto const wantKeys = variantKeys(variantsOf(i));
         if (gotKeys.size() != wantKeys.size()) {
             problem(
-                std::string(ev.id) + ": " + std::to_string(gotKeys.size()) + " variants, TF has "
+                std::string(ev.id) + ": " + std::to_string(gotKeys.size()) + " variants, upstream has "
                 + std::to_string(wantKeys.size())
             );
         } else if (gotKeys != wantKeys) {
             problem(
-                std::string(ev.id) + ": variants (volume|pitch|stream) " + joined(gotKeys) + ", TF's are "
+                std::string(ev.id) + ": variants (volume|pitch|stream) " + joined(gotKeys) + ", upstream's are "
                 + joined(wantKeys)
             );
         }
         for (auto const& s : sounds) {
             auto name = soundName(s);
-            if (name.rfind("sounds/twilightforest/", 0) == 0) {
+            if (name.rfind("sounds/gloamingforest/", 0) == 0) {
                 ++synthesized;
                 if (checkedFiles.insert(name).second) synthFiles.emplace_back(ev.id, name);
             } else {
@@ -334,7 +334,7 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(problems == 0, std::to_string(problems) + " sound definition problem(s)");
     ctx.info(
         std::to_string(std::size(kEvents)) + " events (" + std::to_string(std::size(kVariants)) + " variants, "
-        + std::to_string(subtitles) + " subtitles) as in TF's inventory, " + std::to_string(checkedFiles.size())
+        + std::to_string(subtitles) + " subtitles) as in upstream's inventory, " + std::to_string(checkedFiles.size())
         + " distinct sounds checked (" + std::to_string(synthesized) + " synthesized and " + std::to_string(vanillaRefs)
         + " vanilla references)"
     );
@@ -362,7 +362,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         if (it == defs.end() || !it->contains("sounds")) continue;
         for (auto const& s : (*it)["sounds"]) {
             auto const name        = soundName(s);
-            bool const synthesized = name.rfind("sounds/twilightforest/", 0) == 0;
+            bool const synthesized = name.rfind("sounds/gloamingforest/", 0) == 0;
             probes[i].push_back({synthesized ? pack / (name + ".ogg") : std::filesystem::path(), soundLevel(s).pitch});
         }
     }
@@ -403,7 +403,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         std::uint64_t              handle = 0;
         Clock::time_point          at{};
         bool                       played = false;
-        std::optional<std::string> subtitle, subtitleText; // the engine's, TF's key in the current language
+        std::optional<std::string> subtitle, subtitleText; // the engine's, upstream's key in the current language
         std::optional<float>       volume, pitch;
         int                        later = -1; // -1 not measured, 0 stopped, 1 still playing
     };
@@ -559,10 +559,10 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     };
     // what the engine reports, for the log (a level change of the engine shows up here first)
     for (auto id :
-         {"entity.twilightforest.parrot.imitate.alpha_yeti",
-          "entity.twilightforest.naga.hiss",
-          "music.twilightforest.twilight_forest",
-          "item.twilightforest.ore_meter.crackle"}) {
+         {"entity.gloamingforest.parrot.imitate.alpha_yeti",
+          "entity.gloamingforest.naga.hiss",
+          "music.gloamingforest.gloaming_forest",
+          "item.gloamingforest.ore_meter.crackle"}) {
         if (auto i = index(id); i < std::size(kEvents)) ctx.info("engine: " + describe(i));
     }
     ctx.info(
@@ -570,7 +570,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         + std::to_string(control.later) + ", unknown event handle " + std::to_string(bogus.handle)
     );
 
-    // 1. every TF event is known to the engine
+    // 1. every upstream event is known to the engine
     if (!known(control.handle) || known(bogus.handle)) {
         ctx.fail(
             "the sound engine does not tell known from unknown events (control " + std::to_string(control.handle)
@@ -584,7 +584,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     }
     ctx.check(missing == 0, std::to_string(missing) + " event(s) unknown to the client");
 
-    // 2. TF's subtitles (the engine may give the key or its text)
+    // 2. upstream's subtitles (the engine may give the key or its text)
     int badSubtitles = 0;
     for (std::size_t i = 0; i < std::size(kEvents); ++i) {
         std::string const want = kEvents[i].subtitle;
@@ -594,11 +594,11 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         if (!ok && ++badSubtitles <= 20)
             ctx.check(
                 false,
-                std::string(kEvents[i].id) + ": the engine's subtitle is '" + got.value_or("<none>") + "', TF's is '"
+                std::string(kEvents[i].id) + ": the engine's subtitle is '" + got.value_or("<none>") + "', upstream's is '"
                     + want + "'"
             );
     }
-    ctx.check(badSubtitles == 0, std::to_string(badSubtitles) + " event(s) without TF's subtitle in the engine");
+    ctx.check(badSubtitles == 0, std::to_string(badSubtitles) + " event(s) without upstream's subtitle in the engine");
 
     // 3. long synthesized sounds still play a quarter second later (a file the engine cannot load or
     // decode does not play); measured when the engine reports the long vanilla control still playing
@@ -623,7 +623,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         );
     }
 
-    // 4. the engine's volume and pitch of a play: calibrated on the events TF plays at 1.0 / 1.0 (the
+    // 4. the engine's volume and pitch of a play: calibrated on the events upstream plays at 1.0 / 1.0 (the
     // requested level when the engine applies the definition's), then checked on every event whose
     // variants share another level (the parrot imitations' 0.6 / 1.8, the music's 0.5, ...)
     int  calVol = 0, calPitch = 0, calVolOk = 0, calPitchOk = 0;
@@ -654,11 +654,11 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         if (bad && ++badLevels <= 20)
             ctx.check(
                 false,
-                describe(i) + ": TF's level is volume " + std::to_string(lvl->first) + " pitch "
+                describe(i) + ": upstream's level is volume " + std::to_string(lvl->first) + " pitch "
                     + std::to_string(lvl->second)
             );
     }
-    ctx.check(badLevels == 0, std::to_string(badLevels) + " event(s) not at TF's volume and pitch");
+    ctx.check(badLevels == 0, std::to_string(badLevels) + " event(s) not at upstream's volume and pitch");
     ctx.info(
         "engine levels: volume " + std::string(checkVol ? "checked" : "not checked") + " (" + std::to_string(calVolOk)
         + "/" + std::to_string(calVol) + " calibration plays at the requested volume), pitch "

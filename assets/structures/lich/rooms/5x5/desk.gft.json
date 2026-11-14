@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/5x5/desk",
+  "id": "gloamingforest:lich_tower/5x5/desk",
   "size": [7, 7, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -10,7 +10,7 @@
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:iron_bars"},
-    {"Name":"twilightforest:canopy_slab","Properties":{"type":"top"}}
+    {"Name":"gloamingforest:canopy_slab","Properties":{"type":"top"}}
   ],
   "blocks": [
     [1, 49], [3, 1], [1, 2], [2, 1], [1, 2], [3, 1], [1, 1], [2, 5], [1, 2], [2, 4], [6, 1], [1, 1], [2, 5], [6, 1], [1, 2], [2, 4],

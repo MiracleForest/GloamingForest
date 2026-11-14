@@ -1,0 +1,65 @@
+{
+  "key": "gloamingforest:hedge_maze",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/hedge_maze.json",
+  "structure": {
+    "biomes": "#gloamingforest:valid_hedge_maze_biomes",
+    "decoration_clearance": {
+      "adjust_structure_elevation": true,
+      "allow_biome_surface_decorations": false,
+      "allow_biome_underground_decorations": true,
+      "allow_biome_vegetation": true,
+      "chunk_clearance_radius": 2
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "surface_structures",
+    "structure_icon": "gloamingforest:hedge_maze",
+    "terrain_adaptation": "beard_box",
+    "type": "gloamingforest:hedge_maze"
+  },
+  "structure_set": {
+    "id": "gloamingforest:hedge_maze",
+    "placement": {
+      "structure_grid_lock": "gloamingforest:hedge_maze",
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:hedge_maze",
+        "weight": 1
+      }
+    ]
+  }
+}

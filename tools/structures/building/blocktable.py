@@ -1,14 +1,14 @@
-# GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-# Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-#   src/main/java/twilightforest/init/TFBlocks.java (the unit's block properties)
+# GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+# Translated from the upstream 4.8 source (commit 9e40a757):
+#   src/main/java/gloamingforest/init/TFBlocks.java (the unit's block properties)
 #   src/generated/resources/data/minecraft/tags/block/mineable/*.json, needs_*_tool.json (as listed
 #   in docs/spec/building.md, Appendix A)
-# Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+# Copyright (c) the upstream authors (see NOTICE).
 # Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 # of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #
 # U5 (building): the table of building.blocks (src/feature/building/BlockTable.inc): every block of
-# the unit with TF's hardness and explosion resistance (strength(h[, r]), instabreak(),
+# the unit with upstream's hardness and explosion resistance (strength(h[, r]), instabreak(),
 # ofFullCopy(X) chains resolved) and its mining tool and tier tags, from Appendix A of
 # docs/spec/building.md (TFBlocks' registration statements and the block tags).
 #
@@ -53,7 +53,7 @@ def rows():
         text = f.read()
     section = text[text.index("### Blocks ("):text.index("### Items (")]
     for line in section.splitlines():
-        m = re.match(r"^\| `twilightforest:([a-z_0-9]+)` \|", line)
+        m = re.match(r"^\| `gloamingforest:([a-z_0-9]+)` \|", line)
         if not m:
             continue
         cells = line.split("|")
@@ -123,7 +123,7 @@ def stonecutting():
             raise SystemExit("unexpected stonecutting row: " + line)
 
         def full(i):
-            return "minecraft:" + i[3:] if i.startswith("mc:") else "twilightforest:" + i
+            return "minecraft:" + i[3:] if i.startswith("mc:") else "gloamingforest:" + i
         lines.append('{"%s", "%s", %d},' % (full(cells[3]), full(m.group(1)), int(m.group(2) or 1)))
     return "\n".join(lines) + "\n"
 

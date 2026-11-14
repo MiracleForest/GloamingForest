@@ -2,23 +2,23 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:wraith",
+      "identifier": "gloamingforest:wraith",
       "materials": {
         "default": "entity_alphablend"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/ghost"
+        "default": "textures/gloamingforest/entity/ghost"
       },
       "geometry": {
-        "default": "geometry.twilightforest.wraith"
+        "default": "geometry.gloamingforest.wraith"
       },
       "render_controllers": [
-        "controller.render.twilightforest.wraith"
+        "controller.render.gloamingforest.wraith"
       ],
       "animations": {
-        "base": "animation.twilightforest.wraith.base",
+        "base": "animation.gloamingforest.wraith.base",
         "look_at_target": "animation.humanoid.look_at_target.default",
-        "legs": "animation.twilightforest.wraith.legs"
+        "legs": "animation.gloamingforest.wraith.legs"
       },
       "scripts": {
         "animate": [

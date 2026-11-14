@@ -11,6 +11,6 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $r = Invoke-SelfTest 'labyrinth.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) labyrinth selftest(s) failed" }
 if ($r.Pass -lt 13) { throw "expected at least 13 labyrinth selftests to pass, got $($r.Pass)" }
-foreach ($line in 'labyrinth: installed', 'boss: twilightforest:minoshroom_boss_spawner spawned twilightforest:minoshroom') {
+foreach ($line in 'labyrinth: installed', 'boss: gloamingforest:minoshroom_boss_spawner spawned gloamingforest:minoshroom') {
     if (-not (Get-ServerLog | Select-String -SimpleMatch $line -Quiet)) { throw "missing log line: $line" }
 }

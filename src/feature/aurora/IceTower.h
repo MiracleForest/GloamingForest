@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerBossWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerRoofComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerBeardComponent.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerDecorator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerBossWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerRoofComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerBeardComponent.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerDecorator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// The aurora palace's pieces ("twilightforest:TFIT*") on F7's tower base.
+// The aurora palace's pieces ("gloamingforest:TFIT*") on F7's tower base.
 
 #include <memory>
 
@@ -33,7 +33,7 @@ using structure::bases::PieceList;
 /// IceTowerDecorator ("DecoIceTower").
 [[nodiscard]] std::unique_ptr<structure::bases::Decorator> iceTowerDecorator();
 
-/// IceTowerWingComponent ("twilightforest:TFITWin").
+/// IceTowerWingComponent ("gloamingforest:TFITWin").
 class IceTowerWing : public structure::bases::TowerWing {
 public:
     static constexpr int SIZE  = 11;
@@ -65,7 +65,7 @@ protected:
     /// decorateFloor(world, rand, floorType, floor, ...) of the regular wings (`type`: a core::aurora::FloorType).
     void decorateFloorOfType(Region& region, RandomSource& rand, int type, int floor, int bottom, int top, Rotation ladderUpDir, Rotation ladderDownDir,
                              BlockBox const& sbb);
-    [[nodiscard]] bool isBossWing() const { return typeId == "twilightforest:TFITBoss"; }
+    [[nodiscard]] bool isBossWing() const { return typeId == "gloamingforest:TFITBoss"; }
 
     [[nodiscard]] Orientation getChestDirection(Rotation rotation) const;
     void decoratePillars(Region& region, int bottom, int top, Rotation rotation, BlockBox const& sbb);
@@ -85,7 +85,7 @@ protected:
     void decoratePillarParkour(Region& region, int bottom, int top, Rotation ladderUpDir, Rotation ladderDownDir, bool hasTreasure, BlockBox const& sbb);
 };
 
-/// IceTowerMainComponent ("twilightforest:TFITMai").
+/// IceTowerMainComponent ("gloamingforest:TFITMai").
 class IceTowerMain : public IceTowerWing {
 public:
     /// IceTowerMainComponent(rand, index, x, y, z): the tower at (x + 11, y + 40, z + 11), NORTH.
@@ -104,7 +104,7 @@ private:
     bool makeEntranceTower(PieceList& list, RandomSource& rand, int index, int x, int y, int z, int wingSize, int wingHeight, Rotation rotation);
 };
 
-/// IceTowerBossWingComponent ("twilightforest:TFITBoss").
+/// IceTowerBossWingComponent ("gloamingforest:TFITBoss").
 class IceTowerBossWing : public IceTowerWing {
 public:
     IceTowerBossWing(int index, int x, int y, int z, int wingSize, int wingHeight, Orientation direction);
@@ -121,7 +121,7 @@ private:
     void placeIceStairs(Region& region, BlockBox const& sbb, RandomSource& rand, int y, Rotation rotation);
 };
 
-/// IceTowerEntranceComponent ("twilightforest:TFITEnt").
+/// IceTowerEntranceComponent ("gloamingforest:TFITEnt").
 class IceTowerEntrance : public IceTowerWing {
 public:
     IceTowerEntrance(int index, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -138,7 +138,7 @@ private:
     void decoratePillarsCornersHigh(Region& region, int bottom, int top, Rotation rotation, BlockBox const& sbb);
 };
 
-/// IceTowerBridgeComponent ("twilightforest:TFITBri").
+/// IceTowerBridgeComponent ("gloamingforest:TFITBri").
 class IceTowerBridge : public structure::bases::ComponentOld {
 public:
     IceTowerBridge(int index, int x, int y, int z, int length, int zLength, Orientation direction);
@@ -153,7 +153,7 @@ private:
     int extraZlength = 0;
 };
 
-/// IceTowerStairsComponent ("twilightforest:TFITSt").
+/// IceTowerStairsComponent ("gloamingforest:TFITSt").
 class IceTowerStairs : public structure::bases::TowerWing {
 public:
     static constexpr int stairsLength = 5;
@@ -166,7 +166,7 @@ private:
     void placeStairs(Region& region, BlockBox const& sbb, int x, int y, int z);
 };
 
-/// IceTowerRoofComponent ("twilightforest:TFITRoof").
+/// IceTowerRoofComponent ("gloamingforest:TFITRoof").
 class IceTowerRoof : public structure::bases::TowerRoof {
 public:
     IceTowerRoof(int index, structure::bases::TowerWing const& wing, int x, int y, int z);
@@ -175,7 +175,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// IceTowerBeardComponent ("twilightforest:TFITBea").
+/// IceTowerBeardComponent ("gloamingforest:TFITBea").
 class IceTowerBeard : public structure::bases::ComponentOld {
 public:
     IceTowerBeard(int index, structure::bases::TowerWing const& wing, int x, int y, int z);

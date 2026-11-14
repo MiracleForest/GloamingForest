@@ -1,24 +1,24 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/layer/BiomeDensitySource.java
-//   src/main/java/twilightforest/world/components/layer/RandomBiomeLayer.java
-//   src/main/java/twilightforest/world/components/layer/KeyBiomesLayer.java
-//   src/main/java/twilightforest/world/components/layer/CompanionBiomesLayer.java
-//   src/main/java/twilightforest/world/components/layer/BorderLayer.java
-//   src/main/java/twilightforest/world/components/layer/StabilizeLayer.java
-//   src/main/java/twilightforest/world/components/layer/SeamLayer.java
-//   src/main/java/twilightforest/world/components/layer/FilteredBiomeLayer.java
-//   src/main/java/twilightforest/world/components/layer/MedianLayer.java
-//   src/main/java/twilightforest/world/components/layer/IThornsTransformer.java
-//   src/main/java/twilightforest/world/components/layer/vanillalegacy/ZoomLayer.java
-//   src/main/java/twilightforest/world/components/layer/vanillalegacy/SmoothLayer.java
-//   src/main/java/twilightforest/world/components/layer/vanillalegacy/area/LazyArea.java
-//   src/main/java/twilightforest/world/components/layer/vanillalegacy/context/LazyAreaContext.java
-//   src/main/java/twilightforest/world/components/layer/vanillalegacy/context/RandomContext.java
-//   src/main/java/twilightforest/world/components/layer/vanillalegacy/traits/CastleTransformer.java
-//   src/main/java/twilightforest/world/components/biomesources/TFBiomeProvider.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainColumn.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/layer/BiomeDensitySource.java
+//   src/main/java/gloamingforest/world/components/layer/RandomBiomeLayer.java
+//   src/main/java/gloamingforest/world/components/layer/KeyBiomesLayer.java
+//   src/main/java/gloamingforest/world/components/layer/CompanionBiomesLayer.java
+//   src/main/java/gloamingforest/world/components/layer/BorderLayer.java
+//   src/main/java/gloamingforest/world/components/layer/StabilizeLayer.java
+//   src/main/java/gloamingforest/world/components/layer/SeamLayer.java
+//   src/main/java/gloamingforest/world/components/layer/FilteredBiomeLayer.java
+//   src/main/java/gloamingforest/world/components/layer/MedianLayer.java
+//   src/main/java/gloamingforest/world/components/layer/IThornsTransformer.java
+//   src/main/java/gloamingforest/world/components/layer/vanillalegacy/ZoomLayer.java
+//   src/main/java/gloamingforest/world/components/layer/vanillalegacy/SmoothLayer.java
+//   src/main/java/gloamingforest/world/components/layer/vanillalegacy/area/LazyArea.java
+//   src/main/java/gloamingforest/world/components/layer/vanillalegacy/context/LazyAreaContext.java
+//   src/main/java/gloamingforest/world/components/layer/vanillalegacy/context/RandomContext.java
+//   src/main/java/gloamingforest/world/components/layer/vanillalegacy/traits/CastleTransformer.java
+//   src/main/java/gloamingforest/world/components/biomesources/TFBiomeProvider.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainColumn.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/biomes/BiomeLayers.h"
@@ -85,7 +85,7 @@ struct RandomContext {
 
 // ---- LazyArea --------------------------------------------------------------------------------
 
-/// A layer with TF's LazyArea cache. The cache only avoids recomputation (TF's samples are pure
+/// A layer with upstream's LazyArea cache. The cache only avoids recomputation (upstream's samples are pure
 /// functions of (x, z)); here it is a lock-free direct-mapped table whose entries carry their own
 /// coordinates, so concurrent readers never see another pixel's value.
 class CachedLayer : public Layer {
@@ -391,7 +391,7 @@ private:
     std::unique_ptr<Layer> mFallback, mFiltered;
 };
 
-/// MedianLayer as TF's code behaves: the first biome (index order) seen at least 5 times in the
+/// MedianLayer as upstream's code behaves: the first biome (index order) seen at least 5 times in the
 /// 3x3 (x .. x+2, z .. z+2), else the sample at (x, z). The tie branch never runs (its count
 /// starts at 0 and every count is at least 1), so no context random is drawn.
 class MedianLayer final : public CachedLayer {
@@ -419,7 +419,7 @@ private:
 
 std::string typeOf(Json const& j) {
     std::string t = normalize(j.at("layer_type").get<std::string>());
-    if (t.starts_with("twilightforest:")) return t.substr(15);
+    if (t.starts_with("gloamingforest:")) return t.substr(15);
     throw std::runtime_error("unknown biome layer type " + t);
 }
 
@@ -478,10 +478,10 @@ std::unique_ptr<Layer> build(Json const& j, LayerStackRegistry const& reg, Biome
         return std::make_unique<FilteredBiomeLayer>(s, keep, std::move(fallback), std::move(filtered));
     }
     if (type == "median") return std::make_unique<MedianLayer>(s, parent());
-    throw std::runtime_error("unknown biome layer type twilightforest:" + type);
+    throw std::runtime_error("unknown biome layer type gloamingforest:" + type);
 }
 
-/// The terrain values are density function holders in TF; its data ships constants.
+/// The terrain values are density function holders in upstream; its data ships constants.
 double constantOf(Json const& j, char const* key) {
     auto const& v = j.at(key);
     if (v.is_number()) return v.get<double>();
@@ -593,7 +593,7 @@ TerrainColumn const* BiomeProvider::terrainColumn(std::string const& keyBiome) c
 std::string const& BiomeProvider::mainBiome(int quartX, int quartZ) const {
     BiomeKey k = mStack->get(quartX, quartZ);
     if (k < mColumnOfKey.size() && mColumnOfKey[k]) return mColumnOfKey[k]->key;
-    return mNames.name(k); // TF throws here (no column); the stack's biome is the best answer
+    return mNames.name(k); // upstream throws here (no column); the stack's biome is the best answer
 }
 
 std::string const& BiomeProvider::noiseBiome(int quartX, int quartY, int quartZ) const {

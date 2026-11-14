@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.naga": "Naga",
-  "item.twilightforest.naga_spawn_egg": "Jajo przyzywające Nagę",
-  "subtitles.twilightforest.entity.naga.hiss": "Naga syczy",
-  "subtitles.twilightforest.entity.naga.hurt": "Naga zraniona",
-  "subtitles.twilightforest.entity.naga.rattle": "Naga grzechocze"
+  "entity.gloamingforest.naga": "Naga",
+  "item.gloamingforest.naga_spawn_egg": "Jajo przyzywające Nagę",
+  "subtitles.gloamingforest.entity.naga.hiss": "Naga syczy",
+  "subtitles.gloamingforest.entity.naga.hurt": "Naga zraniona",
+  "subtitles.gloamingforest.entity.naga.rattle": "Naga grzechocze"
 }

@@ -2,8 +2,8 @@
 // build only.
 //
 // F12's SkyProvider gives a dimension its cloud height but not the clouds' colour, and Bedrock tints
-// the sky and the clouds with its own sunrise / sunset colour (time 13000 in the Twilight Forest is
-// Bedrock's dusk). TF's TwilightForestRenderInfo has no sunrise colour (getSunriseColor returns
+// the sky and the clouds with its own sunrise / sunset colour (time 13000 in the Gloaming Forest is
+// Bedrock's dusk). upstream's GloamingForestRenderInfo has no sunrise colour (getSunriseColor returns
 // null) and its clouds take ClientLevel#getCloudColor. A view override sets, for the frame of a
 // dimension, the colour the clouds are drawn in and hides the sunrise colour band
 // (ViewRenderObject::mCloudState.mCloudColor, mViewData.mSunriseColor, set in

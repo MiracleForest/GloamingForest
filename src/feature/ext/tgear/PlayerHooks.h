@@ -5,11 +5,11 @@
 // Armour damage (NeoForge's ArmorHurtEvent), which no W0 contract offers: Mob::hurtArmorSlots and its
 // ServerPlayer override are wrapped (the outermost call of a wearer only). Listeners get:
 //   - before the game applies it, the wearer, the damage and the armour slots to hurt (bits 0 head ..
-//     3 feet, 4 body), and may take slots out of the set to damage those pieces themselves (TF's
+//     3 feet, 4 body), and may take slots out of the set to damage those pieces themselves (upstream's
 //     stopDamagingTravellersGear changes the new damage of a slot, which Bedrock's hurtArmorSlots has
 //     no parameter for);
 //   - after it, the wearer and its four armour stacks from before the damage.
-// U11 uses it for TF's never-break rule of Travellers' Gear and the last armour damage time of auto
+// U11 uses it for upstream's never-break rule of Travellers' Gear and the last armour damage time of auto
 // repair.
 //
 //     gf::ext::tgear::onArmorHurtPre([](Mob& m, int damage, std::bitset<5>& slots) { ... });

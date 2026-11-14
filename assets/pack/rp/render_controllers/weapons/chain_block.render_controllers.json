@@ -1,11 +1,11 @@
 {
   "format_version": "1.10.0",
   "render_controllers": {
-    "controller.render.twilightforest.chain_block": {
+    "controller.render.gloamingforest.chain_block": {
       "geometry": "Geometry.default",
       "materials": [
         {
-          "*": "query.property('twilightforest:foil') ? Material.foil : Material.default"
+          "*": "query.property('gloamingforest:foil') ? Material.foil : Material.default"
         }
       ],
       "textures": [

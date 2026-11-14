@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:winter_wolf",
+      "identifier": "gloamingforest:winter_wolf",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "winter_wolf", "monster", "mob"]
+        "family": ["gloamingforest", "winter_wolf", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 1.4,

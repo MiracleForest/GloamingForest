@@ -14,7 +14,7 @@
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"east","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:mossy_stone_bricks"},
-    {"Name":"twilightforest:hedge"},
+    {"Name":"gloamingforest:hedge"},
     {"Name":"minecraft:grass_block"}
   ],
   "blocks": [

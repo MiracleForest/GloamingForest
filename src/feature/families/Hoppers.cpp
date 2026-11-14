@@ -4,7 +4,7 @@
 // the right half first), the blocked rule ignored; RandomizableContainerBlockEntity rolls a pending
 // loot table on any access of its slots).
 //
-// TF's chests are vanilla ChestBlock / TrappedChestBlock in Java, so hoppers, hopper minecarts and
+// upstream's chests are vanilla ChestBlock / TrappedChestBlock in Java, so hoppers, hopper minecarts and
 // droppers fill and empty them. Here a chest keeps its slots in the inventory contract's native
 // backend (F10, spike S3): the game container F10 gives the data-driven block actor that
 // tools/families declares with minecraft:block_entity. The game's hopper and dropper ask a block
@@ -12,7 +12,7 @@
 // not have, so they would see nothing there: three hooks hand them the native container instead
 // (Hopper::_getContainerInBlock and Hopper::_getContainersAt for hoppers and hopper minecarts,
 // DropperBlockActor::getContainerAt for droppers). Only blocks hoppers may reach get one
-// (feature/ext/families/Hoppers.h: by default the chest-like declarations, TF's chests among them;
+// (feature/ext/families/Hoppers.h: by default the chest-like declarations, upstream's chests among them;
 // other units opt their Container block entities in); a block kept in block data (no
 // minecraft:block_entity) stays invisible to them.
 //
@@ -328,7 +328,7 @@ Container* hopperContainerAt(BlockSource& region, BlockPos const& pos) {
     // a data-driven block actor (minecraft:block_entity) of a block hoppers may reach
     auto* actor = region.getBlockEntity(pos);
     if (!actor) {
-        // a TF chest half saved without its block actor: it gets one at the end of the tick (with
+        // an upstream chest half saved without its block actor: it gets one at the end of the tick (with
         // its partner), and the hopper sees the chest from the next tick on
         detail::settleWithoutActor(region, pos);
         return nullptr;

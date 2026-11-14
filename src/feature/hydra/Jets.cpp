@@ -1,24 +1,24 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/FireJetBlock.java
-//   src/main/java/twilightforest/block/EncasedFireJetBlock.java
-//   src/main/java/twilightforest/block/TFSmokerBlock.java
-//   src/main/java/twilightforest/block/EncasedSmokerBlock.java
-//   src/main/java/twilightforest/block/entity/FireJetBlockEntity.java
-//   src/main/java/twilightforest/block/entity/TFSmokerBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/FireJetBlock.java
+//   src/main/java/gloamingforest/block/EncasedFireJetBlock.java
+//   src/main/java/gloamingforest/block/TFSmokerBlock.java
+//   src/main/java/gloamingforest/block/EncasedSmokerBlock.java
+//   src/main/java/gloamingforest/block/entity/FireJetBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/TFSmokerBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Fire jets and smokers. Custom blocks have no block entities (S3): the jets' FireJetBlockEntity
-// (twilightforest:flame_jet) ticks every popping / flaming jet from a registry of positions, the
-// smokers' TFSmokerBlockEntity (twilightforest:smoker) every smoker near a player. The registry is
+// (gloamingforest:flame_jet) ticks every popping / flaming jet from a registry of positions, the
+// smokers' TFSmokerBlockEntity (gloamingforest:smoker) every smoker near a player. The registry is
 // filled when a jet starts (random tick, redstone) and by a palette scan around the players (a jet
 // still popping or flaming after a reload, the jets and smokers the fire_jet feature generates);
 // every other placed one (a player's, /setblock's, a structure's) is remembered in the world DB
 // (gf:hydra:jets) and comes back with its chunk, as Java's block entities do (watches are dropped while the chunk is unloaded). The encased blocks
 // read redstone through gf::redstone (custom blocks get no neighbour updates): F11's neighbour
-// changes plus a watch on every encased block the scan or a placement found. TF's client-side
+// changes plus a watch on every encased block the scan or a placement found. upstream's client-side
 // effects (particles, the jet's active / start sounds) go out through gf::fx.
 
 #include "feature/hydra/Hydra.h"
@@ -97,7 +97,7 @@ JetState& J() {
     return s;
 }
 
-/// The positions the twilightforest:fire_jet feature placed a jet or smoker at, until their
+/// The positions the gloamingforest:fire_jet feature placed a jet or smoker at, until their
 /// placement is seen (world generation may run off the server thread). Bounded: the oldest are
 /// dropped beyond kGeneratedMax (a placement the game never reports).
 struct Generated {
@@ -130,7 +130,7 @@ bool isJet(std::string const& id) { return id == kFireJet || id == kEncasedJet; 
 bool isSmoker(std::string const& id) { return id == kSmoker || id == kEncasedSmoker; }
 
 void setJetState(BlockSource& region, BlockPos const& pos, std::string const& id, char const* value) {
-    if (auto const* b = game::blockWithStates(id, {{"twilightforest:state", value}})) game::setBlock(region, pos, *b);
+    if (auto const* b = game::blockWithStates(id, {{"gloamingforest:state", value}})) game::setBlock(region, pos, *b);
 }
 
 void sound(BlockSource& region, BlockPos const& pos, double dx, double dy, double dz, char const* event, float volume, float pitch) {
@@ -139,14 +139,14 @@ void sound(BlockSource& region, BlockPos const& pos, double dx, double dy, doubl
 
 void track(GlobalPos const& gp) { J().jets.try_emplace(gp); }
 
-/// FireJetBlock#isLava: #twilightforest:fire_jet_fuel blocks or a fluid of the fluid tag (lava).
+/// FireJetBlock#isLava: #gloamingforest:fire_jet_fuel blocks or a fluid of the fluid tag (lava).
 bool isLava(BlockSource& region, BlockPos const& pos) {
     auto id = idAt(region, pos);
     if (id.empty()) return false;
-    if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:fire_jet_fuel", id)) return true;
-    // the fluid tag twilightforest:fire_jet_fuel = #minecraft:lava (still and flowing lava)
+    if (gf::tags::has(gf::tags::Registry::Block, "gloamingforest:fire_jet_fuel", id)) return true;
+    // the fluid tag gloamingforest:fire_jet_fuel = #minecraft:lava (still and flowing lava)
     return id == "minecraft:lava" || id == "minecraft:flowing_lava"
-        || gf::tags::has(gf::tags::Registry::Fluid, "twilightforest:fire_jet_fuel", id);
+        || gf::tags::has(gf::tags::Registry::Fluid, "gloamingforest:fire_jet_fuel", id);
 }
 
 /// FireJetBlock#findLavaAround: the block itself, else 3 tries on its layer (intentionally unreliable).
@@ -162,7 +162,7 @@ BlockPos findLavaAround(BlockSource& region, BlockPos const& pos, core::jrand::R
 }
 
 void jetRandomTick(BlockSource& region, BlockPos const& pos, Block const& block, core::jrand::RandomSource& random) {
-    if (stateValue(block, "twilightforest:state") != "idle") return;
+    if (stateValue(block, "gloamingforest:state") != "idle") return;
     BlockPos below{pos.x, pos.y - 1, pos.z};
     BlockPos lavaPos = findLavaAround(region, below, random);
     if (!isLava(region, lavaPos)) return;
@@ -177,11 +177,11 @@ void encasedUpdate(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     auto         id    = game::blockId(block);
     if (id == kEncasedJet) {
-        auto variant = stateValue(block, "twilightforest:state");
+        auto variant = stateValue(block, "gloamingforest:state");
         bool powered = gf::redstone::powered(region, pos);
         if (variant == "idle" && powered) {
             setJetState(region, pos, kEncasedJet, "popping");
-            sound(region, pos, 0.5, 0.5, 0.5, "block.twilightforest.jet.start", 0.3F, 0.6F);
+            sound(region, pos, 0.5, 0.5, 0.5, "block.gloamingforest.jet.start", 0.3F, 0.6F);
             track(game::globalPos(region, pos));
             log().info("hydra: encased fire jet at {} {} {} powered: popping", pos.x, pos.y, pos.z);
         } else if (variant == "timeout" && !powered) {
@@ -190,10 +190,10 @@ void encasedUpdate(BlockSource& region, BlockPos const& pos) {
         }
     } else if (id == kEncasedSmoker) {
         bool powered = gf::redstone::powered(region, pos);
-        bool active  = stateValue(block, "twilightforest:active") == "true";
+        bool active  = stateValue(block, "gloamingforest:active") == "true";
         if (active != powered) {
-            if (auto const* b = game::blockWithStates(kEncasedSmoker, {{"twilightforest:active", powered}})) game::setBlock(region, pos, *b);
-            sound(region, pos, 0.5, 0.5, 0.5, "block.twilightforest.smoker.start", 0.3F, 0.6F);
+            if (auto const* b = game::blockWithStates(kEncasedSmoker, {{"gloamingforest:active", powered}})) game::setBlock(region, pos, *b);
+            sound(region, pos, 0.5, 0.5, 0.5, "block.gloamingforest.smoker.start", 0.3F, 0.6F);
             J().smokers.try_emplace(game::globalPos(region, pos));
             log().info("hydra: encased smoker at {} {} {} {}", pos.x, pos.y, pos.z, powered ? "active" : "inactive");
         }
@@ -242,7 +242,7 @@ void jetHurtEntities(BlockSource& region, BlockPos const& pos) {
     for (auto id : ids) {
         Actor* e = fe::actorById(id);
         if (!e || !e->isAlive()) continue;
-        gf::combat::hurt(*e, 2.0F, "twilightforest:fire_jet");
+        gf::combat::hurt(*e, 2.0F, "gloamingforest:fire_jet");
         if ((e = fe::actorById(id)) && e->isAlive()) e->setOnFire(15, true); // setRemainingFireTicks(300)
     }
 }
@@ -256,7 +256,7 @@ bool tickJet(GlobalPos const& gp, Jet& jet) {
     Block const& block = region->getBlock(pos);
     auto         id    = game::blockId(block);
     if (!isJet(id)) return false;
-    auto  variant = stateValue(block, "twilightforest:state");
+    auto  variant = stateValue(block, "gloamingforest:state");
     auto& r       = J().random;
     if (variant == "popping") {
         if (++jet.counter >= 80) {
@@ -267,7 +267,7 @@ bool tickJet(GlobalPos const& gp, Jet& jet) {
         } else if (jet.counter % 20 == 0) {
             for (int i = 0; i < 8; i++)
                 gf::fx::particle(region->getDimension(), "minecraft:lava", Vec3{pos.x + 0.5F, pos.y + 1.5F, pos.z + 0.5F});
-            sound(*region, pos, 0.5, 0.5, 0.5, "block.twilightforest.jet.pop", 0.2F + r.nextFloat() * 0.2F, 0.9F + r.nextFloat() * 0.15F);
+            sound(*region, pos, 0.5, 0.5, 0.5, "block.gloamingforest.jet.pop", 0.2F + r.nextFloat() * 0.2F, 0.9F + r.nextFloat() * 0.15F);
         }
         return true;
     }
@@ -289,18 +289,18 @@ bool tickJet(GlobalPos const& gp, Jet& jet) {
             // large_explosion (a pale explosion puff, routed to F10); the unit's stand-in effect
             // gf_hydra:large_smoke is Java's SmokeParticle at scale 2.5 (the huge smoke's maths)
             gf::fx::particle(dim, kLargeSmokeStandIn, at(0.5, 0.5));
-            gf::fx::particle(dim, "twilightforest:large_flame", at(0.5, 0.5), Vec3{0.0F, 0.5F, 0.0F});
-            gf::fx::particle(dim, "twilightforest:large_flame", at(-0.5, 0.5), Vec3{0.05F, 0.5F, 0.0F});
-            gf::fx::particle(dim, "twilightforest:large_flame", at(0.5, -0.5), Vec3{0.0F, 0.5F, 0.05F});
-            gf::fx::particle(dim, "twilightforest:large_flame", at(1.5, 0.5), Vec3{-0.05F, 0.5F, 0.0F});
-            gf::fx::particle(dim, "twilightforest:large_flame", at(0.5, 1.5), Vec3{0.0F, 0.5F, -0.05F});
+            gf::fx::particle(dim, "gloamingforest:large_flame", at(0.5, 0.5), Vec3{0.0F, 0.5F, 0.0F});
+            gf::fx::particle(dim, "gloamingforest:large_flame", at(-0.5, 0.5), Vec3{0.05F, 0.5F, 0.0F});
+            gf::fx::particle(dim, "gloamingforest:large_flame", at(0.5, -0.5), Vec3{0.0F, 0.5F, 0.05F});
+            gf::fx::particle(dim, "gloamingforest:large_flame", at(1.5, 0.5), Vec3{-0.05F, 0.5F, 0.0F});
+            gf::fx::particle(dim, "gloamingforest:large_flame", at(0.5, 1.5), Vec3{0.0F, 0.5F, -0.05F});
         }
         // sounds
         if (jet.counter % 4 == 0)
-            gf::fx::sound(dim, "block.twilightforest.jet.active", Vec3{static_cast<float>(x + 0.5), static_cast<float>(y + 0.5), static_cast<float>(z + 0.5)}, 1.0F + r.nextFloat(),
+            gf::fx::sound(dim, "block.gloamingforest.jet.active", Vec3{static_cast<float>(x + 0.5), static_cast<float>(y + 0.5), static_cast<float>(z + 0.5)}, 1.0F + r.nextFloat(),
                           r.nextFloat() * 0.7F + 0.3F);
         else if (jet.counter == 1)
-            gf::fx::sound(dim, "block.twilightforest.jet.start", Vec3{static_cast<float>(x + 0.5), static_cast<float>(y + 0.5), static_cast<float>(z + 0.5)}, 1.0F + r.nextFloat(),
+            gf::fx::sound(dim, "block.gloamingforest.jet.start", Vec3{static_cast<float>(x + 0.5), static_cast<float>(y + 0.5), static_cast<float>(z + 0.5)}, 1.0F + r.nextFloat(),
                           r.nextFloat() * 0.7F + 0.3F);
         // actual fire effects
         if (jet.counter % 5 == 0) jetHurtEntities(*region, pos);
@@ -320,10 +320,10 @@ bool tickSmoker(GlobalPos const& gp, Smoker& s) {
     auto         id    = game::blockId(block);
     if (!isSmoker(id)) return false;
     if (++s.counter % 4 == 0) {
-        bool on = id == kSmoker || stateValue(block, "twilightforest:active") == "true";
+        bool on = id == kSmoker || stateValue(block, "gloamingforest:active") == "true";
         if (on) {
             double c = static_cast<double>(s.counter) / 10.0;
-            gf::fx::particle(region->getDimension(), "twilightforest:huge_smoke", Vec3{pos.x + 0.5F, pos.y + 0.95F, pos.z + 0.5F},
+            gf::fx::particle(region->getDimension(), "gloamingforest:huge_smoke", Vec3{pos.x + 0.5F, pos.y + 0.95F, pos.z + 0.5F},
                              Vec3{static_cast<float>(std::cos(c) * 0.05), 0.25F, static_cast<float>(std::sin(c) * 0.05)});
             ++J().smokeParticles;
         }
@@ -332,7 +332,7 @@ bool tickSmoker(GlobalPos const& gp, Smoker& s) {
 }
 
 /// Finds the jets and smokers the world generation placed (and the ones a reload left popping or
-/// flaming) around the players in the Twilight Forest, once a second. Blocks placed in any
+/// flaming) around the players in the Gloaming Forest, once a second. Blocks placed in any
 /// dimension are known from their placement (onPlaced), jets that start from a random tick or
 /// redstone register themselves.
 void scan() {
@@ -345,7 +345,7 @@ void scan() {
     if (!lv) return;
     std::vector<GlobalPos> found;
     lv->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
-        if (!gf::world::isTwilight(p.getDimension())) return true;
+        if (!gf::world::isGloaming(p.getDimension())) return true;
         int   dim    = static_cast<int>(p.getDimensionId());
         auto* region = game::regionOf(dim);
         if (!region) return true;
@@ -371,7 +371,7 @@ void scan() {
         Block const& block = region->getBlock(pos);
         auto         id    = game::blockId(block);
         if (isJet(id)) {
-            auto v = stateValue(block, "twilightforest:state");
+            auto v = stateValue(block, "gloamingforest:state");
             if (v == "popping" || v == "flame") track(gp);
         }
         if (id == kEncasedJet || id == kEncasedSmoker) watch(*region, pos);
@@ -439,7 +439,7 @@ void revisit() {
         if (id == kEncasedJet || id == kEncasedSmoker) watch(*region, pos);
         if (isSmoker(id)) s.smokers.try_emplace(*it);
         if (isJet(id)) {
-            auto v = stateValue(block, "twilightforest:state");
+            auto v = stateValue(block, "gloamingforest:state");
             if (v == "popping" || v == "flame") track(*it);
         }
         ++it;
@@ -472,7 +472,7 @@ void onLevelTick() {
 std::string jetState(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (!isJet(game::blockId(block))) return {};
-    return stateValue(block, "twilightforest:state");
+    return stateValue(block, "gloamingforest:state");
 }
 
 void randomTickJet(BlockSource& region, BlockPos const& pos) { jetRandomTick(region, pos, region.getBlock(pos), J().random); }
@@ -533,7 +533,7 @@ void installJets() {
         // a jet placed already popping or flaming has a ticking block entity at once (any dimension)
         for (auto const* id : {kFireJet, kEncasedJet})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const& block, Actor*) {
-                auto v = stateValue(block, "twilightforest:state");
+                auto v = stateValue(block, "gloamingforest:state");
                 if (v == "popping" || v == "flame") track(game::globalPos(region, pos));
             });
         for (auto const* id : {kSmoker, kEncasedSmoker})
@@ -541,7 +541,7 @@ void installJets() {
         // the jets and smokers placed are remembered with the world: their "block entity" comes back
         // with its chunk however far it is from the players, whoever placed them (a player,
         // /setblock, /fill, a structure, another unit's code). Only the fire swamp's generated ones
-        // (the twilightforest:fire_jet feature notes them) are not: block changes of any cause reach
+        // (the gloamingforest:fire_jet feature notes them) are not: block changes of any cause reach
         // onPlaced, so they would grow the list with exploration (the palette scan around the
         // players finds those)
         for (auto const* id : {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker})

@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/HolidayEvent.java
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java (customizeSplashes)
-//   src/main/java/twilightforest/item/MoonDialItem.java (April Fools)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/HolidayEvent.java
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java (customizeSplashes)
+//   src/main/java/gloamingforest/item/MoonDialItem.java (April Fools)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/Holiday.h"
@@ -35,9 +35,9 @@ bool isHalloweenWeek(MonthDay date) {
 
 bool isHalloweenWeek() { return isHalloweenWeek(today()); }
 
-bool isTwilightBirthday(MonthDay date) { return date.month == 8 && date.day == 19; }
+bool isGloamingBirthday(MonthDay date) { return date.month == 8 && date.day == 19; }
 
-int twilightAge(int year) { return year - 2011; }
+int gloamingAge(int year) { return year - 2011; }
 
 bool isAprilFools(MonthDay date) { return date.month == 4 && date.day == 1; }
 

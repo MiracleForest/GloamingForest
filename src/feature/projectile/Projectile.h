@@ -2,14 +2,14 @@
 
 // Contract "projectile" (header owned by F0, implemented by F8).
 //
-// TF's throwables and arrows (TFThrowable / TFArrow bases): native flight with gravity and drag,
+// upstream's throwables and arrows (TFThrowable / TFArrow bases): native flight with gravity and drag,
 // hit callbacks, and steering (seeker arrow homing, moonworm shots).
 //
-//     gf::projectile::registerType("twilightforest:ice_snowball", {
+//     gf::projectile::registerType("gloamingforest:ice_snowball", {
 //         .gravity = 0.03f,
 //         .onHitEntity = [](Actor& p, Actor& target) { ...; return true; },
 //     });
-//     gf::projectile::shoot(shooter, "twilightforest:ice_snowball", look, 1.5f, 1.0f);
+//     gf::projectile::shoot(shooter, "gloamingforest:ice_snowball", look, 1.5f, 1.0f);
 
 #include <functional>
 #include <optional>

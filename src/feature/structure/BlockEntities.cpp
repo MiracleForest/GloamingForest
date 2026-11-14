@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/entities/EntityUtil.java (tryHangPainting: the spawn)
-//   src/main/java/twilightforest/block/entity/DryingRackBlockEntity.java (fillFromLootTable)
-//   src/main/java/twilightforest/world/components/processors/UpdateMarkingProcessor.java (the post-processing it marks)
-//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerLogic.java (load)
-//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerBlockEntity.java (loadAdditional)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java (tryHangPainting: the spawn)
+//   src/main/java/gloamingforest/block/entity/DryingRackBlockEntity.java (fillFromLootTable)
+//   src/main/java/gloamingforest/world/components/processors/UpdateMarkingProcessor.java (the post-processing it marks)
+//   src/main/java/gloamingforest/block/entity/spawner/SinisterSpawnerLogic.java (load)
+//   src/main/java/gloamingforest/block/entity/spawner/SinisterSpawnerBlockEntity.java (loadAdditional)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -254,7 +254,7 @@ std::string pendingKey(ChunkKey const& key) {
            std::to_string(std::get<2>(key));
 }
 
-// ---- queued paintings (the ProtoChunk entities TF's painting check sees) ----------------------------------
+// ---- queued paintings (the ProtoChunk entities upstream's painting check sees) ----------------------------------
 
 /// A painting job's box, indexed by the chunk of its block apart from the job queue: generation
 /// threads check them for every painting they try to hang.
@@ -363,7 +363,7 @@ std::string variantOf(Motif const* motif) {
 /// HangingEntity#pos: HangingActor::_calculateActorPositionFromPlacementPosition(wall) gives the
 /// box Painting#calculateBoundingBox gives the covered block (inset by 1/32 at the edges), the
 /// covered block gives a box one block further out. Measured by the selftest structure.paintings,
-/// which hangs paintings and compares their boxes with TF's.
+/// which hangs paintings and compares their boxes with upstream's.
 BlockPos placementPosition(BlockPos const& covered, Orientation direction) {
     return BlockPos{covered.x - stepX(direction), covered.y, covered.z - stepZ(direction)};
 }
@@ -438,8 +438,8 @@ int gRefusalReports = 0;
 std::string fmtPos(BlockPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
 
 /// One log line when the game's own HangingActor::_wouldSurvive and Java's HangingEntity#survives
-/// disagree on a painting TF's spot check accepted (`java`: Java's verdict; the game's is the
-/// other): TF's box and the game's, and for every block the painting covers the block there and
+/// disagree on a painting upstream's spot check accepted (`java`: Java's verdict; the game's is the
+/// other): upstream's box and the game's, and for every block the painting covers the block there and
 /// the wall block behind it with what the game's check reads of them, and the entities around.
 void reportRefusal(BlockSource& source, Painting& painting, BlockPos const& covered, BlockPos const& at, Orientation direction, Motif const& motif,
                    bool java) {
@@ -456,7 +456,7 @@ void reportRefusal(BlockSource& source, Painting& painting, BlockPos const& cove
     if (variant) {
         double tf[6];
         paintings::boundingBox(covered, direction, *variant, tf);
-        std::snprintf(buf, sizeof(buf), ", TF box %.4f %.4f %.4f .. %.4f %.4f %.4f", tf[0], tf[1], tf[2], tf[3], tf[4], tf[5]);
+        std::snprintf(buf, sizeof(buf), ", upstream box %.4f %.4f %.4f .. %.4f %.4f %.4f", tf[0], tf[1], tf[2], tf[3], tf[4], tf[5]);
         line += buf;
         line += "; cells:";
         for (int x = pure::mthFloor(tf[0]); x < pure::mthCeil(tf[3]); x++)
@@ -487,11 +487,11 @@ void reportRefusal(BlockSource& source, Painting& painting, BlockPos const& cove
 }
 
 /// Spawns a painting of `motif` hanging at `pos` (the block it covers) facing `direction` (Java
-/// 2D data value, which Bedrock's HangingActor direction shares). TF adds the painting once its
+/// 2D data value, which Bedrock's HangingActor direction shares). upstream adds the painting once its
 /// spot check passed and Java keeps it while HangingEntity#survives holds: the painting hangs when
 /// Java's check holds (the game's own check is not asked; it refuses spots Java keeps, see
 /// reportRefusal), and keeps Java's check for good (kJavaPaintingTag). False when Java's check
-/// fails (the caller drops the item, as TF's painting drops on its next check).
+/// fails (the caller drops the item, as upstream's painting drops on its next check).
 bool spawnPainting(BlockSource& source, BlockPos const& pos, Orientation direction, Motif const& motif) {
     BlockPos at      = placementPosition(pos, direction);
     auto     variant = paintings::byId(variantOf(&motif));
@@ -511,7 +511,7 @@ bool spawnPainting(BlockSource& source, BlockPos const& pos, Orientation directi
     });
 }
 
-/// Painting#dropItem when a painting cannot stay (TF hangs it anyway and it drops off): a painting
+/// Painting#dropItem when a painting cannot stay (upstream hangs it anyway and it drops off): a painting
 /// item at the painting's center, if entities drop items (doEntityDrops).
 void dropPaintingItem(BlockSource& source, Json const& box) {
     auto level = ll::service::getLevel();
@@ -535,7 +535,7 @@ constexpr char const* kSpawnerFields[] = {"Delay", "MinSpawnDelay", "MaxSpawnDel
 /// Bedrock's spawner does not keep for the spawner events (Spawners.cpp: SpawnerProcessor
 /// entity_width_max, the generic.scale its spawn data gives the mob, and SpawnData's custom spawn
 /// rules, the light ranges BaseSpawner checks instead of the mob's spawn rules) and, for a spawner
-/// block the kit does not drive (`withFields`: TF's sinister spawner), the BaseSpawner fields of
+/// block the kit does not drive (`withFields`: upstream's sinister spawner), the BaseSpawner fields of
 /// its data. Empty when there is nothing to keep.
 Json spawnerRecordOf(std::string const& entityId, Json const& data, bool withFields) {
     Json record = Json::object();
@@ -700,7 +700,7 @@ SpawnerTag readSpawnerTag(Json const& data) {
 enum class ParticleShape { Simple, Dust, DustTransition, BlockState, Item, Color, Vibration, Roll, Delay, Leaf };
 
 /// The particle types of Minecraft 1.21.1 (ParticleTypes: the SimpleParticleTypes, which take no
-/// options, and the option types; read from the server jar's ParticleTypes.<clinit>) and TF 4.8
+/// options, and the option types; read from the server jar's ParticleTypes.<clinit>) and upstream 4.8
 /// (TFParticleType), by id; nullopt for an unknown id (Registry#byNameCodec fails).
 std::optional<ParticleShape> particleShape(std::string const& id) {
     static std::unordered_map<std::string, ParticleShape> const table = [] {
@@ -730,10 +730,10 @@ std::optional<ParticleShape> particleShape(std::string const& id) {
         for (auto const* s : {"large_flame", "leaf_rune", "boss_tear", "ghast_trap", "protection", "snow", "snow_warning", "extended_snow_warning",
                               "snow_guardian", "ice_beam", "annihilate", "perfect_dodge", "double_jump", "huge_smoke", "firefly", "wandering_firefly",
                               "particle_spawner_firefly", "dim_flame", "ominous_flame", "sorting_particle", "transformation_particle",
-                              "log_core_particle", "cloud_puff", "angry_lich", "twilight_orb", "shield_break", "drying_rack"})
-            t[std::string("twilightforest:") + s] = ParticleShape::Simple;
-        t["twilightforest:fallen_leaf"]  = ParticleShape::Leaf;  // LeafParticleData: r, g, b
-        t["twilightforest:magic_effect"] = ParticleShape::Color; // ColorParticleOption
+                              "log_core_particle", "cloud_puff", "angry_lich", "gloaming_orb", "shield_break", "drying_rack"})
+            t[std::string("gloamingforest:") + s] = ParticleShape::Simple;
+        t["gloamingforest:fallen_leaf"]  = ParticleShape::Leaf;  // LeafParticleData: r, g, b
+        t["gloamingforest:magic_effect"] = ParticleShape::Color; // ColorParticleOption
         return t;
     }();
     auto it = table.find(id);
@@ -1023,13 +1023,13 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
     auto const& data     = action.value("data", Json::object());
     auto const& b        = source.getBlock(pos);
     if (b.getTypeName() != "minecraft:mob_spawner") {
-        // placeSpawner / setSpawner place the vanilla spawner (TF's setSpawner places
+        // placeSpawner / setSpawner place the vanilla spawner (upstream's setSpawner places
         // Blocks.SPAWNER); a template's block entity data stays with the block the template put
         // there (StructureTemplate loads it into that block's own block entity)
         if (!action.value("place", true)) {
             // nothing there (a processor dropped it): vanilla has no block entity to load the data into
             if (b.isAir() || blocks::isLiquid(b)) return true;
-            // a spawner block of its own (TF's sinister spawner, SpawnerProcessor handles it like
+            // a spawner block of its own (upstream's sinister spawner, SpawnerProcessor handles it like
             // the vanilla one): the block stays and its block entity (F8's, in block data) loads
             // the data as BaseSpawner#load does
             loadSinisterSpawner(source, pos, entityId, data);
@@ -1060,7 +1060,7 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
             }
             if (fields.range) spawner->mSpawnRange = *fields.range;
         } else {
-            // TF's setSpawner: its modifier sets single fields of the new spawner
+            // upstream's setSpawner: its modifier sets single fields of the new spawner
             auto field = [&](char const* name, auto& out) {
                 if (nbtHasNumber(data, name)) out = nbtInt(data, name);
             };
@@ -1142,9 +1142,9 @@ bool runEntity(BlockSource& source, Json const& action) {
 /// neighbours (Block.updateFromNeighbourShapes in UPDATE_SHAPE_ORDER: west, east, north, south,
 /// down, up). Bedrock: what a structure block does after placing it (BlockType#onStructureBlockPlace:
 /// walls fix their connection states), then a neighbour update from each side (blocks that keep
-/// their shape in states, TF's connected blocks through gf::blockevents, recompute it). A marked
+/// their shape in states, upstream's connected blocks through gf::blockevents, recompute it). A marked
 /// block that can no longer stand breaks as a neighbour update breaks it on Bedrock (with its
-/// drop); Java's updateShape turns it into air. TF marks walls, fences and stairs, which always
+/// drop); Java's updateShape turns it into air. upstream marks walls, fences and stairs, which always
 /// stand.
 void runUpdateShape(BlockSource& source, BlockPos const& pos) {
     if (source.getBlock(pos).isAir()) return;
@@ -1258,8 +1258,8 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
             return true;
         }
         auto dir = blocks::parseDirection(action.value("direction", std::string("north"))).value_or(Orientation::North);
-        // TF hangs a painting once its spot check passed; one the game refuses (no wall behind it)
-        // drops off as an item, as TF's painting does on its next survival check
+        // upstream hangs a painting once its spot check passed; one the game refuses (no wall behind it)
+        // drops off as an item, as upstream's painting does on its next survival check
         if (!spawnPainting(source, pos, dir, *motif)) dropPaintingItem(source, action.value("box", Json::array()));
         return true;
     }
@@ -1355,7 +1355,7 @@ void waterlog(Region& region, BlockPos const& pos, std::string const& blockId) {
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data) {
     if (entityId.empty()) return false;
     if (entityId == "minecraft:painting") {
-        // not a mob: paintings hang through paintings::tryHang (TF's spot check, the motif, the facing)
+        // not a mob: paintings hang through paintings::tryHang (upstream's spot check, the motif, the facing)
         warnOnce("entity-painting", "structure: a painting was passed as an entity; paintings hang through paintings::tryHang");
         return false;
     }
@@ -1371,10 +1371,10 @@ bool painting(Region& region, BlockPos const& pos, Orientation direction, std::s
             warnOnce("motive:" + motive, "structure: no Bedrock painting for " + motive);
             return false;
         }
-        // EntityUtil.tryHangPainting is true once TF's spot check passed (the caller's): TF adds
+        // EntityUtil.tryHangPainting is true once upstream's spot check passed (the caller's): upstream adds
         // the painting even without a wall behind it and it drops off as an item on its next
         // survival check; the game does not hang such a painting at all, so the item drops now.
-        // Either way the result (and so TF's retry loop) is TF's.
+        // Either way the result (and so upstream's retry loop) is upstream's.
         if (!spawnPainting(*source, pos, direction, *motif)) dropPaintingItem(*source, box);
         return true;
     }
@@ -1386,7 +1386,7 @@ bool painting(Region& region, BlockPos const& pos, Orientation direction, std::s
 // An engine hook outside the W0 contracts (no contract dispatches HangingActor's survival check;
 // disclosed for A8): the game checks a hanging actor's spot every few seconds and drops it when its
 // own rules refuse it. For the paintings the kit hung (kJavaPaintingTag) Java's
-// HangingEntity#survives decides instead, as in TF; every other painting keeps the game's rules.
+// HangingEntity#survives decides instead, as in upstream; every other painting keeps the game's rules.
 
 LL_TYPE_INSTANCE_HOOK(
     StructurePaintingSurvivalHook,

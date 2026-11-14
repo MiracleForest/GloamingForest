@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:steeleaf_helmet",
+      "identifier": "gloamingforest:steeleaf_helmet",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:steeleaf_helmet.name"
+        "value": "item.gloamingforest:steeleaf_helmet.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

@@ -2,7 +2,7 @@
   "format_version": "1.21.120",
   "minecraft:client_biome": {
     "description": {
-      "identifier": "twilightforest:oak_savannah"
+      "identifier": "gloamingforest:oak_savannah"
     },
     "components": {
       "minecraft:sky_color": {
@@ -18,7 +18,7 @@
         "atmosphere_identifier": "gloamingforest:oak_savannah_atmospherics"
       },
       "minecraft:biome_music": {
-        "music_definition": "twilightforest:oak_savannah"
+        "music_definition": "gloamingforest:oak_savannah"
       },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",

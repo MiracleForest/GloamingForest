@@ -1,0 +1,65 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.mayapple",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1, 0, 0],
+              "size": [1, 6, 1],
+              "uv": {
+                "north": {
+                  "uv": [8, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "stem"
+                },
+                "east": {
+                  "uv": [8, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "stem"
+                },
+                "south": {
+                  "uv": [8, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "stem"
+                },
+                "west": {
+                  "uv": [8, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "stem"
+                }
+              }
+            },
+            {
+              "origin": [-8, 6, -8],
+              "size": [16, 0, 16],
+              "uv": {
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "leaf"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "leaf"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

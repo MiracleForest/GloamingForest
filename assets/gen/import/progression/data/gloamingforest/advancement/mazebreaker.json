@@ -1,0 +1,42 @@
+{
+  "parent": "gloamingforest:progress_labyrinth",
+  "criteria": {
+    "pick": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:mazebreaker_pickaxe"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.mazebreaker.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.mazebreaker_pickaxe"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:mazebreaker_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.mazebreaker"
+    }
+  },
+  "requirements": [
+    [
+      "pick"
+    ]
+  ],
+  "rewards": {
+    "experience": 50
+  },
+  "sends_telemetry_event": true
+}

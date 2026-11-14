@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFItems.java
-//   src/main/java/twilightforest/block/Experiment115Block.java
-//   src/main/java/twilightforest/potions/FrostedEffect.java
-//   src/main/java/twilightforest/events/EntityEvents.java
-//   src/main/java/twilightforest/init/TFEnchantments.java
-//   src/main/java/twilightforest/init/TFJukeboxSongs.java
-//   src/main/java/twilightforest/item/ChainBlockItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/block/Experiment115Block.java
+//   src/main/java/gloamingforest/potions/FrostedEffect.java
+//   src/main/java/gloamingforest/events/EntityEvents.java
+//   src/main/java/gloamingforest/init/TFEnchantments.java
+//   src/main/java/gloamingforest/init/TFJukeboxSongs.java
+//   src/main/java/gloamingforest/item/ChainBlockItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U10 (provisions), pure rules: TF's food properties, Experiment 115's state machine and redstone,
+// U10 (provisions), pure rules: upstream's food properties, Experiment 115's state machine and redstone,
 // the frosted effect's numbers, the enchantments' level-based values and the jukebox songs.
 #pragma once
 
@@ -23,14 +23,14 @@ namespace gf::core::provisions {
 
 // ---- food -------------------------------------------------------------------------------------------
 
-/// A vanilla effect a food gives (MobEffectInstance, probability 1.0 in every TF food).
+/// A vanilla effect a food gives (MobEffectInstance, probability 1.0 in every upstream food).
 struct FoodEffect {
     std::string_view effect; ///< "minecraft:regeneration"
     int              ticks     = 0;
     int              amplifier = 0;
 };
 
-/// TF's FoodProperties of an item.
+/// upstream's FoodProperties of an item.
 struct Food {
     std::string_view          id;
     int                       nutrition  = 0;
@@ -68,7 +68,7 @@ enum class E115Action {
 };
 
 struct E115Use {
-    bool holdsE115      = false; ///< the hand holds twilightforest:experiment_115
+    bool holdsE115      = false; ///< the hand holds gloamingforest:experiment_115
     bool holdsRedstone  = false; ///< the hand holds minecraft:redstone
     bool emptyHands     = true;  ///< both hands empty
     bool sneaking       = false; ///< isSecondaryUseActive
@@ -136,16 +136,16 @@ inline constexpr int kSmashRadius = 1;
 
 // ---- music ------------------------------------------------------------------------------------------
 
-/// A jukebox song (data/twilightforest/jukebox_song): key, disc track, length, comparator output.
+/// A jukebox song (data/gloamingforest/jukebox_song): key, disc track, length, comparator output.
 struct Song {
-    std::string_view key;   ///< "warfarer" (TF's typo) for the wayfarer disc
-    std::string_view track; ///< "wayfarer": the disc item music_disc_<track>, sound music_disc.twilightforest.<track>
+    std::string_view key;   ///< "warfarer" (upstream's typo) for the wayfarer disc
+    std::string_view track; ///< "wayfarer": the disc item music_disc_<track>, sound music_disc.gloamingforest.<track>
     int              seconds = 0;
     int              comparator = 15;
 };
 [[nodiscard]] std::array<Song, 9> const& songs();
-/// TF's background music of every biome (TFConfiguredFeatures.TFMUSICTYPE): event, delays (ticks).
-inline constexpr std::string_view kDimensionMusic = "music.twilightforest.twilight_forest";
+/// upstream's background music of every biome (TFConfiguredFeatures.TFMUSICTYPE): event, delays (ticks).
+inline constexpr std::string_view kDimensionMusic = "music.gloamingforest.gloaming_forest";
 inline constexpr int              kMusicMinDelay  = 1200;
 inline constexpr int              kMusicMaxDelay  = 12000;
 

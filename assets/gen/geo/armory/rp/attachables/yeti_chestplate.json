@@ -2,17 +2,17 @@
   "format_version": "1.10.0",
   "minecraft:attachable": {
     "description": {
-      "identifier": "twilightforest:yeti_chestplate",
+      "identifier": "gloamingforest:yeti_chestplate",
       "materials": {
         "default": "armor",
         "enchanted": "armor_enchanted"
       },
       "textures": {
-        "default": "textures/twilightforest/models/armor/yeti_layer_1",
+        "default": "textures/gloamingforest/models/armor/yeti_layer_1",
         "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
-        "default": "geometry.twilightforest.yeti_armor.chestplate"
+        "default": "geometry.gloamingforest.yeti_armor.chestplate"
       },
       "scripts": {
         "parent_setup": "variable.chest_layer_visible = 0.0;"

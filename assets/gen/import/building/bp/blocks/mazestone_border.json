@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mazestone_border",
+      "identifier": "gloamingforest:mazestone_border",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {

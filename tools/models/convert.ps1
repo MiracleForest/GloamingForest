@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-  Contract "geo" (unit F2): converts The Twilight Forest's Java entity models to Bedrock geometry.
+  Contract "geo" (unit F2): converts The Gloaming Forest's Java entity models to Bedrock geometry.
 
 .DESCRIPTION
-  Reads every LayerDefinition TF registers (ClientRegistrationEvents.registerLayerDefinitions, LGPL
-  code) from the shared checkout (tools/tf/fetch.ps1, rule R24), runs the builder code
+  Reads every LayerDefinition upstream registers (ClientRegistrationEvents.registerLayerDefinitions, LGPL
+  code) from the shared checkout (tools/upstream/fetch.ps1, rule R24), runs the builder code
   (PartDefinition.addOrReplaceChild / CubeListBuilder / PartPose, loops, helper methods, seeded
   randoms) in a small Java interpreter (tools/models/lib) and writes, partitioned by the owning
   unit of tools/models/catalog.json (rule R3):
 
-    assets/gen/geo/<unit>/rp/models/entity/<name>.geo.json   geometry.twilightforest.<name>
-    assets/gen/geo/<unit>/rp/animations/<name>.base.json     animation.twilightforest.<name>.base
+    assets/gen/geo/<unit>/rp/models/entity/<name>.geo.json   geometry.gloamingforest.<name>
+    assets/gen/geo/<unit>/rp/animations/<name>.base.json     animation.gloamingforest.<name>.base
                                                              (setupAnim statements translated to Molang)
     assets/gen/geo/<unit>/bones/<name>.json                  Java part -> bone, pivots, mirror, and the
                                                              setupAnim statements left to translate by hand

@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:beanstalk_leaves",
+    "id": "gloamingforest:beanstalk_leaves",
     "family": "leaves",
     "params": {
       "class": "SpecialStemLeavesBlock",
@@ -13,11 +13,11 @@
         "minecraft:is_shears_item_destructible",
         "minecraft:is_sword_item_destructible"
       ],
-      "comment": "SpecialStemLeavesBlock: the distance counts from twilightforest:huge_stalk (its 'log' flag below)"
+      "comment": "SpecialStemLeavesBlock: the distance counts from gloamingforest:huge_stalk (its 'log' flag below)"
     }
   },
   {
-    "id": "twilightforest:huge_stalk",
+    "id": "gloamingforest:huge_stalk",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dump for unit U3 (trees): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 //
 // The source of assets/data/java_goldens/trees.json (U3's Java goldens), a dump kind for F13's oracle
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Trees placed and grown by The Twilight Forest in a flat overworld, block by block, at the absolute
+ * Trees placed and grown by The Gloaming Forest in a flat overworld, block by block, at the absolute
  * positions the Bedrock selftests use (trees.java_*): each case clears its area as the selftest's
  * flatArea does (grass under the box, air in it), places a configured feature with
  * {@code LegacyRandomSource(seed)} or plants saplings and advances them with one, dumps the box

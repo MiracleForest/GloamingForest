@@ -1,5 +1,5 @@
 // U6 flora: the module (plants, bushes, critters, jars, feature types) and the config section
-// "flora" (TF's client cicada switches, docs/spec/config.md).
+// "flora" (upstream's client cicada switches, docs/spec/config.md).
 
 #include "feature/flora/Flora.h"
 

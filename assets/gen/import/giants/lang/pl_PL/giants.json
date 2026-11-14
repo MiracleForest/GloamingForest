@@ -1,8 +1,8 @@
 {
-  "block.twilightforest.fluffy_cloud": "Puszysta Chmura",
-  "block.twilightforest.giant_cobblestone": "Ogromny Bruk",
-  "block.twilightforest.giant_leaves": "Ogromne Liście",
-  "block.twilightforest.giant_log": "Ogromna Kłoda",
-  "block.twilightforest.giant_obsidian": "Ogromny Obsydian",
-  "block.twilightforest.rainy_cloud": "Deszczowa Chmura"
+  "block.gloamingforest.fluffy_cloud": "Puszysta Chmura",
+  "block.gloamingforest.giant_cobblestone": "Ogromny Bruk",
+  "block.gloamingforest.giant_leaves": "Ogromne Liście",
+  "block.gloamingforest.giant_log": "Ogromna Kłoda",
+  "block.gloamingforest.giant_obsidian": "Ogromny Obsydian",
+  "block.gloamingforest.rainy_cloud": "Deszczowa Chmura"
 }

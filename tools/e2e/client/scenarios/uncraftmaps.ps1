@@ -1,10 +1,10 @@
-# Uncrafting table and maps (U13), client side. What it shows (compare each with TF):
-#   out/uncraftmaps/uncraftmaps-1-table.png        the uncrafting table block (TF's uncrafting_top /
+# Uncrafting table and maps (U13), client side. What it shows (compare each with upstream):
+#   out/uncraftmaps/uncraftmaps-1-table.png        the uncrafting table block (upstream's uncrafting_top /
 #                                                 uncrafting_side textures), unpowered and, on an
 #                                                 amethyst block with a redstone block, powered (the
 #                                                 glowing sides)
 #   out/uncraftmaps/uncraftmaps-2-screen.png       the table right-clicked: local / remote-mod the
-#                                                 client mod's screen on TF's guigoblintinkering.png
+#                                                 client mod's screen on upstream's guigoblintinkering.png
 #                                                 (the frame is compared pixel by pixel with the
 #                                                 texture), remote-vanilla the form
 #   out/uncraftmaps/uncraftmaps-3-ghost.png        an iron pickaxe shift-clicked into the input: the 3
@@ -12,10 +12,10 @@
 #                                                 in the assembly grid, the cost 3 (green: 30 levels)
 #   out/uncraftmaps/uncraftmaps-4-taken.png        a ghost iron clicked: on the cursor, the rest in the
 #                                                 assembly grid, the pickaxe used up
-#   out/uncraftmaps/uncraftmaps-5-magic-map.png    a magic map made in the Twilight Forest and held:
-#                                                 the biome colours and the landmark icons (TF's icons
+#   out/uncraftmaps/uncraftmaps-5-magic-map.png    a magic map made in the Gloaming Forest and held:
+#                                                 the biome colours and the landmark icons (upstream's icons
 #                                                 with the client mod, vanilla icons otherwise)
-#   out/uncraftmaps/uncraftmaps-6-items.png        the 8 map items in the hotbar (TF's item textures)
+#   out/uncraftmaps/uncraftmaps-6-items.png        the 8 map items in the hotbar (upstream's item textures)
 # Local mode also runs the uncraftmaps selftests on the integrated server (biomepng's local-world
 # path included).
 
@@ -38,9 +38,9 @@ $tx = 40; $tz = 70
 # stand there first: setblock needs the chunks loaded
 Invoke-Teleport "/tp $who $($tx + 2) $($y + 1) $($tz + 4) 180 25"
 Start-Sleep -Seconds 3
-Invoke-Build "setblock $tx $y $tz twilightforest:uncrafting_table"
+Invoke-Build "setblock $tx $y $tz gloamingforest:uncrafting_table"
 Invoke-Build "setblock $($tx + 3) $($y - 1) $tz amethyst_block"
-Invoke-Build "setblock $($tx + 3) $y $tz twilightforest:uncrafting_table"
+Invoke-Build "setblock $($tx + 3) $y $tz gloamingforest:uncrafting_table"
 Invoke-Build "setblock $($tx + 4) $y $tz redstone_block"
 Invoke-Teleport "/tp $who $($tx + 2) $($y + 1) $($tz + 4) 180 25"
 Start-Sleep -Seconds 2
@@ -66,8 +66,8 @@ if ($script:Mode -eq 'remote-vanilla') {
     $png = Save-Screenshot 'uncraftmaps-2-screen'
     if ("$open" -notmatch 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') { throw "no layout in '$open'" }
     $px = [double]$Matches[1]; $py = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
-    # the frame against TF's texture: points of the background away from slots, text and items
-    $tex = Join-Path $script:RepoRoot 'assets/gen/import/import/rp/textures/twilightforest/gui/guigoblintinkering.png'
+    # the frame against upstream's texture: points of the background away from slots, text and items
+    $tex = Join-Path $script:RepoRoot 'assets/gen/import/import/rp/textures/gloamingforest/gui/guigoblintinkering.png'
     Add-Type -AssemblyName System.Drawing
     $shot = [System.Drawing.Bitmap]::FromFile($png); $t = [System.Drawing.Bitmap]::FromFile($tex)
     try {
@@ -80,7 +80,7 @@ if ($script:Mode -eq 'remote-vanilla') {
             $worst = [Math]::Max($worst, $d); $n++
         }
         Write-Step "uncrafting frame vs guigoblintinkering.png: $n points, worst channel difference $worst"
-        if ($worst -gt 24) { throw "the uncrafting screen's frame differs from TF's texture (worst channel difference $worst)" }
+        if ($worst -gt 24) { throw "the uncrafting screen's frame differs from upstream's texture (worst channel difference $worst)" }
     } finally { $shot.Dispose(); $t.Dispose() }
     $at = { param($gx, $gy) @((($px + $gx) / $gw), (($py + $gy) / $gh)) }
     # shift-click the hotbar's first slot (menu slot 47 at 8, 142) into the input
@@ -98,12 +98,12 @@ if ($script:Mode -eq 'remote-vanilla') {
     Close-Screen
 }
 
-# the map items and a magic map in the Twilight Forest
+# the map items and a magic map in the Gloaming Forest
 Invoke-Build "clear $who"
-foreach ($i in 'magic_map', 'maze_map', 'ore_map', 'magic_map_focus', 'maze_map_focus') { Invoke-Build "give $who twilightforest:$i" }
+foreach ($i in 'magic_map', 'maze_map', 'ore_map', 'magic_map_focus', 'maze_map_focus') { Invoke-Build "give $who gloamingforest:$i" }
 Start-Sleep -Seconds 1
 Save-Screenshot 'uncraftmaps-6-items' | Out-Null
-# a magic map in hand (uncraftmaps.fixture_map: the test world's Twilight Forest has no ground), held
+# a magic map in hand (uncraftmaps.fixture_map: the test world's Gloaming Forest has no ground), held
 # for a while so the holder's area is painted, then looked at
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'uncraftmaps.fixture_map'

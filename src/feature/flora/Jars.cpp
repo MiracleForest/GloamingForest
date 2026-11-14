@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/JarBlock.java
-//   src/main/java/twilightforest/block/FireflyJarBlock.java
-//   src/main/java/twilightforest/block/CicadaJarBlock.java
-//   src/main/java/twilightforest/block/MasonJarBlock.java
-//   src/main/java/twilightforest/block/entity/JarBlockEntity.java
-//   src/main/java/twilightforest/block/entity/MasonJarBlockEntity.java
-//   src/main/java/twilightforest/item/JarItem.java
-//   src/main/java/twilightforest/block/AbstractParticleSpawnerBlock.java
-//   src/main/java/twilightforest/block/FireflySpawnerBlock.java
-//   src/main/java/twilightforest/events/RegistrationEvents.java (the jar lids)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/JarBlock.java
+//   src/main/java/gloamingforest/block/FireflyJarBlock.java
+//   src/main/java/gloamingforest/block/CicadaJarBlock.java
+//   src/main/java/gloamingforest/block/MasonJarBlock.java
+//   src/main/java/gloamingforest/block/entity/JarBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/MasonJarBlockEntity.java
+//   src/main/java/gloamingforest/item/JarItem.java
+//   src/main/java/gloamingforest/block/AbstractParticleSpawnerBlock.java
+//   src/main/java/gloamingforest/block/FireflySpawnerBlock.java
+//   src/main/java/gloamingforest/events/RegistrationEvents.java (the jar lids)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U6 flora: jars. Custom blocks have no block entities: a jar's lid is its block data
-// "components" {"twilightforest:jar_lid": item id} (what the loot contract's copy_components moves
+// "components" {"gloamingforest:jar_lid": item id} (what the loot contract's copy_components moves
 // into the dropped item's data, and placing the item reads back), the mason jar's stack is a
 // one-slot gf::inventory container (BlockData backend, kept in the dropped item as
 // "minecraft:container") and its item rotation is block data "flora" {"rotation"}. Every change of
@@ -61,15 +61,15 @@ namespace jars {
 
 namespace {
 
-constexpr char kLidKey[]     = "twilightforest:jar_lid";
-constexpr char kLightState[] = "twilightforest:jar_light";
+constexpr char kLidKey[]     = "gloamingforest:jar_lid";
+constexpr char kLightState[] = "gloamingforest:jar_light";
 
 std::set<std::string> const& lids() {
     static std::set<std::string> const s = [] {
         std::set<std::string> out;
-        for (char const* w : {"mangrove", "canopy", "dark", "mining", "sorting", "time", "transformation", "twilight_oak"}) {
-            out.insert(std::string("twilightforest:") + w + "_log");
-            out.insert(std::string("twilightforest:stripped_") + w + "_log");
+        for (char const* w : {"mangrove", "canopy", "dark", "mining", "sorting", "time", "transformation", "gloaming_oak"}) {
+            out.insert(std::string("gloamingforest:") + w + "_log");
+            out.insert(std::string("gloamingforest:stripped_") + w + "_log");
         }
         for (char const* w : {"acacia", "birch", "cherry", "dark_oak", "jungle", "mangrove", "oak", "spruce"}) {
             out.insert(std::string("minecraft:") + w + "_log");
@@ -79,7 +79,7 @@ std::set<std::string> const& lids() {
             out.insert(std::string("minecraft:") + w + "_stem");
             out.insert(std::string("minecraft:stripped_") + w + "_stem");
         }
-        out.insert("twilightforest:cinder_log");
+        out.insert("gloamingforest:cinder_log");
         out.insert("minecraft:bamboo_block");
         out.insert("minecraft:stripped_bamboo_block");
         return out;
@@ -140,7 +140,7 @@ void syncMasonJar(BlockSource& region, BlockPos const& pos) {
 std::optional<inventory::Handler> handlerAt(BlockSource& region, BlockPos const& pos) { return inventory::find(region, pos); }
 
 /// MasonJarBlockEntity's light: the light emission of a stored block item (0 otherwise), kept in the
-/// jar's `twilightforest:jar_light` state (a GloamingForest addition: Bedrock blocks emit light per
+/// jar's `gloamingforest:jar_light` state (a GloamingForest addition: Bedrock blocks emit light per
 /// permutation only; tools/import/overrides/flora.json).
 int lightOf(ItemStack const& stack) {
     if (game::items::isEmpty(stack) || !stack.mBlock) return 0;
@@ -162,7 +162,7 @@ bool fitsInside(std::string const& itemId) { return itemId.find("shulker_box") =
 
 /// MasonJarBlock#wiggle.
 void wiggle(BlockSource& region, BlockPos const& pos) {
-    sound(region, pos, "block.twilightforest.jar.wiggle");
+    sound(region, pos, "block.gloamingforest.jar.wiggle");
     wobble(region, pos, false);
 }
 
@@ -173,7 +173,7 @@ bool isLid(std::string const& itemId) {
     return itemId == "minecraft:pumpkin" && core::holiday::isHalloweenWeek();
 }
 
-std::string defaultLid(std::string const& jarId) { return jarId == ids::CicadaJar ? "twilightforest:canopy_log" : "twilightforest:twilight_oak_log"; }
+std::string defaultLid(std::string const& jarId) { return jarId == ids::CicadaJar ? "gloamingforest:canopy_log" : "gloamingforest:gloaming_oak_log"; }
 
 std::string lidAt(BlockSource& region, BlockPos const& pos) {
     if (auto const* c = bd::get(region, pos, "components"); c && c->is_object()) {
@@ -231,7 +231,7 @@ void installJars() {
             // JarBlock#useItemOn: a registered lid used on the top 2 px swaps the lid
             if (!c.itemId.empty() && c.hit[1] >= 14.0 / 16.0 && isLid(c.itemId) && c.itemId != lidAt(region, pos)) {
                 setLid(region, pos, c.itemId);
-                sound(region, pos, "block.twilightforest.jar.lid_swap");
+                sound(region, pos, "block.gloamingforest.jar.lid_swap");
                 wobble(region, pos, true);
                 if (c.blockId == ids::MasonJar) syncMasonJar(region, pos);
                 log().info("flora: {} put a {} lid on the jar at {} {} {}", c.player.getRealName(), c.itemId, pos.x, pos.y, pos.z);
@@ -257,7 +257,7 @@ void installJars() {
                     // the hand was empty: the stack goes into the selected slot
                     c.player.setSelectedItem(stored);
                     c.player.sendInventory(false);
-                    sound(region, pos, "block.twilightforest.jar.remove");
+                    sound(region, pos, "block.gloamingforest.jar.remove");
                     wobble(region, pos, false);
                     syncMasonJar(region, pos);
                     return ia::Result::Consume;
@@ -286,7 +286,7 @@ void installJars() {
                     c.player.sendInventory(false);
                 }
                 float filled = static_cast<float>(inserted) / static_cast<float>(maxStack(before));
-                sound(region, pos, "block.twilightforest.jar.insert", 1.0f, 0.7f + 0.5f * filled);
+                sound(region, pos, "block.gloamingforest.jar.insert", 1.0f, 0.7f + 0.5f * filled);
                 wobble(region, pos, true);
                 syncMasonJar(region, pos);
                 log().info("flora: {} put {} x{} in the mason jar at {} {} {}", c.player.getRealName(), c.itemId, inserted, pos.x, pos.y, pos.z);
@@ -308,7 +308,7 @@ void installJars() {
             }
             // JarBlock#useWithoutItem: empty hands wiggle the jar
             if (emptyHands) {
-                sound(region, pos, "block.twilightforest.jar.wiggle");
+                sound(region, pos, "block.gloamingforest.jar.wiggle");
                 wobble(region, pos, false);
                 return ia::Result::Consume;
             }
@@ -352,13 +352,13 @@ void installJars() {
         if (c.itemId == ids::Firefly && !c.sneaking && radius < 10) {
             setStates(region, pos, {{st::Radius, radius + 1}});
             consumeHeld(c.player, c.item);
-            actionBar(c.player, trFor(c.player, "misc.twilightforest.firefly_spawner_radius", "Firefly Particle Radius: %s Blocks", radius + 1));
+            actionBar(c.player, trFor(c.player, "misc.gloamingforest.firefly_spawner_radius", "Firefly Particle Radius: %s Blocks", radius + 1));
             return ia::Result::Consume;
         }
         if (c.sneaking && radius > 1) {
             setStates(region, pos, {{st::Radius, radius - 1}});
             if (auto s = makeItem(ids::Firefly)) spawnItemAt(region, pos.x + .5f, pos.y + 1.0f, pos.z + .5f, *s);
-            actionBar(c.player, trFor(c.player, "misc.twilightforest.firefly_spawner_radius", "Firefly Particle Radius: %s Blocks", radius - 1));
+            actionBar(c.player, trFor(c.player, "misc.gloamingforest.firefly_spawner_radius", "Firefly Particle Radius: %s Blocks", radius - 1));
             return ia::Result::Consume;
         }
         return ia::Result::Pass;

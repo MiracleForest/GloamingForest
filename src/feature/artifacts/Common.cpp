@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U9 (artifacts): small Java equivalents over the engine (see Artifacts.h).
 #include <algorithm>
 #include <cmath>

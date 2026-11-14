@@ -1,7 +1,7 @@
 {
-  "item.twilightforest.knightmetal_armor.equip": {
+  "item.gloamingforest.knightmetal_armor.equip": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.knightmetal_armor.equip",
+    "subtitle": "subtitles.gloamingforest.item.knightmetal_armor.equip",
     "sounds": [
       {
         "name": "sounds/armor/equip_netherite1"

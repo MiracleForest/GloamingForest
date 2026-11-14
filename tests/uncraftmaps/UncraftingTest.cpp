@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of the uncrafting table's rules (U13): UncraftingMenu's costs, damaged parts, recipe
-// filters, grid layout and the UncraftingGuiPacket counters (TeamTwilight/twilightforest @ 9e40a757,
+// filters, grid layout and the UncraftingGuiPacket counters (upstream commit 9e40a757,
 // LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
@@ -21,19 +21,19 @@ TEST(Uncrafting, FloorModAndRound) {
 
 TEST(Uncrafting, RecipeFilterIsAnXorOfBothLists) {
     RecipeFilter f;
-    f.recipeIds = {"twilightforest:giant_log_to_oak_planks"};
-    EXPECT_FALSE(recipeAllowed(f, "twilightforest:giant_log_to_oak_planks"));
+    f.recipeIds = {"gloamingforest:giant_log_to_oak_planks"};
+    EXPECT_FALSE(recipeAllowed(f, "gloamingforest:giant_log_to_oak_planks"));
     EXPECT_TRUE(recipeAllowed(f, "minecraft:iron_pickaxe"));
     f.flipRecipeList = true; // a whitelist
-    EXPECT_TRUE(recipeAllowed(f, "twilightforest:giant_log_to_oak_planks"));
+    EXPECT_TRUE(recipeAllowed(f, "gloamingforest:giant_log_to_oak_planks"));
     EXPECT_FALSE(recipeAllowed(f, "minecraft:iron_pickaxe"));
     f = {};
-    f.modIds = {"twilightforest"};
-    EXPECT_FALSE(recipeAllowed(f, "twilightforest:naga_chestplate"));
+    f.modIds = {"gloamingforest"};
+    EXPECT_FALSE(recipeAllowed(f, "gloamingforest:naga_chestplate"));
     EXPECT_TRUE(recipeAllowed(f, "minecraft:iron_pickaxe"));
     EXPECT_FALSE(recipeAllowed(RecipeFilter{{}, false, {"minecraft"}, false}, "iron_pickaxe")); // no namespace: minecraft
     f.flipIdList = true;
-    EXPECT_TRUE(recipeAllowed(f, "twilightforest:naga_chestplate"));
+    EXPECT_TRUE(recipeAllowed(f, "gloamingforest:naga_chestplate"));
     EXPECT_FALSE(recipeAllowed(f, "minecraft:iron_pickaxe"));
 }
 
@@ -79,7 +79,7 @@ TEST(Uncrafting, EnchantmentWeights) {
     EXPECT_EQ(vanillaEnchantmentWeight("minecraft:mending"), 2);
     EXPECT_EQ(vanillaEnchantmentWeight("minecraft:silk_touch"), 1);
     EXPECT_EQ(vanillaEnchantmentWeight("minecraft:unbreaking"), 5);
-    EXPECT_EQ(vanillaEnchantmentWeight("twilightforest:fire_react"), 0);
+    EXPECT_EQ(vanillaEnchantmentWeight("gloamingforest:fire_react"), 0);
     // sharpness III (weight 10: x1) and unbreaking II (5: x2): 3 + 1 + 4 + 1
     EXPECT_EQ(totalEnchantmentCost({{10, 3}, {5, 2}}), 9);
     EXPECT_EQ(totalEnchantmentCost({{1, 0}}), 0);

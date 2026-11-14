@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mangrove_planks",
+      "identifier": "gloamingforest:mangrove_planks",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {

@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponent.java
-//   src/main/java/twilightforest/init/TFStructurePieceTypes.java
-//   src/main/java/twilightforest/init/TFStructureProcessors.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java
+//   src/main/java/gloamingforest/init/TFStructurePieceTypes.java
+//   src/main/java/gloamingforest/init/TFStructureProcessors.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract "structure": the piece framework (vanilla StructurePiece semantics, which TF's pieces
+// Contract "structure": the piece framework (vanilla StructurePiece semantics, which upstream's pieces
 // extend) and the type / processor / marker registries. Piece-local coordinates map to the world
 // through the orientation exactly as StructurePiece#getWorldX/Y/Z; every placement is clipped to
 // the chunk box it is given (postProcess runs once per chunk a piece intersects).
@@ -312,7 +312,7 @@ bool Piece::placeChest(Region& region, BlockBox const& chunkBox, RandomSource& r
 bool Piece::placeSpawner(Region& region, BlockBox const& chunkBox, int x, int y, int z, std::string const& entityId) {
     BlockPos pos = getWorldPos(x, y, z);
     if (!chunkBox.contains(pos.x, pos.y, pos.z)) return false;
-    // a boss spawner is a block of its own (TF places TFBlocks.*_BOSS_SPAWNER with placeBlock): an
+    // a boss spawner is a block of its own (upstream places TFBlocks.*_BOSS_SPAWNER with placeBlock): an
     // id the block registry knows is placed as that block, any other id is the mob of a spawner.
     // Bedrock's block ids that are also mob ids stay mobs.
     static constexpr std::string_view kMobsNamedLikeBlocks[] = {"minecraft:slime", "minecraft:tnt"};

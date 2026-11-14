@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:feature/graveyard/grave_trap",
+  "id": "gloamingforest:feature/graveyard/grave_trap",
   "size": [3, 2, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},

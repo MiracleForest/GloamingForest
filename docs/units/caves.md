@@ -10,16 +10,16 @@ Implementation notes of U27 (spec: [docs/spec/caves.md](../spec/caves.md)).
 | `src/feature/caves/Structures.*` | The pieces `TFTCMai`, `TFTCCon`, `TFTCGard`, `TFTCVa`, `TFClCa`, `TFCloud`, `TFClTr`, `TFTCloud`, `TFYeti` (exact translations, no templates) and the two landmark generators (the yeti cave with its terraformer). |
 | `src/feature/caves/Features.cpp` | `big_mushgloom`, `troll_cave_big_mushgloom`, `troll_cave_huge_brown_mushroom`, `troll_cave_huge_red_mushroom`, `troll_vines`. |
 | `src/feature/caves/Blocks.cpp` | Trollsteinn (faces by light on placement and random ticks, comparator output), troll roots (harvest, ripening, support). |
-| `src/feature/caves/Troll.cpp`, `Yeti.cpp`, `AlphaYeti.cpp`, `FallingIce.cpp`, `Goals.h` | The mobs (vanilla goals as BP behaviours, TF's own goals native). |
+| `src/feature/caves/Troll.cpp`, `Yeti.cpp`, `AlphaYeti.cpp`, `FallingIce.cpp`, `Goals.h` | The mobs (vanilla goals as BP behaviours, upstream's own goals native). |
 | `src/client/caves/Sparkle.cpp` | The trollsteinn's purple sparkle (client mod, ClientLevel#animateTick sampling). |
 | `src/feature/ext/caves/W0Internals.h` | The one door into F7 / F8 internals (see the header; for A8 to fold). |
 
 ## Bedrock adaptations
 
-- The troll's held rock is drawn on the troll (RP render controller `controller.render.twilightforest.troll_rock`,
-  property `twilightforest:rock`) instead of a ThrownBlock entity riding it: no actor the projectile kit would fly.
+- The troll's held rock is drawn on the troll (RP render controller `controller.render.gloamingforest.troll_rock`,
+  property `gloamingforest:rock`) instead of a ThrownBlock entity riding it: no actor the projectile kit would fly.
 - Thrown blocks and falling ice draw a cube with the block's vanilla texture chosen by the property
-  `twilightforest:block` (base stone overworld blocks / the ice blocks).
+  `gloamingforest:block` (base stone overworld blocks / the ice blocks).
 - The yeti throw state (YetiThrowAttachment) is F8's (`gf::entity::mount`, channel `projectile.thrown`), not a
   separate `caves.thrown` channel.
 - The troll roots' support is the BP placement filter (pops when the block above changes) plus a neighbour check.
@@ -38,14 +38,14 @@ types) are left out of the goldens, so they stay stable when those units registe
 
 ## Audit round 1
 
-Checked against TF 4.8 (AlphaYeti, YetiRampageGoal, YetiTiredGoal, EntityUtil#canDestroyBlock, YetiCaveComponent,
+Checked against upstream 4.8 (AlphaYeti, YetiRampageGoal, YetiTiredGoal, EntityUtil#canDestroyBlock, YetiCaveComponent,
 Troll / ThrownBlock renderers).
 
 Fixed:
 - Rampage block breaking (`destroyBlocksInAABB`, also after 15 collisions) spared every block entity; it now spares
   only Java's `Container` block entities (furnaces, chests, barrels, hoppers, dispensers, droppers, shulker boxes,
   brewing stands, crafters, jukeboxes, chiseled bookshelves, decorated pots, plus Bedrock's item frames) and
-  gf::inventory containers (TF's chests); signs, banners, beds, skulls and spawners break as in TF. Selftest
+  gf::inventory containers (upstream's chests); signs, banners, beds, skulls and spawners break as in upstream. Selftest
   `caves.alpha_yeti` places a chest, a sign and stone in the rampage box.
 - The ground pound fired on every landing, including a landing that followed no fall; it now needs a downward
   move while airborne (Java's fallDistance > 0), see above.
@@ -64,19 +64,19 @@ Open: those client screenshots; the yeti's own fall damage is the engine's (Bedr
 
 ## Audit round 2
 
-Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 18 of this unit's sound events still played F3's name-derived baseline placeholder. Alpha Yeti and Yeti (shared files, as in TF) and Troll. `tools/sounds/recipes/caves.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit caves` into `assets/gen/audio/caves/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 18 of this unit's sound events still played F3's name-derived baseline placeholder. Alpha Yeti and Yeti (shared files, as in upstream) and Troll. `tools/sounds/recipes/caves.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; upstream's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit caves` into `assets/gen/audio/caves/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
 
 Open: nothing for audio.
 
 Mobs and visuals (A5 findings, client shots).
 
 Fixed:
-- `twilightforest:alpha_yeti` was fire immune (A5's sweep): the BP declared `"minecraft:fire_immune": false`, and
-  Bedrock treats the component's presence as immunity. Removed: AlphaYeti is not `fireImmune()` in TF
+- `gloamingforest:alpha_yeti` was fire immune (A5's sweep): the BP declared `"minecraft:fire_immune": false`, and
+  Bedrock treats the component's presence as immunity. Removed: AlphaYeti is not `fireImmune()` in upstream
   (TFEntities.ALPHA_YETI; BaseTFBoss#lavaHurt burns it).
 - Client shots of the held rock and the alpha yeti's poses: the scenario named `troll-rock`,
   `alpha-yeti-rampage` and `alpha-yeti-tired` but never took them (the selftests it ran have no camera). The BPs
-  now have `gf:show_rock` (troll: granite, property `twilightforest:rock` 2) and `gf:show_rampage` /
+  now have `gf:show_rock` (troll: granite, property `gloamingforest:rock` 2) and `gf:show_rampage` /
   `gf:show_tired` (alpha yeti) for `/event entity`, and `tools/e2e/client/scenarios/caves.ps1` shoots them, plus the
   thrown block and the falling ice in flight (`thrown-block-flight`, `falling-ice-flight`). Written, not run.
 

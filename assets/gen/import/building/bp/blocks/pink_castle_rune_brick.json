@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:pink_castle_rune_brick",
+      "identifier": "gloamingforest:pink_castle_rune_brick",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -16,7 +16,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"],
       "minecraft:map_color": "#b24cd8",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.castle_rune_brick_0",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.castle_rune_brick_0",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_castle_brick",
@@ -38,7 +38,7 @@
           "texture": "tf_block_castle_brick",
           "render_method": "opaque"
         },
-        "t_twilightforest_block_castle_brick": {
+        "t_gloamingforest_block_castle_brick": {
           "texture": "tf_block_castle_brick",
           "render_method": "opaque"
         },

@@ -2,24 +2,24 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:slime_beetle",
+      "identifier": "gloamingforest:slime_beetle",
       "materials": {
         "default": "entity_alphatest",
         "tail": "entity_alphablend"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/slimebeetle"
+        "default": "textures/gloamingforest/entity/slimebeetle"
       },
       "geometry": {
-        "default": "geometry.twilightforest.slime_beetle",
-        "tail": "geometry.twilightforest.slime_beetle_tail"
+        "default": "geometry.gloamingforest.slime_beetle",
+        "tail": "geometry.gloamingforest.slime_beetle_tail"
       },
       "render_controllers": [
-        "controller.render.twilightforest.slime_beetle",
-        "controller.render.twilightforest.slime_beetle_tail"
+        "controller.render.gloamingforest.slime_beetle",
+        "controller.render.gloamingforest.slime_beetle_tail"
       ],
       "animations": {
-        "base": "animation.twilightforest.slime_beetle.base"
+        "base": "animation.gloamingforest.slime_beetle.base"
       },
       "scripts": {
         "animate": [

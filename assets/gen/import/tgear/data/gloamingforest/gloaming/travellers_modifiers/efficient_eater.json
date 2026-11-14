@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:efficient_eater": 2.0
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.efficient_eater.description"
+    }
+  ],
+  "equipment_slots": "chest"
+}

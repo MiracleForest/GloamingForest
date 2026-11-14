@@ -1,23 +1,23 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/util/StructureTemplateDefinitions.java
-//   src/main/java/twilightforest/world/components/structures/util/TemplatePoolInstance.java (HeightAdjustment)
-//   src/main/java/twilightforest/world/components/structures/TwilightJigsawPiece.java (addJigsaws)
-//   src/main/java/twilightforest/util/WorldUtil.java (adjustForTerrain)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/util/StructureTemplateDefinitions.java
+//   src/main/java/gloamingforest/world/components/structures/util/TemplatePoolInstance.java (HeightAdjustment)
+//   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java (addJigsaws)
+//   src/main/java/gloamingforest/util/WorldUtil.java (adjustForTerrain)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract extension of "structure" (rule R18: F7, new files only; folded into the contract by A8
-// in W2b). TF's StructureTemplateDefinitions as W1 landmarks call it: the template pools built from
-// twilight/template_definition (CourtyardMain U20, FinalCastle* U30 initializeTemplateFromPool;
+// in W2b). upstream's StructureTemplateDefinitions as W1 landmarks call it: the template pools built from
+// gloaming/template_definition (CourtyardMain U20, FinalCastle* U30 initializeTemplateFromPool;
 // LichTowerUtil U21/U22 getRandomTemplate / getShuffledSequence; CampStructure U19), with the
 // generation context jigsaw assembly needs for TemplatePoolInstance.height_adjustment.
 //
 //     auto ctx   = gf::structure::ext::GenerationContext{&random, worldgen::seed(), heights};
-//     auto start = gf::structure::ext::initializeTemplateFromPool("twilightforest:camp/structure_start", pos,
-//                      gf::structure::ext::FrontAndTop::UpSouth, "twilightforest:camp/structure_start", ctx, 0, false);
+//     auto start = gf::structure::ext::initializeTemplateFromPool("gloamingforest:camp/structure_start", pos,
+//                      gf::structure::ext::FrontAndTop::UpSouth, "gloamingforest:camp/structure_start", ctx, 0, false);
 //     if (start) { auto* raw = start.get(); pieces.push_back(std::move(start)); ext::addJigsaws(*raw, *raw, pieces, ctx); }
 
 #include <cstdint>
@@ -72,7 +72,7 @@ struct GenerationContext {
                                                                              FrontAndTop parentOrientation, std::string const& selectName,
                                                                              GenerationContext const& context, int genDepth,
                                                                              bool parentProjectsTerrain);
-/// TwilightJigsawPiece#addJigsaws(parent, accessor, context): grows `piece`'s spare jigsaws with
+/// GloamingJigsawPiece#addJigsaws(parent, accessor, context): grows `piece`'s spare jigsaws with
 /// the context (its random reseeded from context.seed, height adjustment on every child).
 void addJigsaws(bases::JigsawPiece& piece, bases::JigsawPiece& parent, bases::PieceList& pieces, GenerationContext const& context);
 /// jigsaw::assemble with a generation context (CampStructure's start: FrontAndTop(UP,

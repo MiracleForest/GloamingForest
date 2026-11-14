@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_mob_r0",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_mob_r0",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,
@@ -1681,7 +1681,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_mob_r1",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_mob_r1",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,
@@ -3359,7 +3359,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_mob_r2",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_mob_r2",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,
@@ -5037,7 +5037,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_mob_r3",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_mob_r3",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,
@@ -6715,7 +6715,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.wall_skull_candle_mob",
+        "identifier": "geometry.gloamingforest.lichdecor.wall_skull_candle_mob",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,
@@ -8388,7 +8388,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_human_r0",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_human_r0",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -10141,7 +10141,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_human_r1",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_human_r1",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -11894,7 +11894,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_human_r2",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_human_r2",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -13647,7 +13647,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_human_r3",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_human_r3",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -15400,7 +15400,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.wall_skull_candle_human",
+        "identifier": "geometry.gloamingforest.lichdecor.wall_skull_candle_human",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -17148,7 +17148,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r0",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r0",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -19068,7 +19068,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r1",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r1",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -20988,7 +20988,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r2",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r2",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -22908,7 +22908,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r3",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r3",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -24828,7 +24828,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.wall_skull_candle_piglin",
+        "identifier": "geometry.gloamingforest.lichdecor.wall_skull_candle_piglin",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,

@@ -2,23 +2,23 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:carminite_ghastling",
+      "identifier": "gloamingforest:carminite_ghastling",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/towerghast",
-        "openeyes": "textures/twilightforest/entity/towerghast_openeyes",
-        "fire": "textures/twilightforest/entity/towerghast_fire"
+        "default": "textures/gloamingforest/entity/towerghast",
+        "openeyes": "textures/gloamingforest/entity/towerghast_openeyes",
+        "fire": "textures/gloamingforest/entity/towerghast_fire"
       },
       "geometry": {
-        "default": "geometry.twilightforest.carminite_ghastling"
+        "default": "geometry.gloamingforest.carminite_ghastling"
       },
       "render_controllers": [
-        "controller.render.twilightforest.carminite_ghast"
+        "controller.render.gloamingforest.carminite_ghast"
       ],
       "animations": {
-        "setup": "animation.twilightforest.carminite_ghast.setup"
+        "setup": "animation.gloamingforest.carminite_ghast.setup"
       },
       "scripts": {
         "animate": [

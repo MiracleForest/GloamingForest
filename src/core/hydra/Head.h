@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/HydraHeadContainer.java
-//   src/main/java/twilightforest/entity/boss/Hydra.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/HydraHeadContainer.java
+//   src/main/java/gloamingforest/entity/boss/Hydra.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -39,7 +39,7 @@ inline constexpr int   kBiteChance        = 10;
 inline constexpr int   kFlameChance       = 100;
 inline constexpr int   kMortarChance      = 160;
 /// Part actors, in Java's order (Hydra's constructor) without the two legs: body, tail, then per
-/// head the head and its five necks. TF registers a left and a right leg part (2 x 3) but never
+/// head the head and its five necks. upstream registers a left and a right leg part (2 x 3) but never
 /// positions them (they stay at the world origin and render nothing); no actor stands for them here.
 inline constexpr int   kBodyParts         = 2;
 inline constexpr int   kPartsPerHead      = 6;

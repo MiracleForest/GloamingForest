@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:hostile_wolf",
+      "identifier": "gloamingforest:hostile_wolf",
       "materials": {
         "default": "entity_alphatest"
       },
@@ -14,13 +14,13 @@
         "default": "geometry.wolf"
       },
       "render_controllers": [
-        "controller.render.twilightforest.hostile_wolf"
+        "controller.render.gloamingforest.hostile_wolf"
       ],
       "animations": {
         "setup": "animation.wolf.setup",
         "legs": "animation.wolf.leg_default",
         "look_at": "animation.common.look_at_target",
-        "tail": "animation.twilightforest.hostile_wolf.tail"
+        "tail": "animation.gloamingforest.hostile_wolf.tail"
       },
       "scripts": {
         "animate": [

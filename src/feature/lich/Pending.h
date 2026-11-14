@@ -1,7 +1,7 @@
 #pragma once
 
 // U21 (lich): world edits a structure piece cannot make while the chunk generates (the generation
-// region has no block entities and no entities): TF's pieces fill block entities (lectern books,
+// region has no block entities and no entities): upstream's pieces fill block entities (lectern books,
 // brewing stands, jars, shelves, sinister spawners) and add entities (Death Tome mimics, trapped
 // zombies, the gallery's magic painting) inside postProcess. The piece queues them here with the
 // values it rolled; the server thread applies them once the chunk is loaded, at most a second

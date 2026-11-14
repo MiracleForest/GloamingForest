@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/BigMushgloomFeature.java
-//   src/main/java/twilightforest/world/components/feature/trollcave/TrollBigMushgloomFeature.java
-//   src/main/java/twilightforest/world/components/feature/trollcave/TrollHugeBrownMushroomFeature.java
-//   src/main/java/twilightforest/world/components/feature/trollcave/TrollHugeRedMushroomFeature.java
-//   src/main/java/twilightforest/world/components/feature/UndergroundPlantFeature.java
-//   src/main/java/twilightforest/util/features/FeatureLogic.java (mushroom helpers)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/BigMushgloomFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trollcave/TrollBigMushgloomFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trollcave/TrollHugeBrownMushroomFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trollcave/TrollHugeRedMushroomFeature.java
+//   src/main/java/gloamingforest/world/components/feature/UndergroundPlantFeature.java
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java (mushroom helpers)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U27's feature types (F5 registerType). The mushroom features follow Minecraft 1.21.1's
-// AbstractHugeMushroomFeature#place (tree height, isValidPosition, makeCap, placeTrunk) with TF's
-// own caps. Java's six huge mushroom faces are TF's own block states on the mushgloom blocks; the
+// AbstractHugeMushroomFeature#place (tree height, isValidPosition, makeCap, placeTrunk) with upstream's
+// own caps. Java's six huge mushroom faces are upstream's own block states on the mushgloom blocks; the
 // vanilla caps and stems take Bedrock's huge_mushroom_bits nearest to the faces.
 #include "feature/caves/Caves.h"
 
@@ -88,9 +88,9 @@ int mushroomBits(Faces const& f, bool stem) {
 
 /// The Bedrock block of a Java huge mushroom state with these faces.
 Block const* mushroomBlock(MushroomState const& s, Faces const& f) {
-    if (s.id.rfind("twilightforest:", 0) == 0) {
-        Json states{{"twilightforest:up", f.up},     {"twilightforest:down", f.down}, {"twilightforest:north", f.north},
-                    {"twilightforest:south", f.south}, {"twilightforest:east", f.east}, {"twilightforest:west", f.west}};
+    if (s.id.rfind("gloamingforest:", 0) == 0) {
+        Json states{{"gloamingforest:up", f.up},     {"gloamingforest:down", f.down}, {"gloamingforest:north", f.north},
+                    {"gloamingforest:south", f.south}, {"gloamingforest:east", f.east}, {"gloamingforest:west", f.west}};
         if (auto const* b = game::blockWithStates(s.id, states)) return b;
         return kit::javaBlock(s.id);
     }
@@ -177,7 +177,7 @@ bool bigMushgloom(FeatureContext const& c, bool troll) {
 
 bool isEdge(int x, int edge) { return x == edge || x == -edge; }
 
-/// TrollHugeBrownMushroomFeature (HugeBrownMushroomFeature with TF's cap).
+/// TrollHugeBrownMushroomFeature (HugeBrownMushroomFeature with upstream's cap).
 bool trollHugeBrown(FeatureContext const& c) {
     MushroomState cap  = capOf(c);
     MushroomState stem = stemOf(c);
@@ -202,7 +202,7 @@ bool trollHugeBrown(FeatureContext const& c) {
     return true;
 }
 
-/// TrollHugeRedMushroomFeature (HugeRedMushroomFeature with TF's cap).
+/// TrollHugeRedMushroomFeature (HugeRedMushroomFeature with upstream's cap).
 bool trollHugeRed(FeatureContext const& c) {
     MushroomState cap  = capOf(c);
     MushroomState stem = stemOf(c);
@@ -227,7 +227,7 @@ bool trollHugeRed(FeatureContext const& c) {
     return true;
 }
 
-/// UndergroundPlantFeature(config, spawnInStructure = true) ("twilightforest:troll_vines").
+/// UndergroundPlantFeature(config, spawnInStructure = true) ("gloamingforest:troll_vines").
 bool trollVines(FeatureContext const& c) {
     Json const& stateJson = c.config.contains("state") ? c.config["state"] : Json();
     std::string baseId    = stateJson.is_object() ? stateJson.value("Name", std::string()) : std::string();
@@ -267,11 +267,11 @@ bool trollVines(FeatureContext const& c) {
 } // namespace
 
 void installFeatures() {
-    gf::features::registerType("twilightforest:big_mushgloom", [](FeatureContext const& c) { return bigMushgloom(c, false); });
-    gf::features::registerType("twilightforest:troll_cave_big_mushgloom", [](FeatureContext const& c) { return bigMushgloom(c, true); });
-    gf::features::registerType("twilightforest:troll_cave_huge_brown_mushroom", trollHugeBrown);
-    gf::features::registerType("twilightforest:troll_cave_huge_red_mushroom", trollHugeRed);
-    gf::features::registerType("twilightforest:troll_vines", trollVines);
+    gf::features::registerType("gloamingforest:big_mushgloom", [](FeatureContext const& c) { return bigMushgloom(c, false); });
+    gf::features::registerType("gloamingforest:troll_cave_big_mushgloom", [](FeatureContext const& c) { return bigMushgloom(c, true); });
+    gf::features::registerType("gloamingforest:troll_cave_huge_brown_mushroom", trollHugeBrown);
+    gf::features::registerType("gloamingforest:troll_cave_huge_red_mushroom", trollHugeRed);
+    gf::features::registerType("gloamingforest:troll_vines", trollVines);
 }
 
 } // namespace gf::feature::caves

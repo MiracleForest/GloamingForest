@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:slime_blob",
+      "identifier": "gloamingforest:slime_blob",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "slime_blob"]
+        "family": ["gloamingforest", "slime_blob"]
       },
       "minecraft:collision_box": {
         "width": 0.25,

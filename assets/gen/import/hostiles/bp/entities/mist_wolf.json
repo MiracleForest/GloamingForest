@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:mist_wolf",
+      "identifier": "gloamingforest:mist_wolf",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "mist_wolf", "monster", "mob"]
+        "family": ["gloamingforest", "mist_wolf", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 1.4,

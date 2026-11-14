@@ -1,19 +1,19 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.hostile_wolf.tail": {
+    "animation.gloamingforest.hostile_wolf.tail": {
       "loop": true,
       "bones": {
         "tail": {
           "rotation": [
-            "(q.property('twilightforest:has_target') ? 88.2000 : 36.0000) - this",
-            "q.property('twilightforest:aggressive') ? -this : (math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed * 80.22 - this)",
+            "(q.property('gloamingforest:has_target') ? 88.2000 : 36.0000) - this",
+            "q.property('gloamingforest:aggressive') ? -this : (math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed * 80.22 - this)",
             0.0
           ]
         }
       }
     },
-    "animation.twilightforest.wraith.legs": {
+    "animation.gloamingforest.wraith.legs": {
       "loop": true,
       "bones": {
         "rightLeg": {
@@ -32,7 +32,7 @@
         }
       }
     },
-    "animation.twilightforest.pinch_beetle.pincers_open": {
+    "animation.gloamingforest.pinch_beetle.pincers_open": {
       "loop": true,
       "bones": {
         "right_pincher": {
@@ -51,7 +51,7 @@
         }
       }
     },
-    "animation.twilightforest.redcap.attack_arms": {
+    "animation.gloamingforest.redcap.attack_arms": {
       "loop": true,
       "bones": {
         "rightArm": {

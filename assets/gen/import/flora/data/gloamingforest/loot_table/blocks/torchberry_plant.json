@@ -1,0 +1,41 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "ability": "shears_dig",
+              "condition": "neoforge:can_item_perform_ability"
+            }
+          ],
+          "name": "gloamingforest:torchberry_plant"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "block": "gloamingforest:torchberry_plant",
+              "condition": "minecraft:block_state_property",
+              "properties": {
+                "has_torchberries": "true"
+              }
+            }
+          ],
+          "name": "gloamingforest:torchberries"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "gloamingforest:blocks/torchberry_plant"
+}

@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/Experiment115Block.java
-//   src/main/java/twilightforest/item/Experiment115Item.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/Experiment115Block.java
+//   src/main/java/gloamingforest/item/Experiment115Item.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U10 (provisions): Experiment 115, the cake you can put back together.
 // - The block: states omnomnom (bites taken 0..7; the BP's default 0 is a full block, a placed
-//   slice is 7 as TF's default state) and regenerate; F1's permutations draw the slices and give
+//   slice is 7 as upstream's default state) and regenerate; F1's permutations draw the slices and give
 //   their boxes; no loot (noLootTable: the BP override drops nothing). It survives only on a solid
 //   block below (a neighbour change removes it otherwise).
-// - Use (core::provisions::e115Action, TF's order): an E115 item adds a slice; redstone on a full,
+// - Use (core::provisions::e115Action, upstream's order): an E115 item adds a slice; redstone on a full,
 //   non-regenerating block makes it regenerate; sneaking with empty hands takes a slice back; any
 //   other use eats one (4 / 0.3, the e115_slices_eaten stat, the consume_item trigger with 8 - bites
 //   items). Random ticks regrow a regenerating block; it is a redstone source of 15 - 2 x bites
@@ -58,8 +58,8 @@ namespace ia = common::interactions;
 
 namespace {
 
-constexpr char kBites[]      = "twilightforest:omnomnom";
-constexpr char kRegenerate[] = "twilightforest:regenerate";
+constexpr char kBites[]      = "gloamingforest:omnomnom";
+constexpr char kRegenerate[] = "gloamingforest:regenerate";
 
 std::mt19937& rng() {
     static std::mt19937 r{std::random_device{}()};

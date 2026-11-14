@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U24 (hydra): the world helpers of World.h on the game's API (no F8 internals).
 
 #include "feature/hydra/World.h"

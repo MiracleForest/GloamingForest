@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponentOld.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentOld.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18).
-// TFStructureComponentOld: the procedural piece base of the older TF structures (lich tower wings,
+// TFStructureComponentOld: the procedural piece base of the older upstream structures (lich tower wings,
 // dark tower, aurora palace, mushroom tower, labyrinth, knight stronghold, final castle, troll
 // caves, hollow hills ...): orientation without vanilla's mirror, rotated placement helpers,
 // spawners, treasure chests, tripwires, signs, ground level probing and the beardifier box.
@@ -68,7 +68,7 @@ protected:
     void surroundBlockCardinalRotated(Region& region, Block const& block, int x, int y, int z, BlockBox const& sbb);
     void surroundBlockCorners(Region& region, Block const& block, int x, int y, int z, BlockBox const& sbb);
 
-    /// Treasure chests with loot table `tableId` ("twilightforest:chests/..."), through gf::loot.
+    /// Treasure chests with loot table `tableId` ("gloamingforest:chests/..."), through gf::loot.
     void placeTreasureAtCurrentPosition(Region& region, int x, int y, int z, std::string const& tableId, BlockBox const& sbb);
     void placeTreasureAtCurrentPosition(Region& region, int x, int y, int z, std::string const& tableId, bool trapped, BlockBox const& sbb);
     void placeTreasureAtWorldPosition(Region& region, std::string const& tableId, bool trapped, BlockBox const& sbb, BlockPos const& pos);
@@ -90,7 +90,7 @@ protected:
     [[nodiscard]] virtual std::array<int, 3> offsetTowerCoords(int x, int y, int z, int towerSize, Orientation direction) const;
     [[nodiscard]] virtual BlockPos           offsetTowerCCoords(int x, int y, int z, int towerSize, Orientation direction) const;
 
-    /// getWorldX / getWorldZ with TF's own orientation handling (no mirror).
+    /// getWorldX / getWorldZ with upstream's own orientation handling (no mirror).
     [[nodiscard]] int worldX(int x, int z) const override;
     [[nodiscard]] int worldZ(int x, int z) const override;
     [[nodiscard]] int getXWithOffsetRotated(int x, int z, Rotation rotationsCW) const;

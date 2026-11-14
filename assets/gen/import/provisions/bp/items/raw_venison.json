@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:raw_venison",
+      "identifier": "gloamingforest:raw_venison",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:raw_venison.name"
+        "value": "item.gloamingforest:raw_venison.name"
       },
       "minecraft:tags": {
         "tags": ["alexscaves:raw_meats", "c:foods/raw_meat", "farmersdelight:cabbage_roll_ingredients"]

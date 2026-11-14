@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "tag": "gloamingforest:towerwood"
+    },
+    "-": {
+      "tag": "c:ingots/knightmetal"
+    },
+    "o": {
+      "item": "gloamingforest:knightmetal_ring"
+    }
+  },
+  "pattern": [
+    "-#",
+    "-o",
+    "-#"
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:knightmetal_shield"
+  }
+}

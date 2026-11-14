@@ -1,32 +1,32 @@
--- GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
--- Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
---   src/main/java/twilightforest/client/model/block/connected/ConnectionLogic.java
---   src/main/java/twilightforest/client/model/block/connected/ConnectedTextureModel.java
---   src/main/java/twilightforest/client/model/block/connected/UnbakedConnectedTextureModel.java
---   src/main/java/twilightforest/block/WallPillarBlock.java
---   src/main/java/twilightforest/block/ConnectableRotatedPillarBlock.java
---   src/main/java/twilightforest/block/SnowLoggable.java
---   src/main/java/twilightforest/client/renderer/block/TFChestRenderer.java
---   src/main/java/twilightforest/client/event/ColorHandler.java
---   src/main/java/twilightforest/util/woods/TFWoodTypes.java
---   src/main/java/twilightforest/init/TFSoundTypes.java
---   src/main/java/twilightforest/init/TFSounds.java
---   src/main/java/twilightforest/init/TFBlocks.java
--- Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+-- GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+-- Translated from the upstream 4.8 source (commit 9e40a757):
+--   src/main/java/gloamingforest/client/model/block/connected/ConnectionLogic.java
+--   src/main/java/gloamingforest/client/model/block/connected/ConnectedTextureModel.java
+--   src/main/java/gloamingforest/client/model/block/connected/UnbakedConnectedTextureModel.java
+--   src/main/java/gloamingforest/block/WallPillarBlock.java
+--   src/main/java/gloamingforest/block/ConnectableRotatedPillarBlock.java
+--   src/main/java/gloamingforest/block/SnowLoggable.java
+--   src/main/java/gloamingforest/client/renderer/block/TFChestRenderer.java
+--   src/main/java/gloamingforest/client/event/ColorHandler.java
+--   src/main/java/gloamingforest/util/woods/TFWoodTypes.java
+--   src/main/java/gloamingforest/init/TFSoundTypes.java
+--   src/main/java/gloamingforest/init/TFSounds.java
+--   src/main/java/gloamingforest/init/TFBlocks.java
+-- Copyright (c) the upstream authors (see NOTICE).
 -- Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 -- of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 --
 -- Contract "families+blockevents" (F11): the assemble-time block family generator.
 --
--- About 400 TF blocks are variations of vanilla shapes (stairs, slabs, fences, doors, logs,
+-- About 400 upstream blocks are variations of vanilla shapes (stairs, slabs, fences, doors, logs,
 -- leaves, signs, chests, ...). Units declare them as data (assets/data/families/<u>.json; F1
--- imports TF's as data/gf/families/<u>.json) and this module completes their Bedrock block
+-- imports upstream's as data/gf/families/<u>.json) and this module completes their Bedrock block
 -- definitions after the packs are assembled (the data schema: tools/families/README.md):
 --
 -- * A hand-made BP file (assets/pack/bp/**, assets/test/bp/**) is kept: the manual layer wins.
 -- * An F1 skeleton (assets/gen/import/<u>/bp/blocks/<id>.json) keeps its states (frozen,
---   docs/spec/blockstates.md: Java's properties as twilightforest:<p> with Java's values) and, for
---   the families Java draws with block models, its geometry and permutations (F1 converts TF's
+--   docs/spec/blockstates.md: Java's properties as gloamingforest:<p> with Java's values) and, for
+--   the families Java draws with block models, its geometry and permutations (F1 converts upstream's
 --   models). The kit adds what the block does: collision and selection boxes per state (Java's
 --   getShape / getCollisionShape), redstone output, connection rules, liquid detection, light,
 --   tint, snow, block sounds, and the states it adds (rule R1: additions only).
@@ -38,7 +38,7 @@
 -- * No placement traits: the runtime (src/feature/families) sets the states on placement as Java's
 --   getStateForPlacement does.
 -- * Extras: shared geometries (RP models/blocks/gf_families/), the sign text display entity,
---   entity textures in terrain_texture.json, block sounds (blocks.json; TF's sound types as
+--   entity textures in terrain_texture.json, block sounds (blocks.json; upstream's sound types as
 --   sounds.json block_sounds), double slab loot tables.
 --
 -- Entry points: generate(projectdir, outdir, opts) (tools/xmake/assemble.lua after the packs are
@@ -46,9 +46,9 @@
 
 import("core.base.json")
 
-local NS = "twilightforest:"
+local NS = "gloamingforest:"
 -- the states the kit adds that no Java block declares (chests' lid and open_count, connected textures):
--- TF's blocks keep exactly their frozen twilightforest:* states (docs/spec/blockstates.md)
+-- upstream's blocks keep exactly their frozen gloamingforest:* states (docs/spec/blockstates.md)
 local KIT = "gloamingforest:"
 local GEO_DIR = "models/blocks/gf_families"
 local FORMAT = "1.26.0"
@@ -408,16 +408,16 @@ local function part_cubes(parts, static, mat)
     return out
 end
 
--- ---- TF's data (generator side) ------------------------------------------------------------------
+-- ---- upstream's data (generator side) ------------------------------------------------------------------
 
 -- TFChestRenderer: the chest texture folder of each chest block
 local CHEST_TEXTURE_DIRS = {
-    twilight_oak = "twilight", canopy = "canopy", mangrove = "mangrove", dark = "darkwood",
+    gloaming_oak = "gloaming", canopy = "canopy", mangrove = "mangrove", dark = "darkwood",
     time = "time", transformation = "transformation", mining = "mining", sorting = "sorting",
 }
 
 
--- ColorHandler: the leaves Bedrock tints by biome. Biome foliage (twilight oak, dark leaves) as
+-- ColorHandler: the leaves Bedrock tints by biome. Biome foliage (gloaming oak, dark leaves) as
 -- Java; canopy and mangrove leaves blend the biome foliage with 0x469A66 / 0xC0E694
 -- (CANOPY_COLORIZER / MANGROVE_COLORIZER), which Bedrock's tint methods can't: they take the tint
 -- of Java's colour without a world (FoliageColor.getEvergreenColor / getBirchColor).
@@ -426,19 +426,19 @@ local CHEST_TEXTURE_DIRS = {
 -- PositionDependentTintResolver hook, which only runs for tinted materials) draws Java's colour
 -- per position (src/client/families); a vanilla client tints them with the biome's foliage.
 local LEAF_TINTS = {
-    ["twilightforest:twilight_oak_leaves"] = "default_foliage", ["twilightforest:dark_leaves"] = "default_foliage",
-    ["twilightforest:canopy_leaves"] = "evergreen_foliage", ["twilightforest:mangrove_leaves"] = "birch_foliage",
-    ["twilightforest:time_leaves"] = "default_foliage", ["twilightforest:transformation_leaves"] = "default_foliage",
-    ["twilightforest:mining_leaves"] = "default_foliage", ["twilightforest:sorting_leaves"] = "default_foliage",
-    ["twilightforest:rainbow_oak_leaves"] = "default_foliage",
+    ["gloamingforest:gloaming_oak_leaves"] = "default_foliage", ["gloamingforest:dark_leaves"] = "default_foliage",
+    ["gloamingforest:canopy_leaves"] = "evergreen_foliage", ["gloamingforest:mangrove_leaves"] = "birch_foliage",
+    ["gloamingforest:time_leaves"] = "default_foliage", ["gloamingforest:transformation_leaves"] = "default_foliage",
+    ["gloamingforest:mining_leaves"] = "default_foliage", ["gloamingforest:sorting_leaves"] = "default_foliage",
+    ["gloamingforest:rainbow_oak_leaves"] = "default_foliage",
 }
 -- The leaves Java always colours the same (FoliageColor.getEvergreenColor): their grey textures
 -- pre-tinted with it (terrain_texture.json tint_color), the same on every client.
 local LEAF_COLORS = {
-    ["twilightforest:beanstalk_leaves"] = "#619961", ["twilightforest:thorn_leaves"] = "#619961",
+    ["gloamingforest:beanstalk_leaves"] = "#619961", ["gloamingforest:thorn_leaves"] = "#619961",
 }
 
--- The wood of a sign / chest (TFWoodTypes names: twilight_oak, canopy, mangrove, dark, time,
+-- The wood of a sign / chest (TFWoodTypes names: gloaming_oak, canopy, mangrove, dark, time,
 -- transformation, mining, sorting): params.wood, F1's woodType ("canopy_wood_type"), or the id.
 local function wood_of(e)
     local p = e.params
@@ -1131,7 +1131,7 @@ behaviour.leaves = function (doc, e, ctx)
     end
 end
 
--- cross plants (sapling, TF bushes): Java's block/cross model (two planes, rescaled at 45 degrees).
+-- cross plants (sapling, upstream bushes): Java's block/cross model (two planes, rescaled at 45 degrees).
 local function cross_cubes(x0, x1, y0, y1, material)
     local rot = {axis = "y", angle = 45, origin = {8, 8, 8}, rescale = true}
     local faces1 = {north = {rect = {0, 16 - (y1 - y0), 16, 16}, mat = material}, south = {rect = {0, 16 - (y1 - y0), 16, 16}, mat = material}}
@@ -1157,7 +1157,7 @@ behaviour.sapling = function (doc)
     comps(doc)["minecraft:light_dampening"] = 0
 end
 
--- potted plant (Java FlowerPotBlock / TF SpecialFlowerPotBlock): block/flower_pot_cross.
+-- potted plant (Java FlowerPotBlock / upstream SpecialFlowerPotBlock): block/flower_pot_cross.
 visual.potted = function (doc, e, t, ctx)
     local g = geo(ctx, "geometry.gf_families.potted", function ()
         local pot = {
@@ -1416,8 +1416,8 @@ behaviour.trapped_chest = function (doc, e)
     for n = 1, 15 do perm(doc, is(KIT .. "open_count", n), {["minecraft:redstone_producer"] = {power = n, strongly_powered_face = "down"}}) end
 end
 
--- horizontal (TF TFHorizontalBlock, HorizontalDirectionalBlock): facing; the front (params
--- textures.front) faces the facing. binary rotated (TF BinaryRotatedBlock): rotated turns the
+-- horizontal (upstream TFHorizontalBlock, HorizontalDirectionalBlock): facing; the front (params
+-- textures.front) faces the facing. binary rotated (upstream BinaryRotatedBlock): rotated turns the
 -- model a quarter. directional (Java DirectionalBlock): facing of six; the front is up.
 visual.horizontal = function (doc, e, t)
     full_block(doc, {["*"] = tex(t, "side", "*"), up = tex(t, "up", "top", "*"), down = tex(t, "down", "bottom", "up", "*"),
@@ -1435,10 +1435,10 @@ visual.directional = function (doc, e, t)
     for f, r in pairs(rots) do perm(doc, is(NS .. "facing", f), {["minecraft:transformation"] = {rotation = r}}) end
 end
 
--- connectable pillar (TF ConnectableRotatedPillarBlock, e.g. thorns: one box per state from
--- getShape) and wall pillar (TF WallPillarBlock: the 12 px core, 2 px arms, 3 px flats on the axis
+-- connectable pillar (upstream ConnectableRotatedPillarBlock, e.g. thorns: one box per state from
+-- getShape) and wall pillar (upstream WallPillarBlock: the 12 px core, 2 px arms, 3 px flats on the axis
 -- ends). axis and six connections, kept by the runtime.
--- ConnectableRotatedPillarBlock's width: params.width, TF's ThornsBlock(properties, 10)
+-- ConnectableRotatedPillarBlock's width: params.width, upstream's ThornsBlock(properties, 10)
 local function pillar_width(e)
     if e.params.width then return e.params.width end
     local c = e.params.class
@@ -1451,7 +1451,7 @@ local function pillar_bounds(width)
     return lo, 16 - lo
 end
 local function connectable_shape(axis, c, lo, hi)
-    -- ConnectableRotatedPillarBlock.getShape (TF's mapping of the connections, as written)
+    -- ConnectableRotatedPillarBlock.getShape (upstream's mapping of the connections, as written)
     if axis == "x" then
         return {0, c.north and 0 or lo, c.west and 0 or lo, 16, c.south and 16 or hi, c.east and 16 or hi}
     elseif axis == "z" then
@@ -1529,10 +1529,10 @@ visual.wall_pillar = function (doc, e, t, ctx) pillar_conn_visual(doc, e, t, ctx
 behaviour.connectable_pillar = function (doc, e) pillar_conn_behaviour(doc, e, "connectable_pillar") end
 behaviour.wall_pillar = function (doc, e) pillar_conn_behaviour(doc, e, "wall_pillar") end
 
--- connected texture (TF ConnectedTextureModel / UnbakedConnectedTextureModel / ConnectionLogic):
--- every face is four 8 x 8 quadrants; each quadrant draws the overlay (TF's overlay_texture) or a
+-- connected texture (upstream ConnectedTextureModel / UnbakedConnectedTextureModel / ConnectionLogic):
+-- every face is four 8 x 8 quadrants; each quadrant draws the overlay (upstream's overlay_texture) or a
 -- piece of the connected sheet (overlay_connected: cornerless / vertical / horizontal / corner) by
--- the connections to its two sides and the block in their corner (twilightforest:<direction> and
+-- the connections to its two sides and the block in their corner (gloamingforest:<direction> and
 -- gloamingforest:corner_<a>_<b>, kept by the runtime). Bedrock's per-block budget (65536 states)
 -- holds the corners only for blocks whose enabled faces need few of them (six sides and twelve
 -- corners are 2^18): otherwise two connected sides count as a filled corner (cornerless), as in a
@@ -1688,7 +1688,7 @@ modifiers.waterloggable = function (doc)
     comps(doc)["minecraft:liquid_detection"] = {detection_rules = arr({{liquid_type = "water", can_contain_liquid = true, on_liquid_touches = "blocking"}})}
 end
 
--- TF SnowLoggable: layers 0..8 of snow in the block (SNOW_SHAPE_BY_LAYER: 2 px per layer): snow
+-- upstream SnowLoggable: layers 0..8 of snow in the block (SNOW_SHAPE_BY_LAYER: 2 px per layer): snow
 -- bones in a copy of the geometry, the snow in the selection box.
 modifiers.snowloggable = function (doc, e, t, ctx)
     ensure_state(doc, NS .. "layers", ints(8))
@@ -1720,7 +1720,7 @@ modifiers.snowloggable = function (doc, e, t, ctx)
             base and base.ambient_occlusion == false and {ambient_occlusion = true, face_dimming = true} or nil)
         comps(doc)["minecraft:material_instances"] = mi
     end
-    -- the snow is part of the block's shape (SnowLoggable shapes). F1's skeleton of a TF block has
+    -- the snow is part of the block's shape (SnowLoggable shapes). F1's skeleton of an upstream block has
     -- Java's shape per state already (TFBushBlock.getShape / getCollisionShape with the snow of each
     -- layer count, per age): those stay, the kit's layer boxes would override them
     for _, p in ipairs(block_of(doc).permutations or {}) do
@@ -1737,14 +1737,14 @@ modifiers.snowloggable = function (doc, e, t, ctx)
     end
 end
 
--- Java ladders / scaffolding (TF climbable hollow logs, rope, iron ladder): the runtime marks the
+-- Java ladders / scaffolding (upstream climbable hollow logs, rope, iron ladder): the runtime marks the
 -- block type climbable (BlockProperty::Climbable) on the server and in the client mod.
 modifiers.climbable = function () end
 
--- TF LightableBlock: lighting none / normal / dim / ominous; light per level.
+-- upstream LightableBlock: lighting none / normal / dim / ominous; light per level.
 modifiers.lightable = function (doc, e)
     ensure_state(doc, NS .. "lighting", list("none", "normal", "dim", "ominous"))
-    -- F1's skeleton already carries TF's own light per state (the block's lightLevel lambda: skull
+    -- F1's skeleton already carries upstream's own light per state (the block's lightLevel lambda: skull
     -- candles give 3 per candle, ...): it wins unless the data names light_levels
     if not e.params.light_levels then
         local has = comps(doc)["minecraft:light_emission"] ~= nil
@@ -1787,7 +1787,7 @@ local DEFAULT_SOUND = {
 
 -- Families whose Java class sets the sound type in its constructor, over the properties' one (and
 -- over the import's sound for the id): CeilingHangingSignBlock and WallHangingSignBlock call
--- properties.sound(woodType.hangingSignSoundType()), and TF's wood types (TFWoodTypes: new
+-- properties.sound(woodType.hangingSignSoundType()), and upstream's wood types (TFWoodTypes: new
 -- WoodType(name, set)) take WoodType's default SoundType.HANGING_SIGN, although TFBlocks copies the
 -- planks' properties (SoundType.WOOD) into them. A params.sound still wins.
 local FORCED_SOUND = {hanging_sign = "hanging_sign", wall_hanging_sign = "hanging_sign"}
@@ -2012,7 +2012,7 @@ end
 
 -- ---- generation ----------------------------------------------------------------------------------
 
--- The entity textures of signs and chests (the assembled RP's TF textures, registered in
+-- The entity textures of signs and chests (the assembled RP's upstream textures, registered in
 -- terrain_texture.json under tf_entity_*), or the params' textures.
 local function entity_textures(g, rpdir, ctx)
     local function register(key, rel)
@@ -2026,17 +2026,17 @@ local function entity_textures(g, rpdir, ctx)
     local shape = g.shape
     if shape == "sign" or shape == "wall_sign" then
         local w = wood_of({id = g.id, params = g.params})
-        t.entity = register("tf_entity_sign_" .. w, "textures/twilightforest/entity/signs/" .. w)
+        t.entity = register("tf_entity_sign_" .. w, "textures/gloamingforest/entity/signs/" .. w)
     elseif shape == "hanging_sign" or shape == "wall_hanging_sign" then
         local w = wood_of({id = g.id, params = g.params})
-        t.entity = register("tf_entity_hanging_sign_" .. w, "textures/twilightforest/entity/signs/hanging/" .. w)
+        t.entity = register("tf_entity_hanging_sign_" .. w, "textures/gloamingforest/entity/signs/hanging/" .. w)
     elseif shape == "chest" or shape == "trapped_chest" then
         local w = wood_of({id = g.id, params = g.params})
         local dir = CHEST_TEXTURE_DIRS[w] or w
         local trapped = shape == "trapped_chest"
         for _, k in ipairs({"single", "left", "right"}) do
             local name = trapped and (k == "single" and "trapped" or ("trapped_" .. k)) or k
-            t[k] = register("tf_entity_chest_" .. dir .. "_" .. name, "textures/twilightforest/entity/chest/" .. dir .. "/" .. name)
+            t[k] = register("tf_entity_chest_" .. dir .. "_" .. name, "textures/gloamingforest/entity/chest/" .. dir .. "/" .. name)
         end
     end
     return t
@@ -2053,12 +2053,12 @@ end
 --   wherever it is placed (SoundType#getPlaceSound), so the type's place_in_water is its place event.
 -- - chest.open / chest.closed: the game's chest events played with the chest's block (vanilla's
 --   chests have type wood too, which defines neither, so the game falls back to its
---   individual_event_sounds chest.open / chest.closed). TF's chests are vanilla ChestBlocks of their
+--   individual_event_sounds chest.open / chest.closed). upstream's chests are vanilla ChestBlocks of their
 --   wood (ChestBlockEntity#playSound: CHEST_OPEN / CHEST_CLOSE, volume 0.5, pitch 0.9..1.0, which
 --   the inventory contract plays itself, F10): the chest family's types define the same values.
 -- Packs merge sounds.json per event (the game's own vanilla_1.26.10 pack redefines only wood's place
 -- event), so the events are added to the type as it is: its other events stay the game's (or the
--- import's, for TF's own types).
+-- import's, for upstream's own types).
 -- Side effect on vanilla content, intended: the types are the game's own (wood, stone, metal, glass,
 -- grass, sand, cloth, ...), which vanilla blocks share, so a vanilla waterloggable block of such a
 -- type placed into water plays its type's place event through this place_in_water too, and vanilla
@@ -2212,7 +2212,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             local e = {id = id, params = g.params}
             local shape = g.shape
             local skel_geo = skel and skel.doc["minecraft:block"] and skel.doc["minecraft:block"].components["minecraft:geometry"] ~= nil
-            -- F1's skeleton models stay (TF's own block models); the kit draws block entity models,
+            -- F1's skeleton models stay (upstream's own block models); the kit draws block entity models,
             -- connected textures and blocks without a skeleton model; modifier-only ids keep theirs
             local keep_visual = skel_geo and (shape == nil or not ENTITY_MODEL[shape]) and not g.params.textures
             if shape == nil and not skel then
@@ -2293,7 +2293,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
         if opts.strict_textures then table.insert(errors, "families: texture " .. m .. " is not in the resource pack") end
     end
     -- block sounds (RP blocks.json): the kit's default per family where the block has no sound yet.
-    -- An id that has one keeps it: TF's sound types (the jars' twilightforest.jar, TFSoundTypes) are
+    -- An id that has one keeps it: upstream's sound types (the jars' gloamingforest.jar, TFSoundTypes) are
     -- F1's import, its rp/blocks.d and rp/sounds.json.d fragments (block_sounds and the step, fall,
     -- jump and land interactive_sounds), except where the family's Java class sets the sound type
     -- itself (FORCED_SOUND: the hanging signs), which replaces the one their properties give (the

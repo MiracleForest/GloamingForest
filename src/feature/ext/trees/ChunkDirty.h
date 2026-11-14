@@ -2,7 +2,7 @@
 
 // Contract extension of "worldgen" for U3 (rule R18: new file; A8 folds it into F5's
 // src/feature/worldgen/Worldgen.h or src/game/). Java's LevelChunk#setUnsaved(true) for a change that
-// edits no block: TF's transformation core rewrites a column's biomes (TransLogCoreBlock), and the
+// edits no block: upstream's transformation core rewrites a column's biomes (TransLogCoreBlock), and the
 // chunk must be saved with them.
 //
 // Bedrock 26.51 has no callable way to mark a chunk's data unsaved without a block edit (checked in

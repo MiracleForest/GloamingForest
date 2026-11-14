@@ -1,27 +1,27 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/ToolEvents.java
-//   src/main/java/twilightforest/events/EntityEvents.java
-//   src/main/java/twilightforest/enchantment/ApplyFrostedEffect.java
-//   src/main/java/twilightforest/item/FierySwordItem.java
-//   src/main/java/twilightforest/item/FieryPickItem.java
-//   src/main/java/twilightforest/item/FieryArmorItem.java
-//   src/main/java/twilightforest/item/KnightmetalSwordItem.java
-//   src/main/java/twilightforest/item/KnightmetalPickItem.java
-//   src/main/java/twilightforest/item/KnightmetalAxeItem.java
-//   src/main/java/twilightforest/item/MinotaurAxeItem.java
-//   src/main/java/twilightforest/item/MazebreakerPickItem.java
-//   src/main/java/twilightforest/item/ArcticArmorItem.java
-//   src/main/java/twilightforest/item/PhantomArmorItem.java
-//   src/main/java/twilightforest/item/YetiArmorItem.java
-//   src/main/java/twilightforest/loot/modifiers/FieryToolSmeltingModifier.java
-//   src/main/java/twilightforest/item/recipe/NoTemplateSmithingRecipe.java
-//   src/main/java/twilightforest/data/CraftingGenerator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/ToolEvents.java
+//   src/main/java/gloamingforest/events/EntityEvents.java
+//   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
+//   src/main/java/gloamingforest/item/FierySwordItem.java
+//   src/main/java/gloamingforest/item/FieryPickItem.java
+//   src/main/java/gloamingforest/item/FieryArmorItem.java
+//   src/main/java/gloamingforest/item/KnightmetalSwordItem.java
+//   src/main/java/gloamingforest/item/KnightmetalPickItem.java
+//   src/main/java/gloamingforest/item/KnightmetalAxeItem.java
+//   src/main/java/gloamingforest/item/MinotaurAxeItem.java
+//   src/main/java/gloamingforest/item/MazebreakerPickItem.java
+//   src/main/java/gloamingforest/item/ArcticArmorItem.java
+//   src/main/java/gloamingforest/item/PhantomArmorItem.java
+//   src/main/java/gloamingforest/item/YetiArmorItem.java
+//   src/main/java/gloamingforest/loot/modifiers/FieryToolSmeltingModifier.java
+//   src/main/java/gloamingforest/item/recipe/NoTemplateSmithingRecipe.java
+//   src/main/java/gloamingforest/data/CraftingGenerator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U7 (armory): TF's armour and tool tiers. The BP items (assets/pack/bp/items/armory) carry the
+// U7 (armory): upstream's armour and tool tiers. The BP items (assets/pack/bp/items/armory) carry the
 // numbers Bedrock reads (protection, durability, enchantability, repair items, attack damage, mining
 // speeds and tiers, rarity, fire resistance, the arctic dye); this module adds the behaviour:
 // - ToolEvents: the fiery tools set what they hurt on fire (1 s for any damage dealt holding one,
@@ -33,14 +33,14 @@
 //   armour frosts it (5y + 5 ticks, amplifier y; ApplyFrostedEffect#doChillAuraEffect's immunities);
 // - armour toughness (ext/armory, Mob::getToughnessValue), powder snow walking for the arctic and
 //   yeti boots and freeze immunity for #freeze_immune_wearables (the entity flags leather sets);
-// - the global loot modifier twilightforest:fiery_pick_smelting (FieryToolSmeltingModifier);
+// - the global loot modifier gloamingforest:fiery_pick_smelting (FieryToolSmeltingModifier);
 // - the default enchantments of 24 crafted results (CraftingGenerator's result components) as
 //   special crafting of their BP recipes;
-// - no-template smithing (twilightforest:no_template_smithing, R4): Bedrock's smithing table needs a
+// - no-template smithing (gloamingforest:no_template_smithing, R4): Bedrock's smithing table needs a
 //   template, so the emperor's cloth recipe is crafted in the crafting table (base + addition,
 //   assets/pack/bp/recipes/armory) with NoTemplateSmithingRecipe's match and result;
 // - tooltips (gray descriptions), rarities, the knightmetal armour's equip sound.
-// Phantom armour is kept on death by F10's #twilightforest:kept_on_death keeper (U9's tag).
+// Phantom armour is kept on death by F10's #gloamingforest:kept_on_death keeper (U9's tag).
 #include "feature/armory/Armory.h"
 
 #include <algorithm>
@@ -299,7 +299,7 @@ bool ingredientMatches(recipes::Ingredient const& in, std::string const& id) {
     return false;
 }
 
-/// RecipeManager#getRecipeFor(SMELTING, stack): the data's smelting recipes (TF's), then the game's
+/// RecipeManager#getRecipeFor(SMELTING, stack): the data's smelting recipes (upstream's), then the game's
 /// furnace recipes (vanilla's); the result (count x result count) and the recipe's XP.
 std::optional<std::pair<ItemStack, float>> smelt(ItemStack const& stack) {
     auto id = items::idOf(stack);
@@ -324,7 +324,7 @@ std::optional<std::pair<ItemStack, float>> smelt(ItemStack const& stack) {
 }
 
 void smeltingModifier(std::vector<ItemStack>& loot, loot::LootContext const& ctx, std::string const&) {
-    // condition: match_tool twilightforest:fiery_pickaxe
+    // condition: match_tool gloamingforest:fiery_pickaxe
     if (!ctx.tool || idOf(*ctx.tool) != ids::kFieryPickaxe) return;
     float xp = smeltDrops(loot);
     if (xp > 0.f && ctx.thisEntity && ctx.region) {
@@ -389,19 +389,19 @@ void registerTooltips() {
     auto line = [](std::string key, std::string fallback) {
         return [key, fallback](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) { lines.push_back(gray(viewer, key, fallback)); };
     };
-    gf::item::addTooltip(ids::kFierySword, line("item.twilightforest.fiery_sword.desc", "Burns targets"));
-    gf::item::addTooltip(ids::kFieryPickaxe, line("item.twilightforest.fiery_pickaxe.desc", "Auto-smelting"));
-    gf::item::addTooltip(ids::kKnightmetalSword, line("item.twilightforest.knightmetal_sword.desc", "Extra damage to armored targets"));
-    gf::item::addTooltip(ids::kKnightmetalPickaxe, line("item.twilightforest.knightmetal_pickaxe.desc", "Extra damage to armored targets"));
-    gf::item::addTooltip(ids::kKnightmetalAxe, line("item.twilightforest.knightmetal_axe.desc", "Extra damage to unarmored targets"));
+    gf::item::addTooltip(ids::kFierySword, line("item.gloamingforest.fiery_sword.desc", "Burns targets"));
+    gf::item::addTooltip(ids::kFieryPickaxe, line("item.gloamingforest.fiery_pickaxe.desc", "Auto-smelting"));
+    gf::item::addTooltip(ids::kKnightmetalSword, line("item.gloamingforest.knightmetal_sword.desc", "Extra damage to armored targets"));
+    gf::item::addTooltip(ids::kKnightmetalPickaxe, line("item.gloamingforest.knightmetal_pickaxe.desc", "Extra damage to armored targets"));
+    gf::item::addTooltip(ids::kKnightmetalAxe, line("item.gloamingforest.knightmetal_axe.desc", "Extra damage to unarmored targets"));
     for (auto const* id : {ids::kGoldMinotaurAxe, ids::kDiamondMinotaurAxe})
-        gf::item::addTooltip(id, line("item.twilightforest.minotaur_axe.desc", "Extra damage while charging"));
+        gf::item::addTooltip(id, line("item.gloamingforest.minotaur_axe.desc", "Extra damage while charging"));
     for (auto const& p : ca::armorPieces()) {
         std::string id(p.id);
-        if (p.material == "arctic") gf::item::addTooltip(id, line("item.twilightforest.arctic_armor.desc", "Dyeable"));
-        else if (p.material == "fiery") gf::item::addTooltip(id, line("item.twilightforest.fiery_armor.desc", "Burns attackers"));
-        else if (p.material == "yeti") gf::item::addTooltip(id, line("item.twilightforest.yeti_armor.desc", "Chills attackers"));
-        else if (p.material == "phantom") gf::item::addTooltip(id, line("item.twilightforest.phantom_armor.desc", "Is never lost on death"));
+        if (p.material == "arctic") gf::item::addTooltip(id, line("item.gloamingforest.arctic_armor.desc", "Dyeable"));
+        else if (p.material == "fiery") gf::item::addTooltip(id, line("item.gloamingforest.fiery_armor.desc", "Burns attackers"));
+        else if (p.material == "yeti") gf::item::addTooltip(id, line("item.gloamingforest.yeti_armor.desc", "Chills attackers"));
+        else if (p.material == "phantom") gf::item::addTooltip(id, line("item.gloamingforest.phantom_armor.desc", "Is never lost on death"));
     }
 }
 
@@ -421,10 +421,10 @@ void registerRecipes() {
             }
         );
     }
-    // No crafting-table copy of twilightforest:emperors_cloth_smithing: Bedrock's smithing table needs a
-    // template, and TF's own crafting recipe twilightforest:emperors_cloth_recipe (U9) already puts the
+    // No crafting-table copy of gloamingforest:emperors_cloth_smithing: Bedrock's smithing table needs a
+    // template, and upstream's own crafting recipe gloamingforest:emperors_cloth_recipe (U9) already puts the
     // cloth on any applicable piece with the same result (a copy of the base with
-    // twilightforest:emperors_cloth); a second crafting recipe of the same layout was a duplicate
+    // gloamingforest:emperors_cloth); a second crafting recipe of the same layout was a duplicate
     // (content-log warning). noTemplateSmithing keeps NoTemplateSmithingRecipe's match and result.
 }
 

@@ -1,7 +1,7 @@
 {
   "values": [
-    "#twilightforest:common_protections",
-    "twilightforest:fake_diamond",
-    "twilightforest:fake_gold"
+    "#gloamingforest:common_protections",
+    "gloamingforest:fake_diamond",
+    "gloamingforest:fake_gold"
   ]
 }

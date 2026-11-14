@@ -13,7 +13,7 @@ $log = Get-ServerLog
 foreach ($line in 'tags: \d+ tag files loaded', 'recipes: \d+ data recipes loaded', 'data maps: \d+ loaded') {
     if (-not ($log | Select-String -Pattern $line -Quiet)) { throw "missing log line '$line'" }
 }
-# recipes whose neoforge:conditions fail (TF's jeed integration) are skipped without a warning
+# recipes whose neoforge:conditions fail (upstream's jeed integration) are skipped without a warning
 if ($log | Select-String -Pattern 'no loader for recipe type jeed:' -Quiet) { throw 'the jeed recipes were parsed although their mod_loaded condition fails' }
 # the prelaunch flag (item.prelaunch.ps1): this run, and only this run, registers the S6 trim probe at load
 if (-not ($log | Select-String -Pattern 'item: S6 trim probe registered at load' -Quiet)) { throw 'the S6 trim probe was not registered at load (prelaunch flag)' }
@@ -21,15 +21,15 @@ if (-not ($log | Select-String -Pattern 'item: S6 trim probe registered at load'
 $r = Invoke-SelfTest 'item.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed: $($r.Failed -join ', ')" }
 if ($r.Pass -lt 54) { throw "expected at least 54 item selftests to pass, got $($r.Pass)" }
-# Minecraft's structure tags: in the Twilight Forest /twilightforest locate #minecraft:village knows
+# Minecraft's structure tags: in the Gloaming Forest /gloamingforest locate #minecraft:village knows
 # the tag and finds none (Java's not_found), as item.tags_locate_village ran it
 if (-not (Get-ServerLog | Select-String -Pattern 'landmark: locate #minecraft:village from -?\d+ -?\d+: none' -Quiet)) {
-    throw "/twilightforest locate #minecraft:village did not answer not_found in the Twilight Forest"
+    throw "/gloamingforest locate #minecraft:village did not answer not_found in the Gloaming Forest"
 }
 if (Get-ServerLog | Select-String -Pattern 'landmark: locate #minecraft:village: invalid' -Quiet) { throw '#minecraft:village was an invalid structure tag' }
 # every bridge include resolves (no dangling include warning of the tag runtime)
 if (Get-ServerLog | Select-String -Pattern 'tags: .* which has no data and no bridge rule' -Quiet) { throw 'a tag includes a tag that has neither data nor a bridge rule' }
-# TF's recipes, tags and data maps name only ids the game knows (item.java_ids_registry's counts)
+# upstream's recipes, tags and data maps name only ids the game knows (item.java_ids_registry's counts)
 Get-ServerLog | Select-String -Pattern 'SELFTEST INFO item\.(java_ids_registry|recipes_java_ids)' | ForEach-Object { Write-Step $_.Line }
 
 # the S6 evidence lines (docs/spikes/S6.md quotes them)
@@ -38,12 +38,12 @@ $r = Invoke-SelfTest 'item.spike_*'
 if ($r.Fail -gt 0) { throw 'an S6 spike selftest failed' }
 Get-ServerLog -Since $mark | Select-String -Pattern 'SELFTEST INFO item\.spike_' | ForEach-Object { Write-Step $_.Line }
 
-# the data reload of /twilightforest reload reads the data again
+# the data reload of /gloamingforest reload reads the data again
 $mark = Get-LogMark
-Send-Console 'twilightforest reload'
+Send-Console 'gloamingforest reload'
 Wait-LogLine 'tags: \d+ tag files loaded' 30 -Since $mark | Out-Null
 $r = Invoke-SelfTest 'item.recipes_fixture'
-if ($r.Pass -ne 1) { throw 'the recipes are gone after /twilightforest reload' }
+if ($r.Pass -ne 1) { throw 'the recipes are gone after /gloamingforest reload' }
 
 # the tag caches are rebuilt by the reload: the c: bridge still answers
 $r = Invoke-SelfTest 'item.tags_common'

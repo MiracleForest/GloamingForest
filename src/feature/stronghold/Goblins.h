@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U25 (stronghold): the goblin knights, the block-and-chain goblin and the helmet crab

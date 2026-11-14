@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/HorizontalHollowLogBlock.java
-//   src/main/java/twilightforest/block/VerticalHollowLogBlock.java
-//   src/main/java/twilightforest/block/ClimbableHollowLogBlock.java
-//   src/main/java/twilightforest/item/HollowLogItem.java
-//   src/main/java/twilightforest/enums/HollowLogVariants.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/HorizontalHollowLogBlock.java
+//   src/main/java/gloamingforest/block/VerticalHollowLogBlock.java
+//   src/main/java/gloamingforest/block/ClimbableHollowLogBlock.java
+//   src/main/java/gloamingforest/item/HollowLogItem.java
+//   src/main/java/gloamingforest/enums/HollowLogVariants.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Hollow logs (18 woods x horizontal, vertical, climbable). The item (HollowLogItem) is a BP block
-// placer of the horizontal log without an icon, so the game draws that block as the item (TF's item
+// placer of the horizontal log without an icon, so the game draws that block as the item (upstream's item
 // model is block/hollow_<wood>_log_horizontal); the placement here becomes the vertical log on a top
 // or bottom face and the horizontal log along the clicked side face's axis (getPlacementState). Java's `waterlogged` / variant `waterlogged` /
 // `ladder_waterlogged` are Bedrock's water layer (liquid detection); the variants follow it where
@@ -45,11 +45,11 @@ namespace ia = interactions;
 
 namespace {
 
-constexpr char kAxis[]    = "twilightforest:axis";
-constexpr char kVariant[] = "twilightforest:variant";
-constexpr char kFacing[]  = "twilightforest:facing";
+constexpr char kAxis[]    = "gloamingforest:axis";
+constexpr char kVariant[] = "gloamingforest:variant";
+constexpr char kFacing[]  = "gloamingforest:facing";
 
-constexpr char kMossPatch[]  = "twilightforest:moss_patch";
+constexpr char kMossPatch[]  = "gloamingforest:moss_patch";
 constexpr char kShortGrass[] = "minecraft:short_grass";
 
 std::vector<ia::HandlerId>& handlerIds() {

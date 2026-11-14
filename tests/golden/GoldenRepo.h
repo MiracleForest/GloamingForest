@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Shared by the golden tests of the Java oracle (unit F13): where the repository and tests/golden are,
 // and file / JSON reading.
 #pragma once

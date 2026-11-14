@@ -1,0 +1,5 @@
+{
+  "type": "gloamingforest:builtin",
+  "component": "gloamingforest:zoom_ability_modifier",
+  "equipment_slots": "head"
+}

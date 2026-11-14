@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:hydra_chop",
+      "identifier": "gloamingforest:hydra_chop",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:hydra_chop.name"
+        "value": "item.gloamingforest:hydra_chop.name"
       },
       "minecraft:tags": {
         "tags": [

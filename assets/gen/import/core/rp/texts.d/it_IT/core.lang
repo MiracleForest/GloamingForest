@@ -1,5 +1,5 @@
 commands.tffeature.usage=%s <info | reactivate | conquer | center>
-misc.twilightforest.advancement_required=Progresso richiesto:
-misc.twilightforest.core_disabled=%s è disabilitato nella configurazione
-misc.twilightforest.firefly_spawner_radius=Raggio delle particelle delle lucciole: %s blocchi
-misc.twilightforest.pedestal_ineligible=Non sei degno.
+misc.gloamingforest.advancement_required=Progresso richiesto:
+misc.gloamingforest.core_disabled=%s è disabilitato nella configurazione
+misc.gloamingforest.firefly_spawner_radius=Raggio delle particelle delle lucciole: %s blocchi
+misc.gloamingforest.pedestal_ineligible=Non sei degno.

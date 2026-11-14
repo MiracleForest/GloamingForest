@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.upper_goblin_knight.rooted",
+        "identifier": "geometry.gloamingforest.upper_goblin_knight.rooted",
         "texture_width": 128,
         "texture_height": 64,
         "visible_bounds_width": 4,

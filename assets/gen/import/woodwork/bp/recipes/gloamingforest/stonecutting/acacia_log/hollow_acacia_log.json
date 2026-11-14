@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/acacia_log/hollow_acacia_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "minecraft:acacia_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minecraft:acacia_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hollow_acacia_log"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:random_selector",
+  "config": {
+    "default": {
+      "feature": "gloamingforest:tf_oak_fallen_log",
+      "placement": []
+    },
+    "features": [
+      {
+        "chance": 0.1,
+        "feature": {
+          "feature": "gloamingforest:birch_fallen_log",
+          "placement": []
+        }
+      },
+      {
+        "chance": 0.2,
+        "feature": {
+          "feature": "gloamingforest:oak_fallen_log",
+          "placement": []
+        }
+      },
+      {
+        "chance": 0.4,
+        "feature": {
+          "feature": "gloamingforest:canopy_fallen_log",
+          "placement": []
+        }
+      }
+    ]
+  }
+}

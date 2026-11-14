@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:lich_minion",
+      "identifier": "gloamingforest:lich_minion",
       "materials": {
         "default": "zombie"
       },
@@ -10,7 +10,7 @@
         "default": "textures/entity/zombie/zombie"
       },
       "geometry": {
-        "default": "geometry.twilightforest.lich_minion"
+        "default": "geometry.gloamingforest.lich_minion"
       },
       "scripts": {
         "initialize": ["variable.gliding_speed_value = 1.0;"],
@@ -25,9 +25,9 @@
         "move": "animation.humanoid.move",
         "attack_bare_hand": "animation.zombie.attack_bare_hand",
         "bob": "animation.humanoid.bob",
-        "base": "animation.twilightforest.lich_minion.base"
+        "base": "animation.gloamingforest.lich_minion.base"
       },
-      "render_controllers": ["controller.render.twilightforest.lich_minion"],
+      "render_controllers": ["controller.render.gloamingforest.lich_minion"],
       "enable_attachables": true
     }
   }

@@ -10,19 +10,19 @@
 //                               through the chest minecart proxy (27 slots)
 //   combat.ui_chest_screen      a BlockData container: the client mod's chest screen (companions)
 //                               or, on vanilla clients, the game's chest screen through the proxy
-//   combat.ui_tf_double_chest   TF's twilight oak double chest (F11's families declare it a container
+//   combat.ui_tf_double_chest   upstream's gloaming oak double chest (F11's families declare it a container
 //                               of this contract) opened as a right click opens it: the client mod's
 //                               54-slot "Large Chest" (the right half first); on vanilla clients the
 //                               game's large chest screen (the minecart proxy behind a chest pair of
 //                               the client)
-//   combat.ui_tf_trapped_chest  TF's trapped chest, a right click: the client mod's chest screen, the
+//   combat.ui_tf_trapped_chest  upstream's trapped chest, a right click: the client mod's chest screen, the
 //                               game's chest screen through the proxy on vanilla clients
-//   combat.ui_missing_toast     TF's MissingAdvancementToast for progress_lich (F12's toast on the
+//   combat.ui_missing_toast     upstream's MissingAdvancementToast for progress_lich (F12's toast on the
 //                               client mod, the game's toast on vanilla clients)
-//   combat.ui_fx_particles      TF's large_flame through gf::fx in front of the player for 5 s (the
+//   combat.ui_fx_particles      upstream's large_flame through gf::fx in front of the player for 5 s (the
 //                               client mod: fx.particle, its native factory or resource pack effect;
 //                               vanilla clients: the game's particle packets)
-//   combat.ui_fx_portal         TF's portal particles (TFPortalBlock#animateTick: minecraft:portal) of a
+//   combat.ui_fx_portal         upstream's portal particles (TFPortalBlock#animateTick: minecraft:portal) of a
 //                               3-block row in front of the player for 5 s: they rise from the row and
 //                               fall back onto it as Java's PortalParticle (F10's gf:portal: Java's
 //                               blue-violet)
@@ -336,7 +336,7 @@ bool useOn(Player& p, BlockPos const& bp) {
 
 } // namespace
 
-// TF's double chest, the halves placed north of the player facing it (south): a left half's partner
+// upstream's double chest, the halves placed north of the player facing it (south): a left half's partner
 // is west of it (ChestBlock#getConnectedDirection).
 GF_REGISTER_SELFTEST("combat.ui_tf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
@@ -348,14 +348,14 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest", [](Context& ctx) -> ll::coro::
     auto& region = p->getDimensionBlockSource();
     auto  lbp    = besidePlayer(*p, 1, -2);
     auto  rbp    = besidePlayer(*p, 0, -2);
-    auto const* left  = gf::game::blockWithStates("twilightforest:twilight_oak_chest", {{"twilightforest:type", "left"}, {"twilightforest:facing", "south"}});
-    auto const* right = gf::game::blockWithStates("twilightforest:twilight_oak_chest", {{"twilightforest:type", "right"}, {"twilightforest:facing", "south"}});
-    ctx.require(left && right, "the twilight oak chest halves");
-    ctx.require(place(region, lbp, *left) && place(region, rbp, *right), "a twilight oak double chest beside the player");
+    auto const* left  = gf::game::blockWithStates("gloamingforest:gloaming_oak_chest", {{"gloamingforest:type", "left"}, {"gloamingforest:facing", "south"}});
+    auto const* right = gf::game::blockWithStates("gloamingforest:gloaming_oak_chest", {{"gloamingforest:type", "right"}, {"gloamingforest:facing", "south"}});
+    ctx.require(left && right, "the gloaming oak chest halves");
+    ctx.require(place(region, lbp, *left) && place(region, rbp, *right), "a gloaming oak double chest beside the player");
     auto lpos = gf::game::globalPos(region, lbp), rpos = gf::game::globalPos(region, rbp);
     ctx.require(gf::inventory::partsOf(lpos).size() == 2, "the halves pair");
-    fill(rpos, {{0, "twilightforest:naga_scale", 7}, {4, "twilightforest:raven_feather", 12}, {13, "twilightforest:liveroot", 20}, {26, "twilightforest:torchberries", 5}});
-    fill(lpos, {{0, "twilightforest:ironwood_ingot", 9}, {10, "twilightforest:steeleaf_ingot", 16}, {20, "twilightforest:fiery_ingot", 3}, {26, "twilightforest:arctic_fur", 4}});
+    fill(rpos, {{0, "gloamingforest:naga_scale", 7}, {4, "gloamingforest:raven_feather", 12}, {13, "gloamingforest:liveroot", 20}, {26, "gloamingforest:torchberries", 5}});
+    fill(lpos, {{0, "gloamingforest:ironwood_ingot", 9}, {10, "gloamingforest:steeleaf_ingot", 16}, {20, "gloamingforest:fiery_ingot", 3}, {26, "gloamingforest:arctic_fur", 4}});
     auto id = p->getOrCreateUniqueID();
     co_await ctx.ticks(10); // once the client has the blocks and the chat that ran the test has closed
     p = ll::service::getLevel()->getPlayer(id);
@@ -377,7 +377,7 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest_taken", [](Context& ctx) {
     std::optional<GlobalPos> right;
     for (auto const& placed : ui().placed)
         if (auto* region = gf::game::regionOf(placed.pos.dim);
-            region && gf::game::blockIdAt(*region, gf::game::blockPos(placed.pos)) == "twilightforest:twilight_oak_chest"
+            region && gf::game::blockIdAt(*region, gf::game::blockPos(placed.pos)) == "gloamingforest:gloaming_oak_chest"
             && gf::inventory::partsOf(placed.pos).size() == 2 && gf::inventory::partsOf(placed.pos).front() == placed.pos)
             right = placed.pos; // the right half: first of its double chest's parts
     ctx.require(right.has_value(), "the double chest of combat.ui_tf_double_chest is still there");
@@ -388,10 +388,10 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest_taken", [](Context& ctx) {
     auto& inv    = p->getInventory();
     int   scales = 0;
     for (int i = 0; i < inv.getContainerSize(); ++i)
-        if (gf::game::items::idOf(inv.getItem(i)) == "twilightforest:naga_scale") scales += gf::game::items::countOf(inv.getItem(i));
+        if (gf::game::items::idOf(inv.getItem(i)) == "gloamingforest:naga_scale") scales += gf::game::items::countOf(inv.getItem(i));
     ctx.check(scales == 7, "the 7 naga scales are in the player's inventory (" + std::to_string(scales) + ")");
     for (int i = 0; i < inv.getContainerSize(); ++i)
-        if (gf::game::items::idOf(inv.getItem(i)) == "twilightforest:naga_scale") inv.setItem(i, ItemStack{});
+        if (gf::game::items::idOf(inv.getItem(i)) == "gloamingforest:naga_scale") inv.setItem(i, ItemStack{});
     p->sendInventory(false);
     gf::log().info("combat ui: tf double chest item request checked");
 });
@@ -405,11 +405,11 @@ GF_REGISTER_SELFTEST("combat.ui_tf_trapped_chest", [](Context& ctx) -> ll::coro:
     beginUiTest(*p);
     auto&       region = p->getDimensionBlockSource();
     auto        bp     = besidePlayer(*p, 0, 2);
-    auto const* chest  = gf::game::blockWithStates("twilightforest:canopy_trapped_chest", {{"twilightforest:facing", "north"}});
+    auto const* chest  = gf::game::blockWithStates("gloamingforest:canopy_trapped_chest", {{"gloamingforest:facing", "north"}});
     ctx.require(chest != nullptr, "the canopy trapped chest");
     ctx.require(place(region, bp, *chest), "a canopy trapped chest beside the player");
     auto pos = gf::game::globalPos(region, bp);
-    fill(pos, {{0, "twilightforest:knightmetal_ingot", 8}, {13, "twilightforest:carminite", 3}, {22, "twilightforest:naga_scale", 1}});
+    fill(pos, {{0, "gloamingforest:knightmetal_ingot", 8}, {13, "gloamingforest:carminite", 3}, {22, "gloamingforest:naga_scale", 1}});
     auto id = p->getOrCreateUniqueID();
     co_await ctx.ticks(10);
     p = ll::service::getLevel()->getPlayer(id);
@@ -430,7 +430,7 @@ GF_REGISTER_SELFTEST("combat.ui_missing_toast", [](Context& ctx) -> ll::coro::Co
     co_await ctx.ticks(10); // once the chat that ran the test has closed
     p = ll::service::getLevel()->getPlayer(id);
     ctx.require(p != nullptr, "the player is still there");
-    gf::progression::showMissing(*p, "twilightforest:progress_lich");
+    gf::progression::showMissing(*p, "gloamingforest:progress_lich");
     gf::log().info("combat ui: missing advancement toast sent to {}", p->getRealName());
 });
 
@@ -441,7 +441,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_particles", [](Context& ctx) -> ll::coro::Cor
         co_return;
     }
     beginUiTest(*p);
-    // 5 s of TF's large flame, 3 blocks in front of the eyes (16 a tick, spread as sendParticles)
+    // 5 s of upstream's large flame, 3 blocks in front of the eyes (16 a tick, spread as sendParticles)
     struct Emitter {
         static void run(std::int64_t playerId, int ticks) {
             if (ticks <= 0) return;
@@ -453,7 +453,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_particles", [](Context& ctx) -> ll::coro::Cor
                 if (!pl) return;
                 auto at = pl->getPosition() + pl->getViewVector(0.f) * 3.f;
                 // "probe": the client mod logs its route once for this test (the scenario waits for it)
-                gf::fx::particle(pl->getDimension(), "twilightforest:large_flame", at, Vec3{0, .05f, 0}, 16, nlohmann::json{{"spread", {.4, .4, .4}}, {"probe", "combat.ui_fx_particles"}});
+                gf::fx::particle(pl->getDimension(), "gloamingforest:large_flame", at, Vec3{0, .05f, 0}, 16, nlohmann::json{{"spread", {.4, .4, .4}}, {"probe", "combat.ui_fx_particles"}});
                 run(playerId, ticks - 1);
             });
         }
@@ -517,7 +517,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_vanilla", [](Context& ctx) -> ll::coro::CoroT
         co_return;
     }
     beginUiTest(*p);
-    // every mapped Java particle type, 3 blocks ahead, with the velocity and params TF passes
+    // every mapped Java particle type, 3 blocks ahead, with the velocity and params upstream passes
     // the mapped types once (vanillaParticleIds builds and sorts the list), not on every tick
     emitEachTick(p->getOrCreateUniqueID().rawID, 40, [ids = gf::fx::vanillaParticleIds()](Player& pl) {
         auto at = pl.getPosition() + pl.getViewVector(0.f) * 3.f;
@@ -542,7 +542,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTa
     beginUiTest(*p);
     // 3 blocks ahead, left to right: the Ur-Ghast trophy's red dust (DustParticleOptions.REDSTONE),
     // TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0, 0.5)), both F10's gf:dust
-    // (Java's DustParticle), the item particles of a block item (twilightforest:twilight_oak_log: a negative item
+    // (Java's DustParticle), the item particles of a block item (gloamingforest:gloaming_oak_log: a negative item
     // id in the legacy IconCrack data), still crits (Naga's) and poofs rising at 0.1 blocks/tick
     emitEachTick(p->getOrCreateUniqueID().rawID, 60, [](Player& pl) {
         auto view = pl.getViewVector(0.f);
@@ -552,7 +552,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTa
         auto& dim = pl.getDimension();
         gf::fx::particle(dim, "minecraft:dust", slot(-2.5f), Vec3{}, 4, nlohmann::json{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
         gf::fx::particle(dim, "minecraft:dust", slot(-1.5f), Vec3{}, 4, nlohmann::json{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
-        gf::fx::particle(dim, "minecraft:item", slot(-0.5f), Vec3{0.f, 0.1f, 0.f}, 2, nlohmann::json{{"item", "twilightforest:twilight_oak_log"}, {"spread", {0.1, 0.1, 0.1}}});
+        gf::fx::particle(dim, "minecraft:item", slot(-0.5f), Vec3{0.f, 0.1f, 0.f}, 2, nlohmann::json{{"item", "gloamingforest:gloaming_oak_log"}, {"spread", {0.1, 0.1, 0.1}}});
         gf::fx::particle(dim, "minecraft:crit", slot(0.5f), Vec3{}, 2);
         gf::fx::particle(dim, "minecraft:poof", slot(1.5f), Vec3{0.f, 0.1f, 0.f});
     });

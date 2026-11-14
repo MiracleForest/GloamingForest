@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/maze_slime"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "###", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:maze_slime_ball"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:maze_slime_ball"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:maze_slime_block"
+    }
+  }
+}

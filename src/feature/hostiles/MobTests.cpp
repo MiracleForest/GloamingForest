@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U17 (hostiles) selftests (rule R12: "hostiles.*", testPos dx 1700..1799): F13's goldens on the
 // live actors, and each mob's special against a SimulatedPlayer: the mist wolf's blindness in the
@@ -157,7 +157,7 @@ struct Golden {
     char const* id;
     float       health, width, height, movement, attack;
 };
-// tests/golden/mobs.json (F13, derived from TF 4.8): maxHealth, width, height and the movement_speed /
+// tests/golden/mobs.json (F13, derived from upstream 4.8): maxHealth, width, height and the movement_speed /
 // attack_damage attributes (follow range 16 for all)
 constexpr Golden kGoldens[] = {
     {id::HostileWolf, 20.0f, 0.6f, 0.85f, 0.3f, 2.0f},  {id::MistWolf, 30.0f, 1.4f, 1.9f, 0.3f, 6.0f},
@@ -279,8 +279,8 @@ GF_REGISTER_SELFTEST("hostiles.fire_beetle_breath", [](Context& ctx) -> ll::coro
     auto* beetle = spawn(ctx, id::FireBeetle, center(at));
     auto  bid    = uidOf(*beetle);
     listen(ctx.player());
-    ge::ext::doBreathAttack(*beetle, ctx.player(), "twilightforest:scorched");
-    ctx.check(dealtType("twilightforest:scorched"), "the breath is scorched damage");
+    ge::ext::doBreathAttack(*beetle, ctx.player(), "gloamingforest:scorched");
+    ctx.check(dealtType("gloamingforest:scorched"), "the breath is scorched damage");
     ctx.check(!dealt().amounts.empty() && near(dealt().amounts.back(), 2.0f, 0.05f), "the breath deals 2");
     ctx.check(ctx.player().isOnFire(), "the player burns");
     // a breath attack while breathing (doHurtTarget): scorched only
@@ -291,7 +291,7 @@ GF_REGISTER_SELFTEST("hostiles.fire_beetle_breath", [](Context& ctx) -> ll::coro
     auto* other = spawn(ctx, id::FireBeetle, center(at.offset(0, 0, 2)));
     auto* b2    = spawn(ctx, id::FireBeetle, center(at.offset(2, 0, 2)));
     float before = static_cast<float>(other->getHealth());
-    ge::ext::doBreathAttack(*b2, *other, "twilightforest:scorched");
+    ge::ext::doBreathAttack(*b2, *other, "gloamingforest:scorched");
     ctx.check(static_cast<float>(other->getHealth()) >= before, "a fire beetle is fire immune");
     other->remove();
     b2->remove();
@@ -316,7 +316,7 @@ GF_REGISTER_SELFTEST("hostiles.pinch_beetle_grab", [](Context& ctx) -> ll::coro:
     auto* b = mobById(bid);
     ctx.require(b != nullptr, "the beetle is there");
     ctx.check(ctx.player().getVehicle() == b, "the player rides the beetle");
-    ctx.check(dealtType("twilightforest:clamped"), "the grab squeezes with clamped damage");
+    ctx.check(dealtType("gloamingforest:clamped"), "the grab squeezes with clamped damage");
     ctx.check(ge::ext::isRidingUnfriendly(ctx.player()), "the player rides unfriendly");
     ctx.player().stopRiding(true, false, false, false);
     co_await ctx.ticks(2);
@@ -409,7 +409,7 @@ GF_REGISTER_SELFTEST("hostiles.druid_nature_bolt", [](Context& ctx) -> ll::coro:
         if (auto* d = mobById(did)) druid::performRangedAttack(*d, ctx.player());
         for (int i = 0; i < 40 && !hit; ++i) {
             co_await ctx.ticks(1);
-            hit = dealtType("twilightforest:leaf_brain");
+            hit = dealtType("gloamingforest:leaf_brain");
         }
     }
     ctx.check(hit, "a nature bolt hit the player with leaf_brain damage");
@@ -560,7 +560,7 @@ GF_REGISTER_SELFTEST("hostiles.wraith_home", [](Context& ctx) -> ll::coro::CoroT
     co_return;
 });
 
-// The entity loot tables (TF data): what each one drops
+// The entity loot tables (upstream data): what each one drops
 GF_REGISTER_SELFTEST("hostiles.loot_tables", [](Context& ctx) -> ll::coro::CoroTask<> {
     struct Table {
         char const*              id;
@@ -568,19 +568,19 @@ GF_REGISTER_SELFTEST("hostiles.loot_tables", [](Context& ctx) -> ll::coro::CoroT
         int                      max;
     };
     std::vector<Table> tables = {
-        {"twilightforest:entities/winter_wolf", {"twilightforest:arctic_fur"}, 3},
-        {"twilightforest:entities/skeleton_druid", {"minecraft:bone", "twilightforest:torchberries"}, 6},
-        {"twilightforest:entities/redcap", {"minecraft:coal"}, 2},
-        {"twilightforest:entities/redcap_sapper", {"minecraft:coal"}, 2},
-        {"twilightforest:entities/wraith", {"minecraft:glowstone_dust"}, 3},
-        {"twilightforest:entities/fire_beetle", {"minecraft:gunpowder"}, 3},
-        {"twilightforest:entities/slime_beetle", {"minecraft:slime_ball"}, 3},
-        {"twilightforest:entities/pinch_beetle", {}, 0},
-        {"twilightforest:entities/king_spider", {"minecraft:string", "minecraft:spider_eye"}, 4},
-        {"twilightforest:entities/hedge_spider", {"minecraft:string", "minecraft:spider_eye"}, 4},
-        {"twilightforest:entities/swarm_spider", {"minecraft:string", "minecraft:spider_eye"}, 4},
-        {"twilightforest:entities/hostile_wolf", {}, 0},
-        {"twilightforest:entities/mist_wolf", {}, 0},
+        {"gloamingforest:entities/winter_wolf", {"gloamingforest:arctic_fur"}, 3},
+        {"gloamingforest:entities/skeleton_druid", {"minecraft:bone", "gloamingforest:torchberries"}, 6},
+        {"gloamingforest:entities/redcap", {"minecraft:coal"}, 2},
+        {"gloamingforest:entities/redcap_sapper", {"minecraft:coal"}, 2},
+        {"gloamingforest:entities/wraith", {"minecraft:glowstone_dust"}, 3},
+        {"gloamingforest:entities/fire_beetle", {"minecraft:gunpowder"}, 3},
+        {"gloamingforest:entities/slime_beetle", {"minecraft:slime_ball"}, 3},
+        {"gloamingforest:entities/pinch_beetle", {}, 0},
+        {"gloamingforest:entities/king_spider", {"minecraft:string", "minecraft:spider_eye"}, 4},
+        {"gloamingforest:entities/hedge_spider", {"minecraft:string", "minecraft:spider_eye"}, 4},
+        {"gloamingforest:entities/swarm_spider", {"minecraft:string", "minecraft:spider_eye"}, 4},
+        {"gloamingforest:entities/hostile_wolf", {}, 0},
+        {"gloamingforest:entities/mist_wolf", {}, 0},
     };
     for (auto const& t : tables) {
         bool any = false;

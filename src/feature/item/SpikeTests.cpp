@@ -94,9 +94,9 @@ constexpr char kLateTrim[]     = "gold_darker";  ///< appended while players are
 constexpr char kNoPalette[]    = "gf_test_trim"; ///< appended while players are in the world, no palette texture
 // The probe BP of the spike's runs (tools/e2e/server/scenarios/item.s6probe.ps1): a data-driven disc.
 constexpr char kProbeDisc[]  = "gf_s6:disc";
-constexpr char kProbeSound[] = "twilightforest:music_disc.twilightforest.radiance"; ///< F3's sound definitions
+constexpr char kProbeSound[] = "gloamingforest:music_disc.gloamingforest.radiance"; ///< F3's sound definitions
 
-/// A banner whose second pattern is `pattern` (an id no Bedrock client knows: TF's would be such ids).
+/// A banner whose second pattern is `pattern` (an id no Bedrock client knows: upstream's would be such ids).
 std::optional<ItemStack> bannerWith(std::string const& pattern) {
     auto banner = items::make("minecraft:banner", 1, 15);
     if (!banner) return std::nullopt;
@@ -126,7 +126,7 @@ void registerFixtures(bool client) {
     );
     gf::enchant::ext::setFlags("gf_test:fixture_react", {.treasure = false, .tradeable = false, .discoverable = false});
     gf::effects::registerType("gf_test:fixture_frosted", {.carrier = "minecraft:slowness", .color = 0x56CBFD});
-    // a texture every pack has (TF's frosted icon comes with F1's import: textures/twilightforest/mob_effect/frosted)
+    // a texture every pack has (upstream's frosted icon comes with F1's import: textures/gloamingforest/mob_effect/frosted)
     gf::effects::ext::setIcon("gf_test:fixture_frosted", "textures/items/snowball");
     if (client) {
         // stays registered for the client's screenshots until item.spike_client_clear
@@ -137,7 +137,7 @@ void registerFixtures(bool client) {
             auto doses = gf::item::getData(s, "doses");
             return gf::item::Bar{doses.is_number_integer() ? static_cast<float>(doses.get<int>()) / 4.0f : 0.6f, 0xFF8000};
         });
-        gf::item::ext::setRarity(kFixture, gf::item::ext::Rarity::Twilight);
+        gf::item::ext::setRarity(kFixture, gf::item::ext::Rarity::Gloaming);
     }
 }
 
@@ -265,7 +265,7 @@ GF_REGISTER_SELFTEST("item.spike_banner_registry", [](Context& ctx) {
 });
 
 #ifdef GF_CLIENT
-// The client mod's side of TF's banner patterns: BannerPattern's constructors are MCAPI and the
+// The client mod's side of upstream's banner patterns: BannerPattern's constructors are MCAPI and the
 // registry is a plain vector, so a pattern can be appended (the client of a local world shares it
 // with its integrated server). The client e2e photographs a banner with it (local mode).
 GF_REGISTER_SELFTEST("item.spike_banner_append", [](Context& ctx) {
@@ -275,8 +275,8 @@ GF_REGISTER_SELFTEST("item.spike_banner_append", [](Context& ctx) {
     if (!known) {
         if (patterns.size() == patterns.capacity()) {
             // a reallocation would move patterns the running game may point at: the client mod
-            // appends TF's at load instead (U5); nothing to probe here
-            ctx.info("no spare capacity: TF's patterns must be appended at mod load, before the game uses the registry");
+            // appends upstream's at load instead (U5); nothing to probe here
+            ctx.info("no spare capacity: upstream's patterns must be appended at mod load, before the game uses the registry");
             return;
         }
         patterns.emplace_back("gf_test", kUnknownPattern, true);
@@ -311,7 +311,7 @@ GF_REGISTER_SELFTEST("item.spike_trim_materials", [](Context& ctx) {
 });
 
 namespace {
-// The spike's runs (and only they) register the fixture trim material at load, as U7 registers TF's,
+// The spike's runs (and only they) register the fixture trim material at load, as U7 registers upstream's,
 // so it is in the world's registry before players join: the e2e scenario's prelaunch step
 // (tools/e2e/{server,client}/scenarios/item.prelaunch.ps1) leaves <mod>/s6-trim-probe.flag next to
 // a development build (or GF_S6_TRIM_PROBE is set). Every other world, the 'full' run included,
@@ -398,10 +398,10 @@ GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) -> ll::coro::C
     ctx.check(components > 0, "the game's discs are component items with a record component");
 });
 
-// Attachables: TF's armour on the body is resource pack attachables (F2's tools/models/attachable.ps1
+// Attachables: upstream's armour on the body is resource pack attachables (F2's tools/models/attachable.ps1
 // over F1's BP items, in the mod's RP that BDS also sends vanilla clients). item.spike_attachables
-// puts TF's fiery helmet (F2's own geometry, geometry.twilightforest.fiery_armor.helmet) and naga
-// chestplate (the humanoid armour geometry with TF's naga scale texture) into every real player's
+// puts upstream's fiery helmet (F2's own geometry, geometry.gloamingforest.fiery_armor.helmet) and naga
+// chestplate (the humanoid armour geometry with upstream's naga scale texture) into every real player's
 // armour slots; the client e2e photographs the player from the front. item.spike_attachables_clear
 // puts back what was there. On a server without real players there is nothing to dress.
 namespace {
@@ -413,10 +413,10 @@ std::map<std::int64_t, std::pair<ItemStack, ItemStack>>& wornBefore() {
 } // namespace
 
 GF_REGISTER_SELFTEST("item.spike_attachables", [](Context& ctx) {
-    auto helmet = items::make("twilightforest:fiery_helmet");
-    auto chest  = items::make("twilightforest:naga_chestplate");
+    auto helmet = items::make("gloamingforest:fiery_helmet");
+    auto chest  = items::make("gloamingforest:naga_chestplate");
     if (!helmet || !chest) {
-        ctx.info("TF's armour items are not in this build (F1's import): no attachable to show");
+        ctx.info("upstream's armour items are not in this build (F1's import): no attachable to show");
         return;
     }
     auto level = ll::service::getLevel();
@@ -434,7 +434,7 @@ GF_REGISTER_SELFTEST("item.spike_attachables", [](Context& ctx) {
         gf::log().info("item: S6 attachables worn by {}", p.getRealName());
         return true;
     });
-    ctx.info("real players wearing TF's fiery helmet and naga chestplate: " + std::to_string(dressed));
+    ctx.info("real players wearing upstream's fiery helmet and naga chestplate: " + std::to_string(dressed));
 });
 
 GF_REGISTER_SELFTEST("item.spike_attachables_clear", [](Context& ctx) {
@@ -527,7 +527,7 @@ GF_REGISTER_SELFTEST("item.spike_client", [](Context& ctx) {
         gf::log().info("item: S6 carriers given to {}", p.getRealName());
         return true;
     });
-    // a companion client draws the fixtures' bars, TWILIGHT name and effect icon with the same
+    // a companion client draws the fixtures' bars, GLOAMING name and effect icon with the same
     // registrations (they go again with item.spike_client_clear)
     int told = tellCompanions(true);
     ctx.info("real players given the S6 carriers: " + std::to_string(given) + ", companions told: " + std::to_string(told));

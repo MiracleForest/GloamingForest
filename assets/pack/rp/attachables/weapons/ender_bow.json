@@ -2,16 +2,16 @@
   "format_version": "1.10.0",
   "minecraft:attachable": {
     "description": {
-      "identifier": "twilightforest:ender_bow",
+      "identifier": "gloamingforest:ender_bow",
       "materials": {
         "default": "entity_alphatest",
         "enchanted": "entity_alphatest_glint"
       },
       "textures": {
-        "default": "textures/twilightforest/item/ender_bow",
-        "bow_pulling_0": "textures/twilightforest/item/ender_bow_pulling_0",
-        "bow_pulling_1": "textures/twilightforest/item/ender_bow_pulling_1",
-        "bow_pulling_2": "textures/twilightforest/item/ender_bow_pulling_2",
+        "default": "textures/gloamingforest/item/ender_bow",
+        "bow_pulling_0": "textures/gloamingforest/item/ender_bow_pulling_0",
+        "bow_pulling_1": "textures/gloamingforest/item/ender_bow_pulling_1",
+        "bow_pulling_2": "textures/gloamingforest/item/ender_bow_pulling_2",
         "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
@@ -37,7 +37,7 @@
         ]
       },
       "render_controllers": [
-        "controller.render.twilightforest.bow"
+        "controller.render.gloamingforest.bow"
       ]
     }
   }

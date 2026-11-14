@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The mining speed extension (Mining.h): one hook on Player::getDestroyProgress (outside the W0
 // contracts; disclosed for A8).

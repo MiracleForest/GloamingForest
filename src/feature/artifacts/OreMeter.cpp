@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/OreMeterItem.java
-//   src/main/java/twilightforest/components/item/OreScannerComponent.java
-//   src/main/java/twilightforest/components/item/OreScannerData.java
-//   src/main/java/twilightforest/network/WipeOreMeterPacket.java
-//   src/main/java/twilightforest/events/EntityEvents.java (ore meter wipe)
-//   src/main/java/twilightforest/client/event/OverlayHandler.java (the stats, vanilla fallback)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/OreMeterItem.java
+//   src/main/java/gloamingforest/components/item/OreScannerComponent.java
+//   src/main/java/gloamingforest/components/item/OreScannerData.java
+//   src/main/java/gloamingforest/network/WipeOreMeterPacket.java
+//   src/main/java/gloamingforest/events/EntityEvents.java (ore meter wipe)
+//   src/main/java/gloamingforest/client/event/OverlayHandler.java (the stats, vanilla fallback)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The ore meter: use starts a scan of the chunks within its range (0..2) over 50 + 25 * range
 // ticks (the scan walks the column volume in equal steps per tick, counting every block); the
 // result keeps the #c:ores counts (or only the filter block's). Sneak-use in the air cycles the
-// range, sneak-use on a #twilightforest:ore_meter_targetable block sets the filter; a swing at
+// range, sneak-use on a #gloamingforest:ore_meter_targetable block sets the filter; a swing at
 // nothing with data or a filter wipes both. Item data: ore_scanner (the scan in progress),
-// ore_loading, ore_data, ore_filter, ore_range (TF's components). The client mod draws TF's
+// ore_loading, ore_data, ore_filter, ore_range (upstream's components). The client mod draws upstream's
 // overlay from the held stack; vanilla players get "Loading..." on the action bar and the results
 // as chat lines.
 #include <algorithm>
@@ -92,22 +92,22 @@ std::string blockName(std::string const& id) {
     return colon == std::string::npos ? id : id.substr(colon + 1);
 }
 
-/// Vanilla clients: the results as chat lines (TF's overlay rows, unprettified).
+/// Vanilla clients: the results as chat lines (upstream's overlay rows, unprettified).
 void sendResults(Player& player, Json const& data, int range) {
     if (net::isCompanion(player)) return;
     auto chunk = data.value("chunk", Json::array({0, 0}));
     int  total = data.value("total", 0);
-    player.sendMessage(trFor(player, "misc.twilightforest.ore_meter_range", "Radius: %s, Origin: [%s, %s]", std::to_string(range), chunk[0].dump(), chunk[1].dump()));
-    player.sendMessage(trFor(player, "misc.twilightforest.ore_meter_total", "Total blocks scanned: %s", std::to_string(total)));
+    player.sendMessage(trFor(player, "misc.gloamingforest.ore_meter_range", "Radius: %s, Origin: [%s, %s]", std::to_string(range), chunk[0].dump(), chunk[1].dump()));
+    player.sendMessage(trFor(player, "misc.gloamingforest.ore_meter_total", "Total blocks scanned: %s", std::to_string(total)));
     std::vector<std::pair<std::string, int>> rows;
     for (auto const& [k, v] : data.value("counts", Json::object()).items()) rows.emplace_back(k, v.get<int>());
     std::stable_sort(rows.begin(), rows.end(), [](auto const& a, auto const& b) { return a.second < b.second; });
-    if (rows.empty()) player.sendMessage(trFor(player, "misc.twilightforest.ore_meter_no_blocks", "No blocks found nearby"));
+    if (rows.empty()) player.sendMessage(trFor(player, "misc.gloamingforest.ore_meter_no_blocks", "No blocks found nearby"));
     auto names = data.value("names", Json::object());
     for (auto const& [id, n] : rows) {
         std::string name = names.value(id, blockName(id));
-        player.sendMessage(name + " " + trFor(player, "misc.twilightforest.ore_meter_separator", "-") + " " + std::to_string(n) + " "
-                           + trFor(player, "misc.twilightforest.ore_meter_ratio", "(%s%%)", ca::oreRatio(n, total)));
+        player.sendMessage(name + " " + trFor(player, "misc.gloamingforest.ore_meter_separator", "-") + " " + std::to_string(n) + " "
+                           + trFor(player, "misc.gloamingforest.ore_meter_ratio", "(%s%%)", ca::oreRatio(n, total)));
     }
 }
 
@@ -116,7 +116,7 @@ void wipe(Player& player, ItemStack& stack) {
     items::setData(stack, kDataOreData, nullptr);
     items::setData(stack, kDataOreFilter, nullptr);
     auto& r = levelRandom();
-    playSound(player, "item.twilightforest.ore_meter.clear", 1.25F, 0.6F + r.nextFloat() * 0.2F);
+    playSound(player, "item.gloamingforest.ore_meter.clear", 1.25F, 0.6F + r.nextFloat() * 0.2F);
     log().info("artifacts: {} wiped an ore meter", player.getRealName());
 }
 
@@ -155,7 +155,7 @@ void beginOreScan(Player& player, ItemStack& stack) {
     auto scan  = ca::OreScan::fromCenter(static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.z)), range, ca::oreScanTicks(range));
     items::setData(stack, kDataOreScanner, scanToJson(scan));
     auto& r = levelRandom();
-    playSound(player, "item.twilightforest.ore_meter.crackle", 0.5F, r.nextFloat() * 0.1F + 0.9F);
+    playSound(player, "item.gloamingforest.ore_meter.crackle", 0.5F, r.nextFloat() * 0.1F + 0.9F);
     log().info("artifacts: {} started an ore scan (range {})", player.getRealName(), range);
 }
 
@@ -170,7 +170,7 @@ void tickOreMeter(ItemStack& stack, Player& player) {
     auto& region = player.getDimensionBlockSource();
     int   minY   = region.getMinHeight();
     // the volume: Java's volume is area * getMaxBuildHeight (the top y, 320 in the overworld), walked up from
-    // the bottom: TF's scan stops short of the top
+    // the bottom: upstream's scan stops short of the top
     int maxY = std::max<int>(1, region.getMaxHeight());
     scan.tick(minY, maxY, [&](int x, int y, int z) { return idOfBlock(region.getBlock(BlockPos{x, y, z})); });
     if (!scan.finished()) {
@@ -178,7 +178,7 @@ void tickOreMeter(ItemStack& stack, Player& player) {
         items::setData(stack, kDataOreScanner, scanToJson(scan));
         if (!net::isCompanion(player)) {
             std::string dots(static_cast<std::size_t>((scan.progress / 5) % 3 + 1), '.');
-            actionBar(player, trFor(player, "misc.twilightforest.ore_meter_loading", "Loading") + dots);
+            actionBar(player, trFor(player, "misc.gloamingforest.ore_meter_loading", "Loading") + dots);
         }
         return;
     }
@@ -221,7 +221,7 @@ void registerOreMeter() {
             if (looksAtBlock(player, true)) return gf::item::Result::Pass;
             int next = (rangeOf(stack) + 1) % 3;
             items::setData(stack, kDataOreRange, next);
-            actionBar(player, trFor(player, "misc.twilightforest.ore_meter_new_range", "Range set to %s chunks", std::to_string(next)));
+            actionBar(player, trFor(player, "misc.gloamingforest.ore_meter_new_range", "Range set to %s chunks", std::to_string(next)));
             playSound(player, "minecraft:ui.button.click", 0.25F, 0.75F + next * 0.1F);
             return gf::item::Result::Success;
         },
@@ -230,13 +230,13 @@ void registerOreMeter() {
     // OreMeterItem#useOn: sneaking on a targetable block sets the filter
     ia::onUseOn({.item = kOreMeter}, [](ia::UseOnContext const& c) {
         if (!c.sneaking) return ia::Result::Pass;
-        if (!gf::tags::has(gf::tags::Registry::Block, "twilightforest:ore_meter_targetable", c.blockId)) return ia::Result::Pass;
+        if (!gf::tags::has(gf::tags::Registry::Block, "gloamingforest:ore_meter_targetable", c.blockId)) return ia::Result::Pass;
         if (!c.firstEvent) return ia::Result::Consume;
         auto& held = ia::mutableItem(c.item);
         items::setData(held, kDataOreFilter, c.blockId);
-        actionBar(c.player, trFor(c.player, "misc.twilightforest.ore_meter_set_block", "Targeted block set to %s", blockName(c.blockId)));
+        actionBar(c.player, trFor(c.player, "misc.gloamingforest.ore_meter_set_block", "Targeted block set to %s", blockName(c.blockId)));
         auto& r = levelRandom();
-        playSound(c.player, "item.twilightforest.ore_meter.target_block", 0.5F, r.nextFloat() * 0.1F + 0.9F);
+        playSound(c.player, "item.gloamingforest.ore_meter.target_block", 0.5F, r.nextFloat() * 0.1F + 0.9F);
         c.player.sendInventory(false);
         return ia::Result::Consume;
     });
@@ -244,8 +244,8 @@ void registerOreMeter() {
         auto f = items::getData(stack, kDataOreFilter);
         if (!f.is_string()) return;
         auto name = blockName(f.get<std::string>());
-        lines.push_back("§7" + (viewer ? trFor(*viewer, "misc.twilightforest.ore_meter_targeted_block", "Targeted block: %s", name)
-                                       : tr("misc.twilightforest.ore_meter_targeted_block", "Targeted block: %s", name)));
+        lines.push_back("§7" + (viewer ? trFor(*viewer, "misc.gloamingforest.ore_meter_targeted_block", "Targeted block: %s", name)
+                                       : tr("misc.gloamingforest.ore_meter_targeted_block", "Targeted block: %s", name)));
     });
     // WipeOreMeterPacket (a companion's left click at nothing) and the swing at nothing of any client
     net::on(kChanWipeOre, [](Player& player, Json const&) { wipeHeld(player); });

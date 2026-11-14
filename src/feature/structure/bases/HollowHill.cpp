@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/HollowHillComponent.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/HollowHillComponent.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/structure/bases/HollowHill.h"
@@ -97,7 +97,7 @@ void HollowHill::postProcess(Region& region, RandomSource& rand, BlockBox const&
             if (floatChance < kSpawnerSpawnChance) {
                 setSpawnerInWorld(region, writeableBounds, getMobID(rand), {}, above);
             } else {
-                char const* table = hillSize == 3 ? "twilightforest:hill_3" : hillSize == 2 ? "twilightforest:hill_2" : "twilightforest:hill_1";
+                char const* table = hillSize == 3 ? "gloamingforest:hill_3" : hillSize == 2 ? "gloamingforest:hill_2" : "gloamingforest:hill_1";
                 placeTreasureAtWorldPosition(region, table, false, writeableBounds, above);
             }
             region.setBlock(BlockPos{pos.x, pos.y - 1, pos.z}, blocks::java("minecraft:cobblestone"), 2);
@@ -168,9 +168,9 @@ std::string HollowHill::getLevel1Mob(RandomSource& random) const {
     case 8:
         return "minecraft:silverfish";
     case 9:
-        return "twilightforest:redcap";
+        return "gloamingforest:redcap";
     default:
-        return "twilightforest:swarm_spider";
+        return "gloamingforest:swarm_spider";
     }
 }
 
@@ -184,22 +184,22 @@ std::string HollowHill::getLevel2Mob(RandomSource& random) const {
     case 7:
         return "minecraft:skeleton";
     case 8:
-        return "twilightforest:swarm_spider";
+        return "gloamingforest:swarm_spider";
     case 9:
         return "minecraft:cave_spider";
     default:
-        return "twilightforest:redcap";
+        return "gloamingforest:redcap";
     }
 }
 
 std::string HollowHill::getLevel3Mob(RandomSource& random) const {
     switch (random.nextInt(11)) {
     case 0:
-        return "twilightforest:slime_beetle";
+        return "gloamingforest:slime_beetle";
     case 1:
-        return "twilightforest:fire_beetle";
+        return "gloamingforest:fire_beetle";
     case 2:
-        return "twilightforest:pinch_beetle";
+        return "gloamingforest:pinch_beetle";
     case 3:
     case 4:
     case 5:
@@ -211,7 +211,7 @@ std::string HollowHill::getLevel3Mob(RandomSource& random) const {
     case 9:
         return "minecraft:creeper";
     default:
-        return "twilightforest:wraith";
+        return "gloamingforest:wraith";
     }
 }
 

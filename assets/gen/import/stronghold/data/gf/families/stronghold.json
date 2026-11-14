@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:stronghold_shield",
+    "id": "gloamingforest:stronghold_shield",
     "family": "directional",
     "params": {
       "class": "StrongholdShieldBlock",
@@ -10,7 +10,7 @@
     }
   },
   {
-    "id": "twilightforest:trophy_pedestal",
+    "id": "gloamingforest:trophy_pedestal",
     "family": "waterloggable",
     "params": {
       "class": "TrophyPedestalBlock",

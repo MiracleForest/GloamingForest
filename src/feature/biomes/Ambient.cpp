@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/registration/biomes/BiomeHelper.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/registration/biomes/BiomeHelper.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The biomes' ambient particles (BiomeSpecialEffects#ambientParticle: TF's wandering fireflies in
+// The biomes' ambient particles (BiomeSpecialEffects#ambientParticle: upstream's wandering fireflies in
 // the forests, white ash in the fire swamp), as Java's ClientLevel#animateTick draws them around
 // the local player: 667 samples at radius 16 and 667 at radius 32 per tick (each axis
 // rand(r) - rand(r) around the player's block), a sample whose block has no full collision shape
@@ -14,17 +14,17 @@
 // Bedrock:
 // - white ash: Bedrock clients draw it themselves for a biome whose client biome file asks for it
 //   (minecraft:precipitation "white_ash", what the basalt deltas use: Java's 0.118093334 there is
-//   Bedrock's 2.0), so the fire swamp's client file carries TF's 0.05 as 0.05 / 0.118093334 * 2.0;
+//   Bedrock's 2.0), so the fire swamp's client file carries upstream's 0.05 as 0.05 / 0.118093334 * 2.0;
 //   every client, vanilla included, draws Java's small white specks.
 // - fireflies: Bedrock has no data-driven ambient particle per biome. The client mod runs this
 //   animateTick itself (src/client/biomes/Ambient.cpp: only its own samples, drawn locally, as on
-//   Java); for players without it the server stands in, per player in the Twilight Forest, and
+//   Java); for players without it the server stands in, per player in the Gloaming Forest, and
 //   sends each of them its own samples only (a SpawnParticleEffectPacket of the resource pack's
 //   effect to that player).
 // A sample first rolls the largest probability of any biome, then the rest of its own: the same
 // distribution with far fewer block and biome lookups.
 //
-// The mood sound (TF's AmbientMoodSettings.LEGACY_CAVE_SETTINGS in every biome: ambient.cave,
+// The mood sound (upstream's AmbientMoodSettings.LEGACY_CAVE_SETTINGS in every biome: ambient.cave,
 // tick delay 6000, search extent 8, offset 2.0) is played by the server per player as
 // BiomeAmbientSoundsHandler#tick does on Java's client (core/biomes/Mood): Bedrock's client biome
 // mood has none of these settings, so the client biome files carry no mood.
@@ -78,15 +78,15 @@ struct AmbientParticle {
     float       probability;
 };
 
-// TF's biome JSON "effects.particle" (docs/spec/biomes.md section 6); the fire swamp's white ash is
+// upstream's biome JSON "effects.particle" (docs/spec/biomes.md section 6); the fire swamp's white ash is
 // drawn by the clients from its client biome file (see above)
 constexpr std::array<AmbientParticle, 6> kParticles{{
-    {"twilightforest:dense_forest", "twilightforest:wandering_firefly", 0.00025f},
-    {"twilightforest:dense_mushroom_forest", "twilightforest:wandering_firefly", 0.00025f},
-    {"twilightforest:enchanted_forest", "twilightforest:wandering_firefly", 0.00025f},
-    {"twilightforest:firefly_forest", "twilightforest:wandering_firefly", 0.001f},
-    {"twilightforest:forest", "twilightforest:wandering_firefly", 0.00025f},
-    {"twilightforest:mushroom_forest", "twilightforest:wandering_firefly", 0.00025f},
+    {"gloamingforest:dense_forest", "gloamingforest:wandering_firefly", 0.00025f},
+    {"gloamingforest:dense_mushroom_forest", "gloamingforest:wandering_firefly", 0.00025f},
+    {"gloamingforest:enchanted_forest", "gloamingforest:wandering_firefly", 0.00025f},
+    {"gloamingforest:firefly_forest", "gloamingforest:wandering_firefly", 0.001f},
+    {"gloamingforest:forest", "gloamingforest:wandering_firefly", 0.00025f},
+    {"gloamingforest:mushroom_forest", "gloamingforest:wandering_firefly", 0.00025f},
 }};
 constexpr float kMaxProbability = 0.001f;
 
@@ -151,13 +151,13 @@ struct BiomeAmbientModule {
 
 private:
     void tick() {
-        auto twilight = world::twilight();
+        auto gloaming = world::gloaming();
         auto level    = ll::service::getLevel();
-        if (!twilight || !level) return;
-        auto* region = game::regionOf(static_cast<int>(*twilight));
+        if (!gloaming || !level) return;
+        auto* region = game::regionOf(static_cast<int>(*gloaming));
         if (!region) return;
         level->forEachPlayer([&](Player& player) {
-            if (player.getDimensionId() != *twilight) return true;
+            if (player.getDimensionId() != *gloaming) return true;
             moodTick(*region, player);
             // the client mod draws its own player's particles (src/client/biomes/Ambient.cpp)
             if (!player.isSimulatedPlayer() && !net::isCompanion(player)) animateTick(*region, player);
@@ -165,7 +165,7 @@ private:
         });
     }
 
-    /// BiomeAmbientSoundsHandler#tick's mood part for `player` (TF's mood settings in every TF
+    /// BiomeAmbientSoundsHandler#tick's mood part for `player` (upstream's mood settings in every upstream
     /// biome). Bedrock's own mood timing does not apply: the client biome files have no mood.
     void moodTick(BlockSource& region, Player& player) {
         if (player.isSimulatedPlayer()) return;
@@ -173,7 +173,7 @@ private:
         // Entity#getEyeY: the player's eye height (1.62 standing, 1.27 crouching)
         double const eyeY = feet.y + (player.isSneaking() ? 1.27 : 1.62);
         if (!isTfBiome(biomeIdOf(region.getBiome(game::blockPosOf(feet))))) return;
-        auto const&                        s = mood::kTwilight;
+        auto const&                        s = mood::kGloaming;
         std::uniform_int_distribution<int> axis(0, s.blockSearch * 2);
         // Java draws x, y, z in that order
         int      dx = axis(mRandom) - s.blockSearch, dy = axis(mRandom) - s.blockSearch, dz = axis(mRandom) - s.blockSearch;

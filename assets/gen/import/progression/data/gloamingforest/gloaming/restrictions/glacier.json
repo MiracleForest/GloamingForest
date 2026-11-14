@@ -1,0 +1,12 @@
+{
+  "advancements": [
+    "gloamingforest:progress_yeti"
+  ],
+  "enforcement": "gloamingforest:frost",
+  "locked_biome_toast": {
+    "count": 1,
+    "id": "gloamingforest:alpha_yeti_fur"
+  },
+  "multiplier": 1.0,
+  "structure_key": "gloamingforest:aurora_palace"
+}

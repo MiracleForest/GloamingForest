@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/knightmetal_ring"
+    },
+    "tags": ["crafting_table"],
+    "pattern": [" - ", "- -", " - "],
+    "key": {
+      "-": {
+        "item": "gloamingforest:knightmetal_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:knightmetal_ingot"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:knightmetal_ring"
+    }
+  }
+}

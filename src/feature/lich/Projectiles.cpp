@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/projectile/LichBolt.java
-//   src/main/java/twilightforest/entity/projectile/LichBomb.java
-//   src/main/java/twilightforest/entity/projectile/TomeBolt.java
-//   src/main/java/twilightforest/entity/projectile/TFThrowable.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/projectile/LichBolt.java
+//   src/main/java/gloamingforest/entity/projectile/LichBomb.java
+//   src/main/java/gloamingforest/entity/projectile/TomeBolt.java
+//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -125,7 +125,7 @@ bool boltHitEntity(Actor& bolt, Actor& target) {
         if (auto* lich = asMob(target); lich && deflect(*lich, bolt, projectileOwner(bolt))) return false;
     if (isLiving(target)) {
         Actor* owner = projectileOwner(bolt);
-        gf::combat::hurt(target, 6.0F, "twilightforest:lich_bolt", owner ? owner : &bolt, &bolt);
+        gf::combat::hurt(target, 6.0F, "gloamingforest:lich_bolt", owner ? owner : &bolt, &bolt);
     }
     itemBurst(bolt, "minecraft:ender_pearl");
     return true;
@@ -164,7 +164,7 @@ bool tomeBoltHitEntity(Actor& bolt, Actor& target) {
     if (isLiving(target)) {
         auto&  r     = randomOf(bolt);
         Actor* owner = projectileOwner(bolt);
-        char const* type = r.nextBoolean() ? "twilightforest:lost_words" : "twilightforest:schooled";
+        char const* type = r.nextBoolean() ? "gloamingforest:lost_words" : "gloamingforest:schooled";
         if (gf::combat::hurt(target, 3.0F, type, owner ? owner : &bolt, &bolt)) {
             auto level = ll::service::getLevel();
             auto d     = level ? level->getDifficulty() : SharedTypes::Legacy::Difficulty::Normal;
@@ -361,11 +361,11 @@ void registerProjectiles() {
             // the blast of a bomb already gone: still the bomb's damage, the owner's kill
             Blast const* b = !d.direct && !d.attacker && damageTypeIn("minecraft:is_explosion", d.type) ? blastAround(d.victim) : nullptr;
             if (!b) return gf::combat::Verdict::Pass;
-            d.type = "twilightforest:lich_bomb";
+            d.type = "gloamingforest:lich_bomb";
             if (b->owner) d.attacker = actorById(b->owner);
             return gf::combat::Verdict::Pass;
         }
-        d.type     = "twilightforest:lich_bomb";
+        d.type     = "gloamingforest:lich_bomb";
         d.direct   = bomb;
         d.attacker = projectileOwner(*bomb);
         if (!d.attacker) d.attacker = bomb;

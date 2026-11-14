@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/Yeti.java
-//   src/main/java/twilightforest/entity/ai/goal/ThrowRiderGoal.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/Yeti.java
+//   src/main/java/gloamingforest/entity/ai/goal/ThrowRiderGoal.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -44,7 +44,7 @@ constexpr char kAngryKey[] = "caves:angry"; ///< Yeti Angry
 
 void setAngry(Actor& yeti, bool angry) {
     gf::entity::data(yeti, kAngryKey) = angry;
-    gf::entity::setProperty(yeti, "twilightforest:angry", angry);
+    gf::entity::setProperty(yeti, "gloamingforest:angry", angry);
 }
 
 std::string biomeAt(BlockSource& region, BlockPos const& pos) {
@@ -54,7 +54,7 @@ std::string biomeAt(BlockSource& region, BlockPos const& pos) {
 
 /// Yeti.isValidLightLevel.
 bool isValidLightLevel(BlockSource& region, BlockPos const& pos, gf::spawn::RandomSource& random) {
-    bool snowy = biomeAt(region, pos) == "twilightforest:snowy_forest";
+    bool snowy = biomeAt(region, pos) == "gloamingforest:snowy_forest";
     auto pair  = region.getBrightnessPair(pos);
     if (static_cast<int>(pair.sky->mValue) > random.nextInt(32)) return snowy;
     int darken = gf::world::ext::isThundering(region) ? 10 : gf::world::ext::skyDarken(region);
@@ -73,13 +73,13 @@ bool yetiAngry(Actor& yeti) {
 std::shared_ptr<ThrowRiderGoal> makeThrowRiderGoal(Mob& mob, bool alpha) {
     auto grab = [alpha](Mob& m) {
         auto& r = fe::randomOf(m);
-        if (alpha) gf::fx::sound(m.getDimension(), "entity.twilightforest.alpha_yeti.grab", m.getFeetPos(), 4.0F, 0.75F + r.nextFloat() * 0.25F);
-        else gf::fx::sound(m.getDimension(), "entity.twilightforest.yeti.grab", m.getFeetPos(), 1.0F, 1.25F + r.nextFloat() * 0.5F);
+        if (alpha) gf::fx::sound(m.getDimension(), "entity.gloamingforest.alpha_yeti.grab", m.getFeetPos(), 4.0F, 0.75F + r.nextFloat() * 0.25F);
+        else gf::fx::sound(m.getDimension(), "entity.gloamingforest.yeti.grab", m.getFeetPos(), 1.0F, 1.25F + r.nextFloat() * 0.5F);
     };
     auto thr = [alpha](Mob& m) {
         auto& r = fe::randomOf(m);
-        if (alpha) gf::fx::sound(m.getDimension(), "entity.twilightforest.alpha_yeti.throw", m.getFeetPos(), 4.0F, 0.75F + r.nextFloat() * 0.25F);
-        else gf::fx::sound(m.getDimension(), "entity.twilightforest.yeti.throw", m.getFeetPos(), 1.0F, 1.25F + r.nextFloat() * 0.5F);
+        if (alpha) gf::fx::sound(m.getDimension(), "entity.gloamingforest.alpha_yeti.throw", m.getFeetPos(), 4.0F, 0.75F + r.nextFloat() * 0.25F);
+        else gf::fx::sound(m.getDimension(), "entity.gloamingforest.yeti.throw", m.getFeetPos(), 1.0F, 1.25F + r.nextFloat() * 0.5F);
     };
     return std::make_shared<ThrowRiderGoal>(mob, 1.0, false, grab, thr);
 }
@@ -98,7 +98,7 @@ void installYeti() {
     b.onSpawn = [](Actor& self) {
         auto* yeti = fe::asMob(self);
         if (!yeti) return;
-        gf::entity::setProperty(self, "twilightforest:angry", yetiAngry(self));
+        gf::entity::setProperty(self, "gloamingforest:angry", yetiAngry(self));
         gf::entity::addGoal(*yeti, 1, makeThrowRiderGoal(*yeti, false));
         // NearestAttackableTargetGoal(Player, true): follow range 4, + 8 while angry
         gf::entity::addTargetGoal(*yeti, 2, std::make_shared<NearestPlayerTargetGoal>(*yeti, [](Mob& m) { return yetiAngry(m) ? 12.0 : 4.0; }));
@@ -124,7 +124,7 @@ void installYeti() {
                                  [](BlockSource& region, std::string const&, BlockPos const& pos, gf::spawn::SpawnReason, gf::spawn::RandomSource& random) {
                                      auto level = ll::service::getLevel();
                                      if (level && level->getDifficulty() == SharedTypes::Legacy::Difficulty::Peaceful) return false;
-                                     if (biomeAt(region, pos) == "twilightforest:snowy_forest") return true;
+                                     if (biomeAt(region, pos) == "gloamingforest:snowy_forest") return true;
                                      return isValidLightLevel(region, pos, random);
                                  });
 }

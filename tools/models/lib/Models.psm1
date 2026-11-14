@@ -1,6 +1,6 @@
-# GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+# GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 # Shared code of the model converter (contract "geo", unit F2): compiles the C# converter
-# (tools/models/lib/*.cs), runs it against the shared TF checkout and writes or checks
+# (tools/models/lib/*.cs), runs it against the shared upstream checkout and writes or checks
 # assets/gen/geo/**. Part of GloamingForest, LGPL-3.0-or-later.
 #
 # Partitions. assets/gen/geo/<unit>/** holds the files of the ids <unit> owns (docs/spec/owners.tsv,
@@ -16,13 +16,13 @@ function Import-GfModelsAssembly {
     Add-Type -Path $sources -ReferencedAssemblies 'System.Text.Json', 'System.Memory', 'System.Collections', 'System.Linq', 'System.Runtime', 'System.Console', 'System.Text.Encodings.Web', 'System.Text.RegularExpressions' -WarningAction SilentlyContinue
 }
 
-# The TF source tree (src/main/java) of the shared checkout (rule R24).
+# The upstream source tree (src/main/java) of the shared checkout (rule R24).
 function Get-GfTfJavaRoot {
-    $tf = if ($env:GF_TF_HOME) { $env:GF_TF_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-tf' }
+    $tf = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
     $java = Join-Path $tf 'src/main/java'
-    if (-not (Test-Path (Join-Path $java 'twilightforest/client/model/TFModelLayers.java'))) {
-        & pwsh -NoProfile -File (Join-Path $script:Root 'tools/tf/fetch.ps1') -Quiet | Out-Null
-        if ($LASTEXITCODE -ne 0 -or -not (Test-Path $java)) { throw "The Twilight Forest checkout is missing: run pwsh tools/tf/fetch.ps1" }
+    if (-not (Test-Path (Join-Path $java 'gloamingforest/client/model/TFModelLayers.java'))) {
+        & pwsh -NoProfile -File (Join-Path $script:Root 'tools/upstream/fetch.ps1') -Quiet | Out-Null
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path $java)) { throw "The Gloaming Forest checkout is missing: run pwsh tools/upstream/fetch.ps1" }
     }
     return $java
 }

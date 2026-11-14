@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:attachable": {
     "description": {
-      "identifier": "twilightforest:ur_ghast_trophy",
+      "identifier": "gloamingforest:ur_ghast_trophy",
       "materials": {
         "default": "entity_alphatest",
         "part1": "entity_alphatest",
@@ -10,20 +10,20 @@
         "enchanted": "entity_alphatest_glint"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/towerboss",
-        "part1": "textures/twilightforest/entity/towerboss",
-        "part2": "textures/twilightforest/entity/towerboss",
+        "default": "textures/gloamingforest/entity/towerboss",
+        "part1": "textures/gloamingforest/entity/towerboss",
+        "part2": "textures/gloamingforest/entity/towerboss",
         "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
-        "default": "geometry.twilightforest.ur_ghast_trophy_worn",
-        "part1": "geometry.twilightforest.ur_ghast_trophy_held",
-        "part2": "geometry.twilightforest.ur_ghast_trophy_held_left"
+        "default": "geometry.gloamingforest.ur_ghast_trophy_worn",
+        "part1": "geometry.gloamingforest.ur_ghast_trophy_held",
+        "part2": "geometry.gloamingforest.ur_ghast_trophy_held_left"
       },
       "animations": {
-        "worn": "animation.twilightforest.ur_ghast_trophy_worn.base",
-        "held": "animation.twilightforest.ur_ghast_trophy_held.base",
-        "held_left": "animation.twilightforest.ur_ghast_trophy_held_left.base"
+        "worn": "animation.gloamingforest.ur_ghast_trophy_worn.base",
+        "held": "animation.gloamingforest.ur_ghast_trophy_held.base",
+        "held_left": "animation.gloamingforest.ur_ghast_trophy_held_left.base"
       },
       "scripts": {
         "animate": [
@@ -43,10 +43,10 @@
           "controller.render.item_default": "c.item_slot == 'head'"
         },
         {
-          "controller.render.twilightforest.models.part1": "c.item_slot == 'main_hand'"
+          "controller.render.gloamingforest.models.part1": "c.item_slot == 'main_hand'"
         },
         {
-          "controller.render.twilightforest.models.part2": "c.item_slot == 'off_hand'"
+          "controller.render.gloamingforest.models.part2": "c.item_slot == 'off_hand'"
         }
       ]
     }

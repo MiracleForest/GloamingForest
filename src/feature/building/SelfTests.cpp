@@ -64,7 +64,7 @@ std::string st(Context& ctx, GlobalPos const& p, std::string const& state) {
     auto* region = ctx.region();
     if (!region) return {};
     auto const* blk = b::blockAt(*region, gf::game::blockPos(p));
-    return blk ? b::stateOf(*blk, "twilightforest:" + state) : std::string();
+    return blk ? b::stateOf(*blk, "gloamingforest:" + state) : std::string();
 }
 
 SimulatedPlayer& sim(Context& ctx) { return static_cast<SimulatedPlayer&>(ctx.player()); }
@@ -146,22 +146,22 @@ GF_REGISTER_SELFTEST("building.blocks", [](Context& ctx) {
         "worn_castle_brick_stairs", "cracked_castle_brick_stairs", "mossy_castle_brick_stairs", "encased_castle_brick_stairs",
         "bold_castle_brick_stairs", "pink_castle_rune_brick", "yellow_castle_rune_brick", "blue_castle_rune_brick",
         "violet_castle_rune_brick", "knightmetal_block", "ironwood_block", "fiery_block", "steeleaf_block", "arctic_fur_block",
-        "carminite_block", "canopy_window", "canopy_window_pane", "iron_ladder", "rope", "twilight_portal_miniature_structure",
+        "carminite_block", "canopy_window", "canopy_window_pane", "iron_ladder", "rope", "gloaming_portal_miniature_structure",
         "naga_courtyard_miniature_structure", "lich_tower_miniature_structure", "minotaur_labyrinth_miniature_structure",
         "dark_tower_miniature_structure"};
     int missing = 0;
     for (auto const* id : ids)
-        if (!gf::game::blockWith(std::string("twilightforest:") + id)) {
+        if (!gf::game::blockWith(std::string("gloamingforest:") + id)) {
             ++missing;
             ctx.check(false, std::string("block registered: ") + id);
         }
     for (auto const& boss : b::trophyBosses()) {
-        ctx.check(gf::game::blockWith("twilightforest:" + boss + "_trophy") && gf::game::blockWith("twilightforest:" + boss + "_wall_trophy"), "trophy blocks of " + boss);
-        ctx.check(gf::game::items::make("twilightforest:" + boss + "_trophy").has_value(), "trophy item of " + boss);
-        ctx.check(gf::game::items::make("twilightforest:" + boss + "_banner_pattern").has_value(), "banner pattern item of " + boss);
+        ctx.check(gf::game::blockWith("gloamingforest:" + boss + "_trophy") && gf::game::blockWith("gloamingforest:" + boss + "_wall_trophy"), "trophy blocks of " + boss);
+        ctx.check(gf::game::items::make("gloamingforest:" + boss + "_trophy").has_value(), "trophy item of " + boss);
+        ctx.check(gf::game::items::make("gloamingforest:" + boss + "_banner_pattern").has_value(), "banner pattern item of " + boss);
     }
     for (auto const* boss : {"naga", "lich", "hydra", "ur_ghast", "knight_phantom", "snow_queen", "minoshroom", "alpha_yeti", "final_boss"}) {
-        auto const* sp = gf::game::blockWith(std::string("twilightforest:") + boss + "_boss_spawner");
+        auto const* sp = gf::game::blockWith(std::string("gloamingforest:") + boss + "_boss_spawner");
         ctx.check(sp != nullptr, std::string("boss spawner of ") + boss);
         // strength(-1.0, 3600000.8): unbreakable
         if (sp) ctx.check(sp->getBlockType().getDestroySpeed() < 0, std::string("the boss spawner of ") + boss + " is unbreakable");
@@ -169,7 +169,7 @@ GF_REGISTER_SELFTEST("building.blocks", [](Context& ctx) {
     ctx.info("building blocks registered: " + std::to_string(std::size(ids) - missing) + " of " + std::to_string(std::size(ids)));
 });
 
-// every block of Appendix A: TF's hardness, explosion resistance, mining tools, tier and sound
+// every block of Appendix A: upstream's hardness, explosion resistance, mining tools, tier and sound
 struct BlockRow {
     char const* id;
     float       hardness, resistance;
@@ -210,7 +210,7 @@ GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
     float unit = stone->getBlockType().getExplosionResistance() / 6.0f;
     int   good = 0, bad = 0;
     for (auto const& r : rows) {
-        std::string id  = std::string("twilightforest:") + r.id;
+        std::string id  = std::string("gloamingforest:") + r.id;
         auto const* blk = gf::game::blockWith(id);
         if (!blk) {
             ctx.check(false, id + " registered");
@@ -257,7 +257,7 @@ GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
         }
         ok ? ++good : ++bad;
     }
-    ctx.check(bad == 0, "block properties as TF: " + std::to_string(good) + " of " + std::to_string(std::size(rows)));
+    ctx.check(bad == 0, "block properties as upstream: " + std::to_string(good) + " of " + std::to_string(std::size(rows)));
 });
 
 GF_REGISTER_SELFTEST("building.trophy_variants", [](Context& ctx) {
@@ -269,18 +269,18 @@ GF_REGISTER_SELFTEST("building.trophy_variants", [](Context& ctx) {
         float       volume, pitch;
     };
     static Row const rows[]{
-        {"naga", 5, "entity.twilightforest.naga.rattle", 1.25f, 1.2f},
-        {"lich", 6, "entity.twilightforest.lich.ambient", 0.35f, 1.1f},
-        {"hydra", 12, "entity.twilightforest.hydra.growl", 1.0f, 1.2f},
-        {"ur_ghast", 13, "entity.twilightforest.ur_ghast.ambient", 1.0f, 0.6f},
-        {"knight_phantom", 8, "entity.twilightforest.knight_phantom.ambient", 1.0f, 1.1f},
-        {"snow_queen", 14, "entity.twilightforest.snow_queen.ambient", 1.0f, 0.9f},
-        {"minoshroom", 7, "entity.twilightforest.minoshroom.ambient", 0.75f, 0.7f},
-        {"alpha_yeti", 9, "entity.twilightforest.alpha_yeti.growl", 0.75f, 0.75f},
-        {"quest_ram", 1, "entity.twilightforest.quest_ram.ambient", 1.0f, 0.7f},
+        {"naga", 5, "entity.gloamingforest.naga.rattle", 1.25f, 1.2f},
+        {"lich", 6, "entity.gloamingforest.lich.ambient", 0.35f, 1.1f},
+        {"hydra", 12, "entity.gloamingforest.hydra.growl", 1.0f, 1.2f},
+        {"ur_ghast", 13, "entity.gloamingforest.ur_ghast.ambient", 1.0f, 0.6f},
+        {"knight_phantom", 8, "entity.gloamingforest.knight_phantom.ambient", 1.0f, 1.1f},
+        {"snow_queen", 14, "entity.gloamingforest.snow_queen.ambient", 1.0f, 0.9f},
+        {"minoshroom", 7, "entity.gloamingforest.minoshroom.ambient", 0.75f, 0.7f},
+        {"alpha_yeti", 9, "entity.gloamingforest.alpha_yeti.growl", 0.75f, 0.75f},
+        {"quest_ram", 1, "entity.gloamingforest.quest_ram.ambient", 1.0f, 0.7f},
     };
     for (auto const& r : rows) {
-        std::string floor = std::string("twilightforest:") + r.boss + "_trophy", wall = std::string("twilightforest:") + r.boss + "_wall_trophy";
+        std::string floor = std::string("gloamingforest:") + r.boss + "_trophy", wall = std::string("gloamingforest:") + r.boss + "_wall_trophy";
         auto        v     = gf::boss::trophyVariant(floor);
         ctx.check(v && v->comparator == r.comparator, floor + " pedestal comparator " + std::to_string(r.comparator) + " (got " + (v ? std::to_string(v->comparator) : "none") + ")");
         auto w = gf::boss::trophyVariant(wall);
@@ -290,15 +290,15 @@ GF_REGISTER_SELFTEST("building.trophy_variants", [](Context& ctx) {
                   floor + " sound " + r.sound + " (got " + (s ? s->event + " " + std::to_string(s->volume) + " " + std::to_string(s->pitch) : "none") + ")");
         ctx.check(b::trophyBoss(floor) == std::string(r.boss) && b::trophyBoss(wall) == std::string(r.boss) && b::isWallTrophy(wall) && !b::isWallTrophy(floor), floor + " ids");
     }
-    // rarities: TWILIGHT trophies and banner patterns (dark green names), the UNCOMMON fiery block
+    // rarities: GLOAMING trophies and banner patterns (dark green names), the UNCOMMON fiery block
     namespace ex = gf::item::ext;
     for (auto const& boss : b::trophyBosses()) {
-        ctx.check(ex::rarityOf("twilightforest:" + boss + "_trophy") == ex::Rarity::Twilight, boss + " trophy is TWILIGHT");
-        ctx.check(ex::rarityOf("twilightforest:" + boss + "_banner_pattern") == ex::Rarity::Twilight, boss + " banner pattern is TWILIGHT");
+        ctx.check(ex::rarityOf("gloamingforest:" + boss + "_trophy") == ex::Rarity::Gloaming, boss + " trophy is GLOAMING");
+        ctx.check(ex::rarityOf("gloamingforest:" + boss + "_banner_pattern") == ex::Rarity::Gloaming, boss + " banner pattern is GLOAMING");
     }
-    ctx.check(ex::rarityOf("twilightforest:fiery_block") == ex::Rarity::Uncommon, "the fiery block is UNCOMMON");
-    auto rare = b::trophySound("twilightforest:alpha_yeti_trophy", 0.001f);
-    ctx.check(rare && rare->event == "entity.twilightforest.alpha_yeti.roar", "the alpha yeti roars once in 50");
+    ctx.check(ex::rarityOf("gloamingforest:fiery_block") == ex::Rarity::Uncommon, "the fiery block is UNCOMMON");
+    auto rare = b::trophySound("gloamingforest:alpha_yeti_trophy", 0.001f);
+    ctx.check(rare && rare->event == "entity.gloamingforest.alpha_yeti.roar", "the alpha yeti roars once in 50");
     // TrophyBlock#getStateForPlacement: floor(yaw * 16 / 360 + 0.5) & 15
     ctx.check(b::trophyRotation(0) == 0 && b::trophyRotation(90) == 4 && b::trophyRotation(180) == 8 && b::trophyRotation(-90) == 12 && b::trophyRotation(11.0f) == 0 &&
                   b::trophyRotation(12.0f) == 1 && b::trophyRotation(-12.0f) == 15 && b::trophyRotation(359.0f) == 0,
@@ -322,23 +322,23 @@ GF_REGISTER_SELFTEST("building.nagastone_variants", [](Context& ctx) -> ll::coro
     auto p = ctx.testPos(500, 1);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto mid = at(p, 0, 2, 0), above = at(p, 0, 3, 0), north = at(p, 0, 2, -1);
-    ctx.require(ctx.setBlock(mid, "twilightforest:nagastone"), "nagastone");
+    ctx.require(ctx.setBlock(mid, "gloamingforest:nagastone"), "nagastone");
     co_await ctx.ticks(2);
     ctx.check(st(ctx, mid, "variant") == "solid", "a lone nagastone is solid (" + st(ctx, mid, "variant") + ")");
-    ctx.require(ctx.setBlock(above, "twilightforest:nagastone"), "nagastone above");
+    ctx.require(ctx.setBlock(above, "gloamingforest:nagastone"), "nagastone above");
     co_await ctx.ticks(2);
     ctx.check(st(ctx, mid, "variant") == "axis_y" && st(ctx, above, "variant") == "axis_y", "two stacked: axis_y (" + st(ctx, mid, "variant") + ", " + st(ctx, above, "variant") + ")");
-    ctx.require(ctx.setBlock(north, "twilightforest:nagastone"), "nagastone north");
+    ctx.require(ctx.setBlock(north, "gloamingforest:nagastone"), "nagastone north");
     co_await ctx.ticks(2);
     ctx.check(st(ctx, mid, "variant") == "north_up", "up + north: the north_up elbow (" + st(ctx, mid, "variant") + ")");
     ctx.check(st(ctx, north, "variant") == "axis_z", "the north stone lies along z (" + st(ctx, north, "variant") + ")");
     // a head connects only when it faces the stone
     auto lone = at(p, 3, 2, 2), head = at(p, 3, 2, 1);
-    ctx.require(ctx.setBlock(lone, "twilightforest:nagastone"), "lone stone");
-    ctx.require(ctx.setBlock(head, "twilightforest:nagastone_head", {{"twilightforest:facing", "east"}}), "a head facing away");
+    ctx.require(ctx.setBlock(lone, "gloamingforest:nagastone"), "lone stone");
+    ctx.require(ctx.setBlock(head, "gloamingforest:nagastone_head", {{"gloamingforest:facing", "east"}}), "a head facing away");
     co_await ctx.ticks(2);
     ctx.check(st(ctx, lone, "variant") == "solid", "a head facing away does not connect (" + st(ctx, lone, "variant") + ")");
-    ctx.require(ctx.setBlock(head, "twilightforest:nagastone_head", {{"twilightforest:facing", "north"}}), "the head facing the stone");
+    ctx.require(ctx.setBlock(head, "gloamingforest:nagastone_head", {{"gloamingforest:facing", "north"}}), "the head facing the stone");
     co_await ctx.ticks(2);
     ctx.check(st(ctx, lone, "variant") == "axis_z", "a head facing the stone (north of it) connects (" + st(ctx, lone, "variant") + ")");
 });
@@ -361,9 +361,9 @@ GF_REGISTER_SELFTEST("building.trophy_place", [](Context& ctx) -> ll::coro::Coro
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto ground = at(p, 0, -1, 2);
     // on top of a block, the player south of it looking north (yaw 180): the standing trophy, rotation 8
-    auto t = co_await place(ctx, ground, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "twilightforest:naga_trophy");
+    auto t = co_await place(ctx, ground, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gloamingforest:naga_trophy");
     co_await ctx.ticks(2);
-    ctx.check(t && ctx.blockAt(*t) == "twilightforest:naga_trophy", "a trophy on the ground stands (" + (t ? ctx.blockAt(*t) : "not placed") + ")");
+    ctx.check(t && ctx.blockAt(*t) == "gloamingforest:naga_trophy", "a trophy on the ground stands (" + (t ? ctx.blockAt(*t) : "not placed") + ")");
     if (t) {
         float yaw      = ctx.player().getRotation().y;
         int   expected = b::trophyRotation(yaw);
@@ -374,9 +374,9 @@ GF_REGISTER_SELFTEST("building.trophy_place", [](Context& ctx) -> ll::coro::Coro
     // against a wall: the wall trophy facing out of it
     auto wall = at(p, 4, 0, 2);
     ctx.require(ctx.setBlock(wall, "minecraft:stone"), "a wall");
-    auto w = co_await place(ctx, wall, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "twilightforest:lich_trophy");
+    auto w = co_await place(ctx, wall, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gloamingforest:lich_trophy");
     co_await ctx.ticks(2);
-    ctx.check(w && ctx.blockAt(*w) == "twilightforest:lich_wall_trophy" && st(ctx, *w, "facing") == "south",
+    ctx.check(w && ctx.blockAt(*w) == "gloamingforest:lich_wall_trophy" && st(ctx, *w, "facing") == "south",
               "a trophy against a wall hangs on it facing out (" + (w ? ctx.blockAt(*w) + " " + st(ctx, *w, "facing") : "not placed") + ")");
     if (w) ctx.setBlock(*w, "minecraft:air");
 });
@@ -385,7 +385,7 @@ GF_REGISTER_SELFTEST("building.trophy_powered", [](Context& ctx) -> ll::coro::Co
     auto p = ctx.testPos(520, 1);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto t = at(p, 0, 1, 0), source = at(p, 1, 1, 0);
-    ctx.require(ctx.setBlock(t, "twilightforest:hydra_trophy", {{"twilightforest:rotation", 4}}), "a hydra trophy");
+    ctx.require(ctx.setBlock(t, "gloamingforest:hydra_trophy", {{"gloamingforest:rotation", 4}}), "a hydra trophy");
     co_await ctx.ticks(3);
     ctx.check(st(ctx, t, "powered") == "false", "unpowered at first");
     // the sound plays on the rising edge only (AbstractTrophyBlock#neighborChanged)
@@ -403,12 +403,12 @@ GF_REGISTER_SELFTEST("building.trophy_powered", [](Context& ctx) -> ll::coro::Co
     stand(ctx, t, static_cast<int>(Facing::South), "");
     co_await ctx.ticks(kClickGap);
     bool consumed = false;
-    auto id       = ia::onUseOn({.block = "twilightforest:hydra_trophy"}, [&](ia::UseOnContext const&) { consumed = true; return ia::Result::Pass; }, ia::priority::Highest + 1000);
+    auto id       = ia::onUseOn({.block = "gloamingforest:hydra_trophy"}, [&](ia::UseOnContext const&) { consumed = true; return ia::Result::Pass; }, ia::priority::Highest + 1000);
     sounds        = b::trophySoundsPlayed();
     useOn(ctx, t, Facing::South, Vec3{0.5f, 0.25f, 0.75f});
     ia::remove(id);
     co_await ctx.ticks(1);
-    ctx.check(consumed && ctx.blockAt(t) == "twilightforest:hydra_trophy", "the click reaches the trophy and it stays");
+    ctx.check(consumed && ctx.blockAt(t) == "gloamingforest:hydra_trophy", "the click reaches the trophy and it stays");
     ctx.check(b::trophySoundsPlayed() == sounds + 1, "the click plays the sound");
 });
 
@@ -429,20 +429,20 @@ GF_REGISTER_SELFTEST("building.trophy_dispense", [](Context& ctx) -> ll::coro::C
     ctx.require(actor != nullptr, "the dispenser's block actor");
     auto* container = static_cast<DispenserBlockActor*>(actor)->getContainer();
     ctx.require(container != nullptr, "its container");
-    auto trophy = gf::game::items::make("twilightforest:minoshroom_trophy", 2);
+    auto trophy = gf::game::items::make("gloamingforest:minoshroom_trophy", 2);
     ctx.require(trophy.has_value(), "a minoshroom trophy");
     container->setItem(0, *trophy);
     static_cast<DispenserBlock const&>(region->getBlock(bp).getBlockType()).dispenseFrom(*region, bp);
     co_await ctx.ticks(2);
     auto& p2 = sim(ctx);
-    ctx.check(gf::game::items::idOf(p2.getArmor(SharedTypes::Legacy::ArmorSlot::Head)) == "twilightforest:minoshroom_trophy", "the player in front wears the trophy");
+    ctx.check(gf::game::items::idOf(p2.getArmor(SharedTypes::Legacy::ArmorSlot::Head)) == "gloamingforest:minoshroom_trophy", "the player in front wears the trophy");
     ctx.check(gf::game::items::countOf(container->getItem(0)) == 1, "one trophy left in the dispenser");
     // nobody in front: the trophy stays (OptionalDispenseItemBehavior fails)
     p2.teleport(Vec3{disp.x + 0.5f, float(disp.y + 3), disp.z + 3.5f}, p2.getDimensionId());
     co_await ctx.ticks(2);
     static_cast<DispenserBlock const&>(region->getBlock(bp).getBlockType()).dispenseFrom(*region, bp);
     co_await ctx.ticks(2);
-    ctx.check(gf::game::items::countOf(container->getItem(0)) == 1 && itemsNear(ctx, at(disp, 1, 0, 0), "twilightforest:minoshroom_trophy") == 0, "with nobody in front the trophy stays in the dispenser");
+    ctx.check(gf::game::items::countOf(container->getItem(0)) == 1 && itemsNear(ctx, at(disp, 1, 0, 0), "gloamingforest:minoshroom_trophy") == 0, "with nobody in front the trophy stays in the dispenser");
     container->setItem(0, ItemStack::EMPTY_ITEM());
     sim(ctx).setArmor(SharedTypes::Legacy::ArmorSlot::Head, ItemStack::EMPTY_ITEM());
 });
@@ -459,46 +459,46 @@ GF_REGISTER_SELFTEST("building.rope", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto top = at(p, 0, 6, 2);
     ctx.require(ctx.setBlock(top, "minecraft:stone"), "a stone overhead");
     std::vector<GlobalPos> chain{at(top, 0, -1, 0), at(top, 0, -2, 0), at(top, 0, -3, 0)};
-    for (auto const& c : chain) ctx.require(ctx.setBlock(c, "twilightforest:rope"), "rope");
+    for (auto const& c : chain) ctx.require(ctx.setBlock(c, "gloamingforest:rope"), "rope");
     co_await ctx.ticks(4);
     bool kept = true;
-    for (auto const& c : chain) kept = kept && ctx.blockAt(c) == "twilightforest:rope";
+    for (auto const& c : chain) kept = kept && ctx.blockAt(c) == "gloamingforest:rope";
     ctx.check(kept, "a vertical chain under a stone survives");
     ctx.check(ropeCheckConnection(*region, gf::game::blockPos(chain[2]), Up), "the bottom rope's chain leads up to support");
     // the rope item used on the bottom rope extends it downwards (RopeItem: a y strand goes down)
-    stand(ctx, chain[2], static_cast<int>(Facing::South), "twilightforest:rope");
+    stand(ctx, chain[2], static_cast<int>(Facing::South), "gloamingforest:rope");
     co_await ctx.ticks(kClickGap);
     useOn(ctx, chain[2], Facing::South, Vec3{0.5f, 0.5f, 0.6f});
     co_await ctx.ticks(3);
     auto extended = at(chain[2], 0, -1, 0);
-    ctx.check(ctx.blockAt(extended) == "twilightforest:rope" && st(ctx, extended, "y") == "true", "the rope item extends the chain downwards (" + ctx.blockAt(extended) + ")");
-    if (ctx.blockAt(extended) == "twilightforest:rope") chain.push_back(extended);
+    ctx.check(ctx.blockAt(extended) == "gloamingforest:rope" && st(ctx, extended, "y") == "true", "the rope item extends the chain downwards (" + ctx.blockAt(extended) + ")");
+    if (ctx.blockAt(extended) == "gloamingforest:rope") chain.push_back(extended);
     // the support goes: one tick later every strand is dropped (one rope each)
     clearItems(ctx, chain[1]);
     ctx.setBlock(top, "minecraft:air");
     co_await ctx.ticks(8);
     bool gone = true;
-    for (auto const& c : chain) gone = gone && ctx.blockAt(c) != "twilightforest:rope";
+    for (auto const& c : chain) gone = gone && ctx.blockAt(c) != "gloamingforest:rope";
     ctx.check(gone, "without support the chain breaks");
-    int dropped = itemsNear(ctx, chain[1], "twilightforest:rope");
+    int dropped = itemsNear(ctx, chain[1], "gloamingforest:rope");
     ctx.check(dropped == static_cast<int>(chain.size()), "one rope per strand dropped (" + std::to_string(dropped) + " of " + std::to_string(chain.size()) + ")");
     clearItems(ctx, chain[1]);
     // a horizontal strand between two walls; a cross rope drops only its lost strand
     auto w1 = at(p, 4, 2, 2), w2 = at(p, 6, 2, 2), mid = at(p, 5, 2, 2);
     ctx.require(ctx.setBlock(w1, "minecraft:stone") && ctx.setBlock(w2, "minecraft:stone"), "two walls");
-    ctx.require(ctx.setBlock(mid, "twilightforest:rope", {{"twilightforest:x", true}, {"twilightforest:y", true}, {"twilightforest:z", false}}), "an x + y rope");
+    ctx.require(ctx.setBlock(mid, "gloamingforest:rope", {{"gloamingforest:x", true}, {"gloamingforest:y", true}, {"gloamingforest:z", false}}), "an x + y rope");
     co_await ctx.ticks(6);
-    ctx.check(ctx.blockAt(mid) == "twilightforest:rope" && st(ctx, mid, "x") == "true" && st(ctx, mid, "y") == "false",
+    ctx.check(ctx.blockAt(mid) == "gloamingforest:rope" && st(ctx, mid, "x") == "true" && st(ctx, mid, "y") == "false",
               "the unsupported y strand goes, the x strand between the walls stays (x " + st(ctx, mid, "x") + ", y " + st(ctx, mid, "y") + ")");
-    ctx.check(itemsNear(ctx, mid, "twilightforest:rope") == 1, "one rope dropped for the lost strand");
+    ctx.check(itemsNear(ctx, mid, "gloamingforest:rope") == 1, "one rope dropped for the lost strand");
     clearItems(ctx, mid);
     // never supported from below
     auto floor = at(p, 8, 1, 2), onFloor = at(p, 8, 2, 2);
     ctx.require(ctx.setBlock(floor, "minecraft:stone"), "a floor");
     ctx.check(!ropeCanConnectTo(*region, gf::game::blockPos(floor), Down), "a block below is no support");
-    ctx.require(ctx.setBlock(onFloor, "twilightforest:rope"), "a rope on the floor");
+    ctx.require(ctx.setBlock(onFloor, "gloamingforest:rope"), "a rope on the floor");
     co_await ctx.ticks(6);
-    ctx.check(ctx.blockAt(onFloor) != "twilightforest:rope", "a vertical rope standing on a floor breaks");
+    ctx.check(ctx.blockAt(onFloor) != "gloamingforest:rope", "a vertical rope standing on a floor breaks");
     clearItems(ctx, onFloor);
 });
 
@@ -508,10 +508,10 @@ GF_REGISTER_SELFTEST("building.iron_ladder", [](Context& ctx) -> ll::coro::CoroT
     // a wall of three, ladders on its south side
     auto w0 = at(p, 0, 1, 0), w1 = at(p, 1, 1, 0), w2 = at(p, 2, 1, 0);
     for (auto const& w : {w0, w1, w2}) ctx.require(ctx.setBlock(w, "minecraft:stone"), "wall");
-    auto l0 = co_await place(ctx, w0, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "twilightforest:iron_ladder");
+    auto l0 = co_await place(ctx, w0, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gloamingforest:iron_ladder");
     co_await ctx.ticks(2);
-    ctx.check(l0 && ctx.blockAt(*l0) == "twilightforest:iron_ladder" && st(ctx, *l0, "facing") == "south", "a ladder on a wall's south side faces south (" + (l0 ? st(ctx, *l0, "facing") : "not placed") + ")");
-    auto l1 = co_await place(ctx, w1, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "twilightforest:iron_ladder");
+    ctx.check(l0 && ctx.blockAt(*l0) == "gloamingforest:iron_ladder" && st(ctx, *l0, "facing") == "south", "a ladder on a wall's south side faces south (" + (l0 ? st(ctx, *l0, "facing") : "not placed") + ")");
+    auto l1 = co_await place(ctx, w1, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gloamingforest:iron_ladder");
     co_await ctx.ticks(3);
     ctx.require(l0 && l1, "two ladders");
     // facing south: counter-clockwise is east, clockwise west (l1 is east of l0)
@@ -520,8 +520,8 @@ GF_REGISTER_SELFTEST("building.iron_ladder", [](Context& ctx) -> ll::coro::CoroT
     clearItems(ctx, *l1);
     ctx.setBlock(w1, "minecraft:air");
     co_await ctx.ticks(4);
-    ctx.check(ctx.blockAt(*l1) != "twilightforest:iron_ladder", "without its wall the ladder breaks");
-    ctx.check(itemsNear(ctx, *l1, "twilightforest:iron_ladder") >= 1, "and drops itself");
+    ctx.check(ctx.blockAt(*l1) != "gloamingforest:iron_ladder", "without its wall the ladder breaks");
+    ctx.check(itemsNear(ctx, *l1, "gloamingforest:iron_ladder") >= 1, "and drops itself");
     clearItems(ctx, *l1);
     ctx.setBlock(*l0, "minecraft:air");
 });
@@ -537,7 +537,7 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     sp.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
     // fiery block: stepping on it hurts, fiery boots protect
     auto fb = at(p, 3, 1, 0);
-    ctx.require(ctx.setBlock(fb, "twilightforest:fiery_block"), "a fiery block");
+    ctx.require(ctx.setBlock(fb, "gloamingforest:fiery_block"), "a fiery block");
     sim(ctx).teleport(Vec3{fb.x + 0.5f, fb.y + 1.0f, fb.z + 0.5f}, sim(ctx).getDimensionId());
     co_await ctx.ticks(2);
     float before = sim(ctx).getHealth();
@@ -559,7 +559,7 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     {
         auto source = at(p, 6, 1, 0), flame = at(p, 6, 2, 0);
         auto stone = at(p, 8, 1, 0), control = at(p, 8, 2, 0);
-        ctx.require(ctx.setBlock(source, "twilightforest:fiery_block") && ctx.setBlock(stone, "minecraft:stone"), "a second fiery block and a stone");
+        ctx.require(ctx.setBlock(source, "gloamingforest:fiery_block") && ctx.setBlock(stone, "minecraft:stone"), "a second fiery block and a stone");
         ctx.require(ctx.setBlock(flame, "minecraft:fire", {{"age", 15}}) && ctx.setBlock(control, "minecraft:fire", {{"age", 15}}), "old fire on both");
         int waited = 0;
         for (; waited < 400 && ctx.blockAt(control) == "minecraft:fire"; waited += 5) co_await ctx.ticks(5);
@@ -580,20 +580,20 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
             auto const* b = gf::game::blockWith(id);
             return b && (static_cast<std::uint64_t>(b->getBlockType().mProperties) & static_cast<std::uint64_t>(prop)) != 0;
         };
-        ctx.check(has("twilightforest:fiery_block", BlockProperty::InfiniBurn), "the fiery block is an infinite fire source");
-        ctx.check(has("twilightforest:rope", BlockProperty::Scaffolding) && has("twilightforest:rope", BlockProperty::Climbable), "the rope climbs as scaffolding");
+        ctx.check(has("gloamingforest:fiery_block", BlockProperty::InfiniBurn), "the fiery block is an infinite fire source");
+        ctx.check(has("gloamingforest:rope", BlockProperty::Scaffolding) && has("gloamingforest:rope", BlockProperty::Climbable), "the rope climbs as scaffolding");
     }
     co_await rest();
     // knightmetal: standing in its spiky shape hurts (4 knightmetal damage)
     auto km = at(p, 0, 1, 0);
-    ctx.require(ctx.setBlock(km, "twilightforest:knightmetal_block"), "a knightmetal block");
+    ctx.require(ctx.setBlock(km, "gloamingforest:knightmetal_block"), "a knightmetal block");
     sim(ctx).teleport(Vec3{km.x + 0.5f, km.y + 15.0f / 16.0f, km.z + 0.5f}, sim(ctx).getDimensionId());
     before = sim(ctx).getHealth();
     co_await ctx.ticks(10);
     after = sim(ctx).getHealth();
     ctx.check(after <= before - 4.0f + 0.01f, "knightmetal hurts the player standing on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
     ctx.check(fieryHurts(sim(ctx)), "fieryHurts without boots");
-    if (auto boots = gf::game::items::make("twilightforest:fiery_boots")) {
+    if (auto boots = gf::game::items::make("gloamingforest:fiery_boots")) {
         sim(ctx).setArmor(SharedTypes::Legacy::ArmorSlot::Feet, *boots);
         ctx.check(!fieryHurts(sim(ctx)), "fiery boots protect");
         sim(ctx).setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
@@ -626,7 +626,7 @@ GF_REGISTER_SELFTEST("building.arctic_fur_fall", [](Context& ctx) -> ll::coro::C
         ctx.setBlock(ground, "minecraft:air");
         co_return lost;
     };
-    float fur   = co_await drop("twilightforest:arctic_fur_block", 1);
+    float fur   = co_await drop("gloamingforest:arctic_fur_block", 1);
     float stone = co_await drop("minecraft:stone", 3);
     ctx.check(stone >= 4.0f, "the 8-block fall hurts on stone (" + std::to_string(stone) + ")");
     ctx.check(fur > 0 && std::abs(fur - std::ceil(stone * kArcticFurFallMultiplier - 1e-4f)) < 0.01f,
@@ -639,10 +639,10 @@ GF_REGISTER_SELFTEST("building.arctic_fur_fall", [](Context& ctx) -> ll::coro::C
 GF_REGISTER_SELFTEST("building.recipes", [](Context& ctx) {
     // the banner patterns from paper + trophy; the stonecutting sets
     for (auto const* boss : {"naga", "lich", "hydra", "ur_ghast", "knight_phantom", "snow_queen", "minoshroom", "alpha_yeti"}) {
-        auto list = gf::recipes::producing(std::string("twilightforest:") + boss + "_banner_pattern");
+        auto list = gf::recipes::producing(std::string("gloamingforest:") + boss + "_banner_pattern");
         ctx.check(!list.empty(), std::string("a recipe makes the ") + boss + " banner pattern");
     }
-    ctx.check(gf::recipes::producing("twilightforest:quest_ram_banner_pattern").empty(), "the questing ram pattern has no recipe (TF 4.8)");
+    ctx.check(gf::recipes::producing("gloamingforest:quest_ram_banner_pattern").empty(), "the questing ram pattern has no recipe (upstream 4.8)");
 });
 
 GF_REGISTER_SELFTEST("building.stonecutting", [](Context& ctx) {

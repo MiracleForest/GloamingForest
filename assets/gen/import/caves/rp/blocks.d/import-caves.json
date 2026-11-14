@@ -1,20 +1,20 @@
 {
-  "twilightforest:huge_mushgloom": {
+  "gloamingforest:huge_mushgloom": {
     "sound": "shroomlight"
   },
-  "twilightforest:huge_mushgloom_stem": {
+  "gloamingforest:huge_mushgloom_stem": {
     "sound": "nylium"
   },
-  "twilightforest:trollber": {
+  "gloamingforest:trollber": {
     "sound": "azalea"
   },
-  "twilightforest:trollsteinn": {
+  "gloamingforest:trollsteinn": {
     "sound": "stone"
   },
-  "twilightforest:trollvidr": {
+  "gloamingforest:trollvidr": {
     "sound": "azalea"
   },
-  "twilightforest:unripe_trollber": {
+  "gloamingforest:unripe_trollber": {
     "sound": "azalea"
   }
 }

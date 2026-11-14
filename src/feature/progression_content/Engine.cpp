@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/data/TFAdvancementGenerator.java
-//   src/main/java/twilightforest/init/TFAdvancements.java
-//   src/main/java/twilightforest/advancements/HurtBossTrigger.java
-//   src/main/java/twilightforest/advancements/KillBugTrigger.java
-//   src/main/java/twilightforest/advancements/DrinkFromFlaskTrigger.java
-//   src/main/java/twilightforest/advancements/UncraftItemTrigger.java
-//   src/main/java/twilightforest/advancements/AddModifierTrigger.java
-//   src/main/java/twilightforest/advancements/SimpleAdvancementTrigger.java
-//   src/main/java/twilightforest/init/custom/Restrictions.java
-//   src/main/java/twilightforest/util/Restriction.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/data/TFAdvancementGenerator.java
+//   src/main/java/gloamingforest/init/TFAdvancements.java
+//   src/main/java/gloamingforest/advancements/HurtBossTrigger.java
+//   src/main/java/gloamingforest/advancements/KillBugTrigger.java
+//   src/main/java/gloamingforest/advancements/DrinkFromFlaskTrigger.java
+//   src/main/java/gloamingforest/advancements/UncraftItemTrigger.java
+//   src/main/java/gloamingforest/advancements/AddModifierTrigger.java
+//   src/main/java/gloamingforest/advancements/SimpleAdvancementTrigger.java
+//   src/main/java/gloamingforest/init/custom/Restrictions.java
+//   src/main/java/gloamingforest/util/Restriction.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U14's criteria engine. TF's 45 advancements (data/twilightforest/advancement/*.json, the JSON
+// U14's criteria engine. upstream's 45 advancements (data/gloamingforest/advancement/*.json, the JSON
 // TFAdvancementGenerator wrote) are read here; every criterion is attached to its trigger:
 //
 // - minecraft:inventory_changed  progression::events::onInventoryChanged (the whole inventory,
@@ -25,7 +25,7 @@
 // - minecraft:consume_item       the trigger F10 fires after events::onConsumed ({"item": id})
 // - minecraft:location, tick     every second (events::onTick) and after every grant (the
 //                                "previous progression" criteria follow at once)
-// - minecraft:item_used_on_block / recipe_crafted and TF's 13 triggers: progression::onTrigger
+// - minecraft:item_used_on_block / recipe_crafted and upstream's 13 triggers: progression::onTrigger
 //   (payloads in docs/units/progression.md); recipe_crafted counts F1's numbered Bedrock layouts
 //   of a split Java recipe (core::progression::sameRecipe against recipeIndex())
 //
@@ -168,9 +168,9 @@ void loadLocked(Store& s) {
     auto data = dataDir();
     std::error_code ec;
     if (data.empty() || !std::filesystem::is_directory(data, ec)) return;
-    // TF's own advancements: the top level of data/twilightforest/advancement (the recipe unlocks
+    // upstream's own advancements: the top level of data/gloamingforest/advancement (the recipe unlocks
     // under recipes/ are F1's, R21)
-    auto dir = data / "twilightforest" / "advancement";
+    auto dir = data / "gloamingforest" / "advancement";
     std::vector<std::filesystem::path> files;
     for (auto const& f : std::filesystem::directory_iterator(dir, ec))
         if (f.is_regular_file() && f.path().extension() == ".json") files.push_back(f.path());
@@ -179,7 +179,7 @@ void loadLocked(Store& s) {
         try {
             std::ifstream in(f);
             auto          j  = Json::parse(in, nullptr, true, true);
-            auto          id = "twilightforest:" + f.stem().string();
+            auto          id = "gloamingforest:" + f.stem().string();
             if (auto a = parseAdvancement(id, j)) {
                 collectStats(j, s.statIds);
                 s.index[id] = s.list.size();
@@ -202,9 +202,9 @@ void loadLocked(Store& s) {
             s.list[i].placed = layout[i].placed;
         }
     }
-    // the restrictions registry: data/<ns>/twilight/restrictions/<path>.json, keyed by biome
+    // the restrictions registry: data/<ns>/gloaming/restrictions/<path>.json, keyed by biome
     for (auto const& nsDir : std::filesystem::directory_iterator(data, ec)) {
-        auto root = nsDir.path() / "twilight" / "restrictions";
+        auto root = nsDir.path() / "gloaming" / "restrictions";
         if (!std::filesystem::is_directory(root, ec)) continue;
         for (auto const& f : std::filesystem::recursive_directory_iterator(root, ec)) {
             if (f.path().extension() != ".json") continue;
@@ -232,7 +232,7 @@ Store& loaded() {
 
 std::string dimensionName(Actor const& actor) {
     auto& dim = const_cast<Actor&>(actor).getDimension();
-    if (world::isTwilight(dim)) return world::kDimensionId;
+    if (world::isGloaming(dim)) return world::kDimensionId;
     switch (static_cast<int>(actor.getDimensionId())) {
     case 0: return "minecraft:overworld";
     case 1: return "minecraft:the_nether";
@@ -406,7 +406,7 @@ public:
                         } else if (key == "is_direct") {
                             if (!pred.is_boolean() || pred.get<bool>() != isDirect) return false;
                         } else {
-                            return false; // damage type tags: not used by TF's advancements
+                            return false; // damage type tags: not used by upstream's advancements
                         }
                     }
                 }
@@ -448,11 +448,11 @@ public:
             });
         });
 
-        // redstone on experiment 115 (TF's Experiment115Block#useItemOn sets regenerate): vanilla
+        // redstone on experiment 115 (upstream's Experiment115Block#useItemOn sets regenerate): vanilla
         // fires item_used_on_block for a block's own use; the click is watched here (below F6's
         // protection) and the trigger fires when the block turned regenerating
         ia::onUseOn(
-            {.block = "twilightforest:experiment_115", .item = "minecraft:redstone"},
+            {.block = "gloamingforest:experiment_115", .item = "minecraft:redstone"},
             [](ia::UseOnContext const& c) {
                 if (!c.firstEvent) return ia::Result::Pass;
                 bool before = regenerating(c.block);
@@ -464,7 +464,7 @@ public:
                     auto* region = game::regionOf(pos.dim);
                     if (!p || !region || before) return;
                     auto const& b = region->getBlock(game::blockPos(pos));
-                    if (game::blockId(b) != "twilightforest:experiment_115" || !regenerating(b)) return;
+                    if (game::blockId(b) != "gloamingforest:experiment_115" || !regenerating(b)) return;
                     pr::trigger(*p, "minecraft:item_used_on_block", {{"pos", {pos.x, pos.y, pos.z}}, {"item", "minecraft:redstone"}});
                 });
                 return ia::Result::Pass;
@@ -477,7 +477,7 @@ public:
         // and a beanstalk grower took its place; watched here so beanstalk's use_beans does not
         // depend on the item's owner firing it (a second trigger is harmless)
         ia::onUseOn(
-            {.block = "twilightforest:uberous_soil", .item = "twilightforest:magic_beans"},
+            {.block = "gloamingforest:uberous_soil", .item = "gloamingforest:magic_beans"},
             [](ia::UseOnContext const& c) {
                 if (!c.firstEvent) return ia::Result::Pass;
                 auto  id     = c.player.getOrCreateUniqueID();
@@ -491,9 +491,9 @@ public:
                     auto* region = game::regionOf(pos.dim);
                     if (!p || !region) return;
                     auto bp = game::blockPos(pos);
-                    if (game::blockId(region->getBlock(bp)) != "twilightforest:uberous_soil") return;
-                    if (game::blockId(region->getBlock(BlockPos{bp.x, bp.y + 1, bp.z})) != "twilightforest:beanstalk_grower") return;
-                    pr::trigger(*p, "minecraft:item_used_on_block", {{"pos", {pos.x, pos.y, pos.z}}, {"item", "twilightforest:magic_beans"}});
+                    if (game::blockId(region->getBlock(bp)) != "gloamingforest:uberous_soil") return;
+                    if (game::blockId(region->getBlock(BlockPos{bp.x, bp.y + 1, bp.z})) != "gloamingforest:beanstalk_grower") return;
+                    pr::trigger(*p, "minecraft:item_used_on_block", {{"pos", {pos.x, pos.y, pos.z}}, {"item", "gloamingforest:magic_beans"}});
                 });
                 return ia::Result::Pass;
             },
@@ -507,11 +507,11 @@ public:
             });
         });
 
-        // TF's triggers (TFAdvancements): fired by their owners through progression::trigger
-        for (char const* t : {"twilightforest:make_tf_portal", "twilightforest:hurt_boss", "twilightforest:kill_bug", "twilightforest:broke_glass_sword",
-                              "twilightforest:drink_from_flask", "twilightforest:consume_hydra_chop_on_low_hunger", "twilightforest:add_modifier",
-                              "twilightforest:uncraft_item", "twilightforest:complete_quest_ram", "twilightforest:placed_on_trophy_pedestal",
-                              "twilightforest:kill_all_phantoms", "twilightforest:activate_ghast_trap", "twilightforest:structure_cleared"}) {
+        // upstream's triggers (TFAdvancements): fired by their owners through progression::trigger
+        for (char const* t : {"gloamingforest:make_tf_portal", "gloamingforest:hurt_boss", "gloamingforest:kill_bug", "gloamingforest:broke_glass_sword",
+                              "gloamingforest:drink_from_flask", "gloamingforest:consume_hydra_chop_on_low_hunger", "gloamingforest:add_modifier",
+                              "gloamingforest:uncraft_item", "gloamingforest:complete_quest_ram", "gloamingforest:placed_on_trophy_pedestal",
+                              "gloamingforest:kill_all_phantoms", "gloamingforest:activate_ghast_trap", "gloamingforest:structure_cleared"}) {
             std::string trigger = t;
             pr::onTrigger(trigger, [trigger](Player& p, Json const& data) {
                 awardWhere(p, trigger, [&](Advancement const&, Criterion const& c) { return cp::matchTfTrigger(trigger, c.conditions, data, env()); });
@@ -520,7 +520,7 @@ public:
 
         // the "previous progression" tick criteria follow every grant at once
         pr::onGranted([](Player& p, std::string const& adv) {
-            if (adv.starts_with("twilightforest:")) evaluatePlayerCriteria(p);
+            if (adv.starts_with("gloamingforest:")) evaluatePlayerCriteria(p);
         });
     }
     void uninstall() {}
@@ -603,7 +603,7 @@ cp::ItemView itemView(ItemStack const& stack) {
 
 std::string biomeAt(Actor& actor) {
     auto bp = feetOf(actor);
-    if (world::isTwilight(actor.getDimension())) {
+    if (world::isGloaming(actor.getDimension())) {
         auto id = worldgen::biomeAt(bp);
         if (!id.empty()) return id;
     }
@@ -709,11 +709,11 @@ int potionAux(std::string const& javaId) {
     return it == m.end() ? -1 : it->second;
 }
 
-/// An icon component as the item data the port keeps: TF's potion flask component becomes U9's
+/// An icon component as the item data the port keeps: upstream's potion flask component becomes U9's
 /// flask data ("flask_contents" {potion: Bedrock potion aux, doses, breakage, breakable}), so the
 /// icon draws the filled flask; other components keep their id.
 std::pair<std::string, Json> iconData(std::string const& component, Json const& value) {
-    if (component == "twilightforest:flask_contents" && value.is_object()) {
+    if (component == "gloamingforest:flask_contents" && value.is_object()) {
         auto        pot  = value.value("potion", Json::object());
         std::string java = pot.is_object() ? pot.value("potion", std::string{}) : pot.is_string() ? pot.get<std::string>() : std::string{};
         return {"flask_contents",

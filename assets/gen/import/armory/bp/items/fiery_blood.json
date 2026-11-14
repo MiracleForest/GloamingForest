@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:fiery_blood",
+      "identifier": "gloamingforest:fiery_blood",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:fiery_blood.name"
+        "value": "item.gloamingforest:fiery_blood.name"
       },
       "minecraft:tags": {
-        "tags": ["twilightforest:fiery_vial"]
+        "tags": ["gloamingforest:fiery_vial"]
       }
     }
   }

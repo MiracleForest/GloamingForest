@@ -1,28 +1,28 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TFPlantBlock.java
-//   src/main/java/twilightforest/block/PatchBlock.java
-//   src/main/java/twilightforest/block/MossPatchBlock.java
-//   src/main/java/twilightforest/block/MayappleBlock.java
-//   src/main/java/twilightforest/block/FiddleheadBlock.java
-//   src/main/java/twilightforest/block/MushgloomBlock.java
-//   src/main/java/twilightforest/block/FallenLeavesBlock.java
-//   src/main/java/twilightforest/block/RootStrandBlock.java
-//   src/main/java/twilightforest/block/TorchberryPlantBlock.java
-//   src/main/java/twilightforest/block/LiverootBlock.java
-//   src/main/java/twilightforest/block/HugeLilyPadBlock.java
-//   src/main/java/twilightforest/block/HugeWaterLilyBlock.java
-//   src/main/java/twilightforest/block/TrollRootBlock.java (canSurvive of the roots U6's feature places)
-//   src/main/java/twilightforest/item/HugeLilyPadItem.java
-//   src/main/java/twilightforest/item/EssenceBerryItem.java
-//   src/main/java/twilightforest/item/StackableEffectItem.java
-//   src/main/java/twilightforest/init/TFItems.java (fallen leaves item, torchberries)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TFPlantBlock.java
+//   src/main/java/gloamingforest/block/PatchBlock.java
+//   src/main/java/gloamingforest/block/MossPatchBlock.java
+//   src/main/java/gloamingforest/block/MayappleBlock.java
+//   src/main/java/gloamingforest/block/FiddleheadBlock.java
+//   src/main/java/gloamingforest/block/MushgloomBlock.java
+//   src/main/java/gloamingforest/block/FallenLeavesBlock.java
+//   src/main/java/gloamingforest/block/RootStrandBlock.java
+//   src/main/java/gloamingforest/block/TorchberryPlantBlock.java
+//   src/main/java/gloamingforest/block/LiverootBlock.java
+//   src/main/java/gloamingforest/block/HugeLilyPadBlock.java
+//   src/main/java/gloamingforest/block/HugeWaterLilyBlock.java
+//   src/main/java/gloamingforest/block/TrollRootBlock.java (canSurvive of the roots U6's feature places)
+//   src/main/java/gloamingforest/item/HugeLilyPadItem.java
+//   src/main/java/gloamingforest/item/EssenceBerryItem.java
+//   src/main/java/gloamingforest/item/StackableEffectItem.java
+//   src/main/java/gloamingforest/init/TFItems.java (fallen leaves item, torchberries)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U6 flora: the small plants. Custom Bedrock blocks get no Java callbacks, so the canSurvive rules
-// of TF's BushBlocks run here: a placement where the plant can't stay is undone (BlockItem#canPlace),
+// of upstream's BushBlocks run here: a placement where the plant can't stay is undone (BlockItem#canPlace),
 // a plant whose support goes pops with its drops (BushBlock#updateShape), and world generation
 // sweeps the plants the vanilla features of the features contract placed without asking them
 // (SimpleBlockFeature asks BlockState#canSurvive, which custom blocks do not answer).
@@ -72,7 +72,7 @@ namespace ia = interactions;
 namespace {
 
 bool isTrollRoot(std::string const& id) {
-    return id == "twilightforest:trollvidr" || id == "twilightforest:trollber" || id == "twilightforest:unripe_trollber";
+    return id == "gloamingforest:trollvidr" || id == "gloamingforest:trollber" || id == "gloamingforest:unripe_trollber";
 }
 
 /// Java BushBlock#mayPlaceOn: #minecraft:dirt or farmland.
@@ -117,11 +117,11 @@ std::optional<bool> survivesWith(View const& v, BlockPos const& pos, std::string
     }
     if (id == ids::RootStrand) {
         auto const* a = above();
-        return a && (tagged(*a, "twilightforest:plants_hang_on") || a->getTypeName() == ids::RootStrand);
+        return a && (tagged(*a, "gloamingforest:plants_hang_on") || a->getTypeName() == ids::RootStrand);
     }
     if (id == ids::TorchberryPlant) {
         auto const* a = above();
-        return a && tagged(*a, "twilightforest:plants_hang_on");
+        return a && tagged(*a, "gloamingforest:plants_hang_on");
     }
     if (isTrollRoot(id)) {
         // TrollRootBlock.canPlaceRootBelow(pos.above())
@@ -160,9 +160,9 @@ std::optional<bool> survivesIn(worldgen::Region& region, BlockPos const& pos, Bl
         // TFBushBlock#canSurvive without the light (the bush features place grown bushes by tag)
         auto const& below = region.getBlock(relative(pos, Down));
         auto        kind  = bushes::kindOf(id);
-        char const* tag   = kind == bushes::Kind::Overworld ? "twilightforest:tf_berry_bushes_survive"
-                          : kind == bushes::Kind::DarkTower ? "twilightforest:dark_tower_berry_bushes_survive"
-                                                            : "twilightforest:oreberry_bushes_survive";
+        char const* tag   = kind == bushes::Kind::Overworld ? "gloamingforest:tf_berry_bushes_survive"
+                          : kind == bushes::Kind::DarkTower ? "gloamingforest:dark_tower_berry_bushes_survive"
+                                                            : "gloamingforest:oreberry_bushes_survive";
         return features::kit::hasTag(below, tag) || (below.getTypeName() == id && intState(below, st::Age, 0) >= 2);
     }
     auto inside = [&](BlockPos const& p) { return p.y >= region.minY() && p.y < region.maxY() && region.isInside(p.x, p.z); };
@@ -406,9 +406,9 @@ void installPlants() {
         if (!b) return ia::Result::Pass;
         if (boolState(*b, st::Berries)) {
             setStates(region, pos, {{st::Berries, false}});
-            sound(region, pos, "block.twilightforest.torchberry.harvest");
+            sound(region, pos, "block.gloamingforest.torchberry.harvest");
             if (auto s = makeItem(ids::Torchberries)) spawnItemAt(region, pos.x + .5f, static_cast<float>(pos.y), pos.z + .5f, *s);
-            stats::award(c.player, "twilightforest:torchberries_harvested");
+            stats::award(c.player, "gloamingforest:torchberries_harvested");
             log().info("flora: {} harvested torchberries at {} {} {}", c.player.getRealName(), pos.x, pos.y, pos.z);
             return ia::Result::Consume;
         }
@@ -530,10 +530,10 @@ void installPlants() {
                        }});
 
     // ---- berries: StackableEffectItem's stacking effects
-    registerBerry("twilightforest:blightberry", {{"minecraft:regeneration", 10, 8 * 20, 1.0f}, {"minecraft:poison", 19, 5 * 20, 0.75f}, {"minecraft:wither", 20, 5 * 20, 0.15f}});
-    registerBerry("twilightforest:duskberry", {{"minecraft:night_vision", 16, 15 * 20, 1.0f}, {"minecraft:blindness", 15, 3 * 20, 0.75f}});
-    registerBerry("twilightforest:skyberry", {{"minecraft:jump_boost", 8, 8 * 20, 1.0f}, {"minecraft:slowness", 2, 3 * 20, 0.75f}});
-    registerBerry("twilightforest:stingberry", {{"minecraft:strength", 5, 10 * 20, 1.0f}, {"minecraft:mining_fatigue", 4, 10 * 20, 0.75f}});
+    registerBerry("gloamingforest:blightberry", {{"minecraft:regeneration", 10, 8 * 20, 1.0f}, {"minecraft:poison", 19, 5 * 20, 0.75f}, {"minecraft:wither", 20, 5 * 20, 0.15f}});
+    registerBerry("gloamingforest:duskberry", {{"minecraft:night_vision", 16, 15 * 20, 1.0f}, {"minecraft:blindness", 15, 3 * 20, 0.75f}});
+    registerBerry("gloamingforest:skyberry", {{"minecraft:jump_boost", 8, 8 * 20, 1.0f}, {"minecraft:slowness", 2, 3 * 20, 0.75f}});
+    registerBerry("gloamingforest:stingberry", {{"minecraft:strength", 5, 10 * 20, 1.0f}, {"minecraft:mining_fatigue", 4, 10 * 20, 0.75f}});
 
     // ---- world generation: the plants the vanilla features placed where they can't stay
     worldgen::addStage(worldgen::Stage::Features, "flora.survival", 1000, [](worldgen::Chunk&, worldgen::Region& region) {

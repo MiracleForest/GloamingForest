@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of src/core/tgear/Logic.h (translated from TF 4.8's ItemDisplayContents, TravellersArmorBeltItem,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of src/core/tgear/Logic.h (translated from upstream 4.8's ItemDisplayContents, TravellersArmorBeltItem,
 // TravellersGearLogic, TooltipStringInterpolator, ClockDisplay and MoonDialDisplay; LGPL-2.1-or-later
 // code, see the header of Logic.h).
 #include <cmath>
@@ -108,7 +108,7 @@ TEST(TgearHud, Clock) {
 }
 
 TEST(TgearHud, MoonPhaseFollowsTheDayCount) {
-    // the level's day time, never the Twilight Forest's fixed_time 13000: day 3 is phase 3
+    // the level's day time, never the Gloaming Forest's fixed_time 13000: day 3 is phase 3
     EXPECT_EQ(moonPhaseOf(0), 0);
     EXPECT_EQ(moonPhaseOf(3 * 24000 + 13000), 3);
     EXPECT_EQ(moonPhaseOf(9 * 24000), 1);
@@ -116,8 +116,8 @@ TEST(TgearHud, MoonPhaseFollowsTheDayCount) {
 }
 
 TEST(TgearTooltip, Interpolate) {
-    auto name = [](std::string const& k) { return k == "key.twilightforest.swap_hotbar" ? std::string("V") : std::string("Nonexistent key"); };
-    EXPECT_EQ(interpolate("Swap Hotbar (keybind: ${tfkeybinds/key.twilightforest.swap_hotbar})", name), "Swap Hotbar (keybind: V)");
+    auto name = [](std::string const& k) { return k == "key.gloamingforest.swap_hotbar" ? std::string("V") : std::string("Nonexistent key"); };
+    EXPECT_EQ(interpolate("Swap Hotbar (keybind: ${tfkeybinds/key.gloamingforest.swap_hotbar})", name), "Swap Hotbar (keybind: V)");
     EXPECT_EQ(interpolate("a ${tfkeybinds/x} b ${other/y} c", name), "a Nonexistent key b ${other/y} c");
     EXPECT_EQ(interpolate("plain", name), "plain");
 }

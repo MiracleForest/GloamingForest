@@ -1,35 +1,35 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:lich": {
+      "gloamingforest:lich": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.lich.ambient",
-          "hurt": "entity.twilightforest.lich.hurt",
-          "death": "entity.twilightforest.lich.death"
+          "ambient": "entity.gloamingforest.lich.ambient",
+          "hurt": "entity.gloamingforest.lich.hurt",
+          "death": "entity.gloamingforest.lich.death"
         }
       },
-      "twilightforest:lich_minion": {
+      "gloamingforest:lich_minion": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.minion.ambient",
-          "hurt": "entity.twilightforest.minion.hurt",
-          "death": "entity.twilightforest.minion.death",
-          "step": { "sound": "entity.twilightforest.minion.step", "volume": 0.15, "pitch": 1.0 }
+          "ambient": "entity.gloamingforest.minion.ambient",
+          "hurt": "entity.gloamingforest.minion.hurt",
+          "death": "entity.gloamingforest.minion.death",
+          "step": { "sound": "entity.gloamingforest.minion.step", "volume": 0.15, "pitch": 1.0 }
         }
       },
-      "twilightforest:death_tome": {
+      "gloamingforest:death_tome": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.death_tome.ambient",
-          "hurt": "entity.twilightforest.death_tome.hurt",
-          "death": "entity.twilightforest.death_tome.death"
+          "ambient": "entity.gloamingforest.death_tome.ambient",
+          "hurt": "entity.gloamingforest.death_tome.hurt",
+          "death": "entity.gloamingforest.death_tome.death"
         }
       },
-      "twilightforest:rising_zombie": {
+      "gloamingforest:rising_zombie": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {

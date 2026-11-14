@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:blackberry_bush",
+    "id": "gloamingforest:blackberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "BerryBushBlock",
@@ -10,7 +10,7 @@
     }
   },
   {
-    "id": "twilightforest:blightberry_bush",
+    "id": "gloamingforest:blightberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "DarkTowerBerryBushBlock",
@@ -20,7 +20,7 @@
     }
   },
   {
-    "id": "twilightforest:blueberry_bush",
+    "id": "gloamingforest:blueberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "BerryBushBlock",
@@ -30,7 +30,7 @@
     }
   },
   {
-    "id": "twilightforest:cicada_jar",
+    "id": "gloamingforest:cicada_jar",
     "family": "waterloggable",
     "params": {
       "class": "CicadaJarBlock",
@@ -39,7 +39,7 @@
     }
   },
   {
-    "id": "twilightforest:copper_oreberry",
+    "id": "gloamingforest:copper_oreberry",
     "family": "snowloggable",
     "params": {
       "class": "OreBerryBlock",
@@ -49,7 +49,7 @@
     }
   },
   {
-    "id": "twilightforest:duskberry_bush",
+    "id": "gloamingforest:duskberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "DarkTowerBerryBushBlock",
@@ -59,7 +59,7 @@
     }
   },
   {
-    "id": "twilightforest:essence_oreberry",
+    "id": "gloamingforest:essence_oreberry",
     "family": "snowloggable",
     "params": {
       "class": "OreBerryBlock",
@@ -69,7 +69,7 @@
     }
   },
   {
-    "id": "twilightforest:firefly_jar",
+    "id": "gloamingforest:firefly_jar",
     "family": "waterloggable",
     "params": {
       "class": "FireflyJarBlock",
@@ -78,7 +78,7 @@
     }
   },
   {
-    "id": "twilightforest:firefly_particle_spawner",
+    "id": "gloamingforest:firefly_particle_spawner",
     "family": "waterloggable",
     "params": {
       "class": "FireflySpawnerBlock",
@@ -88,7 +88,7 @@
     }
   },
   {
-    "id": "twilightforest:gold_oreberry",
+    "id": "gloamingforest:gold_oreberry",
     "family": "snowloggable",
     "params": {
       "class": "OreBerryBlock",
@@ -98,7 +98,7 @@
     }
   },
   {
-    "id": "twilightforest:iron_oreberry",
+    "id": "gloamingforest:iron_oreberry",
     "family": "snowloggable",
     "params": {
       "class": "OreBerryBlock",
@@ -108,7 +108,7 @@
     }
   },
   {
-    "id": "twilightforest:maloberry_bush",
+    "id": "gloamingforest:maloberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "BerryBushBlock",
@@ -118,7 +118,7 @@
     }
   },
   {
-    "id": "twilightforest:mason_jar",
+    "id": "gloamingforest:mason_jar",
     "family": "waterloggable",
     "params": {
       "class": "MasonJarBlock",
@@ -127,7 +127,7 @@
     }
   },
   {
-    "id": "twilightforest:moonworm",
+    "id": "gloamingforest:moonworm",
     "family": "waterloggable",
     "params": {
       "class": "MoonwormBlock",
@@ -137,28 +137,28 @@
     }
   },
   {
-    "id": "twilightforest:potted_fiddlehead",
+    "id": "gloamingforest:potted_fiddlehead",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_mayapple",
+    "id": "gloamingforest:potted_mayapple",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_mushgloom",
+    "id": "gloamingforest:potted_mushgloom",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:raspberry_bush",
+    "id": "gloamingforest:raspberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "BerryBushBlock",
@@ -168,7 +168,7 @@
     }
   },
   {
-    "id": "twilightforest:root_strand",
+    "id": "gloamingforest:root_strand",
     "family": "climbable",
     "params": {
       "class": "RootStrandBlock",
@@ -177,7 +177,7 @@
     }
   },
   {
-    "id": "twilightforest:skyberry_bush",
+    "id": "gloamingforest:skyberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "DarkTowerBerryBushBlock",
@@ -187,7 +187,7 @@
     }
   },
   {
-    "id": "twilightforest:stingberry_bush",
+    "id": "gloamingforest:stingberry_bush",
     "family": "snowloggable",
     "params": {
       "class": "DarkTowerBerryBushBlock",

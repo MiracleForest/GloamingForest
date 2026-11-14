@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/util/StructureTemplateDefinitions.java
-//   src/main/java/twilightforest/world/components/structures/TwilightJigsawPiece.java (addJigsaws)
-//   src/main/java/twilightforest/world/components/structures/type/CampStructure.java (the jigsaw start)
-//   src/main/java/twilightforest/util/WorldUtil.java (adjustForTerrain)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/util/StructureTemplateDefinitions.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java (addJigsaws)
+//   src/main/java/gloamingforest/world/components/structures/type/CampStructure.java (the jigsaw start)
+//   src/main/java/gloamingforest/util/WorldUtil.java (adjustForTerrain)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/ext/structure/TemplateDefinitions.h"

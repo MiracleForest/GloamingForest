@@ -2,20 +2,20 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:dwarf_rabbit",
+      "identifier": "gloamingforest:dwarf_rabbit",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "brown": "textures/twilightforest/entity/bunnybrown",
-        "dutch": "textures/twilightforest/entity/bunnydutch",
-        "white": "textures/twilightforest/entity/bunnywhite"
+        "brown": "textures/gloamingforest/entity/bunnybrown",
+        "dutch": "textures/gloamingforest/entity/bunnydutch",
+        "white": "textures/gloamingforest/entity/bunnywhite"
       },
       "geometry": {
-        "default": "geometry.twilightforest.bunny"
+        "default": "geometry.gloamingforest.bunny"
       },
       "animations": {
-        "setup": "animation.twilightforest.bunny.base"
+        "setup": "animation.gloamingforest.bunny.base"
       },
       "scripts": {
         "animate": [
@@ -23,7 +23,7 @@
         ]
       },
       "render_controllers": [
-        "controller.render.twilightforest.dwarf_rabbit"
+        "controller.render.gloamingforest.dwarf_rabbit"
       ],
       "spawn_egg": {
         "base_color": "#fefeee",

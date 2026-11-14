@@ -1,10 +1,10 @@
 {
-  "block.twilightforest.cicada": "Cykada",
-  "block.twilightforest.cicada_jar": "Słój cykad",
-  "block.twilightforest.fallen_leaves": "Opadłe liście",
-  "block.twilightforest.firefly": "Świetlik",
-  "block.twilightforest.firefly_jar": "Słój świetlików",
-  "block.twilightforest.firefly_particle_spawner": "Przyzywacz Cząsteczek Świetlików",
-  "block.twilightforest.liveroot_block": "Żywokłącze",
-  "block.twilightforest.moonworm": "Księżycowy robak"
+  "block.gloamingforest.cicada": "Cykada",
+  "block.gloamingforest.cicada_jar": "Słój cykad",
+  "block.gloamingforest.fallen_leaves": "Opadłe liście",
+  "block.gloamingforest.firefly": "Świetlik",
+  "block.gloamingforest.firefly_jar": "Słój świetlików",
+  "block.gloamingforest.firefly_particle_spawner": "Przyzywacz Cząsteczek Świetlików",
+  "block.gloamingforest.liveroot_block": "Żywokłącze",
+  "block.gloamingforest.moonworm": "Księżycowy robak"
 }

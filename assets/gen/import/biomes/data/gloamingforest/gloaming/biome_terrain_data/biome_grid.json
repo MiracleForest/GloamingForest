@@ -1,0 +1,203 @@
+{
+  "biome_landscape": [
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:clearing",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.05,
+      "key_biome": "gloamingforest:clearing",
+      "scale": 1.15,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:dark_forest",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.1,
+      "key_biome": "gloamingforest:dark_forest",
+      "scale": 1.25,
+      "weight": 0.5
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:dark_forest_center",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.1,
+      "key_biome": "gloamingforest:dark_forest_center",
+      "scale": 1.125,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.8": "gloamingforest:dense_forest",
+        "-3.8": "gloamingforest:underground"
+      },
+      "depth": -0.8,
+      "key_biome": "gloamingforest:dense_forest",
+      "scale": 3.9,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:dense_mushroom_forest",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.0,
+      "key_biome": "gloamingforest:dense_mushroom_forest",
+      "scale": 1.75,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.5": "gloamingforest:enchanted_forest",
+        "-3.5": "gloamingforest:underground"
+      },
+      "depth": -0.5,
+      "key_biome": "gloamingforest:enchanted_forest",
+      "scale": 4.0,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "0.0": "gloamingforest:final_plateau"
+      },
+      "depth": 12.0,
+      "key_biome": "gloamingforest:final_plateau",
+      "scale": 0.75,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:fire_swamp",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.2,
+      "key_biome": "gloamingforest:fire_swamp",
+      "scale": 1.25,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.75": "gloamingforest:firefly_forest",
+        "-3.75": "gloamingforest:underground"
+      },
+      "depth": -0.75,
+      "key_biome": "gloamingforest:firefly_forest",
+      "scale": 4.15,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.7": "gloamingforest:forest",
+        "-3.7": "gloamingforest:underground"
+      },
+      "depth": -0.7,
+      "key_biome": "gloamingforest:forest",
+      "scale": 4.2,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.05": "gloamingforest:glacier",
+        "-3.05": "gloamingforest:underground"
+      },
+      "depth": -0.05,
+      "key_biome": "gloamingforest:glacier",
+      "scale": 1.75,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:highlands",
+        "-3.0": "gloamingforest:highlands_underground"
+      },
+      "depth": 3.0,
+      "key_biome": "gloamingforest:highlands",
+      "scale": 2.25,
+      "weight": 0.135
+    },
+    {
+      "biome_layers": {
+        "-3.2": "gloamingforest:lake",
+        "-5.2": "gloamingforest:underground"
+      },
+      "depth": -2.2,
+      "key_biome": "gloamingforest:lake",
+      "scale": 2.0,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:mushroom_forest",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.0,
+      "key_biome": "gloamingforest:mushroom_forest",
+      "scale": 2.0,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.05": "gloamingforest:oak_savannah",
+        "-3.05": "gloamingforest:underground"
+      },
+      "depth": -0.05,
+      "key_biome": "gloamingforest:oak_savannah",
+      "scale": 2.0,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:snowy_forest",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.0,
+      "key_biome": "gloamingforest:snowy_forest",
+      "scale": 2.45,
+      "weight": 0.5
+    },
+    {
+      "biome_layers": {
+        "-1.0": "gloamingforest:spooky_forest",
+        "-3.0": "gloamingforest:underground"
+      },
+      "depth": 0.0,
+      "key_biome": "gloamingforest:spooky_forest",
+      "scale": 2.25,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "-1.1": "gloamingforest:stream",
+        "-3.1": "gloamingforest:underground"
+      },
+      "depth": -0.1,
+      "key_biome": "gloamingforest:stream",
+      "scale": 0.001,
+      "weight": 1.35
+    },
+    {
+      "biome_layers": {
+        "-1.6": "gloamingforest:swamp",
+        "-3.6": "gloamingforest:underground"
+      },
+      "depth": -0.6,
+      "key_biome": "gloamingforest:swamp",
+      "scale": 1.7,
+      "weight": 1.0
+    },
+    {
+      "biome_layers": {
+        "0.0": "gloamingforest:thornlands"
+      },
+      "depth": 5.5,
+      "key_biome": "gloamingforest:thornlands",
+      "scale": 1.75,
+      "weight": 1.15
+    }
+  ],
+  "biome_layer_config": "gloamingforest:biomes_along_streams"
+}

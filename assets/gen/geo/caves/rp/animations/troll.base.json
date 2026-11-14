@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.troll.base": {
+    "animation.gloamingforest.troll.base": {
       "loop": true,
       "bones": {
         "hat": {

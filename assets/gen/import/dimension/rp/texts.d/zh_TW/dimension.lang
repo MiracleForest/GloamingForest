@@ -1,6 +1,6 @@
-block.twilightforest.twilight_portal=暮色森林傳送門
-dimension.twilightforest.twilight_forest=暮色森林
-misc.twilightforest.portal_unsafe=這里看上去不安全……
-misc.twilightforest.portal_unworthy=傳送門沒有反應。也許是忽略了什麽？
-subtitles.twilightforest.block.portal.whoosh=暮色森林傳送門：呼喚
-tile.twilightforest:twilight_portal.name=暮色森林傳送門
+block.gloamingforest.gloaming_portal=薄暮森林傳送門
+dimension.gloamingforest.gloaming_forest=薄暮森林
+misc.gloamingforest.portal_unsafe=這里看上去不安全……
+misc.gloamingforest.portal_unworthy=傳送門沒有反應。也許是忽略了什麽？
+subtitles.gloamingforest.block.portal.whoosh=薄暮森林傳送門：呼喚
+tile.gloamingforest:gloaming_portal.name=薄暮森林傳送門

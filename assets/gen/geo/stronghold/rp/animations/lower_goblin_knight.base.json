@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.lower_goblin_knight.base": {
+    "animation.gloamingforest.lower_goblin_knight.base": {
       "loop": true,
       "bones": {
         "leftLeg": {

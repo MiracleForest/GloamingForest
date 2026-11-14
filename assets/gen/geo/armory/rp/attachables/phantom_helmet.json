@@ -2,17 +2,17 @@
   "format_version": "1.10.0",
   "minecraft:attachable": {
     "description": {
-      "identifier": "twilightforest:phantom_helmet",
+      "identifier": "gloamingforest:phantom_helmet",
       "materials": {
         "default": "armor",
         "enchanted": "armor_enchanted"
       },
       "textures": {
-        "default": "textures/twilightforest/models/armor/phantom_layer_1",
+        "default": "textures/gloamingforest/models/armor/phantom_layer_1",
         "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
-        "default": "geometry.twilightforest.phantom_armor.helmet"
+        "default": "geometry.gloamingforest.phantom_armor.helmet"
       },
       "scripts": {
         "parent_setup": "variable.helmet_layer_visible = 0.0;"

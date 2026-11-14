@@ -1,10 +1,10 @@
-# GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-# Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-#   src/main/java/twilightforest/block/TrophyBlock.java
-#   src/main/java/twilightforest/block/TrophyWallBlock.java
-#   src/main/java/twilightforest/client/renderer/block/TrophyRenderer.java
-#   src/main/java/twilightforest/item/TrophyItem.java
-# Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+# GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+# Translated from the upstream 4.8 source (commit 9e40a757):
+#   src/main/java/gloamingforest/block/TrophyBlock.java
+#   src/main/java/gloamingforest/block/TrophyWallBlock.java
+#   src/main/java/gloamingforest/client/renderer/block/TrophyRenderer.java
+#   src/main/java/gloamingforest/item/TrophyItem.java
+# Copyright (c) the upstream authors (see NOTICE).
 # Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 # of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #
@@ -44,7 +44,7 @@ OUT_ITEMS = os.path.join(ROOT, "assets", "pack", "bp", "items", "building")
 OUT_TERRAIN = os.path.join(ROOT, "assets", "pack", "rp", "terrain_texture.d", "building.json")
 OUT_ITEM_TEX = os.path.join(ROOT, "assets", "pack", "rp", "item_texture.d", "building.json")
 
-NS = "twilightforest:"
+NS = "gloamingforest:"
 # BossVariant: trophy type (the GUI backdrop, item/<model>) per boss
 BOSSES = {
     "naga": "trophy",
@@ -350,7 +350,7 @@ def item(boss):
                 # ISTER draws the head over the trophy type's backdrop sprite (item/trophy...): the
                 # backdrop is the icon, the client mod draws the head on it
                 "minecraft:icon": {"textures": {"default": "tf_building_item_" + BOSSES[boss]}},
-                "minecraft:display_name": {"value": "tile.twilightforest:%s_trophy.name" % boss},
+                "minecraft:display_name": {"value": "tile.gloamingforest:%s_trophy.name" % boss},
                 "minecraft:block_placer": {"block": NS + boss + "_trophy", "replace_block_item": True},
                 # AbstractTrophyBlock#getEquipmentSlot: HEAD
                 "minecraft:wearable": {"slot": "slot.armor.head", "protection": 0},
@@ -370,7 +370,7 @@ def outputs():
     for boss in BOSSES:
         for wall in (False, True):
             base = boss + ("_wall_trophy" if wall else "_trophy")
-            geo_id = "geometry.twilightforest.building." + base
+            geo_id = "geometry.gloamingforest.building." + base
             if wall:
                 geos = [(geo_id,) + trophy_bones(base, 0)]
             else:
@@ -388,11 +388,11 @@ def outputs():
     # variations, which Bedrock also picks per position
     for color, rgb in RUNE_COLORS.items():
         terrain["tf_building_rune_" + color] = {"textures": {"variations": [
-            {"path": "textures/twilightforest/block/castleblock_magic_%d" % i, "tint_color": rgb, "weight": 1} for i in range(8)]}}
-    # TF's random model variants as per-face texture variations (variants.py writes the rest)
+            {"path": "textures/gloamingforest/block/castleblock_magic_%d" % i, "tint_color": rgb, "weight": 1} for i in range(8)]}}
+    # upstream's random model variants as per-face texture variations (variants.py writes the rest)
     terrain.update(variants.terrain())
     files[OUT_TERRAIN] = dump(dict(sorted(terrain.items())))
-    items = {"tf_building_item_" + t: {"textures": "textures/twilightforest/item/" + t} for t in sorted(set(BOSSES.values()))}
+    items = {"tf_building_item_" + t: {"textures": "textures/gloamingforest/item/" + t} for t in sorted(set(BOSSES.values()))}
     files[OUT_ITEM_TEX] = dump(items)
     return files
 

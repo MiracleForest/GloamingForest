@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The pack patch extension (PackPatch.h): two hooks on the reads of resource pack files,
 // ResourcePack::getResource and ResourcePackManager::load (outside the W0 contracts; disclosed for

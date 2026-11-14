@@ -2,20 +2,20 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:unstable_ice_core",
+      "identifier": "gloamingforest:unstable_ice_core",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/iceexploder"
+        "default": "textures/gloamingforest/entity/iceexploder"
       },
       "geometry": {
-        "default": "geometry.twilightforest.unstable_ice_core.swell"
+        "default": "geometry.gloamingforest.unstable_ice_core.swell"
       },
       "scripts": {
         "animate": ["base", "spikes", "swell", "snow_aura"],
         "pre_animation": [
-          "v.dying = q.property('twilightforest:dying');",
+          "v.dying = q.property('gloamingforest:dying');",
           "v.swell = 1 + math.sin(v.dying * 100 * 57.29578) * v.dying * 0.01;",
           "v.f4 = v.dying > 0 ? 1 : 0;",
           "v.swell_xz = (1 + v.f4 * 0.4) * v.swell;",
@@ -23,12 +23,12 @@
         ]
       },
       "animations": {
-        "base": "animation.twilightforest.unstable_ice_core.base",
-        "spikes": "animation.twilightforest.unstable_ice_core.spikes",
-        "swell": "animation.twilightforest.unstable_ice_core.swell",
-        "snow_aura": "controller.animation.twilightforest.unstable_ice_core.snow"
+        "base": "animation.gloamingforest.unstable_ice_core.base",
+        "spikes": "animation.gloamingforest.unstable_ice_core.spikes",
+        "swell": "animation.gloamingforest.unstable_ice_core.swell",
+        "snow_aura": "controller.animation.gloamingforest.unstable_ice_core.snow"
       },
-      "render_controllers": ["controller.render.twilightforest.unstable_ice_core"],
+      "render_controllers": ["controller.render.gloamingforest.unstable_ice_core"],
       "spawn_egg": {
         "base_color": "#9aacf5",
         "overlay_color": "#9b0fa5"

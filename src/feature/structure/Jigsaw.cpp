@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/util/StructureTemplateDefinition.java
-//   src/main/java/twilightforest/world/components/structures/util/StructureTemplateDefinitions.java
-//   src/main/java/twilightforest/world/components/structures/util/TemplatePoolInstance.java
-//   src/main/java/twilightforest/world/components/structures/TwilightJigsawPiece.java (defaultForTemplate)
-//   src/main/java/twilightforest/world/components/structures/type/CampStructure.java (jigsaw start)
-//   src/main/java/twilightforest/init/TFStructurePieceTypes.java (TFJigsawTemplate, TFUtilityPiece)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/util/StructureTemplateDefinition.java
+//   src/main/java/gloamingforest/world/components/structures/util/StructureTemplateDefinitions.java
+//   src/main/java/gloamingforest/world/components/structures/util/TemplatePoolInstance.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java (defaultForTemplate)
+//   src/main/java/gloamingforest/world/components/structures/type/CampStructure.java (jigsaw start)
+//   src/main/java/gloamingforest/init/TFStructurePieceTypes.java (TFJigsawTemplate, TFUtilityPiece)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Template pools from TF's twilight/template_definition data (a template lists the pools it
-// belongs to with a weight or a TemplatePoolInstance), and TF's jigsaw growth over them.
+// Template pools from upstream's gloaming/template_definition data (a template lists the pools it
+// belongs to with a weight or a TemplatePoolInstance), and upstream's jigsaw growth over them.
 #include <algorithm>
 #include <climits>
 #include <optional>
@@ -108,11 +108,11 @@ namespace bases::detail {
 
 namespace {
 
-/// A TwilightJigsawPiece built from a pool entry (TwilightJigsawPiece.defaultForTemplate).
+/// A GloamingJigsawPiece built from a pool entry (GloamingJigsawPiece.defaultForTemplate).
 class PoolJigsawPiece final : public JigsawPiece {
 public:
     PoolJigsawPiece(int depth, std::string const& templateId, JigsawPlaceContext const& context, Json const& instance, std::vector<std::string> chosen)
-    : JigsawPiece("twilightforest:TFJigsawTemplate", depth, templateId, context) {
+    : JigsawPiece("gloamingforest:TFJigsawTemplate", depth, templateId, context) {
         if (instance.is_object()) {
             terrainAdjustment = parseTerrainAdjustment(instance.value("terrain_adaptation", std::string("none")));
             if (instance.contains("processors")) {
@@ -239,13 +239,13 @@ bool projectsTerrain(JigsawPiece const& piece) {
 }
 
 void registerPieceTypes() {
-    registerPieceType("twilightforest:TFUtilityPiece", [](Json const& saved) -> std::unique_ptr<Piece> {
+    registerPieceType("gloamingforest:TFUtilityPiece", [](Json const& saved) -> std::unique_ptr<Piece> {
         auto p = std::make_unique<UtilityPiece>(0, BlockBox{});
         p->load(saved);
         return p;
     });
-    registerPieceType("twilightforest:TFJigsawTemplate", [](Json const& saved) -> std::unique_ptr<Piece> {
-        auto p = std::make_unique<JigsawPiece>("twilightforest:TFJigsawTemplate", 0, saved.value("Template", std::string{}), JigsawPlaceContext{});
+    registerPieceType("gloamingforest:TFJigsawTemplate", [](Json const& saved) -> std::unique_ptr<Piece> {
+        auto p = std::make_unique<JigsawPiece>("gloamingforest:TFJigsawTemplate", 0, saved.value("Template", std::string{}), JigsawPlaceContext{});
         p->load(saved);
         return p;
     });

@@ -1,12 +1,12 @@
 {
   "values": [
-    "twilightforest:twilight_oak_button",
-    "twilightforest:canopy_button",
-    "twilightforest:mangrove_button",
-    "twilightforest:dark_button",
-    "twilightforest:time_button",
-    "twilightforest:transformation_button",
-    "twilightforest:mining_button",
-    "twilightforest:sorting_button"
+    "gloamingforest:gloaming_oak_button",
+    "gloamingforest:canopy_button",
+    "gloamingforest:mangrove_button",
+    "gloamingforest:dark_button",
+    "gloamingforest:time_button",
+    "gloamingforest:transformation_button",
+    "gloamingforest:mining_button",
+    "gloamingforest:sorting_button"
   ]
 }

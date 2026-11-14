@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:no_template_smithing",
+  "addition": {
+    "item": "gloamingforest:emperors_cloth"
+  },
+  "additional_data": {
+    "gloamingforest:emperors_cloth": {}
+  },
+  "base": {
+    "tag": "gloamingforest:emperors_cloth_applicable"
+  }
+}

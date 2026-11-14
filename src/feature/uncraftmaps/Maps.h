@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/MagicMapItem.java
-//   src/main/java/twilightforest/item/MazeMapItem.java
-//   src/main/java/twilightforest/item/mapdata/TFMagicMapData.java
-//   src/main/java/twilightforest/item/mapdata/TFMazeMapData.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/MagicMapItem.java
+//   src/main/java/gloamingforest/item/MazeMapItem.java
+//   src/main/java/gloamingforest/item/mapdata/TFMagicMapData.java
+//   src/main/java/gloamingforest/item/mapdata/TFMazeMapData.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// TF's maps on Bedrock (U13). Bedrock draws maps only for its own map item, so a filled TF map is
+// upstream's maps on Bedrock (U13). Bedrock draws maps only for its own map item, so a filled upstream map is
 // a minecraft:filled_map whose map data is locked against Bedrock's terrain sampling and painted by
-// U13, marked as TF's in the stack's item data ("uncraftmaps.map": {"kind": "magic" | "maze" |
-// "ore"}) and named after TF's item (README deviation). Its pixels are written on the server, so
-// vanilla clients see them; TF's landmark icons are vanilla map decorations for vanilla clients
-// and, for companions, TF's icons over the map ("uncraftmaps.magic_map", F12's map decorations with
+// U13, marked as upstream's in the stack's item data ("uncraftmaps.map": {"kind": "magic" | "maze" |
+// "ore"}) and named after upstream's item (README deviation). Its pixels are written on the server, so
+// vanilla clients see them; upstream's landmark icons are vanilla map decorations for vanilla clients
+// and, for companions, upstream's icons over the map ("uncraftmaps.magic_map", F12's map decorations with
 // the conquered red X and the player icon on top).
 
 #include <cstdint>
@@ -34,7 +34,7 @@ namespace gf::feature::uncraftmaps {
 
 enum class MapKind { Magic, Maze, Ore };
 
-/// The TF map kind of a stack (nullopt: not a filled TF map).
+/// The upstream map kind of a stack (nullopt: not a filled upstream map).
 [[nodiscard]] std::optional<MapKind> mapKindOf(ItemStack const& stack);
 /// The map id (map_uuid) of a filled map stack (0: none).
 [[nodiscard]] std::int64_t mapIdOf(ItemStack const& stack);
@@ -53,13 +53,13 @@ enum class MapKind { Magic, Maze, Ore };
 /// One update of a held map as MapItem#inventoryTick does it while selected (selftests call it).
 void updateHeldMap(Player& player, ItemStack const& stack);
 
-/// A TF decoration of a magic map (TFMagicMapData#addTFDecoration).
+/// An upstream decoration of a magic map (TFMagicMapData#addTFDecoration).
 struct TfDecoration {
-    std::string  type; ///< "twilightforest:lich_tower"
+    std::string  type; ///< "gloamingforest:lich_tower"
     int          x = 0, z = 0, rotation = 0;
     bool         conquered = false;
 };
-/// The TF decorations of a magic map so far (selftests, the companion packet).
+/// The upstream decorations of a magic map so far (selftests, the companion packet).
 [[nodiscard]] std::vector<TfDecoration> decorationsOf(std::int64_t mapId);
 /// The yCenter of a maze / ore map (nullopt: not one).
 [[nodiscard]] std::optional<int> mazeYCenter(std::int64_t mapId);
@@ -69,7 +69,7 @@ struct TfDecoration {
 /// The pixel colour of a map (ARGB; 0 = transparent).
 [[nodiscard]] std::uint32_t mapPixel(MapItemSavedData const& data, int x, int z);
 
-/// The vanilla map decoration a TF decoration is shown as for vanilla clients (MapDecoration::Type).
+/// The vanilla map decoration an upstream decoration is shown as for vanilla clients (MapDecoration::Type).
 [[nodiscard]] int vanillaDecorationFor(std::string const& tfType);
 
 /// Java's MapItem#create + MapItemSavedData#addTargetDecoration ("+", red X) for map_locator: a

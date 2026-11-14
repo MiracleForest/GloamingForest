@@ -1,104 +1,104 @@
 {
-  "twilightforest:entity.twilightforest.maze_slime.death": {
+  "gloamingforest:entity.gloamingforest.maze_slime.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.death",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.death",
     "sounds": [
       {
         "event": "entity.slime.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.maze_slime.hurt": {
+  "gloamingforest:entity.gloamingforest.maze_slime.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.hurt",
     "sounds": [
       {
         "event": "entity.slime.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.maze_slime.squish": {
+  "gloamingforest:entity.gloamingforest.maze_slime.squish": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.squish",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.squish",
     "sounds": [
       {
         "event": "entity.slime.squish"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.maze_slime_small.death": {
+  "gloamingforest:entity.gloamingforest.maze_slime_small.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.death",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.death",
     "sounds": [
       {
         "event": "entity.slime.death_small"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.maze_slime_small.hurt": {
+  "gloamingforest:entity.gloamingforest.maze_slime_small.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.hurt",
     "sounds": [
       {
         "event": "entity.slime.hurt_small"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.maze_slime_small.squish": {
+  "gloamingforest:entity.gloamingforest.maze_slime_small.squish": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.maze_slime.squish",
+    "subtitle": "subtitles.gloamingforest.entity.maze_slime.squish",
     "sounds": [
       {
         "event": "entity.slime.squish_small"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minoshroom.ambient": {
+  "gloamingforest:entity.gloamingforest.minoshroom.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.ambient",
     "sounds": [
       {
         "event": "entity.cow.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minoshroom.attack": {
+  "gloamingforest:entity.gloamingforest.minoshroom.attack": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.attack",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.attack",
     "sounds": [
       {
         "event": "entity.iron_golem.attack"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minoshroom.death": {
+  "gloamingforest:entity.gloamingforest.minoshroom.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.death",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.death",
     "sounds": [
       {
         "event": "entity.cow.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minoshroom.hurt": {
+  "gloamingforest:entity.gloamingforest.minoshroom.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.hurt",
     "sounds": [
       {
         "event": "entity.cow.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minoshroom.slam": {
+  "gloamingforest:entity.gloamingforest.minoshroom.slam": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minoshroom.slam",
+    "subtitle": "subtitles.gloamingforest.entity.minoshroom.slam",
     "sounds": [
       {
         "event": "entity.lightning_bolt.impact"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minoshroom.step": {
+  "gloamingforest:entity.gloamingforest.minoshroom.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -107,43 +107,43 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minotaur.ambient": {
+  "gloamingforest:entity.gloamingforest.minotaur.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.ambient",
     "sounds": [
       {
         "event": "entity.cow.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minotaur.attack": {
+  "gloamingforest:entity.gloamingforest.minotaur.attack": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.attack",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.attack",
     "sounds": [
       {
         "event": "entity.iron_golem.attack"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minotaur.death": {
+  "gloamingforest:entity.gloamingforest.minotaur.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.death",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.death",
     "sounds": [
       {
         "event": "entity.cow.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minotaur.hurt": {
+  "gloamingforest:entity.gloamingforest.minotaur.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.minotaur.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.minotaur.hurt",
     "sounds": [
       {
         "event": "entity.cow.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.minotaur.step": {
+  "gloamingforest:entity.gloamingforest.minotaur.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [

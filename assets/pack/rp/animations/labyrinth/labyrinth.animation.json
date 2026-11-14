@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.minotaur.walk": {
+    "animation.gloamingforest.minotaur.walk": {
       "loop": true,
       "bones": {
         "head": {
@@ -21,7 +21,7 @@
         }
       }
     },
-    "animation.twilightforest.minoshroom.slam": {
+    "animation.gloamingforest.minoshroom.slam": {
       "loop": true,
       "bones": {
         "hat": {
@@ -76,7 +76,7 @@
         }
       }
     },
-    "animation.twilightforest.maze_slime.squish": {
+    "animation.gloamingforest.maze_slime.squish": {
       "loop": true,
       "bones": {
         "slime": {

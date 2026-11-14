@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:maze_stone/smelted_maze_stone_cracked"
+    },
+    "tags": ["furnace"],
+    "input": "gloamingforest:mazestone_brick",
+    "output": "gloamingforest:cracked_mazestone",
+    "unlock": [
+      {
+        "item": "gloamingforest:mazestone_brick"
+      }
+    ]
+  }
+}

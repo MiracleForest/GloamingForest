@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/canopy_wood"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", "##"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:canopy_log"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:canopy_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:canopy_wood",
+      "count": 3
+    }
+  }
+}

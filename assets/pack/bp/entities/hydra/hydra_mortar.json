@@ -2,7 +2,7 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:hydra_mortar",
+      "identifier": "gloamingforest:hydra_mortar",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
@@ -10,7 +10,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "hydra_mortar",
           "inanimate"
         ]

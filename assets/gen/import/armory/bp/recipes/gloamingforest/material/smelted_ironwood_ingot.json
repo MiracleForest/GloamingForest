@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:material/smelted_ironwood_ingot"
+    },
+    "tags": ["furnace"],
+    "input": "gloamingforest:raw_ironwood",
+    "output": "gloamingforest:ironwood_ingot",
+    "unlock": [
+      {
+        "item": "gloamingforest:raw_ironwood"
+      }
+    ]
+  }
+}

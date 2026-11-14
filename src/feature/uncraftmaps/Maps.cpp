@@ -1,27 +1,27 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/EmptyMagicMapItem.java
-//   src/main/java/twilightforest/item/EmptyMazeMapItem.java
-//   src/main/java/twilightforest/item/MagicMapItem.java
-//   src/main/java/twilightforest/item/MazeMapItem.java
-//   src/main/java/twilightforest/item/mapdata/TFMagicMapData.java
-//   src/main/java/twilightforest/item/mapdata/TFMazeMapData.java
-//   src/main/java/twilightforest/item/recipe/MagicMapCloningRecipe.java
-//   src/main/java/twilightforest/item/recipe/MazeMapCloningRecipe.java
-//   src/main/java/twilightforest/network/MagicMapPacket.java
-//   src/main/java/twilightforest/network/MazeMapPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/EmptyMagicMapItem.java
+//   src/main/java/gloamingforest/item/EmptyMazeMapItem.java
+//   src/main/java/gloamingforest/item/MagicMapItem.java
+//   src/main/java/gloamingforest/item/MazeMapItem.java
+//   src/main/java/gloamingforest/item/mapdata/TFMagicMapData.java
+//   src/main/java/gloamingforest/item/mapdata/TFMazeMapData.java
+//   src/main/java/gloamingforest/item/recipe/MagicMapCloningRecipe.java
+//   src/main/java/gloamingforest/item/recipe/MazeMapCloningRecipe.java
+//   src/main/java/gloamingforest/network/MagicMapPacket.java
+//   src/main/java/gloamingforest/network/MazeMapPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's magic, maze and ore maps (see Maps.h for how they live on Bedrock's map item).
+// upstream's magic, maze and ore maps (see Maps.h for how they live on Bedrock's map item).
 //
-// - The empty maps (twilightforest:magic_map, maze_map, ore_map) make a filled map on use.
-// - Every server tick each player's selected and off-hand TF maps update as MapItem#inventoryTick
+// - The empty maps (gloamingforest:magic_map, maze_map, ore_map) make a filled map on use.
+// - Every server tick each player's selected and off-hand upstream maps update as MapItem#inventoryTick
 //   does (update() while held): the magic map paints the biomes' magic_map_color around the holder
 //   and records the landmark icons it passes (with their conquered state), the maze / ore map paints
 //   one column stripe of blocks at its yCenter per tick (ores by ore_map_color with the ore map).
-// - Changed pixels reach the holder in the map's full data packet (at most every 5 ticks); the TF
+// - Changed pixels reach the holder in the map's full data packet (at most every 5 ticks); the upstream
 //   decorations reach companions over "uncraftmaps.magic_map" (MagicMapPacket's conquered list)
 //   and vanilla clients as vanilla map decorations (vanillaDecorationFor; an X over a conquered one).
 // - The map records (kind, yCenter, decorations) are kept in the world DB
@@ -209,7 +209,7 @@ bool sameId(MapItemTrackedActor::UniqueId const& a, MapItemTrackedActor::UniqueI
     return a.type == b.type && a.keyEntityId.get().rawID == b.keyEntityId.get().rawID && a.keyBlockPos.get() == b.keyBlockPos.get();
 }
 
-/// Adds (or updates) a vanilla decoration at world (x, z) and puts it at the map coordinates TF
+/// Adds (or updates) a vanilla decoration at world (x, z) and puts it at the map coordinates upstream
 /// computed (MapItemSavedData#addDecoration).
 void putVanillaDecoration(MapItemSavedData& data, MapDecoration::Type type, int worldX, int worldZ, int salt, cu::DecorationPos const& at) {
     auto id = decorationId(worldX, worldZ, salt);
@@ -244,7 +244,7 @@ std::uint64_t& serverTick() {
     return t;
 }
 
-/// MagicMapPacket for a companion: the TF decorations with their conquered state.
+/// MagicMapPacket for a companion: the upstream decorations with their conquered state.
 void sendDecorations(Player& player, std::int64_t id, MapRecord& r) {
     if (!net::isCompanion(player)) return;
     Json list = Json::array();
@@ -272,7 +272,7 @@ BiomeCache& biomeCache() {
 }
 
 std::pair<std::uint32_t, int> magicColour(std::string const& biome) {
-    if (auto c = dataMapColour("twilightforest:magic_map_color", biome)) return *c;
+    if (auto c = dataMapColour("gloamingforest:magic_map_color", biome)) return *c;
     return {kMagenta, 1};
 }
 
@@ -300,16 +300,16 @@ void updateMagic(Player& player, std::int64_t id, MapRecord& r, MapItemSavedData
         // make streams more visible
         auto const& over = cache.at(cu::magicSampleBlock(centerX, sx + 1), cu::magicSampleBlock(centerZ, sz));
         auto const& down = cache.at(cu::magicSampleBlock(centerX, sx), cu::magicSampleBlock(centerZ, sz + 1));
-        if (over == "twilightforest:stream") biome = over;
-        else if (down == "twilightforest:stream") biome = down;
+        if (over == "gloamingforest:stream") biome = over;
+        else if (down == "gloamingforest:stream") biome = down;
         auto [rgb, brightness] = magicColour(biome);
         if (setPixel(data, xPixel, zPixel, cu::shade(rgb, brightness))) changed = true;
-        // look for TF features
+        // look for upstream features
         int worldX = cu::magicPixelBlock(centerX, xPixel);
         int worldZ = cu::magicPixelBlock(centerZ, zPixel);
         if (!cl::blockIsInCenter(worldX, worldZ)) return;
         auto key = cl::pickForChunk(worldgen::seed(), worldX >> 4, worldZ >> 4, [](int x, int z) { return worldgen::biomeAt(BlockPos{x, 0, z}); });
-        if (!tags::has(tags::Registry::Structure, "twilightforest:landmark", key)) return;
+        if (!tags::has(tags::Registry::Structure, "gloamingforest:landmark", key)) return;
         auto const* desc = gf::landmark::descriptor(key);
         if (!desc || desc->icon.empty()) return;
         auto at = cu::decorationPos(worldX, worldZ, centerX, centerZ, data.mScale, 180.0);
@@ -353,7 +353,7 @@ void updateMaze(Player& player, MapRecord& r, MapItemSavedData& data) {
     int   viewerX  = cu::viewerPixel(pos.x, centerX, bpp);
     int   viewerZ  = cu::viewerPixel(pos.z, centerZ, bpp);
     bool  ceiling  = static_cast<int>(player.getDimensionId()) == 1;
-    int   radius   = ceiling ? 8 : 16; // TF: smaller on the maze map
+    int   radius   = ceiling ? 8 : 16; // upstream: smaller on the maze map
     auto  uid      = player.getOrCreateUniqueID().rawID;
     int   step     = ++r.steps[uid];
     bool  ore      = r.kind == MapKind::Ore;
@@ -390,7 +390,7 @@ void updateMaze(Player& player, MapRecord& r, MapItemSavedData& data) {
                 if (ore) {
                     // recolour ores (weight 1000: wins over the block)
                     auto stateId = game::blockId(*state);
-                    if (auto c = dataMapColour("twilightforest:ore_map_color", stateId)) colour = c->first;
+                    if (auto c = dataMapColour("gloamingforest:ore_map_color", stateId)) colour = c->first;
                     else if (stateId != "minecraft:air" && tags::has(tags::Registry::Block, "c:ores", stateId)) colour = kPink;
                 }
             }
@@ -444,7 +444,7 @@ ItemStack stackFor(Player& player, MapItemSavedData& data, MapKind kind) {
     if (!stack) return {};
     items::setData(*stack, kMapData, {{"kind", kindName(kind)}});
     writeMapTags(*stack, data);
-    char const* key      = kind == MapKind::Magic ? "item.twilightforest.filled_magic_map" : kind == MapKind::Maze ? "item.twilightforest.filled_maze_map" : "item.twilightforest.filled_ore_map";
+    char const* key      = kind == MapKind::Magic ? "item.gloamingforest.filled_magic_map" : kind == MapKind::Maze ? "item.gloamingforest.filled_maze_map" : "item.gloamingforest.filled_ore_map";
     char const* fallback = kind == MapKind::Magic ? "Magic Map" : kind == MapKind::Maze ? "Maze Map" : "Maze/Ore Map";
     stack->setCustomName(Bedrock::Safety::RedactableString("§r" + trFor(player, key, fallback)));
     return *stack;
@@ -469,7 +469,7 @@ gf::item::Result useEmpty(Player& player, ItemStack& held, std::string const& it
     return gf::item::Result::Success;
 }
 
-/// The cloning recipes: one filled TF map of `kind` plus n empty ones -> n + 1 copies.
+/// The cloning recipes: one filled upstream map of `kind` plus n empty ones -> n + 1 copies.
 bool cloneMatch(recipes::CraftingGrid const& grid, MapKind kind, std::string const& emptyId, ItemStack* out) {
     ItemStack const* filled = nullptr;
     int              empties = 0;
@@ -553,10 +553,10 @@ std::pair<int, int> mazeCenterFor(int dim, int x, int z) {
     auto center = cu::mazeMapCenter(x, z, 0);
     // TFMazeMapData#calculateMapCenter: inside a labyrinth chunk the map snaps to its centre
     // (LegacyLandmarkPlacements#pickLandmarkForChunk of the level the map is made in)
-    auto tf = gf::world::twilight();
+    auto tf = gf::world::gloaming();
     if (tf && dim == static_cast<int>(*tf)) {
         auto key = cl::pickForChunk(worldgen::seed(), x >> 4, z >> 4, [](int bx, int bz) { return worldgen::biomeAt(BlockPos{bx, 0, bz}); });
-        if (key == "twilightforest:labyrinth") {
+        if (key == "gloamingforest:labyrinth") {
             auto c = cl::nearestCenter(x >> 4, z >> 4);
             center = {c.x, c.z};
         }
@@ -568,7 +568,7 @@ ItemStack cloneResult(std::vector<ItemStack const*> const& grid, MapKind kind) {
     recipes::CraftingGrid g;
     g.slots = grid;
     ItemStack out;
-    if (!cloneMatch(g, kind, kind == MapKind::Magic ? "twilightforest:magic_map" : "twilightforest:maze_map", &out)) return {};
+    if (!cloneMatch(g, kind, kind == MapKind::Magic ? "gloamingforest:magic_map" : "gloamingforest:maze_map", &out)) return {};
     return out;
 }
 
@@ -615,14 +615,14 @@ void updateHeldMap(Player& player, ItemStack const& stack) {
 int vanillaDecorationFor(std::string const& tfType) {
     using T = MapDecoration::Type;
     static std::unordered_map<std::string, T> const types{
-        {"twilightforest:hedge_maze", T::TriangleGreen},          {"twilightforest:small_hollow_hill", T::BuriedMineshaft},
-        {"twilightforest:medium_hollow_hill", T::BuriedMineshaft}, {"twilightforest:large_hollow_hill", T::BuriedMineshaft},
-        {"twilightforest:quest_grove", T::MarkerTeal},            {"twilightforest:naga_courtyard", T::JungleTemple},
-        {"twilightforest:lich_tower", T::Monument},               {"twilightforest:labyrinth", T::TrialChambers},
-        {"twilightforest:hydra_lair", T::MarkerRed},              {"twilightforest:knight_stronghold", T::BuriedAncientCity},
-        {"twilightforest:dark_tower", T::Mansion},                {"twilightforest:yeti_lair", T::VillageSnowy},
-        {"twilightforest:aurora_palace", T::MarkerBlue},          {"twilightforest:troll_caves", T::MarkerOrange},
-        {"twilightforest:final_castle", T::MarkerYellow},
+        {"gloamingforest:hedge_maze", T::TriangleGreen},          {"gloamingforest:small_hollow_hill", T::BuriedMineshaft},
+        {"gloamingforest:medium_hollow_hill", T::BuriedMineshaft}, {"gloamingforest:large_hollow_hill", T::BuriedMineshaft},
+        {"gloamingforest:quest_grove", T::MarkerTeal},            {"gloamingforest:naga_courtyard", T::JungleTemple},
+        {"gloamingforest:lich_tower", T::Monument},               {"gloamingforest:labyrinth", T::TrialChambers},
+        {"gloamingforest:hydra_lair", T::MarkerRed},              {"gloamingforest:knight_stronghold", T::BuriedAncientCity},
+        {"gloamingforest:dark_tower", T::Mansion},                {"gloamingforest:yeti_lair", T::VillageSnowy},
+        {"gloamingforest:aurora_palace", T::MarkerBlue},          {"gloamingforest:troll_caves", T::MarkerOrange},
+        {"gloamingforest:final_castle", T::MarkerYellow},
     };
     auto it = types.find(tfType);
     return static_cast<int>(it == types.end() ? T::TriangleRed : it->second);
@@ -703,17 +703,17 @@ private:
             biomeCache().cells.clear();
         });
         // EmptyMagicMapItem#use
-        gf::item::registerItem("twilightforest:magic_map", {.use = [](Player& player, ItemStack& held) {
-                                   if (!gf::world::isTwilight(player.getDimension())) {
+        gf::item::registerItem("gloamingforest:magic_map", {.use = [](Player& player, ItemStack& held) {
+                                   if (!gf::world::isGloaming(player.getDimension())) {
                                        log().info("uncraftmaps: the magic map of {} faltered in dimension {}", player.getRealName(), static_cast<int>(player.getDimensionId()));
-                                       actionBar(player, trFor(player, "misc.twilightforest.magic_map_fail", "The Magic faltered. Perhaps it doesn't work here?"));
+                                       actionBar(player, trFor(player, "misc.gloamingforest.magic_map_fail", "The Magic faltered. Perhaps it doesn't work here?"));
                                        return gf::item::Result::Fail;
                                    }
-                                   return useEmpty(player, held, "twilightforest:magic_map", setupMagicMap(player));
+                                   return useEmpty(player, held, "gloamingforest:magic_map", setupMagicMap(player));
                                }});
         // EmptyMazeMapItem#use
         for (bool ore : {false, true}) {
-            std::string id = ore ? "twilightforest:ore_map" : "twilightforest:maze_map";
+            std::string id = ore ? "gloamingforest:ore_map" : "gloamingforest:maze_map";
             gf::item::registerItem(id, {.use = [id, ore](Player& player, ItemStack& held) { return useEmpty(player, held, id, setupMazeMap(player, ore)); }});
         }
         // MagicMapCloningRecipe / MazeMapCloningRecipe (BP layouts _2.._9 in assets/pack/bp/recipes/uncraftmaps)
@@ -722,8 +722,8 @@ private:
             MapKind     kind;
             char const* empty;
         };
-        for (auto const& c : {Cloning{"twilightforest:magic_map_cloning_recipe", MapKind::Magic, "twilightforest:magic_map"},
-                              Cloning{"twilightforest:maze_map_cloning_recipe", MapKind::Maze, "twilightforest:maze_map"}}) {
+        for (auto const& c : {Cloning{"gloamingforest:magic_map_cloning_recipe", MapKind::Magic, "gloamingforest:magic_map"},
+                              Cloning{"gloamingforest:maze_map_cloning_recipe", MapKind::Maze, "gloamingforest:maze_map"}}) {
             auto kind  = c.kind;
             auto empty = std::string(c.empty);
             recipes::registerSpecialCrafting(

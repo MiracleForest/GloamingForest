@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U25 (stronghold): the Knight Phantoms and their thrown weapons (Phantom.cpp). Unit-internal: the

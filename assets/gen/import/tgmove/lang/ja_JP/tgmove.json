@@ -1,4 +1,4 @@
 {
-  "config.twilightforest.manual_travellers_wings_gradual_glide": "低速滑空の手動操作",
-  "config.twilightforest.manual_travellers_wings_gradual_glide.tooltip": "このオプションがオフの場合、低速落下がデフォルトになり、スニークキーを押している間は通常速度で落下します。このオプションがオンの場合、通常落下がデフォルトになり、スニークキーを押している間は低速で落下します。"
+  "config.gloamingforest.manual_travellers_wings_gradual_glide": "低速滑空の手動操作",
+  "config.gloamingforest.manual_travellers_wings_gradual_glide.tooltip": "このオプションがオフの場合、低速落下がデフォルトになり、スニークキーを押している間は通常速度で落下します。このオプションがオンの場合、通常落下がデフォルトになり、スニークキーを押している間は低速で落下します。"
 }

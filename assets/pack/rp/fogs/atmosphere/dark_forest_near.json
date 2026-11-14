@@ -2,7 +2,7 @@
   "format_version": "1.16.100",
   "minecraft:fog_settings": {
     "description": {
-      "identifier": "twilightforest:dark_forest_near"
+      "identifier": "gloamingforest:dark_forest_near"
     },
     "distance": {
       "air": {

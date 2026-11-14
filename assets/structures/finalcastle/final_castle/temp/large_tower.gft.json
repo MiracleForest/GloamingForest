@@ -1,18 +1,18 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:final_castle/temp/large_tower",
+  "id": "gloamingforest:final_castle/temp/large_tower",
   "size": [13, 61, 13],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:quartz_stairs","Properties":{"facing":"south","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:castle_brick"},
+    {"Name":"gloamingforest:castle_brick"},
     {"Name":"minecraft:quartz_stairs","Properties":{"facing":"east","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:quartz_stairs","Properties":{"facing":"north","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:quartz_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
-    {"Name":"twilightforest:thick_castle_brick"},
-    {"Name":"twilightforest:bold_castle_brick_pillar","Properties":{"axis":"y"}},
+    {"Name":"gloamingforest:thick_castle_brick"},
+    {"Name":"gloamingforest:bold_castle_brick_pillar","Properties":{"axis":"y"}},
     {"Name":"minecraft:chiseled_quartz_block"},
     {"Name":"minecraft:oak_sign","Properties":{"rotation":"0","waterlogged":"false"}}
   ],

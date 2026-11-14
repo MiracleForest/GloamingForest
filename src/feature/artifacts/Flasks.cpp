@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/BrittleFlaskItem.java
-//   src/main/java/twilightforest/item/GreaterFlaskItem.java
-//   src/main/java/twilightforest/components/item/PotionFlaskComponent.java
-//   src/main/java/twilightforest/components/entity/PotionFlaskTrackingAttachment.java
-//   src/main/java/twilightforest/client/renderer/tooltip/PotionFlaskTooltipComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/BrittleFlaskItem.java
+//   src/main/java/gloamingforest/item/GreaterFlaskItem.java
+//   src/main/java/gloamingforest/components/item/PotionFlaskComponent.java
+//   src/main/java/gloamingforest/components/entity/PotionFlaskTrackingAttachment.java
+//   src/main/java/gloamingforest/client/renderer/tooltip/PotionFlaskTooltipComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The brittle and greater potion flasks: up to 3 doses of one potion (item data "flask_contents",
-// TF's component), drunk over 32 ticks (BP use_modifiers, DRINK). Filling: Java right-clicks a
+// upstream's component), drunk over 32 ticks (BP use_modifiers, DRINK). Filling: Java right-clicks a
 // potion onto the flask in an inventory; Bedrock has no such click, so a flask is filled by using
 // it (or the potion) while the potion (or the flask) is in the other hand (docs/units/artifacts.md).
-// A strong harming dose deals 6 << amplifier twilightforest:failed_challenge damage; each drink
-// fires twilightforest:drink_from_flask (doses in a row of the same potion and the seconds since
+// A strong harming dose deals 6 << amplifier gloamingforest:failed_challenge damage; each drink
+// fires gloamingforest:drink_from_flask (doses in a row of the same potion and the seconds since
 // the first) and a brittle flask cracks, then breaks at its third dose. The dose bar is the
 // potion's colour; filled flasks carry a stack nonce so they never stack (Java: stack size 1).
 #include <cmath>
@@ -87,9 +87,9 @@ std::string potionName(int aux, Player const* viewer) {
 void flaskTooltip(ItemStack const& stack, std::vector<std::string>& lines, Player const* viewer) {
     auto f = flaskOf(stack);
     if (f.empty()) {
-        lines.push_back("§7" + (viewer ? trFor(*viewer, "item.twilightforest.flask.empty_description", "Can hold multiple potion doses")
-                                       : tr("item.twilightforest.flask.empty_description", "Can hold multiple potion doses")));
-        lines.push_back("§f" + (viewer ? trFor(*viewer, "item.twilightforest.flask.empty", "Empty") : tr("item.twilightforest.flask.empty", "Empty")));
+        lines.push_back("§7" + (viewer ? trFor(*viewer, "item.gloamingforest.flask.empty_description", "Can hold multiple potion doses")
+                                       : tr("item.gloamingforest.flask.empty_description", "Can hold multiple potion doses")));
+        lines.push_back("§f" + (viewer ? trFor(*viewer, "item.gloamingforest.flask.empty", "Empty") : tr("item.gloamingforest.flask.empty", "Empty")));
         return;
     }
     lines.push_back("§7" + potionName(f.potion, viewer));
@@ -145,7 +145,7 @@ bool fillFlask(Player& player, ItemStack& flask, ItemStack& potion, bool flaskIn
     setFlask(*one, f.addDose(aux));
     if (one == &spare) giveOrDrop(player, spare);
     auto& r = levelRandom();
-    playSound(player, "item.twilightforest.flask.fill", static_cast<float>(f.doses + 1) * 0.25F, r.nextFloat() * 0.1F + 0.9F);
+    playSound(player, "item.gloamingforest.flask.fill", static_cast<float>(f.doses + 1) * 0.25F, r.nextFloat() * 0.1F + 0.9F);
     log().info("artifacts: {} filled a flask ({} dose(s) of potion {})", player.getRealName(), f.doses + 1, aux);
     return true;
 }
@@ -171,7 +171,7 @@ void drinkFlask(Player& player, ItemStack& stack) {
         for (auto const& e : potion->effects) {
             // an amplified Instant Damage (Instant Health for the undead) is the failed challenge
             if (e.id == "instant_damage" && e.amp > 0) {
-                gf::combat::hurt(player, static_cast<float>(6 << e.amp), "twilightforest:failed_challenge");
+                gf::combat::hurt(player, static_cast<float>(6 << e.amp), "gloamingforest:failed_challenge");
             } else if (e.instant) {
                 gf::effects::apply(player, "minecraft:" + e.id, 1, e.amp);
             } else if (auto const* me = MobEffect::getByName(e.id)) {
@@ -184,7 +184,7 @@ void drinkFlask(Player& player, ItemStack& stack) {
             auto& t        = flaskTracking(player);
             auto [n, secs] = t.track(potion->javaId, gameTime());
             saveTracking(player, t);
-            if (player.isAlive()) gf::progression::trigger(player, "twilightforest:drink_from_flask", Json{{"doses", n}, {"seconds", secs}, {"potion", potion->javaId}});
+            if (player.isAlive()) gf::progression::trigger(player, "gloamingforest:drink_from_flask", Json{{"doses", n}, {"seconds", secs}, {"potion", potion->javaId}});
         }
     }
     if (creative(player)) return;
@@ -195,9 +195,9 @@ void drinkFlask(Player& player, ItemStack& stack) {
     if (next.breakable) {
         if (next.breakage >= ca::kFlaskDoses) {
             gone = true;
-            playSound(player, "item.twilightforest.flask.break", 1.5F, 0.7F);
+            playSound(player, "item.gloamingforest.flask.break", 1.5F, 0.7F);
         } else {
-            playSound(player, "item.twilightforest.flask.crack", 1.5F, 2.0F);
+            playSound(player, "item.gloamingforest.flask.crack", 1.5F, 2.0F);
         }
     }
     if (gone) {
@@ -260,7 +260,7 @@ void registerFlasks() {
         }, ia::priority::High);
     }
     // EntityEvents#resetFlaskLogic, handed over by U14 (docs/units/progression.md, "Flask doses")
-    gf::progression::onTrigger("twilightforest:flask_doses_reset", [](Player& player, Json const&) {
+    gf::progression::onTrigger("gloamingforest:flask_doses_reset", [](Player& player, Json const&) {
         auto& t = flaskTracking(player);
         t.reset();
         saveTracking(player, t);

@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mangrove_root",
+      "identifier": "gloamingforest:mangrove_root",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {

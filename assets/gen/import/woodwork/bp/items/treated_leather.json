@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:treated_leather",
+      "identifier": "gloamingforest:treated_leather",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:treated_leather.name"
+        "value": "item.gloamingforest:treated_leather.name"
       }
     }
   }

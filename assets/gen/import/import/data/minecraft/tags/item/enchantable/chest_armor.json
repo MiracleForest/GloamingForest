@@ -1,12 +1,12 @@
 {
   "values": [
-    "twilightforest:naga_chestplate",
-    "twilightforest:ironwood_chestplate",
-    "twilightforest:steeleaf_chestplate",
-    "twilightforest:knightmetal_chestplate",
-    "twilightforest:phantom_chestplate",
-    "twilightforest:fiery_chestplate",
-    "twilightforest:arctic_chestplate",
-    "twilightforest:yeti_chestplate"
+    "gloamingforest:naga_chestplate",
+    "gloamingforest:ironwood_chestplate",
+    "gloamingforest:steeleaf_chestplate",
+    "gloamingforest:knightmetal_chestplate",
+    "gloamingforest:phantom_chestplate",
+    "gloamingforest:fiery_chestplate",
+    "gloamingforest:arctic_chestplate",
+    "gloamingforest:yeti_chestplate"
   ]
 }

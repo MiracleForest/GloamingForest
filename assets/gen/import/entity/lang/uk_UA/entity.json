@@ -1,11 +1,11 @@
 {
-  "config.twilightforest.boss_drop_chests": "Скрині здобичі босів",
-  "config.twilightforest.boss_drop_chests.tooltip": "Якщо «УВІМК.», боси Сутінкового Лісу кладуть здобич у скриню, де вони спочатку з’явилися, замість того, щоби скидати здобич безпосередньо.\nЗауважте, що це не впливає на фантомів лицаря, оскільки вони дії діють інакше.",
-  "config.twilightforest.multiplayer_fight_adjuster": "Налагоджувач бою гри в мережі",
-  "config.twilightforest.multiplayer_fight_adjuster.more_health": "Більше здоров'я",
-  "config.twilightforest.multiplayer_fight_adjuster.more_loot": "Більше здобичі",
-  "config.twilightforest.multiplayer_fight_adjuster.more_loot_and_health": "Більше здобичі та здоров'я",
-  "config.twilightforest.multiplayer_fight_adjuster.none": "Нічого",
-  "config.twilightforest.multiplayer_fight_adjuster.tooltip": "Керує тим, як боси повинні пристосуватися до боїв у грі в мережі. Тут можна вказати 4 можливі значення:\nНІЧОГО: нічого не робить, коли в битві з босом бере участь кілька людей. Боси будуть діяти так само, як і в грі наодинці або в боях наодинці.\nБІЛЬШЕ ЗДОБИЧІ: додає додаткові випадіння до таблиці здобичі боса залежно від кількости гравців, які брали участь у бою. Вони повністю контролюються через таблицю здобичі сутності за допомогою функції здобичі «twilightforest:multiplayer_multiplier». Зауважте, що ця функція виконуватиме дії лише з сутностями, включеними до теґу «twilightforest:multiplayer_inclusive_entities».\nБІЛЬШЕ ЗДОРОВ'Я: збільшує здоров’я кожного боса на 20 сердець для кожного гравця поблизу, коли починається бій.\nБІЛЬШЕ ЗДОБИЧІ ТА ЗДОРОВ'Я: виконує обидві вищезазначені функції для кожного боса.",
-  "subtitles.twilightforest.block.boss_chest.appear": "З'являється скриня боса"
+  "config.gloamingforest.boss_drop_chests": "Скрині здобичі босів",
+  "config.gloamingforest.boss_drop_chests.tooltip": "Якщо «УВІМК.», боси Сутінкового Лісу кладуть здобич у скриню, де вони спочатку з’явилися, замість того, щоби скидати здобич безпосередньо.\nЗауважте, що це не впливає на фантомів лицаря, оскільки вони дії діють інакше.",
+  "config.gloamingforest.multiplayer_fight_adjuster": "Налагоджувач бою гри в мережі",
+  "config.gloamingforest.multiplayer_fight_adjuster.more_health": "Більше здоров'я",
+  "config.gloamingforest.multiplayer_fight_adjuster.more_loot": "Більше здобичі",
+  "config.gloamingforest.multiplayer_fight_adjuster.more_loot_and_health": "Більше здобичі та здоров'я",
+  "config.gloamingforest.multiplayer_fight_adjuster.none": "Нічого",
+  "config.gloamingforest.multiplayer_fight_adjuster.tooltip": "Керує тим, як боси повинні пристосуватися до боїв у грі в мережі. Тут можна вказати 4 можливі значення:\nНІЧОГО: нічого не робить, коли в битві з босом бере участь кілька людей. Боси будуть діяти так само, як і в грі наодинці або в боях наодинці.\nБІЛЬШЕ ЗДОБИЧІ: додає додаткові випадіння до таблиці здобичі боса залежно від кількости гравців, які брали участь у бою. Вони повністю контролюються через таблицю здобичі сутності за допомогою функції здобичі «gloamingforest:multiplayer_multiplier». Зауважте, що ця функція виконуватиме дії лише з сутностями, включеними до теґу «gloamingforest:multiplayer_inclusive_entities».\nБІЛЬШЕ ЗДОРОВ'Я: збільшує здоров’я кожного боса на 20 сердець для кожного гравця поблизу, коли починається бій.\nБІЛЬШЕ ЗДОБИЧІ ТА ЗДОРОВ'Я: виконує обидві вищезазначені функції для кожного боса.",
+  "subtitles.gloamingforest.block.boss_chest.appear": "З'являється скриня боса"
 }

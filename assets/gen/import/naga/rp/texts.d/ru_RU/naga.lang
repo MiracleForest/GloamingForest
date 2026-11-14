@@ -1,7 +1,7 @@
-entity.twilightforest.naga=Нага
-entity.twilightforest:naga.name=Нага
-item.spawn_egg.entity.twilightforest:naga.name=Яйцо призыва наги
-item.twilightforest.naga_spawn_egg=Яйцо призыва наги
-subtitles.twilightforest.entity.naga.hiss=Нага шипит
-subtitles.twilightforest.entity.naga.hurt=Нага ранена
-subtitles.twilightforest.entity.naga.rattle=Нага гремит
+entity.gloamingforest.naga=Нага
+entity.gloamingforest:naga.name=Нага
+item.gloamingforest.naga_spawn_egg=Яйцо призыва наги
+item.spawn_egg.entity.gloamingforest:naga.name=Яйцо призыва наги
+subtitles.gloamingforest.entity.naga.hiss=Нага шипит
+subtitles.gloamingforest.entity.naga.hurt=Нага ранена
+subtitles.gloamingforest.entity.naga.rattle=Нага гремит

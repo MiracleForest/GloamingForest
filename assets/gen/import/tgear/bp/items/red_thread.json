@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:red_thread",
+      "identifier": "gloamingforest:red_thread",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:red_thread.name"
+        "value": "tile.gloamingforest:red_thread.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:red_thread",
+        "block": "gloamingforest:red_thread",
         "replace_block_item": true
       }
     }

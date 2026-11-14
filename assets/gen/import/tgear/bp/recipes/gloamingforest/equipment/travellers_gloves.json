@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/travellers_gloves"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["s s", "l l"],
+    "key": {
+      "l": {
+        "item": "gloamingforest:tanned_leather"
+      },
+      "s": {
+        "item": "minecraft:string"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:tanned_leather"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:travellers_gloves"
+    }
+  }
+}

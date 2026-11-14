@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/BrazierBlock.java
-//   src/main/java/twilightforest/block/entity/BrazierBlockEntity.java
-//   src/main/java/twilightforest/enums/BrazierLight.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/BrazierBlock.java
+//   src/main/java/gloamingforest/block/entity/BrazierBlockEntity.java
+//   src/main/java/gloamingforest/enums/BrazierLight.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -12,7 +12,7 @@
 // partner or, for the lower half, a non-sturdy floor destroys the half, with drops: Java's
 // updateOrDestroy); a creative break of the upper half removes the lower one without drops
 // (playerWillDestroy). Flint and steel / a fire charge on the upper half cycles `light` off -> dim
-// -> half -> bright -> full (TF cycles only the upper half's state: the lower half's
+// -> half -> bright -> full (upstream cycles only the upper half's state: the lower half's
 // `getBlockState(below).cycle(LIGHT)` result is discarded); a water bucket on a lit brazier puts it
 // out. The light level is the upper half's `light` (BP). BrazierBlockEntity#tick only counts the
 // client's smoke rate: the smoke above the fire is client-side.
@@ -63,8 +63,8 @@ void onPlaced(ia::PlaceContext const& c) {
         if (!c.player.isCreative() && c.itemBefore) giveOrDrop(c.player, game::items::withCount(*c.itemBefore, 1));
         return;
     }
-    auto const* lower = game::blockWithStates(kBrazier, Json{{"twilightforest:half", "lower"}, {"twilightforest:light", "off"}});
-    auto const* upper = game::blockWithStates(kBrazier, Json{{"twilightforest:half", "upper"}, {"twilightforest:light", "off"}});
+    auto const* lower = game::blockWithStates(kBrazier, Json{{"gloamingforest:half", "lower"}, {"gloamingforest:light", "off"}});
+    auto const* upper = game::blockWithStates(kBrazier, Json{{"gloamingforest:half", "upper"}, {"gloamingforest:light", "off"}});
     if (!lower || !upper) return;
     game::setBlock(*region, pos, *lower);
     game::setBlock(*region, up, *upper); // setPlacedBy

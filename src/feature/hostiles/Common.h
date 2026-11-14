@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/HostileWolf.java (isValidLightLevel)
-//   src/main/java/twilightforest/entity/monster/SkeletonDruid.java (isValidLightLevel)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/HostileWolf.java (isValidLightLevel)
+//   src/main/java/gloamingforest/entity/monster/SkeletonDruid.java (isValidLightLevel)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // U17 (hostiles): the helpers the forest and hollow-hill hostiles share (ids, light, difficulty,
 // equipment, the BP component groups the native goals switch, vanilla goals translated for the
-// mobs whose TF goal stacks are native). Not a contract: only src/feature/hostiles uses it.
+// mobs whose upstream goal stacks are native). Not a contract: only src/feature/hostiles uses it.
 
 #include <cstdint>
 #include <functional>
@@ -38,21 +38,21 @@ using Json = nlohmann::json;
 namespace ge = gf::entity;
 
 namespace id {
-inline constexpr char HostileWolf[]  = "twilightforest:hostile_wolf";
-inline constexpr char MistWolf[]     = "twilightforest:mist_wolf";
-inline constexpr char WinterWolf[]   = "twilightforest:winter_wolf";
-inline constexpr char KingSpider[]   = "twilightforest:king_spider";
-inline constexpr char HedgeSpider[]  = "twilightforest:hedge_spider";
-inline constexpr char SwarmSpider[]  = "twilightforest:swarm_spider";
-inline constexpr char Druid[]        = "twilightforest:skeleton_druid";
-inline constexpr char NatureBolt[]   = "twilightforest:nature_bolt";
-inline constexpr char Redcap[]       = "twilightforest:redcap";
-inline constexpr char RedcapSapper[] = "twilightforest:redcap_sapper";
-inline constexpr char Wraith[]       = "twilightforest:wraith";
-inline constexpr char FireBeetle[]   = "twilightforest:fire_beetle";
-inline constexpr char SlimeBeetle[]  = "twilightforest:slime_beetle";
-inline constexpr char SlimeBlob[]    = "twilightforest:slime_blob";
-inline constexpr char PinchBeetle[]  = "twilightforest:pinch_beetle";
+inline constexpr char HostileWolf[]  = "gloamingforest:hostile_wolf";
+inline constexpr char MistWolf[]     = "gloamingforest:mist_wolf";
+inline constexpr char WinterWolf[]   = "gloamingforest:winter_wolf";
+inline constexpr char KingSpider[]   = "gloamingforest:king_spider";
+inline constexpr char HedgeSpider[]  = "gloamingforest:hedge_spider";
+inline constexpr char SwarmSpider[]  = "gloamingforest:swarm_spider";
+inline constexpr char Druid[]        = "gloamingforest:skeleton_druid";
+inline constexpr char NatureBolt[]   = "gloamingforest:nature_bolt";
+inline constexpr char Redcap[]       = "gloamingforest:redcap";
+inline constexpr char RedcapSapper[] = "gloamingforest:redcap_sapper";
+inline constexpr char Wraith[]       = "gloamingforest:wraith";
+inline constexpr char FireBeetle[]   = "gloamingforest:fire_beetle";
+inline constexpr char SlimeBeetle[]  = "gloamingforest:slime_beetle";
+inline constexpr char SlimeBlob[]    = "gloamingforest:slime_blob";
+inline constexpr char PinchBeetle[]  = "gloamingforest:pinch_beetle";
 } // namespace id
 
 // ---- actors ------------------------------------------------------------------------------------------
@@ -99,14 +99,14 @@ void onForget(std::function<void(std::int64_t uid)> fn);
 bool despawnInPeaceful(Actor& actor);
 /// LevelReader#getMaxLocalRawBrightness: max(sky light - sky darken, block light).
 [[nodiscard]] int maxLocalRawBrightness(BlockSource& region, BlockPos const& pos);
-/// DimensionType#brightness of the Twilight Forest (ambient light 0.01) for a light level.
+/// DimensionType#brightness of the Gloaming Forest (ambient light 0.01) for a light level.
 [[nodiscard]] float brightnessOf(int light);
 /// Entity#getLightLevelDependentMagicValue (the brightness at the actor's eyes' block).
 [[nodiscard]] float lightMagicValue(Actor& actor);
 /// DifficultyInstance#getSpecialMultiplier (no inhabited time on Bedrock).
 [[nodiscard]] float specialMultiplier();
 /// The chunk's landmark (LegacyLandmarkPlacements#pickLandmarkForChunk) is the hedge maze (only in
-/// the Twilight Forest).
+/// the Gloaming Forest).
 [[nodiscard]] bool hedgeMazeChunk(BlockSource& region, BlockPos const& pos);
 /// Monster#isDarkEnoughToSpawn.
 [[nodiscard]] bool darkEnough(BlockSource& region, BlockPos const& pos, gf::core::jrand::RandomSource& random);
@@ -118,7 +118,7 @@ bool despawnInPeaceful(Actor& actor);
 enum Effect : unsigned { Speed = 1, Strength = 5, Regeneration = 10, Invisibility = 14, Blindness = 15, Poison = 19 };
 /// LivingEntity#addEffect (`ticks` < 0: infinite).
 void addEffect(Actor& actor, unsigned effect, int ticks, int amplifier = 0);
-/// Entity#playSound at the actor (TF's sound events and Java vanilla events, through gf::fx).
+/// Entity#playSound at the actor (upstream's sound events and Java vanilla events, through gf::fx).
 void playSound(Actor& actor, std::string const& event, float volume, float pitch);
 /// LivingEntity#getVoicePitch with `base` ((r1 - r2) x 0.2 + base).
 [[nodiscard]] float voicePitch(Actor& actor, float base = 1.0f);

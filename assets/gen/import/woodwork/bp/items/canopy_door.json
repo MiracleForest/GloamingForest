@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:canopy_door",
+      "identifier": "gloamingforest:canopy_door",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:canopy_door.name"
+        "value": "tile.gloamingforest:canopy_door.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:canopy_door",
+        "block": "gloamingforest:canopy_door",
         "replace_block_item": true
       },
       "minecraft:fuel": {

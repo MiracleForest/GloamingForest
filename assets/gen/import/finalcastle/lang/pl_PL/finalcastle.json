@@ -1,9 +1,9 @@
 {
-  "block.twilightforest.blue_force_field": "Niebieskie Pole Siłowe",
-  "block.twilightforest.brown_thorns": "Ciernie",
-  "block.twilightforest.burnt_thorns": "Przypalone Ciernie",
-  "block.twilightforest.green_force_field": "Zielone Pole Siłowe",
-  "block.twilightforest.green_thorns": "Zielone Ciernie",
-  "block.twilightforest.pink_castle_door": "Karmaynowe drzwi zamkowe",
-  "block.twilightforest.pink_force_field": "Karmazynowe Pole Siłowe"
+  "block.gloamingforest.blue_force_field": "Niebieskie Pole Siłowe",
+  "block.gloamingforest.brown_thorns": "Ciernie",
+  "block.gloamingforest.burnt_thorns": "Przypalone Ciernie",
+  "block.gloamingforest.green_force_field": "Zielone Pole Siłowe",
+  "block.gloamingforest.green_thorns": "Zielone Ciernie",
+  "block.gloamingforest.pink_castle_door": "Karmaynowe drzwi zamkowe",
+  "block.gloamingforest.pink_force_field": "Karmazynowe Pole Siłowe"
 }

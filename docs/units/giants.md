@@ -5,25 +5,25 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
 
 ## How it maps to Bedrock
 
-| TF | GloamingForest |
+| Upstream | GloamingForest |
 |---|---|
-| `GrowingBeanstalkBlockEntity` | BlockData key `grower` (`core::giants::BeanstalkState`, TF's saved fields) + `gf:giants:growers`; the module ticks every loaded grower each server tick (`tickBeanstalk`, exact translation with Mth.sin's table) |
+| `GrowingBeanstalkBlockEntity` | BlockData key `grower` (`core::giants::BeanstalkState`, upstream's saved fields) + `gf:giants:growers`; the module ticks every loaded grower each server tick (`tickBeanstalk`, exact translation with Mth.sin's table) |
 | Beanstalk rumble | dust: block particles (20 a tick, sent by the server); camera shake: `giants.rumble` to companions (F12 `camera::shake`) |
 | `SpecialStemLeavesBlock` | F11 leaves family; `huge_stalk` carries the families `log` flag so the leaf distance counts from it |
 | `UberousSoilBlock` | F11 `onNeighborChanged` / `onPlaced`, `interactions::onPlace` (getStateForPlacement), bone meal through `BlockType::onFertilized` (15 times on the next tick) |
-| `GiantBlockModel` | block states `gf:giant_tiled` (false = untiled item / unfixed block) and `gf:giant_x` / `_y` / `_z` (0..3, the cell position; Bedrock allows 16 values per state; gf: so the frozen TF states stay as imported) whose permutations pick one of 64 geometries with the face's 4 x 4 sub-square and only the cell's outer faces: every client, vanilla included, draws the tiling |
+| `GiantBlockModel` | block states `gf:giant_tiled` (false = untiled item / unfixed block) and `gf:giant_x` / `_y` / `_z` (0..3, the cell position; Bedrock allows 16 values per state; gf: so the frozen upstream states stay as imported) whose permutations pick one of 64 geometries with the face's 4 x 4 sub-square and only the cell's outer faces: every client, vanilla included, draws the tiling |
 | `GiantBlock` placement / removal | `interactions::onUseOn` refuses an occupied cell, `onPlace` fills it next tick, F11 `onRemoved` removes an incomplete cell without drops |
-| Giant pickaxe mining + loot modifier | `interactions::onDestroy` / `onDestroyed`, F10 `registerCondition("twilightforest:giant_pick_used")` and `addGlobalModifier("twilightforest:giant_block_grouping")` |
+| Giant pickaxe mining + loot modifier | `interactions::onDestroy` / `onDestroyed`, F10 `registerCondition("gloamingforest:giant_pick_used")` and `addGlobalModifier("gloamingforest:giant_block_grouping")` |
 | Cloud weather | F11 random ticks (cauldrons, snow layers; farmland moisture and fire out under rainy clouds); `rainingFromCloudAt` = BlockHooks#isRainingAt's scan |
 | CloudEvents rendering | client mod: drops (`gf:giants_cloud_rain` / `_snow`) and rain splashes from the clouds near the camera; vanilla clients: the same drops sent by the server |
-| Giants | BP goals / attributes; native gear, `twilightforest:ant` melee, spawn rule |
-| `giant_house` | F6 generator creating U27's `twilightforest:TFClCa` from its saved form (R2), registered once the piece type exists |
+| Giants | BP goals / attributes; native gear, `gloamingforest:ant` melee, spawn rule |
+| `giant_house` | F6 generator creating U27's `gloamingforest:TFClCa` from its saved form (R2), registered once the piece type exists |
 
 ## Deviations
 
 - Giants render with the default skin (Bedrock cannot bind another player's skin to a mob);
   `client.giantSkinUUIDs` is kept in the config section but unused.
-- The rain / snow under clouds are falling particles, not TF's sheets; vanilla clients get them from
+- The rain / snow under clouds are falling particles, not upstream's sheets; vanilla clients get them from
   the server (4 a tick per player).
 - Entity wetness under rainy clouds is emulated by the unit (fire out, drown damage to water-sensitive mobs);
   other isRainingAt consumers (lightning rods, fishing, riptide) do not see the clouds.
@@ -34,13 +34,13 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
 
 ## Audit round 1
 
-Checked against TF 4.8 (GrowingBeanstalkBlockEntity, CloudCastleComponent via U27's pieces, GiantPickItem /
+Checked against upstream 4.8 (GrowingBeanstalkBlockEntity, CloudCastleComponent via U27's pieces, GiantPickItem /
 GiantSwordItem, CloudEvents, BlockHooks#isRainingAt).
 
 Fixed:
 - `giants.cloud_castle_hash` golden committed (`18f7c25dab5940c5`, the same value on two independent runs); the
   one-time screenshot review is the client scenario `giants.ps1` (not run this round).
-- The beanstalk rumble dust: 20 block particles a tick like TF (was 5).
+- The beanstalk rumble dust: 20 block particles a tick like upstream (was 5).
 
 Open (round 2, all Bedrock limits; not-ported candidates):
 - Giant skins (a mob cannot wear another player's skin).
@@ -51,12 +51,12 @@ Open (round 2, all Bedrock limits; not-ported candidates):
 
 ## Audit round 2
 
-Checked against TF 4.8 (`GiantMiner#doHurtTarget`, `GiantMiner` / `ArmoredGiant` sounds, `BlockHooks#isRainingAt`,
+Checked against upstream 4.8 (`GiantMiner#doHurtTarget`, `GiantMiner` / `ArmoredGiant` sounds, `BlockHooks#isRainingAt`,
 `Entity#move` / `LivingEntity#aiStep` under rain, `TFGiantRenderer`).
 
 Fixed:
 
-- **Ant damage inside the hit**: GiantMiner#doHurtTarget's `twilightforest:ant` damage is dealt inside the
+- **Ant damage inside the hit**: GiantMiner#doHurtTarget's `gloamingforest:ant` damage is dealt inside the
   combat handler (F10 runs the handlers of a nested hurt), not on the next tick; `giants.giant_mobs` checks it
   at once.
 - **Hurt / death sounds** (A5): the giants are plain `Monster`s in Java (`entity.hostile.hurt` /
@@ -81,6 +81,6 @@ Open (Bedrock limits; not-ported candidates):
   engine-side, not reached.
 - The giant block outline replacing the highlight (drawn beside Bedrock's own; replacing it is F12's renderer).
 
-Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 1 of this unit's sound events still played F3's name-derived baseline placeholder. Beanstalk growth. `tools/sounds/recipes/giants.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit giants` into `assets/gen/audio/giants/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 1 of this unit's sound events still played F3's name-derived baseline placeholder. Beanstalk growth. `tools/sounds/recipes/giants.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; upstream's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit giants` into `assets/gen/audio/giants/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
 
-Also: `assets/pack/rp/sounds.json.d/giants.json` gives the giant miner and armored giant Monster's default hurt/death sounds (Java `entity.hostile.hurt` / `entity.hostile.death` -> Bedrock `game.player.hurt` / `game.player.die`); before, they had no entry (hostiles.mob_assets audit). Bedrock's own `entity_sounds.defaults` may already supply these two events; the explicit entry states TF's Monster defaults either way and is what the audit reads. Open: nothing for audio.
+Also: `assets/pack/rp/sounds.json.d/giants.json` gives the giant miner and armored giant Monster's default hurt/death sounds (Java `entity.hostile.hurt` / `entity.hostile.death` -> Bedrock `game.player.hurt` / `game.player.die`); before, they had no entry (hostiles.mob_assets audit). Bedrock's own `entity_sounds.defaults` may already supply these two events; the explicit entry states upstream's Monster defaults either way and is what the audit reads. Open: nothing for audio.

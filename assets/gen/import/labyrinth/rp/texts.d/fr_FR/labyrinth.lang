@@ -1,4 +1,4 @@
-entity.twilightforest.maze_slime=Slime du labyrinthe
-entity.twilightforest.minotaur=Minotaure
-entity.twilightforest:maze_slime.name=Slime du labyrinthe
-entity.twilightforest:minotaur.name=Minotaure
+entity.gloamingforest.maze_slime=Slime du labyrinthe
+entity.gloamingforest.minotaur=Minotaure
+entity.gloamingforest:maze_slime.name=Slime du labyrinthe
+entity.gloamingforest:minotaur.name=Minotaure

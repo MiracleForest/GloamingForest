@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:minoshroom_trophy",
+      "identifier": "gloamingforest:minoshroom_trophy",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:minoshroom_trophy.name"
+        "value": "tile.gloamingforest:minoshroom_trophy.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:minoshroom_trophy",
+        "block": "gloamingforest:minoshroom_trophy",
         "replace_block_item": true
       },
       "minecraft:wearable": {

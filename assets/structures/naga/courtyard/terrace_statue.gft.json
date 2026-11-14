@@ -14,12 +14,12 @@
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"east","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:mossy_stone_bricks"},
-    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"up"}},
-    {"Name":"twilightforest:nagastone_pillar","Properties":{"axis":"y"}},
-    {"Name":"twilightforest:nagastone","Properties":{"variant":"solid"}},
-    {"Name":"twilightforest:nagastone","Properties":{"variant":"axis_z"}},
-    {"Name":"twilightforest:nagastone","Properties":{"variant":"axis_y"}},
-    {"Name":"twilightforest:nagastone_head","Properties":{"facing":"north"}}
+    {"Name":"gloamingforest:etched_nagastone","Properties":{"facing":"up"}},
+    {"Name":"gloamingforest:nagastone_pillar","Properties":{"axis":"y"}},
+    {"Name":"gloamingforest:nagastone","Properties":{"variant":"solid"}},
+    {"Name":"gloamingforest:nagastone","Properties":{"variant":"axis_z"}},
+    {"Name":"gloamingforest:nagastone","Properties":{"variant":"axis_y"}},
+    {"Name":"gloamingforest:nagastone_head","Properties":{"facing":"north"}}
   ],
   "blocks": [
     [2, 32], [9, 1], [2, 5], [9, 1], [2, 13], [10, 4], [2, 8], [10, 4], [2, 8], [10, 4], [2, 8], [10, 4], [2, 1], [9, 1], [2, 5], [9, 1],

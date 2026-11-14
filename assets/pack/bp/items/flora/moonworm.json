@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:moonworm",
+      "identifier": "gloamingforest:moonworm",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:moonworm.name"
+        "value": "tile.gloamingforest:moonworm.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:moonworm",
+        "block": "gloamingforest:moonworm",
         "replace_block_item": true
       },
       "minecraft:wearable": {

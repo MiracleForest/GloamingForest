@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/events/TravellersGearEvents.java
-//   src/main/java/twilightforest/asmhooks/EntityHooks.java
-//   src/main/java/twilightforest/asmhooks/PlayerHooks.java
-//   src/main/java/twilightforest/network/PerformDoubleJumpPacket.java
-//   src/main/java/twilightforest/network/PerformSidestepPacket.java
-//   src/main/java/twilightforest/network/GradualGlidePacket.java
-//   src/main/java/twilightforest/network/TravellersWingsStatePacket.java
-//   src/main/java/twilightforest/init/custom/TravellersModifiersManager.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java
+//   src/main/java/gloamingforest/asmhooks/EntityHooks.java
+//   src/main/java/gloamingforest/asmhooks/PlayerHooks.java
+//   src/main/java/gloamingforest/network/PerformDoubleJumpPacket.java
+//   src/main/java/gloamingforest/network/PerformSidestepPacket.java
+//   src/main/java/gloamingforest/network/GradualGlidePacket.java
+//   src/main/java/gloamingforest/network/TravellersWingsStatePacket.java
+//   src/main/java/gloamingforest/init/custom/TravellersModifiersManager.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U12's server half (see TgMove.h). One ServerLevelTickEvent listener runs TF's per-tick player
+// U12's server half (see TgMove.h). One ServerLevelTickEvent listener runs upstream's per-tick player
 // and mob logic; the companion packets, the input edges (F12's movement contract), the fall damage
 // (F10's combat contract) and the mining speed (the ext/tgmove extension) come in through the
 // contracts.
@@ -116,8 +116,8 @@ constexpr float    kMaxRefundDebt  = 4.0f; ///< efficient eater: at most one wra
 constexpr float    kLeashFreeDistance  = 6.0f; ///< PathfinderMob#tickLeash: no stay-close pathing within 6 blocks with the override
 constexpr double   kLeashHolderPathEnd = 2.5;  ///< a leashed mob's path ending this close to the holder is the stay-close approach (Java stops 2 blocks short)
 constexpr int      kLeashJoinTicks     = 40;   ///< a marked mob this old has joined the world (its leash is on)
-constexpr char     kWings[]        = "twilightforest:travellers_wings";
-constexpr char     kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
+constexpr char     kWings[]        = "gloamingforest:travellers_wings";
+constexpr char     kStraightName[] = "gloamingforest:travellers_gear.boots_straight_ahead";
 // the slowdowns BlockMovementSlowdownImmunityComponent covers (EntityInsideSystemImpl: cobweb, powder
 // snow; the berry bush's stuck speed); soul sand and honey are applyUnrestrained's
 constexpr char const* kSlowdownBlocks[] = {"minecraft:web", "minecraft:sweet_berry_bush", "minecraft:powder_snow"};
@@ -350,7 +350,7 @@ double itemUseSlowdownOf(Vec2 const& move, Vec2 const& raw) {
 
 Vec2 agileRangerInput(Vec2 const& move, double slowdown) {
     // Java: the use slowdown 0.2, then x 5 = the input as it was; Bedrock's slowdown is in the input
-    // (measured with a bow: 0.122 of a key's 1; other items have their own), so TF's input is the
+    // (measured with a bow: 0.122 of a key's 1; other items have their own), so upstream's input is the
     // input without the current use's slowdown, at most length 1
     if (slowdown <= 0) slowdown = kBedrockItemUseSlowdown;
     Vec2  tf{static_cast<float>(move.x / slowdown), static_cast<float>(move.y / slowdown)};
@@ -369,7 +369,7 @@ Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGro
         BlockPos below{static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.y - 0.5000001)), static_cast<int>(std::floor(feet.z))};
         float    speed = 0.1f;
         if (auto attr = a.getAttribute(SharedAttributes::MOVEMENT_SPEED()); attr.mPtr) speed = attr.mPtr->mCurrentValue;
-        // unrestrained: TF's step is on friction 0.6 whatever the block (resetBlockFrictionWithUnrestrained)
+        // unrestrained: upstream's step is on friction 0.6 whatever the block (resetBlockFrictionWithUnrestrained)
         double friction = unrestrained ? tg::kUnrestrainedFriction : blockFriction(a.getDimensionBlockSource().getBlock(below));
         scale           = speed * tg::groundAccelFactor(friction);
     }
@@ -486,19 +486,19 @@ void restore(Actor& a, PlayerState& st) {
 
 char const* modId(Mod m) {
     switch (m) {
-    case Mod::DoubleJump: return "twilightforest:double_jump";
-    case Mod::SideStep: return "twilightforest:side_step";
-    case Mod::GradualGlide: return "twilightforest:gradual_glide";
-    case Mod::HighJump: return "twilightforest:high_jump";
-    case Mod::AgileRanger: return "twilightforest:agile_ranger";
-    case Mod::StepUp: return "twilightforest:step_up";
-    case Mod::StraightAhead: return "twilightforest:straight_ahead";
-    case Mod::SlimySoles: return "twilightforest:slimy_soles";
-    case Mod::Unrestrained: return "twilightforest:unrestrained";
-    case Mod::WaterWalk: return "twilightforest:water_walk";
-    case Mod::SwiftSwim: return "twilightforest:swift_swim";
-    case Mod::AquaticAgility: return "twilightforest:aquatic_agility";
-    case Mod::EfficientEater: return "twilightforest:efficient_eater";
+    case Mod::DoubleJump: return "gloamingforest:double_jump";
+    case Mod::SideStep: return "gloamingforest:side_step";
+    case Mod::GradualGlide: return "gloamingforest:gradual_glide";
+    case Mod::HighJump: return "gloamingforest:high_jump";
+    case Mod::AgileRanger: return "gloamingforest:agile_ranger";
+    case Mod::StepUp: return "gloamingforest:step_up";
+    case Mod::StraightAhead: return "gloamingforest:straight_ahead";
+    case Mod::SlimySoles: return "gloamingforest:slimy_soles";
+    case Mod::Unrestrained: return "gloamingforest:unrestrained";
+    case Mod::WaterWalk: return "gloamingforest:water_walk";
+    case Mod::SwiftSwim: return "gloamingforest:swift_swim";
+    case Mod::AquaticAgility: return "gloamingforest:aquatic_agility";
+    case Mod::EfficientEater: return "gloamingforest:efficient_eater";
     }
     return "";
 }
@@ -518,7 +518,7 @@ int modSlot(Mod m) {
 }
 
 bool brokenGear(ItemStack const& stack) {
-    if (game::items::isEmpty(stack) || !game::items::idOf(stack).starts_with("twilightforest:travellers_")) return false;
+    if (game::items::isEmpty(stack) || !game::items::idOf(stack).starts_with("gloamingforest:travellers_")) return false;
     Item const* item = stack.mItem.get();
     if (!item || !stack.isDamageableItem()) return false;
     return item->getMaxDamage() - 1 <= stack.getDamageValue();
@@ -554,10 +554,10 @@ bool activeOn(Actor const& entity, Mod m) { return has(modMask(entity), m); }
 bool agileRangerItem(ItemStack const& stack) {
     auto id = game::items::idOf(stack);
     if (id.empty()) return false;
-    bool legal = id == "minecraft:bow" || id == "minecraft:crossbow" || id == "twilightforest:triple_bow" || id == "twilightforest:seeker_bow"
-              || id == "twilightforest:ice_bow" || id == "twilightforest:ender_bow"
-              || tags::has(tags::Registry::Item, "twilightforest:travellers_agile_ranger_whitelisted", id);
-    return legal && !tags::has(tags::Registry::Item, "twilightforest:travellers_agile_ranger_blacklisted", id);
+    bool legal = id == "minecraft:bow" || id == "minecraft:crossbow" || id == "gloamingforest:triple_bow" || id == "gloamingforest:seeker_bow"
+              || id == "gloamingforest:ice_bow" || id == "gloamingforest:ender_bow"
+              || tags::has(tags::Registry::Item, "gloamingforest:travellers_agile_ranger_whitelisted", id);
+    return legal && !tags::has(tags::Registry::Item, "gloamingforest:travellers_agile_ranger_blacklisted", id);
 }
 
 bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bool forceOff) {
@@ -608,7 +608,7 @@ long long gameTime() {
 bool validatorEnabled() {
     if (auto f = store().forceValidator) return *f;
 #ifdef GF_CLIENT
-    return false; // the integrated server of a local world (TF: isDedicatedServer)
+    return false; // the integrated server of a local world (upstream: isDedicatedServer)
 #else
     return true;
 #endif
@@ -658,7 +658,7 @@ Json wingsMessage(Actor& entity, PlayerState const& st) {
     };
 }
 
-bool wearsWingsItem(Actor const& a) { return game::items::idOf(armor(a, 2)) == "twilightforest:travellers_wings"; }
+bool wearsWingsItem(Actor const& a) { return game::items::idOf(armor(a, 2)) == "gloamingforest:travellers_wings"; }
 
 /// The wing state (and a player's glide) of every wearer to the companions that came into range,
 /// joined or reloaded the entity since its last change (TravellersWingsStatePacket goes to each
@@ -740,7 +740,7 @@ bool performDoubleJump(Player& player, bool vanilla) {
     float e = jumpExhaustionOf(player);
     if (active(player, Mod::EfficientEater)) e /= 2.0f; // efficient_eater: 2.0
     player.causeFoodExhaustion(e);
-    playAt(player, "item.twilightforest.travellers_gear.double_jump", 1.5f, tg::doubleJumpPitch(voicePitch()));
+    playAt(player, "item.gloamingforest.travellers_gear.double_jump", 1.5f, tg::doubleJumpPitch(voicePitch()));
     st.hasDoubleJump             = false;
     st.doubleJumpValidator.count = 0;
     st.safeFall                  = true;
@@ -751,7 +751,7 @@ bool performDoubleJump(Player& player, bool vanilla) {
         Vec3  pos  = player.getFeetPos() + Vec3{std::sin(body) / 3.0f, 1.2f, -std::cos(body) / 3.0f};
         for (int i = 0; i < 10; ++i) {
             Vec3 vel{static_cast<float>((rand01() - 0.5) * 0.25), static_cast<float>((rand01() + 1) * -0.5), static_cast<float>((rand01() - 0.5) * 0.25)};
-            fx::particle(player.getDimension(), "twilightforest:double_jump", pos, vel + nv);
+            fx::particle(player.getDimension(), "gloamingforest:double_jump", pos, vel + nv);
         }
         syncWings(player);
     }
@@ -769,7 +769,7 @@ bool tryPerformSidestep(Player& player, bool left) {
         return false;
     auto push = tg::sidestepPush(player.getRotation().y, left);
     movement::applyMotion(player, player.getPosDelta() + Vec3{static_cast<float>(push.x), 0.0f, static_cast<float>(push.z)});
-    playAt(player, "item.twilightforest.travellers_gear.side_step", 1.0f, voicePitch());
+    playAt(player, "item.gloamingforest.travellers_gear.side_step", 1.0f, voicePitch());
     tg::startSidestep(st.wings, left);
     syncWings(player);
     st.wings.lastSidestepTime        = now;
@@ -980,7 +980,7 @@ void tickPlayer(Player& player) {
 
     // sidestep cooldown sound (travellersWingsSidestepCooldownSound)
     if (has(mask, Mod::SideStep) && tg::sidestepReady(now, st.wings.lastSidestepTime, tg::kSidestepCooldown) && st.wings.shouldPlayCooldownSound) {
-        fx::soundTo(player, "item.twilightforest.travellers_gear.side_step_ready", 1.0f, voicePitch());
+        fx::soundTo(player, "item.gloamingforest.travellers_gear.side_step_ready", 1.0f, voicePitch());
         st.wings.shouldPlayCooldownSound = false;
     }
 
@@ -1095,7 +1095,7 @@ void tickPlayer(Player& player) {
             if (float refund = tg::efficientEaterRefund(e, exh - st.lastExhaustion); refund > 0) st.refundDebt = std::min(st.refundDebt + refund, kMaxRefundDebt);
         }
         // the refund owed, as far as the exhaustion has it: after a wrap it is small, and the rest is
-        // taken from the exhaustion of the next ticks (the food lasts as long as TF's on average)
+        // taken from the exhaustion of the next ticks (the food lasts as long as upstream's on average)
         if (st.refundDebt > 0) {
             st.refundDebt -= refundExhaustion(player, st.refundDebt);
             if (st.refundDebt < 1e-6f) st.refundDebt = 0;
@@ -1195,11 +1195,11 @@ void tickLeashOverride(Level& lv, Actor& a) {
     if (std::sqrt(dx * dx + dz * dz) <= kLeashHolderPathEnd) path.reset();
 }
 
-/// A mob wears Travellers' gear where TF's mob modifiers come from (legs or feet).
+/// A mob wears Travellers' gear where upstream's mob modifiers come from (legs or feet).
 bool wearsTravellers(Actor const& a) {
     for (int slot : {2, 3}) {
         auto const& stack = armor(a, slot);
-        if (!game::items::isEmpty(stack) && game::items::idOf(stack).starts_with("twilightforest:travellers_")) return true;
+        if (!game::items::isEmpty(stack) && game::items::idOf(stack).starts_with("gloamingforest:travellers_")) return true;
     }
     return false;
 }
@@ -1361,7 +1361,7 @@ public:
         // last_damage_armor_time (TravellersGearEvents#setLastDamageArmorTime): armour takes damage
         // from what it protects against; U11's auto repair reads it by name (F8's entity data).
         combat::onDealt(combat::priority::Normal, [](combat::DamageInfo const& d) {
-            // #minecraft:bypasses_armor: vanilla's members (1.21.1) and the data's (TF's)
+            // #minecraft:bypasses_armor: vanilla's members (1.21.1) and the data's (upstream's)
             static std::unordered_set<std::string> const vanilla{
                 "minecraft:on_fire", "minecraft:in_wall", "minecraft:cramming", "minecraft:drown", "minecraft:fly_into_wall", "minecraft:generic",
                 "minecraft:wither", "minecraft:dragon_breath", "minecraft:starve", "minecraft:fall", "minecraft:freeze", "minecraft:stalagmite",
@@ -1374,7 +1374,7 @@ public:
                 auto const& stack = armor(d.victim, s);
                 if (game::items::isEmpty(stack)) continue;
                 damageable = damageable || stack.isDamageableItem();
-                travellers = travellers || game::items::idOf(stack).starts_with("twilightforest:travellers_");
+                travellers = travellers || game::items::idOf(stack).starts_with("gloamingforest:travellers_");
             }
             if (damageable && travellers) entity::data(d.victim, kLastDamageArmorTimeKey) = gameTime();
         });

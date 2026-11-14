@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/command/MapLocatorCommand.java
-//   src/main/java/twilightforest/command/MapBiomesCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/command/MapLocatorCommand.java
+//   src/main/java/gloamingforest/command/MapBiomesCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest map_locator <structure> [<player> [<skip_known_structures>]] and
-// /twilightforest biomepng [<width> [<height> [<showBiomePercents>]]] (U13, docs/spec/uncraftmaps.md
+// /gloamingforest map_locator <structure> [<player> [<skip_known_structures>]] and
+// /gloamingforest biomepng [<width> [<height> [<showBiomePercents>]]] (U13, docs/spec/uncraftmaps.md
 // 3.6). Both need Java's permission level 2 (commands::isAdmin; below it Bedrock's
 // commands.generic.unknown, as F6's commands answer).
 //
-// map_locator: TF's structures through F6's gf::landmark::ext::locate (the random-spread rings,
+// map_locator: upstream's structures through F6's gf::landmark::ext::locate (the random-spread rings,
 // then the landmark grid); Minecraft's own (minecraft: ids) through Bedrock's world generator
 // (WorldGenerator::findNearestStructureFeature with the Bedrock feature of the Java id). A
 // structure tag ("#ns:path") is typed as the rest of the line, since Bedrock's string parameter
 // refuses a leading '#': "#tag [<player name | @s> [true|false]]".
 //
-// biomepng: the server build is TF's dedicated server (returns at once, nothing happens); the
+// biomepng: the server build is upstream's dedicated server (returns at once, nothing happens); the
 // client build in a local world samples the biomes, reports and writes the PNG under the world's
-// folder. Biomes of the Twilight Forest come from its biome source (any quart); other dimensions
+// folder. Biomes of the Gloaming Forest come from its biome source (any quart); other dimensions
 // are read from their loaded chunks (Bedrock's biome sources are not callable from here).
 #include <algorithm>
 #include <chrono>
@@ -136,9 +136,9 @@ struct Found {
     int         x = 0, z = 0;
 };
 
-/// ChunkGenerator#findNearestMapStructure (with TF's hook) for a key or "#tag".
+/// ChunkGenerator#findNearestMapStructure (with upstream's hook) for a key or "#tag".
 std::optional<Found> search(int dim, std::string const& printable, std::vector<std::string> const& holders, int x, int z, bool skip) {
-    bool tf = std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return k.starts_with("twilightforest:"); });
+    bool tf = std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return k.starts_with("gloamingforest:"); });
     if (tf) {
         if (auto hit = gf::landmark::ext::locate(dim, printable, x, z, 100, skip)) return Found{hit->key, hit->pos.x, hit->pos.z};
     }
@@ -174,8 +174,8 @@ void mapLocator(CommandOrigin const& origin, CommandOutput& output, std::string 
     // LocateCommand#getHolders: the key, or the tag's members; else ERROR_STRUCTURE_INVALID
     std::vector<std::string> holders;
     if (tag) holders = tags::members(tags::Registry::Structure, id);
-    else if (id.starts_with("twilightforest:") || !bedrockFeature(id).empty() || id.starts_with("minecraft:")) holders.push_back(id);
-    static std::vector<std::string> const kSpread{"twilightforest:camp", "twilightforest:fallen_trunk", "twilightforest:hollow_tree", "twilightforest:swamp_hollow_tree"};
+    else if (id.starts_with("gloamingforest:") || !bedrockFeature(id).empty() || id.starts_with("minecraft:")) holders.push_back(id);
+    static std::vector<std::string> const kSpread{"gloamingforest:camp", "gloamingforest:fallen_trunk", "gloamingforest:hollow_tree", "gloamingforest:swamp_hollow_tree"};
     bool known = !holders.empty()
               && (tag || id.starts_with("minecraft:") || gf::landmark::descriptor(id) != nullptr || std::find(kSpread.begin(), kSpread.end(), id) != kSpread.end());
     if (!known) return output.error(say(origin, "commands.locate.structure.invalid", "There is no structure with type \"%s\"", printable));
@@ -210,7 +210,7 @@ void mapLocator(CommandOrigin const& origin, CommandOutput& output, std::string 
 
 /// The biome id at quart (qx, 0, qz) of `dim` (getNoiseBiome).
 std::string noiseBiome(int dim, int qx, int qz) {
-    auto tf = gf::world::twilight();
+    auto tf = gf::world::gloaming();
     if (tf && static_cast<int>(*tf) == dim) return worldgen::biomeAt(BlockPos{qx * 4, 0, qz * 4});
     auto region = game::regionOf(dim);
     if (!region) return {};
@@ -225,7 +225,7 @@ std::uint32_t biomeColour(std::string const& biome) {
     if (auto it = cache.find(biome); it != cache.end()) return it->second;
     std::uint32_t c;
     if (auto fixed = cu::biomePngColor(biome)) c = *fixed;
-    else if (auto const* v = datamaps::get("twilightforest:magic_map_color", biome); v && v->is_object())
+    else if (auto const* v = datamaps::get("gloamingforest:magic_map_color", biome); v && v->is_object())
         c = cu::biomePngDataMapColor(static_cast<std::uint32_t>(v->value("map_color", nlohmann::json::object()).value("color", 0)));
     else c = 0xFF000000u; // getBiomeColor's default: opaque black (non-zero: no grass colour fallback)
     return cache[biome] = c;

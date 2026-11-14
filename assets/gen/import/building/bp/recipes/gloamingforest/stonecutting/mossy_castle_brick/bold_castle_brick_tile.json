@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/mossy_castle_brick/bold_castle_brick_tile"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:mossy_castle_brick"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:mossy_castle_brick"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:bold_castle_brick_tile"
+    }
+  }
+}

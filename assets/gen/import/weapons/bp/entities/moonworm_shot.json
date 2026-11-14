@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:moonworm_shot",
+      "identifier": "gloamingforest:moonworm_shot",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "moonworm_shot"]
+        "family": ["gloamingforest", "moonworm_shot"]
       },
       "minecraft:collision_box": {
         "width": 0.25,

@@ -1,0 +1,188 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.chiseled_canopy_bookshelf.multipart",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "part0",
+          "pivot": [0, 8, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_minecraft_block_chiseled_bookshelf_empty"
+                },
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part13",
+          "pivot": [0, 8, 0],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_minecraft_block_chiseled_bookshelf_empty"
+                },
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part26",
+          "pivot": [0, 8, 0],
+          "rotation": [0, 180, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_minecraft_block_chiseled_bookshelf_empty"
+                },
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part39",
+          "pivot": [0, 8, 0],
+          "rotation": [0, 270, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 16, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_minecraft_block_chiseled_bookshelf_empty"
+                },
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_side"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "t_gloamingforest_block_wood_chiseled_canopy_bookshelf_top"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:candelabra",
+    "id": "gloamingforest:candelabra",
     "family": "lightable",
     "params": {
       "class": "CandelabraBlock",
@@ -11,7 +11,7 @@
     }
   },
   {
-    "id": "twilightforest:creeper_skull_candle",
+    "id": "gloamingforest:creeper_skull_candle",
     "family": "lightable",
     "params": {
       "class": "SkullCandleBlock",
@@ -21,7 +21,7 @@
     }
   },
   {
-    "id": "twilightforest:creeper_wall_skull_candle",
+    "id": "gloamingforest:creeper_wall_skull_candle",
     "family": "lightable",
     "params": {
       "class": "WallSkullCandleBlock",
@@ -31,7 +31,7 @@
     }
   },
   {
-    "id": "twilightforest:piglin_skull_candle",
+    "id": "gloamingforest:piglin_skull_candle",
     "family": "lightable",
     "params": {
       "class": "SkullCandleBlock",
@@ -41,7 +41,7 @@
     }
   },
   {
-    "id": "twilightforest:piglin_wall_skull_candle",
+    "id": "gloamingforest:piglin_wall_skull_candle",
     "family": "lightable",
     "params": {
       "class": "WallSkullCandleBlock",
@@ -51,7 +51,7 @@
     }
   },
   {
-    "id": "twilightforest:player_skull_candle",
+    "id": "gloamingforest:player_skull_candle",
     "family": "lightable",
     "params": {
       "class": "SkullCandleBlock",
@@ -61,7 +61,7 @@
     }
   },
   {
-    "id": "twilightforest:player_wall_skull_candle",
+    "id": "gloamingforest:player_wall_skull_candle",
     "family": "lightable",
     "params": {
       "class": "WallSkullCandleBlock",
@@ -71,7 +71,7 @@
     }
   },
   {
-    "id": "twilightforest:skeleton_skull_candle",
+    "id": "gloamingforest:skeleton_skull_candle",
     "family": "lightable",
     "params": {
       "class": "SkullCandleBlock",
@@ -81,7 +81,7 @@
     }
   },
   {
-    "id": "twilightforest:skeleton_wall_skull_candle",
+    "id": "gloamingforest:skeleton_wall_skull_candle",
     "family": "lightable",
     "params": {
       "class": "WallSkullCandleBlock",
@@ -91,7 +91,7 @@
     }
   },
   {
-    "id": "twilightforest:terrorcotta_arcs",
+    "id": "gloamingforest:terrorcotta_arcs",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
@@ -100,7 +100,7 @@
     }
   },
   {
-    "id": "twilightforest:wither_skeleton_skull_candle",
+    "id": "gloamingforest:wither_skeleton_skull_candle",
     "family": "lightable",
     "params": {
       "class": "SkullCandleBlock",
@@ -110,7 +110,7 @@
     }
   },
   {
-    "id": "twilightforest:wither_skeleton_wall_skull_candle",
+    "id": "gloamingforest:wither_skeleton_wall_skull_candle",
     "family": "lightable",
     "params": {
       "class": "WallSkullCandleBlock",
@@ -120,7 +120,7 @@
     }
   },
   {
-    "id": "twilightforest:wrought_iron_fence",
+    "id": "gloamingforest:wrought_iron_fence",
     "family": "waterloggable",
     "params": {
       "class": "WroughtIronFenceBlock",
@@ -131,7 +131,7 @@
     }
   },
   {
-    "id": "twilightforest:zombie_skull_candle",
+    "id": "gloamingforest:zombie_skull_candle",
     "family": "lightable",
     "params": {
       "class": "SkullCandleBlock",
@@ -141,7 +141,7 @@
     }
   },
   {
-    "id": "twilightforest:zombie_wall_skull_candle",
+    "id": "gloamingforest:zombie_wall_skull_candle",
     "family": "lightable",
     "params": {
       "class": "WallSkullCandleBlock",

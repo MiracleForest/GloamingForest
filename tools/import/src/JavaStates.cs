@@ -1,8 +1,8 @@
-// GloamingForest import tool (contract "import", unit F1): the block-state properties of a TF block,
-// read from its Java class chain. Every TF class that overrides createBlockStateDefinition contributes the
+// GloamingForest import tool (contract "import", unit F1): the block-state properties of an upstream block,
+// read from its Java class chain. Every upstream class that overrides createBlockStateDefinition contributes the
 // properties it adds (builder.add(...), chained .add(...), LIST.forEach(builder::add)); a super call
 // continues with the superclass, and the first vanilla class contributes its full Minecraft 1.21.1
-// property set. Property constants are resolved through the class, its TF superclasses and interfaces,
+// property set. Property constants are resolved through the class, its upstream superclasses and interfaces,
 // its static imports, and the vanilla constants (BlockStateProperties, PipeBlock, ...): Property.create
 // names, integer ranges and enum values (the enum's serialized names, in declaration order).
 // Facts only; no Java code is translated here.
@@ -21,8 +21,8 @@ namespace GfImport
         public List<string> Values = new List<string>();     // bool: false, true; int: min..max; enum: serialized names
         public string Origin;                                // where it was resolved ("TrophyBlock.ROTATION")
         public Dictionary<string, string> Consts = new Dictionary<string, string>(StringComparer.Ordinal); // enum constant -> value
-        public string Default;                               // the value TF's registerDefaultState sets (null: not set)
-        public string EnumType;                              // the TF enum of an EnumProperty ("BrazierLight")
+        public string Default;                               // the value upstream's registerDefaultState sets (null: not set)
+        public string EnumType;                              // the upstream enum of an EnumProperty ("BrazierLight")
     }
 
     public static class JavaStates
@@ -89,7 +89,7 @@ namespace GfImport
             "UP", "DOWN", "NORTH", "EAST", "SOUTH", "WEST", "CRACKED",
         };
 
-        /// <summary>The complete property set of the vanilla block classes TF blocks extend (Minecraft 1.21.1).
+        /// <summary>The complete property set of the vanilla block classes upstream blocks extend (Minecraft 1.21.1).
         /// An empty array: the class declares no state.</summary>
         static readonly Dictionary<string, string[]> VanillaClass = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
@@ -156,7 +156,7 @@ namespace GfImport
             return jp;
         }
 
-        // ---- TF classes ------------------------------------------------------------------------------------
+        // ---- upstream classes ------------------------------------------------------------------------------------
 
         sealed class ClassInfo
         {
@@ -169,7 +169,7 @@ namespace GfImport
 
         public static void Reset() { classes.Clear(); }
 
-        /// <summary>The comment-stripped text of a TF class (cached), or null for a vanilla class.</summary>
+        /// <summary>The comment-stripped text of an upstream class (cached), or null for a vanilla class.</summary>
         public static string Text(Ctx ctx, string cls)
         {
             var ci = Info(ctx, cls);
@@ -273,13 +273,13 @@ namespace GfImport
         sealed class Scope
         {
             public Ctx Ctx;
-            public ClassInfo Cls;           // the TF class the expression is written in
+            public ClassInfo Cls;           // the upstream class the expression is written in
             public List<string> Vanilla;    // vanilla classes of the block's chain (for inherited vanilla constants)
             public Action<string> Warn;
             public int Depth;
         }
 
-        /// <summary>Resolves a field NAME visible from a TF class: the class, its TF interfaces and superclasses,
+        /// <summary>Resolves a field NAME visible from an upstream class: the class, its upstream interfaces and superclasses,
         /// its static imports, then the vanilla classes of the chain.</summary>
         static List<JProp> ResolveName(Scope s, ClassInfo ci, string name, HashSet<string> seen)
         {
@@ -412,9 +412,9 @@ namespace GfImport
             return 0;
         }
 
-        /// <summary>The constants of an enum (TF enum, nested TF enum, or a known vanilla enum) with their
+        /// <summary>The constants of an enum (upstream enum, nested upstream enum, or a known vanilla enum) with their
         /// serialized names, in declaration order. A constant's name is its first string argument when it has
-        /// one, else its lower-case Java name (TF's getSerializedName implementations).</summary>
+        /// one, else its lower-case Java name (upstream's getSerializedName implementations).</summary>
         static List<KeyValuePair<string, string>> EnumConstants(Scope s, string type)
         {
             string v;
@@ -475,7 +475,7 @@ namespace GfImport
             return false;
         }
 
-        /// <summary>The properties a constant expression ("LIGHTING", "FireJetBlock.STATE") denotes in a TF class.</summary>
+        /// <summary>The properties a constant expression ("LIGHTING", "FireJetBlock.STATE") denotes in an upstream class.</summary>
         public static List<JProp> Resolve(Ctx ctx, string cls, string expr, Action<string> warn)
         {
             var ci = Info(ctx, cls);
@@ -483,7 +483,7 @@ namespace GfImport
             return Eval(new Scope { Ctx = ctx, Cls = ci, Vanilla = new List<string>(), Warn = warn }, expr, cls);
         }
 
-        /// <summary>For a TF enum property: serialized value -> the int constructor argument named arg (the
+        /// <summary>For an upstream enum property: serialized value -> the int constructor argument named arg (the
         /// parameter its constructor stores in the field of that name), e.g. BrazierLight's "light".</summary>
         public static Dictionary<string, int> EnumArgs(Ctx ctx, string cls, JProp prop, string arg, Action<string> warn)
         {
@@ -538,7 +538,7 @@ namespace GfImport
                     string[] specs;
                     if (VanillaClass.TryGetValue(cls, out specs)) foreach (var sp in specs) add(Spec(sp, cls));
                     else warn("vanilla block class " + cls + " has no known property set (JavaStates.VanillaClass)");
-                    // MultifaceBlock: TF subclasses that support fewer faces override isFaceSupported
+                    // MultifaceBlock: upstream subclasses that support fewer faces override isFaceSupported
                     if (cls == "MultifaceBlock" && chain.Take(k).Any(c => Info(ctx, c) != null && Info(ctx, c).Text.Contains("isFaceSupported")))
                         warn(chain[0] + " overrides MultifaceBlock.isFaceSupported: every face kept");
                     break;
@@ -587,10 +587,10 @@ namespace GfImport
             { "ChiseledBookShelfBlock", "facing=north,slot_0_occupied=false,slot_1_occupied=false,slot_2_occupied=false,slot_3_occupied=false,slot_4_occupied=false,slot_5_occupied=false" },
         };
 
-        /// <summary>Sets JProp.Default to TF's default state (Java's, not Bedrock's): the leaf-most
+        /// <summary>Sets JProp.Default to upstream's default state (Java's, not Bedrock's): the leaf-most
         /// registerDefaultState call of the class chain wins per property (also through a local BlockState variable
         /// and a "for (p : LIST) state = state.setValue(p, v)" loop); a call built on this.defaultBlockState() keeps
-        /// the superclass's values, one built on stateDefinition.any() starts afresh; without a TF call the vanilla
+        /// the superclass's values, one built on stateDefinition.any() starts afresh; without an upstream call the vanilla
         /// class's defaults apply; every property still unset has StateDefinition.any()'s value (a boolean is true,
         /// an integer its minimum, an enum its first value).</summary>
         static void Defaults(Ctx ctx, List<string> chain, List<string> vanilla, List<JProp> props, Action<string> warn)

@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/central_bridge",
+  "id": "gloamingforest:lich_tower/central_bridge",
   "size": [3, 4, 4],
   "palette": [
     {"Name":"minecraft:structure_void"},

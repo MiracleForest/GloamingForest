@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/command/TFTeleportCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/command/TFTeleportCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest tp (rule R14: subcommand owned by F4; TF's functions tp_twilight / tp_overworld
+// /gloamingforest tp (rule R14: subcommand owned by F4; upstream's functions tp_gloaming / tp_overworld
 // are in Functions.cpp). A move to another dimension completes asynchronously: the success
-// message is TF's, a move that does not complete is reported to the player (gf::world::teleport)
+// message is upstream's, a move that does not complete is reported to the player (gf::world::teleport)
 // and logged.
 
 #include <cstdio>
@@ -41,11 +41,11 @@ void teleportCommand(CommandOrigin const& origin, CommandOutput& output) {
     if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
     auto* player = commands::playerOf(origin);
     if (!player) return output.error(tr("commands.tffeature.teleport.player_only", "Command must be run by a player."));
-    auto twilight = world::twilight();
-    auto tfHeight = twilight ? heightOf(static_cast<int>(*twilight)) : std::nullopt;
-    if (!twilight || !tfHeight) return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
+    auto gloaming = world::gloaming();
+    auto tfHeight = gloaming ? heightOf(static_cast<int>(*gloaming)) : std::nullopt;
+    if (!gloaming || !tfHeight) return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable."));
     auto here = heightOf(static_cast<int>(player->getDimensionId()));
-    if (!here) return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
+    if (!here) return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable."));
     Vec3   pos        = player->getFeetPos();
     double yConverted = (pos.y - here->min) / static_cast<double>(here->max - here->min) * (tfHeight->max - tfHeight->min) + tfHeight->min;
     Vec3   teleportPos{pos.x, static_cast<float>(yConverted), pos.z};
@@ -54,13 +54,13 @@ void teleportCommand(CommandOrigin const& origin, CommandOutput& output) {
     if (blockY < tfHeight->min || blockY >= tfHeight->max || std::abs(pos.x) >= 30000000.0f || std::abs(pos.z) >= 30000000.0f) {
         return output.error(tr("commands.teleport.invalidPosition", "Invalid position for teleport"));
     }
-    if (!world::teleport(*player, *twilight, teleportPos, player->getRotation().y)) {
-        return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
+    if (!world::teleport(*player, *gloaming, teleportPos, player->getRotation().y)) {
+        return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable."));
     }
     output.success(trFor(
         *player,
         "commands.tffeature.teleport.success",
-        "Teleported to The Twilight Forest at %s %s %s",
+        "Teleported to The Gloaming Forest at %s %s %s",
         format1(teleportPos.x),
         format1(teleportPos.y),
         format1(teleportPos.z)

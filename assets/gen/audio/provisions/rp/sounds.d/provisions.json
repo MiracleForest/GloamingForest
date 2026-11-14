@@ -1,139 +1,139 @@
 {
-  "music_disc.twilightforest.findings": {
+  "music_disc.gloamingforest.findings": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/findings",
+        "name": "sounds/gloamingforest/provisions/music/findings",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.home": {
+  "music_disc.gloamingforest.home": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/home",
+        "name": "sounds/gloamingforest/provisions/music/home",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.maker": {
+  "music_disc.gloamingforest.maker": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/maker",
+        "name": "sounds/gloamingforest/provisions/music/maker",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.motion": {
+  "music_disc.gloamingforest.motion": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/motion",
+        "name": "sounds/gloamingforest/provisions/music/motion",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.radiance": {
+  "music_disc.gloamingforest.radiance": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/radiance",
+        "name": "sounds/gloamingforest/provisions/music/radiance",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.steps": {
+  "music_disc.gloamingforest.steps": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/steps",
+        "name": "sounds/gloamingforest/provisions/music/steps",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.superstitious": {
+  "music_disc.gloamingforest.superstitious": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/superstitious",
+        "name": "sounds/gloamingforest/provisions/music/superstitious",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.thread": {
+  "music_disc.gloamingforest.thread": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/thread",
+        "name": "sounds/gloamingforest/provisions/music/thread",
         "stream": true
       }
     ]
   },
-  "music_disc.twilightforest.wayfarer": {
+  "music_disc.gloamingforest.wayfarer": {
     "category": "record",
     "max_distance": 64,
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/wayfarer",
+        "name": "sounds/gloamingforest/provisions/music/wayfarer",
         "stream": true
       }
     ]
   },
-  "music.twilightforest.twilight_forest": {
+  "music.gloamingforest.gloaming_forest": {
     "category": "music",
     "sounds": [
       {
-        "name": "sounds/twilightforest/provisions/music/superstitious",
+        "name": "sounds/gloamingforest/provisions/music/superstitious",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/steps",
+        "name": "sounds/gloamingforest/provisions/music/steps",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/radiance",
+        "name": "sounds/gloamingforest/provisions/music/radiance",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/home",
+        "name": "sounds/gloamingforest/provisions/music/home",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/wayfarer",
+        "name": "sounds/gloamingforest/provisions/music/wayfarer",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/findings",
+        "name": "sounds/gloamingforest/provisions/music/findings",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/maker",
+        "name": "sounds/gloamingforest/provisions/music/maker",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/thread",
+        "name": "sounds/gloamingforest/provisions/music/thread",
         "volume": 0.5,
         "stream": true
       },
       {
-        "name": "sounds/twilightforest/provisions/music/motion",
+        "name": "sounds/gloamingforest/provisions/music/motion",
         "volume": 0.5,
         "stream": true
       }

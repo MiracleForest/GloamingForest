@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:charm_effect",
+      "identifier": "gloamingforest:charm_effect",
       "materials": {
         "default": "entity_alphatest"
       },

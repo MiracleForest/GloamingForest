@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:ur_ghast_trophy",
+      "identifier": "gloamingforest:ur_ghast_trophy",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:ur_ghast_trophy.name"
+        "value": "tile.gloamingforest:ur_ghast_trophy.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:ur_ghast_trophy",
+        "block": "gloamingforest:ur_ghast_trophy",
         "replace_block_item": true
       },
       "minecraft:wearable": {

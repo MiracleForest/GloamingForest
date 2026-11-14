@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:winter_wolf",
+      "identifier": "gloamingforest:winter_wolf",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/winterwolf"
+        "default": "textures/gloamingforest/entity/winterwolf"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.winter_wolf"

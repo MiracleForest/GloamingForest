@@ -164,7 +164,7 @@ GF_REGISTER_SELFTEST("core.blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(ctx.setBlock(pos, "minecraft:gold_block"), "set a vanilla block");
     co_await ctx.ticks(1);
     ctx.check(ctx.blockAt(pos) == "minecraft:gold_block", "block reads back");
-    ctx.check(gf::game::blockWith("twilightforest:no_such_block") == nullptr, "unknown block ids give nullptr");
+    ctx.check(gf::game::blockWith("gloamingforest:no_such_block") == nullptr, "unknown block ids give nullptr");
     auto const* stairs = gf::game::blockWithStates("minecraft:oak_stairs", {{"upside_down_bit", true}, {"weirdo_direction", 2}});
     ctx.require(stairs != nullptr, "states by name and value");
     auto states = gf::game::statesOf(*stairs);
@@ -184,7 +184,7 @@ GF_REGISTER_SELFTEST("core.players", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(a.getOrCreateUniqueID() == aId, "player() is still the first player after a tick");
     ctx.check(!a.getRealName().empty(), "the simulated player has a name");
     ctx.check(ctx.give("minecraft:diamond", 3) >= 0, "give(id, n) puts the item in the inventory");
-    ctx.check(ctx.give("twilightforest:no_such_item") < 0, "give refuses unknown items");
+    ctx.check(ctx.give("gloamingforest:no_such_item") < 0, "give refuses unknown items");
 });
 
 GF_REGISTER_SELFTEST("core.block_data", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -245,13 +245,13 @@ GF_REGISTER_SELFTEST("core.interactions", [](Context& ctx) -> ll::coro::CoroTask
     auto        high  = ia::onUseOn({.block = "minecraft:gold_block"}, [&](ia::UseOnContext const&) { order += "high,"; return ia::Result::Pass; }, ia::priority::High);
     auto        other = ia::onUseOn({.block = "minecraft:stone"}, [&](ia::UseOnContext const&) { order += "stone"; return ia::Result::Consume; });
     // tag matchers ask gf::tags (a stub until F9: nothing is tagged yet)
-    auto tagged = ia::onUseOn(ia::Match::tag("twilightforest:core_probe_tag"), [&](ia::UseOnContext const&) { order += "tag"; return ia::Result::Consume; }, ia::priority::Highest);
+    auto tagged = ia::onUseOn(ia::Match::tag("gloamingforest:core_probe_tag"), [&](ia::UseOnContext const&) { order += "tag"; return ia::Result::Consume; }, ia::priority::Highest);
     std::string       blockId = "minecraft:gold_block", itemId;
     auto const&       empty   = gf::game::items::empty();
     ia::UseOnContext  c{p, empty, itemId, block, blockId, pos, 1, {0.5, 1.0, 0.5}, false, true};
     auto              result = ia::dispatchUseOn(c);
     ctx.check(result == ia::Result::Consume && order == "high,low", "handlers run by priority until one takes the click (got " + order + ")");
-    ctx.check(!ia::matches(ia::Match::tag("twilightforest:core_probe_tag"), blockId, itemId), "untagged blocks don't match a tag");
+    ctx.check(!ia::matches(ia::Match::tag("gloamingforest:core_probe_tag"), blockId, itemId), "untagged blocks don't match a tag");
     ctx.check(ia::matches({.item = "minecraft:stick"}, blockId, "minecraft:stick") && !ia::matches({.emptyHand = true}, blockId, "minecraft:stick"), "item and empty-hand matchers");
     for (auto id : {low, high, other, tagged}) ia::remove(id);
     order.clear();

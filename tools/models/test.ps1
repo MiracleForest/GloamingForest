@@ -11,7 +11,7 @@
     per-face UV of fractional and mirrored cubes, unique bone names, extracts (wrapper rotation)
   - setupAnim -> Molang (look_at_target, the quadruped walk)
   - the three hard models (Hydra, Naga segment, Snow Queen) against values worked out by hand
-    from TF's Java code
+    from upstream's Java code
   - every committed geometry / animation / attachable: valid structure, unique bones, parents,
     UVs inside the texture; and convert.ps1 -Check reproduces the tree byte for byte
 
@@ -219,14 +219,14 @@ Test 'Bedrock euler angles of a rotation matrix round-trip' {
     }
 }
 
-Write-Host '[geo-test] the generator against TF 4.8'
+Write-Host '[geo-test] the generator against upstream 4.8'
 $gen = [Gf.Models.Generator]::new((Get-GfTfJavaRoot), (Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw))
 $gen.Run($null, $null, $null)
 $files = $gen.Files
 function Geo([string]$unit, [string]$name) { ($files["assets/gen/geo/$unit/rp/models/entity/$name.geo.json"] | ConvertFrom-Json).'minecraft:geometry'[0] }
 function BoneOf($geo, [string]$name) { $geo.bones | Where-Object name -eq $name }
 function BoneMap([string]$unit, [string]$name) { $files["assets/gen/geo/$unit/bones/$name.json"] | ConvertFrom-Json }
-Test 'every TF layer is registered and described (101 layers)' {
+Test 'every upstream layer is registered and described (101 layers)' {
     Eq $gen.Layers.Count 101
     Eq $gen.Errors.Count 0 ($gen.Errors -join '; ')
 }
@@ -252,7 +252,7 @@ Test 'Hydra (HydraModel.create): body, legs, three heads with jaws and frills, n
     Eq ((BoneOf $g 'left_leg').pivot -join ',') '-48,48,0'
 }
 Test 'vanilla skeleton names only in their vanilla family (rightArm in HumanoidModel, leg0..leg3 in QuadrupedModel)' {
-    # Minoshroom (a HumanoidModel): the humanoid names, but its quadruped legs keep TF's names (its
+    # Minoshroom (a HumanoidModel): the humanoid names, but its quadruped legs keep upstream's names (its
     # left_front_leg sits at -x, Bedrock's vanilla leg3 at +x)
     $m = @((Geo 'labyrinth' 'minoshroom').bones.name)
     foreach ($b in 'rightArm', 'leftArm', 'rightLeg', 'leftLeg', 'left_front_leg', 'right_front_leg', 'left_back_leg', 'right_back_leg') { if ($m -notcontains $b) { throw "minoshroom: no bone $b ($($m -join ','))" } }
@@ -298,13 +298,13 @@ Test 'Death tome: 0.005-deep pages get per-face UV (Bedrock box UV would floor t
 }
 Test 'setupAnim -> Molang: head look and the quadruped walk' {
     $a = $files['assets/gen/geo/fauna/rp/animations/bunny.base.json'] | ConvertFrom-Json
-    $bones = $a.animations.'animation.twilightforest.bunny.base'.bones
+    $bones = $a.animations.'animation.gloamingforest.bunny.base'.bones
     Eq ($bones.head.rotation -join '|') 'query.target_x_rotation|query.target_y_rotation|0'
     Eq $bones.leg1.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141'
 }
 Test 'setupAnim -> Molang: the hat under the head is not turned a second time' {
     $a = $files['assets/gen/geo/caves/rp/animations/yeti.base.json'] | ConvertFrom-Json
-    $bones = $a.animations.'animation.twilightforest.yeti.base'.bones
+    $bones = $a.animations.'animation.gloamingforest.yeti.base'.bones
     Eq ($bones.head.rotation -join '|') 'query.target_x_rotation|query.target_y_rotation|0'
     if ($bones.PSObject.Properties.Name -contains 'hat') { throw 'the hat (a child of the head) has its own copy of the head rotation' }
 }
@@ -400,7 +400,7 @@ public class TestZombie extends HumanoidModel<Zombie> {
 }
 Test 'setupAnim -> Molang: the real LoyalZombieModel keeps the raised arms (-80 degrees: isAggressive counts as false)' {
     $m = BoneMap 'artifacts' 'loyal_zombie'
-    $a = ($files['assets/gen/geo/artifacts/rp/animations/loyal_zombie.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.loyal_zombie.base'.bones
+    $a = ($files['assets/gen/geo/artifacts/rp/animations/loyal_zombie.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.loyal_zombie.base'.bones
     foreach ($arm in 'rightArm', 'leftArm') {
         if ($a.$arm.rotation[0] -notmatch '- 80$') { throw "$arm.xRot does not hold -PI / 2.25 (-80 degrees): $($a.$arm.rotation[0])" }
         if ($a.$arm.rotation[0] -notmatch 'variable\.attack_time') { throw "$arm.xRot lost the attack swing" }
@@ -417,14 +417,14 @@ Test 'setupAnim -> Molang: the Alpha Yeti and the Yeti walk and swing their arms
     foreach ($s in 'this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;', 'this.rightArm.xRot = -Mth.HALF_PI;', 'this.body.y = -6F;') {
         if ($m.setupAnim.translated -notcontains $s) { throw "alpha_yeti: '$s' is not translated" }
     }
-    $a = ($files['assets/gen/geo/caves/rp/animations/alpha_yeti.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.alpha_yeti.base'.bones
+    $a = ($files['assets/gen/geo/caves/rp/animations/alpha_yeti.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.alpha_yeti.base'.bones
     Eq $a.rightLeg.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141'
     if ($a.rightArm.rotation[0] -notmatch '- 90$') { throw "alpha_yeti rightArm.xRot is not -90 + swing: $($a.rightArm.rotation[0])" }
     $tired = @($m.setupAnim.todo | Where-Object { $_.java -eq 'if (entity.isTired()) {' })[0]
     if ($tired.affects -notcontains 'body.y' -or $tired.affects -notcontains 'rightArm.xRot') { throw "isTired affects $($tired.affects -join ',')" }
     $y = BoneMap 'caves' 'yeti'
     if ($y.setupAnim.translated -notcontains 'AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);') { throw 'yeti: bobArms is not translated' }
-    $ya = ($files['assets/gen/geo/caves/rp/animations/yeti.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.yeti.base'.bones
+    $ya = ($files['assets/gen/geo/caves/rp/animations/yeti.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.yeti.base'.bones
     Eq $ya.rightArm.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 57.2958 + math.sin(query.life_time * 76.7763) * 2.8648'
     foreach ($e in $y.setupAnim.todo) { if ($e.why -like 'its effect is not in the base animation*') { throw "yeti: $($e.java) lost" } }
 }
@@ -517,7 +517,7 @@ public class TestHat extends HumanoidModel<Zombie> {
     if ($t.Bones.PSObject.Properties.Name -contains 'hat') { throw "the hat (under the head) moves a second time: $($t.Bones.hat | ConvertTo-Json -Compress)" }
 }
 Test 'setupAnim -> Molang: catalog baseCase values (TrollModel pattern: ArmPose.EMPTY is fixed, the main arm is a case)' {
-    # TrollModel adds PI to an arm when the other arm pose is not EMPTY; TF's mobs keep EMPTY, so the base
+    # TrollModel adds PI to an arm when the other arm pose is not EMPTY; upstream's mobs keep EMPTY, so the base
     # animation must not raise the arms (the TrollModel pattern), and a comparison with EMPTY leaves no case
     $t = Translate-Test @'
 public class TestTroll extends HumanoidModel<Zombie> {
@@ -558,8 +558,8 @@ public class TestTroll2 extends HumanoidModel<Zombie> {
     if (-not (TodoOf $u 'if (this.leftArmPose').Case) { throw 'without baseCase the arm pose condition is not a case' }
 }
 Test 'setupAnim -> Molang: the real Troll and Upper Goblin Knight take ArmPose.EMPTY (arms at their sides, the shield arm held)' {
-    $a = ($files['assets/gen/geo/caves/rp/animations/troll.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.troll.base'.bones
-    # attackTime 0: the walk swing only (TF: no PI from the arm poses); attacking: x - PI * (1 - attackTime)
+    $a = ($files['assets/gen/geo/caves/rp/animations/troll.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.troll.base'.bones
+    # attackTime 0: the walk swing only (upstream: no PI from the arm poses); attacking: x - PI * (1 - attackTime)
     Eq $a.rightArm.rotation[0] '((variable.attack_time > 0) ? math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed - variable.attack_time * (-3.1416) - 3.1416 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed) * 57.2958 + math.sin(query.life_time * 76.7763) * 2.8648'
     $m = BoneMap 'caves' 'troll'
     foreach ($e in $m.setupAnim.todo) { if ($e.java -like '*ArmPose*') { throw "troll: $($e.java) is still a case" } }
@@ -567,7 +567,7 @@ Test 'setupAnim -> Molang: the real Troll and Upper Goblin Knight take ArmPose.E
     foreach ($e in $u.setupAnim.todo) { if ($e.java -like '*ArmPose*') { throw "upper_goblin_knight: $($e.java) is still a case" } }
     $shield = @($u.setupAnim.todo | Where-Object { $_.java -eq 'boolean hasShield = entity.hasShield();' })[0]
     if ($shield.why -notlike '*counts entity.hasShield() as true (*') { throw "hasShield: $($shield.why)" }
-    $ua = ($files['assets/gen/geo/stronghold/rp/animations/upper_goblin_knight.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.upper_goblin_knight.base'.bones
+    $ua = ($files['assets/gen/geo/stronghold/rp/animations/upper_goblin_knight.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.upper_goblin_knight.base'.bones
     # with the shield the left arm swings 0.2 (leftConstraint), and no '* 0.5 - PI / 10' of a non-EMPTY arm pose
     if ($ua.leftArm.rotation[0] -notmatch '\* 0\.2 ' -or $ua.leftArm.rotation[0] -match '- 18$') { throw "upper_goblin_knight leftArm.xRot: $($ua.leftArm.rotation[0])" }
     $lower = BoneMap 'stronghold' 'lower_goblin_knight'
@@ -644,7 +644,7 @@ public class TestLichArm extends HumanoidModel<Zombie> {
     if (-not $c.Case -or $c.Reason -notlike '*leftArm.zRot: the base animation takes the if branch, which sets it (query.life_time * 20 > 0 holds on every frame after the first)*') { throw "reason: $($c.Reason)" }
     Eq ($c.Affects -join ',') 'leftArm.zRot'
     if (@($t.Res.OverridesVanilla.Keys) -notcontains 'leftArm.zRot') { throw 'leftArm.zRot is not in overrides_vanilla' }
-    $lich = ($files['assets/gen/geo/lich/rp/animations/lich.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.lich.base'.bones
+    $lich = ($files['assets/gen/geo/lich/rp/animations/lich.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.lich.base'.bones
     Eq $lich.leftArm.rotation[2] 'math.cos(query.life_time * 297.938) * (-8.5944) + 25.7831' 'LichModel: 0.5 - (cos(age * 0.26) * 0.15 + 0.05)'
 }
 Test 'catalog baseCase: every entry is well-formed and used by a model' {
@@ -661,20 +661,20 @@ Test 'catalog baseCase: every entry is well-formed and used by a model' {
         foreach ($e in @($sa.todo)) { if ($e.why) { $texts.Add($e.why) } }
     }
     $all = $texts -join "`n"
-    $modelSrc = (Get-ChildItem (Join-Path (Get-GfTfJavaRoot) 'twilightforest/client/model/entity') -Filter *.java | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
+    $modelSrc = (Get-ChildItem (Join-Path (Get-GfTfJavaRoot) 'gloamingforest/client/model/entity') -Filter *.java | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
     foreach ($b in $gen.BaseCases) {
         $needle = if ($b.Fixed) { "catalog baseCase: $($b.Expr) is $($b.ValueText) on every frame" } else { " as $($b.ValueText) ($($b.Why))" }
         if ($all.Contains($needle)) { continue }
-        # read only off the base path (this.rightArmPose.isTwoHanded() for a left-handed mob): TF's models
+        # read only off the base path (this.rightArmPose.isTwoHanded() for a left-handed mob): upstream's models
         # must still use it
         $tail = ($b.Expr -replace '^(entity|this)\.', '') -replace '\(\*\)$', '('
         if (-not $modelSrc.Contains($tail)) { throw "baseCase $($b.Scope) / $($b.Expr) is not used by any model" }
     }
 }
-Test 'catalog.json carries the LGPL attribution of the TF code its extracts translate' {
+Test 'catalog.json carries the LGPL attribution of the upstream code its extracts translate' {
     $catalog = Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw | ConvertFrom-Json
     $attr = @($catalog.attribution)
-    if (-not ($attr -match 'Copyright \(c\) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors\.')) { throw 'no copyright line' }
+    if (-not ($attr -match 'Copyright \(c\) the upstream authors \(see NOTICE\)\.')) { throw 'no copyright line' }
     if (-not ($attr -match 'GNU Lesser General Public License v2\.1 or later')) { throw 'no licence line' }
     $raw = Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw
     $sources = @([regex]::Matches($raw, '"source":\s*"([^"]*)"') | ForEach-Object { $_.Groups[1].Value })
@@ -701,12 +701,12 @@ Test 'worn extracts never reuse the wearer''s bone names' {
 }
 Test 'worn trophies use their own item model''s head display (alpha yeti: 0 2 0 x1.5, Ur-Ghast: 0 18 0)' {
     $d = (BoneMap 'building' 'alpha_yeti_trophy_worn').item_display[0]
-    Eq $d.file 'src/generated/resources/assets/twilightforest/models/item/alpha_yeti_trophy.json'
+    Eq $d.file 'src/generated/resources/assets/gloamingforest/models/item/alpha_yeti_trophy.json'
     Eq ($d.translation -join ',') '0,2,0'; Eq ($d.scale -join ',') '1.5,1.5,1.5'; Eq ($d.rotation -join ',') '180,0,180'
     $u = (BoneMap 'building' 'ur_ghast_trophy_worn').item_display[0]
     Eq ($u.translation -join ',') '0,18,0'; Eq ($u.scale -join ',') '1.6,1.6,1.6'
     $n = (BoneMap 'building' 'naga_trophy_worn').item_display[0]
-    Eq $n.file 'src/main/resources/assets/twilightforest/models/item/template_trophy.json' 'naga_trophy.json has no display: its parent'
+    Eq $n.file 'src/main/resources/assets/gloamingforest/models/item/template_trophy.json' 'naga_trophy.json has no display: its parent'
     Eq ($n.translation -join ',') '0,6,0'
     # CustomHeadLayer (0.625) * head display: the Ur-Ghast body pivot is 12 px * 0.625 = 7.5 px higher than with the template's 6
     Eq ((BoneOf (Geo 'building' 'ur_ghast_trophy_worn') 'ur_ghast_trophy_worn_body').pivot -join ',') '0,27.25,0'
@@ -731,24 +731,24 @@ Test 'held forms: the left hand mirrors the right one (ItemTransform leftHand, I
 }
 Test 'one attachable per item draws each form in its slot (head, main hand, off hand)' {
     $a = ($files['assets/gen/geo/building/rp/attachables/knight_phantom_trophy.json'] | ConvertFrom-Json).'minecraft:attachable'.description
-    Eq (@($a.geometry.PSObject.Properties.Value) -join ',') 'geometry.twilightforest.knight_phantom_trophy_worn,geometry.twilightforest.knight_phantom_trophy_worn_armor,geometry.twilightforest.knight_phantom_trophy_held,geometry.twilightforest.knight_phantom_trophy_held_armor,geometry.twilightforest.knight_phantom_trophy_held_left,geometry.twilightforest.knight_phantom_trophy_held_left_armor'
+    Eq (@($a.geometry.PSObject.Properties.Value) -join ',') 'geometry.gloamingforest.knight_phantom_trophy_worn,geometry.gloamingforest.knight_phantom_trophy_worn_armor,geometry.gloamingforest.knight_phantom_trophy_held,geometry.gloamingforest.knight_phantom_trophy_held_armor,geometry.gloamingforest.knight_phantom_trophy_held_left,geometry.gloamingforest.knight_phantom_trophy_held_left_armor'
     $cond = @($a.render_controllers | ForEach-Object { $_.PSObject.Properties.Value })
     Eq ($cond -join '|') "c.item_slot == 'head'|c.item_slot == 'head'|c.item_slot == 'main_hand'|c.item_slot == 'main_hand'|c.item_slot == 'off_hand'|c.item_slot == 'off_hand'"
     Eq $a.materials.enchanted 'entity_alphatest_glint'
     $s = ($files['assets/gen/geo/weapons/rp/attachables/knightmetal_shield.json'] | ConvertFrom-Json).'minecraft:attachable'.description
-    Eq (@($s.geometry.PSObject.Properties.Value) -join ',') 'geometry.twilightforest.knightmetal_shield_held,geometry.twilightforest.knightmetal_shield_held_left'
+    Eq (@($s.geometry.PSObject.Properties.Value) -join ',') 'geometry.gloamingforest.knightmetal_shield_held,geometry.gloamingforest.knightmetal_shield_held_left'
 }
 Test 'the Ur-Ghast trophies wave their tentacles (waveTentacles on the trophy clock, 0 at tick 0)' {
     foreach ($n in 'ur_ghast_trophy', 'ur_ghast_wall_trophy', 'ur_ghast_trophy_worn', 'ur_ghast_trophy_held', 'ur_ghast_trophy_held_left') {
-        $a = ($files["assets/gen/geo/building/rp/animations/$n.base.json"] | ConvertFrom-Json).animations."animation.twilightforest.$n.base"
+        $a = ($files["assets/gen/geo/building/rp/animations/$n.base.json"] | ConvertFrom-Json).animations."animation.gloamingforest.$n.base"
         if (-not $a) { throw "no animation for $n" }
         Eq @($a.bones.PSObject.Properties).Count 36 "$n animates 9 tentacles x 4 parts"
     }
-    $b = ($files['assets/gen/geo/building/rp/animations/ur_ghast_trophy.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.ur_ghast_trophy.base'.bones
+    $b = ($files['assets/gen/geo/building/rp/animations/ur_ghast_trophy.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.ur_ghast_trophy.base'.bones
     # tentacle 0: xRot = 0.2 + cos(0.9 t / 2 * 0.3335) * 0.15 (t ticks = life_time * 20), minus the bind pose 0.35 rad
     Eq $b.tentacle_0.rotation[0] 'math.cos(query.life_time * 171.9733) * 8.5944 - 8.5943'
     $att = ($files['assets/gen/geo/building/rp/attachables/ur_ghast_trophy.json'] | ConvertFrom-Json).'minecraft:attachable'.description
-    Eq $att.animations.held 'animation.twilightforest.ur_ghast_trophy_held.base'
+    Eq $att.animations.held 'animation.gloamingforest.ur_ghast_trophy_held.base'
 }
 Test 'every converted entity layer has a base animation (a stub when nothing translates)' {
     $index = $files['assets/gen/geo/models/data/gf/models/index.json'] | ConvertFrom-Json
@@ -760,7 +760,7 @@ Test 'every converted entity layer has a base animation (a stub when nothing tra
         if (-not $anims.ContainsKey("$id.base")) { throw "no base animation for $($g.identifier)" }
         Eq $g.animation "$id.base" $g.identifier
     }
-    $stub = ($files['assets/gen/geo/weapons/rp/animations/chain.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.chain.base'
+    $stub = ($files['assets/gen/geo/weapons/rp/animations/chain.base.json'] | ConvertFrom-Json).animations.'animation.gloamingforest.chain.base'
     Eq $stub.loop $true; Eq (@($stub.bones.PSObject.Properties.Name) -join ',') 'chain' 'a stub (Bedrock rejects an empty bones object)'
     Eq ($stub.bones.chain.rotation -join ',') '0,0,0'
 }
@@ -793,13 +793,13 @@ Test 'Select: -Java / -Item pick the files of one model class / item from the fu
     if (-not ($hydra -contains 'assets/gen/geo/hydra/rp/models/entity/hydra.geo.json')) { throw 'HydraModel does not select hydra.geo.json' }
     $other = @($hydra | Where-Object { $_ -notlike 'assets/gen/geo/hydra/*' })
     if ($other) { throw "HydraModel selects files of other units: $($other -join ', ')" }
-    $shield = @($gen.Select($null, 'twilightforest:knightmetal_shield'))
+    $shield = @($gen.Select($null, 'gloamingforest:knightmetal_shield'))
     Eq ($shield -join ',') 'assets/gen/geo/weapons/bones/knightmetal_shield.json,assets/gen/geo/weapons/bones/knightmetal_shield_held.json,assets/gen/geo/weapons/bones/knightmetal_shield_held_left.json,assets/gen/geo/weapons/rp/attachables/knightmetal_shield.json,assets/gen/geo/weapons/rp/models/entity/knightmetal_shield.geo.json,assets/gen/geo/weapons/rp/models/entity/knightmetal_shield_held.geo.json,assets/gen/geo/weapons/rp/models/entity/knightmetal_shield_held_left.geo.json'
 }
 Test 'Write-GfModelsFiles: -Unit with a -Java / -Item selection writes only the selected files of that partition' {
     $tmp = Join-Path ([IO.Path]::GetTempPath()) "gf-geo-test-$PID"
     try {
-        $r = @{ Files = [ordered]@{}; Selected = @($gen.Select($null, 'twilightforest:fiery_helmet')) }
+        $r = @{ Files = [ordered]@{}; Selected = @($gen.Select($null, 'gloamingforest:fiery_helmet')) }
         foreach ($k in $files.Keys) { $r.Files[$k] = $files[$k] }
         $w = Write-GfModelsFiles $r -Unit 'armory' -Out $tmp
         $written = @(Get-ChildItem $tmp -Recurse -File | ForEach-Object { [IO.Path]::GetRelativePath($tmp, $_.FullName).Replace('\', '/') } | Sort-Object)

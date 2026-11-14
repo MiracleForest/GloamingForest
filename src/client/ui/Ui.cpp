@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/LockedBiomeToast.java
-//   src/main/java/twilightforest/client/MissingAdvancementToast.java
-//   src/main/java/twilightforest/client/UncraftingScreen.java (container screen layout)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/LockedBiomeToast.java
+//   src/main/java/gloamingforest/client/MissingAdvancementToast.java
+//   src/main/java/gloamingforest/client/UncraftingScreen.java (container screen layout)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Client half of "client.ui" (F12). Client build only.
 //
-// - ContainerScreen: TF's container GUIs (AbstractContainerScreen): the GUI texture ("skin") drawn
+// - ContainerScreen: upstream's container GUIs (AbstractContainerScreen): the GUI texture ("skin") drawn
 //   1:1 at the panel with Java's blit, the title at Java's (8, 6) in 0x404040, the container slots
-//   at their Java positions and, as TF's textures include it, the player's inventory at
+//   at their Java positions and, as upstream's textures include it, the player's inventory at
 //   (8, height - 82) with its label at (8, height - 94).
 // - hud: layers drawn after the vanilla HUD (ll AfterUIRenderEvent on "hud_screen").
-// - toast: TF's toasts (LockedBiomeToast, MissingAdvancementToast) in Java's ToastComponent: 160 x
+// - toast: upstream's toasts (LockedBiomeToast, MissingAdvancementToast) in Java's ToastComponent: 160 x
 //   32 at the top right over every screen, 5 slots (a toast keeps the slot it got; more wait in a
 //   queue), 600 ms slide in / out with the in / out sound (Bedrock's UI toast sound), item at
 //   (6, 8), title at (25, 7) and body at (25, 18) in the toast's colours (LockedBiomeToast: -256 and
@@ -90,7 +90,7 @@ namespace gf::client {
 
 namespace {
 
-/// A key from the mod's translations (assets/lang + TF's imported lang), then the game's own
+/// A key from the mod's translations (assets/lang + upstream's imported lang), then the game's own
 /// (resource pack texts), else the key itself.
 std::string translateAny(std::string const& key) {
     if (key.empty()) return {};
@@ -326,7 +326,7 @@ private:
 
 Rect slotRect(float x, float y) { return Rect{x, y, 16, 16}; }
 
-/// Java's player inventory inside a TF skin: main rows at y = height - 82, hotbar at height - 24.
+/// Java's player inventory inside an upstream skin: main rows at y = height - 82, hotbar at height - 24.
 Rect inventoryRect(ContainerScreen const& s, int slot) {
     float top = s.height - 82;
     if (slot >= 9) return slotRect(8 + static_cast<float>((slot - 9) % 9) * 18, top + static_cast<float>((slot - 9) / 9) * 18);

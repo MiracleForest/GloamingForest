@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:wrought_iron_bar",
+      "identifier": "gloamingforest:wrought_iron_bar",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:wrought_iron_bar.name"
+        "value": "item.gloamingforest:wrought_iron_bar.name"
       },
       "minecraft:tags": {
         "tags": ["c:ingots/wrought_iron"]

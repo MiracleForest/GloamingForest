@@ -55,7 +55,7 @@ Store& store() {
 /// Java's jukebox song volume (JukeboxSongPlayer: 4, i.e. heard within 64 blocks).
 constexpr float kVolume = 4.0f;
 
-/// The sound definition name fx plays for a TF event ("twilightforest:music_disc.x" -> "music_disc.x").
+/// The sound definition name fx plays for an upstream event ("gloamingforest:music_disc.x" -> "music_disc.x").
 std::string definitionName(std::string const& event) {
     auto colon = event.find(':');
     return colon == std::string::npos ? event : event.substr(colon + 1);

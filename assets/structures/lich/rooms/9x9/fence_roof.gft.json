@@ -1,17 +1,17 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/9x9/fence_roof",
+  "id": "gloamingforest:lich_tower/9x9/fence_roof",
   "size": [11, 3, 11],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:stone_bricks"},
-    {"Name":"twilightforest:canopy_planks"},
-    {"Name":"twilightforest:canopy_fence"},
-    {"Name":"twilightforest:wrought_iron_fence","Properties":{"post":"post"}},
-    {"Name":"twilightforest:wrought_iron_fence","Properties":{"post":"capped"}},
-    {"Name":"twilightforest:brazier","Properties":{"half":"lower","light":"off"}},
-    {"Name":"twilightforest:brazier","Properties":{"half":"upper","light":"off"}}
+    {"Name":"gloamingforest:canopy_planks"},
+    {"Name":"gloamingforest:canopy_fence"},
+    {"Name":"gloamingforest:wrought_iron_fence","Properties":{"post":"post"}},
+    {"Name":"gloamingforest:wrought_iron_fence","Properties":{"post":"capped"}},
+    {"Name":"gloamingforest:brazier","Properties":{"half":"lower","light":"off"}},
+    {"Name":"gloamingforest:brazier","Properties":{"half":"upper","light":"off"}}
   ],
   "blocks": [
     [1, 12], [2, 9], [1, 2], [2, 9], [1, 2], [2, 9], [1, 2], [2, 9], [1, 2], [2, 9], [1, 2], [2, 9], [1, 2], [2, 9], [1, 2], [2, 9],

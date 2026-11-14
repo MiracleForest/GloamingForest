@@ -9,7 +9,7 @@
 //   - PerlinNoise     ...synth.PerlinNoise (octaves; legacy and modern seeding)
 //   - NormalNoise     ...synth.NormalNoise (two PerlinNoise, NoiseParameters)
 //   - Density         a compiled density function tree (vanilla density functions plus the ones
-//                     TF registers: forested_terrain, raw_biome_noise, raw_biome_terrain,
+//                     upstream registers: forested_terrain, raw_biome_noise, raw_biome_terrain,
 //                     skylight_terrain, box / focused / absolute difference / sqrt / tanh hill /
 //                     hollow hill), built from worldgen JSON.
 //
@@ -90,14 +90,14 @@ struct DensityPoint {
 /// A compiled density function (DensityFunction).
 class Density {
 public:
-    /// Resolves noise / density references by id ("minecraft:..." or "twilightforest:...").
+    /// Resolves noise / density references by id ("minecraft:..." or "gloamingforest:...").
     struct Resolver {
         std::function<std::optional<NoiseParameters>(std::string const& noiseId)>   noise;
         std::function<std::optional<nlohmann::json>(std::string const& densityId)> density;
     };
     /// Builds a density function from its worldgen JSON for `seed` (nullopt: unknown type).
     [[nodiscard]] static std::optional<Density> fromJson(nlohmann::json const& json, std::int64_t seed, Resolver const& resolver);
-    /// A custom density type ("twilightforest:forested_terrain" ...), registered by its owner
+    /// A custom density type ("gloamingforest:forested_terrain" ...), registered by its owner
     /// (U2): `build` receives the type's JSON and returns the evaluator.
     using Evaluator = std::function<double(DensityPoint const&)>;
     using Builder   = std::function<Evaluator(nlohmann::json const& json, std::int64_t seed, Resolver const& resolver)>;

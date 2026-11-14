@@ -2,35 +2,35 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_vest/arrow_magnetism_modifier"
+      "identifier": "gloamingforest:add_modifier_to_travellers_gear/travellers_vest/arrow_magnetism_modifier"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:exanimate_essence"
+        "item": "gloamingforest:exanimate_essence"
       },
       {
-        "item": "twilightforest:ore_magnet"
+        "item": "gloamingforest:ore_magnet"
       },
       {
-        "item": "twilightforest:liveroot"
+        "item": "gloamingforest:liveroot"
       },
       {
         "item": "minecraft:chicken"
       },
       {
-        "item": "twilightforest:travellers_vest"
+        "item": "gloamingforest:travellers_vest"
       }
     ],
     "unlock": [
       {
-        "item": "twilightforest:travellers_vest"
+        "item": "gloamingforest:travellers_vest"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_vest"
+      "item": "gloamingforest:travellers_vest"
     }
   }
 }

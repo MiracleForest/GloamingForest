@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:cod_jerky",
+      "identifier": "gloamingforest:cod_jerky",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:cod_jerky.name"
+        "value": "item.gloamingforest:cod_jerky.name"
       },
       "minecraft:tags": {
         "tags": ["c:foods", "c:foods/jerky"]

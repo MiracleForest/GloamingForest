@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/LightableBlock.java
-//   src/main/java/twilightforest/block/AbstractSkullCandleBlock.java (CandleColors)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/LightableBlock.java
+//   src/main/java/gloamingforest/block/AbstractSkullCandleBlock.java (CandleColors)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -39,7 +39,7 @@ namespace gf::feature::lichdecor::light {
 
 namespace {
 
-/// TF's CandleColors in value order (0 plain .. 16 brown).
+/// upstream's CandleColors in value order (0 plain .. 16 brown).
 constexpr std::array<std::string_view, 17> kTfColors{"",     "white", "light_gray", "gray", "black",  "red",    "orange",  "yellow", "green",
                                                      "lime", "blue",  "cyan",       "light_blue", "purple", "magenta", "pink", "brown"};
 
@@ -176,8 +176,8 @@ void registerLightable() {
     };
     ia::onDestroy({.block = kCandelabra}, stashIt, ia::priority::Fallback);
     for (char const* type : {"zombie", "skeleton", "wither_skeleton", "creeper", "player", "piglin"}) {
-        ia::onDestroy({.block = std::string("twilightforest:") + type + "_skull_candle"}, stashIt, ia::priority::Fallback);
-        ia::onDestroy({.block = std::string("twilightforest:") + type + "_wall_skull_candle"}, stashIt, ia::priority::Fallback);
+        ia::onDestroy({.block = std::string("gloamingforest:") + type + "_skull_candle"}, stashIt, ia::priority::Fallback);
+        ia::onDestroy({.block = std::string("gloamingforest:") + type + "_wall_skull_candle"}, stashIt, ia::priority::Fallback);
     }
 }
 

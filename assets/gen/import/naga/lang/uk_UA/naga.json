@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.naga": "Наґа",
-  "item.twilightforest.naga_spawn_egg": "Яйце виклику наґи",
-  "subtitles.twilightforest.entity.naga.hiss": "Наґа шипить",
-  "subtitles.twilightforest.entity.naga.hurt": "Наґу поранено",
-  "subtitles.twilightforest.entity.naga.rattle": "Наґа бряжчить"
+  "entity.gloamingforest.naga": "Наґа",
+  "item.gloamingforest.naga_spawn_egg": "Яйце виклику наґи",
+  "subtitles.gloamingforest.entity.naga.hiss": "Наґа шипить",
+  "subtitles.gloamingforest.entity.naga.hurt": "Наґу поранено",
+  "subtitles.gloamingforest.entity.naga.rattle": "Наґа бряжчить"
 }

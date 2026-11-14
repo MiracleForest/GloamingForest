@@ -2,16 +2,16 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:maze_slime",
+      "identifier": "gloamingforest:maze_slime",
       "materials": {
         "default": "entity_alphatest",
         "outer": "entity_alphablend"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/mazeslime"
+        "default": "textures/gloamingforest/entity/mazeslime"
       },
       "geometry": {
-        "default": "geometry.twilightforest.maze_slime"
+        "default": "geometry.gloamingforest.maze_slime"
       },
       "scripts": {
         "initialize": [
@@ -31,9 +31,9 @@
         "animate": ["squish"]
       },
       "animations": {
-        "squish": "animation.twilightforest.maze_slime.squish"
+        "squish": "animation.gloamingforest.maze_slime.squish"
       },
-      "render_controllers": ["controller.render.twilightforest.maze_slime"],
+      "render_controllers": ["controller.render.gloamingforest.maze_slime"],
       "spawn_egg": {
         "base_color": "#a3a3a3",
         "overlay_color": "#2a3b17"

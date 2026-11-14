@@ -1,24 +1,24 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFDimensionData.java
-//   src/main/java/twilightforest/init/TFDensityFunctions.java
-//   src/main/java/twilightforest/init/custom/ChunkBlanketProcessors.java
-//   src/main/java/twilightforest/asmhooks/WorldgenHooks.java
-//   src/main/java/twilightforest/world/components/placements/ChunkBlanketingModifier.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainDensityRouter.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/NoiseDensityRouter.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFDimensionData.java
+//   src/main/java/gloamingforest/init/TFDensityFunctions.java
+//   src/main/java/gloamingforest/init/custom/ChunkBlanketProcessors.java
+//   src/main/java/gloamingforest/asmhooks/WorldgenHooks.java
+//   src/main/java/gloamingforest/world/components/placements/ChunkBlanketingModifier.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainDensityRouter.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/NoiseDensityRouter.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U2 (terrain): the Twilight Forest's noise terrain, surface rules and chunk blankets as F5
-// providers (setTerrain, setSurface, registerBlanket), TF's density function types for F5's
+// U2 (terrain): the Gloaming Forest's noise terrain, surface rules and chunk blankets as F5
+// providers (setTerrain, setSurface, registerBlanket), upstream's density function types for F5's
 // Density, the landmark height provider (F6 ext::setHeightProvider), the chunk_blanketing
 // placement modifier and the Skylight preset (config section "terrain", kept per world in
 // gf:terrain:skylight).
 //
 // Java order kept: NoiseBasedChunkGenerator#fillFromNoise (density = final_density + beardifier,
-// TF's WorldgenHooks#getCustomDensity adding the structure terraformers to the beardifier), then
+// upstream's WorldgenHooks#getCustomDensity adding the structure terraformers to the beardifier), then
 // SurfaceSystem#buildSurface, then ChunkBlanketProcessors#chunkBlanketing (F5 runs the Blanket
 // stage right after the surface), then the carvers (Carvers.cpp).
 #include "feature/terrain/Terrain.h"
@@ -78,7 +78,7 @@ namespace kit = gf::features::kit;
 namespace {
 
 constexpr char kSkylightKey[] = "gf:terrain:skylight";
-constexpr char kBlanketId[]   = "twilightforest:chunk_blanketing";
+constexpr char kBlanketId[]   = "gloamingforest:chunk_blanketing";
 
 Json readJson(fs::path const& p) {
     std::ifstream in(p, std::ios::binary);
@@ -101,7 +101,7 @@ std::atomic<int>& skylightFlag() { // -1 unknown, 0 / 1
     return v;
 }
 
-/// The game chunks of the Twilight Forest this session generated before the world's preset was known
+/// The game chunks of the Gloaming Forest this session generated before the world's preset was known
 /// (by dimension and position; in-memory passes are none): the saved-chunk check must not take them
 /// (saved already, perhaps) for an older world's.
 std::mutex& provisionalChunksMutex() {
@@ -151,10 +151,10 @@ Data const& data() {
             return out;
         }
         std::error_code ec;
-        auto tf          = root / "twilightforest";
-        out.twilight     = readJson(tf / "worldgen/noise_settings/twilight_noise_gen.json");
+        auto tf          = root / "gloamingforest";
+        out.gloaming     = readJson(tf / "worldgen/noise_settings/gloaming_noise_gen.json");
         out.skylight     = readJson(tf / "worldgen/noise_settings/skylight_noise_gen.json");
-        out.biomeGrid    = readJson(tf / "twilight/biome_terrain_data/biome_grid.json");
+        out.biomeGrid    = readJson(tf / "gloaming/biome_terrain_data/biome_grid.json");
         for (auto const& ns : fs::directory_iterator(root, ec)) {
             if (!ns.is_directory()) continue;
             auto nsName = ns.path().filename().string();
@@ -165,7 +165,7 @@ Data const& data() {
                     auto rel = fs::relative(f.path(), dir, ec).generic_string();
                     out.densities[nsName + ":" + rel.substr(0, rel.size() - 5)] = readJson(f.path());
                 }
-            auto bdir = ns.path() / "twilight/chunk_blanket_processors";
+            auto bdir = ns.path() / "gloaming/chunk_blanket_processors";
             if (fs::is_directory(bdir, ec))
                 for (auto const& f : fs::directory_iterator(bdir, ec)) {
                     if (!f.is_regular_file() || f.path().extension() != ".json") continue;
@@ -183,7 +183,7 @@ TerrainColumn const* State::columnAt(int quartX, int quartZ) const {
     auto id = worldgen::mainBiomeAt(core::mth::toBlock(quartX), core::mth::toBlock(quartZ));
     if (auto const* c = grid.column(id)) return c;
     // no biome source (U1 not registered) or a biome outside the grid: the forest's column
-    return grid.column("twilightforest:forest");
+    return grid.column("gloamingforest:forest");
 }
 
 std::string const& State::noiseBiome(int quartX, int quartY, int quartZ) const {
@@ -204,7 +204,7 @@ std::shared_ptr<State const> makeState(std::int64_t seed, bool skylight) {
     auto const& d = data();
     s->grid       = TerrainGrid::fromJson(d.biomeGrid);
     if (s->grid.empty()) {
-        s->error = "biome_terrain_data/twilightforest:biome_grid is missing";
+        s->error = "biome_terrain_data/gloamingforest:biome_grid is missing";
         return s;
     }
     Density::Resolver r;
@@ -213,7 +213,7 @@ std::shared_ptr<State const> makeState(std::int64_t seed, bool skylight) {
         if (it == d.densities.end()) return std::nullopt;
         return it->second;
     };
-    auto const& settings = skylight ? d.skylight : d.twilight;
+    auto const& settings = skylight ? d.skylight : d.gloaming;
     s->gen               = Generator::create(settings, seed, r, s->table, &s->error);
     if (!s->gen) return s;
     for (auto const& [id, json] : d.blankets)
@@ -286,7 +286,7 @@ bool skylightWorld() {
     if (v >= 0) return v == 1;
     // The world's preset is read on the server thread when the world is ready (the world DB is
     // server-thread only). A chunk generated before that (a client loading a world whose player
-    // stands in the Twilight Forest) waits a little for it, then uses the config's preset and
+    // stands in the Gloaming Forest) waits a little for it, then uses the config's preset and
     // remembers it, so onWorldReady keeps a new world consistent with those chunks.
     if (int p = provisionalFlag().load(); p >= 0) return p == 1; // waited once already
     std::unique_lock lock(flagMutex());
@@ -305,7 +305,7 @@ bool skylightWorld() {
     if (int p = provisionalFlag().load(); p >= 0) return p == 1;
     bool sky          = config::get<TerrainConfig>().skylight;
     provisionalFlag() = sky ? 1 : 0;
-    gf::log().warn("terrain: a chunk generates before the world's preset is known: {} (config) for now", sky ? "skylight" : "twilight");
+    gf::log().warn("terrain: a chunk generates before the world's preset is known: {} (config) for now", sky ? "skylight" : "gloaming");
     return sky;
 }
 
@@ -322,7 +322,7 @@ std::shared_ptr<State const> state() {
     }
     auto s = makeState(seed, skylight);
     if (!s->gen || !s->stone) gf::log().error("terrain: the generator cannot be built: {}", s->error.empty() ? "default block unknown" : s->error);
-    else gf::log().info("terrain: generator ready (seed {}, {})", seed, skylight ? "skylight" : "twilight_noise_gen");
+    else gf::log().info("terrain: generator ready (seed {}, {})", seed, skylight ? "skylight" : "gloaming_noise_gen");
     std::lock_guard lock(stateMutex());
     cachedState() = s;
     return s->gen && s->stone ? s : nullptr;
@@ -490,8 +490,8 @@ struct StageTimer {
     ~StageTimer() { tChunkMs += threadCpuMs() - start; }
 };
 
-int twilightDim() {
-    if (auto t = gf::world::twilight()) return static_cast<int>(*t);
+int gloamingDim() {
+    if (auto t = gf::world::gloaming()) return static_cast<int>(*t);
     return -1;
 }
 } // namespace
@@ -712,9 +712,9 @@ void terrainProvider(worldgen::Chunk& chunk) {
     StageTimer timer;
     auto       s = state();
     if (!s) return;
-    int dim = twilightDim();
+    int dim = gloamingDim();
     if (skylightFlag().load() < 0 && dim >= 0) {
-        // only the game's own Twilight Forest chunks (an in-memory pass is never saved)
+        // only the game's own Gloaming Forest chunks (an in-memory pass is never saved)
         if (auto d = gf::terrain::ext::gameChunkDimension(chunk); d && *d == dim) {
             std::lock_guard lock(provisionalChunksMutex());
             provisionalChunks().insert({dim, chunk.chunkX(), chunk.chunkZ()});
@@ -723,7 +723,7 @@ void terrainProvider(worldgen::Chunk& chunk) {
     ChunkColumns cols(*s, chunk.chunkX(), chunk.chunkZ());
     // the beardifier: Beardifier#forStructuresInChunk (NeoForge: each piece's
     // PieceBeardifierModifier, else its box with the structure's adaptation) plus
-    // WorldgenHooks#getCustomDensity (the TF terraformers)
+    // WorldgenHooks#getCustomDensity (the upstream terraformers)
     ExtraDensity extra;
     if (dim >= 0) {
         auto rigid = beardRigids(dim, chunk.chunkX(), chunk.chunkZ());
@@ -735,7 +735,7 @@ void terrainProvider(worldgen::Chunk& chunk) {
                 return t ? d0 + t(x, y, z) : d0;
             };
     }
-    // the grid spans the chunk and the noise (the Twilight Forest's chunks reach y 256, the noise
+    // the grid spans the chunk and the noise (the Gloaming Forest's chunks reach y 256, the noise
     // settings stop at 224: air above, as Java's ProtoChunk holds it)
     auto shape = s->gen->shape();
     int  lo = std::min(shape.minY, chunk.minY()), hi = std::max(shape.minY + shape.height, chunk.maxY());
@@ -793,7 +793,7 @@ void blanketProvider(worldgen::Chunk& chunk, worldgen::Region&) {
     Grid before(chunk.minY(), chunk.maxY() - chunk.minY());
     if (!takeHandedGrid(*s, chunk, 1, before)) readGrid(*s, chunk, before);
     Grid after = before;
-    int  dim   = twilightDim();
+    int  dim   = gloamingDim();
     s->blankets.apply(
         chunk.chunkX(), chunk.chunkZ(), after, s->table, biomes,
         [&](int x, int y, int z) -> std::string const& { return cols.blockBiome(x, y, z); },
@@ -825,8 +825,8 @@ std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan, ChunkLook
         if (isProvisionalChunk(dim, x, z)) return false; // this session's, not an older world's
         return lookup(x, z);
     };
-    // the chunks a Twilight Forest is entered by first: around its origin, and around where a portal
-    // at the world spawn leads (F4: Twilight Forest = overworld / coordinateScale), nearest first
+    // the chunks a Gloaming Forest is entered by first: around its origin, and around where a portal
+    // at the world spawn leads (F4: Gloaming Forest = overworld / coordinateScale), nearest first
     BlockPos const& spawn         = level->getDefaultSpawn();
     double          toTf          = 1.0 / gf::world::coordinateScale();
     std::array<std::array<int, 2>, 3> const centres{{
@@ -859,27 +859,27 @@ std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan, ChunkLook
 
 namespace {
 
-// ---- F5 Density: TF's types for other users of core/noise ----------------------------------------------
+// ---- F5 Density: upstream's types for other users of core/noise ----------------------------------------------
 
 void registerDensityTypes() {
     using NDensity = gf::core::noise::Density;
     auto num = [](Json const& j, char const* k) { return j.contains(k) && j[k].is_number() ? j[k].get<double>() : 0.0; };
-    NDensity::registerType("twilightforest:focused", [num](Json const& j, std::int64_t, NDensity::Resolver const&) -> NDensity::Evaluator {
+    NDensity::registerType("gloamingforest:focused", [num](Json const& j, std::int64_t, NDensity::Resolver const&) -> NDensity::Evaluator {
         Focused f{static_cast<float>(num(j, "x_center")), static_cast<float>(num(j, "y_bottom")), static_cast<float>(num(j, "z_center")),
                   static_cast<float>(num(j, "radius")),   static_cast<float>(num(j, "near_value")), static_cast<float>(num(j, "far_value"))};
         return [f](gf::core::noise::DensityPoint const& p) { return f.compute(p.blockX, p.blockY, p.blockZ); };
     });
-    NDensity::registerType("twilightforest:hollow_hill", [num](Json const& j, std::int64_t, NDensity::Resolver const&) -> NDensity::Evaluator {
+    NDensity::registerType("gloamingforest:hollow_hill", [num](Json const& j, std::int64_t, NDensity::Resolver const&) -> NDensity::Evaluator {
         HollowHill h{static_cast<float>(num(j, "x_center")), static_cast<float>(num(j, "y_bottom")), static_cast<float>(num(j, "z_center")),
                      static_cast<float>(num(j, "radius")),   static_cast<float>(num(j, "height_scale"))};
         return [h](gf::core::noise::DensityPoint const& p) { return h.compute(p.blockX, p.blockY, p.blockZ); };
     });
     for (bool isMax : {false, true})
-        NDensity::registerType(isMax ? "twilightforest:coord_max" : "twilightforest:coord_min", [num, isMax](Json const& j, std::int64_t, NDensity::Resolver const&) -> NDensity::Evaluator {
+        NDensity::registerType(isMax ? "gloamingforest:coord_max" : "gloamingforest:coord_min", [num, isMax](Json const& j, std::int64_t, NDensity::Resolver const&) -> NDensity::Evaluator {
             AbsoluteDifference a{isMax, num(j, "max"), num(j, "x_center"), num(j, "z_center")};
             return [a](gf::core::noise::DensityPoint const& p) { return a.compute(p.blockX, p.blockZ); };
         });
-    NDensity::registerType("twilightforest:sqrt", [](Json const& j, std::int64_t seed, NDensity::Resolver const& r) -> NDensity::Evaluator {
+    NDensity::registerType("gloamingforest:sqrt", [](Json const& j, std::int64_t seed, NDensity::Resolver const& r) -> NDensity::Evaluator {
         auto in = NDensity::fromJson(j.contains("input") ? j["input"] : Json(), seed, r);
         if (!in) return {};
         return [in = *in](gf::core::noise::DensityPoint const& p) { return std::sqrt(in.compute(p)); };
@@ -891,13 +891,13 @@ void registerDensityTypes() {
     // inline function or a reference) compiled with the seed the evaluator is built for
     auto grid = std::make_shared<TerrainGrid const>(TerrainGrid::fromJson(data().biomeGrid));
     for (bool terrain : {true, false})
-        NDensity::registerType(terrain ? "twilightforest:biome_driven_terrain" : "twilightforest:biome_driven_noise",
+        NDensity::registerType(terrain ? "gloamingforest:biome_driven_terrain" : "gloamingforest:biome_driven_noise",
                                [terrain, grid](Json const& j, std::int64_t seed, NDensity::Resolver const& r) -> NDensity::Evaluator {
             if (grid->empty()) return {};
             auto columnAt = [grid](int qx, int qz) -> TerrainColumn const* {
                 auto id = worldgen::mainBiomeAt(core::mth::toBlock(qx), core::mth::toBlock(qz));
                 if (auto const* c = grid->column(id)) return c;
-                return grid->column("twilightforest:forest");
+                return grid->column("gloamingforest:forest");
             };
             if (!terrain)
                 return [columnAt](gf::core::noise::DensityPoint const& p) { return sampleTerrain(p.blockX, p.blockZ, columnAt).scale; };
@@ -915,8 +915,8 @@ void registerDensityTypes() {
 // ---- landmark heights ----------------------------------------------------------------------------------
 
 std::optional<int> heightProvider(int dimension, int x, int z, worldgen::Heightmap type) {
-    // TF's heights only for the Twilight Forest (no dimension registered: no Twilight Forest)
-    int tf = twilightDim();
+    // upstream's heights only for the Gloaming Forest (no dimension registered: no Gloaming Forest)
+    int tf = gloamingDim();
     if (tf < 0 || dimension != tf) return std::nullopt;
     auto s = state();
     if (!s) return std::nullopt;
@@ -928,7 +928,7 @@ std::optional<int> heightProvider(int dimension, int x, int z, worldgen::Heightm
     return s->gen->baseHeight(x, z, ocean, sampler) - 1;
 }
 
-// ---- twilightforest:chunk_blanketing ---------------------------------------------------------------------
+// ---- gloamingforest:chunk_blanketing ---------------------------------------------------------------------
 
 bool biomeInSet(Json const& set, std::string const& biome) {
     auto test = [&](Json const& e) {
@@ -958,7 +958,7 @@ bool blanketingConfigValid(features::PlacementContext const& ctx) {
     static std::unordered_set<std::string> warned;
     std::lock_guard                        lock(m);
     if (warned.insert(ctx.placedFeatureId).second)
-        gf::log().warn("terrain: {} has an invalid twilightforest:chunk_blanketing modifier ({}): it places nothing", ctx.placedFeatureId.empty() ? std::string("a placed feature") : ctx.placedFeatureId, problem);
+        gf::log().warn("terrain: {} has an invalid gloamingforest:chunk_blanketing modifier ({}): it places nothing", ctx.placedFeatureId.empty() ? std::string("a placed feature") : ctx.placedFeatureId, problem);
     return false;
 }
 
@@ -998,24 +998,24 @@ void onWorldReady() {
             flagKnown().notify_all();
         }
     } decided;
-    // TF's preset is chosen when the world is created (the dimension's chunk generator) and kept
-    // with it: a stored choice wins; a world whose Twilight Forest already holds saved chunks (an
-    // existing world, generated before a preset was kept) stays twilight_noise_gen; a new world
+    // upstream's preset is chosen when the world is created (the dimension's chunk generator) and kept
+    // with it: a stored choice wins; a world whose Gloaming Forest already holds saved chunks (an
+    // existing world, generated before a preset was kept) stays gloaming_noise_gen; a new world
     // takes the one chunks already generated with this session (before the world was ready), else
     // the config's
     bool                configured  = config::get<TerrainConfig>().skylight;
-    auto name        = [](bool s) { return s ? "skylight" : "twilight"; };
+    auto name        = [](bool s) { return s ? "skylight" : "gloaming"; };
     std::optional<bool> stored;
     if (auto v = game::db::get(kSkylightKey); v && v->is_boolean()) stored = v->get<bool>();
     bool saved = false;
-    // the DB is read only when saved chunks would turn a skylight answer into twilight (the default
-    // twilight config never reads it), and then only once per world: the answer is stored below
-    if (int dim = twilightDim(); dim >= 0 && core::terrain::savedChunksMatter(stored, provisional, configured)) {
+    // the DB is read only when saved chunks would turn a skylight answer into gloaming (the default
+    // gloaming config never reads it), and then only once per world: the answer is stored below
+    if (int dim = gloamingDim(); dim >= 0 && core::terrain::savedChunksMatter(stored, provisional, configured)) {
         auto start = std::chrono::steady_clock::now();
         auto probe = findSavedChunks(dim, true);
         saved      = probe && probe->found;
         gf::log().info(
-            "terrain: saved Twilight Forest chunks: {} ({} positions looked up{}, {:.0f} ms)",
+            "terrain: saved Gloaming Forest chunks: {} ({} positions looked up{}, {:.0f} ms)",
             saved ? "yes" : "no",
             probe ? probe->probed : 0,
             probe && probe->scanned ? ", chunk table scanned" : "",
@@ -1032,12 +1032,12 @@ void onWorldReady() {
     case core::terrain::PresetSource::SavedChunks:
         if (configured)
             gf::log().warn(
-                "terrain: this world's Twilight Forest was generated before a preset was kept: it stays twilight "
+                "terrain: this world's Gloaming Forest was generated before a preset was kept: it stays gloaming "
                 "(config skylight ignored)"
             );
         if (provisional == 1)
             gf::log().warn(
-                "terrain: chunks generated before the world was ready used skylight, but the world stays twilight"
+                "terrain: chunks generated before the world was ready used skylight, but the world stays gloaming"
             );
         break;
     case core::terrain::PresetSource::Provisional:
@@ -1070,10 +1070,10 @@ struct TerrainModule {
         worldgen::setSurface(surfaceProvider);
         worldgen::registerBlanket(kBlanketId, blanketProvider);
         gf::terrain::ext::installPassProbe(kBlanketId);
-        worldgen::registerCarver("twilightforest:tf_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
+        worldgen::registerCarver("gloamingforest:tf_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
             carve(false, c, r, rnd);
         });
-        worldgen::registerCarver("twilightforest:highland_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
+        worldgen::registerCarver("gloamingforest:highland_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
             carve(true, c, r, rnd);
         });
         // the chunk's total (noise .. carvers) once its Carvers stage ends
@@ -1086,7 +1086,7 @@ struct TerrainModule {
                 tChunkMs = 0;
             }
         );
-        features::registerPlacement("twilightforest:chunk_blanketing", chunkBlanketing);
+        features::registerPlacement("gloamingforest:chunk_blanketing", chunkBlanketing);
         landmark::ext::setHeightProvider(heightProvider);
         game::db::onWorldReady(onWorldReady);
         if (game::db::available()) onWorldReady(); // BDS: the world was ready before the mods were enabled

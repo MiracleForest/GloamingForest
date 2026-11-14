@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/config/TFCommonConfig.java
-//   src/main/java/twilightforest/config/TFConfig.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/config/TFCommonConfig.java
+//   src/main/java/gloamingforest/config/TFConfig.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// Config section "dimension" (rule R13, docs/spec/config.md): TF's "Dimension Settings" and
-// "Portal Settings" keys with TF's names, defaults and ranges.
+// Config section "dimension" (rule R13, docs/spec/config.md): upstream's "Dimension Settings" and
+// "Portal Settings" keys with upstream's names, defaults and ranges.
 
 #include <string>
 
@@ -17,16 +17,16 @@ namespace gf::feature::dimension {
 struct DimensionConfig {
     int version = 1;
 
-    // -- Dimension Settings (config.twilightforest.dim_settings) --
-    /// spawn_in_tf: new players spawn in the Twilight Forest (and respawn there without a bed).
+    // -- Dimension Settings (config.gloamingforest.dim_settings) --
+    /// spawn_in_tf: new players spawn in the Gloaming Forest (and respawn there without a bed).
     bool newPlayersSpawnInTF = false;
     /// portal_for_new_player: such players arrive next to a fresh (one-way) portal.
     bool portalForNewPlayer = false;
 
-    // -- Portal Settings (config.twilightforest.portal_settings) --
-    /// origin_dimension: where Twilight portals lead back to.
+    // -- Portal Settings (config.gloamingforest.portal_settings) --
+    /// origin_dimension: where Gloaming portals lead back to.
     std::string originDimension = "minecraft:overworld";
-    /// portals_in_other_dimensions: portals may be lit outside the origin and the Twilight Forest.
+    /// portals_in_other_dimensions: portals may be lit outside the origin and the Gloaming Forest.
     bool allowPortalsInOtherDimensions = false;
     /// portal_permission: permission level (0..4) needed to light a portal.
     int portalCreationPermission = 0;

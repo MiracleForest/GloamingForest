@@ -1,10 +1,10 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/client/assembly/TransitionalBar.cpp), LGPL-3.0-or-later.
 //
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// The effect rows translate Minecraft's Gui#renderEffects and EffectRenderingInventoryScreen as TF
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// The effect rows translate Minecraft's Gui#renderEffects and EffectRenderingInventoryScreen as upstream
 // relies on them for its effect (frosted) through
-//   src/main/java/twilightforest/potions/FrostedEffect.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+//   src/main/java/gloamingforest/potions/FrostedEffect.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -16,9 +16,9 @@
 //   data included), not the renderer's copy (built from #item_id_aux without data). The batch hook
 //   runs at High priority, so the bars go on top of the GUI item renderers drawn after the same
 //   batch (F12's client/render: Java draws the decorations last);
-// - name colours of TF's rarities (ext/item/Item.h, TFRarityEnumExtension's TWILIGHT dark green,
+// - name colours of upstream's rarities (ext/item/Item.h, TFRarityEnumExtension's GLOAMING dark green,
 //   with ItemStack#getRarity's bump for enchanted stacks): the hover text's formatting prefix;
-// - the custom effects (TF's frosted) on the HUD exactly where Java's Gui#renderEffects puts them
+// - the custom effects (upstream's frosted) on the HUD exactly where Java's Gui#renderEffects puts them
 //   (24 px backgrounds from the right edge, 25 px apart, beneficial on the top row, the others
 //   26 px lower, the icon blinking in the last 200 ticks), counting every active effect as Java
 //   does, and the effect list next to the inventory as EffectRenderingInventoryScreen draws it
@@ -527,7 +527,7 @@ LL_TYPE_INSTANCE_HOOK(
     }
 }
 
-// The name colour of an item with a rarity (TF's TWILIGHT: dark green). As Java's
+// The name colour of an item with a rarity (upstream's GLOAMING: dark green). As Java's
 // ItemStack#getDisplayName / getTooltipLines, a custom name keeps the rarity's colour and is italic.
 LL_TYPE_INSTANCE_HOOK(
     ItemRarityPrefixHook,

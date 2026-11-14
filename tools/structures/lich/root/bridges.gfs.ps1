@@ -2,7 +2,7 @@
 # bridge runs along +z: its junction faces north at (centre, 1, 0) and the room junction south at the
 # far end; the walkway is at y 1 over a floor at y 0.
 . (Join-Path $PSScriptRoot '../LichLib.ps1')
-$NS = 'twilightforest:lich_tower/'
+$NS = 'gloamingforest:lich_tower/'
 
 # A bridge of length L (3 wide). Style: open (fences), enclosed (walls and a slab roof), planks.
 function New-LichBridge([string]$id, [string]$out, [int]$len, [string]$style, [string]$name, [string]$floor = 'minecraft:stone_bricks') {
@@ -19,23 +19,23 @@ function New-LichBridge([string]$id, [string]$out, [int]$len, [string]$style, [s
             Set-GftBox $t 0 3 0 2 3 ($len - 1) 'minecraft:stone_brick_slab' @{ type = 'bottom' }
         }
         'open' {
-            Set-GftBox $t 0 1 0 0 1 ($len - 1) 'twilightforest:canopy_fence'
-            Set-GftBox $t 2 1 0 2 1 ($len - 1) 'twilightforest:canopy_fence'
+            Set-GftBox $t 0 1 0 0 1 ($len - 1) 'gloamingforest:canopy_fence'
+            Set-GftBox $t 2 1 0 2 1 ($len - 1) 'gloamingforest:canopy_fence'
             Set-GftBox $t 0 2 0 0 2 ($len - 1) 'minecraft:air'
             Set-GftBox $t 2 2 0 2 2 ($len - 1) 'minecraft:air'
         }
         'planks' {
-            Set-GftBox $t 0 0 0 2 0 ($len - 1) 'twilightforest:twilight_oak_planks'
+            Set-GftBox $t 0 0 0 2 0 ($len - 1) 'gloamingforest:gloaming_oak_planks'
             Set-GftBox $t 0 1 0 0 1 ($len - 1) 'minecraft:stone_brick_wall'
             Set-GftBox $t 2 1 0 2 1 ($len - 1) 'minecraft:stone_brick_wall'
             Set-GftBox $t 0 2 0 0 2 ($len - 1) 'minecraft:air'
             Set-GftBox $t 2 2 0 2 2 ($len - 1) 'minecraft:air'
         }
         'slabs' {
-            Set-GftBox $t 0 0 0 2 0 ($len - 1) 'twilightforest:canopy_slab' @{ type = 'top' }
+            Set-GftBox $t 0 0 0 2 0 ($len - 1) 'gloamingforest:canopy_slab' @{ type = 'top' }
             Set-GftBox $t 0 1 0 0 2 ($len - 1) 'minecraft:air'
             Set-GftBox $t 2 1 0 2 2 ($len - 1) 'minecraft:air'
-            for ($z = 0; $z -lt $len; $z += 2) { Set-GftBlock $t 0 1 $z 'twilightforest:canopy_fence'; Set-GftBlock $t 2 1 $z 'twilightforest:canopy_fence' }
+            for ($z = 0; $z -lt $len; $z += 2) { Set-GftBlock $t 0 1 $z 'gloamingforest:canopy_fence'; Set-GftBlock $t 2 1 $z 'gloamingforest:canopy_fence' }
         }
     }
     Add-GftJigsaw $t 1 1 0 -Front north -Name $name

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // Extension added by U2 (terrain), rule R18 (folded by A8 in W2b): questions about F5's generator
@@ -18,7 +18,7 @@
 //   only one whose steps are known; any other pass counts as unknown.
 // - Fluids in Bedrock's liquid layer: a Java block that is waterlogged ("waterlogged=true") keeps
 //   its water in the subchunk's extra block layer in Bedrock, which worldgen::Chunk::getBlock does
-//   not show. TF's carver asks BlockState#getFluidState, so it must see that water.
+//   not show. upstream's carver asks BlockState#getFluidState, so it must see that water.
 
 #include <cstdint>
 #include <functional>

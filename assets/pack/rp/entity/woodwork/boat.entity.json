@@ -2,38 +2,38 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:boat",
+      "identifier": "gloamingforest:boat",
       "materials": {
         "default": "entity"
       },
       "textures": {
-        "tf_twilight_oak": "textures/twilightforest/entity/boat/twilight_oak",
-        "tf_canopy": "textures/twilightforest/entity/boat/canopy",
-        "tf_mangrove": "textures/twilightforest/entity/boat/mangrove",
-        "tf_dark": "textures/twilightforest/entity/boat/dark",
-        "tf_time": "textures/twilightforest/entity/boat/time",
-        "tf_transformation": "textures/twilightforest/entity/boat/transformation",
-        "tf_mining": "textures/twilightforest/entity/boat/mining",
-        "tf_sorting": "textures/twilightforest/entity/boat/sorting",
-        "oak": "textures/twilightforest/entity/boat/twilight_oak",
-        "default": "textures/twilightforest/entity/boat/twilight_oak",
-        "spruce": "textures/twilightforest/entity/boat/canopy",
-        "birch": "textures/twilightforest/entity/boat/mangrove",
-        "jungle": "textures/twilightforest/entity/boat/dark",
-        "acacia": "textures/twilightforest/entity/boat/time",
-        "darkoak": "textures/twilightforest/entity/boat/transformation",
-        "dark_oak": "textures/twilightforest/entity/boat/transformation",
-        "mangrove": "textures/twilightforest/entity/boat/mining",
-        "cherry": "textures/twilightforest/entity/boat/sorting"
+        "tf_gloaming_oak": "textures/gloamingforest/entity/boat/gloaming_oak",
+        "tf_canopy": "textures/gloamingforest/entity/boat/canopy",
+        "tf_mangrove": "textures/gloamingforest/entity/boat/mangrove",
+        "tf_dark": "textures/gloamingforest/entity/boat/dark",
+        "tf_time": "textures/gloamingforest/entity/boat/time",
+        "tf_transformation": "textures/gloamingforest/entity/boat/transformation",
+        "tf_mining": "textures/gloamingforest/entity/boat/mining",
+        "tf_sorting": "textures/gloamingforest/entity/boat/sorting",
+        "oak": "textures/gloamingforest/entity/boat/gloaming_oak",
+        "default": "textures/gloamingforest/entity/boat/gloaming_oak",
+        "spruce": "textures/gloamingforest/entity/boat/canopy",
+        "birch": "textures/gloamingforest/entity/boat/mangrove",
+        "jungle": "textures/gloamingforest/entity/boat/dark",
+        "acacia": "textures/gloamingforest/entity/boat/time",
+        "darkoak": "textures/gloamingforest/entity/boat/transformation",
+        "dark_oak": "textures/gloamingforest/entity/boat/transformation",
+        "mangrove": "textures/gloamingforest/entity/boat/mining",
+        "cherry": "textures/gloamingforest/entity/boat/sorting"
       },
       "geometry": {
-        "default": "geometry.twilightforest.boat"
+        "default": "geometry.gloamingforest.boat"
       },
       "render_controllers": [
-        "controller.render.twilightforest.boat"
+        "controller.render.gloamingforest.boat"
       ],
       "animations": {
-        "paddles": "animation.twilightforest.boat.paddles"
+        "paddles": "animation.gloamingforest.boat.paddles"
       },
       "scripts": {
         "pre_animation": [

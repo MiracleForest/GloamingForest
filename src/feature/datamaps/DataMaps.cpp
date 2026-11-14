@@ -1,4 +1,4 @@
-// The data map part of contract "data" (F9): NeoForge data maps (TF's crumble_horn, ore_map_color,
+// The data map part of contract "data" (F9): NeoForge data maps (upstream's crumble_horn, ore_map_color,
 // magic_map_color, transformation_powder, ominous_fire and NeoForge's compostables, furnace_fuels,
 // parrot_imitations), loaded from data/<ns>/data_maps/<registry>/<name>.json as NeoForge reads
 // them: {"replace": bool, "values": {"<id>": value, "#<tag>": value}, "remove": [...]}; a map id is
@@ -38,9 +38,9 @@ using IdFields = std::map<std::string, std::map<std::string, std::string>>;
 struct FieldStore {
     std::mutex mutex;
     IdFields   fields{
-        {"twilightforest:crumble_horn", {{"crumble_to", "block"}}},           // CrumbledBlock
-        {"twilightforest:transformation_powder", {{"transform_to", "entity_type"}}}, // EntityTransformation
-        {"twilightforest:ominous_fire", {{"transform_to", "entity_type"}}},    // EntityTransformation
+        {"gloamingforest:crumble_horn", {{"crumble_to", "block"}}},           // CrumbledBlock
+        {"gloamingforest:transformation_powder", {{"transform_to", "entity_type"}}}, // EntityTransformation
+        {"gloamingforest:ominous_fire", {{"transform_to", "entity_type"}}},    // EntityTransformation
         {"neoforge:oxidizables", {{"next_oxidation_stage", "block"}}},       // NeoForge's Oxidizable
         {"neoforge:waxables", {{"waxed", "block"}}},                         // NeoForge's Waxable
     };

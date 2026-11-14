@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:hydra_banner_pattern"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:paper"
+      },
+      {
+        "item": "gloamingforest:hydra_trophy"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:hydra_trophy"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hydra_banner_pattern"
+    }
+  }
+}

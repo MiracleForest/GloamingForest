@@ -1,8 +1,8 @@
 {
-  "block.twilightforest.brazier": "Brasero",
-  "block.twilightforest.candelabra": "Candelabro",
-  "block.twilightforest.chiseled_canopy_bookshelf": "Estantería de dosel",
-  "block.twilightforest.coronation_carpet": "Alfombra de Coronación",
-  "block.twilightforest.creeper_skull_candle": "Cabeza de creeper con vela",
-  "entity.twilightforest.magic_painting": "Pintura Mágica"
+  "block.gloamingforest.brazier": "Brasero",
+  "block.gloamingforest.candelabra": "Candelabro",
+  "block.gloamingforest.chiseled_canopy_bookshelf": "Estantería de dosel",
+  "block.gloamingforest.coronation_carpet": "Alfombra de Coronación",
+  "block.gloamingforest.creeper_skull_candle": "Cabeza de creeper con vela",
+  "entity.gloamingforest.magic_painting": "Pintura Mágica"
 }

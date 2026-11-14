@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:maze_slime_ball",
+      "identifier": "gloamingforest:maze_slime_ball",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:maze_slime_ball.name"
+        "value": "item.gloamingforest:maze_slime_ball.name"
       },
       "minecraft:tags": {
         "tags": ["c:slime_balls"]

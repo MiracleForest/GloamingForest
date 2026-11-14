@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java-parity orderings: Minecraft 1.21.1's FeatureSorter#buildFeaturesPerStep (with
 // Graph#depthFirstSearch), java.util.HashMap's iteration order and Mth's sine table. Written from
 // the published algorithms; checked in tests/worldgen.

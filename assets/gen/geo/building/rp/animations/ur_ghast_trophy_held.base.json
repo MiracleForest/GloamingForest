@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.ur_ghast_trophy_held.base": {
+    "animation.gloamingforest.ur_ghast_trophy_held.base": {
       "loop": true,
       "bones": {
         "ur_ghast_trophy_held_tentacle_0": {

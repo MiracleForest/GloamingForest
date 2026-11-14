@@ -1,13 +1,13 @@
 #pragma once
 
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/ai/goal/CubeMoveToRedstoneSymbolsGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/CubeCenterOnSymbolGoal.java
-//   src/main/java/twilightforest/entity/monster/Adherent.java (performRangedAttack)
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (vectorsMinMax)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/ai/goal/CubeMoveToRedstoneSymbolsGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/CubeCenterOnSymbolGoal.java
+//   src/main/java/gloamingforest/entity/monster/Adherent.java (performRangedAttack)
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (vectorsMinMax)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -33,9 +33,9 @@ struct DVec {
 // ---- roving cube ---------------------------------------------------------------------------------
 
 /// CubeMoveToRedstoneSymbolsGoal#isRedstoneSymbol: a loaded empty block whose six neighbours
-/// (Direction.values(): down, up, north, south, west, east) are all redstone wire. TF's comment
+/// (Direction.values(): down, up, north, south, west, east) are all redstone wire. upstream's comment
 /// speaks of "8 redstone dust around a blank square", but the check asks every direction, so a
-/// flat ring never matches (kept as TF has it).
+/// flat ring never matches (kept as upstream has it).
 [[nodiscard]] bool isRedstoneSymbol(IPos pos, std::function<bool(IPos)> const& loaded, std::function<bool(IPos)> const& empty,
                                     std::function<bool(IPos)> const& wire);
 
@@ -97,7 +97,7 @@ struct Box {
 /// BoundingBoxUtils#vectorsMinMax (nullopt for no vectors).
 [[nodiscard]] std::optional<Box> vectorsMinMax(std::vector<DVec> const& vectors, double expand);
 
-/// The punch box (TF's Interaction tagged final_castle_wip): width (xsize + zsize) * 0.5, height
+/// The punch box (upstream's Interaction tagged final_castle_wip): width (xsize + zsize) * 0.5, height
 /// ysize, at (centre x, minY, centre z).
 struct Punch {
     DVec   pos;

@@ -1,10 +1,10 @@
 {
-  "block.twilightforest.beanstalk_leaves": "Hojas de tallo de habichuela",
-  "block.twilightforest.fluffy_cloud": "Nube mullida",
-  "block.twilightforest.giant_cobblestone": "Roca gigante",
-  "block.twilightforest.giant_leaves": "Hojas gigantes",
-  "block.twilightforest.giant_log": "Tronco gigante",
-  "block.twilightforest.giant_obsidian": "Obsidiana gigante",
-  "block.twilightforest.huge_stalk": "Tallo enorme",
-  "entity.twilightforest.giant_miner": "Minero Gigante"
+  "block.gloamingforest.beanstalk_leaves": "Hojas de tallo de habichuela",
+  "block.gloamingforest.fluffy_cloud": "Nube mullida",
+  "block.gloamingforest.giant_cobblestone": "Roca gigante",
+  "block.gloamingforest.giant_leaves": "Hojas gigantes",
+  "block.gloamingforest.giant_log": "Tronco gigante",
+  "block.gloamingforest.giant_obsidian": "Obsidiana gigante",
+  "block.gloamingforest.huge_stalk": "Tallo enorme",
+  "entity.gloamingforest.giant_miner": "Minero Gigante"
 }

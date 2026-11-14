@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TFBushBlock.java
-//   src/main/java/twilightforest/client/event/ColorHandler.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/client/event/ColorHandler.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -11,7 +11,7 @@
 // - The family registry for the client's own block types: the client builds its block types per
 //   world it joins (a remote server's blocks), so the registry looks them up again on every join
 //   (the server thread of a local world reads the table it has meanwhile).
-// - Climbable family blocks (TF's climbable hollow logs, rope, iron ladder: BlockProperty::Climbable,
+// - Climbable family blocks (upstream's climbable hollow logs, rope, iron ladder: BlockProperty::Climbable,
 //   like vanilla ladders) for the client's own movement, set again on every join.
 // - Leaf colours by position (ColorHandler: time, transformation, mining, sorting and rainbow oak
 //   leaves, LeafColors.h) through the client.render contract's tint (gf::client::tint, F12): their

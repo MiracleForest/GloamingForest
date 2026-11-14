@@ -16,19 +16,19 @@
 --            sounds.json by block_sounds, entity_sounds.entities, ...; a duplicate id inside a
 --            layer fails).
 --   Lang     assets/lang/<locale>/*.json and the gen layer's lang/<locale>/*.json -> lang/<locale>.json
---            for the 29 Bedrock locales (TF locale names such as de_de are normalised; others are
+--            for the 29 Bedrock locales (upstream locale names such as de_de are normalised; others are
 --            dropped with a note).
 --   Tags     assets/tags/<registry>/<ns>/<path>.d/<unit>.json are unioned into the imported tag
 --            data/<ns>/tags/<registry>/<path>.json (rule R6).
---   Checks   integer block states 0..n, block permutation budget, dangling twilightforest:
+--   Checks   integer block states 0..n, block permutation budget, dangling gloamingforest:
 --            references in BP / data (per kind: a `block` key must name a block; the values of
 --            tag-valued keys name tags; the reviewed ids of tools/import/known-ids.json are known
 --            by kind, its tfDangling references are warnings; template pools are the keys of the
---            imported twilight/template_definition files, template ids and jigsaw connector names
+--            imported gloaming/template_definition files, template ids and jigsaw connector names
 --            those the structures/**.gft.json define), every asset file has an owner
 --            (docs/spec/owners.tsv), the pack path probes (checks.packPathProbes: a file in a
 --            directory granted to a unit reaches the assembled pack and belongs to that unit), and
---            the ARR hash guard (no TF .ogg / .nbt content, tools/ci/arr-blobs.txt).
+--            the ARR hash guard (no upstream .ogg / .nbt content, tools/ci/arr-blobs.txt).
 --
 -- "${version}" in pack manifests is replaced by the mod version as a JSON array [major, minor, patch]
 -- (untagged builds: [0, 0, <stamp of the pack sources>], so games never reuse a stale cached pack).
@@ -46,7 +46,7 @@ local function fail(fmt, ...)
     table.insert(errors, string.format(fmt, ...))
 end
 
--- printed on every run, never fails it (e.g. a reference that is dangling in TF itself)
+-- printed on every run, never fails it (e.g. a reference that is dangling in upstream itself)
 local function warn(fmt, ...)
     table.insert(warnings, string.format(fmt, ...))
 end
@@ -667,7 +667,7 @@ local function check_owners(projectdir, cfg, owners)
     return count
 end
 
--- Lang keys with an owner (the lang rows of owners.tsv: TF's keys by import partition, plus the
+-- Lang keys with an owner (the lang rows of owners.tsv: upstream's keys by import partition, plus the
 -- vanilla keys a unit defines, e.g. F11's container.chest) may be defined in assets/lang only by
 -- that owner's file (assets/lang/<locale>/<u>.json): rule R9. Keys without a row are the unit's own
 -- mod strings. Returns the number of owned keys checked.
@@ -701,7 +701,7 @@ end
 -- Known ids are kept per kind: known[kind][id]. Kinds: block, item (blocks, block items and spawn
 -- eggs count as items), entity, the data registries by their directory below data/<ns>/ without a
 -- "worldgen/" prefix (loot_table, recipe, advancement, configured_feature, placed_feature, biome,
--- structure, template_pool, ..., "twilight/<registry>"), "tag:<registry>" for tags, the owners.tsv
+-- structure, template_pool, ..., "gloaming/<registry>"), "tag:<registry>" for tags, the owners.tsv
 -- kinds (sound_event, particle, damage_type, ...) and "*" (every id of every kind) for references
 -- whose kind the key does not tell.
 
@@ -784,9 +784,9 @@ local function data_registry(r)
     for p in rest:gmatch("[^/]+") do table.insert(parts, p) end
     local depth = 1
     if parts[1] == "tags" then
-        -- two-segment tag registries: tags/worldgen/<registry>/, tags/twilight/<registry>/
-        depth = (parts[2] == "worldgen" or parts[2] == "twilight") and 3 or 2
-    elseif parts[1] == "worldgen" or parts[1] == "twilight" or parts[1] == "data_maps" then
+        -- two-segment tag registries: tags/worldgen/<registry>/, tags/gloaming/<registry>/
+        depth = (parts[2] == "worldgen" or parts[2] == "gloaming") and 3 or 2
+    elseif parts[1] == "worldgen" or parts[1] == "gloaming" or parts[1] == "data_maps" then
         depth = 2
     end
     if #parts <= depth then return nil end
@@ -811,8 +811,8 @@ end
 
 -- The reviewed references of tools/import/known-ids.json (F1, cfg.checks.knownIds): {ids = {ref ->
 -- kind}, dangling = {ref -> {kind, reason}}, tagKeys = {key -> true}}, kinds by reviewed_kind. "ids"
--- are ids TF registers in code (codec types, texture locations, template pools), known by their kind;
--- "tfDangling" are references dangling in TF itself, kept verbatim for parity: a warning, never an error.
+-- are ids upstream registers in code (codec types, texture locations, template pools), known by their kind;
+-- "tfDangling" are references dangling in upstream itself, kept verbatim for parity: a warning, never an error.
 local function load_reviewed(projectdir, cfg)
     local reviewed = {ids = {}, dangling = {}, tagKeys = {}}
     local rel_file = cfg.checks.knownIds
@@ -832,10 +832,10 @@ local function load_reviewed(projectdir, cfg)
     return reviewed
 end
 
--- Every "twilightforest:..." string value in BP / data JSON must name something that exists, of the
--- kind its key implies: `"block": "twilightforest:naga"` fails when naga is only an entity. The value
+-- Every "gloamingforest:..." string value in BP / data JSON must name something that exists, of the
+-- kind its key implies: `"block": "gloamingforest:naga"` fails when naga is only an entity. The value
 -- of a tag-valued key names a tag ('#' or not) of the registry its context gives (a recipe's "tag" is
--- an item tag, generates_on a block tag). A reference listed as tfDangling (dangling in TF itself) of
+-- an item tag, generates_on a block tag). A reference listed as tfDangling (dangling in upstream itself) of
 -- the same kind is a warning.
 local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
     local nss = cfg.checks.danglingNamespaces or {}
@@ -904,7 +904,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
                     if not exists(id, istag, kinds) then
                         local d = dangling_entry(v, id, hash, istag, kinds)
                         if d then
-                            warn("dangling reference '%s' (%s) in %s: dangling in TF itself, kept for parity (tools/import/known-ids.json tfDangling): %s",
+                            warn("dangling reference '%s' (%s) in %s: dangling in upstream itself, kept for parity (tools/import/known-ids.json tfDangling): %s",
                                 v, d.kind, ctx.file, d.reason)
                         else
                             fail("dangling reference '%s' (not a known %s) in %s", v, kinds_text(kinds, istag), ctx.file)
@@ -1007,7 +1007,7 @@ local function check_arr(projectdir, cfg)
                     scanned = scanned + 1
                     local h = blob_hash(file)
                     if arr[h] then
-                        fail("%s is byte-identical to an All Rights Reserved TF file (%s); never copy TF .ogg / .nbt", r, arr[h])
+                        fail("%s is byte-identical to an All Rights Reserved upstream file (%s); never copy upstream .ogg / .nbt", r, arr[h])
                     end
                 end
             end
@@ -1039,8 +1039,8 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     local manual = manual_files(path.join(projectdir, pack.manual))
     local files = layered_files(gen, manual, pack.root)
     local jsons = {}
-    -- Hand-made files derived from TF's CC BY-NC-SA assets live under a "tf-derived/" directory
-    -- next to a SOURCES.json naming their TF source files (AGENTS.md, assets/LICENSE). They stay
+    -- Hand-made files derived from upstream's CC BY-NC-SA assets live under a "tf-derived/" directory
+    -- next to a SOURCES.json naming their upstream source files (AGENTS.md, assets/LICENSE). They stay
     -- CC BY-NC-SA 4.0: the pack lists them in tf-derived-sources.txt beside LICENSE-ASSETS.txt.
     local derived = {}
     for _, r in ipairs(table.keys(files)) do
@@ -1054,7 +1054,7 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
             local from = type(sources) == "table" and sources[sub] or nil
             if type(from) == "string" then from = {from} end
             if type(from) ~= "table" or #from == 0 then
-                fail("%s is TF-derived but %s does not name its TF source file(s)", rel(file, projectdir), rel(srcfile, projectdir))
+                fail("%s is upstream-derived but %s does not name its upstream source file(s)", rel(file, projectdir), rel(srcfile, projectdir))
             else
                 derived[r] = from
             end
@@ -1097,7 +1097,7 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
         table.sort(locales)
         if #locales > 0 then save_json(path.join(dst, "texts", "languages.json"), locales) end
     end
-    -- attribution: the licences of the pack's content (TF-derived assets are CC BY-NC-SA 4.0)
+    -- attribution: the licences of the pack's content (upstream-derived assets are CC BY-NC-SA 4.0)
     if not pack.test then
         for _, l in ipairs(cfg.packLicenseFiles or {}) do
             local src = path.join(projectdir, l.from)
@@ -1106,7 +1106,7 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     end
     if not table.empty(derived) then
         -- plain text: the game would try to read a JSON file at the pack root
-        local lines = {"# TF-derived files of this pack (CC BY-NC-SA 4.0, see LICENSE-ASSETS.txt): <file> <- <TF source files>"}
+        local lines = {"# upstream-derived files of this pack (CC BY-NC-SA 4.0, see LICENSE-ASSETS.txt): <file> <- <upstream source files>"}
         local rels = table.keys(derived)
         table.sort(rels)
         for _, r in ipairs(rels) do table.insert(lines, r .. " <- " .. table.concat(derived[r], ", ")) end
@@ -1291,10 +1291,10 @@ local function copy_data(projectdir, cfg, outdir, with_tests)
             end
         end
         for key, files in pairs(groups) do
-            -- the two-segment registries (worldgen/biome, twilight/wood_palettes; see data_registry)
+            -- the two-segment registries (worldgen/biome, gloaming/wood_palettes; see data_registry)
             -- keep their slash: the namespace is the segment after the registry
             local registry, ns, tagpath = key:match("^(worldgen/[^/]+)/([^/]+)/(.+)$")
-            if not registry then registry, ns, tagpath = key:match("^(twilight/[^/]+)/([^/]+)/(.+)$") end
+            if not registry then registry, ns, tagpath = key:match("^(gloaming/[^/]+)/([^/]+)/(.+)$") end
             if not registry then registry, ns, tagpath = key:match("^([^/]+)/([^/]+)/(.+)$") end
             if not registry then
                 fail("bad tag fragment path %s", key)
@@ -1353,13 +1353,13 @@ local function known_ids(bpdirs, outdir, owners, reviewed)
     if os.isdir(datadir) then
         for _, file in ipairs(os.files(path.join(datadir, "**.json"))) do
             -- data/<ns>/<registry>/<path>.json -> <ns>:<path> of that registry's kind (the path below
-            -- the registry directory only: loot_table/entities/naga.json is twilightforest:entities/naga)
+            -- the registry directory only: loot_table/entities/naga.json is gloamingforest:entities/naga)
             local registry, id = data_registry(rel(file, datadir))
             if registry then
                 add_known(known, registry_kind(registry), id)
                 -- a template definition ({"<pool>": {weight, height_adjustment, ...}}) is keyed by the
-                -- template pool it joins (twilightforest:camp/tent): the pool ids are TF's own (R1)
-                if registry == "twilight/template_definition" then
+                -- template pool it joins (gloamingforest:camp/tent): the pool ids are upstream's own (R1)
+                if registry == "gloaming/template_definition" then
                     local doc = try_json(file)
                     if type(doc) == "table" and not is_array(doc) then
                         for pool, _ in json_pairs(doc) do
@@ -1393,16 +1393,45 @@ local function known_ids(bpdirs, outdir, owners, reviewed)
                 else
                     local entryreg, entryid = id:match("^([^:]+)/([^/]+:.+)$") -- "<registry>/<ns>:<path>"
                     if kind == "registry_entry" and entryreg then
-                        add_known(known, "twilight/" .. entryreg, entryid)
+                        add_known(known, "gloaming/" .. entryreg, entryid)
                     elseif id:find(":") then
                         for _, k in ipairs(OWNER_KIND_ALIASES[kind] or {kind}) do add_known(known, k, id) end
                     elseif kind == "sound_event" then
-                        add_known(known, kind, "twilightforest:" .. id) -- registered as twilightforest:<event>
+                        add_known(known, kind, "gloamingforest:" .. id) -- registered as gloamingforest:<event>
                     end
                 end
             end
         end
     end
+    -- this project's own names in the same namespace: the definitions of the resource packs (particles,
+    -- fogs, atmospherics, water, client entities: description.identifier), the component groups and
+    -- events of the BP entities, and the format tag of the original templates (.gft.json)
+    local rpdir = path.join(outdir, "resource_packs")
+    if os.isdir(rpdir) then
+        for _, file in ipairs(os.files(path.join(rpdir, "**.json"))) do
+            local doc = try_json(file)
+            if type(doc) == "table" and not is_array(doc) then
+                for key, def in json_pairs(doc) do
+                    local id = type(key) == "string" and type(def) == "table" and type(def.description) == "table" and def.description.identifier or nil
+                    if type(id) == "string" then add_known(known, "rp:" .. key:gsub("^minecraft:", ""), id) end
+                end
+            end
+        end
+    end
+    for _, bpdir in ipairs(bpdirs) do
+        for _, file in ipairs(os.files(path.join(bpdir, "**.json"))) do
+            local doc = try_json(file)
+            local def = type(doc) == "table" and type(doc["minecraft:entity"]) == "table" and doc["minecraft:entity"] or nil
+            for _, part in ipairs({"component_groups", "events"}) do
+                if def and type(def[part]) == "table" then
+                    for name, _ in json_pairs(def[part]) do
+                        if type(name) == "string" then add_known(known, "bp:entity_" .. part, name) end
+                    end
+                end
+            end
+        end
+    end
+    add_known(known, "format", "gloamingforest:template")
     for ref, kind in pairs(reviewed.ids) do add_known(known, kind, (ref:gsub("^#", ""))) end
     return known
 end

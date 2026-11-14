@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/inventory/UncraftingMenu.java
-//   src/main/java/twilightforest/inventory/UncraftingContainer.java
-//   src/main/java/twilightforest/inventory/UncraftingInputContainer.java
-//   src/main/java/twilightforest/inventory/slot/UncraftingSlot.java
-//   src/main/java/twilightforest/inventory/slot/UncraftingResultSlot.java
-//   src/main/java/twilightforest/inventory/slot/AssemblySlot.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/inventory/UncraftingMenu.java
+//   src/main/java/gloamingforest/inventory/UncraftingContainer.java
+//   src/main/java/gloamingforest/inventory/UncraftingInputContainer.java
+//   src/main/java/gloamingforest/inventory/slot/UncraftingSlot.java
+//   src/main/java/gloamingforest/inventory/slot/UncraftingResultSlot.java
+//   src/main/java/gloamingforest/inventory/slot/AssemblySlot.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -52,7 +52,7 @@ struct MenuState {
     ItemStack       input;
     ItemStack       result;
     std::array<ItemStack, 9> uncrafting;
-    std::array<bool, 9>      marked{}; ///< TwilightForestMarker on the uncrafting stack
+    std::array<bool, 9>      marked{}; ///< GloamingForestMarker on the uncrafting stack
     std::array<ItemStack, 9> assembly;
     ItemStack       carried;
     core::uncraftmaps::Cycles cycles;
@@ -75,7 +75,7 @@ public:
     enum class Changed { Input, Assembly };
     void slotsChanged(Changed which);
 
-    /// UncraftingMenu#clicked (AbstractContainerMenu#doClick with TF's checks).
+    /// UncraftingMenu#clicked (AbstractContainerMenu#doClick with upstream's checks).
     void clicked(int slot, int button, Click type);
 
     /// UncraftingGuiPacket.
@@ -88,7 +88,7 @@ public:
     [[nodiscard]] int uncraftingCost() const { return mS.uncraftingCost; }
     [[nodiscard]] int recraftingCost() const { return mS.recraftingCost; }
     [[nodiscard]] bool isUncraftingRecipe() const;
-    /// The input is in #twilightforest:banned_uncraftables (the screen's red tooltip).
+    /// The input is in #gloamingforest:banned_uncraftables (the screen's red tooltip).
     [[nodiscard]] bool inputBanned() const;
 
     /// Every uncrafting candidate for `input` (getRecipesFor), in order.
@@ -132,7 +132,7 @@ private:
 };
 
 /// The vanilla form's repair (Table.cpp): the broken (marked) parts of the shown uncrafting recipe
-/// filled from the player's inventory, as a player of TF's screen puts them into the assembly grid
+/// filled from the player's inventory, as a player of upstream's screen puts them into the assembly grid
 /// over the ghost recipe (the combined grid of UncraftingMenu#slotsChanged).
 struct RepairPlan {
     std::array<int, 9> fromSlot{}; ///< the inventory slot of each filled cell (-1: none)

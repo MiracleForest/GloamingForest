@@ -1,0 +1,12 @@
+{
+  "placement": {
+    "type": "gloamingforest:landmark_grid",
+    "structure_grid_lock": "gloamingforest:large_hollow_hill"
+  },
+  "structures": [
+    {
+      "structure": "gloamingforest:large_hollow_hill",
+      "weight": 1
+    }
+  ]
+}

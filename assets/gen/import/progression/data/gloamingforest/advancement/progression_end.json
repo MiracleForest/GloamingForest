@@ -1,0 +1,63 @@
+{
+  "parent": "gloamingforest:progress_troll",
+  "criteria": {
+    "plateau": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "biomes": "gloamingforest:final_plateau"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    },
+    "previous_progression": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type_specific": {
+                "type": "minecraft:player",
+                "advancements": {
+                  "gloamingforest:progress_troll": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:tick"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancement.gloamingforest.progression_end.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:structure_void"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.progression_end"
+    }
+  },
+  "requirements": [
+    [
+      "previous_progression"
+    ],
+    [
+      "plateau"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

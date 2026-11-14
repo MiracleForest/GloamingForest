@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:auto_repair_probability": 0.001
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.auto_repair.description"
+    }
+  ],
+  "equipment_slots": "armor"
+}

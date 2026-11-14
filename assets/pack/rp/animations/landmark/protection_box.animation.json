@@ -1,7 +1,7 @@
 {
   "format_version": "1.10.0",
   "animations": {
-    "animation.twilightforest.protection_box.scale": {
+    "animation.gloamingforest.protection_box.scale": {
       "loop": true,
       "bones": {
         "root": {

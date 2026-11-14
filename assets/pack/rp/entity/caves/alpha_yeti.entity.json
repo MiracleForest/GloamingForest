@@ -2,29 +2,29 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:alpha_yeti",
+      "identifier": "gloamingforest:alpha_yeti",
       "materials": { "default": "entity_alphatest" },
-      "textures": { "default": "textures/twilightforest/entity/yetialpha" },
-      "geometry": { "default": "geometry.twilightforest.alpha_yeti" },
+      "textures": { "default": "textures/gloamingforest/entity/yetialpha" },
+      "geometry": { "default": "geometry.gloamingforest.alpha_yeti" },
       "render_controllers": ["controller.render.default"],
       "particle_effects": {
         "splash": "gloamingforest:caves_alpha_splash",
         "snow": "gloamingforest:caves_rampage_snow"
       },
       "animations": {
-        "setup": "animation.twilightforest.alpha_yeti.setup",
-        "tired_fx": "animation.twilightforest.alpha_yeti.tired_fx",
-        "rampage_fx": "animation.twilightforest.alpha_yeti.rampage_fx"
+        "setup": "animation.gloamingforest.alpha_yeti.setup",
+        "tired_fx": "animation.gloamingforest.alpha_yeti.tired_fx",
+        "rampage_fx": "animation.gloamingforest.alpha_yeti.rampage_fx"
       },
       "scripts": {
         "pre_animation": [
-          "variable.limb_swing = q.property('twilightforest:rampaging') ? q.life_time * 18.0 : q.modified_distance_moved;",
-          "variable.limb_amount = q.property('twilightforest:rampaging') ? 0.9 : q.modified_move_speed;"
+          "variable.limb_swing = q.property('gloamingforest:rampaging') ? q.life_time * 18.0 : q.modified_distance_moved;",
+          "variable.limb_amount = q.property('gloamingforest:rampaging') ? 0.9 : q.modified_move_speed;"
         ],
         "animate": [
           "setup",
-          { "tired_fx": "q.property('twilightforest:tired')" },
-          { "rampage_fx": "q.property('twilightforest:rampaging')" }
+          { "tired_fx": "q.property('gloamingforest:tired')" },
+          { "rampage_fx": "q.property('gloamingforest:rampaging')" }
         ]
       },
       "spawn_egg": { "base_color": "#cdcdcd", "overlay_color": "#29486e" }

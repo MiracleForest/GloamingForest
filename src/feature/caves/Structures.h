@@ -1,22 +1,22 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveConnectComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveGardenComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollVaultComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/CloudCastleComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/CloudComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/CloudTreeComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCloudComponent.java
-//   src/main/java/twilightforest/world/components/structures/YetiCaveComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveConnectComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveGardenComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollVaultComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/CloudCastleComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/CloudComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/CloudTreeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCloudComponent.java
+//   src/main/java/gloamingforest/world/components/structures/YetiCaveComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U27's structure pieces: the troll caves ("twilightforest:TFTC*"), the cloud castle pieces the
-// giant house (U29) starts by string ("twilightforest:TFClCa", "TFCloud", "TFClTr", the legacy
-// "TFTCloud") and the yeti cave ("twilightforest:TFYeti", on F7's HollowHillComponent base).
+// U27's structure pieces: the troll caves ("gloamingforest:TFTC*"), the cloud castle pieces the
+// giant house (U29) starts by string ("gloamingforest:TFClCa", "TFCloud", "TFClTr", the legacy
+// "TFTCloud") and the yeti cave ("gloamingforest:TFYeti", on F7's HollowHillComponent base).
 
 #include <array>
 #include <cstdint>
@@ -28,10 +28,10 @@
 
 namespace gf::feature::caves {
 
-inline constexpr char kTrollCave[]      = "twilightforest:troll_cave";
-inline constexpr char kYetiCave[]       = "twilightforest:yeti_cave";
-inline constexpr char kTrollSpeleothem[] = "twilightforest:troll_cave";
-inline constexpr char kYetiSpeleothem[]  = "twilightforest:yeti_cave";
+inline constexpr char kTrollCave[]      = "gloamingforest:troll_cave";
+inline constexpr char kYetiCave[]       = "gloamingforest:yeti_cave";
+inline constexpr char kTrollSpeleothem[] = "gloamingforest:troll_cave";
+inline constexpr char kYetiSpeleothem[]  = "gloamingforest:yeti_cave";
 
 using structure::BlockBox;
 using structure::Json;
@@ -42,7 +42,7 @@ using structure::Region;
 using structure::Rotation;
 using structure::bases::PieceList;
 
-/// TrollCaveMainComponent ("twilightforest:TFTCMai").
+/// TrollCaveMainComponent ("gloamingforest:TFTCMai").
 class TrollCaveMain : public structure::bases::ComponentOld {
 public:
     /// TrollCaveMainComponent(type, i, x, y, z, config): size 30, height 20, box from (-15, -20, -15), SOUTH.
@@ -74,7 +74,7 @@ protected:
     [[nodiscard]] std::int64_t decoSeed(Region& region) const;
 };
 
-/// TrollCaveConnectComponent ("twilightforest:TFTCCon").
+/// TrollCaveConnectComponent ("gloamingforest:TFTCCon").
 class TrollCaveConnect : public TrollCaveMain {
 public:
     TrollCaveConnect(int index, int x, int y, int z, int caveSize, int caveHeight, Orientation direction, std::string configId = kTrollSpeleothem);
@@ -100,7 +100,7 @@ private:
     bool makeGardenCave(PieceList& list, RandomSource& rand, int index, int x, int y, int z, int caveSize, int caveHeight, Rotation rotation);
 };
 
-/// TrollCaveGardenComponent ("twilightforest:TFTCGard").
+/// TrollCaveGardenComponent ("gloamingforest:TFTCGard").
 class TrollCaveGarden : public TrollCaveMain {
 public:
     TrollCaveGarden(int index, int x, int y, int z, int caveSize, int caveHeight, Orientation direction, std::string configId = kTrollSpeleothem);
@@ -113,14 +113,14 @@ protected:
     void generate(Region& region, std::string const& feature, RandomSource& rand, int x, int y, int z, BlockBox const& sbb);
 };
 
-/// TrollVaultComponent ("twilightforest:TFTCVa").
+/// TrollVaultComponent ("gloamingforest:TFTCVa").
 class TrollVault : public structure::bases::ComponentOld {
 public:
     TrollVault(int index, int x, int y, int z);
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// CloudCastleComponent ("twilightforest:TFClCa").
+/// CloudCastleComponent ("gloamingforest:TFClCa").
 class CloudCastle : public structure::bases::ComponentOld {
 public:
     CloudCastle(int index, int x, int y, int z);
@@ -131,7 +131,7 @@ private:
     void placeGiant(Region& region, BlockBox const& sbb, int x, int z, char const* entityId);
 };
 
-/// CloudComponent ("twilightforest:TFCloud"): a vanilla StructurePiece.
+/// CloudComponent ("gloamingforest:TFCloud"): a vanilla StructurePiece.
 class Cloud : public structure::Piece {
 public:
     Cloud(int genDepth, int centerX, int yHeight, int centerZ);
@@ -140,14 +140,14 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// CloudTreeComponent ("twilightforest:TFClTr").
+/// CloudTreeComponent ("gloamingforest:TFClTr").
 class CloudTree : public structure::bases::ComponentOld {
 public:
     CloudTree(int index, int x, int y, int z);
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// TrollCloudComponent ("twilightforest:TFTCloud"): legacy, only ever loaded.
+/// TrollCloudComponent ("gloamingforest:TFTCloud"): legacy, only ever loaded.
 class TrollCloud : public structure::bases::ComponentOld {
 public:
     TrollCloud();
@@ -159,7 +159,7 @@ public:
     int height = 0;
 };
 
-/// YetiCaveComponent ("twilightforest:TFYeti").
+/// YetiCaveComponent ("gloamingforest:TFYeti").
 class YetiCave : public structure::bases::HollowHill {
 public:
     YetiCave(int index, int x, int y, int z, std::string configId = kYetiSpeleothem);

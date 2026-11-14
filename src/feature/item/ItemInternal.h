@@ -24,7 +24,7 @@ namespace gf::item::internal {
 /// lines of gf::enchant (Java's order: the item's appendHoverText, then the enchantments).
 [[nodiscard]] std::vector<std::string> tooltipLines(ItemStack const& stack, Player const* viewer);
 /// Writes the tooltip lines as the stack's lore (replacing the lines it wrote before, keeping
-/// other lore). Lines without a leading colour code are gray, as TF writes them. True when the
+/// other lore). Lines without a leading colour code are gray, as upstream writes them. True when the
 /// stack changed.
 bool refreshLore(ItemStack& stack, Player const* viewer);
 /// Whether the stack's id has tooltip functions or the stack carries GloamingForest lore.

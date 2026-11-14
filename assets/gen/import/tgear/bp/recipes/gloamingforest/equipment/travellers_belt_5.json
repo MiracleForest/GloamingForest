@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/travellers_belt_5"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["lll", "ixi", "lll"],
+    "key": {
+      "i": {
+        "item": "minecraft:iron_nugget"
+      },
+      "l": {
+        "item": "gloamingforest:tanned_leather"
+      },
+      "x": {
+        "item": "gloamingforest:time_chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:tanned_leather"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:travellers_belt"
+    }
+  }
+}

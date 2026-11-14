@@ -1,0 +1,917 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "gloamingforest:gloaming_oak_door",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:half": ["lower", "upper"],
+        "gloamingforest:hinge": ["left", "right"],
+        "gloamingforest:open": [false, true],
+        "gloamingforest:powered": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 3
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 15
+      },
+      "minecraft:tags": ["minecraft:is_axe_item_destructible"],
+      "minecraft:map_color": "#8f7748",
+      "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_door_gloaming_oak_lower",
+          "render_method": "opaque"
+        },
+        "bottom": {
+          "texture": "tf_block_wood_door_gloaming_oak_lower",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 90, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-8, 0, 5],
+        "size": [16, 16, 3]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, 5],
+        "size": [16, 16, 3]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_gloaming_oak_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_gloaming_oak_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      }
+    ]
+  }
+}

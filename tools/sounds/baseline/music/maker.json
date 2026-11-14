@@ -1,5 +1,5 @@
 {
-  "about": "Baseline placeholder for TF's 'maker' (207 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/maker.json.",
+  "about": "Baseline placeholder for upstream's 'maker' (207 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/maker.json.",
   "rate": 22050,
   "quality": 0.25,
   "seed": 71,

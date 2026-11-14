@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:liveroot",
+      "identifier": "gloamingforest:liveroot",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:liveroot.name"
+        "value": "item.gloamingforest:liveroot.name"
       },
       "minecraft:tags": {
         "tags": ["createaddition:plants"]

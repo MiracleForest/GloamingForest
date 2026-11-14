@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/projectile/ChainBlock.java
-//   src/main/java/twilightforest/entity/projectile/CubeOfAnnihilation.java
-//   src/main/java/twilightforest/entity/projectile/SeekerArrow.java
-//   src/main/java/twilightforest/item/OreMagnetItem.java
-//   src/main/java/twilightforest/item/TripleBowItem.java
-//   src/main/java/twilightforest/item/recipe/MoonwormQueenRepairRecipe.java
-//   src/main/java/twilightforest/util/VoxelBresenhamIterator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/projectile/ChainBlock.java
+//   src/main/java/gloamingforest/entity/projectile/CubeOfAnnihilation.java
+//   src/main/java/gloamingforest/entity/projectile/SeekerArrow.java
+//   src/main/java/gloamingforest/item/OreMagnetItem.java
+//   src/main/java/gloamingforest/item/TripleBowItem.java
+//   src/main/java/gloamingforest/item/recipe/MoonwormQueenRepairRecipe.java
+//   src/main/java/gloamingforest/util/VoxelBresenhamIterator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U8 (weapons): the pure math of TF's weapons and throwables (no game types), gtested in
+// U8 (weapons): the pure math of upstream's weapons and throwables (no game types), gtested in
 // tests/weapons.
 #pragma once
 
@@ -78,7 +78,7 @@ struct I3 {
 /// MoonwormQueenRepairRecipe#assemble: the new damage value.
 [[nodiscard]] int moonwormRepairDamage(int damage, int berries);
 
-/// The box CrumbleHornItem#doCrumble crumbles: [min, max] block positions around `center` (TF
+/// The box CrumbleHornItem#doCrumble crumbles: [min, max] block positions around `center` (upstream
 /// means 4x4x4; encapsulatingFullBlocks + getAllInBB make it center-2..center+2).
 [[nodiscard]] std::pair<I3, I3> crumbleBox(I3 center);
 /// WorldUtil#getAllInBB of an AABB: the block positions [floor(min), floor(max)] (Java's

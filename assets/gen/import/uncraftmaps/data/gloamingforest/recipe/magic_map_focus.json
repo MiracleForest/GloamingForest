@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "gloamingforest:raven_feather"
+    },
+    {
+      "item": "gloamingforest:torchberries"
+    },
+    {
+      "tag": "c:dusts/glowstone"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:magic_map_focus"
+  }
+}

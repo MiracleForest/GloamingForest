@@ -30,16 +30,16 @@ namespace gf::feature::lich {
 using Json   = nlohmann::json;
 using Random = core::jrand::LegacyRandom;
 
-inline constexpr char const* kLich       = "twilightforest:lich";
-inline constexpr char const* kMinion     = "twilightforest:lich_minion";
-inline constexpr char const* kTome       = "twilightforest:death_tome";
-inline constexpr char const* kRising     = "twilightforest:rising_zombie";
-inline constexpr char const* kLichBolt   = "twilightforest:lich_bolt";
-inline constexpr char const* kLichBomb   = "twilightforest:lich_bomb";
-inline constexpr char const* kTomeBolt   = "twilightforest:tome_bolt";
-inline constexpr char const* kWandBolt   = "twilightforest:wand_bolt";
-inline constexpr char const* kSpawner    = "twilightforest:lich_boss_spawner";
-inline constexpr char const* kTowerKey   = "twilightforest:lich_tower";
+inline constexpr char const* kLich       = "gloamingforest:lich";
+inline constexpr char const* kMinion     = "gloamingforest:lich_minion";
+inline constexpr char const* kTome       = "gloamingforest:death_tome";
+inline constexpr char const* kRising     = "gloamingforest:rising_zombie";
+inline constexpr char const* kLichBolt   = "gloamingforest:lich_bolt";
+inline constexpr char const* kLichBomb   = "gloamingforest:lich_bomb";
+inline constexpr char const* kTomeBolt   = "gloamingforest:tome_bolt";
+inline constexpr char const* kWandBolt   = "gloamingforest:wand_bolt";
+inline constexpr char const* kSpawner    = "gloamingforest:lich_boss_spawner";
+inline constexpr char const* kTowerKey   = "gloamingforest:lich_tower";
 
 // ---- actors ----------------------------------------------------------------------------------------
 
@@ -85,7 +85,7 @@ void                  forgetRandom(std::int64_t uid);
 [[nodiscard]] bool hasLineOfSight(Mob& mob, Actor& target);
 /// Java's entity view vector (Entity#getViewVector).
 [[nodiscard]] Vec3 viewVector(Actor const& actor);
-/// LivingEntity#isLookingAtMe as TF's DeathTome / RisingZombie write it: the viewer looks within
+/// LivingEntity#isLookingAtMe as upstream's DeathTome / RisingZombie write it: the viewer looks within
 /// `tolerance` (dot > 1 - tolerance) at one of the heights `ys` of `self` and the clip from that
 /// height to the viewer's eyes is clear.
 [[nodiscard]] bool isLookedAtBy(Actor& self, Player& viewer, double tolerance, std::vector<double> const& ys);

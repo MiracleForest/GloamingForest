@@ -1,17 +1,17 @@
 # Aurora palace, Snow Queen and mushroom tower (U28), client: screenshots of what U28 adds.
-#   palace-*        the aurora palace placed with /twilightforest place (the aurora tint on its walls:
+#   palace-*        the aurora palace placed with /gloamingforest place (the aurora tint on its walls:
 #                   ColorHandler's per-position colour with the client mod, the tint method's colour
 #                   on vanilla clients), its bridge and the Snow Queen's tower
 #   palace-wing-floor, palace-boss-room   inside a wing (floor decorators, chests) and the queen's room
-#   blocks          aurora block (TF's animated variants), pillar, slab and auroralized glass
+#   blocks          aurora block (upstream's animated variants), pillar, slab and auroralized glass
 #   beacon-beam     a beacon's beam through auroralized glass (white up to the glass, then the glass's
 #                   aurora colour), next to a vanilla beacon under red stained glass
-#   block-items     the four block items (TF's item colours)
+#   block-items     the four block items (upstream's item colours)
 #   snow-queen, snow-guardian, ice-cores, ice-crystal   the mobs (the queen with her ice shields)
 #   ice-core-dying-1..3  the dying unstable ice core (swell and white flash)
 #   mushroom-tower  the mushroom tower
 #   reload-blocks   (local) the blocks again after Save & Quit and back in (a second world)
-# Out: out/aurora[-<mode>]/*.png - open each one and compare it with TF's textures and models.
+# Out: out/aurora[-<mode>]/*.png - open each one and compare it with upstream's textures and models.
 if ($script:Mode -eq 'local') { Wait-LogLine 'GloamingForest world ready' 120 | Out-Null }
 else { Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null }
 
@@ -34,8 +34,8 @@ $x = 4000; $z = 4000; $y = -60
 Invoke-Teleport "/tp @s $($x + 16) $($y + 60) $($z + 16)"
 Start-Sleep -Seconds 4
 $mark = Get-LogMark
-Invoke-Chat "/twilightforest place twilightforest:aurora_palace $x $y $z"
-Wait-LogLine "landmark: placed twilightforest:aurora_palace at $x $y $z" 60 -Since $mark | Out-Null
+Invoke-Chat "/gloamingforest place gloamingforest:aurora_palace $x $y $z"
+Wait-LogLine "landmark: placed gloamingforest:aurora_palace at $x $y $z" 60 -Since $mark | Out-Null
 $bossView = Wait-LogLine 'aurora: snow queen room view (-?\d+) (-?\d+) (-?\d+) facing (-?\d+) (-?\d+) (-?\d+)' 10 -Since $mark
 $wingView = Wait-LogLine 'aurora: palace wing view (-?\d+) (-?\d+) (-?\d+) facing (-?\d+) (-?\d+) (-?\d+)' 10 -Since $mark
 Start-Sleep -Seconds 3
@@ -64,10 +64,10 @@ Show-View $bossView 'palace-boss-room'
 $bx = 4200; $bz = 4200; $by = -60
 Invoke-Teleport "/tp @s $($bx + 3) $($by + 2) $($bz - 4) facing $($bx + 3) $($by + 1) $bz"
 Start-Sleep -Seconds 3
-Invoke-Chat "/fill $($bx - 2) $($by) $($bz) $($bx + 8) $($by + 3) $($bz + 1) twilightforest:aurora_block"
-Invoke-Chat "/setblock $($bx + 1) $($by + 1) $($bz - 1) twilightforest:aurora_pillar"
-Invoke-Chat "/setblock $($bx + 3) $($by + 1) $($bz - 1) twilightforest:aurora_slab"
-Invoke-Chat "/setblock $($bx + 5) $($by + 1) $($bz - 1) twilightforest:auroralized_glass"
+Invoke-Chat "/fill $($bx - 2) $($by) $($bz) $($bx + 8) $($by + 3) $($bz + 1) gloamingforest:aurora_block"
+Invoke-Chat "/setblock $($bx + 1) $($by + 1) $($bz - 1) gloamingforest:aurora_pillar"
+Invoke-Chat "/setblock $($bx + 3) $($by + 1) $($bz - 1) gloamingforest:aurora_slab"
+Invoke-Chat "/setblock $($bx + 5) $($by + 1) $($bz - 1) gloamingforest:auroralized_glass"
 Start-Sleep -Seconds 2
 Save-Screenshot 'blocks' | Out-Null
 # a beacon under auroralized glass: the beam takes the glass's aurora colour (getBeaconColorMultiplier)
@@ -75,7 +75,7 @@ $cx = $bx + 14
 $beaconMark = Get-LogMark
 Invoke-Chat "/fill $($cx - 1) $($by) $($bz + 4) $($cx + 1) $($by) $($bz + 6) iron_block"
 Invoke-Chat "/setblock $cx $($by + 1) $($bz + 5) beacon"
-Invoke-Chat "/setblock $cx $($by + 3) $($bz + 5) twilightforest:auroralized_glass"
+Invoke-Chat "/setblock $cx $($by + 3) $($bz + 5) gloamingforest:auroralized_glass"
 # next to it a vanilla beacon under red stained glass (the engine's own beam: the reference for the
 # white section below the glass)
 Invoke-Chat "/fill $($cx - 1) $($by) $($bz + 8) $($cx + 1) $($by) $($bz + 10) iron_block"
@@ -93,7 +93,7 @@ if ($script:Mode -ne 'remote-vanilla') {
 }
 # the block items in the hotbar (ColorHandler's item colours: hue 0.45, the pale colour)
 Invoke-Chat '/clear @s'
-foreach ($i in 'aurora_block', 'aurora_pillar', 'aurora_slab', 'auroralized_glass') { Invoke-Chat "/give @s twilightforest:$i" }
+foreach ($i in 'aurora_block', 'aurora_pillar', 'aurora_slab', 'auroralized_glass') { Invoke-Chat "/give @s gloamingforest:$i" }
 Start-Sleep -Seconds 1
 Save-Screenshot 'block-items' | Out-Null
 
@@ -107,7 +107,7 @@ Invoke-Chat '/clear @s'
 # (go there first: /fill needs the chunk loaded)
 Invoke-Teleport "/tp @s $($mx + 0.5) $($my + 6) $($mz + 0.5)"
 Start-Sleep -Seconds 2
-Invoke-Chat "/fill $($mx - 1) $my $($mz - 1) $($mx + 1) $($my + 3) $($mz + 1) twilightforest:aurora_block hollow"
+Invoke-Chat "/fill $($mx - 1) $my $($mz - 1) $($mx + 1) $($my + 3) $($mz + 1) gloamingforest:aurora_block hollow"
 Invoke-SelfTest 'aurora.client_miner' | Out-Null
 Invoke-Chat '/gamemode survival'
 Invoke-Teleport "/tp @s $($mx + 0.5) $($my + 1) $($mz + 0.5) 0 0"
@@ -140,20 +140,20 @@ function Show-Mob([string]$id, [string]$shot, [double]$dy = 0, [double]$dist = 4
 }
 # (no griefing: a killed unstable core explodes 3 s later)
 Invoke-Chat '/gamerule mobgriefing false'
-Show-Mob 'twilightforest:snow_queen' 'snow-queen' 1 6
-# its gear (a TF sword, chestplate and helmet) reaches the client with the equipment packets
-Show-Mob 'twilightforest:snow_guardian' 'snow-guardian' 0 3 2.5
-Show-Mob 'twilightforest:stable_ice_core' 'ice-core-stable'
-Show-Mob 'twilightforest:unstable_ice_core' 'ice-core-unstable'
-Show-Mob 'twilightforest:ice_crystal' 'ice-crystal'
+Show-Mob 'gloamingforest:snow_queen' 'snow-queen' 1 6
+# its gear (an upstream sword, chestplate and helmet) reaches the client with the equipment packets
+Show-Mob 'gloamingforest:snow_guardian' 'snow-guardian' 0 3 2.5
+Show-Mob 'gloamingforest:stable_ice_core' 'ice-core-stable'
+Show-Mob 'gloamingforest:unstable_ice_core' 'ice-core-unstable'
+Show-Mob 'gloamingforest:ice_crystal' 'ice-crystal'
 # the dying unstable ice core (UnstableIceCoreRenderer): swollen 1.4 x 1.1 with the sin(t x 100)
 # wobble, flashing white every other 2 ticks, for 60 ticks before it explodes
 $dx = 4400; $dz = 4400; $dy = -60
 Invoke-Teleport "/tp @s $($dx + 4) $($dy) $($dz + 0.5) facing $($dx + 0.5) $($dy + 1) $($dz + 0.5)"
 Start-Sleep -Seconds 2
 $dyingMark = Get-LogMark
-Invoke-Chat "/summon twilightforest:unstable_ice_core $($dx + 0.5) $($dy) $($dz + 0.5) facing @p"
-Invoke-Chat '/damage @e[type=twilightforest:unstable_ice_core,c=1] 100'
+Invoke-Chat "/summon gloamingforest:unstable_ice_core $($dx + 0.5) $($dy) $($dz + 0.5) facing @p"
+Invoke-Chat '/damage @e[type=gloamingforest:unstable_ice_core,c=1] 100'
 $dying = Wait-LogLine 'aurora: unstable ice core dying at (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)' 10 -Since $dyingMark
 if ($dying -match 'dying at (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)') {
     # the body lies still where it died: look at it from 3.5 blocks
@@ -163,15 +163,15 @@ if ($dying -match 'dying at (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)') {
 Start-Sleep -Milliseconds 200
 foreach ($k in 1..3) { Save-Screenshot "ice-core-dying-$k" | Out-Null; Start-Sleep -Milliseconds 130 }
 Start-Sleep -Seconds 3
-Invoke-Chat '/kill @e[type=twilightforest:unstable_ice_core]'
+Invoke-Chat '/kill @e[type=gloamingforest:unstable_ice_core]'
 Invoke-Chat '/gamerule mobgriefing true'
 # ---- the mushroom tower -------------------------------------------------------------------------
 $tx = 4600; $tz = 4600; $ty = -60
 Invoke-Teleport "/tp @s $($tx + 20) $($ty + 30) $($tz + 20)"
 Start-Sleep -Seconds 4
 $mark = Get-LogMark
-Invoke-Chat "/twilightforest place twilightforest:mushroom_tower $tx $ty $tz"
-Wait-LogLine "landmark: placed twilightforest:mushroom_tower at $tx $ty $tz" 60 -Since $mark | Out-Null
+Invoke-Chat "/gloamingforest place gloamingforest:mushroom_tower $tx $ty $tz"
+Wait-LogLine "landmark: placed gloamingforest:mushroom_tower at $tx $ty $tz" 60 -Since $mark | Out-Null
 Start-Sleep -Seconds 2
 Set-Camera ($tx + 70) ($ty + 40) ($tz + 70) "$($tx + 20) $($ty + 15) $($tz + 20)"
 Save-Screenshot 'mushroom-tower' | Out-Null

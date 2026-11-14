@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:brittle_potion_flask",
+      "identifier": "gloamingforest:brittle_potion_flask",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:brittle_potion_flask.name"
+        "value": "item.gloamingforest:brittle_potion_flask.name"
       },
       "minecraft:max_stack_size": 64,
       "minecraft:use_modifiers": {

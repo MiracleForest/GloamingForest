@@ -2,14 +2,14 @@
 
 // Contract "item" (header owned by F0, implemented by F9; spike S6).
 //
-// TF's items are BP items (imported skeleton) whose behaviour is native, registered by id. F9
+// upstream's items are BP items (imported skeleton) whose behaviour is native, registered by id. F9
 // owns the engine hooks (item use, release, mining, inventory / armor ticks, tooltips, dispensers,
 // durability bars); units only register:
 //
-//     gf::item::registerItem("twilightforest:ore_magnet", {
+//     gf::item::registerItem("gloamingforest:ore_magnet", {
 //         .use = [](Player& p, ItemStack& s) { ...; return gf::item::Result::Consume; },
 //     });
-//     gf::item::addTooltip("twilightforest:charm_of_life_1", [](ItemStack const&, std::vector<std::string>& lines, Player const*) { ... });
+//     gf::item::addTooltip("gloamingforest:charm_of_life_1", [](ItemStack const&, std::vector<std::string>& lines, Player const*) { ... });
 //
 // Item data lives in the stack's user data (game/Items.h). Server thread unless noted.
 

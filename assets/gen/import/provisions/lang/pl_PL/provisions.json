@@ -1,11 +1,11 @@
 {
-  "block.twilightforest.experiment_115": "Eksperyment 115",
-  "effect.twilightforest.frosted": "Omrożony",
-  "enchantment.twilightforest.chill_aura": "Mroźna Aura",
-  "enchantment.twilightforest.chill_aura.desc": "Dodaje szansę na to, że agresor zostanie zamrożony po zaatakowaniu noszącego.",
-  "enchantment.twilightforest.destruction": "Zniszczenie",
-  "enchantment.twilightforest.destruction.desc": "Pozwala Blokowi z Łańcuchem na niszczenie bloków z wyższym poziomem wydobycia.",
-  "enchantment.twilightforest.fire_react": "Ognista Reakcja",
-  "enchantment.twilightforest.fire_react.desc": "Dodaje szansę na to, że agresor stanie w ogniu po zaatakowaniu noszącego.",
-  "item.twilightforest.hydra_chop": "Ugryzienie Hydry"
+  "block.gloamingforest.experiment_115": "Eksperyment 115",
+  "effect.gloamingforest.frosted": "Omrożony",
+  "enchantment.gloamingforest.chill_aura": "Mroźna Aura",
+  "enchantment.gloamingforest.chill_aura.desc": "Dodaje szansę na to, że agresor zostanie zamrożony po zaatakowaniu noszącego.",
+  "enchantment.gloamingforest.destruction": "Zniszczenie",
+  "enchantment.gloamingforest.destruction.desc": "Pozwala Blokowi z Łańcuchem na niszczenie bloków z wyższym poziomem wydobycia.",
+  "enchantment.gloamingforest.fire_react": "Ognista Reakcja",
+  "enchantment.gloamingforest.fire_react.desc": "Dodaje szansę na to, że agresor stanie w ogniu po zaatakowaniu noszącego.",
+  "item.gloamingforest.hydra_chop": "Ugryzienie Hydry"
 }

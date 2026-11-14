@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:gold_minotaur_axe",
+      "identifier": "gloamingforest:gold_minotaur_axe",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:gold_minotaur_axe.name"
+        "value": "item.gloamingforest:gold_minotaur_axe.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

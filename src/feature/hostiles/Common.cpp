@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/HostileWolf.java (isValidLightLevel)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/HostileWolf.java (isValidLightLevel)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Also translated (vanilla Minecraft 1.21.1, the goals TF's hostiles use from it):
+// Also translated (vanilla Minecraft 1.21.1, the goals upstream's hostiles use from it):
 // net.minecraft.world.entity.ai.goal.RangedAttackGoal and AvoidEntityGoal, Mob's equipment
 // enchantment and drop rules, DifficultyInstance#getSpecialMultiplier.
 
@@ -179,9 +179,9 @@ float specialMultiplier() {
 }
 
 bool hedgeMazeChunk(BlockSource& region, BlockPos const& pos) {
-    if (!gf::world::isTwilight(region.getDimension())) return false;
+    if (!gf::world::isGloaming(region.getDimension())) return false;
     auto key = gf::core::landmark::pickForChunk(gf::worldgen::seed(), pos.x >> 4, pos.z >> 4, [](int x, int z) { return gf::worldgen::biomeAt(BlockPos{x, 0, z}); });
-    return key == "twilightforest:hedge_maze";
+    return key == "gloamingforest:hedge_maze";
 }
 
 bool darkEnough(BlockSource& region, BlockPos const& pos, gf::core::jrand::RandomSource& random) {

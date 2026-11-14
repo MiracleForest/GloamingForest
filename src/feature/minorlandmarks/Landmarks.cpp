@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/HollowHillStructure.java
-//   src/main/java/twilightforest/world/components/structures/type/HedgeMazeStructure.java
-//   src/main/java/twilightforest/world/components/structures/HedgeMazeComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/HollowHillStructure.java
+//   src/main/java/gloamingforest/world/components/structures/type/HedgeMazeStructure.java
+//   src/main/java/gloamingforest/world/components/structures/HedgeMazeComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The hollow hills (small, medium, large) and the hedge maze as F6 landmark generators.
 // HollowHillStructure#canSpawnMob (monsters only inside the dome) is applied by F6 for every
-// structure of type twilightforest:hollow_hill (feature/landmark/README.md): the layout gives the
-// hill piece TF's box and leaves Generator::spawnIndex unset.
+// structure of type gloamingforest:hollow_hill (feature/landmark/README.md): the layout gives the
+// hill piece upstream's box and leaves Generator::spawnIndex unset.
 #include "feature/minorlandmarks/Internal.h"
 
 #include <array>
@@ -49,7 +49,7 @@ public:
         rand.setSeed(core::mth::ladd(world.seed(), static_cast<std::int64_t>(bbox.minX) * bbox.minZ)); // getMazeSeed
         sb::Maze maze(kMSize, kMSize, rand);
         maze.oddBias         = 2;
-        maze.torchBlockState = &st::blocks::java("twilightforest:firefly");
+        maze.torchBlockState = &st::blocks::java("gloamingforest:firefly");
         maze.wallBlockState  = &st::blocks::java(kHedge);
         maze.type            = 4;
         maze.tall            = 3;
@@ -113,8 +113,8 @@ private:
         roomJackO(world, roomRNG, x, z, 8, sbb);
         if (roomRNG.nextInt(4) == 0) roomJackO(world, roomRNG, x, z, 8, sbb);
         roomSpawner(world, roomRNG, x, z, 8, sbb);
-        roomTreasure(world, roomRNG, x, z, 8, sbb, "twilightforest:hedge_maze");
-        if (roomRNG.nextInt(4) == 0) roomTreasure(world, roomRNG, x, z, 8, sbb, "twilightforest:hedge_cloth");
+        roomTreasure(world, roomRNG, x, z, 8, sbb, "gloamingforest:hedge_maze");
+        if (roomRNG.nextInt(4) == 0) roomTreasure(world, roomRNG, x, z, 8, sbb, "gloamingforest:hedge_cloth");
     }
 
     void roomSpawner(Region& world, RandomSource& rand, int x, int z, int diameter, BlockBox const& sbb) {
@@ -122,9 +122,9 @@ private:
         int         rz = z + rand.nextInt(diameter) - (diameter / 2);
         std::string mob;
         switch (rand.nextInt(3)) {
-        case 1: mob = "twilightforest:swarm_spider"; break;
-        case 2: mob = "twilightforest:hostile_wolf"; break;
-        default: mob = "twilightforest:hedge_spider"; break;
+        case 1: mob = "gloamingforest:swarm_spider"; break;
+        case 2: mob = "gloamingforest:hostile_wolf"; break;
+        default: mob = "gloamingforest:hedge_spider"; break;
         }
         setSpawner(world, rx, kFloorLevel, rz, sbb, mob);
     }
@@ -166,7 +166,7 @@ std::string speleothemConfigOf(char const* key) {
     if (auto const* d = gf::landmark::descriptor(key)) {
         if (auto it = d->extra.find("speleothem_config"); it != d->extra.end() && it->is_string()) return it->get<std::string>();
     }
-    return key; // TF's structure_speleothem_settings use the structure's own name
+    return key; // upstream's structure_speleothem_settings use the structure's own name
 }
 
 } // namespace

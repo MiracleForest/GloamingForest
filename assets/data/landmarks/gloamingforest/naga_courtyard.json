@@ -1,0 +1,65 @@
+{
+  "key": "gloamingforest:naga_courtyard",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/naga_courtyard.json",
+  "structure": {
+    "biomes": "#gloamingforest:valid_naga_courtyard_biomes",
+    "decoration_clearance": {
+      "adjust_structure_elevation": true,
+      "allow_biome_surface_decorations": false,
+      "allow_biome_underground_decorations": true,
+      "allow_biome_vegetation": true,
+      "chunk_clearance_radius": 3
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "surface_structures",
+    "structure_icon": "gloamingforest:naga_courtyard",
+    "terrain_adaptation": "beard_thin",
+    "type": "gloamingforest:naga_courtyard"
+  },
+  "structure_set": {
+    "id": "gloamingforest:naga_courtyard",
+    "placement": {
+      "structure_grid_lock": "gloamingforest:naga_courtyard",
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:naga_courtyard",
+        "weight": 1
+      }
+    ]
+  }
+}

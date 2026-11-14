@@ -6,20 +6,20 @@ for each worker and the checklist the worker follows.
 
 ## What the worker gets
 
-- **Goal**, quoted verbatim: 基于LeviLamina，制作Minecraft Java版模组Twilight Forest的基岩版复刻。要求支持客户端和服务端；所有特性和交互和界面必须完全一致，没有任何缺失。可以借助 LiteLDev/BeDD 来调试。
-  Decisions taken with it: The Twilight Forest 4.8 at commit `9e40a75721c716b2fdf80c16d1058fe718825e9f` is the
+- **Goal**, quoted verbatim: 基于LeviLamina，制作Minecraft Java版模组Gloaming Forest的基岩版复刻。要求支持客户端和服务端；所有特性和交互和界面必须完全一致，没有任何缺失。可以借助 LiteLDev/BeDD 来调试。
+  Decisions taken with it: the upstream 4.8 at commit `9e40a75721c716b2fdf80c16d1058fe718825e9f` is the
   reference; the CC BY-NC-SA assets are reused through `tools/import`, the All Rights Reserved ones (sounds,
   music, structure templates) are regenerated; client-mod parity comes first, vanilla clients are best effort.
 - **The unit record**, verbatim from [units.json](units.json): id, title, paths, content, description, contracts,
   e2e, size.
 - **The conventions**: [AGENTS.md](../../AGENTS.md) (rules R1-R25, contracts, Bedrock lessons), the
   [unit table](README.md), the unit's behaviour spec `docs/spec/<unit>.md` (written by F14-F16; until it exists,
-  TF's source) and the contract headers.
+  Upstream's source) and the contract headers.
 - **The e2e recipe**: [e2e.md](e2e.md).
 
 ## Before coding
 
-1. `pwsh tools/tf/fetch.ps1` (once per machine) and read the TF classes of the unit from `%LOCALAPPDATA%\gf-tf`.
+1. `pwsh tools/upstream/fetch.ps1` (once per machine) and read the upstream classes of the unit from `%LOCALAPPDATA%\gf-upstream\view`.
    Never through the GitHub API (rule R24), never open `.ogg` or `.nbt` files (rule R10).
 2. Read the contract headers the record lists and the LeviLamina headers you will call
    (`%LOCALAPPDATA%\.xmake\packages\l\levilamina\26.51.7\<hash>\include`). Never call `MCNAPI` functions.
@@ -29,7 +29,7 @@ for each worker and the checklist the worker follows.
 
 - Edit only owned paths (rule R3); a needed contract extension goes into new files under
   `src/feature/ext/<unit>/` and is called out in the PR (rule R18).
-- Translate TF code faithfully and keep the attribution header (AGENTS.md); keep TF's numbers, timings,
+- Translate upstream code faithfully and keep the attribution header (AGENTS.md); keep upstream's numbers, timings,
   probabilities and texts.
 - Reference other units only by string ids (rule R2); attach behaviour to other units' blocks by tag matchers
   (rule R6).

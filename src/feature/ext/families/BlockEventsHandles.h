@@ -5,7 +5,7 @@
 // register the same handlers with a handle that removes them again (a unit's uninstall, a selftest
 // that listens only while it runs):
 //
-//     auto h = gf::blockevents::ext::addSteppedOn("twilightforest:fiery_block", burn);
+//     auto h = gf::blockevents::ext::addSteppedOn("gloamingforest:fiery_block", burn);
 //     gf::blockevents::ext::remove(h);
 //
 // A removed handler is never called again, also not by a dispatch that is running when it goes (a

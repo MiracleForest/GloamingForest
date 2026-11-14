@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:tannin"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:potion",
+        "data": 0
+      },
+      {
+        "item": "gloamingforest:gloaming_oak_sapling"
+      },
+      {
+        "item": "gloamingforest:root_strand"
+      },
+      {
+        "item": "gloamingforest:gloaming_oak_leaves"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:gloaming_oak_leaves"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:tannin"
+    }
+  }
+}

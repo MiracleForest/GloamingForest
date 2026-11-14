@@ -44,24 +44,24 @@ using core::GlobalPos;
 
 // ---- ids -------------------------------------------------------------------------------------------
 namespace id {
-inline constexpr char YellowDoor[]   = "twilightforest:yellow_castle_door";
-inline constexpr char VioletDoor[]   = "twilightforest:violet_castle_door";
-inline constexpr char PinkDoor[]     = "twilightforest:pink_castle_door";
-inline constexpr char BlueDoor[]     = "twilightforest:blue_castle_door";
-inline constexpr char VioletField[]  = "twilightforest:violet_force_field";
-inline constexpr char PinkField[]    = "twilightforest:pink_force_field";
-inline constexpr char OrangeField[]  = "twilightforest:orange_force_field";
-inline constexpr char GreenField[]   = "twilightforest:green_force_field";
-inline constexpr char BlueField[]    = "twilightforest:blue_force_field";
-inline constexpr char BrownThorns[]  = "twilightforest:brown_thorns";
-inline constexpr char GreenThorns[]  = "twilightforest:green_thorns";
-inline constexpr char BurntThorns[]  = "twilightforest:burnt_thorns";
-inline constexpr char ThornRose[]    = "twilightforest:thorn_rose";
-inline constexpr char ThornLeaves[]  = "twilightforest:thorn_leaves";
-inline constexpr char Deadrock[]     = "twilightforest:weathered_deadrock";
-inline constexpr char CinderFurnace[] = "twilightforest:cinder_furnace";
-inline constexpr char CinderLog[]    = "twilightforest:cinder_log";
-inline constexpr char CinderWood[]   = "twilightforest:cinder_wood";
+inline constexpr char YellowDoor[]   = "gloamingforest:yellow_castle_door";
+inline constexpr char VioletDoor[]   = "gloamingforest:violet_castle_door";
+inline constexpr char PinkDoor[]     = "gloamingforest:pink_castle_door";
+inline constexpr char BlueDoor[]     = "gloamingforest:blue_castle_door";
+inline constexpr char VioletField[]  = "gloamingforest:violet_force_field";
+inline constexpr char PinkField[]    = "gloamingforest:pink_force_field";
+inline constexpr char OrangeField[]  = "gloamingforest:orange_force_field";
+inline constexpr char GreenField[]   = "gloamingforest:green_force_field";
+inline constexpr char BlueField[]    = "gloamingforest:blue_force_field";
+inline constexpr char BrownThorns[]  = "gloamingforest:brown_thorns";
+inline constexpr char GreenThorns[]  = "gloamingforest:green_thorns";
+inline constexpr char BurntThorns[]  = "gloamingforest:burnt_thorns";
+inline constexpr char ThornRose[]    = "gloamingforest:thorn_rose";
+inline constexpr char ThornLeaves[]  = "gloamingforest:thorn_leaves";
+inline constexpr char Deadrock[]     = "gloamingforest:weathered_deadrock";
+inline constexpr char CinderFurnace[] = "gloamingforest:cinder_furnace";
+inline constexpr char CinderLog[]    = "gloamingforest:cinder_log";
+inline constexpr char CinderWood[]   = "gloamingforest:cinder_wood";
 } // namespace id
 
 inline constexpr std::array<char const*, 4> kDoors{id::YellowDoor, id::VioletDoor, id::PinkDoor, id::BlueDoor};
@@ -88,7 +88,7 @@ inline constexpr std::array<int, 6> kDz{0, 0, -1, 1, 0, 0};
 [[nodiscard]] int axisFromName(std::string const& name);
 [[nodiscard]] std::optional<int> dirFromName(std::string const& name);
 [[nodiscard]] BlockPos offset(BlockPos const& p, int d, int n = 1);
-/// twilightforest:<direction>
+/// gloamingforest:<direction>
 [[nodiscard]] std::string sideState(int d);
 
 // ---- level -----------------------------------------------------------------------------------------

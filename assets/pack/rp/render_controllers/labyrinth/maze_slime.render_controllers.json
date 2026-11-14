@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.maze_slime": {
+    "controller.render.gloamingforest.maze_slime": {
       "geometry": "Geometry.default",
       "materials": [{ "*": "Material.default" }, { "outer": "Material.outer" }],
       "textures": ["Texture.default"]

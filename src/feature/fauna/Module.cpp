@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U16 (fauna): installs the passive and ambient fauna (boar, bighorn sheep, deer, penguin, tiny bird,
 // raven, squirrel, dwarf rabbit, kobold, mosquito swarm), their spawn rules, the prey goals of
-// vanilla predators and the parrots' imitations of TF's mobs.
+// vanilla predators and the parrots' imitations of upstream's mobs.
 
 #include "feature/fauna/Fauna.h"
 #include "mod/Log.h"

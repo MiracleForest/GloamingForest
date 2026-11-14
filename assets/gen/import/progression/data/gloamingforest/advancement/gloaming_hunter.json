@@ -1,0 +1,1012 @@
+{
+  "parent": "gloamingforest:root",
+  "criteria": {
+    "adherent": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:adherent",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "alpha_yeti": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:alpha_yeti",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "armored_giant": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:armored_giant",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "bighorn_sheep": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:bighorn_sheep",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "blockchain_goblin": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:blockchain_goblin",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "boar": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:boar",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "carminite_broodling": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:carminite_broodling",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "carminite_ghastguard": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:carminite_ghastguard",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "carminite_ghastling": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:carminite_ghastling",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "carminite_golem": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:carminite_golem",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "death_tome": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:death_tome",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "deer": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:deer",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "dwarf_rabbit": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:dwarf_rabbit",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "fire_beetle": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:fire_beetle",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "giant_miner": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:giant_miner",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "harbinger_cube": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:harbinger_cube",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "hedge_spider": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:hedge_spider",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "helmet_crab": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:helmet_crab",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "hostile_wolf": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:hostile_wolf",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "hydra": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:hydra",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "king_spider": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:king_spider",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "knight_phantom": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:knight_phantom",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "kobold": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:kobold",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "lich": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:lich",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "lich_minion": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:lich_minion",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "lower_goblin_knight": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:lower_goblin_knight",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "maze_slime": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:maze_slime",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "minoshroom": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:minoshroom",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "minotaur": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:minotaur",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "mist_wolf": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:mist_wolf",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "mosquito_swarm": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:mosquito_swarm",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "naga": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:naga",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "penguin": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:penguin",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "pinch_beetle": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:pinch_beetle",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "plateau_boss": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:plateau_boss",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "quest_ram": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:quest_ram",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "raven": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:raven",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "redcap": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:redcap",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "redcap_sapper": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:redcap_sapper",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "skeleton_druid": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:skeleton_druid",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "slime_beetle": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:slime_beetle",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "snow_guardian": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:snow_guardian",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "snow_queen": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:snow_queen",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "squirrel": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:squirrel",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "stable_ice_core": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:stable_ice_core",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "swarm_spider": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:swarm_spider",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "tiny_bird": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:tiny_bird",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "towerwood_borer": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:towerwood_borer",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "troll": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:troll",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "unstable_ice_core": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:unstable_ice_core",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "upper_goblin_knight": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:upper_goblin_knight",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "ur_ghast": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:ur_ghast",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "winter_wolf": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:winter_wolf",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "wraith": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:wraith",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "yeti": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:yeti",
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.gloaming_hunter.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:raven_feather"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.gloaming_hunter"
+    }
+  },
+  "requirements": [
+    [
+      "adherent",
+      "armored_giant",
+      "bighorn_sheep",
+      "blockchain_goblin",
+      "dwarf_rabbit",
+      "death_tome",
+      "deer",
+      "fire_beetle",
+      "giant_miner",
+      "lower_goblin_knight",
+      "upper_goblin_knight",
+      "harbinger_cube",
+      "hedge_spider",
+      "helmet_crab",
+      "hostile_wolf",
+      "hydra",
+      "king_spider",
+      "knight_phantom",
+      "kobold",
+      "lich",
+      "lich_minion",
+      "maze_slime",
+      "carminite_ghastling",
+      "minoshroom",
+      "minotaur",
+      "mist_wolf",
+      "mosquito_swarm",
+      "naga",
+      "penguin",
+      "pinch_beetle",
+      "plateau_boss",
+      "quest_ram",
+      "raven",
+      "redcap",
+      "redcap_sapper",
+      "skeleton_druid",
+      "slime_beetle",
+      "snow_guardian",
+      "snow_queen",
+      "squirrel",
+      "stable_ice_core",
+      "swarm_spider",
+      "tiny_bird",
+      "carminite_broodling",
+      "carminite_ghastguard",
+      "carminite_golem",
+      "towerwood_borer",
+      "troll",
+      "unstable_ice_core",
+      "ur_ghast",
+      "boar",
+      "winter_wolf",
+      "wraith",
+      "yeti",
+      "alpha_yeti"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

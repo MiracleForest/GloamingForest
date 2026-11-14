@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:rising_zombie",
+      "identifier": "gloamingforest:rising_zombie",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "rising_zombie", "monster", "mob"]
+        "family": ["gloamingforest", "rising_zombie", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

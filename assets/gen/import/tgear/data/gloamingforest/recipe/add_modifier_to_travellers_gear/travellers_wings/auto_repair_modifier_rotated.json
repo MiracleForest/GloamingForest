@@ -1,0 +1,23 @@
+{
+  "type": "gloamingforest:travellers_gear_modifier_shaped_recipe",
+  "is_rotated": true,
+  "modifier_key": "gloamingforest:auto_repair",
+  "pattern": {
+    "key": {
+      "E": {
+        "item": "minecraft:experience_bottle"
+      },
+      "M": {
+        "item": "gloamingforest:moss_patch"
+      },
+      "T": {
+        "item": "gloamingforest:travellers_wings"
+      }
+    },
+    "pattern": [
+      " M ",
+      "ETE",
+      " M "
+    ]
+  }
+}

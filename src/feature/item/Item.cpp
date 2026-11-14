@@ -1,6 +1,6 @@
-// Contract "item" (F9; spike S6): TF's item behaviours on Bedrock items.
+// Contract "item" (F9; spike S6): upstream's item behaviours on Bedrock items.
 //
-// TF's items are data-driven BP items (ComponentItem, F1's skeleton) whose behaviour is native and
+// upstream's items are data-driven BP items (ComponentItem, F1's skeleton) whose behaviour is native and
 // registered by id. One hook per engine event (rule R8):
 // - right-click: the shared interaction dispatch (onUse, low priority, after protection and units);
 // - releasing a charged use, the use finishing, hitting an entity, mining speed, anvil repair
@@ -11,7 +11,7 @@
 //   over the players.
 // hurtEnemy returning true lets the item's own post-hit handling run (Java's postHurtEnemy: the
 // durability loss); a registered dispense function is the item's only dispense behaviour (false:
-// the item stays and the fail sound plays, TF's OptionalDispenseItemBehavior). See ext/item/Item.h.
+// the item stays and the fail sound plays, upstream's OptionalDispenseItemBehavior). See ext/item/Item.h.
 // Tooltips become lore written by the server (in the holder's language): vanilla clients and the
 // client mod show the same lines. Bars (setBar) are drawn by the client mod (client/item).
 #include "feature/item/Item.h"
@@ -513,7 +513,7 @@ LL_TYPE_INSTANCE_HOOK(
     Level*     level,
     Player*    player
 ) {
-    // the behaviour first, on the stack as it was used (Java's finishUsingItem; TF's overrides call
+    // the behaviour first, on the stack as it was used (Java's finishUsingItem; upstream's overrides call
     // super for the default part), then the item's own finish (eating, ...)
     std::string id;
     auto        fn = it::behaviourFn(this, &it::Behaviour::finishUsing, &id);
@@ -599,7 +599,7 @@ LL_TYPE_INSTANCE_HOOK(
     if (!used) return origin(region, container, slot, pos, face);
     container.setItem(slot, stack); // the behaviour's stack either way (Java returns it from execute)
     if (*used) return true;
-    // TF's OptionalDispenseItemBehavior: an unsuccessful dispense keeps the item and plays the
+    // upstream's OptionalDispenseItemBehavior: an unsuccessful dispense keeps the item and plays the
     // dispenser's fail sound (level event 1001) instead of the default ejection
     region.getLevel().broadcastLevelEvent(
         SharedTypes::Legacy::LevelEvent::SoundClickFail,

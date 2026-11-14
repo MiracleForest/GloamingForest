@@ -2,12 +2,12 @@
 
 // Contract "inventory" (header owned by F0, implemented by F10; spike S3 picks the backend).
 //
-// Containers on custom blocks (TF's chests, casket, drying racks, jars, uncrafting table, cinder
+// Containers on custom blocks (upstream's chests, casket, drying racks, jars, uncrafting table, cinder
 // furnace, ...). Custom Bedrock blocks have no block entities, so the backend is either
 // data-driven block actors or BlockData plus a container entity; this API hides which one S3
 // chose. Simple chest-like containers are declared as data in assets/data/containers/<u>.json.
 //
-//     gf::inventory::registerBlock("twilightforest:keepsake_casket", {.slots = 27, .open = ...});
+//     gf::inventory::registerBlock("gloamingforest:keepsake_casket", {.slots = 27, .open = ...});
 //     if (auto h = gf::inventory::find(region, pos)) h->insert(gpos, stack, false);
 
 #include <cstdint>

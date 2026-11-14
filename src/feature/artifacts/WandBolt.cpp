@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/projectile/TwilightWandBolt.java
-//   src/main/java/twilightforest/entity/projectile/TFThrowable.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/projectile/GloamingWandBolt.java
+//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The twilight scepter's bolt (twilightforest:wand_bolt) as an F8 projectile: gravity 0.003, a
-// teal twilightforest:magic_effect trail, 6 twilightforest:twilight_scepter damage to a living
-// target, 8 twilight_orb particles where it ends. Damage with a causing entity re-shoots it along
-// that entity's look (TwilightWandBolt#hurt). U21's Lich deflects it by id.
+// The gloaming scepter's bolt (gloamingforest:wand_bolt) as an F8 projectile: gravity 0.003, a
+// teal gloamingforest:magic_effect trail, 6 gloamingforest:gloaming_scepter damage to a living
+// target, 8 gloaming_orb particles where it ends. Damage with a causing entity re-shoots it along
+// that entity's look (GloamingWandBolt#hurt). U21's Lich deflects it by id.
 #include <cmath>
 #include <unordered_map>
 
@@ -40,22 +40,22 @@ std::unordered_map<std::int64_t, std::int64_t>& owners() {
     return m;
 }
 
-/// EntityEvent.DEATH / 3: 8 twilight orb particles.
+/// EntityEvent.DEATH / 3: 8 gloaming orb particles.
 void orbBurst(Actor& bolt) {
     auto& r   = randomOf(bolt);
     auto  pos = bolt.getPosition();
     for (int i = 0; i < 8; ++i)
-        particle(bolt, "twilightforest:twilight_orb", pos,
+        particle(bolt, "gloamingforest:gloaming_orb", pos,
                  Vec3{static_cast<float>(r.nextGaussian() * 0.05), static_cast<float>(r.nextDouble() * 0.2), static_cast<float>(r.nextGaussian() * 0.05)});
 }
 
 bool hitEntity(Actor& bolt, Actor& target) {
-    // TwilightWandBolt#canHitEntity: never a lich bolt or bomb
+    // GloamingWandBolt#canHitEntity: never a lich bolt or bomb
     auto const& id = target.getTypeName();
-    if (id == "twilightforest:lich_bolt" || id == "twilightforest:lich_bomb") return false;
+    if (id == "gloamingforest:lich_bolt" || id == "gloamingforest:lich_bomb") return false;
     Actor* owner = boltOwner(bolt);
-    if (isLiving(target)) gf::combat::hurt(target, 6.0F, "twilightforest:twilight_scepter", owner, &bolt);
-    playSoundAt(bolt, target.getPosition(), "item.twilightforest.twilight_scepter.pearl_hit", 1.0F, 1.0F);
+    if (isLiving(target)) gf::combat::hurt(target, 6.0F, "gloamingforest:gloaming_scepter", owner, &bolt);
+    playSoundAt(bolt, target.getPosition(), "item.gloamingforest.gloaming_scepter.pearl_hit", 1.0F, 1.0F);
     orbBurst(bolt);
     owners().erase(uidOf(bolt));
     return true;
@@ -70,7 +70,7 @@ void trail(Actor& bolt) {
         double dz = pos.z + 0.25 * (r.nextDouble() - r.nextDouble());
         (void)r.nextFloat(), (void)r.nextFloat(), (void)r.nextFloat(); // the colour draws (the effect rolls its own)
         // the colour (0.17, 0.80, 0.69) * (0.5..1): the effect reads an upward velocity as teal
-        particle(bolt, "twilightforest:magic_effect", Vec3{static_cast<float>(dx), static_cast<float>(dy), static_cast<float>(dz)}, Vec3{0.0F, 1e-4F, 0.0F});
+        particle(bolt, "gloamingforest:magic_effect", Vec3{static_cast<float>(dx), static_cast<float>(dy), static_cast<float>(dz)}, Vec3{0.0F, 1e-4F, 0.0F});
     }
 }
 
@@ -109,7 +109,7 @@ void registerWandBolt() {
         },
         .tick = trail,
     });
-    // TwilightWandBolt#hurt: a hit with a causing entity re-shoots it
+    // GloamingWandBolt#hurt: a hit with a causing entity re-shoots it
     ia::onAttack({.block = kWandBolt}, [](ia::EntityContext const& c) {
         reflectWandBolt(c.entity, c.player, &c.player);
         return ia::Result::Consume;

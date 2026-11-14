@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:built_block",
+      "identifier": "gloamingforest:built_block",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:active": [false, true]
+        "gloamingforest:active": [false, true]
       }
     },
     "components": {
@@ -17,7 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 10000
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.built_block",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.built_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerdev_built_off",
@@ -76,9 +76,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:active')",
+        "condition": "!q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.built_block",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.built_block",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_built_off",
@@ -138,9 +138,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.built_block_active",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.built_block_active",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_built_on",

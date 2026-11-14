@@ -1,0 +1,34 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:equipment/fiery_iron_sword"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:iron_sword"
+      },
+      {
+        "tag": "gloamingforest:fiery_vial"
+      },
+      {
+        "tag": "gloamingforest:fiery_vial"
+      },
+      {
+        "item": "minecraft:blaze_rod"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:fiery_blood"
+      },
+      {
+        "item": "gloamingforest:fiery_tears"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:fiery_sword"
+    }
+  }
+}

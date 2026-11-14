@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U14: the challenge toast's sound (core::progression::kChallengeSound), GloamingForest's original
 // stand-in for Mojang's ui.toast.challenge_complete: the resource pack defines it (category ui) on
 // the committed .ogg, which is a valid mono Vorbis file as long as the recipe's render, and the

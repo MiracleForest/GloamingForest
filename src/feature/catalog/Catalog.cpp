@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFCreativeTabs.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFCreativeTabs.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The catalog part of contract "data" (F9; spike S6). TF's four creative tabs (blocks, items,
+// The catalog part of contract "data" (F9; spike S6). upstream's four creative tabs (blocks, items,
 // equipment, food, in that order) are Bedrock creative catalog groups: the behavior pack's
 // item_catalog (F1's import of TFCreativeTabs, item_catalog.d fragments) declares them, the server
 // builds its CreativeItemRegistry from it and sends it to every client. `groups()` reads that
-// registry back (the groups whose name is a TF tab, their items in catalog order); before a world
+// registry back (the groups whose name is an upstream tab, their items in catalog order); before a world
 // exists, or without the catalog data, the four tabs are listed with their icon and name only.
 // The creative entries' data (the default enchantments of showEnchantmentsOnItems, units' default
 // data through ext/item/Catalog.h) is applied to the registry's entries when a world is ready.
@@ -39,13 +39,13 @@ namespace gf::catalog {
 
 namespace {
 
-/// TFCreativeTabs: id, icon, title, in TF's order (withTabsBefore).
+/// TFCreativeTabs: id, icon, title, in upstream's order (withTabsBefore).
 std::vector<Group> defaults() {
     return {
-        {"twilightforest:blocks", "twilightforest:naga_courtyard_miniature_structure", "itemGroup.twilightforest.blocks", {}},
-        {"twilightforest:items", "twilightforest:twilight_portal_miniature_structure", "itemGroup.twilightforest.items", {}},
-        {"twilightforest:equipment", "twilightforest:knightmetal_pickaxe", "itemGroup.twilightforest.equipment", {}},
-        {"twilightforest:food", "twilightforest:cooked_meef", "itemGroup.twilightforest.food", {}},
+        {"gloamingforest:blocks", "gloamingforest:naga_courtyard_miniature_structure", "itemGroup.gloamingforest.blocks", {}},
+        {"gloamingforest:items", "gloamingforest:gloaming_portal_miniature_structure", "itemGroup.gloamingforest.items", {}},
+        {"gloamingforest:equipment", "gloamingforest:knightmetal_pickaxe", "itemGroup.gloamingforest.equipment", {}},
+        {"gloamingforest:food", "gloamingforest:cooked_meef", "itemGroup.gloamingforest.food", {}},
     };
 }
 
@@ -61,13 +61,13 @@ Store& store() {
     return s;
 }
 
-/// The TF tab a catalog group name stands for ("" when none): "twilightforest:blocks", or a name
-/// ending in the tab's path after ':' / '.' / '_' with "twilightforest" in it.
+/// The upstream tab a catalog group name stands for ("" when none): "gloamingforest:blocks", or a name
+/// ending in the tab's path after ':' / '.' / '_' with "gloamingforest" in it.
 std::string tabOf(std::string const& groupName) {
     for (auto const& g : defaults()) {
         if (groupName == g.id) return g.id;
         auto path = g.id.substr(g.id.find(':') + 1);
-        if (groupName.find("twilightforest") == std::string::npos) continue;
+        if (groupName.find("gloamingforest") == std::string::npos) continue;
         if (groupName.size() > path.size() && groupName.ends_with(path)) {
             char sep = groupName[groupName.size() - path.size() - 1];
             if (sep == ':' || sep == '.' || sep == '_') return g.id;

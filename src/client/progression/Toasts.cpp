@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/LockedBiomeToast.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/LockedBiomeToast.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U14, client mod: the toasts of this unit, drawn as Java 1.21.1's ToastComponent draws them
-// (F12's toast queue draws TF's layout only: icon at (6, 8), text at (25, 7) / (25, 18)):
+// (F12's toast queue draws upstream's layout only: icon at (6, 8), text at (25, 7) / (25, 18)):
 // - AdvancementToast (progression.toast): the frame, the icon with its components (variants) at
 //   (8, 8); a title that fits 125 pixels: the type's toast name ("Advancement Made!", "Goal
 //   Reached!", "Challenge Complete!") at (30, 7) in -256 (yellow), -30465 (pink) for challenges,
@@ -15,8 +15,8 @@
 //   255); the challenge sound when it first shows (U14's original synthesized sound
 //   gf.progression.challenge_complete, core::progression::kChallengeSound, for Mojang's
 //   ui.toast.challenge_complete; playUI at volume 1, pitch 1 as Java's forUI); hidden after 5000 ms.
-// - LockedBiomeToast: the icon at (6, 8), misc.twilightforest.biome_locked at (25, 7) in -256 and
-//   misc.twilightforest.biome_locked_2 at (25, 18) in white; hidden after 10000 ms.
+// - LockedBiomeToast: the icon at (6, 8), misc.gloamingforest.biome_locked at (25, 7) in -256 and
+//   misc.gloamingforest.biome_locked_2 at (25, 18) in white; hidden after 10000 ms.
 // - ToastComponent / ToastInstance: 160 x 32 toasts at the top right, 5 slots (a toast keeps its
 //   slot until it slid out; more wait in a queue), 600 ms slides (visibility f², 1 - f² while
 //   hiding), the in / out sound when a slide starts (Bedrock's random.toast, as F12), nothing

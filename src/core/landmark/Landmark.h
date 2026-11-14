@@ -1,12 +1,12 @@
 #pragma once
 
 // Contract "landmark", pure part (header owned by F0, implemented by F6 with gtests against F13
-// oracle goldens). Translations of TF's LegacyLandmarkPlacements, independent of the game.
+// oracle goldens). Translations of upstream's LegacyLandmarkPlacements, independent of the game.
 //
-// TF puts one landmark center near every multiple of 256 blocks (getNearestCenterXZ), picks the
+// upstream puts one landmark center near every multiple of 256 blocks (getNearestCenterXZ), picks the
 // landmark by the biome at the center (BIOME_2_STRUCTURES) or, in other biomes, a variety
-// landmark seeded by the overworld seed (pickVarietyLandmark). Landmark keys are TF structure ids
-// ("twilightforest:lich_tower").
+// landmark seeded by the overworld seed (pickVarietyLandmark). Landmark keys are upstream structure ids
+// ("gloamingforest:lich_tower").
 
 #include <cstdint>
 #include <functional>
@@ -31,7 +31,7 @@ struct ColumnXZ {
 /// key for a chunk (lich towers and naga courtyards at fixed region offsets, else the weighted
 /// VARIETY_LANDMARKS list).
 [[nodiscard]] std::string pickVariety(std::int64_t seed, int chunkX, int chunkZ);
-/// The biome id at a block column ("twilightforest:snowy_forest").
+/// The biome id at a block column ("gloamingforest:snowy_forest").
 using BiomeAtFn = std::function<std::string(int blockX, int blockZ)>;
 /// LegacyLandmarkPlacements#pickLandmarkForChunk: the biome's landmark (BIOME_2_STRUCTURES) or
 /// the variety landmark.

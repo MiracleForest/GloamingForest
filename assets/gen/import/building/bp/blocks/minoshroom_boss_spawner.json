@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:minoshroom_boss_spawner",
+      "identifier": "gloamingforest:minoshroom_boss_spawner",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {

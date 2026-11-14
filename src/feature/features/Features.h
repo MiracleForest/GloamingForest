@@ -3,16 +3,16 @@
 // Contract "features" (header owned by F0, implemented by F5; spike S2).
 //
 // An interpreter for the imported worldgen JSON (configured_feature / placed_feature, 129 / 107 in
-// TF 4.8) with the vanilla feature types it uses (tree with the vanilla trunk / foliage placers and
+// upstream 4.8) with the vanilla feature types it uses (tree with the vanilla trunk / foliage placers and
 // decorators, random_selector, ore, random_patch, flower, random_boolean_selector, simple_block,
 // block_column, no_op), weighted_list, and the placement modifiers (count, rarity_filter,
-// heightmap, biome, in_square, ...) plus TF's avoid_landmark and chunk_center. Units register TF's
+// heightmap, biome, in_square, ...) plus upstream's avoid_landmark and chunk_center. Units register upstream's
 // own feature types and tree parts by id:
 //
-//     gf::features::registerType("twilightforest:hollow_log", [](gf::features::FeatureContext const& c) {
+//     gf::features::registerType("gloamingforest:hollow_log", [](gf::features::FeatureContext const& c) {
 //         ...; return true;
 //     });
-//     gf::features::place("twilightforest:tree/canopy_tree", region, pos, random);
+//     gf::features::place("gloamingforest:tree/canopy_tree", region, pos, random);
 //
 // Features larger than the 3x3 chunk window (canopy and dark trees) write through LargeWriter,
 // which queues blocks for chunks that are not generated yet.
@@ -78,9 +78,9 @@ using RootPlacerFn    = std::function<bool(TreeContext& tree, BlockPos const& po
 /// BlockStateProvider#getState: the block to place at `pos` (nullptr: none).
 using StateProviderFn = std::function<Block const*(RandomSource& random, BlockPos const& pos, Json const& config)>;
 
-/// A feature type ("twilightforest:hollow_log"); replaces an earlier one with the same id.
+/// A feature type ("gloamingforest:hollow_log"); replaces an earlier one with the same id.
 void registerType(std::string const& typeId, FeatureFn fn);
-/// A placement modifier type ("twilightforest:avoid_landmark").
+/// A placement modifier type ("gloamingforest:avoid_landmark").
 void registerPlacement(std::string const& typeId, PlacementFn fn);
 void registerTrunkPlacer(std::string const& typeId, TrunkPlacerFn fn);
 void registerFoliagePlacer(std::string const& typeId, FoliagePlacerFn fn);
@@ -88,7 +88,7 @@ void registerTreeDecorator(std::string const& typeId, TreeDecoratorFn fn);
 void registerRootPlacer(std::string const& typeId, RootPlacerFn fn);
 void registerStateProvider(std::string const& typeId, StateProviderFn fn);
 
-/// Places configured or placed feature `id` (imported JSON, "twilightforest:..." or
+/// Places configured or placed feature `id` (imported JSON, "gloamingforest:..." or
 /// "minecraft:..."); false when it placed nothing or the id is unknown (one warning per id).
 bool place(std::string const& id, Region& region, BlockPos const& pos, RandomSource& random);
 /// Places an inline configured / placed feature JSON object.

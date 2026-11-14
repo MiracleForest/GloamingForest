@@ -1,45 +1,45 @@
 {
   "tf_block_blank": {
-    "textures": "textures/twilightforest/block/blank"
+    "textures": "textures/gloamingforest/block/blank"
   },
   "tf_block_encased_towerwood": {
-    "textures": "textures/twilightforest/block/encased_towerwood"
+    "textures": "textures/gloamingforest/block/encased_towerwood"
   },
   "tf_block_mining_log_top": {
-    "textures": "textures/twilightforest/block/mining_log_top"
+    "textures": "textures/gloamingforest/block/mining_log_top"
   },
   "tf_block_mosspatch": {
-    "textures": "textures/twilightforest/block/mosspatch"
+    "textures": "textures/gloamingforest/block/mosspatch"
   },
   "tf_block_sorting_log_top": {
-    "textures": "textures/twilightforest/block/sorting_log_top"
+    "textures": "textures/gloamingforest/block/sorting_log_top"
   },
   "tf_block_time_log_top": {
-    "textures": "textures/twilightforest/block/time_log_top"
+    "textures": "textures/gloamingforest/block/time_log_top"
   },
   "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1": {
-    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_ghasttraplid_off_1"
+    "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_ghasttraplid_off_1"
   },
   "tf_block_tower_device_level_2_towerdev_ghasttraplid_on_1": {
-    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_ghasttraplid_on_1"
+    "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_ghasttraplid_on_1"
   },
   "tf_block_tower_device_level_3_towerdev_ghasttraplid_on_2": {
-    "textures": "textures/twilightforest/block/tower_device_level_3/towerdev_ghasttraplid_on_2"
+    "textures": "textures/gloamingforest/block/tower_device_level_3/towerdev_ghasttraplid_on_2"
   },
   "tf_block_towerdev_ghasttraplid_off": {
-    "textures": "textures/twilightforest/block/towerdev_ghasttraplid_off"
+    "textures": "textures/gloamingforest/block/towerdev_ghasttraplid_off"
   },
   "tf_block_towerdev_ghasttraplid_on": {
-    "textures": "textures/twilightforest/block/towerdev_ghasttraplid_on"
+    "textures": "textures/gloamingforest/block/towerdev_ghasttraplid_on"
   },
   "tf_block_towerwood": {
-    "textures": "textures/twilightforest/block/towerwood"
+    "textures": "textures/gloamingforest/block/towerwood"
   },
   "tf_block_transformation_log_top": {
-    "textures": "textures/twilightforest/block/transformation_log_top"
+    "textures": "textures/gloamingforest/block/transformation_log_top"
   },
   "tf_block_wood_planks_canopy_0": {
-    "textures": "textures/twilightforest/block/wood/planks_canopy_0"
+    "textures": "textures/gloamingforest/block/wood/planks_canopy_0"
   },
   "tf_vanilla_block_basalt_side": {
     "textures": "textures/blocks/basalt_side"

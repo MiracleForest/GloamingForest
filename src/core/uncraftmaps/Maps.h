@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/MagicMapItem.java
-//   src/main/java/twilightforest/item/MazeMapItem.java
-//   src/main/java/twilightforest/command/MapBiomesCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/MagicMapItem.java
+//   src/main/java/gloamingforest/item/MazeMapItem.java
+//   src/main/java/gloamingforest/command/MapBiomesCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// The game-independent maths of TF's maps (U13): the map centres, the pixel scans of the magic
+// The game-independent maths of upstream's maps (U13): the map centres, the pixel scans of the magic
 // and maze map updates, Java's MapColor shading, map decoration coordinates and the biomepng
 // command's colours, number format and file name.
 
@@ -74,7 +74,7 @@ struct DecorationPos {
 
 // ---- biomepng (MapBiomesCommand) ----------------------------------------------------------------------
 
-/// The fixed colour of a TF biome (ARGB, opaque); nullopt for any other biome.
+/// The fixed colour of an upstream biome (ARGB, opaque); nullopt for any other biome.
 [[nodiscard]] std::optional<std::uint32_t> biomePngColor(std::string const& biomeId);
 /// MapBiomesCommand#getMapColor of a magic_map_color entry (rgb): ABGR with alpha (red and blue
 /// swapped, as Java's BiomeMapColor then takes it for ARGB).

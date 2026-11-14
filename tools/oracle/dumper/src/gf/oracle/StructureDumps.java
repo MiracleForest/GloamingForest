@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
@@ -35,9 +35,9 @@ final class StructureDumps {
 	 * the l-th structure of a step, so a structure's position in its group is its seed salt.
 	 */
 	static Object structureSteps(Ctx ctx) {
-		// the registry the Twilight Forest's chunk generator decorates with (a WorldGenRegion's
+		// the registry the Gloaming Forest's chunk generator decorates with (a WorldGenRegion's
 		// registryAccess is its level's, the server's)
-		Registry<Structure> registry = ctx.twilight().registryAccess().registryOrThrow(Registries.STRUCTURE);
+		Registry<Structure> registry = ctx.gloaming().registryAccess().registryOrThrow(Registries.STRUCTURE);
 		// exactly applyBiomeDecoration's grouping
 		Map<Integer, List<Structure>> byStep = registry.stream().collect(Collectors.groupingBy(s -> s.step().ordinal()));
 
@@ -68,7 +68,7 @@ final class StructureDumps {
 		out.put("note", "The Structure registry (registryAccess().registryOrThrow(Registries.STRUCTURE)) as ChunkGenerator#applyBiomeDecoration walks it. "
 			+ "steps[o]: the ids of the structures with step().ordinal() == o, in registry stream order (empty when none), for every GenerationStep.Decoration o "
 			+ "(stepNames[o] = getSerializedName()); applyBiomeDecoration calls setFeatureSeed(decorationSeed, index, o) before the starts of steps[o][index]. "
-			+ "order: every id in registry stream order; count: Registry#size. Every enabled data pack's structures: Minecraft's and TF's.");
+			+ "order: every id in registry stream order; count: Registry#size. Every enabled data pack's structures: Minecraft's and upstream's.");
 		out.put("count", registry.size());
 		out.put("stepNames", stepNames);
 		out.put("steps", steps);

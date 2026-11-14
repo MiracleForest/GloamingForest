@@ -1,9 +1,9 @@
 {
-  "block.twilightforest.encased_fire_jet": "Zapouzdřená ohnivá tryska",
-  "block.twilightforest.encased_smoker": "Zapouzdřený kuřák",
-  "block.twilightforest.fire_jet": "Ohnivá tryska",
-  "block.twilightforest.smoker": "Kuřák",
-  "entity.twilightforest.hydra_mortar": "Hydří moždíř",
-  "item.twilightforest.hydra_spawn_egg": "Vajíčko s hydrou",
-  "subtitles.twilightforest.block.jet.start": "Ohnivá tryska se aktivuje"
+  "block.gloamingforest.encased_fire_jet": "Zapouzdřená ohnivá tryska",
+  "block.gloamingforest.encased_smoker": "Zapouzdřený kuřák",
+  "block.gloamingforest.fire_jet": "Ohnivá tryska",
+  "block.gloamingforest.smoker": "Kuřák",
+  "entity.gloamingforest.hydra_mortar": "Hydří moždíř",
+  "item.gloamingforest.hydra_spawn_egg": "Vajíčko s hydrou",
+  "subtitles.gloamingforest.block.jet.start": "Ohnivá tryska se aktivuje"
 }

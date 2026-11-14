@@ -333,8 +333,8 @@ GF_REGISTER_SELFTEST("families.fixtures", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(fam::entryOf("gf_test:family_climbable")->has(fam::Climbable), "params.traits [climbable] adds the climbable modifier");
     ctx.check(fam::entryOf("gf_test:family_lightable")->has(fam::Lightable) && fam::entryOf("gf_test:family_lightable")->family == fam::Family::Cube,
               "a shape family and a modifier on one id");
-    // TF's registrations fill what data leaves out
-    ctx.check(fam::familyOf("pillar", "ThornsBlock") == fam::Family::ConnectablePillar, "TF's thorns are connectable pillars");
+    // upstream's registrations fill what data leaves out
+    ctx.check(fam::familyOf("pillar", "ThornsBlock") == fam::Family::ConnectablePillar, "upstream's thorns are connectable pillars");
     // the state schema of docs/spec/blockstates.md: Java's names and values, no traits
     auto const* door = gf::game::blockWith("gf_test:family_door");
     ctx.check(door && fam::strState(*door, kFacing) == "north" && fam::strState(*door, fam::state::Half) == "lower" && fam::strState(*door, fam::state::Hinge) == "left"
@@ -470,35 +470,35 @@ GF_REGISTER_SELFTEST("families.fence_connections", [](Context& ctx) -> ll::coro:
     ctx.require(ctx.setBlock(b, "gf_test:family_fence"), "fence b");
     co_await ctx.ticks(3);
     // one-sided: a joins b on its east side only, b joins a on its west side only
-    ctx.check(flag(a, "twilightforest:east") && !flag(a, "twilightforest:west"), "fence a connects east to b and not west");
-    ctx.check(flag(b, "twilightforest:west") && !flag(b, "twilightforest:east"), "fence b connects west to a and not east");
-    ctx.check(!flag(a, "twilightforest:north") && !flag(a, "twilightforest:south"), "no connection to air");
+    ctx.check(flag(a, "gloamingforest:east") && !flag(a, "gloamingforest:west"), "fence a connects east to b and not west");
+    ctx.check(flag(b, "gloamingforest:west") && !flag(b, "gloamingforest:east"), "fence b connects west to a and not east");
+    ctx.check(!flag(a, "gloamingforest:north") && !flag(a, "gloamingforest:south"), "no connection to air");
     // a full block connects, leaves don't (Java isExceptionForConnection), a vanilla fence does
     ctx.require(ctx.setBlock(c, "minecraft:stone"), "stone north of b");
     ctx.require(ctx.setBlock(at(b, 0, 0, 1), "gf_test:family_leaves", {{fam::state::Persistent, true}}), "leaves south of b");
     ctx.require(ctx.setBlock(at(a, 0, 0, 1), "minecraft:oak_fence"), "a vanilla fence south of a");
     co_await ctx.ticks(3);
-    ctx.check(flag(b, "twilightforest:north"), "a fence connects to a sturdy block");
-    ctx.check(!flag(b, "twilightforest:south"), "but not to leaves");
-    ctx.check(flag(a, "twilightforest:south"), "and to a vanilla wooden fence");
+    ctx.check(flag(b, "gloamingforest:north"), "a fence connects to a sturdy block");
+    ctx.check(!flag(b, "gloamingforest:south"), "but not to leaves");
+    ctx.check(flag(a, "gloamingforest:south"), "and to a vanilla wooden fence");
     // removing a neighbour disconnects
     ctx.setBlock(a, "minecraft:air");
     co_await ctx.ticks(3);
-    ctx.check(!flag(b, "twilightforest:west"), "the connection goes with the neighbour");
+    ctx.check(!flag(b, "gloamingforest:west"), "the connection goes with the neighbour");
     // walls and panes follow their neighbours too
     auto w = at(p, 1, 0, 2), w2 = at(p, 2, 0, 2);
     ctx.require(ctx.setBlock(w, "gf_test:family_wall") && ctx.setBlock(w2, "gf_test:family_wall"), "two walls");
     auto g = at(p, 3, 0, 1);
     ctx.require(ctx.setBlock(g, "gf_test:family_pane") && ctx.setBlock(at(g, 0, 0, 1), "gf_test:family_pane"), "two panes");
     co_await ctx.ticks(3);
-    ctx.check(sst(w, "twilightforest:east") == "low" && sst(w2, "twilightforest:west") == "low", "walls connect low (" + sst(w, "twilightforest:east") + ")");
-    ctx.check(sst(w, "twilightforest:west") == "none", "a wall's free side stays none");
+    ctx.check(sst(w, "gloamingforest:east") == "low" && sst(w2, "gloamingforest:west") == "low", "walls connect low (" + sst(w, "gloamingforest:east") + ")");
+    ctx.check(sst(w, "gloamingforest:west") == "none", "a wall's free side stays none");
     ctx.check(flag(w, fam::state::Up), "the end of a wall keeps its post");
-    ctx.check(flag(g, "twilightforest:south") && !flag(g, "twilightforest:north"), "panes connect to each other only");
+    ctx.check(flag(g, "gloamingforest:south") && !flag(g, "gloamingforest:north"), "panes connect to each other only");
     // a block on top of a wall line raises its sides to tall
     ctx.require(ctx.setBlock(at(w, 0, 1, 0), "minecraft:stone"), "stone on the wall");
     co_await ctx.ticks(3);
-    ctx.check(sst(w, "twilightforest:east") == "tall", "a covered wall side is tall (" + sst(w, "twilightforest:east") + ")");
+    ctx.check(sst(w, "gloamingforest:east") == "tall", "a covered wall side is tall (" + sst(w, "gloamingforest:east") + ")");
     (void)box;
 });
 
@@ -542,7 +542,7 @@ GF_REGISTER_SELFTEST("families.button_redstone", [](Context& ctx) -> ll::coro::C
     co_await ctx.ticks(4);
     ctx.check(flag(button, fam::state::Powered), "the button is pressed");
     ctx.check(dustSignal(at(button, 1, 0, 0)) == 15, "the pressed button powers the dust with 15 (got " + std::to_string(dustSignal(at(button, 1, 0, 0))) + ")");
-    // TF's wooden buttons stay pressed for 30 ticks
+    // upstream's wooden buttons stay pressed for 30 ticks
     co_await ctx.ticks(20);
     ctx.check(flag(button, fam::state::Powered), "still pressed after 20 ticks");
     co_await ctx.ticks(14);
@@ -921,8 +921,8 @@ GF_REGISTER_SELFTEST("families.shapes", [](Context& ctx) -> ll::coro::CoroTask<>
     co_await ctx.ticks(1);
     ctx.require(ctx.setBlock(w2, "gf_test:family_wall_pillar", {{fam::state::Axis, "y"}}), "wall pillar above");
     co_await ctx.ticks(3);
-    ctx.check(flag(w1, "twilightforest:up"), "the lower wall pillar connects up");
-    ctx.check(!flag(w1, "twilightforest:north"), "and not to the air");
+    ctx.check(flag(w1, "gloamingforest:up"), "the lower wall pillar connects up");
+    ctx.check(!flag(w1, "gloamingforest:north"), "and not to the air");
     // connected textures: the sides, and (one-face blocks) the corner block
     auto c1 = at(p, 0, 1, 4), c2 = at(p, 1, 1, 4), c3 = at(p, 0, 2, 4), c4 = at(p, 1, 2, 4);
     ctx.require(ctx.setBlock(c1, "gf_test:family_ct_flat") && ctx.setBlock(c2, "gf_test:family_ct_flat") && ctx.setBlock(c3, "gf_test:family_ct_flat"), "three connected texture blocks");
@@ -1327,13 +1327,13 @@ GF_REGISTER_SELFTEST("families.hanging_chain", [](Context& ctx) -> ll::coro::Cor
 });
 
 GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // TF's own blocks through the kit (F1's skeleton + tools/families): a snowy berry bush keeps
-    // TF's shape per age and layers (TFBushBlock: a grown bush collides as a full block, snow or
+    // upstream's own blocks through the kit (F1's skeleton + tools/families): a snowy berry bush keeps
+    // upstream's shape per age and layers (TFBushBlock: a grown bush collides as a full block, snow or
     // not), the chests are containers with Java's stats, the magic leaves' colours by position
     // (ColorHandler, the client mod's tint), Java's sign line width shared with the editor
-    auto const* bush = gf::game::blockWith("twilightforest:blackberry_bush");
-    if (!fam::entryOf("twilightforest:blackberry_bush") || !bush) {
-        ctx.info("no TF family blocks in this build: skipped");
+    auto const* bush = gf::game::blockWith("gloamingforest:blackberry_bush");
+    if (!fam::entryOf("gloamingforest:blackberry_bush") || !bush) {
+        ctx.info("no upstream family blocks in this build: skipped");
         co_return;
     }
     auto box = co_await ctx.flatArea(6196, 4);
@@ -1349,38 +1349,38 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
         return t;
     };
     auto b1 = at(p, 0, 0, 0);
-    ctx.require(ctx.setBlock(b1, "twilightforest:blackberry_bush", {{"twilightforest:age", 3}, {fam::state::Layers, 1}}), "a grown blackberry bush with one snow layer");
+    ctx.require(ctx.setBlock(b1, "gloamingforest:blackberry_bush", {{"gloamingforest:age", 3}, {fam::state::Layers, 1}}), "a grown blackberry bush with one snow layer");
     co_await ctx.ticks(2);
     ctx.check(std::fabs(top(b1) - 1.0f) < 0.01f, "it collides as a full block (TFBushBlock, " + std::to_string(top(b1)) + ")");
-    ctx.require(ctx.setBlock(b1, "twilightforest:blackberry_bush", {{"twilightforest:age", 0}, {fam::state::Layers, 0}}), "a young bush without snow");
+    ctx.require(ctx.setBlock(b1, "gloamingforest:blackberry_bush", {{"gloamingforest:age", 0}, {fam::state::Layers, 0}}), "a young bush without snow");
     co_await ctx.ticks(1);
     ctx.check(std::fabs(top(b1) - 0.5f) < 0.01f, "a young bush collides 8 px high (" + std::to_string(top(b1)) + ")");
     // the chests
     auto ch = at(p, 2, 0, 0);
-    ctx.require(ctx.setBlock(ch, "twilightforest:canopy_trapped_chest", {{kFacing, "north"}}), "a canopy trapped chest");
+    ctx.require(ctx.setBlock(ch, "gloamingforest:canopy_trapped_chest", {{kFacing, "north"}}), "a canopy trapped chest");
     co_await ctx.ticks(1);
-    ctx.check(gf::inventory::find(region, gf::game::blockPos(ch)).has_value(), "TF's chests are containers of the inventory contract");
+    ctx.check(gf::inventory::find(region, gf::game::blockPos(ch)).has_value(), "upstream's chests are containers of the inventory contract");
     ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(ch)) != nullptr, "their slots are in their block actor (minecraft:block_entity, format 1.26.50)");
     if (auto const* blk = fam::blockAt(ch))
         ctx.check(blk->getBlockType().hasTag(HashedString("minecraft:is_axe_item_destructible")), "and they keep their tool tag (the minecraft:tags array of that format, params.tags)");
     auto declared = containerDeclarations("families.json");
-    ctx.check(declared.value("twilightforest:canopy_trapped_chest", fam::Json{}).value("stat", "") == "minecraft:trigger_trapped_chest"
-                  && declared.value("twilightforest:canopy_chest", fam::Json{}).value("stat", "") == "minecraft:open_chest",
-              "TF's chests are declared with Java's opening stats");
-    ctx.check(st(ch, fam::state::Lid) == 0 && st(ch, fam::state::OpenCount) == 0, "a TF trapped chest has the lid and the signal");
+    ctx.check(declared.value("gloamingforest:canopy_trapped_chest", fam::Json{}).value("stat", "") == "minecraft:trigger_trapped_chest"
+                  && declared.value("gloamingforest:canopy_chest", fam::Json{}).value("stat", "") == "minecraft:open_chest",
+              "upstream's chests are declared with Java's opening stats");
+    ctx.check(st(ch, fam::state::Lid) == 0 && st(ch, fam::state::OpenCount) == 0, "an upstream trapped chest has the lid and the signal");
     // ColorHandler's position colours
     namespace lc = fam::leafcolors;
     ctx.check(lc::time(0, 0, 0) == 0x6A9C17 && lc::time(16, 0, 0) == 0xFB6C1B, "time leaves fade from (106, 156, 23) to (251, 108, 27)");
     ctx.check(lc::transformation(0, 0, 0) == 0x6CCCEA && lc::mining(0, 0, 0) == 0xFCF144 && lc::sorting(0, 0, 0) == 0x364C03, "the other magic leaves' spring colours");
     ctx.check(lc::rainbow(0, 0, 0) == 0x00FF00 && lc::rainbow(8, 0, 0) == 0xFFFF80, "rainbow oak's colours (" + std::to_string(lc::rainbow(8, 0, 0)) + ")");
-    ctx.check(lc::of("twilightforest:time_leaves").has_value() && !lc::of("twilightforest:canopy_leaves").has_value(), "only the position-coloured leaves");
-    ctx.check(gf::game::blockWith("twilightforest:time_leaves") != nullptr, "time leaves exist");
+    ctx.check(lc::of("gloamingforest:time_leaves").has_value() && !lc::of("gloamingforest:canopy_leaves").has_value(), "only the position-coloured leaves");
+    ctx.check(gf::game::blockWith("gloamingforest:time_leaves") != nullptr, "time leaves exist");
     // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage (here FoliageColor's default)
     ctx.check(lc::canopy(0x48B518) == 0x47A73F && lc::mangrove(0x48B518) == 0x84CD56 && lc::canopy(0xFF48B518) == 0x47A73F,
               "canopy and mangrove leaves blend the foliage colour (" + std::to_string(lc::canopy(0x48B518)) + ", " + std::to_string(lc::mangrove(0x48B518)) + ")");
-    auto canopyBlend = lc::blendOf("twilightforest:canopy_leaves");
-    auto mangroveBlend = lc::blendOf("twilightforest:mangrove_leaves");
-    ctx.check(canopyBlend && mangroveBlend && canopyBlend->fn == &lc::canopy && mangroveBlend->fn == &lc::mangrove && !lc::blendOf("twilightforest:twilight_oak_leaves").has_value(),
+    auto canopyBlend = lc::blendOf("gloamingforest:canopy_leaves");
+    auto mangroveBlend = lc::blendOf("gloamingforest:mangrove_leaves");
+    ctx.check(canopyBlend && mangroveBlend && canopyBlend->fn == &lc::canopy && mangroveBlend->fn == &lc::mangrove && !lc::blendOf("gloamingforest:gloaming_oak_leaves").has_value(),
               "only canopy and mangrove leaves blend");
     // without a world (or position) ColorHandler gives FoliageColor.getEvergreenColor / getBirchColor,
     // without the colorizer
@@ -1388,7 +1388,7 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
               "without a world canopy leaves are evergreen and mangrove leaves birch coloured");
     // the sign editor's line width (SignFont.h, the same table on both sides)
     namespace sf = fam::signfont;
-    ctx.check(sf::lineWidth("Twilight") == 6 + 6 + 2 + 3 + 2 + 6 + 6 + 4 && sf::fitLine(std::string(30, 'W'), 90, 384).size() == 15u, "Java's sign line width");
+    ctx.check(sf::lineWidth("Gloaming") == 6 + 6 + 2 + 3 + 2 + 6 + 6 + 4 && sf::fitLine(std::string(30, 'W'), 90, 384).size() == 15u, "Java's sign line width");
     // what SignRenderer draws of a line: the first line of Font.split (word wrap at 90 px)
     ctx.check(sf::firstLine("Here lies a naga", 90) == "Here lies a naga" && sf::firstLine(std::string(20, 'W'), 90) == std::string(15, 'W'),
               "a line that fits is drawn whole, a long word is cut at 90 px");
@@ -1400,10 +1400,10 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
 
 GF_REGISTER_SELFTEST("families.leaves_waterlogged", [](Context& ctx) -> ll::coro::CoroTask<> {
     // Java LeavesBlock.randomTick: decaying leaves dropResources then level.removeBlock(pos, false),
-    // which puts the block's fluid in its place: waterlogged leaves leave their water source (TF's
+    // which puts the block's fluid in its place: waterlogged leaves leave their water source (upstream's
     // leaves are waterloggable: F1's params.traits)
-    if (!fam::entryOf("twilightforest:twilight_oak_leaves") || !gf::game::blockWith("twilightforest:twilight_oak_leaves")) {
-        ctx.info("no TF leaves in this build: skipped");
+    if (!fam::entryOf("gloamingforest:gloaming_oak_leaves") || !gf::game::blockWith("gloamingforest:gloaming_oak_leaves")) {
+        ctx.info("no upstream leaves in this build: skipped");
         co_return;
     }
     auto box = co_await ctx.flatArea(6182, 5);
@@ -1419,11 +1419,11 @@ GF_REGISTER_SELFTEST("families.leaves_waterlogged", [](Context& ctx) -> ll::coro
     auto w = at(p, 2, 0, 0), dry = at(p, 2, 0, 2);
     // a basin of stone around the waterlogged leaves, so the water can't flow away
     for (auto [dx, dz] : {std::pair{1, 0}, std::pair{-1, 0}, std::pair{0, 1}, std::pair{0, -1}}) ctx.require(ctx.setBlock(at(w, dx, 0, dz), "minecraft:stone"), "the basin");
-    ctx.require(ctx.setBlock(w, "twilightforest:twilight_oak_leaves", {{fam::state::Distance, 7}, {fam::state::Persistent, false}}), "leaves far from any log");
-    ctx.require(ctx.setBlock(dry, "twilightforest:twilight_oak_leaves", {{fam::state::Distance, 7}, {fam::state::Persistent, false}}), "dry leaves far from any log");
+    ctx.require(ctx.setBlock(w, "gloamingforest:gloaming_oak_leaves", {{fam::state::Distance, 7}, {fam::state::Persistent, false}}), "leaves far from any log");
+    ctx.require(ctx.setBlock(dry, "gloamingforest:gloaming_oak_leaves", {{fam::state::Distance, 7}, {fam::state::Persistent, false}}), "dry leaves far from any log");
     region.setExtraBlock(gf::game::blockPos(w), *water, 3);
     co_await ctx.ticks(3);
-    ctx.require(ctx.blockAt(w) == "twilightforest:twilight_oak_leaves" && wet(w), "the leaves are waterlogged (water in their liquid layer)");
+    ctx.require(ctx.blockAt(w) == "gloamingforest:gloaming_oak_leaves" && wet(w), "the leaves are waterlogged (water in their liquid layer)");
     fam::detail::randomTickAt(region, gf::game::blockPos(w));
     fam::detail::randomTickAt(region, gf::game::blockPos(dry));
     co_await ctx.ticks(2);

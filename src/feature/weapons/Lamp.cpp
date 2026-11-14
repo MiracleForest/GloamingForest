@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/LampOfCindersItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/LampOfCindersItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:lamp_of_cinders: used on brown or green thorns (U30's blocks, by id) it burns
+// gloamingforest:lamp_of_cinders: used on brown or green thorns (U30's blocks, by id) it burns
 // them; held for more than 12 ticks and released it burns every thorn within 4 of the point 2
-// blocks ahead and sets the mobs there on fire for 5 s. TF 4.8 takes no durability for either.
+// blocks ahead and sets the mobs there on fire for 5 s. upstream 4.8 takes no durability for either.
 
 #include "feature/weapons/Weapons.h"
 
@@ -44,11 +44,11 @@ constexpr int kFiringTime = 12;
 bool burnBlock(BlockSource& region, BlockPos const& pos) {
     Block const& b  = region.getBlock(pos);
     auto         id = game::blockId(b);
-    if (id != "twilightforest:brown_thorns" && id != "twilightforest:green_thorns") return false;
+    if (id != "gloamingforest:brown_thorns" && id != "gloamingforest:green_thorns") return false;
     Json states = Json::object();
     for (auto const& [k, v] : game::statesOf(b)) states[k] = v == "true" ? Json(true) : v == "false" ? Json(false) : Json(v);
-    auto const* burnt = game::blockWithStates("twilightforest:burnt_thorns", states);
-    if (!burnt) burnt = game::blockWith("twilightforest:burnt_thorns");
+    auto const* burnt = game::blockWithStates("gloamingforest:burnt_thorns", states);
+    if (!burnt) burnt = game::blockWith("gloamingforest:burnt_thorns");
     if (!burnt) return false;
     game::setBlock(region, pos, *burnt);
     ++gLampBurns;
@@ -63,7 +63,7 @@ void lampBurn(Player& player) {
     auto  c      = cw::containing({eye.x + look.x * 2.0, eye.y + look.y * 2.0, eye.z + look.z * 2.0});
     auto& region = player.getDimensionBlockSource();
     constexpr int range = 4;
-    gf::fx::sound(player.getDimension(), "item.twilightforest.lamp.burn", player.getFeetPos(), 1.5F, 0.8F);
+    gf::fx::sound(player.getDimension(), "item.gloamingforest.lamp.burn", player.getFeetPos(), 1.5F, 0.8F);
     for (int dx = -range; dx <= range; ++dx)
         for (int dy = -range; dy <= range; ++dy)
             for (int dz = -range; dz <= range; ++dz) burnBlock(region, BlockPos{c.x + dx, c.y + dy, c.z + dz});
@@ -100,14 +100,14 @@ void registerLamp() {
         auto  pos    = game::blockPos(c.pos);
         if (!region) return gf::interactions::Result::Pass;
         auto id = c.blockId;
-        if (id != "twilightforest:brown_thorns" && id != "twilightforest:green_thorns") return gf::interactions::Result::Pass;
+        if (id != "gloamingforest:brown_thorns" && id != "gloamingforest:green_thorns") return gf::interactions::Result::Pass;
         auto uid = world::uidOf(c.player);
         gf::interactions::nextTick([uid, pos, dim = c.pos.dim] {
             auto* player = world::playerById(uid);
             auto* rg     = game::regionOf(dim);
             if (!player || !rg || !burnBlock(*rg, pos)) return;
-            gf::progression::trigger(*player, "minecraft:placed_block", Json{{"block", "twilightforest:burnt_thorns"}});
-            gf::fx::sound(player->getDimension(), "item.twilightforest.lamp.burn", player->getFeetPos(), 0.5F, 1.5F);
+            gf::progression::trigger(*player, "minecraft:placed_block", Json{{"block", "gloamingforest:burnt_thorns"}});
+            gf::fx::sound(player->getDimension(), "item.gloamingforest.lamp.burn", player->getFeetPos(), 0.5F, 1.5F);
             auto& r = world::random();
             for (int i = 0; i < 10; ++i) {
                 Vec3 at{pos.x + 0.5F + (world::diffF(r)) * 0.75F, pos.y + 0.5F + (world::diffF(r)) * 0.75F,

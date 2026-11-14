@@ -3,7 +3,7 @@
 // Contract extension of "features" for U3 (rule R18: new files; A8 folds it into F5's built-in
 // vanilla feature types). Minecraft's own huge mushroom feature types, minecraft:huge_brown_mushroom
 // and minecraft:huge_red_mushroom (AbstractHugeMushroomFeature, HugeBrownMushroomFeature,
-// HugeRedMushroomFeature), are not among the features contract's built-in vanilla types; TF's
+// HugeRedMushroomFeature), are not among the features contract's built-in vanilla types; upstream's
 // tree/selector/vanilla/vanilla_mushrooms (U3) places them by inline config. The helpers that map
 // Java's six huge mushroom block faces to Bedrock's huge_mushroom_bits are shared with U3's canopy
 // mushrooms.

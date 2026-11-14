@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:arctic_fur",
+      "identifier": "gloamingforest:arctic_fur",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:arctic_fur.name"
+        "value": "item.gloamingforest:arctic_fur.name"
       },
       "minecraft:tags": {
-        "tags": ["twilightforest:arctic_fur"]
+        "tags": ["gloamingforest:arctic_fur"]
       }
     }
   }

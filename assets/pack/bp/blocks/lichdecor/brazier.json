@@ -2,16 +2,16 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:brazier",
+      "identifier": "gloamingforest:brazier",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:half": [
+        "gloamingforest:half": [
           "lower",
           "upper"
         ],
-        "twilightforest:light": [
+        "gloamingforest:light": [
           "off",
           "dim",
           "half",
@@ -27,7 +27,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.twilightforest.lichdecor.brazier",
+      "minecraft:geometry": "geometry.gloamingforest.lichdecor.brazier",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_lichdecor_brazier",
@@ -62,9 +62,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper'",
         "components": {
-          "minecraft:geometry": "geometry.twilightforest.lichdecor.empty",
+          "minecraft:geometry": "geometry.gloamingforest.lichdecor.empty",
           "minecraft:collision_box": {
             "origin": [
               -6,
@@ -92,7 +92,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:light') != 'off'",
+        "condition": "q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:light') != 'off'",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -103,25 +103,25 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'dim'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'dim'",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'half'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'half'",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'bright'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'bright'",
         "components": {
           "minecraft:light_emission": 9
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'full'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'full'",
         "components": {
           "minecraft:light_emission": 12
         }

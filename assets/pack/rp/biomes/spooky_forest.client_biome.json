@@ -2,7 +2,7 @@
   "format_version": "1.21.120",
   "minecraft:client_biome": {
     "description": {
-      "identifier": "twilightforest:spooky_forest"
+      "identifier": "gloamingforest:spooky_forest"
     },
     "components": {
       "minecraft:sky_color": {
@@ -27,7 +27,7 @@
         "atmosphere_identifier": "gloamingforest:spooky_forest_atmospherics"
       },
       "minecraft:biome_music": {
-        "music_definition": "twilightforest:spooky_forest"
+        "music_definition": "gloamingforest:spooky_forest"
       },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",

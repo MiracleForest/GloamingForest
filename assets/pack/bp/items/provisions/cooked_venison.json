@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:cooked_venison",
+      "identifier": "gloamingforest:cooked_venison",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:cooked_venison.name"
+        "value": "item.gloamingforest:cooked_venison.name"
       },
       "minecraft:tags": {
         "tags": [

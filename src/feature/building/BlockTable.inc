@@ -87,7 +87,7 @@
 {"steeleaf_block", 5.0f, 6.0f, "hoe", "", "NETHERITE_BLOCK", "netherite"},
 {"thick_castle_brick", 100.0f, 50.0f, "pickaxe", "diamond", "DEEPSLATE_TILES", "deepslate_bricks"},
 {"towerwood", 40.0f, 6.0f, "axe", "", "WOOD", "wood"},
-{"twilight_portal_miniature_structure", 0.75f, 0.75f, "pickaxe", "", "STONE", "stone"},
+{"gloaming_portal_miniature_structure", 0.75f, 0.75f, "pickaxe", "", "STONE", "stone"},
 {"twisted_stone", 1.5f, 6.0f, "pickaxe", "", "STONE", "stone"},
 {"twisted_stone_pillar", 1.5f, 6.0f, "pickaxe", "", "STONE", "stone"},
 {"underbrick", 1.5f, 6.0f, "pickaxe", "stone", "DEEPSLATE_BRICKS", "deepslate_bricks"},

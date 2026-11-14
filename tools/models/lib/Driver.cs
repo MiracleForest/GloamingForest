@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Driver of the model converter (contract "geo", unit F2): reads tools/models/catalog.json,
-// evaluates every LayerDefinition TF registers (ClientRegistrationEvents.registerLayerDefinitions)
+// evaluates every LayerDefinition upstream registers (ClientRegistrationEvents.registerLayerDefinitions)
 // and writes, per owning unit,
-//   assets/gen/geo/<unit>/rp/models/entity/<name>.geo.json     geometry.twilightforest.<name>
-//   assets/gen/geo/<unit>/rp/animations/<name>.base.json       animation.twilightforest.<name>.base
+//   assets/gen/geo/<unit>/rp/models/entity/<name>.geo.json     geometry.gloamingforest.<name>
+//   assets/gen/geo/<unit>/rp/animations/<name>.base.json       animation.gloamingforest.<name>.base
 //   assets/gen/geo/<unit>/rp/attachables/<item>.json           armor, Travellers' Gear, trophy heads
 //   assets/gen/geo/<unit>/bones/<name>.json                    Java part -> bone map, setupAnim report
 // plus assets/gen/geo/models/data/gf/models/index.json (every output, for the selftests and the
@@ -21,10 +21,10 @@ namespace Gf.Models
 {
     public sealed class LayerInfo
     {
-        public string Name;          // TF model layer name (ModelLayerLocation path + "_" + layer unless "main")
+        public string Name;          // upstream model layer name (ModelLayerLocation path + "_" + layer unless "main")
         public string Field;         // TFModelLayers field
         public string Supplier;      // Java source of the supplier
-        public string SupplierClass; // the TF class of a Cls::method supplier
+        public string SupplierClass; // the upstream class of a Cls::method supplier
         public LayerDef Def;
         public string Error;
         public int Line;
@@ -44,7 +44,7 @@ namespace Gf.Models
         readonly List<object> indexAnimations = new List<object>();
         readonly SortedDictionary<string, JObj> renderControllers = new SortedDictionary<string, JObj>(StringComparer.Ordinal);
         readonly string texPrefix, geoPrefix, animPrefix, tfPrefix;
-        // TF's item models (display transforms): the datagen output first, then the hand-written ones
+        // upstream's item models (display transforms): the datagen output first, then the hand-written ones
         readonly string[] itemModelDirs;
         public string TfRevision = "9e40a757";
 
@@ -58,14 +58,14 @@ namespace Gf.Models
             ClassPath = new ClassPath(tfJavaRoot);
             Interp = new Interp(ClassPath);
             cat = JsonDocument.Parse(catalogJson, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true }).RootElement;
-            texPrefix = Str(cat, "texturePrefix", "textures/twilightforest/");
-            geoPrefix = Str(cat, "geometryPrefix", "geometry.twilightforest.");
-            animPrefix = Str(cat, "animationPrefix", "animation.twilightforest.");
-            tfPrefix = "src/main/resources/assets/twilightforest/textures/";
+            texPrefix = Str(cat, "texturePrefix", "textures/gloamingforest/");
+            geoPrefix = Str(cat, "geometryPrefix", "geometry.gloamingforest.");
+            animPrefix = Str(cat, "animationPrefix", "animation.gloamingforest.");
+            tfPrefix = "src/main/resources/assets/gloamingforest/textures/";
             string src = Path.GetFullPath(Path.Combine(tfJavaRoot, "..", ".."));
             itemModelDirs = new[] {
-                Path.Combine(src, "generated", "resources", "assets", "twilightforest", "models", "item"),
-                Path.Combine(src, "main", "resources", "assets", "twilightforest", "models", "item"),
+                Path.Combine(src, "generated", "resources", "assets", "gloamingforest", "models", "item"),
+                Path.Combine(src, "main", "resources", "assets", "gloamingforest", "models", "item"),
             };
             BaseCases = ParseBaseCases(Prop(cat, "baseCase"), Errors);
         }
@@ -135,7 +135,7 @@ namespace Gf.Models
         public void LoadLayers()
         {
             var cls = ClassPath.Find("ClientRegistrationEvents", null);
-            if (cls == null) throw new JavaEvalException("ClientRegistrationEvents.java not found in the TF checkout");
+            if (cls == null) throw new JavaEvalException("ClientRegistrationEvents.java not found in the upstream checkout");
             var m = cls.Methods.First(x => x.Name == "registerLayerDefinitions");
             var body = Parser.ParseBody(cls.Unit, m);
             var lines = cls.Unit.Source.Split('\n');
@@ -188,7 +188,7 @@ namespace Gf.Models
             }
             foreach (var p in layersCat.EnumerateObject())
             {
-                if (!Layers.ContainsKey(p.Name)) { Errors.Add("catalog layer '" + p.Name + "' is not registered by TF"); continue; }
+                if (!Layers.ContainsKey(p.Name)) { Errors.Add("catalog layer '" + p.Name + "' is not registered by upstream"); continue; }
                 var spec = p.Value;
                 var info = Layers[p.Name];
                 string kind = Str(spec, "kind", "entity");
@@ -256,7 +256,7 @@ namespace Gf.Models
             return System.Text.RegularExpressions.Regex.IsMatch(supplier, @"(^|[^A-Za-z0-9_$])" + System.Text.RegularExpressions.Regex.Escape(cls) + @"(::|\.)");
         }
 
-        // A TF texture (path below assets/twilightforest/textures/) as a Bedrock texture path; "minecraft:<path>" names a vanilla one.
+        // An upstream texture (path below assets/gloamingforest/textures/) as a Bedrock texture path; "minecraft:<path>" names a vanilla one.
         string Tex(string tfPath)
         {
             if (tfPath == null) return null;
@@ -366,7 +366,7 @@ namespace Gf.Models
         JObj BoneMap(string name, JsonElement spec, LayerInfo info, GeometryOut geo, AnimResult anim, string animId, string animClass)
         {
             var o = new JObj()
-                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from The Twilight Forest 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code). Never edit: regenerate.")
+                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code). Never edit: regenerate.")
                 .Add("geometry", geo.Identifier)
                 .Add("layer", new JObj().Add("name", name).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
                 .Add("texture_size", Json.Arr(geo.TexWidth, geo.TexHeight));
@@ -421,7 +421,7 @@ namespace Gf.Models
             string unit = Str(spec, "unit");
             cur = new Origin { Info = info, Unit = unit, AnimClass = Str(spec, "animClass") };
             var o = new JObj()
-                .Add("comment", "Generated by tools/models/convert.ps1 (F2). This TF layer uses a vanilla Minecraft model: use the vanilla Bedrock geometry.")
+                .Add("comment", "Generated by tools/models/convert.ps1 (F2). This upstream layer uses a vanilla Minecraft model: use the vanilla Bedrock geometry.")
                 .Add("geometry", Str(spec, "vanilla"))
                 .Add("layer", new JObj().Add("name", name).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier));
             var textures = StrList(spec, "textures");
@@ -462,7 +462,7 @@ namespace Gf.Models
             var slots = StrList(a, "slots");
             if (slots.Count == 0) slots = new List<string> { "helmet", "chestplate", "leggings", "boots" };
             bool vanilla = Bool(a, "vanilla");
-            if (vanilla && onlyClass != null) return; // vanilla-model armor has no TF model class
+            if (vanilla && onlyClass != null) return; // vanilla-model armor has no upstream model class
             var pieces = Prop(a, "pieces");
             if (pieces.ValueKind == JsonValueKind.Object && StrList(a, "slots").Count == 0) slots = pieces.EnumerateObject().Select(x => x.Name).ToList();
             foreach (var key in slots)
@@ -494,7 +494,7 @@ namespace Gf.Models
                     string file = "models/entity/" + geoName + ".geo.json";
                     Put(UnitDir(unit) + "rp/" + file, geo.ToJson());
                     var bm = new JObj()
-                        .Add("comment", "Generated by tools/models/convert.ps1 (F2) from The Twilight Forest 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code). Armor bones carry the player's bone names, so the attachable follows the wearer.")
+                        .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code). Armor bones carry the player's bone names, so the attachable follows the wearer.")
                         .Add("geometry", geoId)
                         .Add("layer", new JObj().Add("name", layerName).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
                         .Add("slot", slot).Add("parts", parts.Cast<object>().ToList())
@@ -603,13 +603,13 @@ namespace Gf.Models
             return list;
         }
 
-        // ---- item display transforms (ItemTransform) from TF's item models ----
+        // ---- item display transforms (ItemTransform) from upstream's item models ----
 
         sealed class ItemDisplay { public string Model, File, Context, From; public V3 Rotation, Translation, Scale; }
 
         readonly Dictionary<string, JsonElement> itemModels = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
 
-        // models/item/<name>.json of TF (the datagen output first); null when TF has none.
+        // models/item/<name>.json of upstream (the datagen output first); null when upstream has none.
         JsonElement? ItemModel(string name, out string file)
         {
             file = null;
@@ -633,7 +633,7 @@ namespace Gf.Models
         }
 
         // The display transform BlockModel.getTransforms() resolves for a context: the model's own, else
-        // its parent's (twilightforest:item/... parents); a missing *_lefthand falls back to the same
+        // its parent's (gloamingforest:item/... parents); a missing *_lefthand falls back to the same
         // model's *_righthand (ItemTransforms.Deserializer). Null = ItemTransform.NO_TRANSFORM.
         ItemDisplay Display(string modelName, string context)
         {
@@ -642,7 +642,7 @@ namespace Gf.Models
             {
                 string file;
                 var m = ItemModel(name, out file);
-                if (m == null) throw new JavaEvalException("TF has no item model models/item/" + name + ".json (src/generated or src/main resources)");
+                if (m == null) throw new JavaEvalException("upstream has no item model models/item/" + name + ".json (src/generated or src/main resources)");
                 var display = Prop(m.Value, "display");
                 string from = context;
                 var t = Prop(display, context);
@@ -667,8 +667,8 @@ namespace Gf.Models
                     };
                 }
                 string parent = Str(m.Value, "parent");
-                if (parent == null || !parent.StartsWith("twilightforest:item/", StringComparison.Ordinal)) return null;
-                name = parent.Substring("twilightforest:item/".Length);
+                if (parent == null || !parent.StartsWith("gloamingforest:item/", StringComparison.Ordinal)) return null;
+                name = parent.Substring("gloamingforest:item/".Length);
             }
             return null;
         }
@@ -969,7 +969,7 @@ namespace Gf.Models
             }
 
             var bm = new JObj()
-                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from The Twilight Forest 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code): parts of a TF model drawn with the PoseStack transforms of its renderer.")
+                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code): parts of an upstream model drawn with the PoseStack transforms of its renderer.")
                 .Add("source", spec.Source)
                 .Add("layer", new JObj().Add("name", layerName).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
                 .Add("frame", frameName);
@@ -1023,7 +1023,7 @@ namespace Gf.Models
         }
 
         // One attachable per item: geometry "default" (controller.render.item_default) and "part<N>"
-        // (controller.render.twilightforest.models.part<N>), each drawn only in its slot (c.item_slot), plus
+        // (controller.render.gloamingforest.models.part<N>), each drawn only in its slot (c.item_slot), plus
         // the enchantment glint (variable.is_enchanted) and the animations of the forms.
         void WriteExtractAttachable(AttachableAcc acc)
         {
@@ -1037,7 +1037,7 @@ namespace Gf.Models
                 materials.Add(key, part.Material);
                 textures.Add(key, Tex(part.Texture));
                 geometry.Add(key, geoPrefix + part.Geometry);
-                string rc = i == 0 ? "controller.render.item_default" : "controller.render.twilightforest.models." + key;
+                string rc = i == 0 ? "controller.render.item_default" : "controller.render.gloamingforest.models." + key;
                 if (i > 0 && !renderControllers.ContainsKey(rc))
                 {
                     renderControllers[rc] = new JObj()
@@ -1079,7 +1079,7 @@ namespace Gf.Models
             {
                 var rcs = new JObj();
                 foreach (var kv in renderControllers) rcs.Add(kv.Key, kv.Value);
-                Put(UnitDir("models") + "rp/render_controllers/twilightforest.models.render_controllers.json", new JObj().Add("format_version", "1.10.0").Add("render_controllers", rcs));
+                Put(UnitDir("models") + "rp/render_controllers/gloamingforest.models.render_controllers.json", new JObj().Add("format_version", "1.10.0").Add("render_controllers", rcs));
             }
             var index = new JObj()
                 .Add("comment", "Generated by tools/models/convert.ps1 (F2): every geometry, base animation and attachable of assets/gen/geo, for the models.* selftests and the e2e preview. Never edit.")

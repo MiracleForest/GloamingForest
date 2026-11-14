@@ -185,7 +185,7 @@ GF_REGISTER_SELFTEST("worldgen.fixture_feature", [](Context& ctx) -> ll::coro::C
     ctx.check(found == 3, "three fixture blocks in the world");
 });
 
-// The vanilla features TF's biomes use, from their embedded definitions.
+// The vanilla features upstream's biomes use, from their embedded definitions.
 GF_REGISTER_SELFTEST("worldgen.vanilla_features", [](Context& ctx) {
     auto world  = flatMemoryWorld(777);
     auto region = world->region(0, 0, 1);
@@ -279,7 +279,7 @@ GF_REGISTER_SELFTEST("worldgen.biomes", [](Context& ctx) -> ll::coro::CoroTask<>
     chunk.setBiomeColumn(lx, lz, original);
     ctx.check(chunk.biome(lx, box.minY, lz) == original, "restored");
 
-    // the generator's own writes: a biome source that varies with height (TF's underground
+    // the generator's own writes: a biome source that varies with height (upstream's underground
     // biomes) and across the chunk's borders, through writeBiomes: every block gets the biome
     // BiomeManager's zoom picks (Java's per-block getBiome), the generation reads the raw quarts
     // back through Chunk::biome; timed, then every block's biome restored
@@ -364,7 +364,7 @@ GF_REGISTER_SELFTEST("worldgen.timing", [](Context& ctx) {
     ctx.info(o.str());
     ctx.check(per <= budget, "within the per-chunk budget");
 
-    // the same with a biome source that varies with height (TF's underground biomes below the
+    // the same with a biome source that varies with height (upstream's underground biomes below the
     // terrain): every quart column is non-uniform
     auto p        = *wg::detail::providers();
     p.biomeSource = [](int qx, int qy, int qz) {
@@ -391,17 +391,17 @@ GF_REGISTER_SELFTEST("worldgen.timing", [](Context& ctx) {
     }
 });
 
-// In the Twilight Forest (when F4's dimension is registered): new chunks come from this generator,
+// In the Gloaming Forest (when F4's dimension is registered): new chunks come from this generator,
 // with the biomes of the biome source (the custom probe biome when the e2e scenario installed it).
 // Without the dimension the test logs a distinct line the worldgen scenario checks.
 GF_REGISTER_SELFTEST("worldgen.generator", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!gf::world::twilight()) {
-        gf::log().info("worldgen generator: skipped, no Twilight Forest dimension (F4)");
-        ctx.info("the Twilight Forest dimension is not registered (F4): in-dimension generation not exercised");
+    if (!gf::world::gloaming()) {
+        gf::log().info("worldgen generator: skipped, no Gloaming Forest dimension (F4)");
+        ctx.info("the Gloaming Forest dimension is not registered (F4): in-dimension generation not exercised");
         co_return;
     }
-    ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
-    ctx.check(wg::ext::generatorActive(), "the Twilight Forest generator is installed");
+    ctx.require(co_await ctx.inGloaming(), "in the Gloaming Forest");
+    ctx.check(wg::ext::generatorActive(), "the Gloaming Forest generator is installed");
     // the probe biome (if installed) as the biome source of the chunks generated now
     auto*       bs       = ctx.region();
     ctx.require(bs != nullptr, "test region");
@@ -468,7 +468,7 @@ std::string ruleText(GameRules::GameRulesIndex index) {
 
 // The dev functions: written into the behavior pack, loaded by the world and run.
 GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto dir = gf::Mod::getInstance().getSelf().getModDir() / "behavior_packs" / "GloamingForest_BP" / "functions" / "twilightforest";
+    auto dir = gf::Mod::getInstance().getSelf().getModDir() / "behavior_packs" / "GloamingForest_BP" / "functions" / "gloamingforest";
     ctx.check(std::filesystem::exists(dir / "dev_new_world.mcfunction"), "dev_new_world written");
     ctx.check(std::filesystem::exists(dir / "dev_powerwash_chunk.mcfunction"), "dev_powerwash_chunk written");
 
@@ -485,8 +485,8 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
     }
     gf::core::GlobalPos keep{at.dim, x, -10, z}, high{at.dim, x, 16, z};
     ctx.require(ctx.setBlock(keep, "minecraft:cobblestone") && ctx.setBlock(high, "minecraft:stone"), "control blocks placed");
-    int ok = runCommand(ctx, "execute positioned " + std::to_string(x) + " -20 " + std::to_string(z) + " run function twilightforest/dev_powerwash_chunk");
-    ctx.check(ok > 0, "/function twilightforest/dev_powerwash_chunk ran");
+    int ok = runCommand(ctx, "execute positioned " + std::to_string(x) + " -20 " + std::to_string(z) + " run function gloamingforest/dev_powerwash_chunk");
+    ctx.check(ok > 0, "/function gloamingforest/dev_powerwash_chunk ran");
     co_await ctx.ticks(2);
     for (int i = 0; i < 8; ++i) {
         gf::core::GlobalPos p{at.dim, x + (i % 2) * 9, -20 + i, z + (i / 2 % 2) * 9};
@@ -504,7 +504,7 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
     };
     std::vector<std::pair<std::string, std::string>> saved;
     for (auto const& [index, name] : rules) saved.emplace_back(name, ruleText(index));
-    // dev_new_world's scriptevent also turns TF's tfEnforcedProgression off (gf::gamerules): the
+    // dev_new_world's scriptevent also turns upstream's tfEnforcedProgression off (gf::gamerules): the
     // tests that run after this one (landmark protection, progression) need it back
     auto progression = gf::gamerules::get("tfEnforcedProgression");
     struct RestoreRules { // the shared test world gets its rules back even when a check aborts
@@ -518,35 +518,35 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
         }
     } restoreRules{ctx, saved, progression};
     int before = gf::worldgen::detail::devNewWorldRuns();
-    ctx.check(runCommand(ctx, "function twilightforest/dev_new_world") > 0, "/function twilightforest/dev_new_world ran");
+    ctx.check(runCommand(ctx, "function gloamingforest/dev_new_world") > 0, "/function gloamingforest/dev_new_world ran");
     co_await ctx.ticks(2);
     std::string expected[] = {"false", "false", "false", "false", "false", "false", "true", "0"};
     for (std::size_t i = 0; i < std::size(rules); ++i)
         ctx.check(ruleText(rules[i].first) == expected[i], std::string(rules[i].second) + " = " + expected[i] + " (" + ruleText(rules[i].first) + ")");
     ctx.check(gf::worldgen::detail::devNewWorldRuns() == before + 1, "the function's scriptevent reached the mod (tfEnforcedProgression, teleport)");
 
-    // run by a player in the overworld: `execute in twilightforest:twilight_forest run teleport ~ 128 ~`
-    // (x / z times 8, the overworld's coordinate scale over the Twilight Forest's 0.125)
-    if (auto twilight = gf::world::twilight()) {
+    // run by a player in the overworld: `execute in gloamingforest:gloaming_forest run teleport ~ 128 ~`
+    // (x / z times 8, the overworld's coordinate scale over the Gloaming Forest's 0.125)
+    if (auto gloaming = gf::world::gloaming()) {
         auto&       player = ctx.player();
         std::string name   = player.getRealName();
         Vec3        from   = player.getFeetPos();
-        ctx.check(runCommand(ctx, "execute as @a[name=\"" + name + "\"] at @s run function twilightforest/dev_new_world") > 0, "dev_new_world run by a player");
+        ctx.check(runCommand(ctx, "execute as @a[name=\"" + name + "\"] at @s run function gloamingforest/dev_new_world") > 0, "dev_new_world run by a player");
         // the first tick in the dimension (the player falls from y 128 afterwards)
         bool arrived = false;
         Vec3 to{};
         for (int i = 0; i < 200 && !arrived; ++i) {
             co_await ctx.ticks(1);
             auto& moved = ctx.player();
-            if (moved.getDimensionId() == *twilight) {
+            if (moved.getDimensionId() == *gloaming) {
                 arrived = true;
                 to      = moved.getFeetPos();
             }
         }
-        ctx.check(arrived, "the player is in the Twilight Forest");
+        ctx.check(arrived, "the player is in the Gloaming Forest");
         ctx.check(arrived && std::abs(to.y - 128.0F) < 2.0F && std::abs(to.x - from.x * 8.0F) < 1.0F && std::abs(to.z - from.z * 8.0F) < 1.0F,
                   "at x * 8, y 128, z * 8 (" + std::to_string(to.x) + " " + std::to_string(to.y) + " " + std::to_string(to.z) + ")");
-        gf::log().info("worldgen functions: dev_new_world sent {} to the Twilight Forest at {:.1f} {:.1f} {:.1f}", name, to.x, to.y, to.z);
+        gf::log().info("worldgen functions: dev_new_world sent {} to the Gloaming Forest at {:.1f} {:.1f} {:.1f}", name, to.x, to.y, to.z);
     }
     (void)gf::gamerules::set("tfEnforcedProgression", progression);
     ctx.check(gf::gamerules::get("tfEnforcedProgression") == progression, "tfEnforcedProgression is restored for the tests that follow");
@@ -671,7 +671,7 @@ std::string entriesText(std::vector<gf::spawn::SpawnEntry> const& list) {
 
 } // namespace
 
-// TF's landmark rules in the spawner and the feature placements, on F6's real starts. The starts are
+// upstream's landmark rules in the spawner and the feature placements, on F6's real starts. The starts are
 // forced with landmark::ext::ScopedStart far from every test row, where no chunk is loaded (stored,
 // no block placed), and removed when the test ends (a start they replaced is put back), in every world.
 // ScopedStart cleans up only on a normal scope exit: if the process crashes or is killed, or the world
@@ -690,8 +690,8 @@ std::string entriesText(std::vector<gf::spawn::SpawnEntry> const& list) {
 //     the biome's outside it), no override for creatures (the biome's);
 //   - the tests' own special spawn function, registered after F6's, shows the order: where F6
 //     answers it is not asked, where F6 passes it is.
-// - twilightforest:no_structure (AvoidLandmarkModifier) over the locked fixture (surface decorations
-//   and vegetation not allowed, underground ones allowed, clearance radius 0) and TF's dark tower
+// - gloamingforest:no_structure (AvoidLandmarkModifier) over the locked fixture (surface decorations
+//   and vegetation not allowed, underground ones allowed, clearance radius 0) and upstream's dark tower
 //   (clearance radius 1 chunk, no surface decorations); a dark tower site without pieces (no
 //   generator yet: StructureStart#isValid false) blocks nothing, which F6's featureBlocked decides.
 // Then concurrent spawn table lookups.
@@ -700,7 +700,7 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
     namespace lm = gf::landmark;
     constexpr char kFixture[] = "gf_test:landmark_fixture";
     constexpr char kOpen[]    = "gf_test:landmark_fixture_open";
-    constexpr char kTower[]   = "twilightforest:dark_tower";
+    constexpr char kTower[]   = "gloamingforest:dark_tower";
     static constexpr char kBiome[] = "gf_test:landmark_rules";
     auto*          bs         = ctx.region();
     ctx.require(bs != nullptr, "test region");
@@ -728,16 +728,16 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
     };
     std::string const biomeMonsters = "[minecraft:skeleton 100 1-1]";
 
-    // twilightforest:no_structure (AvoidLandmarkModifier)
+    // gloamingforest:no_structure (AvoidLandmarkModifier)
     gf::features::PlacementFn fn;
     gf::features::detail::withRegistries([&](auto const& r) {
-        if (auto it = r.placements.find("twilightforest:no_structure"); it != r.placements.end()) fn = it->second;
+        if (auto it = r.placements.find("gloamingforest:no_structure"); it != r.placements.end()) fn = it->second;
         return 0;
     });
-    ctx.require(static_cast<bool>(fn), "twilightforest:no_structure is registered");
+    ctx.require(static_cast<bool>(fn), "gloamingforest:no_structure is registered");
     jr::Xoroshiro128pp random(1);
     auto config = [](bool surface, bool underground, bool vegetation, int clearance, JsonT allowed = JsonT::array()) {
-        return JsonT{{"type", "twilightforest:no_structure"},
+        return JsonT{{"type", "gloamingforest:no_structure"},
                      {"occupies_surface", surface},
                      {"occupies_underground", underground},
                      {"occupies_vegetation", vegetation},
@@ -819,7 +819,7 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
             }
         }
 
-        // StructureStart#isValid: TF's dark tower, 10 chunks east. Without its generator (before W1) F6
+        // StructureStart#isValid: upstream's dark tower, 10 chunks east. Without its generator (before W1) F6
         // reserves the site: no pieces, the clearance square as its box, and Java skips such a start;
         // with one the start has pieces and its clearance (radius 1 chunk) removes surface features
         gf::core::GlobalPos  towerAt{row.dim, center.x + 160, 64, center.z};
@@ -833,7 +833,7 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
             ctx.check(list(middle, "monster") == biomeMonsters, "nor changes the spawns there " + list(middle, "monster"));
         } else {
             ctx.check(!placedAt(config(true, false, false, 0), middle) && f6Blocks, "the dark tower's start (with pieces) removes a surface feature at its center");
-            ctx.check(placedAt(config(true, false, false, 0, "#twilightforest:landmark"), middle), "#twilightforest:landmark in structures_allowed lifts it");
+            ctx.check(placedAt(config(true, false, false, 0, "#gloamingforest:landmark"), middle), "#gloamingforest:landmark in structures_allowed lifts it");
             // its controlled spawns through F6: the labelled list of the pieces' spawn index at the
             // center, or (index -1) the dark tower's empty "full" monster override; never the biome's
             std::set<std::string> lists{"[]"};
@@ -872,9 +872,9 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
     ctx.check(sd::tableOf("gf_test:race_biome_3").byCategory.contains("monster"), "a registered table replaces the imported one");
 });
 
-// The block and biome tags world generation and the spawner read, against F9's gf::tags: TF's tag
+// The block and biome tags world generation and the spawner read, against F9's gf::tags: upstream's tag
 // data (Java ids renamed to the game's) and its vanilla bridge of the Java 1.21.1 tags, with nothing
-// built into F5; BlockState#canBeReplaced with TF's replaceable blocks.
+// built into F5; BlockState#canBeReplaced with upstream's replaceable blocks.
 GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
     namespace sd = gf::spawn::detail;
     struct Case {
@@ -883,56 +883,56 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         bool        member;
     };
     static constexpr Case cases[] = {
-        // vanilla tags gf::tags bridges, with TF's members from its data
+        // vanilla tags gf::tags bridges, with upstream's members from its data
         {"minecraft:grass_block", "minecraft:dirt", true},
         {"minecraft:dirt_with_roots", "minecraft:dirt", true}, // Java's rooted_dirt
-        {"twilightforest:uberous_soil", "minecraft:dirt", true},
+        {"gloamingforest:uberous_soil", "minecraft:dirt", true},
         {"minecraft:stone", "minecraft:dirt", false},
         {"minecraft:deepslate", "minecraft:base_stone_overworld", true},
         {"minecraft:dirt", "minecraft:base_stone_overworld", false},
         {"minecraft:granite", "minecraft:stone_ore_replaceables", true},
         {"minecraft:deepslate", "minecraft:stone_ore_replaceables", false},
         {"minecraft:oak_log", "minecraft:logs", true},
-        {"twilightforest:twilight_oak_log", "minecraft:logs", true},
+        {"gloamingforest:gloaming_oak_log", "minecraft:logs", true},
         {"minecraft:oak_planks", "minecraft:logs", false},
         {"minecraft:oak_leaves", "minecraft:replaceable_by_trees", true},
-        {"twilightforest:canopy_leaves", "minecraft:replaceable_by_trees", true},
-        {"twilightforest:mayapple", "minecraft:replaceable_by_trees", true},
+        {"gloamingforest:canopy_leaves", "minecraft:replaceable_by_trees", true},
+        {"gloamingforest:mayapple", "minecraft:replaceable_by_trees", true},
         {"minecraft:short_grass", "minecraft:replaceable_by_trees", true},
         {"minecraft:stone", "minecraft:replaceable_by_trees", false},
         {"minecraft:cobblestone_wall", "minecraft:walls", true},
-        {"twilightforest:wrought_iron_fence", "minecraft:walls", true},
-        {"twilightforest:canopy_fence_gate", "minecraft:fence_gates", true},
-        // TF's own tags: the data's Java ids are the game's after F9's renaming (snow_block -> snow)
-        {"minecraft:snow", "twilightforest:carver_replaceables", true},
-        {"minecraft:stone", "twilightforest:carver_replaceables", true},
-        {"minecraft:obsidian", "twilightforest:carver_replaceables", false},
-        // vanilla tags with nested tags (the bridge's includes bring TF's members from its data)
+        {"gloamingforest:wrought_iron_fence", "minecraft:walls", true},
+        {"gloamingforest:canopy_fence_gate", "minecraft:fence_gates", true},
+        // upstream's own tags: the data's Java ids are the game's after F9's renaming (snow_block -> snow)
+        {"minecraft:snow", "gloamingforest:carver_replaceables", true},
+        {"minecraft:stone", "gloamingforest:carver_replaceables", true},
+        {"minecraft:obsidian", "gloamingforest:carver_replaceables", false},
+        // vanilla tags with nested tags (the bridge's includes bring upstream's members from its data)
         {"minecraft:oak_fence", "minecraft:fences", true},
         {"minecraft:nether_brick_fence", "minecraft:fences", true},
-        {"twilightforest:twilight_oak_fence", "minecraft:fences", true},
+        {"gloamingforest:gloaming_oak_fence", "minecraft:fences", true},
         {"minecraft:cobblestone_wall", "minecraft:fences", false},
         {"minecraft:iron_door", "minecraft:doors", true},
         {"minecraft:wooden_door", "minecraft:doors", true},
-        {"twilightforest:canopy_door", "minecraft:doors", true},
+        {"gloamingforest:canopy_door", "minecraft:doors", true},
         {"minecraft:iron_trapdoor", "minecraft:trapdoors", true},
-        {"twilightforest:dark_trapdoor", "minecraft:trapdoors", true},
+        {"gloamingforest:dark_trapdoor", "minecraft:trapdoors", true},
         {"minecraft:oak_log", "minecraft:overworld_natural_logs", true},
         {"minecraft:stripped_oak_log", "minecraft:overworld_natural_logs", false},
-        {"twilightforest:twilight_oak_log", "minecraft:overworld_natural_logs", false},
+        {"gloamingforest:gloaming_oak_log", "minecraft:overworld_natural_logs", false},
         {"minecraft:copper_door", "minecraft:doors", true},
         {"minecraft:copper_trapdoor", "minecraft:trapdoors", true},
-        // nested includes reaching TF's data members two or three levels down (the carvers, the lush ground
+        // nested includes reaching upstream's data members two or three levels down (the carvers, the lush ground
         // and lava lake rules read these)
-        {"twilightforest:uberous_soil", "twilightforest:carver_replaceables", true}, // -> overworld_carver_replaceables -> dirt
-        {"twilightforest:root", "twilightforest:worldgen_replaceables", true},       // -> lush_ground_replaceable -> moss_replaceable
-        {"twilightforest:liveroot_block", "twilightforest:worldgen_replaceables", true},
-        {"twilightforest:trollsteinn", "twilightforest:worldgen_replaceables", true},
-        {"twilightforest:uberous_soil", "twilightforest:worldgen_replaceables", true}, // -> moss_replaceable -> dirt
-        {"twilightforest:canopy_leaves", "minecraft:lava_pool_stone_cannot_replace", true}, // -> leaves
-        {"twilightforest:dark_leaves", "minecraft:lava_pool_stone_cannot_replace", true},
-        {"twilightforest:twilight_oak_log", "minecraft:lava_pool_stone_cannot_replace", true}, // -> logs -> twilightforest:logs
-        {"twilightforest:dark_log", "minecraft:lava_pool_stone_cannot_replace", true},
+        {"gloamingforest:uberous_soil", "gloamingforest:carver_replaceables", true}, // -> overworld_carver_replaceables -> dirt
+        {"gloamingforest:root", "gloamingforest:worldgen_replaceables", true},       // -> lush_ground_replaceable -> moss_replaceable
+        {"gloamingforest:liveroot_block", "gloamingforest:worldgen_replaceables", true},
+        {"gloamingforest:trollsteinn", "gloamingforest:worldgen_replaceables", true},
+        {"gloamingforest:uberous_soil", "gloamingforest:worldgen_replaceables", true}, // -> moss_replaceable -> dirt
+        {"gloamingforest:canopy_leaves", "minecraft:lava_pool_stone_cannot_replace", true}, // -> leaves
+        {"gloamingforest:dark_leaves", "minecraft:lava_pool_stone_cannot_replace", true},
+        {"gloamingforest:gloaming_oak_log", "minecraft:lava_pool_stone_cannot_replace", true}, // -> logs -> gloamingforest:logs
+        {"gloamingforest:dark_log", "minecraft:lava_pool_stone_cannot_replace", true},
         {"minecraft:stone", "minecraft:lava_pool_stone_cannot_replace", false},
     };
     int checked = 0;
@@ -959,22 +959,22 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         }
         // structures_allowed (HolderSet<Structure>): an id, "#tags" through gf::tags; the cache checks the
         // value, not only the address
-        JsonT set = "twilightforest:lich_tower";
+        JsonT set = "gloamingforest:lich_tower";
         auto  one = gf::features::detail::structureIds(set);
-        set       = JsonT::array({"#twilightforest:landmark"});
+        set       = JsonT::array({"#gloamingforest:landmark"});
         auto all  = gf::features::detail::structureIds(set);
-        ctx.check(one->size() == 1 && one->front() == "twilightforest:lich_tower", "structures_allowed: an id");
+        ctx.check(one->size() == 1 && one->front() == "gloamingforest:lich_tower", "structures_allowed: an id");
         auto has = [&](char const* id) { return std::find(all->begin(), all->end(), id) != all->end(); };
-        ctx.check(all->size() >= 16 && has("twilightforest:dark_tower") && has("twilightforest:final_castle") && !has("twilightforest:camp"),
-                  "structures_allowed: #twilightforest:landmark holds TF's 16 landmarks (" + std::to_string(all->size()) + ")");
+        ctx.check(all->size() >= 16 && has("gloamingforest:dark_tower") && has("gloamingforest:final_castle") && !has("gloamingforest:camp"),
+                  "structures_allowed: #gloamingforest:landmark holds upstream's 16 landmarks (" + std::to_string(all->size()) + ")");
     }
 
     // BlockState#canBeReplaced (Properties#replaceable): vanilla's and TFBlocks'
     static constexpr std::pair<char const*, bool> replaceable[] = {
         {"minecraft:short_grass", true},           {"minecraft:snow_layer", true},          {"minecraft:bubble_column", true},
         {"minecraft:water", true},                 {"minecraft:snow", false},               {"minecraft:stone", false},
-        {"twilightforest:fallen_leaves", true},    {"twilightforest:fiddlehead", true},     {"twilightforest:wispy_cloud", true},
-        {"twilightforest:ominous_fire", true},     {"twilightforest:moss_patch", false},    {"twilightforest:canopy_leaves", false},
+        {"gloamingforest:fallen_leaves", true},    {"gloamingforest:fiddlehead", true},     {"gloamingforest:wispy_cloud", true},
+        {"gloamingforest:ominous_fire", true},     {"gloamingforest:moss_patch", false},    {"gloamingforest:canopy_leaves", false},
     };
     for (auto const& [id, want] : replaceable) {
         auto const* b = gf::game::blockWith(id);
@@ -986,11 +986,11 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         ++checked;
     }
 
-    // biome tags: TF's and the spawner's vanilla river tag, both from gf::tags
-    ctx.check(sd::biomeHasTag("twilightforest:dark_forest", "twilightforest:in_twilight_forest") && !sd::biomeHasTag("minecraft:plains", "twilightforest:in_twilight_forest"),
-              "#twilightforest:in_twilight_forest holds TF's biomes (gf::tags)");
+    // biome tags: upstream's and the spawner's vanilla river tag, both from gf::tags
+    ctx.check(sd::biomeHasTag("gloamingforest:dark_forest", "gloamingforest:in_gloaming_forest") && !sd::biomeHasTag("minecraft:plains", "gloamingforest:in_gloaming_forest"),
+              "#gloamingforest:in_gloaming_forest holds upstream's biomes (gf::tags)");
     ctx.check(sd::biomeHasTag("minecraft:river", "minecraft:reduce_water_ambient_spawns") && sd::biomeHasTag("minecraft:frozen_river", "minecraft:reduce_water_ambient_spawns")
-                  && !sd::biomeHasTag("twilightforest:stream", "minecraft:reduce_water_ambient_spawns"),
+                  && !sd::biomeHasTag("gloamingforest:stream", "minecraft:reduce_water_ambient_spawns"),
               "#minecraft:reduce_water_ambient_spawns: the rivers (#minecraft:is_river)");
     gf::log().info("worldgen tags: {} block tag and replaceable answers checked against gf::tags", checked);
 });
@@ -1003,7 +1003,7 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
 //   vanilla biome with its own grass and water colours, painted the same way), both kept loaded by
 //   a ticking area until worldgen.custom_biome_restore; the client has never received them.
 // - generated chunks (with F4's dimension): worldgen.generator_view makes the generator write the
-//   probe (or, tagged gf_worldgen_gen_desert, minecraft:desert) into fresh Twilight Forest chunks
+//   probe (or, tagged gf_worldgen_gen_desert, minecraft:desert) into fresh Gloaming Forest chunks
 //   and sends the tagged player there.
 // worldgen.custom_biome_view logs the biome the server and the client's own level hold under the
 // tagged player. worldgen.custom_biome_map renders a server map over probe, plains and desert
@@ -1195,14 +1195,14 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_restore", [](Context& ctx) {
     p.columns.clear();
 });
 
-// The generator path (with F4's dimension): new Twilight Forest chunks get the probe (or, for a
+// The generator path (with F4's dimension): new Gloaming Forest chunks get the probe (or, for a
 // player tagged gf_worldgen_gen_desert, minecraft:desert) from the biome source, and the tagged
 // player is sent where nothing was generated yet. worldgen.generator_view_restore undoes it.
 GF_REGISTER_SELFTEST("worldgen.generator_view", [](Context& ctx) {
-    auto twilight = gf::world::twilight();
-    if (!twilight) {
-        gf::log().info("worldgen generator view: skipped, no Twilight Forest dimension (F4)");
-        ctx.info("the Twilight Forest dimension is not registered (F4)");
+    auto gloaming = gf::world::gloaming();
+    if (!gloaming) {
+        gf::log().info("worldgen generator view: skipped, no Gloaming Forest dimension (F4)");
+        ctx.info("the Gloaming Forest dimension is not registered (F4)");
         return;
     }
     Player* shown = taggedPlayer("gf_worldgen_biome_show");
@@ -1210,7 +1210,7 @@ GF_REGISTER_SELFTEST("worldgen.generator_view", [](Context& ctx) {
         ctx.info("no player tagged gf_worldgen_biome_show");
         return;
     }
-    auto* region = gf::game::regionOf(static_cast<int>(*twilight));
+    auto* region = gf::game::regionOf(static_cast<int>(*gloaming));
     auto& reg    = region ? region->getDimension().getBiomeRegistry() : shown->getDimensionBlockSource().getDimension().getBiomeRegistry();
     bool  desert = shown->hasTag("gf_worldgen_gen_desert");
     std::string biome;
@@ -1225,8 +1225,8 @@ GF_REGISTER_SELFTEST("worldgen.generator_view", [](Context& ctx) {
     }
     wg::setBiomeSource([biome](int, int, int) { return biome; });
     float at = desert ? 40000.5F : 20000.5F; // fresh chunks, far from the trips before
-    ctx.check(gf::world::teleport(*shown, *twilight, Vec3{at, 3.0F, at}, 0.0F), "the player is sent into new Twilight Forest chunks");
-    gf::log().info("worldgen generator view: the biome source gives {}; {} sent to the Twilight Forest at {:.1f} 3 {:.1f}", biome, shown->getRealName(), at, at);
+    ctx.check(gf::world::teleport(*shown, *gloaming, Vec3{at, 3.0F, at}, 0.0F), "the player is sent into new Gloaming Forest chunks");
+    gf::log().info("worldgen generator view: the biome source gives {}; {} sent to the Gloaming Forest at {:.1f} 3 {:.1f}", biome, shown->getRealName(), at, at);
 });
 
 GF_REGISTER_SELFTEST("worldgen.generator_view_restore", [](Context& ctx) {
@@ -1515,7 +1515,7 @@ GF_REGISTER_SELFTEST("worldgen.spawn_checks", [](Context& ctx) {
 
 });
 
-// The Blanket stage runs at surface time (TF's chunkBlanketing after buildSurface): the blanket
+// The Blanket stage runs at surface time (upstream's chunkBlanketing after buildSurface): the blanket
 // sees the bare ground's WORLD_SURFACE_WG height, runs before the carvers and every feature (which
 // see its blocks), gets the WorldGenRegion random and the chunk's biomes.
 GF_REGISTER_SELFTEST("worldgen.blanket", [](Context& ctx) {
@@ -1606,9 +1606,9 @@ GF_REGISTER_SELFTEST("worldgen.pieces", [](Context& ctx) {
                                     decoSeed = d->decorationSeed;
                                     firsts.push_back(d->structureRandom(2)->nextLong());
                                     if (d->step == static_cast<int>(wg::ext::DecorationStep::UndergroundStructures)) {
-                                        auto r = d->structureRandomOf("twilightforest:labyrinth");
+                                        auto r = d->structureRandomOf("gloamingforest:labyrinth");
                                         labyrinthSeed = r && r->nextLong() == d->structureRandom(2)->nextLong();
-                                    } else if (d->structureRandomOf("twilightforest:labyrinth")) {
+                                    } else if (d->structureRandomOf("gloamingforest:labyrinth")) {
                                         otherStepNull = false;
                                     }
                                 }});
@@ -1650,16 +1650,16 @@ GF_REGISTER_SELFTEST("worldgen.pieces", [](Context& ctx) {
     };
     auto by = wg::ext::structuresByStep();
     ctx.check(by.size() == 11 && by[3].size() == 8 && by[4].size() == 43 && by[7].size() == 3 && by[10].size() == 1,
-              "34 vanilla and 21 TF structures: 8 underground_structures, 43 surface_structures, 3 underground_decoration, 1 top_layer_modification");
-    ctx.check(slotIs("minecraft:buried_treasure", 3, 0) && slotIs("twilightforest:knight_stronghold", 3, 1) && slotIs("twilightforest:labyrinth", 3, 2)
-                  && slotIs("minecraft:trail_ruins", 3, 5) && slotIs("minecraft:trial_chambers", 3, 6) && slotIs("twilightforest:troll_cave", 3, 7),
+              "34 vanilla and 21 upstream structures: 8 underground_structures, 43 surface_structures, 3 underground_decoration, 1 top_layer_modification");
+    ctx.check(slotIs("minecraft:buried_treasure", 3, 0) && slotIs("gloamingforest:knight_stronghold", 3, 1) && slotIs("gloamingforest:labyrinth", 3, 2)
+                  && slotIs("minecraft:trail_ruins", 3, 5) && slotIs("minecraft:trial_chambers", 3, 6) && slotIs("gloamingforest:troll_cave", 3, 7),
               "underground_structures in registry order");
-    ctx.check(slotIs("twilightforest:aurora_palace", 4, 0) && slotIs("twilightforest:dark_tower", 4, 3) && slotIs("twilightforest:hedge_maze", 4, 8)
-                  && slotIs("twilightforest:large_hollow_hill", 4, 13) && slotIs("twilightforest:lich_tower", 4, 14)
+    ctx.check(slotIs("gloamingforest:aurora_palace", 4, 0) && slotIs("gloamingforest:dark_tower", 4, 3) && slotIs("gloamingforest:hedge_maze", 4, 8)
+                  && slotIs("gloamingforest:large_hollow_hill", 4, 13) && slotIs("gloamingforest:lich_tower", 4, 14)
                   && slotIs("minecraft:shipwreck", 4, 31) && slotIs("minecraft:shipwreck_beached", 4, 32) && slotIs("minecraft:stronghold", 4, 34)
-                  && slotIs("twilightforest:yeti_cave", 4, 42),
+                  && slotIs("gloamingforest:yeti_cave", 4, 42),
               "surface_structures in registry order, vanilla structures counted");
-    ctx.check(slotIs("twilightforest:giant_house", 10, 0) && !wg::ext::structureSlot("twilightforest:no_such_structure"), "giant house alone at top_layer_modification");
+    ctx.check(slotIs("gloamingforest:giant_house", 10, 0) && !wg::ext::structureSlot("gloamingforest:no_such_structure"), "giant house alone at top_layer_modification");
 });
 
 // CarvingMaskPlacement: the blocks the carvers carved, kept from the Carvers stage until the
@@ -1771,7 +1771,7 @@ GF_REGISTER_SELFTEST("worldgen.biome_zoom", [](Context& ctx) -> ll::coro::CoroTa
             }
         ctx.check(rawMatch, "noiseBiomeAt is the biome source's quart, unzoomed");
         ctx.check(zoomMatch, "biomeAt is noiseBiomeAt at BiomeManager's quart");
-        ctx.check(wg::ext::noiseBiomeAt(0, 100000, 0) == wg::ext::noiseBiomeAt(0, gf::core::mth::fromBlock(wg::detail::twilightMaxY() - 1), 0),
+        ctx.check(wg::ext::noiseBiomeAt(0, 100000, 0) == wg::ext::noiseBiomeAt(0, gf::core::mth::fromBlock(wg::detail::gloamingMaxY() - 1), 0),
                   "noiseBiomeAt clamps the quart y to the dimension");
     } else ctx.info("no biome source installed: noiseBiomeAt not checked");
 
@@ -1788,7 +1788,7 @@ GF_REGISTER_SELFTEST("worldgen.biome_zoom", [](Context& ctx) -> ll::coro::CoroTa
 
 // Java block states in Bedrock terms for the feature kit: renamed vanilla ids, stairs / slabs /
 // walls / doors / fences / mushroom blocks, property variants (lit furnace, double slabs); and the
-// survival rules of TF's JSON blocks (BushBlock, MossPatchBlock, TorchberryPlantBlock, ...) that
+// survival rules of upstream's JSON blocks (BushBlock, MossPatchBlock, TorchberryPlantBlock, ...) that
 // kit::canSurvive answers from their Java classes.
 GF_REGISTER_SELFTEST("worldgen.java_states", [](Context& ctx) {
     auto name = [](JsonT const& state) -> std::string {
@@ -1820,15 +1820,15 @@ GF_REGISTER_SELFTEST("worldgen.java_states", [](Context& ctx) {
               "a north-west cap corner: huge_mushroom_bits 1");
     ctx.check(kit::javaId(*gf::game::blockWith("minecraft:stone_stairs")) == "minecraft:cobblestone_stairs", "Bedrock's stone stairs are Java's cobblestone stairs");
 
-    // survival of TF's blocks on an in-memory region (grass top at y 3)
+    // survival of upstream's blocks on an in-memory region (grass top at y 3)
     auto world  = flatMemoryWorld(7);
     auto region = world->region(0, 0, 1);
     auto const* stone   = gf::game::blockWith("minecraft:stone");
     auto const* air     = gf::game::blockWith("minecraft:air");
-    auto const* mayapple = kit::javaBlock("twilightforest:mayapple");
-    auto const* moss     = kit::javaBlock("twilightforest:moss_patch");
-    auto const* torch    = kit::javaBlock("twilightforest:torchberry_plant");
-    auto const* sapling  = kit::javaBlock("twilightforest:twilight_oak_sapling");
+    auto const* mayapple = kit::javaBlock("gloamingforest:mayapple");
+    auto const* moss     = kit::javaBlock("gloamingforest:moss_patch");
+    auto const* torch    = kit::javaBlock("gloamingforest:torchberry_plant");
+    auto const* sapling  = kit::javaBlock("gloamingforest:gloaming_oak_sapling");
     ctx.require(stone && air && mayapple && moss && torch && sapling, "blocks");
     ctx.check(gf::features::detail::survivalRule(*mayapple) == gf::features::detail::Survival::Bush, "the mayapple is a BushBlock (skeleton classes)");
     BlockPos onGrass{4, 4, 4};
@@ -1839,7 +1839,7 @@ GF_REGISTER_SELFTEST("worldgen.java_states", [](Context& ctx) {
     ctx.check(!kit::canSurvive(*region, BlockPos{6, 5, 6}, *mayapple), "nor on stone");
     ctx.check(kit::canSurvive(*region, BlockPos{6, 5, 6}, *moss), "a moss patch stands on stone (sturdy face)");
     ctx.check(!kit::canSurvive(*region, BlockPos{6, 6, 6}, *moss), "but not in the air");
-    // a torchberry plant hangs under #twilightforest:plants_hang_on (#minecraft:dirt: the grass block)
+    // a torchberry plant hangs under #gloamingforest:plants_hang_on (#minecraft:dirt: the grass block)
     region->setBlock({8, 2, 8}, *air);
     ctx.check(kit::canSurvive(*region, BlockPos{8, 2, 8}, *torch), "a torchberry plant hangs under grass");
     ctx.check(!kit::canSurvive(*region, BlockPos{8, 6, 8}, *torch), "not under air");

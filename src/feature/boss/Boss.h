@@ -2,7 +2,7 @@
 
 // Contract "boss" (header owned by F0, implemented by F8; rule R20).
 //
-// BaseTFBoss lifecycle for TF's eight bosses: home structure, conquest of the landmark on death,
+// BaseTFBoss lifecycle for upstream's eight bosses: home structure, conquest of the landmark on death,
 // the 27-slot loot buffer deposited into a death chest (gf::inventory), peaceful difficulty
 // turning the boss back into its spawner, the RGB boss bar (TFBossBarPacket: exact colour with
 // the client mod, nearest of the 8 BossBarColor values on vanilla clients), the generic boss
@@ -10,9 +10,9 @@
 // adjuster and the trophy variant table (10 BossVariant rows). Config section "bosses"
 // (bossesSpawnDropChests, multiplayerFightAdjuster).
 //
-//     gf::boss::registerBoss({.entityId = "twilightforest:naga", .homeStructure = "twilightforest:naga_courtyard",
-//                             .lootTable = "twilightforest:entities/naga", .bar = {.rgb = 0x76C45A}});
-//     gf::boss::registerSpawner({.blockId = "twilightforest:naga_boss_spawner", .entityId = "twilightforest:naga"});
+//     gf::boss::registerBoss({.entityId = "gloamingforest:naga", .homeStructure = "gloamingforest:naga_courtyard",
+//                             .lootTable = "gloamingforest:entities/naga", .bar = {.rgb = 0x76C45A}});
+//     gf::boss::registerSpawner({.blockId = "gloamingforest:naga_boss_spawner", .entityId = "gloamingforest:naga"});
 
 #include <cstdint>
 #include <functional>
@@ -35,9 +35,9 @@ struct BarSpec {
 };
 
 struct BossSpec {
-    std::string entityId;          ///< "twilightforest:naga"
+    std::string entityId;          ///< "gloamingforest:naga"
     std::string homeStructure;     ///< landmark key conquered on death
-    std::string lootTable;         ///< "twilightforest:entities/naga"
+    std::string lootTable;         ///< "gloamingforest:entities/naga"
     std::string deathChestBlock = "minecraft:chest";
     BarSpec     bar;
     int         deathTicks = 0;    ///< death animation length before drops (BaseTFBoss)
@@ -45,7 +45,7 @@ struct BossSpec {
 void registerBoss(BossSpec spec);
 
 struct SpawnerSpec {
-    std::string blockId;   ///< "twilightforest:naga_boss_spawner"
+    std::string blockId;   ///< "gloamingforest:naga_boss_spawner"
     std::string entityId;  ///< the boss
     int         range = 9; ///< player detection range (BossSpawnerBlockEntity)
     std::string particle;  ///< particle id shown while waiting

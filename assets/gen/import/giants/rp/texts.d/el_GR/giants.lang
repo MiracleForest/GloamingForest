@@ -1,4 +1,4 @@
-entity.twilightforest.armored_giant=Τεθωρακισμένος Γίγαντας
-entity.twilightforest:armored_giant.name=Τεθωρακισμένος Γίγαντας
-item.spawn_egg.entity.twilightforest:armored_giant.name=Αβγό Γέννησης Τεθωρακισμένου Γίγαντα
-item.twilightforest.armored_giant_spawn_egg=Αβγό Γέννησης Τεθωρακισμένου Γίγαντα
+entity.gloamingforest.armored_giant=Τεθωρακισμένος Γίγαντας
+entity.gloamingforest:armored_giant.name=Τεθωρακισμένος Γίγαντας
+item.gloamingforest.armored_giant_spawn_egg=Αβγό Γέννησης Τεθωρακισμένου Γίγαντα
+item.spawn_egg.entity.gloamingforest:armored_giant.name=Αβγό Γέννησης Τεθωρακισμένου Γίγαντα

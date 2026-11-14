@@ -1,16 +1,16 @@
 {
-  "twilightforest:block.twilightforest.trophy_pedestal.activate": {
+  "gloamingforest:block.gloamingforest.trophy_pedestal.activate": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.trophy_pedestal.activate",
+    "subtitle": "subtitles.gloamingforest.block.trophy_pedestal.activate",
     "sounds": [
       {
         "event": "entity.zombie.infect"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.blockchain_goblin.ambient": {
+  "gloamingforest:entity.gloamingforest.blockchain_goblin.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.blockchain_goblin.ambient",
     "sounds": [
       {
         "file": "mob/redcap/redcap1"
@@ -32,9 +32,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.blockchain_goblin.death": {
+  "gloamingforest:entity.gloamingforest.blockchain_goblin.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.death",
+    "subtitle": "subtitles.gloamingforest.entity.blockchain_goblin.death",
     "sounds": [
       {
         "file": "mob/redcap/die1"
@@ -47,9 +47,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.blockchain_goblin.hurt": {
+  "gloamingforest:entity.gloamingforest.blockchain_goblin.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.blockchain_goblin.hurt",
     "sounds": [
       {
         "file": "mob/redcap/hurt1"
@@ -65,9 +65,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.goblin_knight.ambient": {
+  "gloamingforest:entity.gloamingforest.goblin_knight.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.goblin_knight.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.goblin_knight.ambient",
     "sounds": [
       {
         "file": "mob/redcap/redcap1"
@@ -89,9 +89,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.goblin_knight.death": {
+  "gloamingforest:entity.gloamingforest.goblin_knight.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.goblin_knight.death",
+    "subtitle": "subtitles.gloamingforest.entity.goblin_knight.death",
     "sounds": [
       {
         "file": "mob/redcap/die1"
@@ -104,9 +104,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.goblin_knight.hurt": {
+  "gloamingforest:entity.gloamingforest.goblin_knight.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.goblin_knight.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.goblin_knight.hurt",
     "sounds": [
       {
         "file": "mob/redcap/hurt1"
@@ -122,9 +122,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.goblin_knight.muffled.ambient": {
+  "gloamingforest:entity.gloamingforest.goblin_knight.muffled.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.goblin_knight.muffled.ambient",
     "sounds": [
       {
         "file": "mob/redcap/muffled/redcap1"
@@ -146,9 +146,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.goblin_knight.muffled.death": {
+  "gloamingforest:entity.gloamingforest.goblin_knight.muffled.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.death",
+    "subtitle": "subtitles.gloamingforest.entity.goblin_knight.muffled.death",
     "sounds": [
       {
         "file": "mob/redcap/muffled/die1"
@@ -161,9 +161,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.goblin_knight.muffled.hurt": {
+  "gloamingforest:entity.gloamingforest.goblin_knight.muffled.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.goblin_knight.muffled.hurt",
     "sounds": [
       {
         "file": "mob/redcap/muffled/hurt1"
@@ -179,9 +179,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.helmet_crab.ambient": {
+  "gloamingforest:entity.gloamingforest.helmet_crab.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.helmet_crab.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.helmet_crab.ambient",
     "sounds": [
       {
         "file": "mob/helmet_crab/idle1"
@@ -194,9 +194,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.helmet_crab.death": {
+  "gloamingforest:entity.gloamingforest.helmet_crab.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.helmet_crab.death",
+    "subtitle": "subtitles.gloamingforest.entity.helmet_crab.death",
     "sounds": [
       {
         "file": "mob/helmet_crab/hurt1"
@@ -209,9 +209,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.helmet_crab.hurt": {
+  "gloamingforest:entity.gloamingforest.helmet_crab.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.helmet_crab.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.helmet_crab.hurt",
     "sounds": [
       {
         "file": "mob/helmet_crab/hurt1"
@@ -224,7 +224,7 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.helmet_crab.step": {
+  "gloamingforest:entity.gloamingforest.helmet_crab.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -248,9 +248,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.knight_phantom.ambient": {
+  "gloamingforest:entity.gloamingforest.knight_phantom.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.knight_phantom.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.knight_phantom.ambient",
     "sounds": [
       {
         "file": "mob/wraith/wraith1"
@@ -266,18 +266,18 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.knight_phantom.axe": {
+  "gloamingforest:entity.gloamingforest.knight_phantom.axe": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.knight_phantom.axe",
+    "subtitle": "subtitles.gloamingforest.entity.knight_phantom.axe",
     "sounds": [
       {
         "event": "entity.arrow.shoot"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.knight_phantom.death": {
+  "gloamingforest:entity.gloamingforest.knight_phantom.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.knight_phantom.death",
+    "subtitle": "subtitles.gloamingforest.entity.knight_phantom.death",
     "sounds": [
       {
         "file": "mob/wraith/wraith1"
@@ -293,9 +293,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.knight_phantom.hurt": {
+  "gloamingforest:entity.gloamingforest.knight_phantom.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.knight_phantom.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.knight_phantom.hurt",
     "sounds": [
       {
         "file": "mob/wraith/wraith1"
@@ -311,9 +311,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.knight_phantom.pickaxe": {
+  "gloamingforest:entity.gloamingforest.knight_phantom.pickaxe": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.knight_phantom.pickaxe",
+    "subtitle": "subtitles.gloamingforest.entity.knight_phantom.pickaxe",
     "sounds": [
       {
         "event": "entity.arrow.shoot"

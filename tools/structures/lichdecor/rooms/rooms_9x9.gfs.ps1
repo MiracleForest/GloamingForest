@@ -19,7 +19,7 @@ function Add-ShelfRows($t, [int[]]$rows, [int]$top = 3, [string]$label = 'booksh
 
 $rooms = [ordered]@{
     altar             = @{ e = @('east'); l = @(1, 5); f = {
-            Add-RoomCarpet $t 'twilightforest:coronation_carpet' 2
+            Add-RoomCarpet $t 'gloamingforest:coronation_carpet' 2
             for ($x = 3; $x -le 7; $x++) { Set-RoomBlock $t $x 1 8 'minecraft:chiseled_stone_bricks'; Add-RoomMarker $t $x 2 8 'candle:2-4' }
             Add-RoomMarker $t 5 1 7 'sinister_spawner:zombie,skeleton:4:8'
             foreach ($p in @(@(2, 6), @(8, 6), @(2, 3), @(8, 3))) { Add-RoomMarker $t $p[0] 1 $p[1] 'pedestal>skeleton_candle:2-3|zombie_candle:2-3' }
@@ -50,9 +50,9 @@ $rooms = [ordered]@{
         }
     }
     centerpiece       = @{ e = @('south'); l = @(1, 5); f = {
-            Add-RoomPillar $t 5 5 'twilightforest:twisted_stone_pillar'
+            Add-RoomPillar $t 5 5 'gloamingforest:twisted_stone_pillar'
             foreach ($p in @(@(4, 5), @(6, 5), @(5, 4), @(5, 6))) { Set-RoomBlock $t $p[0] 1 $p[1] 'minecraft:chiseled_stone_bricks'; Add-RoomMarker $t $p[0] 2 $p[1] 'candle:2-4' }
-            Add-RoomCarpet $t 'twilightforest:coronation_carpet' 2
+            Add-RoomCarpet $t 'gloamingforest:coronation_carpet' 2
         }
     }
     classic_library   = @{ e = @('east'); l = @(2); f = {
@@ -93,11 +93,11 @@ $rooms = [ordered]@{
         }
     }
     keepsake_casket   = @{ e = @(); NoLadder = $true; f = {
-            Add-RoomCarpet $t 'twilightforest:coronation_carpet' 1
+            Add-RoomCarpet $t 'gloamingforest:coronation_carpet' 1
             Set-RoomBlock $t 5 1 7 'minecraft:chiseled_stone_bricks'
-            Set-RoomBlock $t 5 2 7 'twilightforest:keepsake_casket'
+            Set-RoomBlock $t 5 2 7 'gloamingforest:keepsake_casket'
             foreach ($x in 3, 7) { Set-RoomBlock $t $x 1 7 'minecraft:chiseled_stone_bricks'; Add-RoomMarker $t $x 2 7 'candle:3-4' }
-            foreach ($p in (Get-RoomCorners $t 1)) { Add-RoomPillar $t $p[0] $p[1] 'twilightforest:twisted_stone_pillar' }
+            foreach ($p in (Get-RoomCorners $t 1)) { Add-RoomPillar $t $p[0] $p[1] 'gloamingforest:twisted_stone_pillar' }
             Add-RoomMarker $t 1 1 1 'skeleton_candle:2-4'
             Add-RoomMarker $t 9 1 1 'skeleton_candle:2-4'
             Add-RoomMarker $t 5 1 9 'chest:room@north'
@@ -105,7 +105,7 @@ $rooms = [ordered]@{
         }
     }
     large_study       = @{ e = @('east'); l = @(1, 5); f = {
-            foreach ($z in 3, 6) { for ($x = 3; $x -le 4; $x++) { Set-RoomBlock $t $x 1 $z 'twilightforest:canopy_slab' $script:TopSlab }; Add-RoomMarker $t 3 2 $z 'candle:1-2'; Add-RoomMarker $t 4 2 $z 'mason_jar:library'; Add-RoomMarker $t 5 1 $z 'canopy_stairs@west' }
+            foreach ($z in 3, 6) { for ($x = 3; $x -le 4; $x++) { Set-RoomBlock $t $x 1 $z 'gloamingforest:canopy_slab' $script:TopSlab }; Add-RoomMarker $t 3 2 $z 'candle:1-2'; Add-RoomMarker $t 4 2 $z 'mason_jar:library'; Add-RoomMarker $t 5 1 $z 'canopy_stairs@west' }
             Add-RoomShelves $t 3 'bookshelf|canopy_shelf' 2
             Add-RoomMarker $t 8 1 8 'chest:library@north'
             Add-RoomMarker $t 7 1 5 'empty_lectern@west'
@@ -138,7 +138,7 @@ $rooms = [ordered]@{
         }
     }
     seven             = @{ e = @('west'); l = @(2, 4); f = {
-            foreach ($p in @(@(5, 3), @(7, 3), @(8, 5), @(7, 7), @(3, 7), @(2, 5), @(3, 3))) { Add-RoomPillar $t $p[0] $p[1] 'twilightforest:twisted_stone_pillar' }
+            foreach ($p in @(@(5, 3), @(7, 3), @(8, 5), @(7, 7), @(3, 7), @(2, 5), @(3, 3))) { Add-RoomPillar $t $p[0] $p[1] 'gloamingforest:twisted_stone_pillar' }
             Add-RoomMarker $t 5 1 5 'sinister_spawner:skeleton:3:7'
             foreach ($p in @(@(6, 2), @(8, 4), @(8, 6), @(5, 7), @(2, 6), @(2, 4), @(4, 2))) { Add-RoomMarker $t $p[0] 1 $p[1] 'candle:1-3' }
         }
@@ -149,7 +149,7 @@ $rooms = [ordered]@{
         }
     }
     study             = @{ e = @('east'); l = @(1, 2, 4, 5); f = {
-            for ($x = 3; $x -le 7; $x++) { Set-RoomBlock $t $x 1 4 'twilightforest:canopy_slab' $script:TopSlab }
+            for ($x = 3; $x -le 7; $x++) { Set-RoomBlock $t $x 1 4 'gloamingforest:canopy_slab' $script:TopSlab }
             Add-RoomMarker $t 4 2 4 'candle:1-3'; Add-RoomMarker $t 6 2 4 'mason_jar:library'
             Add-RoomMarker $t 5 1 3 'canopy_stairs@south'
             Add-RoomChiseledShelves $t 'west' 2

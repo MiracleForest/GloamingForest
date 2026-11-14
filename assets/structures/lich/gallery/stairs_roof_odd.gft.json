@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/gallery/stairs_roof_odd",
+  "id": "gloamingforest:lich_tower/gallery/stairs_roof_odd",
   "size": [9, 4, 13],
   "palette": [
     {"Name":"minecraft:structure_void"},

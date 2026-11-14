@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/Lich.java
-//   src/main/java/twilightforest/entity/ai/goal/LichShadowsGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/LichMinionsGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/LichPopMobsGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/LichAbsorbMinionsGoal.java
-//   src/main/java/twilightforest/block/entity/spawner/LichSpawnerBlockEntity.java
-//   src/main/java/twilightforest/item/LifedrainScepterItem.java
-//   src/main/java/twilightforest/components/entity/FortificationShieldAttachment.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/Lich.java
+//   src/main/java/gloamingforest/entity/ai/goal/LichShadowsGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/LichMinionsGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/LichPopMobsGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/LichAbsorbMinionsGoal.java
+//   src/main/java/gloamingforest/block/entity/spawner/LichSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/item/LifedrainScepterItem.java
+//   src/main/java/gloamingforest/components/entity/FortificationShieldAttachment.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The Twilight Lich: three phases (shield and shadow clones, minions, melee), teleports, bolts and
+// The Gloaming Lich: three phases (shield and shadow clones, minions, melee), teleports, bolts and
 // bombs, popping nearby mobs, the candle spawn sequence and its 295-tick death animation. The boss
 // lifecycle (bar, loot buffer, death chest, conquest, spawner) is F8's boss kit; this file plugs the
 // Lich's overrides into it (BaseTFBoss#shouldSpawnLoot / placeSpawner / postRemoval / tickDeath ...).
@@ -66,10 +66,10 @@ constexpr int kDeathDuration = kPointC + 132;      // 295
 constexpr int kMaxActiveMinions = 3;
 constexpr int kHomeRadius    = 30;
 
-constexpr char const* kFortificationScepter = "twilightforest:fortification_scepter";
-constexpr char const* kTwilightScepter      = "twilightforest:twilight_scepter";
-constexpr char const* kLifedrainScepter     = "twilightforest:lifedrain_scepter";
-constexpr char const* kZombieScepter        = "twilightforest:zombie_scepter";
+constexpr char const* kFortificationScepter = "gloamingforest:fortification_scepter";
+constexpr char const* kGloamingScepter      = "gloamingforest:gloaming_scepter";
+constexpr char const* kLifedrainScepter     = "gloamingforest:lifedrain_scepter";
+constexpr char const* kZombieScepter        = "gloamingforest:zombie_scepter";
 constexpr char const* kGoldenSword          = "minecraft:golden_sword";
 
 std::unordered_map<std::int64_t, LichState>& states() {
@@ -119,7 +119,7 @@ void lichTeleportParticles(Mob& lich, bool appear) {
             double x = getX(lich, r.nextDouble() * r.nextDouble() * (r.nextBoolean() ? 1.0 : -1.0));
             double y = getY(lich, r.nextDouble());
             double z = getZ(lich, r.nextDouble() * r.nextDouble() * (r.nextBoolean() ? 1.0 : -1.0));
-            particle(lich, clone ? "minecraft:smoke" : "twilightforest:ominous_flame", Vec3{float(x), float(y), float(z)},
+            particle(lich, clone ? "minecraft:smoke" : "gloamingforest:ominous_flame", Vec3{float(x), float(y), float(z)},
                      Vec3{float((x - mid.x) * 0.0625), float((y - mid.y) * 0.0625), float((z - mid.z) * 0.0625)});
         }
     } else {
@@ -156,14 +156,14 @@ void animateTargetShatter(Mob& lich, Actor& target) {
 /// EntityUtil#getDeathSound for the mobs the Lich pops.
 std::string deathSoundOf(Actor& mob) {
     auto const& id = mob.getTypeName();
-    if (id == kMinion) return "entity.twilightforest.minion.death";
+    if (id == kMinion) return "entity.gloamingforest.minion.death";
     // the vanilla poppables: Bedrock's own sound names (gf::fx passes a bare name through)
     if (id == "minecraft:zombie" || id == "minecraft:husk" || id == "minecraft:drowned" || id == "minecraft:zombie_villager") return "mob.zombie.death";
     if (id == "minecraft:skeleton" || id == "minecraft:stray" || id == "minecraft:wither_skeleton" || id == "minecraft:bogged") return "mob.skeleton.death";
     if (id == "minecraft:enderman") return "mob.endermen.death";
     if (id == "minecraft:spider" || id == "minecraft:cave_spider") return "mob.spider.death";
     if (id == "minecraft:creeper") return "mob.creeper.death";
-    if (id.rfind("twilightforest:", 0) == 0) return "entity.twilightforest." + id.substr(15) + ".death";
+    if (id.rfind("gloamingforest:", 0) == 0) return "entity.gloamingforest." + id.substr(15) + ".death";
     return {};
 }
 
@@ -184,13 +184,13 @@ void addShieldBreakParticles(Mob& lich, Actor* direct, Actor* attacker) {
         for (int i = 0; i < 16; ++i) {
             double h  = r.nextDouble() - 0.5;
             double dx = 0.85 * oz * h, dy = 0.85 * (r.nextDouble() - 0.5), dz = -0.85 * ox * h;
-            particle(lich, "twilightforest:shield_break", Vec3{float(centre.x + dx), float(centre.y + dy), float(centre.z + dz)},
+            particle(lich, "gloamingforest:shield_break", Vec3{float(centre.x + dx), float(centre.y + dy), float(centre.z + dz)},
                      Vec3{float(0.5 * dx), float(0.5 * dy), float(0.5 * dz)});
         }
     } else {
         for (int i = 0; i < 16; ++i) {
             double dx = r.nextDouble() - 0.5, dy = 0.25 * (r.nextDouble() - 0.5), dz = r.nextDouble() - 0.5;
-            particle(lich, "twilightforest:shield_break", Vec3{float(base.x + dx), float(base.y + dy), float(base.z + dz)},
+            particle(lich, "gloamingforest:shield_break", Vec3{float(base.x + dx), float(base.y + dy), float(base.z + dz)},
                      Vec3{float(0.33 * dx), float(0.33 * dy), float(0.33 * dz)});
         }
     }
@@ -201,7 +201,7 @@ void addShieldBreakParticles(Mob& lich, Actor* direct, Actor* attacker) {
 void teleportToNoChecks(Mob& lich, Vec3 const& dest) {
     lichTeleportParticles(lich, false);
     teleportTo(lich, dest);
-    playSound(lich, "entity.twilightforest.lich.teleport", 0.75F, 0.75F);
+    playSound(lich, "entity.gloamingforest.lich.teleport", 0.75F, 0.75F);
     setTeleportInvisibility(lich, 20);
     lich.stopFire();
 }
@@ -224,8 +224,8 @@ void popMob(Mob& lich, Mob& mob, bool absorb) {
     forgetMinionCount(lich);
     if (!deathSound.empty()) playSoundAt(lich, pos, deathSound, 1.0F, mobPitch);
     auto& r = randomOf(lich);
-    playSound(lich, "entity.twilightforest.lich.pop_mob", 3.0F, 0.4F + r.nextFloat() * 0.2F);
-    playSoundAt(lich, pos, "entity.twilightforest.lich.pop_mob", 3.0F, 0.4F + r.nextFloat() * 0.2F);
+    playSound(lich, "entity.gloamingforest.lich.pop_mob", 3.0F, 0.4F + r.nextFloat() * 0.2F);
+    playSoundAt(lich, pos, "entity.gloamingforest.lich.pop_mob", 3.0F, 0.4F + r.nextFloat() * 0.2F);
     makeMagicTrail(lich, eye, eyeOf(lich), 1.0F, 0.5F, 0.5F);
     heal(lich, absorb ? minionHealth : 2.0F);
     swing(lich);
@@ -276,7 +276,7 @@ struct PopMobsGoal final : Goal {
         for (auto* a : actorsIn(m.getDimensionBlockSource(), dimOf(m), inflated(m, 32.0, 16.0))) {
             if (a == &m || a->isPlayer() || !a->isAlive()) continue;
             auto* mob = asMob(*a);
-            if (!mob || !entityTypeIn("twilightforest:lich_poppables", a->getTypeName())) continue;
+            if (!mob || !entityTypeIn("gloamingforest:lich_poppables", a->getTypeName())) continue;
             if (needSight && !hasLineOfSight(m, *mob)) continue;
             out.push_back(mob);
         }
@@ -332,7 +332,7 @@ struct ShadowsGoal final : Goal {
     float range;
     ShadowsGoal(Mob& mob, float attackRange) : m(mob), range(attackRange) { flags = Look | Move; }
     bool canUse() override { return phaseOf(m) == 1 && lichState(m)->tickCount > 20 && targetOf(m) != nullptr; }
-    void start() override { setMainHand(m, kTwilightScepter); }
+    void start() override { setMainHand(m, kGloamingScepter); }
     void stop() override { despawnClones(m); }
     void tick() override {
         auto* s = lichState(m);
@@ -573,9 +573,9 @@ void syncProperties(Mob& m, LichState& s) {
     int  ph    = phaseOf(m);
     int  sh    = shieldOf(m);
     int  clone = s.master != 0 ? 1 : 0;
-    if (ph != s.lastPropPhase) ge::setProperty(m, "twilightforest:phase", ph), s.lastPropPhase = ph;
-    if (sh != s.lastPropShield) ge::setProperty(m, "twilightforest:shield", sh), s.lastPropShield = sh;
-    if (clone != s.lastPropClone) ge::setProperty(m, "twilightforest:clone", clone != 0), s.lastPropClone = clone;
+    if (ph != s.lastPropPhase) ge::setProperty(m, "gloamingforest:phase", ph), s.lastPropPhase = ph;
+    if (sh != s.lastPropShield) ge::setProperty(m, "gloamingforest:shield", sh), s.lastPropShield = sh;
+    if (clone != s.lastPropClone) ge::setProperty(m, "gloamingforest:clone", clone != 0), s.lastPropClone = clone;
     // Lich#isInvisible: teleport invisibility, or a shadow clone in its first 10 ticks
     bool invisible = s.tpInvisibility > 0 || (clone && s.tickCount <= 10);
     if (invisible != s.lastInvisible) {
@@ -600,7 +600,7 @@ void onSpawn(Actor& a) {
         // finalizeSpawn (not a clone): the fortification scepter, its sound, a swing
         if (!isShadowClone(*m)) {
             setMainHand(*m, kFortificationScepter);
-            playSound(*m, "entity.twilightforest.fortification_shield.add", 1.5F, voicePitch(*m));
+            playSound(*m, "entity.gloamingforest.fortification_shield.add", 1.5F, voicePitch(*m));
             swing(*m);
         }
         // LichSpawnerBlockEntity#spawnMyBoss: attackCooldown 40, setExtinguishTimer
@@ -616,7 +616,7 @@ void onSpawn(Actor& a) {
 }
 
 /// Lich#deflection for projectiles whose hit the unit does not run itself: U9's wand bolt (a member
-/// of #twilightforest:lich_deflects_phase_2 like the lich bolt and bomb, whose own hits call
+/// of #gloamingforest:lich_deflects_phase_2 like the lich bolt and bomb, whose own hits call
 /// deflect). Java deflects in Projectile#hitTargetOrDeflectSelf before the hit; here a wand bolt
 /// whose path of the next two ticks crosses the Lich's box is deflected now, before its hit.
 void deflectIncoming(Mob& m) {
@@ -676,7 +676,7 @@ void aiStep(Actor& a) {
         setTeleportInvisibility(*m, s->tpInvisibility - 1);
         if (s->tpInvisibility <= 0) {
             lichTeleportParticles(*m, true);
-            playSound(*m, "entity.twilightforest.lich.teleport", 1.125F, 1.125F);
+            playSound(*m, "entity.gloamingforest.lich.teleport", 1.125F, 1.125F);
         }
         syncProperties(*m, *s);
         return;
@@ -687,7 +687,7 @@ void aiStep(Actor& a) {
         auto p = m->getFeetPos();
         Vec3 at{float(p.x + (r.nextDouble() * 2.0 - 1.0) * bbWidth(*m) * 0.65), float(eyeOf(*m).y + 0.25 + r.nextFloat() * 0.5),
                 float(p.z + (r.nextDouble() * 2.0 - 1.0) * bbWidth(*m) * 0.65)};
-        particle(*m, "twilightforest:angry_lich", at, Vec3{float(r.nextGaussian() * 0.02), float(r.nextGaussian() * 0.02), float(r.nextGaussian() * 0.02)});
+        particle(*m, "gloamingforest:angry_lich", at, Vec3{float(r.nextGaussian() * 0.02), float(r.nextGaussian() * 0.02), float(r.nextGaussian() * 0.02)});
         return;
     }
     // the hand particles
@@ -703,7 +703,7 @@ void aiStep(Actor& a) {
         sparkle *= sparkle;
         float red = 0.37F * sparkle, grn = 0.99F * sparkle, blu = 0.89F * sparkle;
         if (s->attackType != 0) red = 0.99F * sparkle, grn = 0.47F * sparkle, blu = 0.0F;
-        particle(*m, "twilightforest:magic_effect",
+        particle(*m, "gloamingforest:magic_effect",
                  Vec3{float(dx + r.nextGaussian() * 0.025), float(dy + r.nextGaussian() * 0.025), float(dz + r.nextGaussian() * 0.025)}, {},
                  Json{{"color", {red, grn, blu}}});
     }
@@ -716,22 +716,22 @@ bool hurt(Mob& m, gf::combat::DamageInfo& d) {
     if (s->tpInvisibility > 0 && !bypass) return false;
     if (d.type == "minecraft:in_wall" && targetOf(m)) teleportToNewTarget(m, targetOf(m), 20.0F, false);
     if (isShadowClone(m) && !bypass) {
-        playSound(m, "entity.twilightforest.lich_clone.hurt", 1.0F, voicePitch(m) * 2.0F);
+        playSound(m, "entity.gloamingforest.lich_clone.hurt", 1.0F, voicePitch(m) * 2.0F);
         return false;
     }
     if (d.attacker && isLich(*d.attacker)) return false;
     if (!bypass && shieldOf(m) > 0) {
-        if (damageTypeIn("twilightforest:breaks_lich_shields", d.type) && d.amount > 2) {
+        if (damageTypeIn("gloamingforest:breaks_lich_shields", d.type) && d.amount > 2) {
             int ns = shieldOf(m) - 1;
             setShield(m, ns);
             float volume = 1.5F;
             addShieldBreakParticles(m, d.direct, d.attacker);
             if (ns < 6) volume += 0.25F * (6 - ns);
             if (ns == 0) volume += 0.5F;
-            playSound(m, "entity.twilightforest.fortification_shield.break", volume, voicePitch(m) * 1.25F);
+            playSound(m, "entity.gloamingforest.fortification_shield.break", volume, voicePitch(m) * 1.25F);
             log().info("lich: shield broken by {} ({} left)", d.type, ns);
         } else {
-            playSound(m, "entity.twilightforest.fortification_shield.block", 0.75F, voicePitch(m) * 1.75F);
+            playSound(m, "entity.gloamingforest.fortification_shield.block", 0.75F, voicePitch(m) * 1.75F);
             if (d.attacker && (d.attacker->isPlayer() || d.attacker->hasCategory(ActorCategory::Mob))) setLastHurtBy(m, d.attacker);
         }
         return false;
@@ -755,7 +755,7 @@ void die(Actor& a, std::string const&, Actor*) {
     despawnClones(*m);
     if (shieldOf(*m) > 0) {
         setShield(*m, 0);
-        playSound(*m, "entity.twilightforest.fortification_shield.break", 1.2F, voicePitch(*m) * 2.0F);
+        playSound(*m, "entity.gloamingforest.fortification_shield.break", 1.2F, voicePitch(*m) * 2.0F);
     }
 }
 
@@ -799,7 +799,7 @@ float wrapDegrees(float v) {
 }
 
 void tickDeath(Mob& m, int deathTime) {
-    ge::setProperty(m, "twilightforest:death_time", std::min(deathTime, kDeathDuration));
+    ge::setProperty(m, "gloamingforest:death_time", std::min(deathTime, kDeathDuration));
     if (deathTime >= kPointA) setMainHand(m, "");
     else if (Actor* t = lookAtUponDeath(m)) {
         auto  p = m.getFeetPos(), q = t->getFeetPos();
@@ -819,8 +819,8 @@ void tickDeath(Mob& m, int deathTime) {
     if (deathTime <= kPointA) {
         bool done = deathTime == kPointA;
         bool hit  = deathTime % kBurstCooldown == 0;
-        if (done) playSound(m, "entity.twilightforest.lich.death", 1.0F, voicePitch(m));
-        else if (hit) playSound(m, "entity.twilightforest.lich.hurt", 1.0F, voicePitch(m));
+        if (done) playSound(m, "entity.gloamingforest.lich.death", 1.0F, voicePitch(m));
+        else if (hit) playSound(m, "entity.gloamingforest.lich.hurt", 1.0F, voicePitch(m));
         for (int i = 0; i < (hit ? 12 : 3); ++i) {
             double x = (r.nextDouble() - 0.5) * 0.7, y = r.nextDouble() * h, z = (r.nextDouble() - 0.5) * 0.7;
             if (r.nextBoolean() || hit) emit("minecraft:item", pos.x + x, pos.y + y, pos.z + z, {}, bone);
@@ -865,7 +865,7 @@ void tickDeath(Mob& m, int deathTime) {
         for (double i = 0.0; i < 1.0; i += 0.2) {
             double x = std::sin((powFactor + i) * std::numbers::pi * 2.0) * expandFactor * 1.75;
             double z = std::cos((powFactor + i) * std::numbers::pi * 2.0) * expandFactor * 1.75;
-            emit("twilightforest:ominous_flame", pp.x + x, pp.y - 0.25, pp.z + z);
+            emit("gloamingforest:ominous_flame", pp.x + x, pp.y - 0.25, pp.z + z);
         }
     }
     if (deathTime > kPointB && r.nextFloat() <= 0.33F) {
@@ -890,13 +890,13 @@ constexpr char const* kColors[] = {"",     "white_", "orange_", "magenta_", "lig
 /// OminousCandleBlock.CANDLE_MAP: the vanilla candle -> the ominous one ("" when none).
 std::string ominousOf(std::string const& id) {
     for (auto const* c : kColors)
-        if (id == std::string("minecraft:") + c + "candle") return std::string("twilightforest:ominous_") + c + "candle";
+        if (id == std::string("minecraft:") + c + "candle") return std::string("gloamingforest:ominous_") + c + "candle";
     return {};
 }
 
 std::string vanillaOf(std::string const& id) {
     for (auto const* c : kColors)
-        if (id == std::string("twilightforest:ominous_") + c + "candle") return std::string("minecraft:") + c + "candle";
+        if (id == std::string("gloamingforest:ominous_") + c + "candle") return std::string("minecraft:") + c + "candle";
     return {};
 }
 
@@ -998,7 +998,7 @@ void checkAndSpawnMinions(Mob& m) {
     if (auto spot = findVecInLOSOf(m, target)) {
         if (Mob* minion = spawnMinion(m, *spot, target)) {
             auto& r = randomOf(m);
-            playSound(*minion, "entity.twilightforest.minion.summon", 1.0F, ((r.nextFloat() - r.nextFloat()) * 0.7F + 1.0F) * 0.75F);
+            playSound(*minion, "entity.gloamingforest.minion.summon", 1.0F, ((r.nextFloat() - r.nextFloat()) * 0.7F + 1.0F) * 0.75F);
             swing(m);
             float cr = r.nextFloat() * 0.0625F + 0.125F, cg = r.nextFloat() * 0.0625F + 0.125F, cb = r.nextFloat() * 0.0625F + 0.125F;
             makeMagicTrail(m, eyeOf(m), eyeOf(*minion), cr, cg, cb);
@@ -1017,7 +1017,7 @@ void makeMagicTrail(Mob& lich, Vec3 const& from, Vec3 const& to, float r, float 
         double tx = from.x + (to.x - from.x) * f + rnd.nextGaussian() * 0.005;
         double ty = from.y + 0.2 + (to.y - from.y) * f + rnd.nextGaussian() * 0.005;
         double tz = from.z + (to.z - from.z) * f + rnd.nextGaussian() * 0.005;
-        particle(lich, "twilightforest:magic_effect", Vec3{float(tx), float(ty), float(tz)}, {}, params);
+        particle(lich, "gloamingforest:magic_effect", Vec3{float(tx), float(ty), float(tz)}, {}, params);
     }
 }
 
@@ -1083,7 +1083,7 @@ void teleportHome(Mob& lich) {
     BlockPos pos    = *h;
     BlockPos below2{pos.x, pos.y - 2, pos.z};
     if (region.getBlock(below2).isAir())
-        if (auto const* pillar = game::blockWith("twilightforest:bold_stone_pillar")) game::setBlock(region, below2, *pillar);
+        if (auto const* pillar = game::blockWith("gloamingforest:bold_stone_pillar")) game::setBlock(region, below2, *pillar);
     if (region.getBlock(BlockPos{pos.x, pos.y - 1, pos.z}).isAir()) pos.y -= 1;
     teleportToNoChecks(lich, Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f});
 }
@@ -1122,7 +1122,7 @@ void checkAndSpawnClones(Mob& lich, Actor& target) {
     auto& r = randomOf(lich);
     setTarget(*clone, &target);
     lichState(*clone)->attackCooldown = 60 + r.nextInt(3) - r.nextInt(3);
-    setMainHand(*clone, kTwilightScepter);
+    setMainHand(*clone, kGloamingScepter);
     setTeleportInvisibility(*clone, lichState(lich)->tpInvisibility);
     log().info("lich: shadow clone {} of {}", uidOf(*clone), uidOf(lich));
 }
@@ -1147,19 +1147,19 @@ void turnNearbyCandles(Mob& lich, int tick, bool done) {
                     auto st = game::statesOf(b);
                     if (st["lit"] != "true") continue;
                     int count = (st.contains("candles") ? std::stoi(st["candles"]) : 0) + 1;
-                    if (auto const* nb = game::blockWithStates(om, Json{{"twilightforest:candles", count}})) {
+                    if (auto const* nb = game::blockWithStates(om, Json{{"gloamingforest:candles", count}})) {
                         game::setBlock(region, pos, *nb);
-                        playSoundAt(lich, Vec3{x + 0.5f, y + 0.5f, z + 0.5f}, "block.twilightforest.ominous_fire.light", 0.5F, (r.nextFloat() - r.nextFloat()) * 0.2F + 0.75F);
+                        playSoundAt(lich, Vec3{x + 0.5f, y + 0.5f, z + 0.5f}, "block.gloamingforest.ominous_fire.light", 0.5F, (r.nextFloat() - r.nextFloat()) * 0.2F + 0.75F);
                     }
-                } else if (id.rfind("twilightforest:", 0) == 0) {
+                } else if (id.rfind("gloamingforest:", 0) == 0) {
                     auto st = game::statesOf(b);
-                    auto it = st.find("twilightforest:lighting");
+                    auto it = st.find("gloamingforest:lighting");
                     if (it == st.end() || it->second != "normal") continue;
                     Json j                        = statesJson(b);
-                    j["twilightforest:lighting"] = "ominous";
+                    j["gloamingforest:lighting"] = "ominous";
                     if (auto const* nb = game::blockWithStates(id, j)) {
                         game::setBlock(region, pos, *nb);
-                        playSoundAt(lich, Vec3{x + 0.5f, y + 0.5f, z + 0.5f}, "block.twilightforest.candelabra.ominous", 0.5F, (r.nextFloat() - r.nextFloat()) * 0.2F + 0.75F);
+                        playSoundAt(lich, Vec3{x + 0.5f, y + 0.5f, z + 0.5f}, "block.gloamingforest.candelabra.ominous", 0.5F, (r.nextFloat() - r.nextFloat()) * 0.2F + 0.75F);
                     }
                 }
             }
@@ -1175,19 +1175,19 @@ void lightNearbyCandles(Mob& lich) {
                 Block const& b = region.getBlock(pos);
                 if (b.isAir()) continue;
                 std::string id = game::blockId(b);
-                if (id.rfind("twilightforest:", 0) != 0) continue;
+                if (id.rfind("gloamingforest:", 0) != 0) continue;
                 if (auto van = vanillaOf(id); !van.empty()) {
-                    int count = game::intState(b, "twilightforest:candles").value_or(1);
+                    int count = game::intState(b, "gloamingforest:candles").value_or(1);
                     if (auto const* nb = game::blockWithStates(van, Json{{"candles", std::max(count - 1, 0)}, {"lit", true}})) {
                         game::setBlock(region, pos, *nb);
                         playSoundAt(lich, Vec3{x + 0.5f, y + 0.5f, z + 0.5f}, "minecraft:block.fire.ambient", 0.25F, 1.5F);
                     }
                 } else {
                     auto st = game::statesOf(b);
-                    auto it = st.find("twilightforest:lighting");
+                    auto it = st.find("gloamingforest:lighting");
                     if (it == st.end() || it->second != "ominous") continue;
                     Json j                        = statesJson(b);
-                    j["twilightforest:lighting"] = "normal";
+                    j["gloamingforest:lighting"] = "normal";
                     if (auto const* nb = game::blockWithStates(id, j)) {
                         game::setBlock(region, pos, *nb);
                         playSoundAt(lich, Vec3{x + 0.5f, y + 0.5f, z + 0.5f}, "minecraft:block.fire.ambient", 0.25F, 1.15F);
@@ -1211,7 +1211,7 @@ Actor* launchProjectile(Mob& lich, int type) {
     auto&  r     = randomOf(lich);
     float  pitch = (r.nextFloat() - r.nextFloat()) * 0.2F + 1.0F;
     if (type != 0) pitch *= 0.85F;
-    playSound(lich, "entity.twilightforest.lich.shoot", 1.0F, pitch);
+    playSound(lich, "entity.gloamingforest.lich.shoot", 1.0F, pitch);
     char const* id = type == 0 ? kLichBolt : kLichBomb;
     Actor*      pr = gf::projectile::shoot(lich, id, Vec3{float(tx), float(ty), float(tz)}, 0.5F, 1.0F);
     if (pr) pr->moveTo(Vec3{float(sx), float(sy), float(sz)}, lich.getRotation());
@@ -1228,14 +1228,14 @@ void setMinionsLeft(Mob& lich, int left) { lichState(lich)->minionsLeft = left; 
 void setTeleportInvisibility(Mob& lich, int ticks) { lichState(lich)->tpInvisibility = ticks; }
 
 bool deflect(Mob& lich, Actor& projectile, Actor* owner) {
-    if (!entityTypeIn("twilightforest:lich_deflects_phase_2", projectile.getTypeName())) return false;
+    if (!entityTypeIn("gloamingforest:lich_deflects_phase_2", projectile.getTypeName())) return false;
     if (!(owner == nullptr || owner->isPlayer() || isLich(*owner)) || phaseOf(lich) <= 1) return false;
     auto& r = randomOf(lich);
     auto  v = lich.getPosDelta();
     Vec3  nv{float((v.x + (0.5 - r.nextDouble())) * 0.75), float((v.y + 0.75) * 1.5), float((v.z + (0.5 - r.nextDouble())) * 0.75)};
     gf::projectile::ext::setVelocity(projectile, nv);
     setProjectileOwner(projectile, &lich);
-    playSound(lich, "entity.twilightforest.fortification_shield.block", 0.5F, voicePitch(lich) * 1.5F);
+    playSound(lich, "entity.gloamingforest.fortification_shield.block", 0.5F, voicePitch(lich) * 1.5F);
     swing(lich);
     return true;
 }
@@ -1281,12 +1281,12 @@ void registerLich() {
     gb::registerBoss({
         .entityId        = kLich,
         .homeStructure   = kTowerKey,
-        .lootTable       = "twilightforest:entities/lich",
-        .deathChestBlock = "twilightforest:twilight_oak_chest",
+        .lootTable       = "gloamingforest:entities/lich",
+        .deathChestBlock = "gloamingforest:gloaming_oak_chest",
         .bar             = {.rgb = 0xFFD800},
         .deathTicks      = kDeathDuration,
     });
-    gb::registerSpawner({.blockId = kSpawner, .entityId = kLich, .range = 9, .particle = "twilightforest:ominous_flame"});
+    gb::registerSpawner({.blockId = kSpawner, .entityId = kLich, .range = 9, .particle = "gloamingforest:ominous_flame"});
     gb::ext::setHomeRadius(kLich, kHomeRadius);
     gb::ext::setLifecycle(kLich, {
         .shouldSpawnLoot     = [](Mob& m) { return !isShadowClone(m) && gameRuleDoMobLoot(); },
@@ -1295,7 +1295,7 @@ void registerLich() {
         .deathAnimationFinished = [](Mob&, int t) { return t >= kDeathDuration; }, // Lich#isDeathAnimationFinished, clones too
         .deathContainer =
             [](Mob& m, gf::core::jrand::RandomSource&) {
-                return randomOf(m).nextBoolean() ? std::string("twilightforest:canopy_chest") : std::string("twilightforest:twilight_oak_chest");
+                return randomOf(m).nextBoolean() ? std::string("gloamingforest:canopy_chest") : std::string("gloamingforest:gloaming_oak_chest");
             },
         .onPostRemoval = [](Mob& m) {
             if (!isShadowClone(m)) lightNearbyCandles(m);

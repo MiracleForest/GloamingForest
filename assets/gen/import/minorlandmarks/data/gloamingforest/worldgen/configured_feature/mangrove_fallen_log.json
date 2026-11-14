@@ -1,0 +1,18 @@
+{
+  "type": "gloamingforest:fallen_small_log",
+  "config": {
+    "hollow": {
+      "Name": "gloamingforest:hollow_mangrove_log_horizontal",
+      "Properties": {
+        "axis": "x",
+        "variant": "empty"
+      }
+    },
+    "normal": {
+      "Name": "gloamingforest:mangrove_log",
+      "Properties": {
+        "axis": "y"
+      }
+    }
+  }
+}

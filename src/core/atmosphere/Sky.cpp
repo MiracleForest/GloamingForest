@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/TwilightForestRenderInfo.java
-//   src/main/java/twilightforest/client/renderer/TFSkyRenderer.java
-//   src/main/java/twilightforest/client/event/FogHandler.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/GloamingForestRenderInfo.java
+//   src/main/java/gloamingforest/client/renderer/TFSkyRenderer.java
+//   src/main/java/gloamingforest/client/event/FogHandler.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Dimension effects, fog and stars (with vanilla 1.21.1's DimensionType#timeOfDay,
-// FogRenderer#setupFog / setupColor and LevelRenderer#drawStars, which TF's code builds on).
+// FogRenderer#setupFog / setupColor and LevelRenderer#drawStars, which upstream's code builds on).
 
 #include "core/atmosphere/Atmosphere.h"
 
@@ -33,28 +33,28 @@ float rate(float k, float frames) { return frames == 1.0f ? k : 1.0f - std::pow(
 
 std::vector<BiomeLook> const& biomeLooks() {
     static std::vector<BiomeLook> const looks{
-        {"twilightforest:clearing", 0x20224A, 0xC0FFD8},
-        {"twilightforest:dark_forest", 0x000000, 0x000000},
-        {"twilightforest:dark_forest_center", 0x000000, 0x493000},
-        {"twilightforest:dense_forest", 0x20224A, 0xC0FFD8},
-        {"twilightforest:dense_mushroom_forest", 0x20224A, 0xC0FFD8},
-        {"twilightforest:enchanted_forest", 0x20224A, 0xC0FFD8},
-        {"twilightforest:final_plateau", 0x20224A, 0xC0FFD8},
-        {"twilightforest:fire_swamp", 0x20224A, 0x380A00},
-        {"twilightforest:firefly_forest", 0x20224A, 0xC0FFD8},
-        {"twilightforest:forest", 0x20224A, 0xC0FFD8},
-        {"twilightforest:glacier", 0x130D28, 0x361F88},
-        {"twilightforest:highlands", 0x20224A, 0xC0FFD8},
-        {"twilightforest:highlands_underground", 0x20224A, 0xC0FFD8},
-        {"twilightforest:lake", 0x20224A, 0xC0FFD8},
-        {"twilightforest:mushroom_forest", 0x20224A, 0xC0FFD8},
-        {"twilightforest:oak_savannah", 0x20224A, 0xC0FFD8},
-        {"twilightforest:snowy_forest", 0x808080, 0xFFFFFF},
-        {"twilightforest:spooky_forest", 0x20224A, 0x827391},
-        {"twilightforest:stream", 0x20224A, 0xC0FFD8},
-        {"twilightforest:swamp", 0x002112, 0x003F21},
-        {"twilightforest:thornlands", 0x20224A, 0xC0FFD8},
-        {"twilightforest:underground", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:clearing", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:dark_forest", 0x000000, 0x000000},
+        {"gloamingforest:dark_forest_center", 0x000000, 0x493000},
+        {"gloamingforest:dense_forest", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:dense_mushroom_forest", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:enchanted_forest", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:final_plateau", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:fire_swamp", 0x20224A, 0x380A00},
+        {"gloamingforest:firefly_forest", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:forest", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:glacier", 0x130D28, 0x361F88},
+        {"gloamingforest:highlands", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:highlands_underground", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:lake", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:mushroom_forest", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:oak_savannah", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:snowy_forest", 0x808080, 0xFFFFFF},
+        {"gloamingforest:spooky_forest", 0x20224A, 0x827391},
+        {"gloamingforest:stream", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:swamp", 0x002112, 0x003F21},
+        {"gloamingforest:thornlands", 0x20224A, 0xC0FFD8},
+        {"gloamingforest:underground", 0x20224A, 0xC0FFD8},
     };
     return looks;
 }
@@ -105,7 +105,7 @@ Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float d, int renderDistanceChunks, floa
     f       = 1.0f - static_cast<float>(std::pow(static_cast<double>(f), 0.25));
     Rgb sky = skyColor(biomeSky, d, rain, thunder);
     Rgb fog = brightnessDependentFogColor(biomeFog, d);
-    // TF's getSunriseColor is null: no sunrise blend
+    // upstream's getSunriseColor is null: no sunrise blend
     Rgb c{fog.r + (sky.r - fog.r) * f, fog.g + (sky.g - fog.g) * f, fog.b + (sky.b - fog.b) * f};
     if (rain > 0.0f) {
         float rg = 1.0f - rain * 0.5f, bl = 1.0f - rain * 0.4f;
@@ -131,7 +131,7 @@ float linearFogValue(float distance, float start, float end) {
     return t * t * (3.0f - 2.0f * t);
 }
 
-bool isSpooky(std::string_view biomeId) { return biomeId == "twilightforest:spooky_forest"; }
+bool isSpooky(std::string_view biomeId) { return biomeId == "gloamingforest:spooky_forest"; }
 
 Rgb cloudColor(float tod, float rain, float thunder) {
     float f1 = std::clamp(std::cos(tod * (kPi * 2.0f)) * 2.0f + 0.5f, 0.0f, 1.0f);
@@ -237,14 +237,14 @@ std::string bedrockBiomeName(std::string_view rl) {
 bool isFoggyAt(std::string_view biomeId, double playerY) {
     bool spooky = isSpooky(biomeId);
     if (playerY > 20 && !spooky) return false; // above the dark forest canopy
-    return spooky || biomeId == "twilightforest:dark_forest" || biomeId == "twilightforest:dark_forest_center";
+    return spooky || biomeId == "gloamingforest:dark_forest" || biomeId == "gloamingforest:dark_forest_center";
 }
 
 std::string birthdaySplash(int year) {
     int         n      = year - 2011;
     int         mod100 = ((n % 100) + 100) % 100, mod10 = ((n % 10) + 10) % 10;
     char const* suffix = (mod100 >= 11 && mod100 <= 13) ? "th" : mod10 == 1 ? "st" : mod10 == 2 ? "nd" : mod10 == 3 ? "rd" : "th";
-    return "Happy " + std::to_string(n) + suffix + " birthday to the Twilight Forest!";
+    return "Happy " + std::to_string(n) + suffix + " birthday to the Gloaming Forest!";
 }
 
 // ---- fog ------------------------------------------------------------------------------------------------
@@ -320,7 +320,7 @@ Vec3f rotateFromMinusZ(Vec3f dir, Vec3f v) {
 std::vector<std::array<Vec3f, 4>> starQuads() {
     std::vector<std::array<Vec3f, 4>> out;
     jrand::LegacyRandom               random(10842);
-    for (int i = 0; i < 3000; ++i) { // TF: 1500 -> 3000
+    for (int i = 0; i < 3000; ++i) { // upstream: 1500 -> 3000
         float f1 = random.nextFloat() * 2.0f - 1.0f;
         float f2 = random.nextFloat() * 2.0f - 1.0f;
         float f3 = random.nextFloat() * 2.0f - 1.0f;

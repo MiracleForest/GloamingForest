@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/processors/SpawnerProcessor.java (the spawn data it
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/processors/SpawnerProcessor.java (the spawn data it
 //     writes: generic.scale for entity_width_max, the custom spawn rules of compile)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -344,7 +344,7 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
                 }
             }
         }
-    // TF's sinister spawner (F8's block entity, in block data, spawns as a spawner): the ones whose
+    // upstream's sinister spawner (F8's block entity, in block data, spawns as a spawner): the ones whose
     // spawn box (SinisterSpawnerLogic: within SpawnRange of the block on every axis) holds the mob
     // and whose block F7 left a spawner record with (a template's spawner data), on the same terms
     // (the one spawning now first: its delay ran out, then the nearest). The kit's index of its

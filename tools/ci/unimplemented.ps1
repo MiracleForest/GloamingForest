@@ -1,31 +1,31 @@
 <#
 .SYNOPSIS
-  The registered-but-unimplemented report (rule R17, W2): TF blocks, items and entities that need
+  The registered-but-unimplemented report (rule R17, W2): upstream blocks, items and entities that need
   behaviour of their own and have none in GloamingForest beyond the imported skeleton JSON.
 
 .DESCRIPTION
   How it decides (static: the game's registries do not record which code handles an id, so the
-  report reads TF and this repository instead):
+  report reads upstream and this repository instead):
 
-  1. Registered ids: TF's own registrations at 9e40a757 from the shared checkout (rule R24,
-     pwsh tools/tf/fetch.ps1): init/TFBlocks.java and init/TFItems.java (`register*("<path>", () ->
+  1. Registered ids: upstream's own registrations at 9e40a757 from the shared checkout (rule R24,
+     pwsh tools/upstream/fetch.ps1): init/TFBlocks.java and init/TFItems.java (`register*("<path>", () ->
      new <Class>(...))`) and init/TFEntities.java (`make*(TFEntityNames.<NAME>, <Class>::new, ...)`
      with the names of entity/TFEntityNames.java). Commented-out registrations do not count.
-  2. Needs behaviour: the id's class is one of TF's own (a src/main/java/twilightforest/**/<Class>.java
+  2. Needs behaviour: the id's class is one of upstream's own (a src/main/java/gloamingforest/**/<Class>.java
      exists; for a nested class such as JarItem.MasonJarItem the outer one). Ids built from vanilla
      classes (Block, StairBlock, Item, ArmorItem, ...) are complete with the imported skeleton plus
-     the block families (F11) and are not listed. Every TF entity class is TF's own.
+     the block families (F11) and are not listed. Every upstream entity class is upstream's own.
   3. Implemented: the id has any of
-       - a string literal "twilightforest:<path>" or "<path>" in the mod's code (src/**/*.cpp|h,
+       - a string literal "gloamingforest:<path>" or "<path>" in the mod's code (src/**/*.cpp|h,
          without selftests: src/selftest/**, *Test*.cpp, *Tests.cpp, *Demo*.cpp);
        - an entry in the block family data (assets/data/families/*.json "id") or the container
          declarations (assets/data/containers/*.json);
        - a hand-made Bedrock definition (assets/pack/bp/**: "description.identifier");
-       - membership of a TF tag (imported data/twilightforest/tags/{block,item,entity_type}/**, plus
-         assets/tags fragments) that the mod's code names as "twilightforest:<tag>" (R6 matchers).
+       - membership of an upstream tag (imported data/gloamingforest/tags/{block,item,entity_type}/**, plus
+         assets/tags fragments) that the mod's code names as "gloamingforest:<tag>" (R6 matchers).
   4. Accounted for: listed in docs/spec/not-ported.md (sections before the appendices name it as
-     twilightforest:<path>) or reviewed in tools/ci/unimplemented-reviewed.json
-     ({"twilightforest:<path>": "why its skeleton is complete"}).
+     gloamingforest:<path>) or reviewed in tools/ci/unimplemented-reviewed.json
+     ({"gloamingforest:<path>": "why its skeleton is complete"}).
 
   Everything else is reported, per owner (docs/spec/owners.tsv). It is a heuristic: a mention is
   not proof of parity (the unit audits check that), and a reviewed entry needs a reason.
@@ -47,11 +47,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
-$tf = if ($env:GF_TF_DIR) { $env:GF_TF_DIR } else { Join-Path $env:LOCALAPPDATA 'gf-tf' }
-$java = Join-Path $tf 'src/main/java/twilightforest'
-if (-not (Test-Path $java)) { throw "TF checkout not found at $tf (pwsh tools/tf/fetch.ps1)" }
+$tf = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
+$java = Join-Path $tf 'src/main/java/gloamingforest'
+if (-not (Test-Path $java)) { throw "upstream checkout not found at $tf (pwsh tools/upstream/fetch.ps1)" }
 
-# ---- 1-2: TF registrations and their classes ------------------------------------------------------
+# ---- 1-2: upstream registrations and their classes ------------------------------------------------------
 $tfClasses = [Collections.Generic.HashSet[string]]::new()
 Get-ChildItem $java -Recurse -Filter *.java -File | ForEach-Object { [void]$tfClasses.Add($_.BaseName) }
 
@@ -65,7 +65,7 @@ function Get-JavaLines([string]$file) {
 $registered = [Collections.Generic.List[object]]::new()
 function Add-Registered([string]$kind, [string]$path, [string]$class) {
     $outer = ($class -split '\.')[0]
-    $registered.Add([pscustomobject]@{ Kind = $kind; Id = "twilightforest:$path"; Path = $path; Class = $class; Custom = $tfClasses.Contains($outer) })
+    $registered.Add([pscustomobject]@{ Kind = $kind; Id = "gloamingforest:$path"; Path = $path; Class = $class; Custom = $tfClasses.Contains($outer) })
 }
 # `DeferredBlock<T> NAME = <register or helper>("<path>", ... new <Class>(...))`: the constructed class,
 # else (a helper such as ominousCandle("<path>", ...)) the declared type T
@@ -127,7 +127,7 @@ function Add-Evidence([string]$id, [string]$why) { if (-not $evidence.ContainsKe
 foreach ($r in $registered) {
     if ($literals.Contains($r.Id)) { Add-Evidence $r.Id 'code (id)' }
     # a bare path counts only when it cannot be an ordinary word ("naga", "fiery"): ids built at
-    # runtime ("twilightforest:" + "ominous_red_candle") are compound paths
+    # runtime ("gloamingforest:" + "ominous_red_candle") are compound paths
     elseif ($r.Path -match '[_/]' -and $literals.Contains($r.Path)) { Add-Evidence $r.Id 'code (path)' }
 }
 function Get-JsonStrings($node) {
@@ -144,7 +144,7 @@ foreach ($dir in 'families', 'containers') {
         $entries = if ($doc -is [array]) { $doc } elseif ($doc.entries) { $doc.entries } elseif ($doc.containers) { $doc.containers } elseif ($doc.blocks) { $doc.blocks } else { @($doc) }
         foreach ($e in @($entries)) {
             if ($e -isnot [pscustomobject]) { continue }
-            foreach ($k in 'id', 'block') { $s = $e.$k; if ($s -is [string] -and $s -like 'twilightforest:*') { Add-Evidence $s "data/$dir/$($f.Name)" } }
+            foreach ($k in 'id', 'block') { $s = $e.$k; if ($s -is [string] -and $s -like 'gloamingforest:*') { Add-Evidence $s "data/$dir/$($f.Name)" } }
         }
     }
 }
@@ -153,23 +153,23 @@ foreach ($f in Get-ChildItem (Join-Path $root 'assets/pack/bp') -Recurse -Filter
     if (-not $doc -or $doc -isnot [pscustomobject]) { continue }
     foreach ($p in $doc.PSObject.Properties) {
         $id = if ($p.Value -is [pscustomobject] -and $p.Value.description) { $p.Value.description.identifier }
-        if ($id -is [string] -and $id -like 'twilightforest:*') { Add-Evidence $id "pack/bp/$([IO.Path]::GetRelativePath((Join-Path $root 'assets/pack/bp'), $f.FullName).Replace('\', '/'))" }
+        if ($id -is [string] -and $id -like 'gloamingforest:*') { Add-Evidence $id "pack/bp/$([IO.Path]::GetRelativePath((Join-Path $root 'assets/pack/bp'), $f.FullName).Replace('\', '/'))" }
     }
 }
 # tags the code names: their members (one level of nested tags at a time, until nothing changes)
-$tagMembers = @{}   # "<registry>|twilightforest:<tag>" -> values
+$tagMembers = @{}   # "<registry>|gloamingforest:<tag>" -> values
 $tagFiles = @(Get-ChildItem (Join-Path $root 'assets/gen/import') -Recurse -File -Filter *.json -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -match '[\\/]data[\\/]twilightforest[\\/]tags[\\/](block|item|entity_type)[\\/]' })
+        Where-Object { $_.FullName -match '[\\/]data[\\/]gloamingforest[\\/]tags[\\/](block|item|entity_type)[\\/]' })
 foreach ($f in $tagFiles) {
-    $m = [regex]::Match($f.FullName.Replace('\', '/'), '/data/twilightforest/tags/(block|item|entity_type)/(.+)\.json$')
-    $key = "$($m.Groups[1].Value)|twilightforest:$($m.Groups[2].Value)"
+    $m = [regex]::Match($f.FullName.Replace('\', '/'), '/data/gloamingforest/tags/(block|item|entity_type)/(.+)\.json$')
+    $key = "$($m.Groups[1].Value)|gloamingforest:$($m.Groups[2].Value)"
     $doc = Get-Content $f.FullName -Raw | ConvertFrom-Json
     $tagMembers[$key] = @($tagMembers[$key]) + @(Get-JsonStrings $doc.values | Where-Object { $_ }) | Where-Object { $_ }
 }
 foreach ($f in Get-ChildItem (Join-Path $root 'assets/tags') -Recurse -File -Filter *.json -ErrorAction SilentlyContinue) {
-    $m = [regex]::Match($f.FullName.Replace('\', '/'), '/assets/tags/(block|item|entity_type)/twilightforest/(.+)\.d/[^/]+\.json$')
+    $m = [regex]::Match($f.FullName.Replace('\', '/'), '/assets/tags/(block|item|entity_type)/gloamingforest/(.+)\.d/[^/]+\.json$')
     if (-not $m.Success) { continue }
-    $key = "$($m.Groups[1].Value)|twilightforest:$($m.Groups[2].Value)"
+    $key = "$($m.Groups[1].Value)|gloamingforest:$($m.Groups[2].Value)"
     $doc = Get-Content $f.FullName -Raw | ConvertFrom-Json
     $tagMembers[$key] = @($tagMembers[$key]) + @(Get-JsonStrings $doc.values) | Where-Object { $_ }
 }
@@ -181,7 +181,7 @@ foreach ($key in $tagMembers.Keys) {
         $k = $queue.Dequeue(); if ($seen[$k]) { continue }; $seen[$k] = $true
         foreach ($v in @($tagMembers[$k] | Where-Object { $_ -is [string] })) {
             if ($v.StartsWith('#')) { $queue.Enqueue("$reg|$($v.Substring(1))") }
-            elseif ($v -like 'twilightforest:*') { Add-Evidence $v "tag $tag" }
+            elseif ($v -like 'gloamingforest:*') { Add-Evidence $v "tag $tag" }
         }
     }
 }
@@ -191,13 +191,13 @@ $accounted = @{}
 $np = Join-Path $root 'docs/spec/not-ported.md'
 if (Test-Path $np) {
     $text = (Get-Content $np -Raw) -split '(?m)^## Appendix', 2 | Select-Object -First 1
-    foreach ($m in [regex]::Matches($text, 'twilightforest:([a-z0-9_/]+)')) { $accounted["twilightforest:$($m.Groups[1].Value)"] = 'docs/spec/not-ported.md' }
+    foreach ($m in [regex]::Matches($text, 'gloamingforest:([a-z0-9_/]+)')) { $accounted["gloamingforest:$($m.Groups[1].Value)"] = 'docs/spec/not-ported.md' }
 }
 $reviewedFile = Join-Path $PSScriptRoot 'unimplemented-reviewed.json'
 if (Test-Path $reviewedFile) {
     $rev = Get-Content $reviewedFile -Raw | ConvertFrom-Json
     foreach ($p in $rev.PSObject.Properties) {
-        if ($p.Name -like 'twilightforest:*') {
+        if ($p.Name -like 'gloamingforest:*') {
             if (-not ($p.Value -is [string] -and $p.Value.Trim())) { throw "unimplemented-reviewed.json: $($p.Name) needs a reason" }
             $accounted[$p.Name] = "reviewed: $($p.Value)"
         }
@@ -223,13 +223,13 @@ $md = [Collections.Generic.List[string]]::new()
 $md.Add('# Registered but unimplemented (R17)')
 $md.Add('')
 $counts = $rows | Group-Object Status | ForEach-Object { "$($_.Count) $($_.Name)" }
-$md.Add("TF registrations checked: $(@($rows).Count) ($($Kind -join ', ')): $($counts -join ', '). How it decides: tools/ci/unimplemented.ps1.")
+$md.Add("upstream registrations checked: $(@($rows).Count) ($($Kind -join ', ')): $($counts -join ', '). How it decides: tools/ci/unimplemented.ps1.")
 $md.Add('')
 if ($open.Count -eq 0) { $md.Add('**The report is empty.**') }
 foreach ($g in $open | Group-Object Owner | Sort-Object Name) {
     $md.Add("## $($g.Name) ($($g.Count))")
     $md.Add('')
-    $md.Add('| Kind | Id | TF class |')
+    $md.Add('| Kind | Id | upstream class |')
     $md.Add('|---|---|---|')
     foreach ($r in $g.Group | Sort-Object Kind, Id) { $md.Add("| $($r.Kind) | ``$($r.Id)`` | $($r.Class) |") }
     $md.Add('')

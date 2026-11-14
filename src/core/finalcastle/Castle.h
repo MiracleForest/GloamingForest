@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMural.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/DestroyArea.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMural.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/DestroyArea.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -74,10 +74,10 @@ struct DestroyArea {
     [[nodiscard]] bool isEntirelyAbove(int y) const { return box.minY > y; }
     [[nodiscard]] bool isVecInside(int x, int y, int z) const { return box.contains(x, y, z); }
     /// intersectsWith: Java's BoundingBox#intersects(minX, minZ, maxX, maxZ) called with
-    /// (other.maxX + 1, other.minX - 1, other.maxZ + 1, other.minZ - 1) (TF's argument order kept).
+    /// (other.maxX + 1, other.minX - 1, other.maxZ + 1, other.minZ - 1) (upstream's argument order kept).
     [[nodiscard]] bool intersectsWith(DestroyArea const& other) const;
     /// createNonIntersecting: up to 100 tries; a try is taken when the list is empty or when it misses
-    /// any one area of the list (TF's loop), nullopt when none was taken.
+    /// any one area of the list (upstream's loop), nullopt when none was taken.
     [[nodiscard]] static std::optional<DestroyArea> createNonIntersecting(BlockBox const& tower, jrand::RandomSource& rand, int y,
                                                                           std::vector<std::optional<DestroyArea>> const& others);
 };

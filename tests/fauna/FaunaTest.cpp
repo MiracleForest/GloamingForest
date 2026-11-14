@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/fauna (U16): dyes and fleece colours, the bighorn loot tables, the variant
 // picks, the bird flap and flight steering, the kobold and mosquito difficulty numbers.
 #include <gtest/gtest.h>
@@ -59,10 +59,10 @@ TEST(FaunaBighorn, FleeceColourIsBrownAboutHalfTheTime) {
 }
 
 TEST(FaunaBighorn, LootTablesAndShearing) {
-    EXPECT_EQ(bighornLootTable(true, 14), "twilightforest:entities/bighorn_sheep");
-    EXPECT_EQ(bighornLootTable(false, 0), "twilightforest:entities/bighorn_sheep/white");
-    EXPECT_EQ(bighornLootTable(false, 3), "twilightforest:entities/bighorn_sheep/light_blue");
-    EXPECT_EQ(bighornLootTable(false, 99), "twilightforest:entities/bighorn_sheep/white");
+    EXPECT_EQ(bighornLootTable(true, 14), "gloamingforest:entities/bighorn_sheep");
+    EXPECT_EQ(bighornLootTable(false, 0), "gloamingforest:entities/bighorn_sheep/white");
+    EXPECT_EQ(bighornLootTable(false, 3), "gloamingforest:entities/bighorn_sheep/light_blue");
+    EXPECT_EQ(bighornLootTable(false, 99), "gloamingforest:entities/bighorn_sheep/white");
     LegacyRandom  r(7);
     std::set<int> seen;
     for (int i = 0; i < 200; ++i) seen.insert(shearCount(r));
@@ -71,27 +71,27 @@ TEST(FaunaBighorn, LootTablesAndShearing) {
 
 TEST(FaunaVariants, BiomeFilterAndFallback) {
     std::vector<Variant> v = {
-        {"twilightforest:blue", "a", true, {}},
-        {"twilightforest:brown", "b", false, {"twilightforest:glacier"}},
-        {"twilightforest:gold", "c", true, {}},
+        {"gloamingforest:blue", "a", true, {}},
+        {"gloamingforest:brown", "b", false, {"gloamingforest:glacier"}},
+        {"gloamingforest:gold", "c", true, {}},
     };
     LegacyRandom  r(99);
     std::set<int> forest, glacier;
     for (int i = 0; i < 200; ++i) {
-        forest.insert(pickVariant(v, "twilightforest:forest", 0, r));
-        glacier.insert(pickVariant(v, "twilightforest:glacier", 0, r));
+        forest.insert(pickVariant(v, "gloamingforest:forest", 0, r));
+        glacier.insert(pickVariant(v, "gloamingforest:glacier", 0, r));
     }
     EXPECT_EQ(forest, (std::set<int>{0, 2}));
     EXPECT_EQ(glacier, (std::set<int>{0, 1, 2}));
     std::vector<Variant> onlyFiltered = {{"x:a", "", false, {"x:b"}}};
     EXPECT_EQ(pickVariant(onlyFiltered, "x:c", 3, r), 3);
     EXPECT_EQ(pickCommonVariant(onlyFiltered, 5, r), 5);
-    EXPECT_EQ(variantIndex(v, "twilightforest:gold"), 2);
-    EXPECT_EQ(variantIndex(v, "twilightforest:red"), std::nullopt);
+    EXPECT_EQ(variantIndex(v, "gloamingforest:gold"), 2);
+    EXPECT_EQ(variantIndex(v, "gloamingforest:red"), std::nullopt);
 }
 
 TEST(FaunaVariants, RabbitOffspringMostlyFromParents) {
-    std::vector<Variant> v = {{"twilightforest:brown", "", true, {}}, {"twilightforest:dutch", "", true, {}}, {"twilightforest:white", "", true, {}}};
+    std::vector<Variant> v = {{"gloamingforest:brown", "", true, {}}, {"gloamingforest:dutch", "", true, {}}, {"gloamingforest:white", "", true, {}}};
     LegacyRandom         r(5);
     int                  fromParents = 0, n = 20000;
     for (int i = 0; i < n; ++i) {

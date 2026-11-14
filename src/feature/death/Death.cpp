@@ -1,29 +1,29 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/CharmEvents.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/CharmEvents.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract "death" (F10): the death pipeline, TF's CharmEvents host (rule R8: one die hook).
+// Contract "death" (F10): the death pipeline, upstream's CharmEvents host (rule R8: one die hook).
 //
 // When an entity dies (the outermost of Mob / Player / ServerPlayer::die):
-//   1. `onLethal` handlers (higher priority first) may keep it alive (charm of life, TF's
+//   1. `onLethal` handlers (higher priority first) may keep it alive (charm of life, upstream's
 //      LivingDeathEvent at HIGHEST): the handler sets the health; the death does not happen
 //      (a health of 0 left by the handler becomes 1).
-//   2. A player that really dies, not in creative / spectator and without keepInventory (TF's
+//   2. A player that really dies, not in creative / spectator and without keepInventory (upstream's
 //      applyKeepingAndCasket at HIGH): every keeper sees every stack of the inventory (0..35),
 //      the armour (head, chest, legs, feet) and the off-hand, in that order, as the player's
 //      real slot stacks (a keeper may compare addresses with the player's inventory to know the
 //      slot); a stack a keeper keeps leaves the inventory and is stored in the world DB
-//      ("gf:combat:kept:<uuid>", TF's TFCharmInventory persistent tag). Items in the
-//      twilightforest:kept_on_death tag are always kept (the lowest keeper).
+//      ("gf:combat:kept:<uuid>", upstream's TFCharmInventory persistent tag). Items in the
+//      gloamingforest:kept_on_death tag are always kept (the lowest keeper).
 //   3. `onDropsRemaining` handlers get the stacks still in the inventory and may take any of them
 //      (the keepsake casket); what they leave is dropped by the game.
 //   4. The game's death runs; a player killer fires progression's onKilled; a mob's drops are
 //      the loot contract's (feature/loot).
 // On respawn the kept items go back to their slots (or anywhere free, or at the player's feet)
-// and the `onRespawn` handlers run (TF's returnItemsOnRespawn).
+// and the `onRespawn` handlers run (upstream's returnItemsOnRespawn).
 
 #include "feature/death/Death.h"
 
@@ -183,7 +183,7 @@ std::vector<SlotRef> allSlots(Player& p) {
     return out;
 }
 
-/// TF's keeping (keepers) and casket (drops remaining) on a real player death.
+/// upstream's keeping (keepers) and casket (drops remaining) on a real player death.
 void keepAndOffer(Player& player) {
     if (player.isCreative() || player.isSpectator() || keepInventoryRule()) return;
     std::vector<Entry<KeeperFn>> keepers;
@@ -503,10 +503,10 @@ public:
         if (!registered) {
             registered = true;
             game::db::onWorldClosed([] { handledDeaths().clear(); }); // ticks restart per world
-            // TF: items in twilightforest:kept_on_death are always kept (lowest keeper; F9's tag data)
+            // upstream: items in gloamingforest:kept_on_death are always kept (lowest keeper; F9's tag data)
             registerKeeper(-100000, [](Player&, ItemStack& stack) {
                 auto id = game::items::idOf(stack);
-                return !id.empty() && tags::has(tags::Registry::Item, "twilightforest:kept_on_death", id);
+                return !id.empty() && tags::has(tags::Registry::Item, "gloamingforest:kept_on_death", id);
             });
         }
     }

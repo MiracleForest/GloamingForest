@@ -11,7 +11,7 @@ $r = Invoke-SelfTest 'lich.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) lich selftest(s) failed" }
 if ($r.Pass -lt 16) { throw "expected at least 16 lich selftests to pass, got $($r.Pass)" }
 $log = Get-ServerLog -Since $mark
-foreach ($line in @('lich: shield broken by twilightforest:lich_bolt', 'lich: bolt reflected by', 'lich: a rising zombie became a zombie',
+foreach ($line in @('lich: shield broken by gloamingforest:lich_bolt', 'lich: bolt reflected by', 'lich: a rising zombie became a zombie',
         'lich: a death tome left its lectern', 'lich tower: ', 'lich tower: volume hash ')) {
     if (-not ($log | Select-String -SimpleMatch $line)) { throw "missing log line: $line" }
 }

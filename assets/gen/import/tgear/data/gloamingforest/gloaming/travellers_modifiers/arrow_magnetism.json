@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:arrow_magnetism": {}
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.arrow_magnetism.description"
+    }
+  ],
+  "equipment_slots": "chest"
+}

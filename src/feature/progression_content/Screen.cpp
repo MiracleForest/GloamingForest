@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
-// The advancement tree's data (U14): the nodes of TF's tab with their layout, display and the
+// The advancement tree's data (U14): the nodes of upstream's tab with their layout, display and the
 // player's progress, as the client mod's native screen and the vanilla form show them. The
 // visibility follows Java's AdvancementVisibilityEvaluator (a reimplementation of its documented
 // rule: shown when done or with a done descendant, else decided by the nearest of the node, its
@@ -22,8 +22,8 @@ namespace {
 
 enum class Rule { Show, Hide, NoChange };
 
-/// "twilightforest:textures/block/x.png" -> the resource pack path F1 imports it to
-/// ("textures/twilightforest/block/x").
+/// "gloamingforest:textures/block/x.png" -> the resource pack path F1 imports it to
+/// ("textures/gloamingforest/block/x").
 std::string texturePath(std::string const& javaPath) {
     auto p   = javaPath;
     auto ns  = std::string{"minecraft"};

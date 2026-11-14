@@ -320,7 +320,7 @@ ll::coro::CoroTask<core::BlockBox> Context::flatArea(int dx, int size, int heigh
     auto* region = this->region();
     require(region != nullptr, "test dimension available");
     bool loaded = false;
-    for (int i = 0; i < 1200 && !loaded; ++i) { // 60 s: Twilight chunks generate slowly under load
+    for (int i = 0; i < 1200 && !loaded; ++i) { // 60 s: Gloaming chunks generate slowly under load
         loaded = true;
         for (int x = box.minX; loaded && x <= box.maxX + 15; x += 16)
             for (int z = box.minZ; loaded && z <= box.maxZ + 15; z += 16)
@@ -350,8 +350,8 @@ ll::coro::CoroTask<core::BlockBox> Context::flatArea(int dx, int size, int heigh
     co_return box;
 }
 
-ll::coro::CoroTask<bool> Context::inTwilight() {
-    auto dim = world::twilight();
+ll::coro::CoroTask<bool> Context::inGloaming() {
+    auto dim = world::gloaming();
     if (!dim) co_return false;
     int id = static_cast<int>(*dim);
     auto& p  = player();
@@ -364,7 +364,7 @@ ll::coro::CoroTask<bool> Context::inTwilight() {
         mDim       = id;
         mOrigin    = {id, 0, y, 0};
         mHasOrigin = true;
-        info("in the Twilight Forest (dimension " + std::to_string(id) + "), origin y " + std::to_string(y));
+        info("in the Gloaming Forest (dimension " + std::to_string(id) + "), origin y " + std::to_string(y));
         co_return true;
     }
     co_return false;
@@ -487,7 +487,7 @@ ll::coro::CoroTask<> loadTestArea() {
     // ticking areas persist with the world: drop the ones a crashed run left, or they would eat into
     // Bedrock's 10 per world (failures of these removes are expected and ignored)
     std::vector<int> dims{0};
-    if (auto tw = world::twilight()) dims.push_back(static_cast<int>(*tw));
+    if (auto tw = world::gloaming()) dims.push_back(static_cast<int>(*tw));
     for (int dim : dims) {
         for (auto const& a : kTestAreas) runServerCommand(std::string("tickingarea remove ") + a.name, dim);
         for (int i = 1; i <= Context::kMaxFlatAreasPerTest; ++i) runServerCommand("tickingarea remove gf_selftest_area_" + std::to_string(i), dim);

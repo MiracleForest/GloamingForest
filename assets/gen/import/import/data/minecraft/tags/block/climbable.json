@@ -1,8 +1,8 @@
 {
   "values": [
-    "twilightforest:iron_ladder",
-    "twilightforest:rope",
-    "twilightforest:root_strand",
-    "#twilightforest:hollow_logs_climbable"
+    "gloamingforest:iron_ladder",
+    "gloamingforest:rope",
+    "gloamingforest:root_strand",
+    "#gloamingforest:hollow_logs_climbable"
   ]
 }

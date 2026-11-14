@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerWingComponent.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerWingComponent.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -28,8 +28,8 @@ using ::gf::structure::Orientation;
 using ::gf::structure::Region;
 using ::gf::structure::Rotation;
 
-inline constexpr char kLootCache[] = "twilightforest:darktower_cache";
-inline constexpr char kLootKey[]   = "twilightforest:darktower_key";
+inline constexpr char kLootCache[] = "gloamingforest:darktower_cache";
+inline constexpr char kLootKey[]   = "gloamingforest:darktower_key";
 
 /// RotationUtil.ROTATIONS.
 inline constexpr std::array<Rotation, 4> kRotations{Rotation::None, Rotation::Clockwise90, Rotation::Clockwise180, Rotation::Counterclockwise90};
@@ -44,7 +44,7 @@ inline constexpr std::array<Rotation, 4> kRotations{Rotation::None, Rotation::Cl
 [[nodiscard]] Rotation rot(Rotation a, Rotation b);
 /// The Java name of a horizontal direction.
 [[nodiscard]] char const* dirName(Orientation o);
-/// A modulo that stays an index (TF indexes ROTATIONS with `%`; a negative value would throw in Java).
+/// A modulo that stays an index (upstream indexes ROTATIONS with `%`; a negative value would throw in Java).
 [[nodiscard]] inline int javaMod(int v, int m) { return ((v % m) + m) % m; }
 /// The distance of DarkTowerWingComponent#drawBlob / netherTransformBlob (byte arithmetic).
 [[nodiscard]] inline int blobDist(int dx, int dy, int dz) {

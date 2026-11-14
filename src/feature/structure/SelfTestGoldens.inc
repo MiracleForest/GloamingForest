@@ -1,7 +1,7 @@
 // Golden values of the structure selftests (rule R19), {"name", "value"}: volume hashes of
-// in-memory placements at a fixed origin, so they do not depend on where the test area is. TF
+// in-memory placements at a fixed origin, so they do not depend on where the test area is. upstream
 // blocks hash as air (their Bedrock states belong to F1's frozen table, which may still grow);
-// what TF blocks a test places is checked by name where it matters (nagastone_variants_blocks).
+// what upstream blocks a test places is checked by name where it matters (nagastone_variants_blocks).
 // Reviewed once with screenshots of the same placements in the world (tools/e2e/client/scenarios/structure.ps1).
 {"template_none", "512ca9d6e76363cf"},
 {"template_cw90", "174b60051e64a482"},
@@ -13,15 +13,15 @@
 // processors: the fixture at (0, 64, 0) and the processor targets at (10, 64, 0) over the prepared
 // world, each placement sharing one random seeded 0x5eed between its blocks; spawner_processor,
 // update_marking and nagastone_variants equal processor_none: spawn data is not part of a volume
-// hash, update_marking changes nothing here and TF's nagastone hashes as air.
+// hash, update_marking changes nothing here and upstream's nagastone hashes as air.
 // The shared-random goldens (cobble_variants, infest_blocks, smooth_stone_variants,
 // stone_brick_variants, targeted_rot, vertical_decay, web) follow Java's processing order:
 // StructureTemplate#loadPalette / buildInfoList (full blocks, other shapes, block entities; each
-// by y, x, z) after the getRandomPalette draw, with TF's nagastone processed like every block
+// by y, x, z) after the getRandomPalette draw, with upstream's nagastone processed like every block
 // (F1 registers it). Their "diff processor_<name>" info lines (the blocks each processor changed)
 // equal the output of tests/structure/oracle/TemplateOracle.java, which places the same fixtures
 // with Minecraft 1.21.1's own StructureTemplate (load, getRandomPalette, processBlockInfos,
-// filterBlocks; the server jar of the F13 oracle install) and TF's processor bodies (translated,
+// filterBlocks; the server jar of the F13 oracle install) and upstream's processor bodies (translated,
 // ProcessorOracle.java), as does nagastone_variants_blocks; ProcessorOracle.java models the same
 // order by hand and prints the same lines (tests/structure/oracle/run.ps1 compares them).
 {"processor_none", "615811ce73edfd6e"},
@@ -45,8 +45,8 @@
 {"processor_rule", "e804d890c7414853"},
 {"processor_gravity", "b12639ed4e113cff"},
 {"processor_block_ignore", "06d114a20f41c792"},
-// nagastone_variants on the targets' TF nagastone (the placed blocks, Java's order)
-{"nagastone_variants_blocks", "10,64,4:twilightforest:etched_nagastone;11,64,4:twilightforest:nagastone_pillar;13,64,4:twilightforest:cracked_etched_nagastone;14,64,4:twilightforest:nagastone_pillar;"},
+// nagastone_variants on the targets' upstream nagastone (the placed blocks, Java's order)
+{"nagastone_variants_blocks", "10,64,4:gloamingforest:etched_nagastone;11,64,4:gloamingforest:nagastone_pillar;13,64,4:gloamingforest:cracked_etched_nagastone;14,64,4:gloamingforest:nagastone_pillar;"},
 // structure.shared_random: a hut whose data marker sits on a structure_void cell (Java's DATA
 // structure block, processed like every block) and a chest (its LootTableSeed drawn while placing),
 // then its data markers listed (filterBlocks) and a basement placed with the same random, under
@@ -66,6 +66,6 @@
 {"lattice_chunk00", "0,0;-3,-1;0,3;-3,1;0,7;-3,5;0,10;-3,8;6,0;-3,12;6,3;3,-1;6,7;3,1;6,10;3,5;3,8;3,12;"},
 {"maze_6x6", "a900f988d15e0ff5"},
 {"hollow_hill_small", "7b9a9299709faca8"},
-{"tower_layout", "twilightforest:TFLTBA=34 twilightforest:TFLTBea=12 twilightforest:TFLTBri=7 twilightforest:TFLTMai=1 twilightforest:TFLTOut=4 twilightforest:TFLTRAS=20 twilightforest:TFLTRF=11 twilightforest:TFLTRGF=3 twilightforest:TFLTRPO=6 twilightforest:TFLTRSF=4 twilightforest:TFLTRSt=4 twilightforest:TFLTRStO=3 twilightforest:TFLTWin=46 -16,-21,39,144,39"},
+{"tower_layout", "gloamingforest:TFLTBA=34 gloamingforest:TFLTBea=12 gloamingforest:TFLTBri=7 gloamingforest:TFLTMai=1 gloamingforest:TFLTOut=4 gloamingforest:TFLTRAS=20 gloamingforest:TFLTRF=11 gloamingforest:TFLTRGF=3 gloamingforest:TFLTRPO=6 gloamingforest:TFLTRSF=4 gloamingforest:TFLTRSt=4 gloamingforest:TFLTRStO=3 gloamingforest:TFLTWin=46 -16,-21,39,144,39"},
 {"tower_blocks", "7f419aede8b5cfc3"},
 {"component_helpers", "c7caf7366f3b8f18"},

@@ -1,7 +1,7 @@
 #pragma once
 
 // Contract extension of F8 (rule R18: new files only, folded into the W0 headers by A8 in W2b).
-// What the entity / projectile / boss contracts lack for TF's bosses and mobs:
+// What the entity / projectile / boss contracts lack for upstream's bosses and mobs:
 //
 //   gf::entity::ext     TFPart hits (Java's attackEntityFromPart), part management, the
 //                       NoClipMoveControl wanted position, the flying speed of FlyingMoveControl,
@@ -80,7 +80,7 @@ void setFlyingSpeed(std::string const& entityId, double flyingSpeed);
 [[nodiscard]] bool isCharging(Actor const& mob);
 [[nodiscard]] bool isBreathing(Actor const& mob);
 /// IBreathAttacker#doBreathAttack of an entity type; without one the breath deals 2 damage of the
-/// goal's damage type (TF's fire beetle and winter wolf numbers).
+/// goal's damage type (upstream's fire beetle and winter wolf numbers).
 using BreathAttackFn = std::function<void(Mob& breather, Actor& target)>;
 void onBreathAttack(std::string const& entityId, BreathAttackFn fn);
 /// Runs the breath attack of `breather` on `target` (used by goals::breath).
@@ -95,10 +95,10 @@ void markHostileMount(std::string const& entityId);
 /// HostileMountEvents#hostileDismount: the rider may leave (the mob lets go).
 void hostileDismount(Actor& rider);
 /// Entity#canUsePortal of an actor type: false keeps every actor of `entityId` out of portals
-/// (Bedrock's and the Twilight portal), whatever its kind: mobs (RisingZombie), projectiles and
-/// other non-mob actors (ChainBlock, CubeOfAnnihilation), falling blocks. TF's bosses
+/// (Bedrock's and the Gloaming portal), whatever its kind: mobs (RisingZombie), projectiles and
+/// other non-mob actors (ChainBlock, CubeOfAnnihilation), falling blocks. upstream's bosses
 /// (gf::boss::registerBoss, BaseTFBoss) and the parts (addPart: HydraPart, NagaSegment) never use
-/// portals without it. Players are never refused. F4's Twilight portal takes an actor that carries
+/// portals without it. Players are never refused. F4's Gloaming portal takes an actor that carries
 /// a passenger through without asking (gf::portal's canUsePortal, reported to F4).
 void setCanUsePortal(std::string const& entityId, bool canUse);
 
@@ -207,7 +207,7 @@ void setDeathTime(Mob& boss, int deathTime);
 ///              EntityUtil#bossChestLocation : nothing; then onPostRemoval (Lich#lightNearbyCandles);
 ///              then the engine removes the body (XP, death particles).
 ///   peaceful:  BaseTFBoss#checkDespawn: shouldCreateSpawner ? placeSpawner(home) : nothing; gone.
-/// A dying boss is kept in the world DB (TF saves it with its chunk): while its body's chunk is not
+/// A dying boss is kept in the world DB (upstream saves it with its chunk): while its body's chunk is not
 /// loaded the death waits, and it goes on after a world reload. A body that does not come back with
 /// its loaded chunk finishes its death without it (the defaults, with what was known at its last
 /// tick); a death chest whose chunk is not loaded is placed when the chunk loads.
@@ -228,7 +228,7 @@ struct Lifecycle {
     /// (IT_IS_OVER).
     std::function<bool(Mob& boss)> shouldDeposit;
     /// BaseTFBoss#getDeathContainer (default: BossSpec::deathChestBlock); `random` is the boss's.
-    /// Naga / Lich: twilight_oak_chest or canopy_chest at random.
+    /// Naga / Lich: gloaming_oak_chest or canopy_chest at random.
     std::function<std::string(Mob& boss, gf::core::jrand::RandomSource& random)> deathContainer;
     /// Runs after the death chest step of postRemoval (Lich#postRemoval: lightNearbyCandles).
     std::function<void(Mob& boss)> onPostRemoval;
@@ -277,7 +277,7 @@ struct RareSound {
 /// AbstractTrophyBlock#createParticle beyond TrophyVariant::particle: how many particles one use
 /// shows and the options Java creates them with, as gf::fx::particle params:
 ///   ur_ghast        {"color": [1, 0, 0], "scale": 1}               DustParticleOptions.REDSTONE
-///   knight_phantom  {"item": "twilightforest:knightmetal_sword"}   ItemParticleOption
+///   knight_phantom  {"item": "gloamingforest:knightmetal_sword"}   ItemParticleOption
 ///   minoshroom      {"block": <the block under the trophy>}        BlockParticleOption(pos.below());
 ///                   {"block": "below"} when no region / position is given
 ///   quest_ram       {"color": "random"}                            ColorParticleOption of 3 nextFloat()
@@ -291,13 +291,13 @@ struct TrophyParticle {
 trophyParticle(std::string const& blockId, BlockSource* region = nullptr, BlockPos const* pos = nullptr);
 
 /// The sinister spawner block entity (SinisterSpawnerBlockEntity + SinisterSpawnerLogic over
-/// vanilla's BaseSpawner) of a twilightforest:sinister_spawner block, kept in its block data
+/// vanilla's BaseSpawner) of a gloamingforest:sinister_spawner block, kept in its block data
 /// (custom blocks have no block entities). F8 ticks every sinister spawner near a player: while a
 /// player is within requiredPlayerRange it lazily scans for safe spots (solid floor or coronation
 /// carpet, air above), spawns up to nextInt(1 + spawnCount) mobs there after the delay (max
 /// maxNearbyEntities of the type within entityScanRange), shows its particles and resets the delay
 /// (minSpawnDelay..maxSpawnDelay). The block's own behaviour (trophy particles, drops, the
-/// /tf sinister_spawner command) belongs to its block owner (U22).
+/// /gloamingforest sinister_spawner command) belongs to its block owner (U22).
 struct SinisterSpawner {
     /// BaseSpawner#spawnPotentials: weighted entity ids (the next spawn is drawn on every reset).
     std::vector<std::pair<std::string, int>> potentials;
@@ -314,7 +314,7 @@ struct SinisterSpawner {
     std::string              lootTable;                ///< SinisterSpawnerBlockEntity#lootTable ("" = none)
     nlohmann::json           particleParams;           ///< extra fx params per particle id (dust colour)
 };
-/// Writes the spawner of the block at `pos` (the block must be twilightforest:sinister_spawner).
+/// Writes the spawner of the block at `pos` (the block must be gloamingforest:sinister_spawner).
 bool setSinisterSpawner(BlockSource& region, BlockPos const& pos, SinisterSpawner const& spawner);
 /// The spawner of the block at `pos` (defaults for a sinister spawner without data; nullopt for
 /// any other block).

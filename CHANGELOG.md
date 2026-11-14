@@ -13,7 +13,7 @@ through LeviLauncher. Status: preview; what Bedrock cannot do (or does different
 
 ### Added
 
-- The Twilight Forest dimension: portal, time, teleport, the 22 biomes, terrain, carvers, trees, flora and the
+- The Gloaming Forest dimension: portal, time, teleport, the 22 biomes, terrain, carvers, trees, flora and the
   landmark grid with conquest, protection and hints.
 - Every landmark and boss: Naga courtyard, Lich tower, Labyrinth and Minoshroom, Hydra lair, Knight stronghold,
   Dark tower and Ur-Ghast, troll and yeti caves, Aurora palace and Snow Queen, beanstalk and cloud castle, final
@@ -26,9 +26,9 @@ through LeviLauncher. Status: preview; what Bedrock cannot do (or does different
   see `assets/LICENSE`).
 - Client-mod screens and renderers, with best-effort fallbacks (forms, DDUI, lore) for vanilla Bedrock clients
   joining a server.
-- The `/twilightforest` command (aliases `/tf`, `/tffeature`) and an in-game config screen for operators
-  (`/twilightforest config`); settings are kept across updates.
-- About 960 in-game selftests (`/twilightforest selftest`) and C++ unit tests.
+- The `/gloamingforest` command and an in-game config screen for operators
+  (`/gloamingforest config`); settings are kept across updates.
+- About 960 in-game selftests (`/gloamingforest selftest`) and C++ unit tests.
 - The lip package `github.com/MiracleForest/GloamingForest` (lip 0.40.0 or later, or LeviLauncher), with the
   variant `26_51` for LeviLamina 26.51.x and the default variant tracking the newest supported line; each
   variant has a server and a client build.

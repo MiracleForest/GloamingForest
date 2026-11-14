@@ -1,7 +1,7 @@
 {
-  "twilightforest:block.twilightforest.boss_chest.appear": {
+  "gloamingforest:block.gloamingforest.boss_chest.appear": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.boss_chest.appear",
+    "subtitle": "subtitles.gloamingforest.block.boss_chest.appear",
     "sounds": [
       {
         "event": "entity.evoker.prepare_summon"

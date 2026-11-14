@@ -1,131 +1,131 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:boar": {
+      "gloamingforest:boar": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.boar.ambient",
-          "hurt": "entity.twilightforest.boar.hurt",
-          "death": "entity.twilightforest.boar.death",
+          "ambient": "entity.gloamingforest.boar.ambient",
+          "hurt": "entity.gloamingforest.boar.hurt",
+          "death": "entity.gloamingforest.boar.death",
           "step": {
-            "sound": "entity.twilightforest.boar.step",
+            "sound": "entity.gloamingforest.boar.step",
             "volume": 0.15,
             "pitch": 1.0
           }
         }
       },
-      "twilightforest:bighorn_sheep": {
+      "gloamingforest:bighorn_sheep": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.bighorn_sheep.ambient",
-          "hurt": "entity.twilightforest.bighorn_sheep.hurt",
-          "death": "entity.twilightforest.bighorn_sheep.death",
+          "ambient": "entity.gloamingforest.bighorn_sheep.ambient",
+          "hurt": "entity.gloamingforest.bighorn_sheep.hurt",
+          "death": "entity.gloamingforest.bighorn_sheep.death",
           "step": {
-            "sound": "entity.twilightforest.bighorn_sheep.step",
+            "sound": "entity.gloamingforest.bighorn_sheep.step",
             "volume": 0.15,
             "pitch": 1.0
           }
         }
       },
-      "twilightforest:deer": {
+      "gloamingforest:deer": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.deer.ambient",
-          "hurt": "entity.twilightforest.deer.hurt",
-          "death": "entity.twilightforest.deer.death"
+          "ambient": "entity.gloamingforest.deer.ambient",
+          "hurt": "entity.gloamingforest.deer.hurt",
+          "death": "entity.gloamingforest.deer.death"
         }
       },
-      "twilightforest:penguin": {
+      "gloamingforest:penguin": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.penguin.ambient",
-          "hurt": "entity.twilightforest.penguin.hurt",
-          "death": "entity.twilightforest.penguin.death"
+          "ambient": "entity.gloamingforest.penguin.ambient",
+          "hurt": "entity.gloamingforest.penguin.hurt",
+          "death": "entity.gloamingforest.penguin.death"
         }
       },
-      "twilightforest:tiny_bird": {
+      "gloamingforest:tiny_bird": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "hurt": "entity.twilightforest.tiny_bird.hurt",
-          "death": "entity.twilightforest.tiny_bird.hurt"
+          "hurt": "entity.gloamingforest.tiny_bird.hurt",
+          "death": "entity.gloamingforest.tiny_bird.hurt"
         }
       },
-      "twilightforest:raven": {
+      "gloamingforest:raven": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.raven.caw",
-          "hurt": "entity.twilightforest.raven.squawk",
-          "death": "entity.twilightforest.raven.squawk"
+          "ambient": "entity.gloamingforest.raven.caw",
+          "hurt": "entity.gloamingforest.raven.squawk",
+          "death": "entity.gloamingforest.raven.squawk"
         }
       },
-      "twilightforest:squirrel": {
+      "gloamingforest:squirrel": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.squirrel.ambient",
-          "hurt": "entity.twilightforest.squirrel.hurt",
-          "death": "entity.twilightforest.squirrel.death"
+          "ambient": "entity.gloamingforest.squirrel.ambient",
+          "hurt": "entity.gloamingforest.squirrel.hurt",
+          "death": "entity.gloamingforest.squirrel.death"
         }
       },
-      "twilightforest:dwarf_rabbit": {
+      "gloamingforest:dwarf_rabbit": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.dwarf_rabbit.ambient",
-          "hurt": "entity.twilightforest.dwarf_rabbit.hurt",
-          "death": "entity.twilightforest.dwarf_rabbit.death"
+          "ambient": "entity.gloamingforest.dwarf_rabbit.ambient",
+          "hurt": "entity.gloamingforest.dwarf_rabbit.hurt",
+          "death": "entity.gloamingforest.dwarf_rabbit.death"
         }
       },
-      "twilightforest:kobold": {
+      "gloamingforest:kobold": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.kobold.ambient",
-          "hurt": "entity.twilightforest.kobold.hurt",
-          "death": "entity.twilightforest.kobold.death"
+          "ambient": "entity.gloamingforest.kobold.ambient",
+          "hurt": "entity.gloamingforest.kobold.hurt",
+          "death": "entity.gloamingforest.kobold.death"
         }
       },
-      "twilightforest:mosquito_swarm": {
+      "gloamingforest:mosquito_swarm": {
         "volume": 1.0,
         "pitch": [
           0.8,
           1.2
         ],
         "events": {
-          "ambient": "entity.twilightforest.mosquito.ambient"
+          "ambient": "entity.gloamingforest.mosquito.ambient"
         }
       }
     }

@@ -1,22 +1,22 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFItems.java
-//   src/main/java/twilightforest/item/HydraChopItem.java
-//   src/main/java/twilightforest/item/Experiment115Item.java
-//   src/main/java/twilightforest/item/CustomDamageSwordItem.java
-//   src/main/java/twilightforest/init/TFJukeboxSongs.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/item/HydraChopItem.java
+//   src/main/java/gloamingforest/item/Experiment115Item.java
+//   src/main/java/gloamingforest/item/CustomDamageSwordItem.java
+//   src/main/java/gloamingforest/init/TFJukeboxSongs.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U10 (provisions), server module:
 // - foods: the BP items carry nutrition, saturation, always-edible and the bowl (minecraft:food);
-//   the effects of TF's FoodProperties (hydra chop: Regeneration 100 t; meef stroganoff: Fire
+//   the effects of upstream's FoodProperties (hydra chop: Regeneration 100 t; meef stroganoff: Fire
 //   Resistance 3600 t and Strength 2400 t) are given in finishUsing, where HydraChopItem fires
 //   consume_hydra_chop_on_low_hunger at food level 0 and Experiment115Item awards
 //   e115_slices_eaten; rarities through F9's ext::setRarity;
 // - stale bread (CustomDamageSwordItem): its melee hits deal damage type
-//   twilightforest:stale_sandwich (the player attack is replaced by gf::combat::hurt of that type);
+//   gloamingforest:stale_sandwich (the player attack is replaced by gf::combat::hurt of that type);
 // - music discs: BP minecraft:record (length, comparator 15) and the JukeboxSong sound event
 //   through F9's ext::setRecordSound;
 // - the frosted effect (Frosted.cpp), the four enchantments (Enchantments.cpp) and Experiment 115
@@ -65,7 +65,7 @@ AttributeInstance* hungerOf(Player const& p) {
     return const_cast<AttributeInstance*>(static_cast<AttributeInstance const*>(ref.mPtr));
 }
 
-/// FoodProperties' effects (probability 1.0 in every TF food) and the items' own finishUsingItem.
+/// FoodProperties' effects (probability 1.0 in every upstream food) and the items' own finishUsingItem.
 void registerFoods() {
     for (auto const& f : cp::foods()) {
         std::string id(f.id);
@@ -85,7 +85,7 @@ void registerFoods() {
     ::gf::item::ext::setRarity(ids::kStroganoff, ::gf::item::ext::Rarity::Uncommon);
 }
 
-/// TF's disc credits (jukebox_song.twilightforest.<key>), the English fallbacks of TF's en_us.
+/// upstream's disc credits (jukebox_song.gloamingforest.<key>), the English fallbacks of upstream's en_us.
 std::string songCredit(std::string_view key) {
     if (key == "radiance" || key == "steps" || key == "superstitious") return "Rotch Gwylt - " + std::string(key == "radiance" ? "Radiance" : key == "steps" ? "Steps" : "Superstitious");
     std::string name(key == "warfarer" ? "wayfarer" : key);
@@ -95,11 +95,11 @@ std::string songCredit(std::string_view key) {
 
 void registerDiscs() {
     for (auto const& s : cp::songs()) {
-        auto disc = "twilightforest:music_disc_" + std::string(s.track);
-        ::gf::item::ext::setRecordSound(disc, "music_disc.twilightforest." + std::string(s.track));
+        auto disc = "gloamingforest:music_disc_" + std::string(s.track);
+        ::gf::item::ext::setRecordSound(disc, "music_disc.gloamingforest." + std::string(s.track));
         ::gf::item::ext::setRarity(disc, ::gf::item::ext::Rarity::Rare);
         // JukeboxPlayable's tooltip: the song's description in gray
-        auto key      = "jukebox_song.twilightforest." + std::string(s.key);
+        auto key      = "jukebox_song.gloamingforest." + std::string(s.key);
         auto fallback = songCredit(s.key);
         ::gf::item::addTooltip(disc, [key, fallback](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
             lines.push_back("§7" + (viewer ? ::gf::trFor(*viewer, key, fallback) : ::gf::tr(key, fallback)));
@@ -107,7 +107,7 @@ void registerDiscs() {
     }
 }
 
-/// CustomDamageSwordItem#hurtEnemy... TF's sword deals its melee damage as `damageType` (Java's
+/// CustomDamageSwordItem#hurtEnemy... upstream's sword deals its melee damage as `damageType` (Java's
 /// getDamageSource override): the player's attack becomes a hit of that type.
 void registerStaleBread() {
     ::gf::combat::onIncoming(::gf::combat::priority::Lowest, [](::gf::combat::DamageInfo& d) {

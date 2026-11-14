@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/QuestGrove.java
-//   src/main/java/twilightforest/world/components/structures/type/QuestGroveStructure.java
-//   src/main/java/twilightforest/util/features/FeaturePlacers.java (placeEntity)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/QuestGrove.java
+//   src/main/java/gloamingforest/world/components/structures/type/QuestGroveStructure.java
+//   src/main/java/gloamingforest/util/features/FeaturePlacers.java (placeEntity)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -29,11 +29,11 @@ namespace {
 
 /// QuestGroveStructure.LENGTH.
 constexpr int kLength = 27;
-constexpr char kTemplate[] = "twilightforest:quest_grove";
+constexpr char kTemplate[] = "gloamingforest:quest_grove";
 /// MOSSY_BRICK_DECAY: TargetedRotProcessor({mossy_stone_bricks}, 0.5f).
 constexpr char kMossyDecay[] =
-    R"({"processor_type":"twilightforest:targeted_rot","blocks_to_rot":[{"Name":"minecraft:mossy_stone_bricks"}],"integrity":0.5})";
-constexpr char kStoneBricks[] = "twilightforest:stone_brick_variants";
+    R"({"processor_type":"gloamingforest:targeted_rot","blocks_to_rot":[{"Name":"minecraft:mossy_stone_bricks"}],"integrity":0.5})";
+constexpr char kStoneBricks[] = "gloamingforest:stone_brick_variants";
 
 class GrovePiece final : public sb::TemplatePiece {
 public:
@@ -42,7 +42,7 @@ public:
     explicit GrovePiece(Json const& saved) : TemplatePiece(kGrovePiece, 0, kTemplate, settings(), BlockPos{0, 0, 0}) { load(saved); }
 
     /// A piece read back from a save: readSettings(tag) + StoneBricksVariants only (the rot
-    /// processor is not restored: TF's quirk, kept).
+    /// processor is not restored: upstream's quirk, kept).
     void load(Json const& data) override {
         TemplatePiece::load(data);
         placeSettings.processors = {kStoneBricks};
@@ -73,7 +73,7 @@ protected:
             // a dropper facing rotation.rotate(NORTH), filled from quest_grove_dropper (seed random.nextLong())
             auto facing = st::rotateDir(st::Orientation::North, rotation);
             region.setBlock(pos, st::blocks::java("minecraft:dropper", Json{{"facing", st::blocks::directionName(facing)}, {"triggered", "false"}}), 16 | 4 | 2);
-            st::blockentities::lootTable(region, pos, "twilightforest:quest_grove_dropper", random.nextLong());
+            st::blockentities::lootTable(region, pos, "gloamingforest:quest_grove_dropper", random.nextLong());
         }
     }
 

@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TrollsteinnBlock.java
-//   src/main/java/twilightforest/block/TrollRootBlock.java
-//   src/main/java/twilightforest/block/UnripeTorchClusterBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TrollsteinnBlock.java
+//   src/main/java/gloamingforest/block/TrollRootBlock.java
+//   src/main/java/gloamingforest/block/UnripeTorchClusterBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -52,8 +52,8 @@ struct Face {
     int         dx, dy, dz;
 };
 constexpr Face kFaces[] = {
-    {"twilightforest:down", 0, -1, 0},  {"twilightforest:up", 0, 1, 0},    {"twilightforest:north", 0, 0, -1},
-    {"twilightforest:south", 0, 0, 1}, {"twilightforest:west", -1, 0, 0}, {"twilightforest:east", 1, 0, 0},
+    {"gloamingforest:down", 0, -1, 0},  {"gloamingforest:up", 0, 1, 0},    {"gloamingforest:north", 0, 0, -1},
+    {"gloamingforest:south", 0, 0, 1}, {"gloamingforest:west", -1, 0, 0}, {"gloamingforest:east", 1, 0, 0},
 };
 
 bool isTrollRoot(std::string const& id) { return id == kTrollvidr || id == kTrollber || id == kUnripeTrollber; }
@@ -158,11 +158,11 @@ bool harvestTrollber(Player& player, core::GlobalPos const& pos) {
         BlockPos at{pos.x, pos.y, pos.z};
         if (game::blockIdAt(*r, at) != kTrollber) return;
         if (auto const* v = game::blockWith(kTrollvidr)) game::setBlock(*r, at, *v);
-        gf::fx::sound(r->getDimension(), "block.twilightforest.torchberry.harvest", Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 1.0f, 1.0f);
-        if (auto berries = game::items::make("twilightforest:torchberries", 1))
+        gf::fx::sound(r->getDimension(), "block.gloamingforest.torchberry.harvest", Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 1.0f, 1.0f);
+        if (auto berries = game::items::make("gloamingforest:torchberries", 1))
             r->getLevel().getSpawner().spawnItem(*r, *berries, nullptr, Vec3{pos.x + 0.5f, static_cast<float>(pos.y), pos.z + 0.5f}, 0);
     });
-    gf::stats::award(player, "twilightforest:torchberries_harvested");
+    gf::stats::award(player, "gloamingforest:torchberries_harvested");
     gf::log().info("caves: {} picked a trollber at {} {} {}", player.getRealName(), pos.x, pos.y, pos.z);
     return true;
 }

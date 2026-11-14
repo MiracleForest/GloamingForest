@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.alpha_yeti_trophy",
+        "identifier": "geometry.gloamingforest.alpha_yeti_trophy",
         "texture_width": 256,
         "texture_height": 128,
         "visible_bounds_width": 2.5,

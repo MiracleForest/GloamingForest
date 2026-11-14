@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:travellers_gear_modifier_shapeless_recipe",
+  "ingredients": [
+    {
+      "item": "gloamingforest:travellers_wings"
+    },
+    {
+      "item": "gloamingforest:travellers_belt"
+    }
+  ],
+  "modifier_key": "gloamingforest:swap_hotbar"
+}

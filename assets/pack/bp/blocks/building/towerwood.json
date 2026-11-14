@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:towerwood",
+      "identifier": "gloamingforest:towerwood",
       "menu_category": {
         "category": "construction"
       }

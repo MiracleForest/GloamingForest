@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/MissingAdvancementToast.java
-//   src/main/java/twilightforest/network/MissingAdvancementToastPacket.java
-//   src/main/java/twilightforest/util/PlayerHelper.java
-//   src/main/java/twilightforest/util/Restriction.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/MissingAdvancementToast.java
+//   src/main/java/gloamingforest/network/MissingAdvancementToastPacket.java
+//   src/main/java/gloamingforest/util/PlayerHelper.java
+//   src/main/java/gloamingforest/util/Restriction.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -331,7 +331,7 @@ void onGranted(GrantedFn fn) {
 }
 
 MissingToast missingToastFor(std::string const& advancementId) {
-    // TF: info == null ? (no_title, the portal miniature) : (info.getTitle(), info.getIcon())
+    // upstream: info == null ? (no_title, the portal miniature) : (info.getTitle(), info.getIcon())
     MissingToast t{kMissingNoTitle, true, kMissingIcon};
     std::lock_guard lock(state().mutex);
     if (auto const* d = definition(advancementId); d && d->hasDisplay) {
@@ -354,8 +354,8 @@ void showMissing(Player& player, std::string const& advancementId) {
     if (!packet) return;
     auto& pkt    = static_cast<ToastRequestPacket&>(*packet);
     pkt.mTitle   = trFor(player, kMissingUpperText, "Advancement Required:");
-    // an untranslated key reads as the key, as Java's Component.translatable (TF has no text for
-    // twilightforest.ui.advancement.no_title)
+    // an untranslated key reads as the key, as Java's Component.translatable (upstream has no text for
+    // gloamingforest.ui.advancement.no_title)
     pkt.mContent = t.titleIsKey ? trFor(player, t.title, t.title) : t.title;
     pkt.sendTo(player);
 }
@@ -412,7 +412,7 @@ void forgetPlayer(Player const& player) {
 std::string biomeIdAt(Player& player) {
     auto pos = player.getPosition();
     BlockPos bp{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
-    if (world::isTwilight(player.getDimension())) {
+    if (world::isGloaming(player.getDimension())) {
         auto id = worldgen::biomeAt(bp);
         if (!id.empty()) return id;
     }

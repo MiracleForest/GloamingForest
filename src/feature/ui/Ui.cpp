@@ -1,4 +1,4 @@
-// Server half of "client.ui" (F12): the vanilla-client fallbacks of TF's screens.
+// Server half of "client.ui" (F12): the vanilla-client fallbacks of upstream's screens.
 //
 // - form: a LeviLamina SimpleForm (ModalFormRequestPacket), every client shows it;
 // - ddui: a Data-Driven UI custom form (LeviLamina ll::ui::CustomForm) built from a small JSON

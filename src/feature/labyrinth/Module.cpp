@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U23 (labyrinth): the unit's module: the labyrinth landmark, the minotaurs and the maze slime, the
 // maze slime block and the mazebreaker tool rule.
 #include "feature/labyrinth/Blocks.h"

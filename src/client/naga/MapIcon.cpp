@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFMapDecorations.java (NAGA_COURTYARD)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFMapDecorations.java (NAGA_COURTYARD)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The map decoration type twilightforest:naga_courtyard (U20): TFMapDecorations registers it as
-// MapDecorationType(twilightforest:naga_courtyard, showOnItemFrame true, mapColor -1,
+// The map decoration type gloamingforest:naga_courtyard (U20): TFMapDecorations registers it as
+// MapDecorationType(gloamingforest:naga_courtyard, showOnItemFrame true, mapColor -1,
 // explorationMapElement false, trackCount true), drawn with the map_decorations atlas sprite
 // textures/map/decorations/naga_courtyard.png (imported by F1 to
-// textures/twilightforest/map/decorations/naga_courtyard). The magic map (U13) puts the
+// textures/gloamingforest/map/decorations/naga_courtyard). The magic map (U13) puts the
 // decoration on the maps where the courtyard's structure_icon says so; F12 draws it with this icon.
 
 #ifdef GF_CLIENT
@@ -19,8 +19,8 @@
 
 namespace gf::client::naga {
 
-inline constexpr char kDecoration[] = "twilightforest:naga_courtyard";
-inline constexpr char kIcon[]       = "textures/twilightforest/map/decorations/naga_courtyard";
+inline constexpr char kDecoration[] = "gloamingforest:naga_courtyard";
+inline constexpr char kIcon[]       = "textures/gloamingforest/map/decorations/naga_courtyard";
 
 struct NagaMapIconModule {
     void install() { gf::client::maps::setIcon(kDecoration, kIcon); }

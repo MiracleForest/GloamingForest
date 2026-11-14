@@ -1,11 +1,11 @@
 {
   "format_version": "1.10.0",
   "render_controllers": {
-    "controller.render.twilightforest.boat": {
+    "controller.render.gloamingforest.boat": {
       "arrays": {
         "textures": {
           "Array.woods": [
-            "Texture.tf_twilight_oak",
+            "Texture.tf_gloaming_oak",
             "Texture.tf_canopy",
             "Texture.tf_mangrove",
             "Texture.tf_dark",
@@ -26,11 +26,11 @@
         "Array.woods[q.mark_variant]"
       ]
     },
-    "controller.render.twilightforest.chest_boat": {
+    "controller.render.gloamingforest.chest_boat": {
       "arrays": {
         "textures": {
           "Array.woods": [
-            "Texture.tf_twilight_oak",
+            "Texture.tf_gloaming_oak",
             "Texture.tf_canopy",
             "Texture.tf_mangrove",
             "Texture.tf_dark",
@@ -51,7 +51,7 @@
         "Array.woods[q.mark_variant]"
       ]
     },
-    "controller.render.twilightforest.chest_boat_chest": {
+    "controller.render.gloamingforest.chest_boat_chest": {
       "geometry": "Geometry.chest",
       "materials": [
         {

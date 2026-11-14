@@ -1,12 +1,12 @@
 {
   "values": [
-    "twilightforest:twilight_oak_sign",
-    "twilightforest:canopy_sign",
-    "twilightforest:mangrove_sign",
-    "twilightforest:dark_sign",
-    "twilightforest:time_sign",
-    "twilightforest:transformation_sign",
-    "twilightforest:mining_sign",
-    "twilightforest:sorting_sign"
+    "gloamingforest:gloaming_oak_sign",
+    "gloamingforest:canopy_sign",
+    "gloamingforest:mangrove_sign",
+    "gloamingforest:dark_sign",
+    "gloamingforest:time_sign",
+    "gloamingforest:transformation_sign",
+    "gloamingforest:mining_sign",
+    "gloamingforest:sorting_sign"
   ]
 }

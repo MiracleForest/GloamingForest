@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // The hydra.* selftests of U24 (rule R12: dx 2400..2499). The unit record's e2e: a boss fight with
 // a seeded random (head loss and regrowth, parts following the body, the mortar), jets firing on
 // redstone; plus the lair's golden volume hash, the bite, the name tags, the death and the spawner.
 // Every test spawns its own hydra with the brain off (seedForTest), drives the heads and checks
-// what TF's code does.
+// what upstream's code does.
 
 #include <algorithm>
 #include <cmath>
@@ -171,7 +171,7 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
     // the piece box (x - 33 .. x + 35, HollowHill's hillBox) centred in the volume: the piece and
     // hill centre at (minX + 72, minZ + 72), the hill's sphere mask (radius 39.5) well inside
     int  cx = box.minX + 71, cz = box.minZ + 71, cy = box.minY + 4;
-    // with the terraformer's hill (TF's terrain pass at sea level, translated to cy): the speleothems
+    // with the terraformer's hill (upstream's terrain pass at sea level, translated to cy): the speleothems
     // hang from its ceiling and stand on its floor inside the volume
     auto pieceBox = placeLairForTest(*region, box, cx, cy, cz, 2400, true);
     ctx.check(pieceBox.maxX - pieceBox.minX + 1 == 69 && pieceBox.maxY - pieceBox.minY == 17, "the piece box is 69 x 18 x 69 (radius 34, hill size 2)");
@@ -216,7 +216,7 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(hash == kLairGolden, "golden volume hash " + std::string(kLairGolden) + " (got " + hash + ")");
 });
 
-// Spawn: 3 heads active, 4 dead, 44 part actors following the body by TF's formulas, the boss's
+// Spawn: 3 heads active, 4 dead, 44 part actors following the body by upstream's formulas, the boss's
 // attributes (tests/golden/mobs.json: 360 health).
 GF_REGISTER_SELFTEST("hydra.spawn_parts", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
@@ -238,7 +238,7 @@ GF_REGISTER_SELFTEST("hydra.spawn_parts", [](Context& ctx) -> ll::coro::CoroTask
     int typed = 0;
     for (auto const& p : parts)
         if (auto* a = ge::partActor(p); a && a->getTypeName() == kHydraPart) ++typed;
-    ctx.check(typed == ch::kPartCount, "every part is a twilightforest:hydra_part (" + std::to_string(typed) + ")");
+    ctx.check(typed == ch::kPartCount, "every part is a gloamingforest:hydra_part (" + std::to_string(typed) + ")");
     // turn the body and check that the parts follow the formulas
     const_cast<Vec2&>(h->getRotation()) = Vec2{0, 90};
     co_await ctx.ticks(10);
@@ -539,7 +539,7 @@ GF_REGISTER_SELFTEST("hydra.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.ticks(200);
     ctx.check(byId(uid) == nullptr, "the body is gone after 200 ticks");
     auto below = home.offset(0, -1, 0);
-    ctx.check(ctx.blockAt(below) == "twilightforest:mangrove_chest", "the mangrove death chest is under the home point (" + ctx.blockAt(below) + ")");
+    ctx.check(ctx.blockAt(below) == "gloamingforest:mangrove_chest", "the mangrove death chest is under the home point (" + ctx.blockAt(below) + ")");
     // put the floor back (the chest emptied first, so nothing drops)
     if (auto* region = game::regionOf(below.dim)) {
         if (auto inv = gf::inventory::find(*region, game::blockPos(below)); inv && inv->set)
@@ -656,7 +656,7 @@ GF_REGISTER_SELFTEST("hydra.smokers", [](Context& ctx) -> ll::coro::CoroTask<> {
     bool on = false;
     for (int t = 0; t < 10 && !on; ++t) {
         co_await ctx.ticks(1);
-        on = game::statesOf(region->getBlock(game::blockPos(sm)))["twilightforest:active"] == "true";
+        on = game::statesOf(region->getBlock(game::blockPos(sm)))["gloamingforest:active"] == "true";
     }
     ctx.check(on, "powered: active");
     co_await ctx.ticks(20);
@@ -664,14 +664,14 @@ GF_REGISTER_SELFTEST("hydra.smokers", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.setBlock(sm.offset(0, 0, 1), "minecraft:air");
     for (int t = 0; t < 10 && on; ++t) {
         co_await ctx.ticks(1);
-        on = game::statesOf(region->getBlock(game::blockPos(sm)))["twilightforest:active"] == "true";
+        on = game::statesOf(region->getBlock(game::blockPos(sm)))["gloamingforest:active"] == "true";
     }
     ctx.check(!on, "unpowered: inactive");
     (void)box;
 });
 
-// Jets and smokers keep their block entities over a world reload in any dimension (TF saves them
-// with the chunk; gf:hydra:jets here): outside the Twilight Forest, where no palette scan finds
+// Jets and smokers keep their block entities over a world reload in any dimension (upstream saves them
+// with the chunk; gf:hydra:jets here): outside the Gloaming Forest, where no palette scan finds
 // them, the encased smoker's redstone watch and the plain smoker's smoke come back; a removed one
 // is forgotten.
 GF_REGISTER_SELFTEST("hydra.jets_remembered", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -697,7 +697,7 @@ GF_REGISTER_SELFTEST("hydra.jets_remembered", [](Context& ctx) -> ll::coro::Coro
     bool on = false;
     for (int t = 0; t < 10 && !on; ++t) {
         co_await ctx.ticks(1);
-        on = game::statesOf(region->getBlock(game::blockPos(esm)))["twilightforest:active"] == "true";
+        on = game::statesOf(region->getBlock(game::blockPos(esm)))["gloamingforest:active"] == "true";
     }
     ctx.check(on, "powered after the reload: active");
     ctx.setBlock(esm.offset(0, 0, 1), "minecraft:air");
@@ -709,12 +709,12 @@ GF_REGISTER_SELFTEST("hydra.jets_remembered", [](Context& ctx) -> ll::coro::Coro
     (void)box;
 });
 
-// A jet or smoker placed in the Twilight Forest is remembered too (not only by the scan around the
+// A jet or smoker placed in the Gloaming Forest is remembered too (not only by the scan around the
 // players), whoever placed it (here a plain smoker and a plain jet set without a player, as
 // /setblock does), and written to the world DB at the end of its tick, without waiting for an
 // autosave. Only the ones the fire_jet feature generates are left to the scan.
-GF_REGISTER_SELFTEST("hydra.jets_remembered_twilight", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
+GF_REGISTER_SELFTEST("hydra.jets_remembered_gloaming", [](Context& ctx) -> ll::coro::CoroTask<> {
+    ctx.require(co_await ctx.inGloaming(), "in the Gloaming Forest");
     auto box   = co_await ctx.flatArea(2476, 4, 8);
     auto esm   = ctx.testPos(2477, 2);
     auto plain = ctx.testPos(2478, 1);
@@ -1149,7 +1149,7 @@ GF_REGISTER_SELFTEST("hydra.client_showcase", [](Context& ctx) -> ll::coro::Coro
     auto ejet = spot(6.0, -2.0);
     auto smk  = spot(6.0, 2.0);
     auto esmk = spot(6.0, 4.0);
-    ctx.setBlock(jet, kFireJet, {{"twilightforest:state", "flame"}});
+    ctx.setBlock(jet, kFireJet, {{"gloamingforest:state", "flame"}});
     ctx.setBlock(ejet, kEncasedJet);
     ctx.setBlock(smk, kSmoker);
     ctx.setBlock(esmk, kEncasedSmoker);
@@ -1246,7 +1246,7 @@ GF_REGISTER_SELFTEST("hydra.client_lair", [](Context& ctx) -> ll::coro::CoroTask
     ctx.setBlock(core::GlobalPos{dim, bx + 4, gy, bz}, kSmoker);
     ctx.setBlock(core::GlobalPos{dim, bx + 6, gy, bz}, kEncasedSmoker);
     run("gamemode " + mode + " " + name);
-    char const* items[] = {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker, "twilightforest:hydra_spawn_egg"};
+    char const* items[] = {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker, "gloamingforest:hydra_spawn_egg"};
     for (auto const* id : items) run("give " + name + " " + std::string(id) + " 1");
     run("tp " + name + " " + xyz(bx + 3, gy, bz + 5) + " facing " + xyz(bx + 3, gy, bz));
     co_await ctx.ticks(80);
@@ -1452,14 +1452,14 @@ GF_REGISTER_SELFTEST("hydra.conquest", [](Context& ctx) -> ll::coro::CoroTask<> 
             for (int dy = -3; dy <= 3; ++dy)
                 for (int dz = -3; dz <= 3; ++dz) {
                     auto p = home->pos.offset(dx, dy, dz);
-                    if (ctx.blockAt(p) != "twilightforest:mangrove_chest") continue;
+                    if (ctx.blockAt(p) != "gloamingforest:mangrove_chest") continue;
                     ++chests;
                     if (auto inv = gf::inventory::find(*region, game::blockPos(p)))
                         for (int i = 0; i < inv->slots; ++i) {
                             auto id = inv->get ? game::items::idOf(inv->get(p, i)) : std::string();
-                            trophy |= id == "twilightforest:hydra_trophy";
-                            chop |= id == "twilightforest:hydra_chop";
-                            blood |= id == "twilightforest:fiery_blood";
+                            trophy |= id == "gloamingforest:hydra_trophy";
+                            chop |= id == "gloamingforest:hydra_chop";
+                            blood |= id == "gloamingforest:fiery_blood";
                             if (inv->set) inv->set(p, i, game::items::empty());
                         }
                 }
@@ -1551,7 +1551,7 @@ struct WalkEnforcedScope {
     ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
 };
 
-/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,
 /// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
 /// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
 /// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
@@ -1562,7 +1562,7 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
     ctx.check(d->conquerable, key + " is conquerable");
     if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
     else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
-    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "gloamingforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
     WalkEnforcedScope enforced;
     core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
     gf::landmark::ext::ScopedStart forced(key, site);
@@ -1602,8 +1602,8 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 
 } // namespace
 
-// The hydra lair against TF's HydraLairStructure record: locked by progress_labyrinth, the
+// The hydra lair against upstream's HydraLairStructure record: locked by progress_labyrinth, the
 // hydralair hint book, conquerable; its protected pieces refuse a player without progress_labyrinth.
-GF_REGISTER_SELFTEST("hydra.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kLair, "twilightforest:progress_labyrinth", "hydralair", 150407); });
+GF_REGISTER_SELFTEST("hydra.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kLair, "gloamingforest:progress_labyrinth", "hydralair", 150407); });
 
 } // namespace gf::feature::hydra::tests

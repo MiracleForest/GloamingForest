@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:naga_scale",
+      "identifier": "gloamingforest:naga_scale",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:naga_scale.name"
+        "value": "item.gloamingforest:naga_scale.name"
       },
       "minecraft:rarity": {
         "value": "uncommon"

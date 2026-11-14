@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
@@ -26,10 +26,10 @@ import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import twilightforest.util.landmarks.LegacyLandmarkPlacements;
-import twilightforest.world.components.biomesources.TFBiomeProvider;
-import twilightforest.world.components.chunkgenerators.TerrainColumn;
-import twilightforest.world.components.layer.BiomeDensitySource;
+import gloamingforest.util.landmarks.LegacyLandmarkPlacements;
+import gloamingforest.world.components.biomesources.TFBiomeProvider;
+import gloamingforest.world.components.chunkgenerators.TerrainColumn;
+import gloamingforest.world.components.layer.BiomeDensitySource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-/** Seed-dependent dumps of the twilightforest:twilight_forest level: biomes, heights, surface, density, landmarks. */
+/** Seed-dependent dumps of the gloamingforest:gloaming_forest level: biomes, heights, surface, density, landmarks. */
 final class WorldDumps {
 	private WorldDumps() {
 	}
@@ -90,14 +90,14 @@ final class WorldDumps {
 
 	private static TFBiomeProvider biomeSource(ServerLevel level) {
 		if (level.getChunkSource().getGenerator().getBiomeSource() instanceof TFBiomeProvider p) return p;
-		throw new IllegalStateException("the Twilight Forest biome source is not twilightforest:twilight_biomes");
+		throw new IllegalStateException("the Gloaming Forest biome source is not gloamingforest:gloaming_biomes");
 	}
 
 	// -----------------------------------------------------------------------------------------
 	// biomes
 
 	static Object biomes(Ctx ctx) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		TFBiomeProvider src = biomeSource(level);
 		Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
 		JsonObject s = ctx.section();
@@ -181,7 +181,7 @@ final class WorldDumps {
 	// heights (noise only: NoiseBasedChunkGenerator#getBaseHeight, no structures, carvers or features)
 
 	static Object heights(Ctx ctx) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		NoiseBasedChunkGenerator gen = noiseGenerator(level);
 		RandomState rs = level.getChunkSource().randomState();
 		Grid g = Grid.of(ctx.section(), -512, -512, 128, 128, 8);
@@ -212,7 +212,7 @@ final class WorldDumps {
 	private static NoiseBasedChunkGenerator noiseGenerator(ServerLevel level) {
 		ChunkGenerator g = level.getChunkSource().getGenerator();
 		if (g instanceof NoiseBasedChunkGenerator n) return n;
-		throw new IllegalStateException("the Twilight Forest generator is not minecraft:noise but " + g.getClass().getName());
+		throw new IllegalStateException("the Gloaming Forest generator is not minecraft:noise but " + g.getClass().getName());
 	}
 
 	// -----------------------------------------------------------------------------------------
@@ -282,7 +282,7 @@ final class WorldDumps {
 	}
 
 	static Object surface(Ctx ctx) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		JsonObject s = ctx.section();
 		Grid g = Grid.of(s, -128, -128, 128, 128, 2);
 		SurfaceChunks sc = new SurfaceChunks(level);
@@ -456,10 +456,10 @@ final class WorldDumps {
 	}
 
 	// -----------------------------------------------------------------------------------------
-	// density (the seeded noise router of twilightforest:twilight_noise_gen at single points)
+	// density (the seeded noise router of gloamingforest:gloaming_noise_gen at single points)
 
 	static Object density(Ctx ctx) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		RandomState rs = level.getChunkSource().randomState();
 		NoiseRouter router = rs.router();
 		JsonObject s = ctx.section();
@@ -514,7 +514,7 @@ final class WorldDumps {
 		for (int[] p : pts) points.add(p);
 		Map<String, Object> out = Json.obj();
 		out.put("note", "points are block positions [x, y, z]; router.<name>.values[i] is DensityFunction#compute at points[i] (SinglePointContext: no "
-			+ "interpolation, no blending); a function with min == max is listed as constant. terrain is BiomeDensitySource#sampleTerrain(x, z) (TF's biome depth/scale blend).");
+			+ "interpolation, no blending); a function with min == max is listed as constant. terrain is BiomeDensitySource#sampleTerrain(x, z) (upstream's biome depth/scale blend).");
 		out.put("minY", minY);
 		out.put("maxY", maxY);
 		out.put("points", points);
@@ -527,10 +527,10 @@ final class WorldDumps {
 	}
 
 	// -----------------------------------------------------------------------------------------
-	// landmarks (TF's LegacyLandmarkPlacements and the structure starts it leads to)
+	// landmarks (upstream's LegacyLandmarkPlacements and the structure starts it leads to)
 
 	static Object landmarks(Ctx ctx) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		TFBiomeProvider src = biomeSource(level);
 		JsonObject s = ctx.section();
 		int rMin = Ctx.getInt(s, "regionMin", -8), rMax = Ctx.getInt(s, "regionMax", 7);

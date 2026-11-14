@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U21 (lich): the queue of world edits the lich tower's pieces make after generation (Pending.h).
 
 #include "feature/lich/Pending.h"

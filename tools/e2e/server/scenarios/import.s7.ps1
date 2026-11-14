@@ -12,7 +12,7 @@
 # expected line fails the run too. So the scenario exits 0 when the probes behave as measured and nothing else fails.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $r = Invoke-SelfTest 'import.s7_probe'
-# every TF block registered with its frozen states, and its tool / tier tags as the game holds them (the family
+# every upstream block registered with its frozen states, and its tool / tier tags as the game holds them (the family
 # blocks from the import's own skeleton at 1.26.50 in this run, see the prelaunch)
 $r = Invoke-SelfTest 'import.blocks'
 $r = Invoke-SelfTest 'import.harvest_tags'

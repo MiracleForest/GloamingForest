@@ -1,17 +1,17 @@
 # U21 (lich): the magic galleries off the top slice of the lich tower and their roofs (original
 # designs, rule R19). A gallery runs along +z from its junction (facing north at (centre, 1, 0)); the
 # "painting" marker is where U22's magic painting of the gallery hangs, the others hang paintings of
-# #twilightforest:tower_paintings. Roofs come in odd and even widths (LichTowerUtil#rollGalleryRoof).
+# #gloamingforest:tower_paintings. Roofs come in odd and even widths (LichTowerUtil#rollGalleryRoof).
 . (Join-Path $PSScriptRoot '../LichLib.ps1')
-$NS = 'twilightforest:lich_tower/gallery/'
+$NS = 'gloamingforest:lich_tower/gallery/'
 $W = 9; $H = 7; $L = 13; $C = 4
 
 $styles = [ordered]@{
-    castaway_paradise    = @('minecraft:stone_bricks', 'twilightforest:twilight_oak_planks', 'minecraft:light_blue_carpet')
-    darkness             = @('minecraft:deepslate_bricks', 'twilightforest:canopy_planks', 'minecraft:black_carpet')
-    lucid_lands          = @('minecraft:stone_bricks', 'twilightforest:twilight_oak_planks', 'minecraft:lime_carpet')
-    music_in_the_mire    = @('minecraft:mossy_stone_bricks', 'twilightforest:canopy_planks', 'minecraft:green_carpet')
-    the_hostile_paradise = @('minecraft:stone_bricks', 'twilightforest:canopy_planks', 'minecraft:red_carpet')
+    castaway_paradise    = @('minecraft:stone_bricks', 'gloamingforest:gloaming_oak_planks', 'minecraft:light_blue_carpet')
+    darkness             = @('minecraft:deepslate_bricks', 'gloamingforest:canopy_planks', 'minecraft:black_carpet')
+    lucid_lands          = @('minecraft:stone_bricks', 'gloamingforest:gloaming_oak_planks', 'minecraft:lime_carpet')
+    music_in_the_mire    = @('minecraft:mossy_stone_bricks', 'gloamingforest:canopy_planks', 'minecraft:green_carpet')
+    the_hostile_paradise = @('minecraft:stone_bricks', 'gloamingforest:canopy_planks', 'minecraft:red_carpet')
 }
 foreach ($name in $styles.Keys) {
     $s = $styles[$name]
@@ -42,7 +42,7 @@ foreach ($odd in $true, $false) {
         switch ($style) {
             'fence' {
                 Set-GftBox $t 0 0 0 ($w - 1) 0 ($L - 1) 'minecraft:stone_bricks'
-                Set-GftBox $t 0 1 0 ($w - 1) 1 ($L - 1) 'twilightforest:canopy_fence' -Hollow
+                Set-GftBox $t 0 1 0 ($w - 1) 1 ($L - 1) 'gloamingforest:canopy_fence' -Hollow
                 Set-GftBox $t 1 1 1 ($w - 2) 1 ($L - 2) 'minecraft:air'
             }
             'slabs' {

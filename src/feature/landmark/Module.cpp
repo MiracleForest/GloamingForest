@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/EntityEvents.java (structureSpecialSpawns)
-//   src/main/resources/data/twilightforest/function/setup_structure_hunt.mcfunction
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/EntityEvents.java (structureSpecialSpawns)
+//   src/main/resources/data/gloamingforest/function/setup_structure_hunt.mcfunction
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The landmark unit's module (F6): descriptors at install, the start store per world, the
 // protection handlers, the worldgen stages, the controlled spawns and the server tick.
 //
-// The function twilightforest:setup_structure_hunt is the BP function landmark/setup_structure_hunt
-// (functions are parsed before mods add commands, so it cannot call /twilightforest): it tags the
-// nearest player, switches it to spectator with night vision (particles shown, as TF's `effect give
-// @p minecraft:night_vision infinite`), and this module sends the tagged player to the Twilight
-// Forest at the same x / y / z (TF: `execute in twilightforest:twilight_forest run tp @p ~ ~ ~`).
+// The function gloamingforest:setup_structure_hunt is the BP function landmark/setup_structure_hunt
+// (functions are parsed before mods add commands, so it cannot call /gloamingforest): it tags the
+// nearest player, switches it to spectator with night vision (particles shown, as upstream's `effect give
+// @p minecraft:night_vision infinite`), and this module sends the tagged player to the Gloaming
+// Forest at the same x / y / z (upstream: `execute in gloamingforest:gloaming_forest run tp @p ~ ~ ~`).
 #include <algorithm>
 #include <atomic>
 
@@ -70,7 +70,7 @@ namespace {
 
 constexpr char kStructureHuntTag[] = "gf_landmark_structure_hunt";
 
-/// setup_structure_hunt: the tagged player goes to the Twilight Forest (TFTeleportCommand#run).
+/// setup_structure_hunt: the tagged player goes to the Gloaming Forest (TFTeleportCommand#run).
 void structureHunt(Level& level) {
     std::vector<ActorUniqueID> tagged;
     level.forEachPlayer([&](Player& p) {
@@ -81,18 +81,18 @@ void structureHunt(Level& level) {
         auto* p = level.getPlayer(id);
         if (!p) continue;
         p->removeTag(kStructureHuntTag);
-        auto tf = gf::world::twilight();
+        auto tf = gf::world::gloaming();
         if (!tf) {
-            p->sendMessage(trFor(*p, "commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
+            p->sendMessage(trFor(*p, "commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable."));
             continue;
         }
-        // `execute in twilightforest:twilight_forest run tp @p ~ ~ ~`: the same x / y / z (and facing)
-        // in the Twilight Forest; only a position below its floor is lifted onto the lowest layer, so
+        // `execute in gloamingforest:gloaming_forest run tp @p ~ ~ ~`: the same x / y / z (and facing)
+        // in the Gloaming Forest; only a position below its floor is lifted onto the lowest layer, so
         // the player does not start in the void
         auto pos = p->getFeetPos();
         pos.y    = std::max(pos.y, static_cast<float>(gf::world::kMinY));
         gf::world::teleport(*p, *tf, pos, p->getRotation().y);
-        log().info("landmark: setup_structure_hunt sent {} to the Twilight Forest at {} {} {}", p->getRealName(), pos.x, pos.y, pos.z);
+        log().info("landmark: setup_structure_hunt sent {} to the Gloaming Forest at {} {} {}", p->getRealName(), pos.x, pos.y, pos.z);
     }
 }
 

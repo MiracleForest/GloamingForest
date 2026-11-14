@@ -2,24 +2,24 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:ice_crystal",
+      "identifier": "gloamingforest:ice_crystal",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/icecrystal"
+        "default": "textures/gloamingforest/entity/icecrystal"
       },
       "geometry": {
-        "default": "geometry.twilightforest.ice_crystal"
+        "default": "geometry.gloamingforest.ice_crystal"
       },
       "scripts": {
         "animate": ["base", "spikes", "bob_render", "snow_aura"]
       },
       "animations": {
-        "base": "animation.twilightforest.ice_crystal.base",
-        "spikes": "animation.twilightforest.ice_crystal.spikes",
-        "bob_render": "animation.twilightforest.ice_crystal.bob",
-        "snow_aura": "controller.animation.twilightforest.ice_mob.snow"
+        "base": "animation.gloamingforest.ice_crystal.base",
+        "spikes": "animation.gloamingforest.ice_crystal.spikes",
+        "bob_render": "animation.gloamingforest.ice_crystal.bob",
+        "snow_aura": "controller.animation.gloamingforest.ice_mob.snow"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

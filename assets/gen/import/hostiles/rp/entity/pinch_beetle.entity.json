@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:pinch_beetle",
+      "identifier": "gloamingforest:pinch_beetle",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/pinchbeetle"
+        "default": "textures/gloamingforest/entity/pinchbeetle"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.pinch_beetle"

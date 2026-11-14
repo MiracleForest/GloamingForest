@@ -1,51 +1,51 @@
 {
   "tf_block_candelabra": {
-    "textures": "textures/twilightforest/block/candelabra"
+    "textures": "textures/gloamingforest/block/candelabra"
   },
   "tf_block_coronation_carpet": {
-    "textures": "textures/twilightforest/block/coronation_carpet"
+    "textures": "textures/gloamingforest/block/coronation_carpet"
   },
   "tf_block_ominous_fire_0": {
-    "textures": "textures/twilightforest/block/ominous_fire_0"
+    "textures": "textures/gloamingforest/block/ominous_fire_0"
   },
   "tf_block_sinister_spawner": {
-    "textures": "textures/twilightforest/block/sinister_spawner"
+    "textures": "textures/gloamingforest/block/sinister_spawner"
   },
   "tf_block_terrorcotta_arcs_end": {
-    "textures": "textures/twilightforest/block/terrorcotta_arcs_end"
+    "textures": "textures/gloamingforest/block/terrorcotta_arcs_end"
   },
   "tf_block_terrorcotta_arcs_side_a": {
-    "textures": "textures/twilightforest/block/terrorcotta_arcs_side_a"
+    "textures": "textures/gloamingforest/block/terrorcotta_arcs_side_a"
   },
   "tf_block_terrorcotta_arcs_side_b": {
-    "textures": "textures/twilightforest/block/terrorcotta_arcs_side_b"
+    "textures": "textures/gloamingforest/block/terrorcotta_arcs_side_b"
   },
   "tf_block_terrorcotta_curves_a": {
-    "textures": "textures/twilightforest/block/terrorcotta_curves_a"
+    "textures": "textures/gloamingforest/block/terrorcotta_curves_a"
   },
   "tf_block_terrorcotta_curves_b": {
-    "textures": "textures/twilightforest/block/terrorcotta_curves_b"
+    "textures": "textures/gloamingforest/block/terrorcotta_curves_b"
   },
   "tf_block_terrorcotta_curves_c": {
-    "textures": "textures/twilightforest/block/terrorcotta_curves_c"
+    "textures": "textures/gloamingforest/block/terrorcotta_curves_c"
   },
   "tf_block_terrorcotta_curves_d": {
-    "textures": "textures/twilightforest/block/terrorcotta_curves_d"
+    "textures": "textures/gloamingforest/block/terrorcotta_curves_d"
   },
   "tf_block_terrorcotta_lines_a": {
-    "textures": "textures/twilightforest/block/terrorcotta_lines_a"
+    "textures": "textures/gloamingforest/block/terrorcotta_lines_a"
   },
   "tf_block_terrorcotta_lines_b": {
-    "textures": "textures/twilightforest/block/terrorcotta_lines_b"
+    "textures": "textures/gloamingforest/block/terrorcotta_lines_b"
   },
   "tf_block_wood_chiseled_canopy_bookshelf_side": {
-    "textures": "textures/twilightforest/block/wood/chiseled_canopy_bookshelf_side"
+    "textures": "textures/gloamingforest/block/wood/chiseled_canopy_bookshelf_side"
   },
   "tf_block_wood_chiseled_canopy_bookshelf_top": {
-    "textures": "textures/twilightforest/block/wood/chiseled_canopy_bookshelf_top"
+    "textures": "textures/gloamingforest/block/wood/chiseled_canopy_bookshelf_top"
   },
   "tf_block_wrought_iron": {
-    "textures": "textures/twilightforest/block/wrought_iron"
+    "textures": "textures/gloamingforest/block/wrought_iron"
   },
   "tf_vanilla_block_candle_lit": {
     "textures": "textures/blocks/candles/candle_lit"

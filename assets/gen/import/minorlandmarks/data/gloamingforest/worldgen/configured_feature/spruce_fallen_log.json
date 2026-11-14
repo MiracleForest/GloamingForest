@@ -1,0 +1,18 @@
+{
+  "type": "gloamingforest:fallen_small_log",
+  "config": {
+    "hollow": {
+      "Name": "gloamingforest:hollow_spruce_log_horizontal",
+      "Properties": {
+        "axis": "x",
+        "variant": "empty"
+      }
+    },
+    "normal": {
+      "Name": "minecraft:spruce_log",
+      "Properties": {
+        "axis": "y"
+      }
+    }
+  }
+}

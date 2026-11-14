@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFArmorMaterials.java
-//   src/main/java/twilightforest/util/TFToolMaterials.java
-//   src/main/java/twilightforest/init/TFItems.java
-//   src/main/java/twilightforest/init/TFTrimMaterials.java
-//   src/main/java/twilightforest/events/ToolEvents.java
-//   src/main/java/twilightforest/events/EntityEvents.java
-//   src/main/java/twilightforest/enchantment/ApplyFrostedEffect.java
-//   src/main/java/twilightforest/loot/modifiers/FieryToolSmeltingModifier.java
-//   src/main/java/twilightforest/data/CraftingGenerator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFArmorMaterials.java
+//   src/main/java/gloamingforest/util/TFToolMaterials.java
+//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/init/TFTrimMaterials.java
+//   src/main/java/gloamingforest/events/ToolEvents.java
+//   src/main/java/gloamingforest/events/EntityEvents.java
+//   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
+//   src/main/java/gloamingforest/loot/modifiers/FieryToolSmeltingModifier.java
+//   src/main/java/gloamingforest/data/CraftingGenerator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/armory/Armory.h"
@@ -24,14 +24,14 @@ std::vector<ArmorMaterial> const& armorMaterials() {
     // TFArmorMaterials: defense B/L/C/H, enchantability, toughness, repair ingredient; TFItems: the
     // durability multiplier, rarity and fireResistant of the pieces
     static std::vector<ArmorMaterial> const v{
-        {"naga_scale", {3, 6, 7, 2}, 15, 0.5f, "twilightforest:naga_scale", 21, Rarity::Uncommon, false, ""},
-        {"ironwood", {2, 5, 7, 2}, 15, 0.0f, "twilightforest:ironwood_ingot", 20, Rarity::Common, false, ""},
-        {"fiery", {4, 7, 9, 4}, 10, 1.5f, "twilightforest:fiery_ingot", 25, Rarity::Uncommon, true, ""},
-        {"steeleaf", {3, 6, 8, 3}, 9, 0.0f, "twilightforest:steeleaf_ingot", 10, Rarity::Common, false, ""},
-        {"knightmetal", {3, 6, 8, 3}, 8, 1.0f, "twilightforest:knightmetal_ingot", 20, Rarity::Common, false, "item.twilightforest.knightmetal_armor.equip"},
-        {"phantom", {3, 6, 8, 3}, 8, 2.5f, "twilightforest:knightmetal_ingot", 30, Rarity::Uncommon, false, ""},
-        {"yeti", {3, 6, 7, 4}, 15, 3.0f, "twilightforest:alpha_yeti_fur", 20, Rarity::Uncommon, false, ""},
-        {"arctic", {2, 5, 7, 2}, 8, 2.0f, "twilightforest:arctic_fur", 10, Rarity::Common, false, ""},
+        {"naga_scale", {3, 6, 7, 2}, 15, 0.5f, "gloamingforest:naga_scale", 21, Rarity::Uncommon, false, ""},
+        {"ironwood", {2, 5, 7, 2}, 15, 0.0f, "gloamingforest:ironwood_ingot", 20, Rarity::Common, false, ""},
+        {"fiery", {4, 7, 9, 4}, 10, 1.5f, "gloamingforest:fiery_ingot", 25, Rarity::Uncommon, true, ""},
+        {"steeleaf", {3, 6, 8, 3}, 9, 0.0f, "gloamingforest:steeleaf_ingot", 10, Rarity::Common, false, ""},
+        {"knightmetal", {3, 6, 8, 3}, 8, 1.0f, "gloamingforest:knightmetal_ingot", 20, Rarity::Common, false, "item.gloamingforest.knightmetal_armor.equip"},
+        {"phantom", {3, 6, 8, 3}, 8, 2.5f, "gloamingforest:knightmetal_ingot", 30, Rarity::Uncommon, false, ""},
+        {"yeti", {3, 6, 7, 4}, 15, 3.0f, "gloamingforest:alpha_yeti_fur", 20, Rarity::Uncommon, false, ""},
+        {"arctic", {2, 5, 7, 2}, 8, 2.0f, "gloamingforest:arctic_fur", 10, Rarity::Common, false, ""},
     };
     return v;
 }
@@ -39,34 +39,34 @@ std::vector<ArmorMaterial> const& armorMaterials() {
 std::vector<ArmorPiece> const& armorPieces() {
     using T = ArmorType;
     static std::vector<ArmorPiece> const v{
-        {"twilightforest:naga_chestplate", "naga_scale", T::Chestplate},
-        {"twilightforest:naga_leggings", "naga_scale", T::Leggings},
-        {"twilightforest:ironwood_helmet", "ironwood", T::Helmet},
-        {"twilightforest:ironwood_chestplate", "ironwood", T::Chestplate},
-        {"twilightforest:ironwood_leggings", "ironwood", T::Leggings},
-        {"twilightforest:ironwood_boots", "ironwood", T::Boots},
-        {"twilightforest:fiery_helmet", "fiery", T::Helmet},
-        {"twilightforest:fiery_chestplate", "fiery", T::Chestplate},
-        {"twilightforest:fiery_leggings", "fiery", T::Leggings},
-        {"twilightforest:fiery_boots", "fiery", T::Boots},
-        {"twilightforest:steeleaf_helmet", "steeleaf", T::Helmet},
-        {"twilightforest:steeleaf_chestplate", "steeleaf", T::Chestplate},
-        {"twilightforest:steeleaf_leggings", "steeleaf", T::Leggings},
-        {"twilightforest:steeleaf_boots", "steeleaf", T::Boots},
-        {"twilightforest:knightmetal_helmet", "knightmetal", T::Helmet},
-        {"twilightforest:knightmetal_chestplate", "knightmetal", T::Chestplate},
-        {"twilightforest:knightmetal_leggings", "knightmetal", T::Leggings},
-        {"twilightforest:knightmetal_boots", "knightmetal", T::Boots},
-        {"twilightforest:phantom_helmet", "phantom", T::Helmet},
-        {"twilightforest:phantom_chestplate", "phantom", T::Chestplate},
-        {"twilightforest:yeti_helmet", "yeti", T::Helmet},
-        {"twilightforest:yeti_chestplate", "yeti", T::Chestplate},
-        {"twilightforest:yeti_leggings", "yeti", T::Leggings},
-        {"twilightforest:yeti_boots", "yeti", T::Boots},
-        {"twilightforest:arctic_helmet", "arctic", T::Helmet},
-        {"twilightforest:arctic_chestplate", "arctic", T::Chestplate},
-        {"twilightforest:arctic_leggings", "arctic", T::Leggings},
-        {"twilightforest:arctic_boots", "arctic", T::Boots},
+        {"gloamingforest:naga_chestplate", "naga_scale", T::Chestplate},
+        {"gloamingforest:naga_leggings", "naga_scale", T::Leggings},
+        {"gloamingforest:ironwood_helmet", "ironwood", T::Helmet},
+        {"gloamingforest:ironwood_chestplate", "ironwood", T::Chestplate},
+        {"gloamingforest:ironwood_leggings", "ironwood", T::Leggings},
+        {"gloamingforest:ironwood_boots", "ironwood", T::Boots},
+        {"gloamingforest:fiery_helmet", "fiery", T::Helmet},
+        {"gloamingforest:fiery_chestplate", "fiery", T::Chestplate},
+        {"gloamingforest:fiery_leggings", "fiery", T::Leggings},
+        {"gloamingforest:fiery_boots", "fiery", T::Boots},
+        {"gloamingforest:steeleaf_helmet", "steeleaf", T::Helmet},
+        {"gloamingforest:steeleaf_chestplate", "steeleaf", T::Chestplate},
+        {"gloamingforest:steeleaf_leggings", "steeleaf", T::Leggings},
+        {"gloamingforest:steeleaf_boots", "steeleaf", T::Boots},
+        {"gloamingforest:knightmetal_helmet", "knightmetal", T::Helmet},
+        {"gloamingforest:knightmetal_chestplate", "knightmetal", T::Chestplate},
+        {"gloamingforest:knightmetal_leggings", "knightmetal", T::Leggings},
+        {"gloamingforest:knightmetal_boots", "knightmetal", T::Boots},
+        {"gloamingforest:phantom_helmet", "phantom", T::Helmet},
+        {"gloamingforest:phantom_chestplate", "phantom", T::Chestplate},
+        {"gloamingforest:yeti_helmet", "yeti", T::Helmet},
+        {"gloamingforest:yeti_chestplate", "yeti", T::Chestplate},
+        {"gloamingforest:yeti_leggings", "yeti", T::Leggings},
+        {"gloamingforest:yeti_boots", "yeti", T::Boots},
+        {"gloamingforest:arctic_helmet", "arctic", T::Helmet},
+        {"gloamingforest:arctic_chestplate", "arctic", T::Chestplate},
+        {"gloamingforest:arctic_leggings", "arctic", T::Leggings},
+        {"gloamingforest:arctic_boots", "arctic", T::Boots},
     };
     return v;
 }
@@ -101,10 +101,10 @@ float toughnessOf(ArmorPiece const& piece) {
 std::vector<ToolTier> const& toolTiers() {
     // TFToolMaterials (repair tags #repairs_<tier>_tools = #c:ingots/<tier>) and Tiers.GOLD / DIAMOND
     static std::vector<ToolTier> const v{
-        {"ironwood", 512, 6.5f, 2.0f, 25, "twilightforest:ironwood_ingot"},
-        {"fiery", 1024, 9.0f, 4.0f, 10, "twilightforest:fiery_ingot"},
-        {"steeleaf", 131, 8.0f, 3.0f, 9, "twilightforest:steeleaf_ingot"},
-        {"knightmetal", 512, 8.0f, 3.0f, 8, "twilightforest:knightmetal_ingot"},
+        {"ironwood", 512, 6.5f, 2.0f, 25, "gloamingforest:ironwood_ingot"},
+        {"fiery", 1024, 9.0f, 4.0f, 10, "gloamingforest:fiery_ingot"},
+        {"steeleaf", 131, 8.0f, 3.0f, 9, "gloamingforest:steeleaf_ingot"},
+        {"knightmetal", 512, 8.0f, 3.0f, 8, "gloamingforest:knightmetal_ingot"},
         {"gold", 32, 12.0f, 0.0f, 22, "minecraft:gold_ingot"},
         {"diamond", 1561, 8.0f, 3.0f, 10, "minecraft:diamond"},
     };
@@ -115,26 +115,26 @@ std::vector<Tool> const& tools() {
     using K = ToolKind;
     using R = Rarity;
     static std::vector<Tool> const v{
-        {"twilightforest:ironwood_sword", "ironwood", K::Sword, 3.f, -2.4f, R::Common, false, false, 0},
-        {"twilightforest:ironwood_shovel", "ironwood", K::Shovel, 1.5f, -3.0f, R::Common, false, false, 0},
-        {"twilightforest:ironwood_pickaxe", "ironwood", K::Pickaxe, 1.f, -2.8f, R::Common, false, false, 0},
-        {"twilightforest:ironwood_axe", "ironwood", K::Axe, 6.f, -3.1f, R::Common, false, false, 0},
-        {"twilightforest:ironwood_hoe", "ironwood", K::Hoe, -2.f, -1.0f, R::Common, false, false, 0},
-        {"twilightforest:steeleaf_sword", "steeleaf", K::Sword, 3.f, -2.4f, R::Common, false, false, 0},
-        {"twilightforest:steeleaf_shovel", "steeleaf", K::Shovel, 1.5f, -3.0f, R::Common, false, false, 0},
-        {"twilightforest:steeleaf_pickaxe", "steeleaf", K::Pickaxe, 1.f, -2.8f, R::Common, false, false, 0},
-        {"twilightforest:steeleaf_axe", "steeleaf", K::Axe, 6.f, -3.0f, R::Common, false, false, 0},
-        {"twilightforest:steeleaf_hoe", "steeleaf", K::Hoe, -3.f, -0.5f, R::Common, false, false, 0},
-        {"twilightforest:fiery_sword", "fiery", K::Sword, 3.f, -2.4f, R::Uncommon, true, false, 0},
-        {"twilightforest:fiery_pickaxe", "fiery", K::Pickaxe, 1.f, -2.8f, R::Uncommon, true, false, 0},
-        {"twilightforest:knightmetal_sword", "knightmetal", K::Sword, 3.f, -2.4f, R::Common, false, false, 0},
-        {"twilightforest:knightmetal_pickaxe", "knightmetal", K::Pickaxe, 1.f, -2.8f, R::Common, false, false, 0},
+        {"gloamingforest:ironwood_sword", "ironwood", K::Sword, 3.f, -2.4f, R::Common, false, false, 0},
+        {"gloamingforest:ironwood_shovel", "ironwood", K::Shovel, 1.5f, -3.0f, R::Common, false, false, 0},
+        {"gloamingforest:ironwood_pickaxe", "ironwood", K::Pickaxe, 1.f, -2.8f, R::Common, false, false, 0},
+        {"gloamingforest:ironwood_axe", "ironwood", K::Axe, 6.f, -3.1f, R::Common, false, false, 0},
+        {"gloamingforest:ironwood_hoe", "ironwood", K::Hoe, -2.f, -1.0f, R::Common, false, false, 0},
+        {"gloamingforest:steeleaf_sword", "steeleaf", K::Sword, 3.f, -2.4f, R::Common, false, false, 0},
+        {"gloamingforest:steeleaf_shovel", "steeleaf", K::Shovel, 1.5f, -3.0f, R::Common, false, false, 0},
+        {"gloamingforest:steeleaf_pickaxe", "steeleaf", K::Pickaxe, 1.f, -2.8f, R::Common, false, false, 0},
+        {"gloamingforest:steeleaf_axe", "steeleaf", K::Axe, 6.f, -3.0f, R::Common, false, false, 0},
+        {"gloamingforest:steeleaf_hoe", "steeleaf", K::Hoe, -3.f, -0.5f, R::Common, false, false, 0},
+        {"gloamingforest:fiery_sword", "fiery", K::Sword, 3.f, -2.4f, R::Uncommon, true, false, 0},
+        {"gloamingforest:fiery_pickaxe", "fiery", K::Pickaxe, 1.f, -2.8f, R::Uncommon, true, false, 0},
+        {"gloamingforest:knightmetal_sword", "knightmetal", K::Sword, 3.f, -2.4f, R::Common, false, false, 0},
+        {"gloamingforest:knightmetal_pickaxe", "knightmetal", K::Pickaxe, 1.f, -2.8f, R::Common, false, false, 0},
         // KNIGHTMETAL.getSpeed() * 0.05f - 3.4f
-        {"twilightforest:knightmetal_axe", "knightmetal", K::Axe, 6.f, 8.0f * 0.05f - 3.4f, R::Common, false, false, 0},
+        {"gloamingforest:knightmetal_axe", "knightmetal", K::Axe, 6.f, 8.0f * 0.05f - 3.4f, R::Common, false, false, 0},
         // MinotaurAxeItem#getEnchantmentValue: Tiers.GOLD's (22) for both
-        {"twilightforest:gold_minotaur_axe", "gold", K::Axe, 6.f, -3.2f, R::Common, false, false, 22},
-        {"twilightforest:diamond_minotaur_axe", "diamond", K::Axe, 6.f, -3.2f, R::Uncommon, false, false, 22},
-        {"twilightforest:mazebreaker_pickaxe", "diamond", K::Pickaxe, 1.f, -2.8f, R::Rare, false, true, 0},
+        {"gloamingforest:gold_minotaur_axe", "gold", K::Axe, 6.f, -3.2f, R::Common, false, false, 22},
+        {"gloamingforest:diamond_minotaur_axe", "diamond", K::Axe, 6.f, -3.2f, R::Uncommon, false, false, 22},
+        {"gloamingforest:mazebreaker_pickaxe", "diamond", K::Pickaxe, 1.f, -2.8f, R::Rare, false, true, 0},
     };
     return v;
 }
@@ -171,13 +171,13 @@ int enchantability(Tool const& t) {
 std::vector<MaterialItem> const& materialItems() {
     using R = Rarity;
     static std::vector<MaterialItem> const v{
-        {"twilightforest:naga_scale", R::Uncommon, false},       {"twilightforest:raw_ironwood", R::Common, false},
-        {"twilightforest:ironwood_ingot", R::Common, false},     {"twilightforest:steeleaf_ingot", R::Common, false},
-        {"twilightforest:fiery_blood", R::Uncommon, false},      {"twilightforest:fiery_tears", R::Uncommon, false},
-        {"twilightforest:fiery_ingot", R::Uncommon, true},       {"twilightforest:armor_shard", R::Common, false},
-        {"twilightforest:armor_shard_cluster", R::Common, false}, {"twilightforest:knightmetal_ingot", R::Common, false},
-        {"twilightforest:knightmetal_ring", R::Common, false},   {"twilightforest:arctic_fur", R::Common, false},
-        {"twilightforest:alpha_yeti_fur", R::Uncommon, false},
+        {"gloamingforest:naga_scale", R::Uncommon, false},       {"gloamingforest:raw_ironwood", R::Common, false},
+        {"gloamingforest:ironwood_ingot", R::Common, false},     {"gloamingforest:steeleaf_ingot", R::Common, false},
+        {"gloamingforest:fiery_blood", R::Uncommon, false},      {"gloamingforest:fiery_tears", R::Uncommon, false},
+        {"gloamingforest:fiery_ingot", R::Uncommon, true},       {"gloamingforest:armor_shard", R::Common, false},
+        {"gloamingforest:armor_shard_cluster", R::Common, false}, {"gloamingforest:knightmetal_ingot", R::Common, false},
+        {"gloamingforest:knightmetal_ring", R::Common, false},   {"gloamingforest:arctic_fur", R::Common, false},
+        {"gloamingforest:alpha_yeti_fur", R::Uncommon, false},
     };
     return v;
 }
@@ -234,42 +234,42 @@ int smeltingXp(float xp) { return static_cast<int>(std::floor(xp + 0.5f)); }
 
 std::vector<DefaultEnchantments> const& defaultEnchantments() {
     static std::vector<DefaultEnchantments> const v{
-        {"twilightforest:equipment/ironwood_axe", "twilightforest:ironwood_axe", {{"minecraft:fortune", 1}}},
-        {"twilightforest:equipment/ironwood_boots", "twilightforest:ironwood_boots", {{"minecraft:feather_falling", 1}}},
-        {"twilightforest:equipment/ironwood_chestplate", "twilightforest:ironwood_chestplate", {{"minecraft:protection", 1}}},
-        {"twilightforest:equipment/ironwood_helmet", "twilightforest:ironwood_helmet", {{"minecraft:aqua_affinity", 1}}},
-        {"twilightforest:equipment/ironwood_hoe", "twilightforest:ironwood_hoe", {{"minecraft:efficiency", 1}}},
-        {"twilightforest:equipment/ironwood_leggings", "twilightforest:ironwood_leggings", {{"minecraft:protection", 1}}},
-        {"twilightforest:equipment/ironwood_pickaxe", "twilightforest:ironwood_pickaxe", {{"minecraft:efficiency", 1}}},
-        {"twilightforest:equipment/ironwood_shovel", "twilightforest:ironwood_shovel", {{"minecraft:unbreaking", 1}}},
-        {"twilightforest:equipment/ironwood_sword", "twilightforest:ironwood_sword", {{"minecraft:knockback", 1}}},
-        {"twilightforest:equipment/naga_chestplate", "twilightforest:naga_chestplate", {{"minecraft:fire_protection", 3}}},
-        {"twilightforest:equipment/naga_leggings", "twilightforest:naga_leggings", {{"minecraft:protection", 3}}},
-        {"twilightforest:equipment/steeleaf_axe", "twilightforest:steeleaf_axe", {{"minecraft:efficiency", 2}}},
-        {"twilightforest:equipment/steeleaf_boots", "twilightforest:steeleaf_boots", {{"minecraft:feather_falling", 2}}},
-        {"twilightforest:equipment/steeleaf_chestplate", "twilightforest:steeleaf_chestplate", {{"minecraft:blast_protection", 2}}},
-        {"twilightforest:equipment/steeleaf_helmet", "twilightforest:steeleaf_helmet", {{"minecraft:projectile_protection", 2}}},
-        {"twilightforest:equipment/steeleaf_hoe", "twilightforest:steeleaf_hoe", {{"minecraft:fortune", 2}}},
-        {"twilightforest:equipment/steeleaf_leggings", "twilightforest:steeleaf_leggings", {{"minecraft:fire_protection", 2}}},
-        {"twilightforest:equipment/steeleaf_pickaxe", "twilightforest:steeleaf_pickaxe", {{"minecraft:fortune", 2}}},
-        {"twilightforest:equipment/steeleaf_shovel", "twilightforest:steeleaf_shovel", {{"minecraft:efficiency", 2}}},
-        {"twilightforest:equipment/steeleaf_sword", "twilightforest:steeleaf_sword", {{"minecraft:looting", 2}}},
-        {"twilightforest:equipment/yeti_boots", "twilightforest:yeti_boots", {{"minecraft:feather_falling", 4}, {"minecraft:protection", 2}}},
-        {"twilightforest:equipment/yeti_chestplate", "twilightforest:yeti_chestplate", {{"minecraft:protection", 2}}},
-        {"twilightforest:equipment/yeti_helmet", "twilightforest:yeti_helmet", {{"minecraft:protection", 2}}},
-        {"twilightforest:equipment/yeti_leggings", "twilightforest:yeti_leggings", {{"minecraft:protection", 2}}},
+        {"gloamingforest:equipment/ironwood_axe", "gloamingforest:ironwood_axe", {{"minecraft:fortune", 1}}},
+        {"gloamingforest:equipment/ironwood_boots", "gloamingforest:ironwood_boots", {{"minecraft:feather_falling", 1}}},
+        {"gloamingforest:equipment/ironwood_chestplate", "gloamingforest:ironwood_chestplate", {{"minecraft:protection", 1}}},
+        {"gloamingforest:equipment/ironwood_helmet", "gloamingforest:ironwood_helmet", {{"minecraft:aqua_affinity", 1}}},
+        {"gloamingforest:equipment/ironwood_hoe", "gloamingforest:ironwood_hoe", {{"minecraft:efficiency", 1}}},
+        {"gloamingforest:equipment/ironwood_leggings", "gloamingforest:ironwood_leggings", {{"minecraft:protection", 1}}},
+        {"gloamingforest:equipment/ironwood_pickaxe", "gloamingforest:ironwood_pickaxe", {{"minecraft:efficiency", 1}}},
+        {"gloamingforest:equipment/ironwood_shovel", "gloamingforest:ironwood_shovel", {{"minecraft:unbreaking", 1}}},
+        {"gloamingforest:equipment/ironwood_sword", "gloamingforest:ironwood_sword", {{"minecraft:knockback", 1}}},
+        {"gloamingforest:equipment/naga_chestplate", "gloamingforest:naga_chestplate", {{"minecraft:fire_protection", 3}}},
+        {"gloamingforest:equipment/naga_leggings", "gloamingforest:naga_leggings", {{"minecraft:protection", 3}}},
+        {"gloamingforest:equipment/steeleaf_axe", "gloamingforest:steeleaf_axe", {{"minecraft:efficiency", 2}}},
+        {"gloamingforest:equipment/steeleaf_boots", "gloamingforest:steeleaf_boots", {{"minecraft:feather_falling", 2}}},
+        {"gloamingforest:equipment/steeleaf_chestplate", "gloamingforest:steeleaf_chestplate", {{"minecraft:blast_protection", 2}}},
+        {"gloamingforest:equipment/steeleaf_helmet", "gloamingforest:steeleaf_helmet", {{"minecraft:projectile_protection", 2}}},
+        {"gloamingforest:equipment/steeleaf_hoe", "gloamingforest:steeleaf_hoe", {{"minecraft:fortune", 2}}},
+        {"gloamingforest:equipment/steeleaf_leggings", "gloamingforest:steeleaf_leggings", {{"minecraft:fire_protection", 2}}},
+        {"gloamingforest:equipment/steeleaf_pickaxe", "gloamingforest:steeleaf_pickaxe", {{"minecraft:fortune", 2}}},
+        {"gloamingforest:equipment/steeleaf_shovel", "gloamingforest:steeleaf_shovel", {{"minecraft:efficiency", 2}}},
+        {"gloamingforest:equipment/steeleaf_sword", "gloamingforest:steeleaf_sword", {{"minecraft:looting", 2}}},
+        {"gloamingforest:equipment/yeti_boots", "gloamingforest:yeti_boots", {{"minecraft:feather_falling", 4}, {"minecraft:protection", 2}}},
+        {"gloamingforest:equipment/yeti_chestplate", "gloamingforest:yeti_chestplate", {{"minecraft:protection", 2}}},
+        {"gloamingforest:equipment/yeti_helmet", "gloamingforest:yeti_helmet", {{"minecraft:protection", 2}}},
+        {"gloamingforest:equipment/yeti_leggings", "gloamingforest:yeti_leggings", {{"minecraft:protection", 2}}},
     };
     return v;
 }
 
 std::vector<TrimMaterial> const& trimMaterials() {
     static std::vector<TrimMaterial> const v{
-        {"twilightforest:carminite", "twilightforest:carminite", 0x9A0000, 0.4f, "trim_material.twilightforest.carminite"},
-        {"twilightforest:fiery", "twilightforest:fiery_ingot", 0xFFB53C, 0.3f, "trim_material.twilightforest.fiery"},
-        {"twilightforest:ironwood", "twilightforest:ironwood_ingot", 0x6B6161, 0.2f, "trim_material.twilightforest.ironwood"},
-        {"twilightforest:knightmetal", "twilightforest:knightmetal_ingot", 0x808C72, 0.1f, "trim_material.twilightforest.knightmetal"},
-        {"twilightforest:naga_scale", "twilightforest:naga_scale", 0x245712, 0.7f, "trim_material.twilightforest.naga_scale"},
-        {"twilightforest:steeleaf", "twilightforest:steeleaf_ingot", 0x497733, 0.7f, "trim_material.twilightforest.steeleaf"},
+        {"gloamingforest:carminite", "gloamingforest:carminite", 0x9A0000, 0.4f, "trim_material.gloamingforest.carminite"},
+        {"gloamingforest:fiery", "gloamingforest:fiery_ingot", 0xFFB53C, 0.3f, "trim_material.gloamingforest.fiery"},
+        {"gloamingforest:ironwood", "gloamingforest:ironwood_ingot", 0x6B6161, 0.2f, "trim_material.gloamingforest.ironwood"},
+        {"gloamingforest:knightmetal", "gloamingforest:knightmetal_ingot", 0x808C72, 0.1f, "trim_material.gloamingforest.knightmetal"},
+        {"gloamingforest:naga_scale", "gloamingforest:naga_scale", 0x245712, 0.7f, "trim_material.gloamingforest.naga_scale"},
+        {"gloamingforest:steeleaf", "gloamingforest:steeleaf_ingot", 0x497733, 0.7f, "trim_material.gloamingforest.steeleaf"},
     };
     return v;
 }

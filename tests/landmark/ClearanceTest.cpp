@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of TF's decoration clearance and structure terraforming (F6): DecorationClearance,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of upstream's decoration clearance and structure terraforming (F6): DecorationClearance,
 // AvoidLandmarkModifier, BoxDensityFunction, CustomDensitySource, WorldUtil#adjustForTerrain
-// (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// (upstream commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include <algorithm>

@@ -1,10 +1,10 @@
 {
-  "block.twilightforest.beanstalk.grow": {
+  "block.gloamingforest.beanstalk.grow": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.beanstalk.grow",
+    "subtitle": "subtitles.gloamingforest.block.beanstalk.grow",
     "sounds": [
       {
-        "name": "sounds/twilightforest/giants/random/beanstalk_grow"
+        "name": "sounds/gloamingforest/giants/random/beanstalk_grow"
       }
     ]
   }

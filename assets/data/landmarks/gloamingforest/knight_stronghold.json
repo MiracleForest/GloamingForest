@@ -1,0 +1,155 @@
+{
+  "key": "gloamingforest:knight_stronghold",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/knight_stronghold.json",
+  "structure": {
+    "advancements_required": [
+      "gloamingforest:progress_trophy_pedestal"
+    ],
+    "biomes": "#gloamingforest:valid_knight_stronghold_biomes",
+    "controlled_spawns": {
+      "ambient_spawns": [],
+      "labelled_monster_spawns": {
+        "0": [
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:blockchain_goblin",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:lower_goblin_knight",
+            "weight": 5
+          },
+          {
+            "maxCount": 4,
+            "minCount": 2,
+            "type": "gloamingforest:helmet_crab",
+            "weight": 10
+          },
+          {
+            "maxCount": 3,
+            "minCount": 2,
+            "type": "gloamingforest:slime_beetle",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:redcap_sapper",
+            "weight": 2
+          },
+          {
+            "maxCount": 4,
+            "minCount": 2,
+            "type": "gloamingforest:kobold",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "minecraft:creeper",
+            "weight": 5
+          },
+          {
+            "maxCount": 4,
+            "minCount": 4,
+            "type": "minecraft:slime",
+            "weight": 5
+          }
+        ]
+      },
+      "water_spawns": []
+    },
+    "decoration_clearance": {
+      "adjust_structure_elevation": false,
+      "allow_biome_surface_decorations": true,
+      "allow_biome_underground_decorations": false,
+      "allow_biome_vegetation": true,
+      "chunk_clearance_radius": 3
+    },
+    "hint_creature": {
+      "hint_item": {
+        "components": {
+          "minecraft:written_book_content": {
+            "author": "gloamingforest.book.author",
+            "generation": 3,
+            "pages": [
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.1\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.2\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.3\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.4\"}"
+              }
+            ],
+            "resolved": true,
+            "title": {
+              "raw": "gloamingforest.book.tfstronghold"
+            }
+          },
+          "gloamingforest:translatable_book": {}
+        },
+        "count": 1,
+        "id": "minecraft:written_book"
+      },
+      "hint_mob": "gloamingforest:kobold"
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "underground_structures",
+    "structure_icon": "gloamingforest:knight_stronghold",
+    "terrain_adaptation": "bury",
+    "type": "gloamingforest:knight_stronghold"
+  },
+  "structure_set": {
+    "id": "gloamingforest:knight_stronghold",
+    "placement": {
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:knight_stronghold",
+        "weight": 1
+      }
+    ]
+  }
+}

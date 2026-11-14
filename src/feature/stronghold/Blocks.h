@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U25 (stronghold): the trophy pedestal and the stronghold shield (Blocks.cpp).
@@ -9,8 +9,8 @@ class BlockSource;
 
 namespace gf::feature::stronghold::blocks {
 
-inline constexpr char kPedestal[] = "twilightforest:trophy_pedestal";
-inline constexpr char kShield[]   = "twilightforest:stronghold_shield";
+inline constexpr char kPedestal[] = "gloamingforest:trophy_pedestal";
+inline constexpr char kShield[]   = "gloamingforest:stronghold_shield";
 
 /// TrophyPedestalBlock#neighborChanged at `pos` (true: the pedestal activated now).
 bool neighborChanged(BlockSource& region, BlockPos const& pos);

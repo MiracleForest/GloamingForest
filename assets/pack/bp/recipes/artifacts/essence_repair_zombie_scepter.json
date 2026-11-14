@@ -2,24 +2,24 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:essence_repair_recipe_zombie_scepter"
+      "identifier": "gloamingforest:essence_repair_recipe_zombie_scepter"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:zombie_scepter"
+        "item": "gloamingforest:zombie_scepter"
       },
       {
-        "item": "twilightforest:exanimate_essence"
+        "item": "gloamingforest:exanimate_essence"
       }
     ],
     "unlock": {
       "context": "AlwaysUnlocked"
     },
     "result": {
-      "item": "twilightforest:zombie_scepter"
+      "item": "gloamingforest:zombie_scepter"
     }
   }
 }

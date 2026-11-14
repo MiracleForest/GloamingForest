@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U13 (uncraftmaps.*, dx 1300..1399): the uncrafting menu (reversed crafting recipes,
 // broken parts, costs, the config filters, the uncrafting recipes, recrafting with enchantment
 // transfer, the levels), the screen path for companions, the config sync, the powered table, the
@@ -173,7 +173,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.config_bans", [](Context& ctx) {
         c.flipIdList = true;
         overrideConfig(c);
         ctx.check(!Menu::recipesFor(pick).empty(), "the flipped namespace list allows it");
-        c.blacklistedUncraftingModIds = {"twilightforest"};
+        c.blacklistedUncraftingModIds = {"gloamingforest"};
         overrideConfig(c);
         ctx.check(Menu::recipesFor(pick).empty(), "a whitelist of another namespace refuses it");
     }
@@ -211,8 +211,8 @@ GF_REGISTER_SELFTEST("uncraftmaps.config_bans", [](Context& ctx) {
         }
         m.menu.removed();
     }
-    ctx.check(!tags::has(tags::Registry::Item, "twilightforest:banned_uncraftables", "minecraft:iron_pickaxe"), "#banned_uncraftables is empty in TF");
-    ctx.check(tags::has(tags::Registry::Item, "twilightforest:banned_uncrafting_ingredients", "twilightforest:transformation_powder"), "#banned_uncrafting_ingredients holds the transformation powder");
+    ctx.check(!tags::has(tags::Registry::Item, "gloamingforest:banned_uncraftables", "minecraft:iron_pickaxe"), "#banned_uncraftables is empty in upstream");
+    ctx.check(tags::has(tags::Registry::Item, "gloamingforest:banned_uncrafting_ingredients", "gloamingforest:transformation_powder"), "#banned_uncrafting_ingredients holds the transformation powder");
 });
 
 // The uncrafting recipes: 8 tipped arrows -> 8 arrows (cost 4), a written book -> a book (cost 0),
@@ -229,7 +229,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.uncrafting_recipes", [](Context& ctx) {
     };
     check(make(ctx, "minecraft:arrow", 8, 6), "minecraft:arrow", 8, 4); // a tipped arrow (aux: the potion)
     check(make(ctx, "minecraft:written_book"), "minecraft:book", 1, 0);
-    check(make(ctx, "twilightforest:keepsake_casket"), "twilightforest:skull_chest", 1, 0);
+    check(make(ctx, "gloamingforest:keepsake_casket"), "gloamingforest:skull_chest", 1, 0);
     {
         TestMenu m(p);
         m.input(make(ctx, "minecraft:arrow", 7, 6));
@@ -349,28 +349,28 @@ GF_REGISTER_SELFTEST("uncraftmaps.powered", [](Context& ctx) -> ll::coro::CoroTa
     co_await ctx.ticks(2);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "a region");
-    ctx.check(game::intState(region->getBlock(game::blockPos(at)), "twilightforest:powered").value_or(1) == 0, "unpowered at first");
+    ctx.check(game::intState(region->getBlock(game::blockPos(at)), "gloamingforest:powered").value_or(1) == 0, "unpowered at first");
     ctx.require(ctx.setBlock(side, "minecraft:redstone_block"), "a redstone block beside it");
     co_await ctx.ticks(4);
     region = ctx.region();
     refreshPowered(*region, game::blockPos(at)); // (also what the neighbour event does)
-    ctx.check(game::intState(region->getBlock(game::blockPos(at)), "twilightforest:powered").value_or(0) == 1, "powered by the redstone block");
+    ctx.check(game::intState(region->getBlock(game::blockPos(at)), "gloamingforest:powered").value_or(0) == 1, "powered by the redstone block");
     ctx.setBlock(side, "minecraft:air");
     co_await ctx.ticks(4);
     region = ctx.region();
     refreshPowered(*region, game::blockPos(at));
-    ctx.check(game::intState(region->getBlock(game::blockPos(at)), "twilightforest:powered").value_or(1) == 0, "unpowered again");
+    ctx.check(game::intState(region->getBlock(game::blockPos(at)), "gloamingforest:powered").value_or(1) == 0, "unpowered again");
 });
 
-// Magic maps: made only in the Twilight Forest, centred on the 2048-block grid, painted with the
+// Magic maps: made only in the Gloaming Forest, centred on the 2048-block grid, painted with the
 // biomes' magic_map_color around the holder, with the landmark icons it passes.
 GF_REGISTER_SELFTEST("uncraftmaps.magic_map", [](Context& ctx) -> ll::coro::CoroTask<> {
     {
         auto& p    = ctx.player();
-        auto  over = setupMagicMap(p); // the item's use refuses outside the Twilight Forest; the setup itself works anywhere
+        auto  over = setupMagicMap(p); // the item's use refuses outside the Gloaming Forest; the setup itself works anywhere
         ctx.check(mapKindOf(over) == MapKind::Magic, "a magic map stack");
     }
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     auto at = ctx.testPos(1320);
     co_await ctx.ensureLoaded(at);
     auto& p   = ctx.player();
@@ -390,11 +390,11 @@ GF_REGISTER_SELFTEST("uncraftmaps.magic_map", [](Context& ctx) -> ll::coro::Coro
     auto biome = worldgen::biomeAt(BlockPos{cu::magicSampleBlock(ecx, vx * 4), 0, cu::magicSampleBlock(ecz, vz * 4)});
     auto over  = worldgen::biomeAt(BlockPos{cu::magicSampleBlock(ecx, vx * 4 + 1), 0, cu::magicSampleBlock(ecz, vz * 4)});
     auto down  = worldgen::biomeAt(BlockPos{cu::magicSampleBlock(ecx, vx * 4), 0, cu::magicSampleBlock(ecz, vz * 4 + 1)});
-    if (over == "twilightforest:stream") biome = over;
-    else if (down == "twilightforest:stream") biome = down;
+    if (over == "gloamingforest:stream") biome = over;
+    else if (down == "gloamingforest:stream") biome = down;
     std::uint32_t rgb = 0xB24CD8;
     int           brightness = 1;
-    if (auto const* v = datamaps::get("twilightforest:magic_map_color", biome)) {
+    if (auto const* v = datamaps::get("gloamingforest:magic_map_color", biome)) {
         rgb        = static_cast<std::uint32_t>(v->value("map_color", Json::object()).value("color", 0));
         brightness = v->value("brightness", 1);
     }
@@ -416,9 +416,9 @@ GF_REGISTER_SELFTEST("uncraftmaps.magic_map", [](Context& ctx) -> ll::coro::Coro
     updateHeldMap(p, map); // nothing new: no packet
     (void)net::takeTestMessages(p);
     net::setTestCompanion(p, false);
-    // the empty map refuses outside the Twilight Forest (misc.twilightforest.magic_map_fail): its use
-    // checks gf::world::isTwilight
-    ctx.check(gf::world::isTwilight(p.getDimension()), "the test player is in the Twilight Forest");
+    // the empty map refuses outside the Gloaming Forest (misc.gloamingforest.magic_map_fail): its use
+    // checks gf::world::isGloaming
+    ctx.check(gf::world::isGloaming(p.getDimension()), "the test player is in the Gloaming Forest");
 });
 
 // Maze and ore maps: one block per pixel at the holder's y, one stripe per tick; the ore map paints
@@ -448,7 +448,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.maze_map", [](Context& ctx) -> ll::coro::CoroT
     data = mapData(id);
     ctx.require(data != nullptr, "the map data still exists");
     int  ox = cu::viewerPixel(px + 2, cx, 1), oz = cu::viewerPixel(pz, cz, 1);
-    auto diamond = datamaps::get("twilightforest:ore_map_color", "minecraft:diamond_ore");
+    auto diamond = datamaps::get("gloamingforest:ore_map_color", "minecraft:diamond_ore");
     ctx.require(diamond != nullptr, "the diamond ore has an ore map colour");
     auto want = cu::shade(static_cast<std::uint32_t>(diamond->value("map_color", Json::object()).value("color", 0)), 1);
     ctx.check(mapPixel(*data, ox, oz) == want, "the ore shows in its colour");
@@ -459,13 +459,13 @@ GF_REGISTER_SELFTEST("uncraftmaps.maze_map", [](Context& ctx) -> ll::coro::CoroT
     for (int i = 0; i < 17; ++i) updateHeldMap(ctx.player(), maze);
     if (auto* md = mapData(mapIdOf(maze))) ctx.check(mapPixel(*md, ox, oz) != want, "the maze map does not recolour ores");
     // cloning: a filled map and 2 empty ones -> 3 copies; the ore map does not clone as a maze map
-    auto empty = make(ctx, "twilightforest:maze_map");
+    auto empty = make(ctx, "gloamingforest:maze_map");
     auto three = cloneResult({&maze, &empty, &empty}, MapKind::Maze);
     ctx.check(items::countOf(three) == 3 && mapIdOf(three) == mapIdOf(maze), "maze map cloning makes 3 of the same map");
     ctx.check(items::isEmpty(cloneResult({&ore, &empty}, MapKind::Maze)), "the ore map is not a maze map");
     ctx.check(items::isEmpty(cloneResult({&maze, &maze, &empty}, MapKind::Maze)), "two filled maps don't clone");
-    // the labyrinth snap: a labyrinth chunk around the Twilight Forest test area
-    if (auto tf = gf::world::twilight()) {
+    // the labyrinth snap: a labyrinth chunk around the Gloaming Forest test area
+    if (auto tf = gf::world::gloaming()) {
         int dim = static_cast<int>(*tf);
         bool found = false;
         for (int r = 0; r < 12 && !found; ++r)
@@ -473,14 +473,14 @@ GF_REGISTER_SELFTEST("uncraftmaps.maze_map", [](Context& ctx) -> ll::coro::CoroT
                 for (int dz = -r; dz <= r && !found; ++dz) {
                     int bx = dx * 256 + 8, bz = dz * 256 + 8;
                     auto c = core::landmark::nearestCenter(bx >> 4, bz >> 4);
-                    if (core::landmark::pickForChunk(worldgen::seed(), c.x >> 4, c.z >> 4, [](int x, int z) { return worldgen::biomeAt(BlockPos{x, 0, z}); }) != "twilightforest:labyrinth") continue;
+                    if (core::landmark::pickForChunk(worldgen::seed(), c.x >> 4, c.z >> 4, [](int x, int z) { return worldgen::biomeAt(BlockPos{x, 0, z}); }) != "gloamingforest:labyrinth") continue;
                     found       = true;
                     auto center = mazeCenterFor(dim, c.x + 3, c.z - 5);
                     ctx.check(center.first == c.x && center.second == c.z, "a maze map made in the labyrinth chunk snaps to its centre");
                 }
         if (!found) ctx.info("no labyrinth within 12 grid cells: the snap was not checked");
         auto plain = mazeCenterFor(0, 300, -300);
-        ctx.check(plain == cu::mazeMapCenter(300, -300, 0), "outside the Twilight Forest the grid centre");
+        ctx.check(plain == cu::mazeMapCenter(300, -300, 0), "outside the Gloaming Forest the grid centre");
     }
     (void)box;
 });
@@ -489,10 +489,10 @@ GF_REGISTER_SELFTEST("uncraftmaps.maze_map", [](Context& ctx) -> ll::coro::CoroT
 GF_REGISTER_SELFTEST("uncraftmaps.magic_cloning", [](Context& ctx) {
     auto& p     = ctx.player();
     auto  map   = setupMagicMap(p);
-    auto  empty = make(ctx, "twilightforest:magic_map");
+    auto  empty = make(ctx, "gloamingforest:magic_map");
     auto  two   = cloneResult({&map, &empty}, MapKind::Magic);
     ctx.check(items::countOf(two) == 2 && mapIdOf(two) == mapIdOf(map), "a magic map and one empty make 2 copies");
-    auto  maze = make(ctx, "twilightforest:maze_map");
+    auto  maze = make(ctx, "gloamingforest:maze_map");
     ctx.check(items::isEmpty(cloneResult({&map, &maze}, MapKind::Magic)), "a maze map is not a magic map");
     ctx.check(items::isEmpty(cloneResult({&map}, MapKind::Magic)), "no empty map: no match");
 });
@@ -500,7 +500,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.magic_cloning", [](Context& ctx) {
 // The commands: map_locator gives the named player a map; biomepng does nothing on a dedicated server
 // and fails on a 0 / non-square size in a local world.
 GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     auto at = ctx.testPos(1340);
     co_await ctx.ensureLoaded(at);
     auto& p    = ctx.player();
@@ -510,7 +510,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
         if (items::idOf(p.getInventory().getItem(i)) == "minecraft:filled_map") ++maps;
     // (a structure tag is typed as the rest of the line; the player is named there: selectors do not
     // reach the simulated test players from the console)
-    auto r = selftest::runServerCommand("twilightforest map_locator #twilightforest:landmark " + name, ctx.dimension());
+    auto r = selftest::runServerCommand("gloamingforest map_locator #gloamingforest:landmark " + name, ctx.dimension());
     ctx.info("map_locator: " + r.messages);
     auto& p2    = ctx.player();
     int   after = 0;
@@ -518,23 +518,23 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
         if (items::idOf(p2.getInventory().getItem(i)) == "minecraft:filled_map") ++after;
     if (r.ok) ctx.check(after == maps + 1, "the player got the map");
     else ctx.check(r.messages.find("commands.locate.structure.not_found") != std::string::npos || r.messages.find("Could not find") != std::string::npos, "not found is reported");
-    auto bad = selftest::runServerCommand("twilightforest map_locator #twilightforest:no_such_tag " + name, ctx.dimension());
+    auto bad = selftest::runServerCommand("gloamingforest map_locator #gloamingforest:no_such_tag " + name, ctx.dimension());
     ctx.check(!bad.ok, "an unknown structure is refused");
 #ifndef GF_CLIENT
-    auto png = selftest::runServerCommand("twilightforest biomepng 0", ctx.dimension());
+    auto png = selftest::runServerCommand("gloamingforest biomepng 0", ctx.dimension());
     ctx.check(png.messages.find("command.failed") == std::string::npos, "biomepng does nothing on a dedicated server");
 #else
-    auto zero = selftest::runServerCommand("twilightforest biomepng 0", ctx.dimension());
+    auto zero = selftest::runServerCommand("gloamingforest biomepng 0", ctx.dimension());
     ctx.check(!zero.ok, "a 0 size fails");
-    auto wide = selftest::runServerCommand("twilightforest biomepng 16 8", ctx.dimension());
+    auto wide = selftest::runServerCommand("gloamingforest biomepng 16 8", ctx.dimension());
     ctx.check(!wide.ok, "a non-square size fails");
-    auto ok = selftest::runServerCommand("twilightforest biomepng 16", ctx.dimension());
+    auto ok = selftest::runServerCommand("gloamingforest biomepng 16", ctx.dimension());
     ctx.check(ok.ok, "a 16 x 16 map is written: " + ok.messages);
 #endif
 });
 
 // The client scenario's map: a magic map in the hand of every real player (the test world's
-// Twilight Forest has no ground to stand on; the map is painted from the Twilight Forest's biome
+// Gloaming Forest has no ground to stand on; the map is painted from the Gloaming Forest's biome
 // source wherever it is held). Real players only: nothing happens on a server without one.
 GF_REGISTER_SELFTEST("uncraftmaps.fixture_map", [](Context& ctx) {
     auto level = ll::service::getLevel();
@@ -553,7 +553,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.fixture_map", [](Context& ctx) {
 });
 
 // The vanilla form's repair: a half-broken iron pickaxe and two iron ingots in the inventory fill the
-// two broken parts over the ghost recipe (TF's combined grid) and give a new pickaxe for the
+// two broken parts over the ghost recipe (upstream's combined grid) and give a new pickaxe for the
 // recrafting levels; without the ingots there is nothing to repair with.
 GF_REGISTER_SELFTEST("uncraftmaps.form_repair", [](Context& ctx) {
     auto& p   = ctx.player();
@@ -612,22 +612,22 @@ GF_REGISTER_SELFTEST("uncraftmaps.form_repair", [](Context& ctx) {
     cleanup();
 });
 
-// TF's UncraftingTableCondition on the table's own recipe: the crafting table refuses it while the
+// upstream's UncraftingTableCondition on the table's own recipe: the crafting table refuses it while the
 // table is disabled.
 GF_REGISTER_SELFTEST("uncraftmaps.table_recipe_gate", [](Context& ctx) {
-    auto focus = make(ctx, "twilightforest:maze_map_focus");
+    auto focus = make(ctx, "gloamingforest:maze_map_focus");
     auto table = make(ctx, "minecraft:crafting_table");
     recipes::CraftingGrid grid;
     for (int i = 0; i < 9; ++i) grid.slots.push_back(i == 4 ? &focus : &table);
     bool refused = false;
-    auto id      = recipes::internal::resolveSpecial("twilightforest:uncrafting_table", "twilightforest:uncrafting_table", grid, &refused);
+    auto id      = recipes::internal::resolveSpecial("gloamingforest:uncrafting_table", "gloamingforest:uncrafting_table", grid, &refused);
     ctx.check(!refused && !id.empty(), "the table crafts while enabled");
     auto out = recipes::internal::assembleSpecial(id, grid);
-    ctx.check(out && items::idOf(*out) == "twilightforest:uncrafting_table" && items::countOf(*out) == 1, "one uncrafting table");
+    ctx.check(out && items::idOf(*out) == "gloamingforest:uncrafting_table" && items::countOf(*out) == 1, "one uncrafting table");
     UncraftmapsConfig c;
     c.disableUncraftingTable = true;
     ScopedConfig scoped(c);
-    (void)recipes::internal::resolveSpecial("twilightforest:uncrafting_table", "twilightforest:uncrafting_table", grid, &refused);
+    (void)recipes::internal::resolveSpecial("gloamingforest:uncrafting_table", "gloamingforest:uncrafting_table", grid, &refused);
     ctx.check(refused, "the craft is refused while the table is disabled");
 });
 

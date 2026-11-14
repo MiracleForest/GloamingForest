@@ -32,7 +32,7 @@ inline constexpr int Packs     = -800;  ///< pack deployer
 inline constexpr int Net       = -700;  ///< companion protocol
 inline constexpr int Services  = -600;  ///< W0 services (interactions, block data, redstone, screens)
 inline constexpr int Contracts = -550;  ///< W0b contract implementations (dimension, worldgen, combat, ...)
-inline constexpr int Commands  = -500;  ///< /twilightforest command tree
+inline constexpr int Commands  = -500;  ///< /gloamingforest command tree
 inline constexpr int Feature   = 0;     ///< default for feature units
 } // namespace ModuleOrder
 

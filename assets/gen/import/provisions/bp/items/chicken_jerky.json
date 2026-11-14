@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:chicken_jerky",
+      "identifier": "gloamingforest:chicken_jerky",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:chicken_jerky.name"
+        "value": "item.gloamingforest:chicken_jerky.name"
       },
       "minecraft:tags": {
         "tags": ["c:foods", "c:foods/jerky"]

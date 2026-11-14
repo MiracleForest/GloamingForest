@@ -1,5 +1,5 @@
 {
-  "about": "Bedrock sound categories of TF's sound events, from the SoundSource that TF's playSound call sites use (Java SoundSource -> Bedrock category: BLOCKS block, HOSTILE hostile, NEUTRAL neutral, PLAYERS player, AMBIENT ambient, WEATHER weather, RECORDS record, MUSIC music). tools/sounds/baseline/generate.ps1 applies, in order: 'events' (exact ids or wildcards), then music.* music, music_disc.* record, block.* block, item.* player (the user of an item is a player: Player.playSound and player.getSoundSource() are PLAYERS), and entity.twilightforest.<mob>.* the mob's own SoundSource, read from TF's entity classes (HOSTILE for subclasses of Monster, Spider, Zombie, AbstractSkeleton, Ghast and Slime, NEUTRAL for every other Mob; 'entities' maps the event names that are not entity ids). Where TF plays an event with several sources, the source of its main call site wins ('why'). Derived from the call sites and entity classes of The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757, src/main/java/twilightforest/**), Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors, licensed under the GNU Lesser General Public License v2.1 or later; this table is part of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).",
+  "about": "Bedrock sound categories of upstream's sound events, from the SoundSource that upstream's playSound call sites use (Java SoundSource -> Bedrock category: BLOCKS block, HOSTILE hostile, NEUTRAL neutral, PLAYERS player, AMBIENT ambient, WEATHER weather, RECORDS record, MUSIC music). tools/sounds/baseline/generate.ps1 applies, in order: 'events' (exact ids or wildcards), then music.* music, music_disc.* record, block.* block, item.* player (the user of an item is a player: Player.playSound and player.getSoundSource() are PLAYERS), and entity.gloamingforest.<mob>.* the mob's own SoundSource, read from upstream's entity classes (HOSTILE for subclasses of Monster, Spider, Zombie, AbstractSkeleton, Ghast and Slime, NEUTRAL for every other Mob; 'entities' maps the event names that are not entity ids). Where upstream plays an event with several sources, the source of its main call site wins ('why'). Derived from the call sites and entity classes of the upstream 4.8 source (commit 9e40a757, src/main/java/gloamingforest/**), Copyright (c) the upstream authors (see NOTICE), licensed under the GNU Lesser General Public License v2.1 or later; this table is part of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).",
   "entities": {
     "goblin_knight": "upper_goblin_knight",
     "ice": "stable_ice_core",
@@ -9,20 +9,20 @@
     "mosquito": "mosquito_swarm"
   },
   "events": {
-    "block.twilightforest.boss_chest.appear": {"category": "hostile", "why": "entity/boss/IBossLootBuffer.java: boss.getSoundSource()"},
-    "block.twilightforest.cicada": {"category": "neutral", "why": "block/CicadaBlock.java, block/CritterBlock.java, block/entity/CicadaBlockEntity.java, client/MovingCicadaSoundInstance.java: SoundSource.NEUTRAL (only block/CicadaJarBlock.java plays it as BLOCKS)"},
-    "block.twilightforest.generic.annihilation": {"category": "neutral", "why": "entity/projectile/CubeOfAnnihilation.java: Entity.playSound of a projectile (NEUTRAL)"},
-    "block.twilightforest.slider.move": {"category": "neutral", "why": "entity/SlideBlock.java: Entity.playSound (NEUTRAL)"},
-    "entity.twilightforest.fortification_shield.add": {"category": "player", "why": "item/FortificationWandItem.java: Player.playSound (PLAYERS); the Lich plays it too (entity/boss/Lich.java)"},
-    "entity.twilightforest.fortification_shield.block": {"category": "hostile", "why": "entity/boss/Lich.java: Lich.playSound (a Monster: HOSTILE), its only call site"},
-    "entity.twilightforest.fortification_shield.break": {"category": "player", "why": "components/entity/FortificationShieldAttachment.java: SoundSource.PLAYERS; the Lich plays it too (entity/boss/Lich.java)"},
-    "entity.twilightforest.fortification_shield.expire": {"category": "player", "why": "components/entity/FortificationShieldAttachment.java: SoundSource.PLAYERS"},
-    "entity.twilightforest.parrot.imitate.*": {"category": "neutral", "why": "vanilla Parrot.imitateNearbyMobs: parrot.getSoundSource() (NEUTRAL)"},
-    "entity.twilightforest.tear.break": {"category": "ambient", "why": "client/particle/GhastTearParticle.java: SoundSource.AMBIENT"},
-    "environment.twilightforest.acid_rain": {"category": "player", "why": "init/custom/Enforcements.java: SoundSource.PLAYERS"},
-    "item.twilightforest.block_and_chain.collide": {"category": "neutral", "why": "entity/projectile/ChainBlock.java, entity/SpikeBlock.java: Entity.playSound (NEUTRAL)"},
-    "item.twilightforest.block_and_chain.hit": {"category": "neutral", "why": "entity/projectile/ChainBlock.java: Entity.playSound (NEUTRAL)"},
-    "item.twilightforest.transformation_powder.use": {"category": "neutral", "why": "util/entities/EntityUtil.java: the transformed mob's getSoundSource() (TF's transformations are mostly animals: NEUTRAL)"},
-    "item.twilightforest.zombie_scepter.use": {"category": "neutral", "why": "item/ZombieWandItem.java: LoyalZombie.playSound (a TamableAnimal: NEUTRAL)"}
+    "block.gloamingforest.boss_chest.appear": {"category": "hostile", "why": "entity/boss/IBossLootBuffer.java: boss.getSoundSource()"},
+    "block.gloamingforest.cicada": {"category": "neutral", "why": "block/CicadaBlock.java, block/CritterBlock.java, block/entity/CicadaBlockEntity.java, client/MovingCicadaSoundInstance.java: SoundSource.NEUTRAL (only block/CicadaJarBlock.java plays it as BLOCKS)"},
+    "block.gloamingforest.generic.annihilation": {"category": "neutral", "why": "entity/projectile/CubeOfAnnihilation.java: Entity.playSound of a projectile (NEUTRAL)"},
+    "block.gloamingforest.slider.move": {"category": "neutral", "why": "entity/SlideBlock.java: Entity.playSound (NEUTRAL)"},
+    "entity.gloamingforest.fortification_shield.add": {"category": "player", "why": "item/FortificationWandItem.java: Player.playSound (PLAYERS); the Lich plays it too (entity/boss/Lich.java)"},
+    "entity.gloamingforest.fortification_shield.block": {"category": "hostile", "why": "entity/boss/Lich.java: Lich.playSound (a Monster: HOSTILE), its only call site"},
+    "entity.gloamingforest.fortification_shield.break": {"category": "player", "why": "components/entity/FortificationShieldAttachment.java: SoundSource.PLAYERS; the Lich plays it too (entity/boss/Lich.java)"},
+    "entity.gloamingforest.fortification_shield.expire": {"category": "player", "why": "components/entity/FortificationShieldAttachment.java: SoundSource.PLAYERS"},
+    "entity.gloamingforest.parrot.imitate.*": {"category": "neutral", "why": "vanilla Parrot.imitateNearbyMobs: parrot.getSoundSource() (NEUTRAL)"},
+    "entity.gloamingforest.tear.break": {"category": "ambient", "why": "client/particle/GhastTearParticle.java: SoundSource.AMBIENT"},
+    "environment.gloamingforest.acid_rain": {"category": "player", "why": "init/custom/Enforcements.java: SoundSource.PLAYERS"},
+    "item.gloamingforest.block_and_chain.collide": {"category": "neutral", "why": "entity/projectile/ChainBlock.java, entity/SpikeBlock.java: Entity.playSound (NEUTRAL)"},
+    "item.gloamingforest.block_and_chain.hit": {"category": "neutral", "why": "entity/projectile/ChainBlock.java: Entity.playSound (NEUTRAL)"},
+    "item.gloamingforest.transformation_powder.use": {"category": "neutral", "why": "util/entities/EntityUtil.java: the transformed mob's getSoundSource() (upstream's transformations are mostly animals: NEUTRAL)"},
+    "item.gloamingforest.zombie_scepter.use": {"category": "neutral", "why": "item/ZombieWandItem.java: LoyalZombie.playSound (a TamableAnimal: NEUTRAL)"}
   }
 }

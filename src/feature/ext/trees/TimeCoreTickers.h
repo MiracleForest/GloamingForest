@@ -1,16 +1,16 @@
 #pragma once
 
 // Contract extension for U3 (rule R18: new files; A8 folds it into a W0 contract, e.g. the
-// families/blockevents contract next to onRandomTick). TF's TimeLogCoreBlock runs, for every block
+// families/blockevents contract next to onRandomTick). upstream's TimeLogCoreBlock runs, for every block
 // it hits, `state.getTicker(level, type)` of the block entity there (BlockEntityTicker#tick), so it
-// speeds up every ticking block entity, TF's own included: the drying rack, cinder furnace,
+// speeds up every ticking block entity, upstream's own included: the drying rack, cinder furnace,
 // brazier, carminite reactor, ghast trap, antibuilder, firefly / cicada / moonworm jars, the boss
-// spawners, TF smoker, ... (22 TF classes override getTicker). Bedrock's custom blocks have no block
+// spawners, upstream smoker, ... (22 upstream classes override getTicker). Bedrock's custom blocks have no block
 // entities: each unit runs its block's "ticker" itself (BlockData + its own timer), so the
 // timewood clock can't reach it unless the owner tells it how. The owner registers its block's
 // ticker here, by block id (rule R2: ids only):
 //
-//     gf::trees_ext::registerTimeCoreTicker("twilightforest:drying_rack",
+//     gf::trees_ext::registerTimeCoreTicker("gloamingforest:drying_rack",
 //         [](BlockSource& region, BlockPos const& pos, bool simulate) {
 //             if (!hasTicker(region, pos)) return false; // Java: getTicker returned null
 //             if (!simulate) runOneTick(region, pos);    // BlockEntityTicker#tick

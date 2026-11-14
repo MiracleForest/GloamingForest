@@ -2,26 +2,26 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:lich",
+      "identifier": "gloamingforest:lich",
       "materials": {
         "default": "entity_alphatest",
         "clone": "entity_alphablend",
         "eyes": "entity_emissive_alpha"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/twilightlich64",
-        "clone": "textures/twilightforest/lich/tf-derived/twilightlich64_clone",
-        "eyes": "textures/twilightforest/entity/twilightlich64_eyes"
+        "default": "textures/gloamingforest/entity/gloaminglich64",
+        "clone": "textures/gloamingforest/lich/tf-derived/gloaminglich64_clone",
+        "eyes": "textures/gloamingforest/entity/gloaminglich64_eyes"
       },
       "geometry": {
-        "default": "geometry.twilightforest.lich"
+        "default": "geometry.gloamingforest.lich"
       },
       "scripts": {
         "scale": "1.125",
         "pre_animation": [
-          "variable.death_time = query.property('twilightforest:death_time');",
+          "variable.death_time = query.property('gloamingforest:death_time');",
           "variable.dying = variable.death_time > 0;",
-          "variable.phase = query.property('twilightforest:phase');",
+          "variable.phase = query.property('gloamingforest:phase');",
           "variable.has_item = query.is_item_equipped(0);",
           "variable.limb = query.modified_move_speed * 0.75;"
         ],
@@ -30,20 +30,20 @@
       "animations": {
         "base_pose": "animation.humanoid.base_pose",
         "look_at_target": "animation.humanoid.look_at_target.default",
-        "legs": "animation.twilightforest.lich.legs",
-        "arms": "animation.twilightforest.lich.arms",
-        "death": "animation.twilightforest.lich.death",
-        "shake": "animation.twilightforest.lich.shake"
+        "legs": "animation.gloamingforest.lich.legs",
+        "arms": "animation.gloamingforest.lich.arms",
+        "death": "animation.gloamingforest.lich.death",
+        "shake": "animation.gloamingforest.lich.shake"
       },
       "render_controllers": [
         {
-          "controller.render.twilightforest.lich": "!query.property('twilightforest:clone')"
+          "controller.render.gloamingforest.lich": "!query.property('gloamingforest:clone')"
         },
         {
-          "controller.render.twilightforest.lich_clone": "query.property('twilightforest:clone')"
+          "controller.render.gloamingforest.lich_clone": "query.property('gloamingforest:clone')"
         },
         {
-          "controller.render.twilightforest.lich_clone_eyes": "query.property('twilightforest:clone')"
+          "controller.render.gloamingforest.lich_clone_eyes": "query.property('gloamingforest:clone')"
         }
       ],
       "enable_attachables": true,

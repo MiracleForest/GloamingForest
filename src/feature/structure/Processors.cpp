@@ -1,28 +1,28 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFStructureProcessors.java
-//   src/main/java/twilightforest/world/components/processors/BoxCuttingProcessor.java
-//   src/main/java/twilightforest/world/components/processors/CobbleVariants.java
-//   src/main/java/twilightforest/world/components/processors/InfestBlocksProcessor.java
-//   src/main/java/twilightforest/world/components/processors/NagastoneVariants.java
-//   src/main/java/twilightforest/world/components/processors/SmartGrassProcessor.java
-//   src/main/java/twilightforest/world/components/processors/SmoothStoneVariants.java
-//   src/main/java/twilightforest/world/components/processors/SoftReplaceProcessor.java
-//   src/main/java/twilightforest/world/components/processors/SpawnerProcessor.java
-//   src/main/java/twilightforest/world/components/processors/StateTransfiguringProcessor.java
-//   src/main/java/twilightforest/world/components/processors/StoneBricksVariants.java
-//   src/main/java/twilightforest/world/components/processors/TargetedRotProcessor.java
-//   src/main/java/twilightforest/world/components/processors/UpdateMarkingProcessor.java
-//   src/main/java/twilightforest/world/components/processors/VerticalDecayProcessor.java
-//   src/main/java/twilightforest/world/components/processors/WoodMultiPaletteSwizzle.java
-//   src/main/java/twilightforest/world/components/processors/WoodPaletteSwizzle.java
-//   src/main/java/twilightforest/world/components/feature/templates/GraveyardFeature.java (WebTemplateProcessor)
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardTerraceTemplateProcessor.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFStructureProcessors.java
+//   src/main/java/gloamingforest/world/components/processors/BoxCuttingProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/CobbleVariants.java
+//   src/main/java/gloamingforest/world/components/processors/InfestBlocksProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/NagastoneVariants.java
+//   src/main/java/gloamingforest/world/components/processors/SmartGrassProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/SmoothStoneVariants.java
+//   src/main/java/gloamingforest/world/components/processors/SoftReplaceProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/SpawnerProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/StateTransfiguringProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/StoneBricksVariants.java
+//   src/main/java/gloamingforest/world/components/processors/TargetedRotProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/UpdateMarkingProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/VerticalDecayProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/WoodMultiPaletteSwizzle.java
+//   src/main/java/gloamingforest/world/components/processors/WoodPaletteSwizzle.java
+//   src/main/java/gloamingforest/world/components/feature/templates/GraveyardFeature.java (WebTemplateProcessor)
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardTerraceTemplateProcessor.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's 17 structure processors plus the vanilla processor types TF's data and templates use
+// upstream's 17 structure processors plus the vanilla processor types upstream's data and templates use
 // (rule, block_ignore, block_rot, gravity, protected_blocks, jigsaw_replacement, nop). Every
 // processor uses StructurePlaceSettings#getRandom(pos) (processors::randomAt) exactly as Java does,
 // so outcomes depend only on positions and the seed.
@@ -154,7 +154,7 @@ Json outputTag(Json const& rule, RandomSource& random, Json const& data) {
     return data;
 }
 
-// ---- TF processors -----------------------------------------------------------------------------------
+// ---- upstream processors -----------------------------------------------------------------------------------
 
 std::optional<BlockInfo> boxCutting(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const& config) {
     for (auto const& b : config.value("boxes", Json::array())) {
@@ -202,14 +202,14 @@ std::optional<BlockInfo> nagastoneVariants(Region&, BlockInfo const&, BlockInfo 
     auto swap = [&](char const* mossy, char const* cracked) {
         return replaced(current, blocks::transferStates(*current.block, blocks::java(random.nextBoolean() ? mossy : cracked)));
     };
-    if (isBlock(current, "twilightforest:etched_nagastone") && random.nextBoolean())
-        return swap("twilightforest:mossy_etched_nagastone", "twilightforest:cracked_etched_nagastone");
-    if (isBlock(current, "twilightforest:nagastone_pillar") && random.nextBoolean())
-        return swap("twilightforest:mossy_nagastone_pillar", "twilightforest:cracked_nagastone_pillar");
-    if (isBlock(current, "twilightforest:nagastone_stairs_left") && random.nextBoolean())
-        return swap("twilightforest:mossy_nagastone_stairs_left", "twilightforest:cracked_nagastone_stairs_left");
-    if (isBlock(current, "twilightforest:nagastone_stairs_right") && random.nextBoolean())
-        return swap("twilightforest:mossy_nagastone_stairs_right", "twilightforest:cracked_nagastone_stairs_right");
+    if (isBlock(current, "gloamingforest:etched_nagastone") && random.nextBoolean())
+        return swap("gloamingforest:mossy_etched_nagastone", "gloamingforest:cracked_etched_nagastone");
+    if (isBlock(current, "gloamingforest:nagastone_pillar") && random.nextBoolean())
+        return swap("gloamingforest:mossy_nagastone_pillar", "gloamingforest:cracked_nagastone_pillar");
+    if (isBlock(current, "gloamingforest:nagastone_stairs_left") && random.nextBoolean())
+        return swap("gloamingforest:mossy_nagastone_stairs_left", "gloamingforest:cracked_nagastone_stairs_left");
+    if (isBlock(current, "gloamingforest:nagastone_stairs_right") && random.nextBoolean())
+        return swap("gloamingforest:mossy_nagastone_stairs_right", "gloamingforest:cracked_nagastone_stairs_right");
     return current;
 }
 
@@ -224,7 +224,7 @@ std::optional<BlockInfo> smartGrass(Region& region, BlockInfo const& original, B
         if (blocks::is(at, "minecraft:mycelium")) return replaced(current, blocks::java("minecraft:mycelium"));
         if (blocks::is(at, "minecraft:dirt_path")) return replaced(current, blocks::java("minecraft:dirt_path"));
         if (blocks::is(at, "minecraft:coarse_dirt")) return replaced(current, blocks::java("minecraft:coarse_dirt"));
-        if (blocks::is(at, "twilightforest:uberous_soil")) return replaced(current, blocks::java("twilightforest:uberous_soil"));
+        if (blocks::is(at, "gloamingforest:uberous_soil")) return replaced(current, blocks::java("gloamingforest:uberous_soil"));
     }
     return current;
 }
@@ -240,13 +240,13 @@ std::optional<BlockInfo> smoothStoneVariants(Region&, BlockInfo const&, BlockInf
 
 std::optional<BlockInfo> softReplace(Region& region, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
     Block const& at = region.getBlock(current.pos);
-    if (blocks::canBeReplaced(at) || blocks::inTag(at, "twilightforest:worldgen_replaceables")) return current;
+    if (blocks::canBeReplaced(at) || blocks::inTag(at, "gloamingforest:worldgen_replaceables")) return current;
     if (blocks::isPartial(at) && current.block && !blocks::isPartial(*current.block)) return current;
     return std::nullopt;
 }
 
-/// EntityType#getWidth of 1.21.1 (vanilla) and TF 4.8 (TFEntities) mobs, for SpawnerProcessor's
-/// entity_width_max; 0 for an unknown type (no rescale, as TF's orElse(0f)).
+/// EntityType#getWidth of 1.21.1 (vanilla) and upstream 4.8 (TFEntities) mobs, for SpawnerProcessor's
+/// entity_width_max; 0 for an unknown type (no rescale, as upstream's orElse(0f)).
 float entityWidth(std::string const& id) {
     static std::unordered_map<std::string, float> const widths{
         // vanilla
@@ -259,27 +259,27 @@ float entityWidth(std::string const& id) {
         {"minecraft:zombified_piglin", 0.6f}, {"minecraft:hoglin", 1.3964844f}, {"minecraft:guardian", 0.85f}, {"minecraft:breeze", 0.6f},
         {"minecraft:wolf", 0.6f}, {"minecraft:pig", 0.9f}, {"minecraft:cow", 0.9f}, {"minecraft:sheep", 0.9f}, {"minecraft:chicken", 0.4f},
         {"minecraft:bat", 0.5f}, {"minecraft:iron_golem", 1.4f}, {"minecraft:snow_golem", 0.7f}, {"minecraft:villager", 0.6f},
-        // Twilight Forest
-        {"twilightforest:adherent", 0.8f}, {"twilightforest:alpha_yeti", 3.8f}, {"twilightforest:armored_giant", 2.4f},
-        {"twilightforest:bighorn_sheep", 0.9f}, {"twilightforest:blockchain_goblin", 0.9f}, {"twilightforest:boar", 0.9f},
-        {"twilightforest:boggard", 0.8f}, {"twilightforest:carminite_broodling", 0.7f}, {"twilightforest:carminite_ghastguard", 4.0f},
-        {"twilightforest:carminite_ghastling", 1.1f}, {"twilightforest:carminite_golem", 1.4f}, {"twilightforest:death_tome", 0.75f},
-        {"twilightforest:deer", 0.7f}, {"twilightforest:dwarf_rabbit", 0.4f}, {"twilightforest:fire_beetle", 1.1f},
-        {"twilightforest:giant_miner", 2.4f}, {"twilightforest:harbinger_cube", 1.9f}, {"twilightforest:hedge_spider", 1.4f},
-        {"twilightforest:helmet_crab", 0.8f}, {"twilightforest:hostile_wolf", 0.6f}, {"twilightforest:hydra", 16.0f},
-        {"twilightforest:ice_crystal", 0.6f}, {"twilightforest:king_spider", 1.6f}, {"twilightforest:knight_phantom", 1.25f},
-        {"twilightforest:kobold", 0.8f}, {"twilightforest:lich", 0.8f}, {"twilightforest:lich_minion", 0.6f},
-        {"twilightforest:lower_goblin_knight", 0.7f}, {"twilightforest:loyal_zombie", 0.6f}, {"twilightforest:maze_slime", 0.52f},
-        {"twilightforest:minoshroom", 1.49f}, {"twilightforest:minotaur", 0.6f}, {"twilightforest:mist_wolf", 1.4f},
-        {"twilightforest:mosquito_swarm", 0.7f}, {"twilightforest:naga", 2.0f}, {"twilightforest:penguin", 0.5f},
-        {"twilightforest:pinch_beetle", 1.2f}, {"twilightforest:quest_ram", 1.25f}, {"twilightforest:raven", 0.3f},
-        {"twilightforest:redcap", 0.9f}, {"twilightforest:redcap_sapper", 0.9f}, {"twilightforest:rising_zombie", 0.6f},
-        {"twilightforest:roving_cube", 1.2f}, {"twilightforest:skeleton_druid", 0.6f}, {"twilightforest:slime_beetle", 0.9f},
-        {"twilightforest:snow_guardian", 0.6f}, {"twilightforest:snow_queen", 0.7f}, {"twilightforest:squirrel", 0.3f},
-        {"twilightforest:stable_ice_core", 0.8f}, {"twilightforest:swarm_spider", 0.8f}, {"twilightforest:tiny_bird", 0.3f},
-        {"twilightforest:towerwood_borer", 0.4f}, {"twilightforest:troll", 1.4f}, {"twilightforest:unstable_ice_core", 0.8f},
-        {"twilightforest:upper_goblin_knight", 1.1f}, {"twilightforest:ur_ghast", 14.0f}, {"twilightforest:winter_wolf", 1.4f},
-        {"twilightforest:wraith", 0.6f}, {"twilightforest:yeti", 1.4f},
+        // Gloaming Forest
+        {"gloamingforest:adherent", 0.8f}, {"gloamingforest:alpha_yeti", 3.8f}, {"gloamingforest:armored_giant", 2.4f},
+        {"gloamingforest:bighorn_sheep", 0.9f}, {"gloamingforest:blockchain_goblin", 0.9f}, {"gloamingforest:boar", 0.9f},
+        {"gloamingforest:boggard", 0.8f}, {"gloamingforest:carminite_broodling", 0.7f}, {"gloamingforest:carminite_ghastguard", 4.0f},
+        {"gloamingforest:carminite_ghastling", 1.1f}, {"gloamingforest:carminite_golem", 1.4f}, {"gloamingforest:death_tome", 0.75f},
+        {"gloamingforest:deer", 0.7f}, {"gloamingforest:dwarf_rabbit", 0.4f}, {"gloamingforest:fire_beetle", 1.1f},
+        {"gloamingforest:giant_miner", 2.4f}, {"gloamingforest:harbinger_cube", 1.9f}, {"gloamingforest:hedge_spider", 1.4f},
+        {"gloamingforest:helmet_crab", 0.8f}, {"gloamingforest:hostile_wolf", 0.6f}, {"gloamingforest:hydra", 16.0f},
+        {"gloamingforest:ice_crystal", 0.6f}, {"gloamingforest:king_spider", 1.6f}, {"gloamingforest:knight_phantom", 1.25f},
+        {"gloamingforest:kobold", 0.8f}, {"gloamingforest:lich", 0.8f}, {"gloamingforest:lich_minion", 0.6f},
+        {"gloamingforest:lower_goblin_knight", 0.7f}, {"gloamingforest:loyal_zombie", 0.6f}, {"gloamingforest:maze_slime", 0.52f},
+        {"gloamingforest:minoshroom", 1.49f}, {"gloamingforest:minotaur", 0.6f}, {"gloamingforest:mist_wolf", 1.4f},
+        {"gloamingforest:mosquito_swarm", 0.7f}, {"gloamingforest:naga", 2.0f}, {"gloamingforest:penguin", 0.5f},
+        {"gloamingforest:pinch_beetle", 1.2f}, {"gloamingforest:quest_ram", 1.25f}, {"gloamingforest:raven", 0.3f},
+        {"gloamingforest:redcap", 0.9f}, {"gloamingforest:redcap_sapper", 0.9f}, {"gloamingforest:rising_zombie", 0.6f},
+        {"gloamingforest:roving_cube", 1.2f}, {"gloamingforest:skeleton_druid", 0.6f}, {"gloamingforest:slime_beetle", 0.9f},
+        {"gloamingforest:snow_guardian", 0.6f}, {"gloamingforest:snow_queen", 0.7f}, {"gloamingforest:squirrel", 0.3f},
+        {"gloamingforest:stable_ice_core", 0.8f}, {"gloamingforest:swarm_spider", 0.8f}, {"gloamingforest:tiny_bird", 0.3f},
+        {"gloamingforest:towerwood_borer", 0.4f}, {"gloamingforest:troll", 1.4f}, {"gloamingforest:unstable_ice_core", 0.8f},
+        {"gloamingforest:upper_goblin_knight", 1.1f}, {"gloamingforest:ur_ghast", 14.0f}, {"gloamingforest:winter_wolf", 1.4f},
+        {"gloamingforest:wraith", 0.6f}, {"gloamingforest:yeti", 1.4f},
     };
     auto it = widths.find(id);
     return it == widths.end() ? 0.0f : it->second;
@@ -304,7 +304,7 @@ Json lightRange(Json const& v) {
 std::optional<BlockInfo> spawnerProcessor(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const& config) {
     // a template's spawner always carries block entity data (vanilla saves it with the block)
     if (!current.block) return current;
-    if (!blocks::is(*current.block, "minecraft:spawner") && !blocks::is(*current.block, "twilightforest:sinister_spawner")) return current;
+    if (!blocks::is(*current.block, "minecraft:spawner") && !blocks::is(*current.block, "gloamingforest:sinister_spawner")) return current;
     BlockInfo out = current;
     if (!out.data.is_object()) out.data = Json{{"marker", "spawner"}};
     if (!out.data.contains("marker")) out.data["marker"] = "spawner";
@@ -313,7 +313,7 @@ std::optional<BlockInfo> spawnerProcessor(Region&, BlockInfo const&, BlockInfo c
     if (config.contains("start_delay_factor"))
         out.data["Delay"] = pure::javaRound(static_cast<float>(out.data.value("MinSpawnDelay", 200)) * config["start_delay_factor"].get<float>());
     // `getList("SpawnData", TAG_COMPOUND).isEmpty()` is always true for the compound SpawnData, so
-    // TF always replaces the spawn data: SimpleWeightedRandomList<SpawnData>#getRandomValue(settings.getRandom(pos))
+    // upstream always replaces the spawn data: SimpleWeightedRandomList<SpawnData>#getRandomValue(settings.getRandom(pos))
     auto const& entries = config.value("entities", Json::array());
     int         total   = 0;
     for (auto const& e : entries) total += e.value("weight", 1);
@@ -413,8 +413,8 @@ std::optional<BlockInfo> verticalDecay(Region&, BlockInfo const&, BlockInfo cons
 }
 
 std::optional<BlockInfo> web(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
-    // WebTemplateProcessor: the random is seeded with the template offset (TF's "pos" argument),
-    // and the cobweb goes to that offset, exactly as written in TF.
+    // WebTemplateProcessor: the random is seeded with the template offset (upstream's "pos" argument),
+    // and the cobweb goes to that offset, exactly as written in upstream.
     if (isBlock(current, "minecraft:grass_block")) return current;
     BlockPos offset = currentOffset();
     if (randomAt(offset).nextInt(5) == 0) return BlockInfo{offset, &blocks::java("minecraft:cobweb"), Json()};
@@ -594,23 +594,23 @@ std::optional<BlockInfo> run(Instance const& p, Region& region, BlockInfo const&
 }
 
 void registerBuiltins() {
-    registerProcessor("twilightforest:box_cutting", boxCutting);
-    registerProcessor("twilightforest:cobble_variants", cobbleVariants);
-    registerProcessor("twilightforest:courtyard_terrace", courtyardTerrace);
-    registerProcessor("twilightforest:infest_blocks", infestBlocks);
-    registerProcessor("twilightforest:nagastone_variants", nagastoneVariants);
-    registerProcessor("twilightforest:smart_grass", smartGrass);
-    registerProcessor("twilightforest:smooth_stone_variants", smoothStoneVariants);
-    registerProcessor("twilightforest:soft_replace", softReplace);
-    registerProcessor("twilightforest:spawner_processor", spawnerProcessor);
-    registerProcessor("twilightforest:state_transfiguring", stateTransfiguring);
-    registerProcessor("twilightforest:stone_brick_variants", stoneBricksVariants);
-    registerProcessor("twilightforest:targeted_rot", targetedRot);
-    registerProcessor("twilightforest:update_marking", updateMarking);
-    registerProcessor("twilightforest:vertical_decay", verticalDecay);
-    registerProcessor("twilightforest:web", web);
-    registerProcessor("twilightforest:wood_multiswizzle", woodMultiswizzle);
-    registerProcessor("twilightforest:wood_swizzle", woodSwizzle);
+    registerProcessor("gloamingforest:box_cutting", boxCutting);
+    registerProcessor("gloamingforest:cobble_variants", cobbleVariants);
+    registerProcessor("gloamingforest:courtyard_terrace", courtyardTerrace);
+    registerProcessor("gloamingforest:infest_blocks", infestBlocks);
+    registerProcessor("gloamingforest:nagastone_variants", nagastoneVariants);
+    registerProcessor("gloamingforest:smart_grass", smartGrass);
+    registerProcessor("gloamingforest:smooth_stone_variants", smoothStoneVariants);
+    registerProcessor("gloamingforest:soft_replace", softReplace);
+    registerProcessor("gloamingforest:spawner_processor", spawnerProcessor);
+    registerProcessor("gloamingforest:state_transfiguring", stateTransfiguring);
+    registerProcessor("gloamingforest:stone_brick_variants", stoneBricksVariants);
+    registerProcessor("gloamingforest:targeted_rot", targetedRot);
+    registerProcessor("gloamingforest:update_marking", updateMarking);
+    registerProcessor("gloamingforest:vertical_decay", verticalDecay);
+    registerProcessor("gloamingforest:web", web);
+    registerProcessor("gloamingforest:wood_multiswizzle", woodMultiswizzle);
+    registerProcessor("gloamingforest:wood_swizzle", woodSwizzle);
 
     registerProcessor("minecraft:rule", rule);
     registerProcessor("minecraft:block_ignore", blockIgnore);

@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:beanstalk_leaves",
+    "id": "gloamingforest:beanstalk_leaves",
     "family": "leaves",
     "params": {
       "class": "SpecialStemLeavesBlock",
@@ -16,7 +16,7 @@
     }
   },
   {
-    "id": "twilightforest:huge_stalk",
+    "id": "gloamingforest:huge_stalk",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",

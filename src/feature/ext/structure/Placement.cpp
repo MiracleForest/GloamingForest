@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The contract extension forwards to the structure kit (feature/structure/Liquids.cpp,
 // regionRandom in Structure.cpp).

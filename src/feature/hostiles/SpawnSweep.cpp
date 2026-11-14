@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // A5 mobs audit, U17 (hostiles) selftests (rule R12: "hostiles.*", testPos dx 1700..1799): the spawn
-// sweep over every TF entity type (core/hostiles/MobSweep.h, F13's Java goldens):
+// sweep over every upstream entity type (core/hostiles/MobSweep.h, F13's Java goldens):
 //   hostiles.spawn_sweep        every type spawns; a living one has the golden max health, movement
 //                               speed, attack damage, follow range, knockback resistance, box and fire
 //                               immunity; the others their box and fire immunity
@@ -79,45 +79,45 @@ struct DifficultyScope {
 std::map<std::string, std::string, std::less<>> const& known() {
     static std::map<std::string, std::string, std::less<>> const m{
         // U24: the hydra's 16 x 12 Java box is its body's 2 x 3 here; its heads and neck are parts
-        {"twilightforest:hydra|width", "U24: the body's box, the heads are parts"},
-        {"twilightforest:hydra|height", "U24: the body's box, the heads are parts"},
+        {"gloamingforest:hydra|width", "U24: the body's box, the heads are parts"},
+        {"gloamingforest:hydra|height", "U24: the body's box, the heads are parts"},
         // U9 / F6: Java's 0 x 0 markers are 0.01 x 0.01 (Bedrock refuses an empty box)
-        {"twilightforest:charm_effect|width", "U9: Bedrock's smallest box"},
-        {"twilightforest:charm_effect|height", "U9: Bedrock's smallest box"},
-        {"twilightforest:protection_box|width", "F6: Bedrock's smallest box"},
-        {"twilightforest:protection_box|height", "F6: Bedrock's smallest box"},
+        {"gloamingforest:charm_effect|width", "U9: Bedrock's smallest box"},
+        {"gloamingforest:charm_effect|height", "U9: Bedrock's smallest box"},
+        {"gloamingforest:protection_box|width", "F6: Bedrock's smallest box"},
+        {"gloamingforest:protection_box|height", "F6: Bedrock's smallest box"},
         // Bedrock keeps custom monsters on Peaceful: each owner needs Mob#checkDespawn's Peaceful
         // branch (U16 / U17 remove theirs in their ticks; bosses: F8's boss kit)
         {"*|peaceful", "Bedrock keeps custom monsters on Peaceful; the owner must remove them (U17: despawnInPeaceful)"},
         // attributes and fire immunity that differ from the Java goldens
-        {"twilightforest:alpha_yeti|fire_immune", "U27: fire immune here, AlphaYeti is not fireImmune in Java"},
-        {"twilightforest:hydra|knockback_resistance", "U24: knockback resistance 1 here, Java 0"},
-        {"twilightforest:rising_zombie|knockback_resistance", "U21: knockback resistance 1 here, Java 0"},
-        {"twilightforest:hydra_mortar|fire_immune", "U24: the mortar is fireImmune in Java; the BP lacks minecraft:fire_immune"},
-        {"twilightforest:maze_slime|max_health", "U23: a size-1 slime's 3 / 0.3 / 1 here; Java's created maze slime has 20 / 0.7 / 2"},
-        {"twilightforest:maze_slime|movement_speed", "U23: see max_health"},
-        {"twilightforest:maze_slime|attack_damage", "U23: see max_health"},
+        {"gloamingforest:alpha_yeti|fire_immune", "U27: fire immune here, AlphaYeti is not fireImmune in Java"},
+        {"gloamingforest:hydra|knockback_resistance", "U24: knockback resistance 1 here, Java 0"},
+        {"gloamingforest:rising_zombie|knockback_resistance", "U21: knockback resistance 1 here, Java 0"},
+        {"gloamingforest:hydra_mortar|fire_immune", "U24: the mortar is fireImmune in Java; the BP lacks minecraft:fire_immune"},
+        {"gloamingforest:maze_slime|max_health", "U23: a size-1 slime's 3 / 0.3 / 1 here; Java's created maze slime has 20 / 0.7 / 2"},
+        {"gloamingforest:maze_slime|movement_speed", "U23: see max_health"},
+        {"gloamingforest:maze_slime|attack_damage", "U23: see max_health"},
         // entity sounds missing from sounds.json (Java: Monster's entity.hostile.hurt / death, or the class's own)
-        {"twilightforest:adherent|sound.hurt", "U30: Monster default entity.hostile.hurt"},
-        {"twilightforest:adherent|sound.death", "U30: Monster default entity.hostile.death"},
-        {"twilightforest:armored_giant|sound.hurt", "U29: Monster default entity.hostile.hurt"},
-        {"twilightforest:armored_giant|sound.death", "U29: Monster default entity.hostile.death"},
-        {"twilightforest:giant_miner|sound.hurt", "U29: Monster default entity.hostile.hurt"},
-        {"twilightforest:giant_miner|sound.death", "U29: Monster default entity.hostile.death"},
-        {"twilightforest:harbinger_cube|sound.hurt", "U30: Monster default entity.hostile.hurt"},
-        {"twilightforest:harbinger_cube|sound.death", "U30: Monster default entity.hostile.death"},
-        {"twilightforest:roving_cube|sound.hurt", "U30: Monster default entity.hostile.hurt"},
-        {"twilightforest:roving_cube|sound.death", "U30: Monster default entity.hostile.death"},
-        {"twilightforest:plateau_boss|sound.hurt", "U30: Monster default entity.hostile.hurt"},
-        {"twilightforest:plateau_boss|sound.death", "U30: Monster default entity.hostile.death"},
-        {"twilightforest:maze_slime|sound.hurt", "U23: MAZE_SLIME_HURT(_SMALL) by size"},
-        {"twilightforest:maze_slime|sound.death", "U23: MAZE_SLIME_DEATH(_SMALL) by size"},
-        {"twilightforest:unstable_ice_core|sound.death", "U28: BaseIceMob keeps Monster's entity.hostile.death"},
+        {"gloamingforest:adherent|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"gloamingforest:adherent|sound.death", "U30: Monster default entity.hostile.death"},
+        {"gloamingforest:armored_giant|sound.hurt", "U29: Monster default entity.hostile.hurt"},
+        {"gloamingforest:armored_giant|sound.death", "U29: Monster default entity.hostile.death"},
+        {"gloamingforest:giant_miner|sound.hurt", "U29: Monster default entity.hostile.hurt"},
+        {"gloamingforest:giant_miner|sound.death", "U29: Monster default entity.hostile.death"},
+        {"gloamingforest:harbinger_cube|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"gloamingforest:harbinger_cube|sound.death", "U30: Monster default entity.hostile.death"},
+        {"gloamingforest:roving_cube|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"gloamingforest:roving_cube|sound.death", "U30: Monster default entity.hostile.death"},
+        {"gloamingforest:plateau_boss|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"gloamingforest:plateau_boss|sound.death", "U30: Monster default entity.hostile.death"},
+        {"gloamingforest:maze_slime|sound.hurt", "U23: MAZE_SLIME_HURT(_SMALL) by size"},
+        {"gloamingforest:maze_slime|sound.death", "U23: MAZE_SLIME_DEATH(_SMALL) by size"},
+        {"gloamingforest:unstable_ice_core|sound.death", "U28: BaseIceMob keeps Monster's entity.hostile.death"},
         // far-away despawn (Mob#checkDespawn / removeWhenFarAway)
-        {"twilightforest:death_tome|despawn", "U21: a Monster that Java despawns far away; the BP has no minecraft:despawn"},
-        {"twilightforest:lich_minion|despawn", "U21: a Zombie that Java despawns far away; the BP has no minecraft:despawn"},
-        {"twilightforest:rising_zombie|despawn", "U21: a Monster that Java despawns far away; the BP has no minecraft:despawn"},
-        {"twilightforest:loyal_zombie|despawn", "U9: LoyalZombie#removeWhenFarAway is !isTame (only an untamed one despawns): check the BP's filter"},
+        {"gloamingforest:death_tome|despawn", "U21: a Monster that Java despawns far away; the BP has no minecraft:despawn"},
+        {"gloamingforest:lich_minion|despawn", "U21: a Zombie that Java despawns far away; the BP has no minecraft:despawn"},
+        {"gloamingforest:rising_zombie|despawn", "U21: a Monster that Java despawns far away; the BP has no minecraft:despawn"},
+        {"gloamingforest:loyal_zombie|despawn", "U9: LoyalZombie#removeWhenFarAway is !isTame (only an untamed one despawns): check the BP's filter"},
     };
     return m;
 }
@@ -277,9 +277,9 @@ GF_REGISTER_SELFTEST("hostiles.mob_assets", [](Context& ctx) {
         bool        summonable = e.value("description", nlohmann::json::object()).value("is_summonable", false);
         if (summonable != row.canSummon) finding(ctx, row, "summonable", summonable ? "summonable (Java: canSummon false)" : "not summonable");
         if (!row.living) continue;
-        // LivingEntity#dropFromLootTable: twilightforest:entities/<path> (F10's death pipeline)
+        // LivingEntity#dropFromLootTable: gloamingforest:entities/<path> (F10's death pipeline)
         if (row.lootTable) {
-            auto table = dir / "data" / "twilightforest" / "loot_table" / "entities" / (pathOf(row.id) + ".json");
+            auto table = dir / "data" / "gloamingforest" / "loot_table" / "entities" / (pathOf(row.id) + ".json");
             if (!fs::is_regular_file(table, ec)) finding(ctx, row, "loot", "no loot table entities/" + pathOf(row.id));
         }
         auto const& ev = events[row.id];

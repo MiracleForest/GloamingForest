@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:brittle_potion_flask",
+      "identifier": "gloamingforest:brittle_potion_flask",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:brittle_potion_flask.name"
+        "value": "item.gloamingforest:brittle_potion_flask.name"
       }
     }
   }

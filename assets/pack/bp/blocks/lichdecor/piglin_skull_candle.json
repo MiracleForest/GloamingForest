@@ -2,25 +2,25 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:piglin_skull_candle",
+      "identifier": "gloamingforest:piglin_skull_candle",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:candles": [
+        "gloamingforest:candles": [
           0,
           1,
           2,
           3,
           4
         ],
-        "twilightforest:lighting": [
+        "gloamingforest:lighting": [
           "none",
           "normal",
           "dim",
           "ominous"
         ],
-        "twilightforest:rotation": [
+        "gloamingforest:rotation": [
           0,
           1,
           2,
@@ -48,12 +48,12 @@
         "explosion_resistance": 5
       },
       "minecraft:geometry": {
-        "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r0",
+        "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r0",
         "bone_visibility": {
-          "candles_1": "q.block_state('twilightforest:candles') <= 1",
-          "candles_2": "q.block_state('twilightforest:candles') == 2",
-          "candles_3": "q.block_state('twilightforest:candles') == 3",
-          "candles_4": "q.block_state('twilightforest:candles') == 4"
+          "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+          "candles_2": "q.block_state('gloamingforest:candles') == 2",
+          "candles_3": "q.block_state('gloamingforest:candles') == 3",
+          "candles_4": "q.block_state('gloamingforest:candles') == 4"
         }
       },
       "minecraft:material_instances": {
@@ -94,15 +94,15 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:rotation') == 0",
+        "condition": "q.block_state('gloamingforest:rotation') == 0",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r0",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r0",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -115,15 +115,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 1",
+        "condition": "q.block_state('gloamingforest:rotation') == 1",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r1",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r1",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -136,15 +136,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 2",
+        "condition": "q.block_state('gloamingforest:rotation') == 2",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r2",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r2",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -157,15 +157,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 3",
+        "condition": "q.block_state('gloamingforest:rotation') == 3",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r3",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r3",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -178,36 +178,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 4",
+        "condition": "q.block_state('gloamingforest:rotation') == 4",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r0",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r0",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
-            }
-          },
-          "minecraft:transformation": {
-            "rotation": [
-              0,
-              -90,
-              0
-            ]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('twilightforest:rotation') == 5",
-        "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r1",
-            "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -220,15 +199,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 6",
+        "condition": "q.block_state('gloamingforest:rotation') == 5",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r2",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r1",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -241,15 +220,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 7",
+        "condition": "q.block_state('gloamingforest:rotation') == 6",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r3",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r2",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -262,15 +241,36 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 8",
+        "condition": "q.block_state('gloamingforest:rotation') == 7",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r0",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r3",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:rotation') == 8",
+        "components": {
+          "minecraft:geometry": {
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r0",
+            "bone_visibility": {
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -283,15 +283,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 9",
+        "condition": "q.block_state('gloamingforest:rotation') == 9",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r1",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r1",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -304,15 +304,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 10",
+        "condition": "q.block_state('gloamingforest:rotation') == 10",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r2",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r2",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -325,15 +325,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 11",
+        "condition": "q.block_state('gloamingforest:rotation') == 11",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r3",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r3",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -346,15 +346,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 12",
+        "condition": "q.block_state('gloamingforest:rotation') == 12",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r0",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r0",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -367,15 +367,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 13",
+        "condition": "q.block_state('gloamingforest:rotation') == 13",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r1",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r1",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -388,15 +388,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 14",
+        "condition": "q.block_state('gloamingforest:rotation') == 14",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r2",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r2",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -409,15 +409,15 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotation') == 15",
+        "condition": "q.block_state('gloamingforest:rotation') == 15",
         "components": {
           "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.lichdecor.skull_candle_piglin_r3",
+            "identifier": "geometry.gloamingforest.lichdecor.skull_candle_piglin_r3",
             "bone_visibility": {
-              "candles_1": "q.block_state('twilightforest:candles') <= 1",
-              "candles_2": "q.block_state('twilightforest:candles') == 2",
-              "candles_3": "q.block_state('twilightforest:candles') == 3",
-              "candles_4": "q.block_state('twilightforest:candles') == 4"
+              "candles_1": "q.block_state('gloamingforest:candles') <= 1",
+              "candles_2": "q.block_state('gloamingforest:candles') == 2",
+              "candles_3": "q.block_state('gloamingforest:candles') == 3",
+              "candles_4": "q.block_state('gloamingforest:candles') == 4"
             }
           },
           "minecraft:transformation": {
@@ -430,7 +430,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'none'",
+        "condition": "q.block_state('gloamingforest:lighting') == 'none'",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -445,7 +445,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') != 'none'",
+        "condition": "q.block_state('gloamingforest:lighting') != 'none'",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -460,49 +460,49 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 1",
+        "condition": "q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 1",
         "components": {
           "minecraft:light_emission": 1
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 2) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 1)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 2) || (q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 1)",
         "components": {
           "minecraft:light_emission": 2
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 1) || (q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 3)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 1) || (q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 3)",
         "components": {
           "minecraft:light_emission": 3
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 4) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 2)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'dim' && q.block_state('gloamingforest:candles') == 4) || (q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 2)",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 2) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 3)",
+        "condition": "(q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 2) || (q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 3)",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:lighting') == 'ominous' && q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:light_emission": 8
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 3",
+        "condition": "q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 3",
         "components": {
           "minecraft:light_emission": 9
         }
       },
       {
-        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:lighting') == 'normal' && q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:light_emission": 12
         }

@@ -1,0 +1,21 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "jeed"
+    }
+  ],
+  "type": "jeed:effect_provider",
+  "effect": "minecraft:slowness",
+  "providers": [
+    {
+      "item": "gloamingforest:lifedrain_scepter"
+    },
+    {
+      "item": "gloamingforest:death_tome_spawn_egg"
+    },
+    {
+      "item": "gloamingforest:skyberry"
+    }
+  ]
+}

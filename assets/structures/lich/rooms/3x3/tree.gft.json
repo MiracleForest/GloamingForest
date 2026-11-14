@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/3x3/tree",
+  "id": "gloamingforest:lich_tower/3x3/tree",
   "size": [3, 2, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},

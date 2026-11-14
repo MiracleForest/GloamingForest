@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/Boar.java
-//   src/main/java/twilightforest/entity/passive/Bighorn.java
-//   src/main/java/twilightforest/entity/passive/Deer.java
-//   src/main/java/twilightforest/entity/passive/Squirrel.java
-//   src/main/java/twilightforest/entity/passive/DwarfRabbit.java
-//   src/main/java/twilightforest/entity/passive/Penguin.java
-//   src/main/java/twilightforest/entity/passive/Bird.java
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/Boar.java
+//   src/main/java/gloamingforest/entity/passive/Bighorn.java
+//   src/main/java/gloamingforest/entity/passive/Deer.java
+//   src/main/java/gloamingforest/entity/passive/Squirrel.java
+//   src/main/java/gloamingforest/entity/passive/DwarfRabbit.java
+//   src/main/java/gloamingforest/entity/passive/Penguin.java
+//   src/main/java/gloamingforest/entity/passive/Bird.java
 //   net/minecraft/world/entity/animal/Sheep.java (vanilla, the bighorn's shear / dye / offspring colour)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U16's walking animals. Their vanilla goals (float, panic, breed, tempt, follow parent, stroll,
-// look, avoid, eat grass) are the BP's behaviours (assets/pack/bp/entities/fauna); what is TF's own,
+// look, avoid, eat grass) are the BP's behaviours (assets/pack/bp/entities/fauna); what is upstream's own,
 // or a vanilla class the BP cannot express, is native here:
 //   - the bighorn's fleece colour at spawn (Bighorn#finalizeSpawn), its lambs' colour mixing
 //     (Sheep#getOffspringColor), shearing and dyeing (Sheep#mobInteract / DyeItem), its loot table
@@ -191,7 +191,7 @@ std::string bighornTable(Actor& sheep) { return cf::bighornLootTable(isSheared(s
 void deerEatSenbei(Actor& deer) {
     deer.heal(4);
     auto& r = rng();
-    gf::fx::sound(deer.getDimension(), "entity.twilightforest.deer.eat", deer.getFeetPos(), 1.0f, 1.0f + (r.nextFloat() - r.nextFloat()) * 0.2f);
+    gf::fx::sound(deer.getDimension(), "entity.gloamingforest.deer.eat", deer.getFeetPos(), 1.0f, 1.0f + (r.nextFloat() - r.nextFloat()) * 0.2f);
 }
 
 void installAnimals() {
@@ -219,7 +219,7 @@ void installAnimals() {
         if (!c.player.isCreative()) ia::mutableItem(c.item).remove(1);
         return ia::Result::Consume;
     }));
-    gHandlers.push_back(ia::onInteract({.block = kDeer, .item = "twilightforest:shika_senbei"}, deerSenbei));
+    gHandlers.push_back(ia::onInteract({.block = kDeer, .item = "gloamingforest:shika_senbei"}, deerSenbei));
     gf::loot::onEntityDrops(bighornDrops);
 }
 

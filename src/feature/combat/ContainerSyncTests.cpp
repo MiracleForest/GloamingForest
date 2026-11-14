@@ -4,7 +4,7 @@
 //     the end of the tick it changed (a handler's write, a native container's setItem as a hopper
 //     makes it, ext::markChanged), in the context its screen was opened with; nothing while nothing
 //     changes; a player's own click is answered once (feature/ext/combat/InventoryChanges.h);
-//   - combat.tf_chest_screen_refresh: TF's double chest opened by code (no click): a change of either
+//   - combat.tf_chest_screen_refresh: upstream's double chest opened by code (no click): a change of either
 //     half refreshes the screen in its own context (the half it was opened through), whichever
 //     backend the chests use (BlockData on main before F11's native chests, native after);
 //   - combat.inventory_native_migrate: a native container whose stacks still wait in block data
@@ -56,9 +56,9 @@ constexpr char kFixture[]     = "gf_test:fixture_block";
 constexpr char kNativeChest[] = "gf_combat:native_chest"; // the combat scenario's probe (minecraft:block_entity)
 constexpr char kProbeType[]   = "gf_combat:type";
 constexpr char kProbeFacing[] = "gf_combat:facing";
-constexpr char kOakChest[]    = "twilightforest:twilight_oak_chest";
-constexpr char kType[]        = "twilightforest:type";
-constexpr char kFacing[]      = "twilightforest:facing";
+constexpr char kOakChest[]    = "gloamingforest:gloaming_oak_chest";
+constexpr char kType[]        = "gloamingforest:type";
+constexpr char kFacing[]      = "gloamingforest:facing";
 
 Player* playerById(std::int64_t raw) {
     auto level = ll::service::getLevel();
@@ -255,7 +255,7 @@ GF_REGISTER_SELFTEST("combat.inventory_screen_refresh", [](Context& ctx) -> ll::
     if (c) c->setItem(2, ItemStack{});
 });
 
-// ---- TF's double chest opened by code: refreshed in its own context ---------------------------------------
+// ---- upstream's double chest opened by code: refreshed in its own context ---------------------------------------
 
 GF_REGISTER_SELFTEST("combat.tf_chest_screen_refresh", [](Context& ctx) -> ll::coro::CoroTask<> {
     // facing north: a left half's partner is east of it (ChestBlock#getConnectedDirection)
@@ -271,7 +271,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_screen_refresh", [](Context& ctx) -> ll::c
     auto  hr     = inv::find(*region, gf::game::blockPos(right));
     ctx.require(hl && hr, "both halves are containers");
     auto* nativeLeft = inv::nativeContainer(*region, gf::game::blockPos(left));
-    ctx.info(nativeLeft ? "TF's chests use the native backend" : "TF's chests use the BlockData backend");
+    ctx.info(nativeLeft ? "upstream's chests use the native backend" : "upstream's chests use the BlockData backend");
     auto pid = ctx.player().getOrCreateUniqueID().rawID;
     scope.add(ctx.player());
     standBy(ctx.player(), left);

@@ -1,6 +1,6 @@
 #pragma once
 
-// GloamingForest - U22 (lichdecor): pure parts of /twilightforest sinister_spawner (Java's
+// GloamingForest - U22 (lichdecor): pure parts of /gloamingforest sinister_spawner (Java's
 // ParticleArgument, ResourceOrIdArgument and ResourceLocation rules over the 1.21.1 particle
 // registry) and of the wrought iron fence (WroughtIronFenceBlock#shouldBePost / #makeFenceState).
 // No game includes: gtested in tests/lichdecor.
@@ -22,7 +22,7 @@ struct ArgError {
 /// "path" -> "minecraft:path"; "ns:path" unchanged.
 [[nodiscard]] std::string withDefaultNamespace(std::string const& id);
 
-/// Every particle type of the 1.21.1 registry plus TF's (sorted ids).
+/// Every particle type of the 1.21.1 registry plus upstream's (sorted ids).
 [[nodiscard]] std::vector<std::string> const& particleRegistry();
 [[nodiscard]] bool                            isRegisteredParticle(std::string const& id);
 

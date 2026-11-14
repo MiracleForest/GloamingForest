@@ -3,14 +3,14 @@
   Contract "synth" (F3): renders GloamingForest's original sounds and music from recipes.
 
 .DESCRIPTION
-  Every sound event of The Twilight Forest (docs/spec/owners.tsv, kind sound_event: 328) gets a
+  Every sound event of The Gloaming Forest (docs/spec/owners.tsv, kind sound_event: 328) gets a
   Bedrock sound definition rendered by the procedural synthesizer (src/core/synth, compiled
-  into tools/sounds/cli). TF's own audio is All Rights Reserved and is never read (rule R10):
-  everything is synthesized from recipes, or refers to Bedrock's vanilla sounds where TF itself
+  into tools/sounds/cli). upstream's own audio is All Rights Reserved and is never read (rule R10):
+  everything is synthesized from recipes, or refers to Bedrock's vanilla sounds where upstream itself
   plays a vanilla event.
 
   Recipes, per owning unit <u> (the unit's name, e.g. fauna):
-    tools/sounds/baseline/<u>.json   F3's baseline (generated once from TF's event inventory)
+    tools/sounds/baseline/<u>.json   F3's baseline (generated once from upstream's event inventory)
     tools/sounds/recipes/<u>.json    the owner's refinements (optional; wins per event, file and patch)
     tools/sounds/recipes.d/<u>.json  the same for owners without a recipes/ row in owners.tsv (the W0b
                                      units F4 dimension and F8 entity own it as a *.d/<u>.json
@@ -20,14 +20,14 @@
 
   Output (generated layer, never edit by hand, rule R3), per owner <u>, only from <u>'s recipes
   (plus the shared patches and tracks):
-    assets/gen/audio/<u>/rp/sounds/twilightforest/<u>/<file>.ogg
+    assets/gen/audio/<u>/rp/sounds/gloamingforest/<u>/<file>.ogg
     assets/gen/audio/<u>/rp/sounds.d/<u>.json          sound_definitions fragment
     assets/gen/audio/<u>/aliases.json                  snapshot of the other owners' sounds that <u>'s
                                                        events play ({"event": id} variants), rendered
-                                                       as copies under sounds/twilightforest/<u>/alias/
+                                                       as copies under sounds/gloamingforest/<u>/alias/
 
-  Every definition must match TF's inventory (tools/sounds/baseline/inventory.json, generated
-  from TF's sounds.json): variant count, volume, pitch, stream, subtitle and category.
+  Every definition must match upstream's inventory (tools/sounds/baseline/inventory.json, generated
+  from upstream's sounds.json): variant count, volume, pitch, stream, subtitle and category.
 
   The recipe format, the patch language and the tracker format are documented in
   tools/sounds/README.md.
@@ -40,7 +40,7 @@
   Only this owner (unit id or name: U16, fauna). Default: every owner.
 .PARAMETER Check
   Renders everything into a temporary directory and fails unless the committed tree is
-  byte-identical (deterministic output), every event is covered and matches TF's inventory, and
+  byte-identical (deterministic output), every event is covered and matches upstream's inventory, and
   src/feature/ext/synth/SoundEvents.inc matches the inventory. Alias copies are rendered from the
   owner's snapshot (aliases.json); a snapshot older than the aliased owner's current recipe is a
   warning (the aliasing owner refreshes it with -Unit, A8 with a full render), not a failure.
@@ -52,8 +52,8 @@
 .EXAMPLE
   pwsh tools/sounds/synth.ps1                       # every owner (refreshes every alias snapshot)
   pwsh tools/sounds/synth.ps1 -Unit fauna           # one owner
-  pwsh tools/sounds/synth.ps1 -Check                # CI: deterministic, complete, TF's inventory
-  pwsh tools/sounds/synth.ps1 -Preview -Event 'entity.twilightforest.naga.*'
+  pwsh tools/sounds/synth.ps1 -Check                # CI: deterministic, complete, upstream's inventory
+  pwsh tools/sounds/synth.ps1 -Preview -Event 'entity.gloamingforest.naga.*'
 #>
 param(
     [string]$Unit,
@@ -174,7 +174,7 @@ $problems = [Collections.Generic.List[string]]::new()
 foreach ($u in @($eventOwner.Values | Sort-Object -Unique)) {
     $r = Get-Recipe $u
     foreach ($e in $r.events.Keys) {
-        if (-not $eventOwner.Contains($e)) { $problems.Add("$($r.sources -join ', '): '$e' is not a TF sound event") }
+        if (-not $eventOwner.Contains($e)) { $problems.Add("$($r.sources -join ', '): '$e' is not an upstream sound event") }
         elseif ($eventOwner[$e] -ne $u) { $problems.Add("$($r.sources -join ', '): '$e' belongs to $($eventOwner[$e])") }
     }
     foreach ($file in $r.files.Keys) {
@@ -187,7 +187,7 @@ foreach ($e in $eventOwner.Keys) {
 
 # ---- alias snapshots ----------------------------------------------------------------------------------------
 # An event of owner <u> may play another owner's event ({"event": id}). Its sounds are copied into
-# <u>'s own tree (sounds/twilightforest/<u>/alias/<owner>/<file>), so <u>'s output never depends on
+# <u>'s own tree (sounds/gloamingforest/<u>/alias/<owner>/<file>), so <u>'s output never depends on
 # what another unit commits. assets/gen/audio/<u>/aliases.json records what was copied: -Check
 # reproduces <u>'s tree from it and warns when the aliased owner changed since.
 $aliasDir = Join-Path $root 'assets/gen/audio'
@@ -215,7 +215,7 @@ function Resolve-Variants([string]$e, [string]$rootOwner, [int]$depth = 0, [bool
         $i++
         $alias = Get-Prop $v 'event'
         if ($alias) {
-            $alias = $alias -replace '^twilightforest:', ''
+            $alias = $alias -replace '^gloamingforest:', ''
             if (-not $eventOwner.Contains($alias)) { $problems.Add("${e}: alias to unknown event $alias"); continue }
             $sub = if (-not $crossed -and $eventOwner[$alias] -ne $rootOwner) { Get-AliasCopy $rootOwner $alias ($depth + 1) }
                    else { Resolve-Variants $alias $rootOwner ($depth + 1) $crossed }
@@ -409,7 +409,7 @@ foreach ($u in $owners) {
                 $s.name = $x.name
             } else {
                 if ($x.owner -ne $u) { Fail "${e}: internal error, $($x.owner)'s file $($x.file) outside a copy" }
-                $s.name = "sounds/twilightforest/$u/$($x.file)"
+                $s.name = "sounds/gloamingforest/$u/$($x.file)"
                 if (-not $files.Contains($x.file)) { $files[$x.file] = @{ spec = Get-RenderSpec $u $x; copy = ($x.kind -eq 'copy') } }
             }
             foreach ($k in 'volume', 'pitch') { if ($x.ContainsKey($k) -and $x[$k] -ne 1.0) { $s[$k] = $x[$k] } }
@@ -427,27 +427,27 @@ foreach ($u in $owners) {
     $plans[$u] = @{ files = $files; defs = $defs }
 }
 
-# ---- TF's inventory: every definition has TF's variants, subtitle and category ---------------------------
+# ---- upstream's inventory: every definition has upstream's variants, subtitle and category ---------------------------
 $parity = [Collections.Generic.List[string]]::new()
 foreach ($u in $owners) {
     foreach ($e in $plans[$u].defs.Keys) {
         $d = $plans[$u].defs[$e]
-        if (-not $inventory.events.Contains($e)) { $parity.Add("${e} ($u): not in TF's inventory (tools/sounds/baseline/inventory.json; run tools/sounds/baseline/generate.ps1)"); continue }
+        if (-not $inventory.events.Contains($e)) { $parity.Add("${e} ($u): not in upstream's inventory (tools/sounds/baseline/inventory.json; run tools/sounds/baseline/generate.ps1)"); continue }
         $exp = $inventory.events[$e]
         if ($exp.owner -ne $u) { $parity.Add("${e}: owned by $u in docs/spec/owners.tsv but by $($exp.owner) in tools/sounds/baseline/inventory.json (run tools/sounds/baseline/generate.ps1)") }
         $expSub = if ($exp.Contains('subtitle')) { [string]$exp.subtitle } else { '' }
         $gotSub = if ($d.Contains('subtitle')) { [string]$d.subtitle } else { '' }
-        if ($gotSub -ne $expSub) { $parity.Add("${e} ($u): subtitle '$gotSub', TF has '$expSub'") }
-        if ($d.category -ne $exp.category) { $parity.Add("${e} ($u): category '$($d.category)', TF plays it as '$($exp.category)' (tools/sounds/categories.json)") }
+        if ($gotSub -ne $expSub) { $parity.Add("${e} ($u): subtitle '$gotSub', upstream has '$expSub'") }
+        if ($d.category -ne $exp.category) { $parity.Add("${e} ($u): category '$($d.category)', upstream plays it as '$($exp.category)' (tools/sounds/categories.json)") }
         $got  = @(Get-VariantKeys $resolved[$e])
         $want = @(Get-VariantKeys $exp.variants)
-        if ($got.Count -ne $want.Count) { $parity.Add("${e} ($u): $($got.Count) variants, TF has $($want.Count)") }
-        elseif (($got -join ';') -ne ($want -join ';')) { $parity.Add("${e} ($u): variants (volume|pitch|stream) $($got -join ', ') differ from TF's $($want -join ', ')") }
+        if ($got.Count -ne $want.Count) { $parity.Add("${e} ($u): $($got.Count) variants, upstream has $($want.Count)") }
+        elseif (($got -join ';') -ne ($want -join ';')) { $parity.Add("${e} ($u): variants (volume|pitch|stream) $($got -join ', ') differ from upstream's $($want -join ', ')") }
     }
 }
 if ($parity.Count) {
     $parity | Select-Object -First 50 | ForEach-Object { Write-Host "[synth] $_" -ForegroundColor Red }
-    Fail "$($parity.Count) definition(s) differ from TF's inventory: refine the sounds, keep TF's variants (tools/sounds/README.md)"
+    Fail "$($parity.Count) definition(s) differ from upstream's inventory: refine the sounds, keep upstream's variants (tools/sounds/README.md)"
 }
 
 # ---- the renderer ---------------------------------------------------------------------------------------
@@ -533,7 +533,7 @@ if ($Check) { Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue 
 $jobs = @()
 foreach ($u in $owners) {
     $unitDir = Join-Path $target "$u/rp"
-    $sndDir  = Join-Path $unitDir "sounds/twilightforest/$u"
+    $sndDir  = Join-Path $unitDir "sounds/gloamingforest/$u"
     New-Item -ItemType Directory -Force (Join-Path $unitDir 'sounds.d') | Out-Null
     $fragment = Format-Json $plans[$u].defs
     [IO.File]::WriteAllText((Join-Path $unitDir "sounds.d/$u.json"), $fragment + "`n", [Text.UTF8Encoding]::new($false))
@@ -543,7 +543,7 @@ foreach ($u in $owners) {
         $events = [ordered]@{}
         foreach ($a in ($aliasUsed[$u].Keys | Sort-Object)) { $events[$a] = $aliasUsed[$u][$a] }
         $snap = [ordered]@{
-            about  = "Sounds of other owners that $u's events play ({""event"": id} variants), copied under sounds/twilightforest/$u/alias/ as rendered from their recipes at $u's last render, by tools/sounds/synth.ps1: do not edit. synth.ps1 -Check renders the copies from here and warns when an owner changed its event since: pwsh tools/sounds/synth.ps1 -Unit $u refreshes them."
+            about  = "Sounds of other owners that $u's events play ({""event"": id} variants), copied under sounds/gloamingforest/$u/alias/ as rendered from their recipes at $u's last render, by tools/sounds/synth.ps1: do not edit. synth.ps1 -Check renders the copies from here and warns when an owner changed its event since: pwsh tools/sounds/synth.ps1 -Unit $u refreshes them."
             events = $events
         }
         [IO.File]::WriteAllText($snapPath, (Format-Json $snap) + "`n", [Text.UTF8Encoding]::new($false))
@@ -621,7 +621,7 @@ if ($Check) {
         Fail "$($diffs.Count) difference(s): run pwsh tools/sounds/synth.ps1 -Unit <owner> and commit the result"
     }
     foreach ($s in $stale) { Warn $s }
-    Write-Host "[synth] -Check OK: $($resolved.Count) events match TF's inventory, $($jobs.Count) rendered files reproduce the committed tree$(if ($stale.Count) { " ($($stale.Count) stale alias cop$(if ($stale.Count -eq 1) { 'y' } else { 'ies' }))" })" -ForegroundColor Green
+    Write-Host "[synth] -Check OK: $($resolved.Count) events match upstream's inventory, $($jobs.Count) rendered files reproduce the committed tree$(if ($stale.Count) { " ($($stale.Count) stale alias cop$(if ($stale.Count -eq 1) { 'y' } else { 'ies' }))" })" -ForegroundColor Green
     exit 0
 }
 

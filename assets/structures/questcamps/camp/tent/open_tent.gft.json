@@ -1,12 +1,12 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/tent/open_tent",
+  "id": "gloamingforest:camp/tent/open_tent",
   "size": [5, 4, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:twilight_oak_fence"},
+    {"Name":"gloamingforest:gloaming_oak_fence"},
     {"Name":"minecraft:light_gray_wool"},
     {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"foot"}},
     {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"head"}}
@@ -21,6 +21,6 @@
     {"pos":[3,0,1],"marker":"data","data":{"metadata":"tent_pot@west"}}
   ],
   "jigsaw": [
-    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/tent","target":""}
+    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/tent","target":""}
   ]
 }

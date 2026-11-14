@@ -3,7 +3,7 @@
 // The enchantment part of contract "enchant+effects" (F9; spike S6).
 //
 // Bedrock's enchantment registry is a closed enum (Enchant::Type, the 42 ids vanilla clients know),
-// so TF's enchantments (fire_react, chill_aura, destruction, renewal: data/twilightforest/enchantment,
+// so upstream's enchantments (fire_react, chill_aura, destruction, renewal: data/gloamingforest/enchantment,
 // registered from the data at load, an owner's registerType replaces the data's spec) live in the
 // item's user data (`gf:enchant` {id: level}, books too: Java's stored enchantments). Clients see
 // them as gray lore lines named like enchantments (written through the item runtime's lore) and
@@ -14,7 +14,7 @@
 //   supported items checked, books apply to anything), at anvilCost * level (books: half);
 // - grindstone (EnchantUtils::removeEnchants / CraftHandlerGrindstone::_getExperienceFromItem):
 //   every custom enchantment goes (none is a curse), giving its min cost as experience;
-// - enchanting table: only enchantments in #minecraft:in_enchanting_table are offered; TF 4.8 puts
+// - enchanting table: only enchantments in #minecraft:in_enchanting_table are offered; upstream 4.8 puts
 //   none of its four there, so the table never gives them (the roll below serves specs that are
 //   `discoverable`). treasure / tradeable / discoverable come from the vanilla enchantment tags for
 //   every spec, the data's and an owner's registerType alike, unless ext::setFlags set them.
@@ -164,7 +164,7 @@ Spec specOfJson(std::string const& id, Json const& j) {
 }
 
 /// Reads a spec's flags from vanilla's enchantment tags (or ext::setFlags), on first use: the tags
-/// may reload after the enchantments (reload listeners run in registration order). TF 4.8 adds its
+/// may reload after the enchantments (reload listeners run in registration order). upstream 4.8 adds its
 /// enchantments to none of #minecraft:treasure / tradeable / in_enchanting_table. Lock held.
 Entry& resolveFlags(std::string const& id, Entry& e) {
     if (!e.flagsPending) return e;
@@ -530,7 +530,7 @@ private:
 };
 
 struct Candidate {
-    std::string key; ///< an enchantment id ("minecraft:sharpness", "twilightforest:x")
+    std::string key; ///< an enchantment id ("minecraft:sharpness", "gloamingforest:x")
     int         level  = 1;
     int         weight = 1;
 };

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
@@ -28,7 +28,7 @@ final class RngDump {
 	static final int[] BOUNDS = {1, 2, 3, 7, 10, 16, 100, 1000, 1 << 30, (1 << 30) + 1, Integer.MAX_VALUE};
 	static final int N = 8;
 	static final int[][] POSITIONS = {{0, 0, 0}, {1, 2, 3}, {-1, -64, -1}, {12345, 70, -54321}, {-30000000, 319, 30000000}, {7, -7, 7}};
-	static final String[] NAMES = {"", "a", "minecraft:stone", "twilightforest:lich_tower", "minecraft:offset", "twilightforest:twilight_forest", "Twilight Forest", "café 林"};
+	static final String[] NAMES = {"", "a", "minecraft:stone", "example:lich_tower", "minecraft:offset", "example:dimension", "Example Forest", "café 林"};
 
 	static Object dump(Ctx ctx) {
 		Map<String, Object> out = Json.obj();

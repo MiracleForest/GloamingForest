@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/custom/TravellersModifiersManager.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorItem.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorBeltItem.java
-//   src/main/java/twilightforest/item/travellers_gear/modifiers/TravellersComponentModifier.java
-//   src/main/java/twilightforest/item/travellers_gear/modifiers/TransferableComponentModifier.java
-//   src/main/java/twilightforest/item/travellers_gear/modifiers/TravellersModifier.java
-//   src/main/java/twilightforest/components/item/ItemDisplayContents.java
-//   src/main/java/twilightforest/init/TFKeyBinds.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/custom/TravellersModifiersManager.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorItem.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorBeltItem.java
+//   src/main/java/gloamingforest/item/travellers_gear/modifiers/TravellersComponentModifier.java
+//   src/main/java/gloamingforest/item/travellers_gear/modifiers/TransferableComponentModifier.java
+//   src/main/java/gloamingforest/item/travellers_gear/modifiers/TravellersModifier.java
+//   src/main/java/gloamingforest/components/item/ItemDisplayContents.java
+//   src/main/java/gloamingforest/init/TFKeyBinds.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/tgear/Gear.h"
@@ -55,7 +55,7 @@ Registry& registry() {
 
 void loadLocked(Registry& r) {
     r.entries.clear();
-    for (auto const& f : data::list("twilight/travellers_modifiers")) {
+    for (auto const& f : data::list("gloaming/travellers_modifiers")) {
         auto doc = data::read(f.path);
         if (!doc.is_object()) continue;
         ModifierInfo m;
@@ -69,7 +69,7 @@ void loadLocked(Registry& r) {
                 m.value     = it->begin().value();
             }
         }
-        m.ability        = m.type == "twilightforest:builtin" || doc.value("builtin_modifier", false);
+        m.ability        = m.type == "gloamingforest:builtin" || doc.value("builtin_modifier", false);
         m.hasDescription = doc.contains("description") && doc["description"].is_array() && !doc["description"].empty();
         if (m.hasDescription) m.description = doc["description"];
         r.entries[m.id]  = std::move(m);
@@ -85,7 +85,7 @@ void loadLocked(Registry& r) {
                                        }),
                                        true);
 
-std::string fullId(std::string const& id) { return id.find(':') == std::string::npos ? "twilightforest:" + id : id; }
+std::string fullId(std::string const& id) { return id.find(':') == std::string::npos ? "gloamingforest:" + id : id; }
 
 } // namespace
 
@@ -286,11 +286,11 @@ core::tgear::DisplayType displayTypeOf(std::string const& itemId) {
     using core::tgear::DisplayType;
     // Java's MapItem: filled maps only (EmptyMapItem is no MapItem); Bedrock's lodestone compass is
     // Java's compass with a lodestone tracker
-    if (itemId == "minecraft:filled_map" || itemId == "twilightforest:filled_magic_map" || itemId == "twilightforest:filled_maze_map" || itemId == "twilightforest:filled_ore_map")
+    if (itemId == "minecraft:filled_map" || itemId == "gloamingforest:filled_magic_map" || itemId == "gloamingforest:filled_maze_map" || itemId == "gloamingforest:filled_ore_map")
         return DisplayType::Map;
     if (itemId == "minecraft:compass" || itemId == "minecraft:lodestone_compass") return DisplayType::Compass;
     if (itemId == "minecraft:clock") return DisplayType::Clock;
-    if (itemId == "twilightforest:moon_dial") return DisplayType::MoonDial;
+    if (itemId == "gloamingforest:moon_dial") return DisplayType::MoonDial;
     return DisplayType::None;
 }
 
@@ -356,15 +356,15 @@ void setGloves(ItemStack& stack, bool gloves) { items::setData(stack, kGlovesKey
 
 std::string defaultKeyName(std::string const& keyName) {
     // TFKeyBinds: item_display_map_cycle C, red_thread_vision unbound, swap_hotbar V, zoom Z
-    if (keyName == "key.twilightforest.item_display_map_cycle") return "C";
-    if (keyName == "key.twilightforest.swap_hotbar") return "V";
-    if (keyName == "key.twilightforest.zoom") return "Z";
-    if (keyName == "key.twilightforest.red_thread_vision") return std::string(translate("key.keyboard.unknown", "Not Bound"));
+    if (keyName == "key.gloamingforest.item_display_map_cycle") return "C";
+    if (keyName == "key.gloamingforest.swap_hotbar") return "V";
+    if (keyName == "key.gloamingforest.zoom") return "Z";
+    if (keyName == "key.gloamingforest.red_thread_vision") return std::string(translate("key.keyboard.unknown", "Not Bound"));
     return "Nonexistent key";
 }
 
 std::string keybindName(std::string const& key) {
-    if (key.rfind("key.twilightforest.", 0) == 0) return defaultKeyName(key);
+    if (key.rfind("key.gloamingforest.", 0) == 0) return defaultKeyName(key);
     // Java's default bindings (KeyMapping's InputConstants names)
     static std::map<std::string, std::string> const kDefaults{
         {"key.left", "A"},          {"key.right", "D"},       {"key.forward", "W"},         {"key.back", "S"},

@@ -2,40 +2,40 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:upper_goblin_knight",
+      "identifier": "gloamingforest:upper_goblin_knight",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/doublegoblin"
+        "default": "textures/gloamingforest/entity/doublegoblin"
       },
       "geometry": {
-        "default": "geometry.twilightforest.upper_goblin_knight.rooted"
+        "default": "geometry.gloamingforest.upper_goblin_knight.rooted"
       },
       "render_controllers": [
-        "controller.render.twilightforest.upper_goblin_knight"
+        "controller.render.gloamingforest.upper_goblin_knight"
       ],
       "animations": {
-        "base": "animation.twilightforest.upper_goblin_knight.base",
-        "spear": "animation.twilightforest.upper_goblin_knight.spear",
-        "unshielded": "animation.twilightforest.upper_goblin_knight.unshielded",
-        "shield_disabled": "animation.twilightforest.upper_goblin_knight.shield_disabled"
+        "base": "animation.gloamingforest.upper_goblin_knight.base",
+        "spear": "animation.gloamingforest.upper_goblin_knight.spear",
+        "unshielded": "animation.gloamingforest.upper_goblin_knight.unshielded",
+        "shield_disabled": "animation.gloamingforest.upper_goblin_knight.shield_disabled"
       },
       "scripts": {
         "animate": [
           "base",
           {
-            "spear": "q.property('twilightforest:spear_timer') > 0"
+            "spear": "q.property('gloamingforest:spear_timer') > 0"
           },
           {
-            "unshielded": "!q.property('twilightforest:shield')"
+            "unshielded": "!q.property('gloamingforest:shield')"
           },
           {
-            "shield_disabled": "q.property('twilightforest:shield_disabled')"
+            "shield_disabled": "q.property('gloamingforest:shield_disabled')"
           }
         ],
         "pre_animation": [
-          "v.t = 60.0 - q.property('twilightforest:spear_timer');"
+          "v.t = 60.0 - q.property('gloamingforest:spear_timer');"
         ]
       }
     }

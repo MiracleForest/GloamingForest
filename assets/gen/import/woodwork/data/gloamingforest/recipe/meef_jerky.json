@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:drying",
+  "filter_time": 6000,
+  "input": {
+    "item": "gloamingforest:raw_meef"
+  },
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:meef_jerky"
+  }
+}

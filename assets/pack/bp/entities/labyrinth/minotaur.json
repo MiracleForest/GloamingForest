@@ -2,16 +2,16 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:minotaur",
+      "identifier": "gloamingforest:minotaur",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:charging": { "type": "bool", "default": false, "client_sync": true }
+        "gloamingforest:charging": { "type": "bool", "default": false, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "minotaur", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "minotaur", "monster", "mob"] },
       "minecraft:collision_box": { "width": 0.6, "height": 2.1 },
       "minecraft:health": { "value": 30, "max": 30 },
       "minecraft:attack": { "damage": 2 },

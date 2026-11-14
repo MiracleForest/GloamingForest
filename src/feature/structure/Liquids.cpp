@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Waterlogging for the structure kit. Java keeps "waterlogged" in the block state; Bedrock keeps
 // the water in the block's second (liquid) layer. A Java state with waterlogged = true is placed
@@ -66,7 +66,7 @@ bool waterloggable(Block const& block) {
 namespace {
 
 bool computeWaterloggable(Block const& block) {
-    // the Java 1.21.1 SimpleWaterloggedBlock / LiquidBlockContainer families (vanilla and TF)
+    // the Java 1.21.1 SimpleWaterloggedBlock / LiquidBlockContainer families (vanilla and upstream)
     auto const& id = block.getTypeName();
     if (block.isAir() || blocks::isLiquid(block)) return false;
     if (hasFlag(block, BlockProperty::Stair) || hasFlag(block, BlockProperty::HalfSlab) || hasFlag(block, BlockProperty::Trapdoor) ||

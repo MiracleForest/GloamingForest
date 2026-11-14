@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/processors/SpawnerProcessor.java (compile)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/processors/SpawnerProcessor.java (compile)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/ext/structure/Processors.h"
@@ -21,7 +21,7 @@ std::string compileSpawnerProcessor(int range, float maxWidth, std::vector<std::
                                   {"custom_spawn_rules", {{"block_light_limit", Json::array({0, 7})}, {"sky_light_limit", Json::array({0, 15})}}}}},
                                 {"weight", weight}});
     }
-    Json p{{"processor_type", "twilightforest:spawner_processor"}, {"start_delay_factor", 0.25f}, {"entities", entities}};
+    Json p{{"processor_type", "gloamingforest:spawner_processor"}, {"start_delay_factor", 0.25f}, {"entities", entities}};
     if (range > 0) p["range"] = range;
     if (maxWidth > 0) p["entity_width_max"] = maxWidth;
     return p.dump();

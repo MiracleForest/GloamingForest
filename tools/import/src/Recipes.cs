@@ -1,6 +1,6 @@
-// GloamingForest import tool (contract "import", unit F1): TF's vanilla-type recipes (crafting shaped /
+// GloamingForest import tool (contract "import", unit F1): upstream's vanilla-type recipes (crafting shaped /
 // shapeless, smelting, blasting, smoking, campfire, stonecutting, smithing) as Bedrock behaviour-pack
-// recipes, unlocked by the items of TF's recipe advancements. Custom TF types (drying, uncrafting, ...)
+// recipes, unlocked by the items of upstream's recipe advancements. Custom upstream types (drying, uncrafting, ...)
 // stay Java data for the loaders their owners register (contract "recipes").
 using System;
 using System.Collections.Generic;
@@ -60,7 +60,7 @@ namespace GfImport
             }
             if (itype == "neoforge:components")
             {
-                // items with data components: Bedrock has the water bottle as potion data 0 (the only one TF uses)
+                // items with data components: Bedrock has the water bottle as potion data 0 (the only one upstream uses)
                 var potion = ing["components"] != null && ing["components"]["minecraft:potion_contents"] != null ? ing["components"]["minecraft:potion_contents"]["potion"] : null;
                 string it = ing["items"] != null && ing["items"].IsStr ? ing["items"].AsString() : null;
                 if (it == "minecraft:potion" && potion != null && potion.AsString() == "minecraft:water" && ing["components"].Count == 1)
@@ -76,7 +76,7 @@ namespace GfImport
                 string bt;
                 if (BedrockItemTags.TryGetValue(tag, out bt)) { res.Add(J.Obj().Set("tag", bt)); return res; }
                 var members = TagMembers(tag);
-                // tags of TF items only (not blocks) are declared on those items (minecraft:tags, see ItemDoc)
+                // tags of upstream items only (not blocks) are declared on those items (minecraft:tags, see ItemDoc)
                 if (members.Count > 1 && members.All(IsTaggableItem)) { res.Add(J.Obj().Set("tag", tag)); return res; }
                 // other tags do not exist on Bedrock: one recipe per member (see BedrockRecipes)
                 foreach (var m in members) res.Add(J.Obj().Set("item", BedrockItem(m)));
@@ -103,10 +103,10 @@ namespace GfImport
             return Alternatives(ing).Where(a => a["item"] != null).Select(a => a["item"].AsString()).Distinct().ToList();
         }
 
-        /// <summary>A TF item with its own item JSON (so it can carry minecraft:tags).</summary>
+        /// <summary>An upstream item with its own item JSON (so it can carry minecraft:tags).</summary>
         bool IsTaggableItem(string full)
         {
-            return full.StartsWith("twilightforest:", StringComparison.Ordinal) && OwnerOf("item", full) != null && !BlockInfos.ContainsKey(full.Substring(15));
+            return full.StartsWith("gloamingforest:", StringComparison.Ordinal) && OwnerOf("item", full) != null && !BlockInfos.ContainsKey(full.Substring(15));
         }
 
         static J Result(J r)
@@ -120,7 +120,7 @@ namespace GfImport
 
         /// <summary>The unlock list from the recipe's advancement: the items of its inventory_changed criteria, an item tag
         /// ("#c:ingots/ironwood") as its members (Bedrock's unlock lists items); without item criteria, an enter_block
-        /// water criterion (TF's boats) is Bedrock's PlayerInWater context (as Bedrock's own boat recipes), else
+        /// water criterion (upstream's boats) is Bedrock's PlayerInWater context (as Bedrock's own boat recipes), else
         /// AlwaysUnlocked.</summary>
         J Unlock(string ns, string path, J recipe)
         {
@@ -129,9 +129,9 @@ namespace GfImport
             Action<string> add = s =>
             {
                 if (!s.StartsWith("#", StringComparison.Ordinal)) { items.Add(s); return; }
-                // members a Bedrock world has: vanilla items and TF's own (optional compat entries of other mods are left out)
+                // members a Bedrock world has: vanilla items and upstream's own (optional compat entries of other mods are left out)
                 var members = TagMembers(s.Substring(1)).Where(m => m.StartsWith("minecraft:", StringComparison.Ordinal)
-                    || (m.StartsWith("twilightforest:", StringComparison.Ordinal) && (OwnerOf("item", m) != null || OwnerOf("block", m) != null))).ToList();
+                    || (m.StartsWith("gloamingforest:", StringComparison.Ordinal) && (OwnerOf("item", m) != null || OwnerOf("block", m) != null))).ToList();
                 if (members.Count == 0) Warn("recipe " + ns + ":" + path + ": unlock tag " + s + " has no known members");
                 foreach (var m in members) items.Add(m);
             };
@@ -187,7 +187,7 @@ namespace GfImport
             var combos = Cartesian(alts).Take(MaxRecipeExpansion + 1).ToList();
             if (combos.Count <= MaxRecipeExpansion) return combos;
             Errors.Add("recipe " + id + ": more than " + MaxRecipeExpansion + " ingredient combinations (" + string.Join(" x ", alts.Select(a => a.Count))
-                + "); declare the tag on its members (a TF item tag) or raise Recipes.MaxRecipeExpansion");
+                + "); declare the tag on its members (an upstream item tag) or raise Recipes.MaxRecipeExpansion");
             return null;
         }
 
@@ -226,7 +226,7 @@ namespace GfImport
         public void ImportRecipes()
         {
             foreach (var res in new[] { GenRes, MainRes })
-                foreach (var ns in new[] { "twilightforest", "minecraft" })
+                foreach (var ns in new[] { "gloamingforest", "minecraft" })
                 {
                     string dir = Path.Combine(res, "data", ns, "recipe");
                     foreach (var rel in Files(dir, "*.json"))
@@ -258,7 +258,7 @@ namespace GfImport
                     {
                         var keys = r["key"].Keys.ToList();
                         var alts = keys.Select(k => Alternatives(r["key"][k])).ToList();
-                        // Bedrock measures pattern rows in bytes: map non-ASCII keys (TF uses "∴", "•") to free ASCII letters
+                        // Bedrock measures pattern rows in bytes: map non-ASCII keys (upstream uses "∴", "•") to free ASCII letters
                         var pattern = r["pattern"].A.Select(p => p.AsString()).ToList();
                         var free = new Queue<char>("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".Where(c => !keys.Contains(c.ToString())));
                         for (int i = 0; i < keys.Count; i++)

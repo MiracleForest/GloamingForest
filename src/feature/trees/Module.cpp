@@ -1,5 +1,5 @@
 // U3 trees: the module (feature types, tree placers, the cores, the leaves) and the config section
-// "trees" (TF's Magic Trees ranges, docs/spec/config.md).
+// "trees" (upstream's Magic Trees ranges, docs/spec/config.md).
 #include "feature/trees/Trees.h"
 
 #include "mod/Config.h"

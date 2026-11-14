@@ -4,12 +4,12 @@
 // Client build only. The server halves (vanilla fallbacks) are in feature/ui/Ui.h.
 //
 // Native screens on the client mod's screen framework (client/screen/base/Screen.h), HUD layers,
-// toasts and tooltips. Every TF screen, overlay and toast is owned by a W1 unit and registered
+// toasts and tooltips. Every upstream screen, overlay and toast is owned by a W1 unit and registered
 // here; units never hook the UI renderer (rule R8).
 //
 //     gf::client::screen::registerScreen("uncraftmaps.uncrafting", [](Json const& data, auto send) { ... });
 //     gf::client::hud::addLayer("artifacts.shields", 100, [](auto& canvas, float partial) { ... });
-//     gf::client::toast::show({.iconItem = "twilightforest:magic_map", .titleKey = "...", .bodyKey = "..."});
+//     gf::client::toast::show({.iconItem = "gloamingforest:magic_map", .titleKey = "...", .bodyKey = "..."});
 
 #ifdef GF_CLIENT
 
@@ -23,7 +23,7 @@ class ItemStack;
 
 namespace gf::client::screen {
 
-/// A container screen in TF's GUI style: the background texture `skin` (a resource pack path
+/// A container screen in upstream's GUI style: the background texture `skin` (a resource pack path
 /// such as "textures/gui/guigoblintinkering") drawn 1:1 at the panel, container slots at their
 /// Java positions, and the player inventory below.
 class ContainerScreen : public Screen {

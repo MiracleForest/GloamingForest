@@ -1,11 +1,11 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/feature/materials/MaterialsConnections.cpp and
 // src/feature/materials/MaterialsModule.cpp), LGPL-3.0-or-later.
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/ConnectableRotatedPillarBlock.java
-//   src/main/java/twilightforest/block/WallPillarBlock.java
-//   src/main/java/twilightforest/client/model/block/connected/ConnectedTextureModel.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/ConnectableRotatedPillarBlock.java
+//   src/main/java/gloamingforest/block/WallPillarBlock.java
+//   src/main/java/gloamingforest/client/model/block/connected/ConnectedTextureModel.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -13,7 +13,7 @@
 // server for every client:
 //   fence (FenceBlock), pane (IronBarsBlock) and wall (WallBlock) connections with Java's rules,
 //   the wall post and tall sides, stairs shapes (StairBlock.getStairsShape, vanilla stairs
-//   included), TF's wall pillars and connectable pillars (ConnectableRotatedPillarBlock: the side
+//   included), upstream's wall pillars and connectable pillars (ConnectableRotatedPillarBlock: the side
 //   that changed), connected textures (connections to their own kind and the corner blocks),
 //   fence gates lowered in walls, and the 24 px collision of fences, walls and closed fence
 //   gates; slab doubling (SlabBlock.canBeReplaced).
@@ -264,7 +264,7 @@ bool canTakeShape(BlockSource& region, BlockPos const& pos, StairInfo const& sel
     return !o || o->facing != self.facing || o->top != self.top;
 }
 
-// ---- pillars (TF ConnectableRotatedPillarBlock / WallPillarBlock) ------------------------------------
+// ---- pillars (upstream ConnectableRotatedPillarBlock / WallPillarBlock) ------------------------------------
 
 bool updatePillarSide(BlockSource& region, BlockPos const& pos, Block const& block, Entry const& e, int dir) {
     bool         on   = detail::pillarConnects(region, pos, dir, e, axisStateOf(block));
@@ -272,7 +272,7 @@ bool updatePillarSide(BlockSource& region, BlockPos const& pos, Block const& blo
     return next && next != &block && game::setBlock(region, pos, *next);
 }
 
-// ---- connected textures (TF ConnectedTextureModel) ------------------------------------------------------
+// ---- connected textures (upstream ConnectedTextureModel) ------------------------------------------------------
 
 bool connector(Entry const& e, Block const* other) { return ctConnects(e, other); }
 
@@ -391,7 +391,7 @@ std::vector<std::array<float, 6>> tallCollision(Block const& block, Entry const&
 } // namespace
 
 namespace detail {
-/// TF ConnectableRotatedPillarBlock.canConnectTo / WallPillarBlock.canConnectTo for the neighbour
+/// upstream ConnectableRotatedPillarBlock.canConnectTo / WallPillarBlock.canConnectTo for the neighbour
 /// on `dir` of the pillar at `pos` (axis 0 x, 1 y, 2 z).
 bool pillarConnects(BlockSource& region, BlockPos const& pos, int dir, Entry const& e, int axis) {
     BlockPos     n  = offset(pos, dir);

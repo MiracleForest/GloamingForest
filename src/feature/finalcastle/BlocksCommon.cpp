@@ -62,7 +62,7 @@ std::optional<int> dirFromName(std::string const& name) {
 BlockPos offset(BlockPos const& p, int d, int n) {
     return BlockPos{p.x + kDx[static_cast<std::size_t>(d)] * n, p.y + kDy[static_cast<std::size_t>(d)] * n, p.z + kDz[static_cast<std::size_t>(d)] * n};
 }
-std::string sideState(int d) { return std::string("twilightforest:") + dirName(d); }
+std::string sideState(int d) { return std::string("gloamingforest:") + dirName(d); }
 
 // ---- level -------------------------------------------------------------------------------------------
 

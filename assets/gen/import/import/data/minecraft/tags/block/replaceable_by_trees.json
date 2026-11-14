@@ -1,19 +1,19 @@
 {
   "values": [
-    "twilightforest:hardened_dark_leaves",
-    "twilightforest:mayapple",
-    "twilightforest:fiddlehead",
-    "twilightforest:moss_patch",
-    "twilightforest:clover_patch",
-    "twilightforest:mushgloom",
-    "twilightforest:firefly",
-    "twilightforest:fallen_leaves",
-    "twilightforest:torchberry_plant",
-    "twilightforest:root_strand",
-    "twilightforest:root",
-    "twilightforest:raspberry_bush",
-    "twilightforest:blueberry_bush",
-    "twilightforest:blackberry_bush",
-    "twilightforest:maloberry_bush"
+    "gloamingforest:hardened_dark_leaves",
+    "gloamingforest:mayapple",
+    "gloamingforest:fiddlehead",
+    "gloamingforest:moss_patch",
+    "gloamingforest:clover_patch",
+    "gloamingforest:mushgloom",
+    "gloamingforest:firefly",
+    "gloamingforest:fallen_leaves",
+    "gloamingforest:torchberry_plant",
+    "gloamingforest:root_strand",
+    "gloamingforest:root",
+    "gloamingforest:raspberry_bush",
+    "gloamingforest:blueberry_bush",
+    "gloamingforest:blackberry_bush",
+    "gloamingforest:maloberry_bush"
   ]
 }

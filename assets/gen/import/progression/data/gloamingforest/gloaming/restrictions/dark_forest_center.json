@@ -1,0 +1,12 @@
+{
+  "advancements": [
+    "gloamingforest:progress_knights"
+  ],
+  "enforcement": "gloamingforest:darkness",
+  "locked_biome_toast": {
+    "count": 1,
+    "id": "gloamingforest:knight_phantom_trophy"
+  },
+  "multiplier": 0.0,
+  "structure_key": "gloamingforest:dark_tower"
+}

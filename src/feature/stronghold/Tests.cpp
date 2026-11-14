@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U25 (stronghold) selftests ("stronghold.*", testPos dx 2500..2599, rule R12; golden hash, R19).
 // The stronghold is laid out at a fixed seed and start chunk and generated on an in-memory region
@@ -164,7 +164,7 @@ std::map<std::string, int> typesOf(pieces::PieceList const& list) {
 
 std::string describe(std::map<std::string, int> const& types, pieces::PieceList const& list) {
     std::string s;
-    for (auto const& [t, n] : types) s += t.substr(std::string("twilightforest:").size()) + "=" + std::to_string(n) + " ";
+    for (auto const& [t, n] : types) s += t.substr(std::string("gloamingforest:").size()) + "=" + std::to_string(n) + " ";
     BlockBox all = list.front()->bbox;
     for (auto const& p : list)
         all = BlockBox::of(std::min(all.minX, p->bbox.minX), std::min(all.minY, p->bbox.minY), std::min(all.minZ, p->bbox.minZ), std::max(all.maxX, p->bbox.maxX),
@@ -290,7 +290,7 @@ GF_REGISTER_SELFTEST("stronghold.golden_hash", [](Context& ctx) {
             ctx.check(shields == 25, "the shield layer (2, -1, 2)..(6, -1, 6): " + std::to_string(shields));
         }
     }
-    ctx.check(mem.count("twilightforest:underbrick") + mem.count("twilightforest:mossy_underbrick") + mem.count("twilightforest:cracked_underbrick") > 500,
+    ctx.check(mem.count("gloamingforest:underbrick") + mem.count("gloamingforest:mossy_underbrick") + mem.count("gloamingforest:cracked_underbrick") > 500,
               "underbrick walls");
     ctx.check(mem.count("minecraft:mossy_stone_bricks") > 50, "mossy stone brick pillars and statues");
     ctx.check(mem.count("minecraft:stone_brick_stairs") > 50, "statue arms and feet");
@@ -305,14 +305,14 @@ GF_REGISTER_SELFTEST("stronghold.shield_faces", [](Context& ctx) {
         int         face; ///< FacingID: 0 down, 1 up, 2 north, 3 south, 4 west, 5 east
     };
     for (auto r : {Row{"down", 0}, Row{"up", 1}, Row{"north", 3}, Row{"south", 2}, Row{"west", 5}, Row{"east", 4}}) {
-        auto const* b = game::blockWithStates(blocks::kShield, {{"twilightforest:facing", r.facing}});
+        auto const* b = game::blockWithStates(blocks::kShield, {{"gloamingforest:facing", r.facing}});
         ctx.require(b != nullptr, std::string("a shield facing ") + r.facing);
         for (int f = 0; f < 6; f++)
             ctx.check(blocks::canBreakShieldFrom(*b, f) == (f == r.face), std::string("facing ") + r.facing + ", face " + std::to_string(f));
     }
     // minable at all (the inside face's digSpeed(stone) / 1.5 / 100 a tick: 7.5 s by hand), never
     // by an explosion
-    if (auto const* b = game::blockWithStates(blocks::kShield, {{"twilightforest:facing", "north"}})) {
+    if (auto const* b = game::blockWithStates(blocks::kShield, {{"gloamingforest:facing", "north"}})) {
         float speed = b->mDirectData->mDestroySpeed;
         ctx.check(speed > 0.0f, "the shield can be mined (destroy speed " + std::to_string(speed) + ")");
         ctx.check(b->mDirectData->mExplosionResistance > 1000.0f, "explosions cannot break it");
@@ -333,13 +333,13 @@ GF_REGISTER_SELFTEST("stronghold.pedestal", [](Context& ctx) -> ll::coro::CoroTa
         auto& p = ctx.player();
         p.teleport(Vec3{ped.x + 3.5f, float(ped.y), ped.z + 0.5f}, DimensionType(ped.dim));
         co_await ctx.ticks(2);
-        long long statBefore = gf::stats::value(ctx.player(), "twilightforest:trophy_pedestals_activated");
-        ctx.require(ctx.setBlock(ped.offset(0, 1, 0), "twilightforest:naga_trophy"), "a naga trophy on top");
+        long long statBefore = gf::stats::value(ctx.player(), "gloamingforest:trophy_pedestals_activated");
+        ctx.require(ctx.setBlock(ped.offset(0, 1, 0), "gloamingforest:naga_trophy"), "a naga trophy on top");
         blocks::neighborChanged(*region, game::blockPos(ped));
         co_await ctx.ticks(2);
-        ctx.check(gf::stats::value(ctx.player(), "twilightforest:trophy_pedestals_activated") > statBefore, "trophy_pedestals_activated counts it");
-        ctx.check(game::statesOf(region->getBlock(game::blockPos(ped)))["twilightforest:active"] == "true" ||
-                      game::statesOf(region->getBlock(game::blockPos(ped)))["twilightforest:active"] == "1",
+        ctx.check(gf::stats::value(ctx.player(), "gloamingforest:trophy_pedestals_activated") > statBefore, "trophy_pedestals_activated counts it");
+        ctx.check(game::statesOf(region->getBlock(game::blockPos(ped)))["gloamingforest:active"] == "true" ||
+                      game::statesOf(region->getBlock(game::blockPos(ped)))["gloamingforest:active"] == "1",
                   "the pedestal is active");
         ctx.check(ctx.blockAt(in1) != blocks::kShield && ctx.blockAt(in2) != blocks::kShield && ctx.blockAt(in3) != blocks::kShield, "the shields within 5 are gone");
         ctx.check(ctx.blockAt(out) == blocks::kShield, "a shield 6 away stays");
@@ -356,17 +356,17 @@ GF_REGISTER_SELFTEST("stronghold.pedestal", [](Context& ctx) -> ll::coro::CoroTa
         auto shield = ped.offset(1, 0, 0);
         ctx.require(ctx.setBlock(shield, blocks::kShield), "a shield");
         auto& p = ctx.player();
-        gf::progression::revoke(p, "twilightforest:progress_lich");
+        gf::progression::revoke(p, "gloamingforest:progress_lich");
         p.teleport(Vec3{ped.x + 3.5f, float(ped.y), ped.z + 0.5f}, DimensionType(ped.dim));
         co_await ctx.ticks(2);
-        ctx.require(ctx.setBlock(ped.offset(0, 1, 0), "twilightforest:lich_trophy"), "a lich trophy on top");
+        ctx.require(ctx.setBlock(ped.offset(0, 1, 0), "gloamingforest:lich_trophy"), "a lich trophy on top");
         ctx.check(!blocks::neighborChanged(*region, game::blockPos(ped)), "an unworthy player cannot activate it");
         ctx.check(ctx.blockAt(shield) == blocks::kShield, "the shield stays");
         // with progress_lich it activates
-        gf::progression::grant(ctx.player(), "twilightforest:progress_lich");
+        gf::progression::grant(ctx.player(), "gloamingforest:progress_lich");
         ctx.check(blocks::neighborChanged(*region, game::blockPos(ped)), "a worthy player activates it");
         ctx.check(ctx.blockAt(shield) != blocks::kShield, "and the shield is gone");
-        gf::progression::revoke(ctx.player(), "twilightforest:progress_lich");
+        gf::progression::revoke(ctx.player(), "gloamingforest:progress_lich");
         ctx.setBlock(ped.offset(0, 1, 0), "minecraft:air");
         ctx.setBlock(ped, "minecraft:air");
     }
@@ -405,7 +405,7 @@ GF_REGISTER_SELFTEST("stronghold.mob_attributes", [](Context& ctx) -> ll::coro::
     ctx.check(lower && lower->getFirstPassenger() && lower->getFirstPassenger()->getTypeName() == id::UpperGoblinKnight, "an upper goblin knight rides it");
     // the knight phantom's equipment (populateDefaultEquipmentSlots) and its numbering
     if (auto* k = fe::actorById(spawned[0])) {
-        ctx.check(game::items::idOf(k->getCarriedItem()) == "twilightforest:knightmetal_sword", "the knight holds a knightmetal sword: " + game::items::idOf(k->getCarriedItem()));
+        ctx.check(game::items::idOf(k->getCarriedItem()) == "gloamingforest:knightmetal_sword", "the knight holds a knightmetal sword: " + game::items::idOf(k->getCarriedItem()));
         ctx.check(phantom::numberOf(*k) == 0, "a lone knight is number 0");
     }
     for (auto uid : spawned)
@@ -537,7 +537,7 @@ GF_REGISTER_SELFTEST("stronghold.phantom_fight", [](Context& ctx) -> ll::coro::C
         if (auto* a = fe::actorById(uid)) {
             int n = phantom::numberOf(*a);
             numbers.insert(n);
-            char const* weapon = n % 3 == 0 ? "twilightforest:knightmetal_sword" : n % 3 == 1 ? "twilightforest:knightmetal_axe" : "twilightforest:knightmetal_pickaxe";
+            char const* weapon = n % 3 == 0 ? "gloamingforest:knightmetal_sword" : n % 3 == 1 ? "gloamingforest:knightmetal_axe" : "gloamingforest:knightmetal_pickaxe";
             ctx.check(game::items::idOf(a->getCarriedItem()) == weapon, "knight " + std::to_string(n) + " holds " + game::items::idOf(a->getCarriedItem()));
             auto h = ge::home(*fe::asMob(*a));
             ctx.check(h && h->pos.x == home.x && h->pos.y == home.y && h->pos.z == home.z && h->radius == 30, "home at the spawner, radius 30");
@@ -556,21 +556,21 @@ GF_REGISTER_SELFTEST("stronghold.phantom_fight", [](Context& ctx) -> ll::coro::C
     for (std::size_t i = 1; i < knights.size(); i++)
         if (auto* a = fe::actorById(knights[i])) a->kill();
     co_await ctx.ticks(30);
-    ctx.check(ctx.blockAt(home.offset(0, -1, 0)) != "twilightforest:dark_chest", "no chest while a knight lives");
+    ctx.check(ctx.blockAt(home.offset(0, -1, 0)) != "gloamingforest:dark_chest", "no chest while a knight lives");
     auto* last = fe::actorById(knights[0]);
     ctx.require(last && last->isAlive(), "the last knight lives");
     ctx.check(phantom::numberOf(*last) == 0, "the survivor is number 0");
     last->kill();
     co_await ctx.ticks(5);
     if (auto* a = fe::actorById(knights[0])) ctx.check(phantom::isOver(*a), "IT_IS_OVER on the last knight");
-    for (int t = 0; t < 160 && ctx.blockAt(home.offset(0, -1, 0)) != "twilightforest:dark_chest"; ++t) co_await ctx.ticks(1);
-    ctx.check(ctx.blockAt(home.offset(0, -1, 0)) == "twilightforest:dark_chest", "the dark chest with the loot at the home point: " + ctx.blockAt(home.offset(0, -1, 0)));
+    for (int t = 0; t < 160 && ctx.blockAt(home.offset(0, -1, 0)) != "gloamingforest:dark_chest"; ++t) co_await ctx.ticks(1);
+    ctx.check(ctx.blockAt(home.offset(0, -1, 0)) == "gloamingforest:dark_chest", "the dark chest with the loot at the home point: " + ctx.blockAt(home.offset(0, -1, 0)));
     if (auto* region = game::regionOf(home.dim)) {
         auto below = home.offset(0, -1, 0);
         bool trophy = false;
         if (auto inv = gf::inventory::find(*region, game::blockPos(below)); inv && inv->get) {
             for (int i = 0; i < inv->slots; ++i)
-                if (game::items::idOf(inv->get(below, i)) == "twilightforest:knight_phantom_trophy") trophy = true;
+                if (game::items::idOf(inv->get(below, i)) == "gloamingforest:knight_phantom_trophy") trophy = true;
             ctx.check(trophy, "the chest holds the knight phantom trophy");
             if (inv->set)
                 for (int i = 0; i < inv->slots; ++i) inv->set(below, i, game::items::empty());
@@ -596,7 +596,7 @@ struct WalkEnforcedScope {
     ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
 };
 
-/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,
 /// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
 /// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
 /// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
@@ -607,7 +607,7 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
     ctx.check(d->conquerable, key + " is conquerable");
     if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
     else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
-    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "gloamingforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
     WalkEnforcedScope enforced;
     core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
     gf::landmark::ext::ScopedStart forced(key, site);
@@ -647,10 +647,10 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 
 } // namespace
 
-// The knight stronghold against TF's KnightStrongholdStructure record: locked by
+// The knight stronghold against upstream's KnightStrongholdStructure record: locked by
 // progress_trophy_pedestal, the tfstronghold hint book, conquerable; its protected pieces refuse a
 // player without progress_trophy_pedestal.
-GF_REGISTER_SELFTEST("stronghold.landmark_walk", [](Context& ctx) { walkLandmark(ctx, id::Stronghold, "twilightforest:progress_trophy_pedestal", "tfstronghold", 150507); });
+GF_REGISTER_SELFTEST("stronghold.landmark_walk", [](Context& ctx) { walkLandmark(ctx, id::Stronghold, "gloamingforest:progress_trophy_pedestal", "tfstronghold", 150507); });
 
 // The real conquest (KnightPhantom#postmortem -> LandmarkUtil#markStructureConquered): a knight
 // stronghold start forced far from the test rows (its chunks never load: nothing is placed), a lone

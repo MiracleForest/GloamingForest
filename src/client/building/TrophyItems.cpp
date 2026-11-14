@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/ISTER.java
-//   src/main/java/twilightforest/client/renderer/block/TrophyRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/ISTER.java
+//   src/main/java/gloamingforest/client/renderer/block/TrophyRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -68,7 +68,7 @@ struct Head {
 Head headOf(std::string const& boss) {
     static std::map<std::string, std::pair<std::string, std::string>> const textures{
         {"naga", {"nagahead", ""}},
-        {"lich", {"twilightlich64", ""}},
+        {"lich", {"gloaminglich64", ""}},
         {"hydra", {"hydra4", ""}},
         {"ur_ghast", {"towerboss", ""}},
         {"knight_phantom", {"phantomskeleton", "../models/armor/phantom_layer_1"}},
@@ -80,11 +80,11 @@ Head headOf(std::string const& boss) {
     Head h;
     auto it = textures.find(boss);
     if (it == textures.end()) return h;
-    h.geo     = "geometry.twilightforest." + boss + "_trophy";
-    h.texture = "textures/twilightforest/entity/" + it->second.first;
+    h.geo     = "geometry.gloamingforest." + boss + "_trophy";
+    h.texture = "textures/gloamingforest/entity/" + it->second.first;
     if (!it->second.second.empty()) {
         h.geo2     = h.geo + (boss == "knight_phantom" ? "_armor" : "_lines");
-        h.texture2 = boss == "knight_phantom" ? "textures/twilightforest/models/armor/phantom_layer_1" : "textures/twilightforest/entity/questram_lines";
+        h.texture2 = boss == "knight_phantom" ? "textures/gloamingforest/models/armor/phantom_layer_1" : "textures/gloamingforest/entity/questram_lines";
     }
     // ISTER lifts the ur-ghast 0.5; F2's floor geometry already holds UrGhastModel#renderTrophy's
     // block-only translate (0, -1, 0) under scale(-1, -1, 1) (the body 1 block higher than in GUI form)
@@ -129,7 +129,7 @@ struct Bone {
     int         tentacle = -1, segment = -1;
 };
 
-constexpr char const* kUrGhastGeo = "geometry.twilightforest.ur_ghast_trophy";
+constexpr char const* kUrGhastGeo = "geometry.gloamingforest.ur_ghast_trophy";
 
 /// The geometry `identifier` of a geometry file (null json: not in it).
 nlohmann::json geometryIn(std::filesystem::path const& file, std::string const& identifier) {
@@ -274,7 +274,7 @@ bool drawUrGhastAnimated(r::RenderContext& ctx, std::string const& texture, floa
 /// The placed ur-ghast trophy (TrophyRenderer#render with the block entity's animation progress):
 /// the block geometry has the head without tentacles (trophies.py); the tentacles wave here. The
 /// animation progress (TrophyBlockEntity#getAnimationProgress: the block entity's client ticks plus
-/// the partial tick) is the shared client tick count: TF counts each block entity's ticks from its
+/// the partial tick) is the shared client tick count: upstream counts each block entity's ticks from its
 /// load, so only the phase differs.
 void drawPlacedUrGhast(r::RenderContext& ctx, BlockPos const& pos, Block const& block) {
     bool  wall = fb::idOf(block).ends_with("_wall_trophy");
@@ -282,14 +282,14 @@ void drawPlacedUrGhast(r::RenderContext& ctx, BlockPos const& pos, Block const& 
     if (wall) {
         // TrophyRenderer: 22.5 * (2 + get2DDataValue) * 4 (south 180, west 270, north 0, east 90)
         static std::map<std::string, float> const turn{{"north", 0.f}, {"east", 90.f}, {"south", 180.f}, {"west", 270.f}};
-        auto it = turn.find(fb::stateOf(block, "twilightforest:facing"));
+        auto it = turn.find(fb::stateOf(block, "gloamingforest:facing"));
         yaw     = it == turn.end() ? 0.f : it->second;
     } else {
-        yaw = 22.5f * static_cast<float>(std::max(0, fb::intState(block, "twilightforest:rotation", 0)));
+        yaw = 22.5f * static_cast<float>(std::max(0, fb::intState(block, "gloamingforest:rotation", 0)));
     }
     // the ur-ghast is translated (0.5, 0, 0.5) on the floor and on the wall alike
     Vec3 at{static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + 0.5f};
-    drawUrGhastAnimated(ctx, "textures/twilightforest/entity/towerboss", clientTimeWithPartial(), glm::mat4{1.f}, at, yaw, true);
+    drawUrGhastAnimated(ctx, "textures/gloamingforest/entity/towerboss", clientTimeWithPartial(), glm::mat4{1.f}, at, yaw, true);
 }
 
 void drawGui(r::RenderContext& ctx, std::string const& boss) {
@@ -323,17 +323,17 @@ struct TrophyItemsModule {
             lastTickNs().store(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count(), std::memory_order_relaxed);
         });
         for (auto const& boss : fb::trophyBosses())
-            r::registerItemRenderer("twilightforest:" + boss + "_trophy", [boss](r::RenderContext& ctx, ItemStack const&, r::ItemContext where) {
+            r::registerItemRenderer("gloamingforest:" + boss + "_trophy", [boss](r::RenderContext& ctx, ItemStack const&, r::ItemContext where) {
                 if (where == r::Gui) drawGui(ctx, boss);
             }, r::Gui);
-        for (auto const* id : {"twilightforest:ur_ghast_trophy", "twilightforest:ur_ghast_wall_trophy"})
+        for (auto const* id : {"gloamingforest:ur_ghast_trophy", "gloamingforest:ur_ghast_wall_trophy"})
             r::registerBlockRenderer(id, [](r::RenderContext& ctx, BlockPos const& pos, Block const& block, float) { drawPlacedUrGhast(ctx, pos, block); });
         log().info("building: trophy item renderers registered");
     }
     void uninstall() {
-        for (auto const& boss : fb::trophyBosses()) r::unregisterItemRenderer("twilightforest:" + boss + "_trophy");
-        r::unregisterBlockRenderer("twilightforest:ur_ghast_trophy");
-        r::unregisterBlockRenderer("twilightforest:ur_ghast_wall_trophy");
+        for (auto const& boss : fb::trophyBosses()) r::unregisterItemRenderer("gloamingforest:" + boss + "_trophy");
+        r::unregisterBlockRenderer("gloamingforest:ur_ghast_trophy");
+        r::unregisterBlockRenderer("gloamingforest:ur_ghast_wall_trophy");
     }
 };
 

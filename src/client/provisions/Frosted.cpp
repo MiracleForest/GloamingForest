@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/renderer/entity/layers/IceLayer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/renderer/entity/layers/IceLayer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -49,7 +49,7 @@ namespace gf::client::provisions {
 
 namespace {
 
-constexpr char kIceGeo[]     = "geometry.twilightforest.provisions.ice_cube";
+constexpr char kIceGeo[]     = "geometry.gloamingforest.provisions.ice_cube";
 constexpr char kIceTexture[] = "textures/blocks/ice";
 
 struct State {
@@ -83,7 +83,7 @@ void drawIce(render::RenderContext& ctx, Actor& entity, int amplifier, float par
     core::jrand::LegacyRandom random(seed);
     // (int) (bbHeight / 0.4F) + (int) (frost.amount() / FROST_MULTIPLIER) + 1, the amount being -0.15 x (amplifier + 1)
     int   cubes   = static_cast<int>(h / 0.4f) + (amplifier + 1) + 1;
-    float special = entity.getTypeName() == "twilightforest:death_tome" ? 1.0f : 0.0f;
+    float special = entity.getTypeName() == "gloamingforest:death_tome" ? 1.0f : 0.0f;
     Vec3  pos     = entity.getInterpolatedPosition(partial);
     pos.y += entity.getFeetPos().y - entity.getPosition().y; // the feet (a player's position is its eyes)
     float yaw = entity.getInterpolatedBodyRot(partial);

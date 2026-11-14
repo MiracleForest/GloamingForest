@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U11 (tgear.*, dx 1100..1199): the gear, the modifier recipes and their trigger, the vest /
 // gloves merge, the command, the per-tick modifiers, efficient eater, never-break, the belt swap, the
-// item display, the zoom channel and the red thread placement. Behaviour from TF 4.8 (see the headers of
+// item display, the zoom channel and the red thread placement. Behaviour from upstream 4.8 (see the headers of
 // the files under test).
 #include <array>
 #include <cmath>
@@ -89,7 +89,7 @@ GF_REGISTER_SELFTEST("tgear.items", [](Context& ctx) {
     ctx.check(tg::hasModifier(make(tg::ids::kBelt), tg::ids::kSwapHotbarAbility) && tg::hasContainer(make(tg::ids::kBelt)), "the belt swaps the hotbar and has a container");
     ctx.check(tg::insertableModifiers(make(tg::ids::kGoggles)).empty(), "fresh goggles have no insertable modifier");
     // the description components' arguments: side_step's {keybind: key.left} / {keybind: key.right}
-    auto side = tg::modifierDescription("twilightforest:side_step", [](std::string const& key, std::string const& fallback) {
+    auto side = tg::modifierDescription("gloamingforest:side_step", [](std::string const& key, std::string const& fallback) {
         return std::string(gf::translate(key, fallback, "en_US"));
     });
     ctx.check(side.size() == 1 && side[0].find("%s") == std::string::npos && side[0].find("A or D") != std::string::npos,
@@ -98,12 +98,12 @@ GF_REGISTER_SELFTEST("tgear.items", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("tgear.modifier_recipes", [](Context& ctx) {
     int checked = 0;
-    for (auto const* type : {"twilightforest:travellers_gear_modifier_shaped_recipe", "twilightforest:travellers_gear_modifier_shapeless_recipe"}) {
+    for (auto const* type : {"gloamingforest:travellers_gear_modifier_shaped_recipe", "gloamingforest:travellers_gear_modifier_shapeless_recipe"}) {
         for (auto const* r : gf::recipes::ofType(type)) {
-            if (!r->id.starts_with("twilightforest:add_modifier_to_travellers_gear/")) continue;
+            if (!r->id.starts_with("gloamingforest:add_modifier_to_travellers_gear/")) continue;
             auto mod  = r->data.value("modifier_key", std::string());
             auto slash = r->id.find('/');
-            auto gear = "twilightforest:" + r->id.substr(slash + 1, r->id.find('/', slash + 1) - slash - 1);
+            auto gear = "gloamingforest:" + r->id.substr(slash + 1, r->id.find('/', slash + 1) - slash - 1);
             std::vector<ItemStack> in{make(gear)};
             if (mod == tg::ids::kSwapHotbar) in.push_back(make(tg::ids::kBelt));
             Grid g(in);
@@ -119,7 +119,7 @@ GF_REGISTER_SELFTEST("tgear.modifier_recipes", [](Context& ctx) {
     }
     ctx.check(checked == 26, "26 modifier recipes (got " + std::to_string(checked) + ")");
     // the BP potion layouts are special too
-    ctx.check(gf::recipes::internal::isSpecial("twilightforest:add_modifier_to_travellers_gear/travellers_vest/stealth_modifier_1"), "the long invisibility layout crafts stealth");
+    ctx.check(gf::recipes::internal::isSpecial("gloamingforest:add_modifier_to_travellers_gear/travellers_vest/stealth_modifier_1"), "the long invisibility layout crafts stealth");
     // free slots: three modifiers fill the goggles
     auto g = make(tg::ids::kGoggles);
     for (auto const* m : {tg::ids::kAutoRepair, tg::ids::kAllNight, tg::ids::kItemDisplay}) ctx.check(tg::addModifier(g, m), std::string("add ") + m);
@@ -149,7 +149,7 @@ GF_REGISTER_SELFTEST("tgear.swap_hotbar_transfer", [](Context& ctx) {
 GF_REGISTER_SELFTEST("tgear.vest_gloves_merge", [](Context& ctx) {
     Grid g({make(tg::ids::kVest), make(tg::ids::kGloves)});
     ctx.check(tg::mergeRecipeMatches(g.grid), "vest + gloves match");
-    auto out = gf::recipes::internal::assembleSpecial("twilightforest:travellers_vest_gloves_merge_recipe", g.grid);
+    auto out = gf::recipes::internal::assembleSpecial("gloamingforest:travellers_vest_gloves_merge_recipe", g.grid);
     ctx.require(out.has_value(), "merged");
     ctx.check(items::idOf(*out) == tg::ids::kVest && tg::hasGloves(*out), "a vest with gloves");
     Grid again({*out, make(tg::ids::kGloves)});
@@ -164,7 +164,7 @@ GF_REGISTER_SELFTEST("tgear.add_modifier_trigger", [](Context& ctx) -> ll::coro:
     static bool listening = false;
     if (!listening) {
         listening = true;
-        gf::progression::onTrigger("twilightforest:add_modifier", [](Player&, nlohmann::json const& data) {
+        gf::progression::onTrigger("gloamingforest:add_modifier", [](Player&, nlohmann::json const& data) {
             fired.push_back(data.value("modifier", std::string()));
         });
     }
@@ -185,7 +185,7 @@ GF_REGISTER_SELFTEST("tgear.command", [](Context& ctx) {
     auto& p   = ctx.player();
     auto  run = [&](bool add, std::string const& id) { return tg::runCommand(&p, add, id); };
     p.setSelectedItem(make("minecraft:stick"));
-    auto r = run(true, "twilightforest:nope");
+    auto r = run(true, "gloamingforest:nope");
     ctx.check(!r.ok && r.message.find("not a valid") != std::string::npos, "unknown modifier first: " + r.message);
     r = run(true, "auto_repair");
     ctx.check(!r.ok && r.message.find("minecraft:auto_repair") != std::string::npos, "no namespace is minecraft's: " + r.message);
@@ -213,10 +213,10 @@ GF_REGISTER_SELFTEST("tgear.command", [](Context& ctx) {
     ctx.check(!r.ok && r.message.find("is not applied") != std::string::npos, "no modifier: " + r.message);
     p.setSelectedItem(ItemStack::EMPTY_ITEM());
     // through the command line: the console is no player
-    auto c = gf::selftest::runServerCommand("tf travellers_gear add_modifier twilightforest:haste");
+    auto c = gf::selftest::runServerCommand("gloamingforest travellers_gear add_modifier gloamingforest:haste");
     ctx.check(!c.ok, "the console cannot run it: " + c.messages);
-    // a word that is no registry key reaches the command: TF's invalid_modifier, not a parse error
-    auto bad = gf::selftest::runServerCommand("tf travellers_gear add_modifier twilightforest:nope");
+    // a word that is no registry key reaches the command: upstream's invalid_modifier, not a parse error
+    auto bad = gf::selftest::runServerCommand("gloamingforest travellers_gear add_modifier gloamingforest:nope");
     ctx.check(!bad.ok && bad.messages.find("not a valid") != std::string::npos, "an unknown key is not a modifier: " + bad.messages);
 });
 
@@ -348,7 +348,7 @@ GF_REGISTER_SELFTEST("tgear.perfect_dodge", [](Context& ctx) -> ll::coro::CoroTa
         ctx.require(arrow != nullptr, "an arrow is shot at the wearer");
         // the hit through the combat contract, as the arrow's impact deals it
         ctx.check(!gf::combat::hurt(p, 4.f, "minecraft:arrow", &s, arrow), "the arrow's damage is cancelled");
-        // the same projectile's explosion on that impact goes with it (TF cancels the whole impact)
+        // the same projectile's explosion on that impact goes with it (upstream cancels the whole impact)
         ctx.check(!gf::combat::hurt(p, 2.f, "minecraft:explosion", &s, arrow), "the dodged impact's explosion is cancelled too");
     }
     co_await ctx.ticks(30);
@@ -444,10 +444,10 @@ GF_REGISTER_SELFTEST("tgear.item_display", [](Context& ctx) {
     p.setArmor(Slot::Head, goggles);
     ctx.check(tg::cycleMapSlot(p), "cycle 1 changed the map");
     auto dd = tg::displayOf(p.getArmor(Slot::Head));
-    ctx.check(dd && dd->chosenMapSlot == 1 && tg::lastCycleSound() == "item.twilightforest.travellers_gear.cycle_maps", "0 -> 1 with cycle_maps (" + tg::lastCycleSound() + ")");
+    ctx.check(dd && dd->chosenMapSlot == 1 && tg::lastCycleSound() == "item.gloamingforest.travellers_gear.cycle_maps", "0 -> 1 with cycle_maps (" + tg::lastCycleSound() + ")");
     ctx.check(tg::cycleMapSlot(p), "cycle 2 changed the map");
     dd = tg::displayOf(p.getArmor(Slot::Head));
-    ctx.check(dd && dd->chosenMapSlot == -1 && tg::lastCycleSound() == "item.twilightforest.travellers_gear.cycle_maps_empty", "1 -> -1 (none shown) with cycle_maps_empty (" + tg::lastCycleSound() + ")");
+    ctx.check(dd && dd->chosenMapSlot == -1 && tg::lastCycleSound() == "item.gloamingforest.travellers_gear.cycle_maps_empty", "1 -> -1 (none shown) with cycle_maps_empty (" + tg::lastCycleSound() + ")");
     ctx.check(tg::cycleMapSlot(p), "cycle 3 changed the map");
     dd = tg::displayOf(p.getArmor(Slot::Head));
     ctx.check(dd && dd->chosenMapSlot == 0, "-1 -> 0");
@@ -536,8 +536,8 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
     }
     {
         auto const& placed = region->getBlock(bp);
-        ctx.check(gf::game::intState(placed, "twilightforest:down").value_or(0) == 1, "the thread lies on the floor (looking down)");
-        ctx.check(gf::game::intState(placed, "twilightforest:north").value_or(0) == 0, "and not on the clicked wall");
+        ctx.check(gf::game::intState(placed, "gloamingforest:down").value_or(0) == 1, "the thread lies on the floor (looking down)");
+        ctx.check(gf::game::intState(placed, "gloamingforest:north").value_or(0) == 0, "and not on the clicked wall");
         ctx.check(tg::canAttachRedThread(*region, bp, 2) && !tg::canAttachRedThread(*region, bp, 1), "stone supports, air does not");
     }
     {
@@ -554,15 +554,15 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
     {
         auto& p = ctx.player();
         auto const& placed = region->getBlock(bp);
-        ctx.check(gf::game::intState(placed, "twilightforest:north").value_or(0) == 1 && gf::game::intState(placed, "twilightforest:down").value_or(0) == 1, "use-on added the north face");
+        ctx.check(gf::game::intState(placed, "gloamingforest:north").value_or(0) == 1 && gf::game::intState(placed, "gloamingforest:down").value_or(0) == 1, "use-on added the north face");
         ctx.check(items::countOf(p.getSelectedItem()) == 4 || p.isCreative(), "one thread was used (" + std::to_string(items::countOf(p.getSelectedItem())) + " left)");
-        // the loot: one thread per face (twilightforest:blocks/red_thread)
+        // the loot: one thread per face (gloamingforest:blocks/red_thread)
         gf::loot::LootContext lc;
         lc.region = region;
         lc.block  = &placed;
         lc.origin = Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f};
         int n = 0;
-        for (auto const& s : gf::loot::roll("twilightforest:blocks/red_thread", lc))
+        for (auto const& s : gf::loot::roll("gloamingforest:blocks/red_thread", lc))
             if (items::idOf(s) == tg::ids::kRedThread) n += items::countOf(s);
         ctx.check(n == 2, "two faces drop two threads (got " + std::to_string(n) + ")");
         p.setSelectedItem(ItemStack::EMPTY_ITEM());
@@ -572,7 +572,7 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
     co_await ctx.ticks(2);
     {
         auto const& placed = region->getBlock(bp);
-        ctx.check(gf::game::blockId(placed) == tg::ids::kRedThread && gf::game::intState(placed, "twilightforest:north").value_or(0) == 0 && gf::game::intState(placed, "twilightforest:down").value_or(0) == 1,
+        ctx.check(gf::game::blockId(placed) == tg::ids::kRedThread && gf::game::intState(placed, "gloamingforest:north").value_or(0) == 0 && gf::game::intState(placed, "gloamingforest:down").value_or(0) == 1,
                   "the unsupported north face is gone, the floor face stays");
     }
 });
@@ -593,7 +593,7 @@ GF_REGISTER_SELFTEST("tgear.all_night_goggles", [](Context& ctx) -> ll::coro::Co
     {
         auto& p        = ctx.player();
         auto  insomnia = p.getEntityContext().tryGetComponent<InsomniaComponent>();
-        ctx.check(insomnia && insomnia->mTimeSinceRest >= 100000, "the time since rest runs on (TF only denies the spawn)");
+        ctx.check(insomnia && insomnia->mTimeSinceRest >= 100000, "the time since rest runs on (upstream only denies the spawn)");
         clearArmor(p);
         auto at = p.getFeetPos();
         ctx.check(!tg::deniesPhantomAt(static_cast<int>(p.getDimensionId()), Vec3{at.x, at.y + 25.f, at.z}), "without the goggles phantoms may spawn");

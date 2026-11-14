@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Contract "synth" (F3): 16-bit PCM WAV files (previews of synthesized sounds).
 #include "core/synth/Wav.h"
 

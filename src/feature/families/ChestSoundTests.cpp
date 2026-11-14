@@ -5,7 +5,7 @@
 // player opens a chest (onOpen) and CHEST_CLOSE when the last one closes it (onClose), through
 // ChestBlockEntity#playSound: nothing for a LEFT half, a single chest at its centre, a RIGHT half
 // between the two halves, volume 0.5F, pitch random.nextFloat() * 0.1F + 0.9F. TrappedChestBlock
-// uses the same block entity logic. TF's chests of every wood are those blocks (TFBlocks:
+// uses the same block entity logic. upstream's chests of every wood are those blocks (TFBlocks:
 // ChestBlock / TrappedChestBlock with BlockEntityType.CHEST).
 //
 // Here the inventory contract (F10) counts the openers and plays the sound through fx; these tests
@@ -346,11 +346,11 @@ bool javaValues(HeardSound const& h, Vec3 const& where) {
         && close(h.pos.z, where.z);
 }
 
-constexpr char kFacing[] = "twilightforest:facing";
-constexpr char kType[]   = "twilightforest:type";
+constexpr char kFacing[] = "gloamingforest:facing";
+constexpr char kType[]   = "gloamingforest:type";
 
-/// TF's chest woods (TFBlocks: TWILIGHT_OAK_CHEST ... SORTING_TRAPPED_CHEST).
-constexpr char const* kWoods[] = {"twilight_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
+/// upstream's chest woods (TFBlocks: GLOAMING_OAK_CHEST ... SORTING_TRAPPED_CHEST).
+constexpr char const* kWoods[] = {"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
 
 SimulatedPlayer* simPlayer(Context& ctx, std::int64_t uid) {
     auto* region = ctx.region();
@@ -398,18 +398,18 @@ void closeScreen(Context& ctx) { gf::net::injectFromClient(ctx.player(), "screen
 } // namespace
 
 GF_REGISTER_SELFTEST("families.chest_sounds", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // every TF chest and trapped chest: opened by a click, the open sound plays once in the same
+    // every upstream chest and trapped chest: opened by a click, the open sound plays once in the same
     // tick, at the chest's centre, volume 0.5, pitch 0.9..1.0; closed, the close sound the same way;
     // nothing else of the game's own (no LevelSoundEvent ChestOpen / ChestClosed: one sound each)
     std::vector<std::string> ids;
     for (auto const* wood : kWoods)
-        for (auto const* kind : {"_chest", "_trapped_chest"}) ids.push_back(std::string("twilightforest:") + wood + kind);
+        for (auto const* kind : {"_chest", "_trapped_chest"}) ids.push_back(std::string("gloamingforest:") + wood + kind);
     std::erase_if(ids, [](std::string const& id) { return !gf::game::blockWith(id) || !fam::entryOf(id); });
     if (ids.empty()) {
-        ctx.info("no TF chests in this build: skipped");
+        ctx.info("no upstream chests in this build: skipped");
         co_return;
     }
-    ctx.check(ids.size() == 16, std::to_string(ids.size()) + " of TF's 16 chests and trapped chests are in this build");
+    ctx.check(ids.size() == 16, std::to_string(ids.size()) + " of upstream's 16 chests and trapped chests are in this build");
     auto box = co_await ctx.flatArea(6140, 5);
     auto p   = ctx.testPos(6140, 1);
     p.x += 2;
@@ -502,7 +502,7 @@ GF_REGISTER_SELFTEST("families.sound_events", [](Context& ctx) {
         auto it = soundOf.find(e->id);
         if ((e->family == fam::Family::HangingSign || e->family == fam::Family::WallHangingSign) && !e->params.contains("sound")) {
             // CeilingHangingSignBlock / WallHangingSignBlock: properties.sound(woodType.hangingSignSoundType()),
-            // SoundType.HANGING_SIGN for TF's wood types
+            // SoundType.HANGING_SIGN for upstream's wood types
             ++hanging;
             auto byHand = manualSound.find(e->id);
             if (it != soundOf.end() && byHand != manualSound.end() && byHand->second == it->second) {
@@ -538,9 +538,9 @@ GF_REGISTER_SELFTEST("families.sound_events", [](Context& ctx) {
 GF_REGISTER_SELFTEST("families.chest_sounds_double", [](Context& ctx) -> ll::coro::CoroTask<> {
     // a double chest: one sound between the halves (the RIGHT half's; the LEFT half plays none),
     // whichever half is clicked; the close sound the same way once the last opener leaves
-    constexpr char kChest[] = "twilightforest:canopy_trapped_chest";
+    constexpr char kChest[] = "gloamingforest:canopy_trapped_chest";
     if (!gf::game::blockWith(kChest) || !fam::entryOf(kChest)) {
-        ctx.info("no TF chests in this build: skipped");
+        ctx.info("no upstream chests in this build: skipped");
         co_return;
     }
     auto box = co_await ctx.flatArea(6140, 5);
@@ -581,7 +581,7 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
     // Java: BlockItem#place plays the block's SoundType#getPlaceSound once at the block, also when a
     // SimpleWaterloggedBlock takes the water it is placed into. Bedrock's placing client plays the
     // place sound of a block placed into water as LevelSoundEvent PlaceInWater (the type's
-    // place_in_water, which tools/families defines as its place event): a player placing a TF waterloggable slab or stairs
+    // place_in_water, which tools/families defines as its place event): a player placing an upstream waterloggable slab or stairs
     // into a water source makes exactly one place sound (PlaceInWater, Place and ItemUseOn are all
     // counted, so a second sound of another kind fails the test).
     // These are the server's sends: the game broadcasts LevelSoundEvent Place (the type's place
@@ -591,7 +591,7 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
     // (tools/e2e/client/scenarios/families.ps1) places a slab into water and fails on a content-log
     // "No sound found ... 'place_in_water'" line.
     std::string const kPlace = "event:" + std::to_string(static_cast<int>(SharedTypes::Legacy::LevelSoundEvent::Place));
-    constexpr char const* kCandidates[] = {"twilightforest:twilight_oak_slab", "twilightforest:castle_brick_stairs"};
+    constexpr char const* kCandidates[] = {"gloamingforest:gloaming_oak_slab", "gloamingforest:castle_brick_stairs"};
     std::vector<std::string> ids;
     for (auto const* id : kCandidates) {
         auto const* e = fam::entryOf(id);
@@ -601,7 +601,7 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
         }
     }
     if (ids.empty()) {
-        ctx.info("no TF waterloggable slabs or stairs in this build: skipped");
+        ctx.info("no upstream waterloggable slabs or stairs in this build: skipped");
         co_return;
     }
     auto box = co_await ctx.flatArea(6143, 8); // (both basins, x - 1..x + 1 of p.x + 1 and p.x + 5, and their floor)
@@ -666,10 +666,10 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
 
 GF_REGISTER_SELFTEST("families.water_slab_probe", [](Context& ctx) {
     // the client e2e's check (tools/e2e/client/scenarios/families.ps1) that the slab its player placed
-    // into water from the water's edge is there and holds the water, on the server: a TF waterloggable
+    // into water from the water's edge is there and holds the water, on the server: an upstream waterloggable
     // slab with water in its extra layer within a few blocks of a player that is no simulated player.
     // Without such a player (the server scenarios, full) there is nothing to look at.
-    constexpr char kSlab[] = "twilightforest:twilight_oak_slab";
+    constexpr char kSlab[] = "gloamingforest:gloaming_oak_slab";
     auto level = ll::service::getLevel();
     if (!level) {
         ctx.info("no level");

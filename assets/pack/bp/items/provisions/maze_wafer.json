@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:maze_wafer",
+      "identifier": "gloamingforest:maze_wafer",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:maze_wafer.name"
+        "value": "item.gloamingforest:maze_wafer.name"
       },
       "minecraft:tags": {
         "tags": [

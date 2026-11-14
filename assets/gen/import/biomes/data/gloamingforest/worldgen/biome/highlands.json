@@ -1,0 +1,138 @@
+{
+  "carvers": {
+    "air": "gloamingforest:highland_caves"
+  },
+  "creature_spawn_probability": 0.15,
+  "downfall": 0.7,
+  "effects": {
+    "fog_color": 12648408,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
+    "music": {
+      "max_delay": 12000,
+      "min_delay": 1200,
+      "replace_current_music": true,
+      "sound": "gloamingforest:music.gloamingforest.gloaming_forest"
+    },
+    "sky_color": 2105930,
+    "water_color": 4159204,
+    "water_fog_color": 329011
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "gloamingforest:druid_hut",
+      "gloamingforest:well_placer",
+      "gloamingforest:foundation"
+    ],
+    [],
+    [
+      "gloamingforest:legacy_coal_ore",
+      "gloamingforest:legacy_iron_ore",
+      "gloamingforest:legacy_gold_ore",
+      "gloamingforest:legacy_redstone_ore",
+      "gloamingforest:legacy_diamond_ore",
+      "gloamingforest:legacy_lapis_ore",
+      "gloamingforest:legacy_copper_ore",
+      "gloamingforest:small_andesite",
+      "gloamingforest:small_diorite",
+      "gloamingforest:small_granite"
+    ],
+    [
+      "gloamingforest:troll_roots"
+    ],
+    [],
+    [
+      "gloamingforest:blueberry_bushes",
+      "minecraft:patch_grass_taiga",
+      "minecraft:patch_large_fern",
+      "gloamingforest:grove_ruins",
+      "gloamingforest:stone_circle",
+      "gloamingforest:outside_stalagmite",
+      "gloamingforest:monolith",
+      "gloamingforest:hollow_stump",
+      "gloamingforest:hollow_log",
+      "gloamingforest:tree/selector/highlands_trees",
+      "minecraft:forest_rock",
+      "gloamingforest:sparse_mushglooms",
+      "gloamingforest:spruce_fallen_log",
+      "gloamingforest:dark_ferns",
+      "gloamingforest:troll_mushglooms"
+    ]
+  ],
+  "has_precipitation": true,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [
+      {
+        "type": "gloamingforest:bighorn_sheep",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 12
+      },
+      {
+        "type": "gloamingforest:boar",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "minecraft:chicken",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "gloamingforest:deer",
+        "maxCount": 5,
+        "minCount": 4,
+        "weight": 15
+      },
+      {
+        "type": "minecraft:wolf",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 5
+      },
+      {
+        "type": "gloamingforest:tiny_bird",
+        "maxCount": 8,
+        "minCount": 4,
+        "weight": 15
+      },
+      {
+        "type": "gloamingforest:squirrel",
+        "maxCount": 4,
+        "minCount": 2,
+        "weight": 10
+      },
+      {
+        "type": "gloamingforest:dwarf_rabbit",
+        "maxCount": 5,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "gloamingforest:raven",
+        "maxCount": 2,
+        "minCount": 1,
+        "weight": 10
+      }
+    ],
+    "misc": [],
+    "monster": [],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.4
+}

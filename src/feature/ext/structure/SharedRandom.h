@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/templates/TemplateFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/GraveyardFeature.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/templates/TemplateFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/GraveyardFeature.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract extension of "structure" (rule R18: F7, new files only; folded into the contract by A8
-// in W2b). A template placement that draws from the caller's random, as TF's template features
+// in W2b). A template placement that draws from the caller's random, as upstream's template features
 // do: TemplateFeature#place (stone circle, druid hut with its basement, grove ruins, ...) and
 // GraveyardFeature#place give their StructurePlaceSettings the feature's random (setRandom) and
 // pass that same random to StructureTemplate#placeInWorld, then StructureTemplate#filterBlocks for
@@ -39,7 +39,7 @@ namespace gf::structure::ext {
 /// keeps a loaded template's blocks, all of them (settings.clip only limits what is placed); every
 /// randomizable container with block entity data placed draws its LootTableSeed from `random` in
 /// placement order. settings.seed is not used. The data markers are not handled: the caller lists
-/// them with filterDataMarkers (Java's filterBlocks) as TF's features do. False when the template is
+/// them with filterDataMarkers (Java's filterBlocks) as upstream's features do. False when the template is
 /// missing.
 bool placeTemplate(std::string const& id, Region& region, BlockPos const& offset, BlockPos const& pos, TemplateSettings const& settings,
                    RandomSource& random, int flags = 2);

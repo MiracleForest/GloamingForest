@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/LichMinion.java
-//   src/main/java/twilightforest/entity/monster/DeathTome.java
-//   src/main/java/twilightforest/entity/monster/RisingZombie.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/LichMinion.java
+//   src/main/java/gloamingforest/entity/monster/DeathTome.java
+//   src/main/java/gloamingforest/entity/monster/RisingZombie.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The Lich's minions (zombies bound to a master), the Death Tome (a flying book that mimics a
 // lectern book) and the rising zombie of the tower yard. Their walking, flying and targeting are
-// Bedrock behaviour components in their BP files; the TF-specific parts run here.
+// Bedrock behaviour components in their BP files; the upstream-specific parts run here.
 
 #include <algorithm>
 #include <cmath>
@@ -133,13 +133,13 @@ void minionWaterConversion(Mob& m) {
 }
 
 /// LichMinionModel#renderToBuffer tints the minion by hasEffect(DAMAGE_BOOST) (r, b x0.5; x0.25
-/// with Strength): the client reads it from the twilightforest:strong property.
+/// with Strength): the client reads it from the gloamingforest:strong property.
 void syncMinionStrength(Mob& m) {
     bool  strong = m.getEffect(5) != nullptr; // DAMAGE_BOOST
     auto& d      = ge::data(m, "lich:strong");
     if (d.is_boolean() && d.get<bool>() == strong) return;
     d = strong;
-    ge::setProperty(m, "twilightforest:strong", strong);
+    ge::setProperty(m, "gloamingforest:strong", strong);
 }
 
 void minionAiStep(Actor& a) {
@@ -382,7 +382,7 @@ void tomeDealt(Mob& tome, gf::combat::DamageInfo const& d) {
     if (d.attacker && d.attacker->isPlayer()) ctx.player = static_cast<Player*>(d.attacker);
     auto level = ll::service::getLevel();
     if (!level) return;
-    for (auto& stack : gf::loot::roll("twilightforest:entities/death_tome_hurt", ctx))
+    for (auto& stack : gf::loot::roll("gloamingforest:entities/death_tome_hurt", ctx))
         level->getSpawner().spawnItem(tome.getDimensionBlockSource(), stack, nullptr, tome.getFeetPos(), 0);
 }
 
@@ -589,7 +589,7 @@ void setRisingTicks(Actor& zombie, int ticks) {
     int old                    = risingTicks(zombie);
     rising()[uidOf(zombie)]    = ticks;
     ge::data(zombie, "rising_ticks") = ticks;
-    ge::setProperty(zombie, "twilightforest:rising_ticks", std::min(ticks, 130));
+    ge::setProperty(zombie, "gloamingforest:rising_ticks", std::min(ticks, 130));
     if (old != ticks || ticks == 0) applyRisingSize(zombie, ticks);
 }
 
@@ -611,7 +611,7 @@ void registerMobs() {
     });
     // MiscEvents#addTomesToLecterns: a Death Tome spawn egg used on a lectern without a book puts a
     // tome mimic on it
-    ia::onUseOn({.block = "minecraft:lectern", .item = "twilightforest:death_tome_spawn_egg"}, [](ia::UseOnContext const& c) {
+    ia::onUseOn({.block = "minecraft:lectern", .item = "gloamingforest:death_tome_spawn_egg"}, [](ia::UseOnContext const& c) {
         auto& region = c.player.getDimensionBlockSource();
         BlockPos pos{c.pos.x, c.pos.y, c.pos.z};
         auto*    actor = region.getBlockEntity(pos);
@@ -628,7 +628,7 @@ void registerMobs() {
             log().info("lich: a death tome was put on a lectern");
             if (creative) return;
             auto& held = const_cast<ItemStack&>(player->getSelectedItem());
-            if (game::items::idOf(held) == "twilightforest:death_tome_spawn_egg") {
+            if (game::items::idOf(held) == "gloamingforest:death_tome_spawn_egg") {
                 held.remove(1);
                 player->sendInventory(false);
             }

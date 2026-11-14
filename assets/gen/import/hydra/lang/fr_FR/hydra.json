@@ -1,7 +1,7 @@
 {
-  "block.twilightforest.encased_fire_jet": "Jet de feu recouvert",
-  "block.twilightforest.encased_smoker": "Fumeur recouvert",
-  "block.twilightforest.fire_jet": "Jet de feu",
-  "block.twilightforest.smoker": "Bloc fumant",
-  "entity.twilightforest.hydra": "Hydre"
+  "block.gloamingforest.encased_fire_jet": "Jet de feu recouvert",
+  "block.gloamingforest.encased_smoker": "Fumeur recouvert",
+  "block.gloamingforest.fire_jet": "Jet de feu",
+  "block.gloamingforest.smoker": "Bloc fumant",
+  "entity.gloamingforest.hydra": "Hydre"
 }

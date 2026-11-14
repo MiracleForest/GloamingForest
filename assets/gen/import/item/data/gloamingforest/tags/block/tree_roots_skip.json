@@ -1,0 +1,10 @@
+{
+  "values": [
+    "#minecraft:logs",
+    "gloamingforest:root",
+    "gloamingforest:liveroot_block",
+    "gloamingforest:mangrove_root",
+    "gloamingforest:time_wood",
+    "#minecraft:features_cannot_replace"
+  ]
+}

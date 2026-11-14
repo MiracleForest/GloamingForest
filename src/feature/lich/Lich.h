@@ -17,7 +17,7 @@ class Mob;
 
 namespace gf::feature::lich {
 
-/// Lich (TF's entity/boss/Lich.java): synced and saved data plus the server fields.
+/// Lich (upstream's entity/boss/Lich.java): synced and saved data plus the server fields.
 struct LichState {
     std::int64_t              master = 0;  ///< MASTER_LICH (unique id of the master; 0 = not a clone)
     std::vector<std::int64_t> clones;      ///< summonedClones
@@ -32,10 +32,10 @@ struct LichState {
     int previousPhase   = 1;
     int babies          = 0;               ///< babyMinionsSummoned
     int hitsWithoutTeleport = 0;
-    // attributes (Bedrock has no custom attributes: actor data with TF's defaults)
-    int cloneCount   = 2;                  ///< twilightforest:clone_count
-    int minionCount  = 9;                  ///< twilightforest:minion_count
-    int maxShield    = 6;                  ///< twilightforest:max_shield_strength (U9's attribute)
+    // attributes (Bedrock has no custom attributes: actor data with upstream's defaults)
+    int cloneCount   = 2;                  ///< gloamingforest:clone_count
+    int minionCount  = 9;                  ///< gloamingforest:minion_count
+    int maxShield    = 6;                  ///< gloamingforest:max_shield_strength (U9's attribute)
     // bookkeeping
     int  tickCount   = 0;
     bool goalsAdded  = false;
@@ -81,7 +81,7 @@ Actor* launchProjectile(Mob& lich, int type);
 void   setShield(Mob& lich, int shield);
 void   setMinionsLeft(Mob& lich, int left);
 void   setTeleportInvisibility(Mob& lich, int ticks);
-/// Lich#deflection for a projectile of #twilightforest:lich_deflects_phase_2 hitting the Lich:
+/// Lich#deflection for a projectile of #gloamingforest:lich_deflects_phase_2 hitting the Lich:
 /// true when it was deflected (phase > 1 and owner player / lich / none).
 bool deflect(Mob& lich, Actor& projectile, Actor* owner);
 /// Creates the clone of `master` at `pos` (Lich(level, master)).

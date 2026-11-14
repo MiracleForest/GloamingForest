@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/Minotaur.java
-//   src/main/java/twilightforest/entity/boss/Minoshroom.java
-//   src/main/java/twilightforest/entity/monster/MazeSlime.java
-//   src/main/java/twilightforest/entity/ai/goal/GroundAttackGoal.java
-//   src/main/java/twilightforest/block/entity/spawner/MinoshroomSpawnerBlockEntity.java
-//   src/main/java/twilightforest/util/EntityUtil.java (properlyApplyCustomDamageSource)
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/Minotaur.java
+//   src/main/java/gloamingforest/entity/boss/Minoshroom.java
+//   src/main/java/gloamingforest/entity/monster/MazeSlime.java
+//   src/main/java/gloamingforest/entity/ai/goal/GroundAttackGoal.java
+//   src/main/java/gloamingforest/block/entity/spawner/MinoshroomSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/util/EntityUtil.java (properlyApplyCustomDamageSource)
 //   net/minecraft/world/entity/ai/goal/MeleeAttackGoal.java, RandomStrollGoal.java,
 //   WaterAvoidingRandomStrollGoal.java, LookAtPlayerGoal.java, RandomLookAroundGoal.java (vanilla
 //   goals of the minotaurs), net/minecraft/world/entity/monster/Slime.java (setSize, remove,
 //   finalizeSpawn, tick) and Mob.java (populateDefaultEquipmentSlots)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -19,7 +19,7 @@
 // ChargeAttackGoal (goals::charge), the ground slam, the melee attack (axing damage through
 // EntityUtil#properlyApplyCustomDamageSource), the stroll and the looks are here. The ground
 // slam's charge and the charge's windup are entity properties the client animations read
-// (twilightforest:ground_attack, ground_charge, charging).
+// (gloamingforest:ground_attack, ground_charge, charging).
 //
 // The Maze Slime: a slime of size 1, 2 or 4 (the BP's size groups: collision box, health 3 x
 // size^2, attack = size, the vanilla slime jump behaviours); its split on death, sounds and its
@@ -82,11 +82,11 @@ using Slot   = SharedTypes::Legacy::EquipmentSlot;
 
 namespace {
 
-constexpr char kAxing[]        = "twilightforest:axing";
-constexpr char kSlam[]         = "twilightforest:slam";
-constexpr char kDiamondAxe[]   = "twilightforest:diamond_minotaur_axe";
-constexpr char kLabyrinth[]    = "twilightforest:labyrinth";
-constexpr char kSpawnerBlock[] = "twilightforest:minoshroom_boss_spawner";
+constexpr char kAxing[]        = "gloamingforest:axing";
+constexpr char kSlam[]         = "gloamingforest:slam";
+constexpr char kDiamondAxe[]   = "gloamingforest:diamond_minotaur_axe";
+constexpr char kLabyrinth[]    = "gloamingforest:labyrinth";
+constexpr char kSpawnerBlock[] = "gloamingforest:minoshroom_boss_spawner";
 
 gf::core::jrand::RandomSource& rng() {
     static gf::core::jrand::LegacyRandom r(static_cast<std::int64_t>(std::random_device{}()) << 20 ^ static_cast<std::int64_t>(std::random_device{}()));
@@ -250,7 +250,7 @@ bool properlyApplyCustomDamageSource(Mob& self, Actor& victim, char const* fling
     return flag;
 }
 
-char const* attackSoundOf(Actor const& a) { return isType(a, kMinoshroom) ? "entity.twilightforest.minoshroom.attack" : "entity.twilightforest.minotaur.attack"; }
+char const* attackSoundOf(Actor const& a) { return isType(a, kMinoshroom) ? "entity.gloamingforest.minoshroom.attack" : "entity.gloamingforest.minotaur.attack"; }
 
 // ---- goals ---------------------------------------------------------------------------------------------------
 
@@ -424,11 +424,11 @@ private:
 
 void setGroundAttackCharge(Mob& m, bool flag) {
     gf::entity::data(m, "labyrinth:ground_attack") = flag;
-    gf::entity::setProperty(m, "twilightforest:ground_attack", flag);
+    gf::entity::setProperty(m, "gloamingforest:ground_attack", flag);
 }
 void setMaxCharge(Mob& m, int charge) {
     gf::entity::data(m, "labyrinth:ground_charge") = charge;
-    gf::entity::setProperty(m, "twilightforest:ground_charge", charge);
+    gf::entity::setProperty(m, "gloamingforest:ground_charge", charge);
 }
 
 /// The slam itself: sound, game event, the burst of block particles the client draws when the
@@ -437,7 +437,7 @@ int slam(Mob& m) {
     auto& r = fe::randomOf(m);
     setGroundAttackCharge(m, false);
     auto p = feet(m);
-    gf::fx::sound(m.getDimension(), "entity.twilightforest.minoshroom.slam", p, 2.0F, 1.0F + r.nextFloat() * 0.1F);
+    gf::fx::sound(m.getDimension(), "entity.gloamingforest.minoshroom.slam", p, 2.0F, 1.0F + r.nextFloat() * 0.1F);
     BlockPos bp{static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y)), static_cast<int>(std::floor(p.z))};
     // Minoshroom#tick (client): 80 block particles of the block below within +-5
     auto&       region = m.getDimensionBlockSource();
@@ -561,7 +561,7 @@ void minotaurTick(Actor& a, bool boss) {
     auto& last     = gf::entity::data(*m, "labyrinth:charging_prop");
     if (!last.is_boolean() || last.get<bool>() != charging) {
         last = charging;
-        gf::entity::setProperty(*m, "twilightforest:charging", charging);
+        gf::entity::setProperty(*m, "gloamingforest:charging", charging);
     }
 }
 
@@ -579,7 +579,7 @@ float slimeVolume(Actor& a) { return 0.1F * static_cast<float>(slimeSize(a)); } 
 
 char const* slimeSound(Actor& a, char const* kind) {
     static thread_local std::string s;
-    s = std::string("entity.twilightforest.maze_slime") + (slimeSize(a) <= 1 ? "_small." : ".") + kind;
+    s = std::string("entity.gloamingforest.maze_slime") + (slimeSize(a) <= 1 ? "_small." : ".") + kind;
     return s.c_str();
 }
 
@@ -615,7 +615,7 @@ void slimeTick(Actor& a) {
             float f2 = std::sin(f) * static_cast<float>(size) * 0.5F * f1;
             float f3 = std::cos(f) * static_cast<float>(size) * 0.5F * f1;
             gf::fx::particle(m->getDimension(), "minecraft:block", Vec3{p.x + f2, m->getAABB().min.y, p.z + f3}, Vec3{}, 1,
-                             gf::entity::Json{{"block", "twilightforest:mazestone_brick"}});
+                             gf::entity::Json{{"block", "gloamingforest:mazestone_brick"}});
         }
         gf::fx::sound(m->getDimension(), slimeSound(*m, "squish"), p, slimeVolume(*m), ((r.nextFloat() - r.nextFloat()) * 0.2F + 1.0F) / 0.8F);
     } else if (!ground && st.wasOnGround && m->getPosDelta().y > 0.0F) {
@@ -747,13 +747,13 @@ void install() {
         gf::fx::sound(d.victim.getDimension(), slimeSound(d.victim, "hurt"), feet(d.victim), slimeVolume(d.victim), (rng().nextFloat() - rng().nextFloat()) * 0.2F + 1.0F);
     });
 
-    // the Minoshroom as a TF boss (BaseTFBoss): bar 0xFF0000, conquers the labyrinth, its loot into a
+    // the Minoshroom as an upstream boss (BaseTFBoss): bar 0xFF0000, conquers the labyrinth, its loot into a
     // mangrove chest; home radius 20 at its spawner
     gf::boss::registerBoss({
         .entityId        = kMinoshroom,
         .homeStructure   = kLabyrinth,
-        .lootTable       = "twilightforest:entities/minoshroom",
-        .deathChestBlock = "twilightforest:mangrove_chest",
+        .lootTable       = "gloamingforest:entities/minoshroom",
+        .deathChestBlock = "gloamingforest:mangrove_chest",
         .bar             = {.rgb = 0xFF0000},
     });
     gf::boss::ext::setHomeRadius(kMinoshroom, 20);

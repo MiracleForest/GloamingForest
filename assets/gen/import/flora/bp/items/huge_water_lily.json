@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:huge_water_lily",
+      "identifier": "gloamingforest:huge_water_lily",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:huge_water_lily.name"
+        "value": "tile.gloamingforest:huge_water_lily.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:huge_water_lily",
+        "block": "gloamingforest:huge_water_lily",
         "replace_block_item": true
       }
     }

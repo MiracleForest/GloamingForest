@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.harbinger_cube",
+        "identifier": "geometry.gloamingforest.harbinger_cube",
         "texture_width": 128,
         "texture_height": 64,
         "visible_bounds_width": 3.5,

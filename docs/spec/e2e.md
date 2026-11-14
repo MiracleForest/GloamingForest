@@ -21,7 +21,7 @@ pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode remote-van
 
 git fetch origin
 pwsh tools/ci/ownership.ps1 -Unit <unit>                                       # the diff touches only owned paths (vs origin/main)
-pwsh tools/ci/arr-guard.ps1 -Range origin/main                                 # no All Rights Reserved TF file, in any commit
+pwsh tools/ci/arr-guard.ps1 -Range origin/main                                 # no All Rights Reserved upstream file, in any commit
 ```
 
 `tools/ci/ownership.ps1` compares with `origin/main` by default (`main` only when there is no remote): the local
@@ -48,7 +48,7 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   runs RakNet on purpose (`transport=raknet`: the client harness joins `127.0.0.1` without the online signaling
   service that NetherNet needs). Exactly those six texts are skipped; any other line of the same look fails.
 - **The console's echo of a command reply.** BDS prints the error reply of a command run on its console as
-  `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
+  `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/gloamingforest locate`). The
   mod logs a command error first as `[GloamingForest] Command error: <msgId> [<params>]` and, when the server
   language prints it differently (a translated vanilla reply, a reply with parameters filled in), also as
   `[GloamingForest] Command error text: <text>`, the text `I18n` makes of the id and parameters
@@ -195,8 +195,8 @@ visible failure, never a false pass. The fix belongs to that harness: it should 
 `%APPDATA%\levilauncher.exe\hi<N>-e2e.lock` (slot 1: `bei-e2e.lock`) for as long as it uses the instance, as
 BEI's, BeetrootSkin's and our harnesses do.
 
-Open **every** screenshot of the client run and compare it with TF's textures and GUI images in
-`%LOCALAPPDATA%\gf-tf` (never with TF's audio or templates, which are not in the checkout).
+Open **every** screenshot of the client run and compare it with upstream's textures and GUI images in
+`%LOCALAPPDATA%\gf-upstream\view` (never with upstream's audio or templates, which are not in the checkout).
 
 Exceptions:
 
@@ -229,7 +229,7 @@ Exceptions:
   harness can do: restarts (`Restart-Server`), chat commands, keys and clicks, screenshots.
 - The server scenario `full` runs every registered selftest (`*`); a unit's tests must pass there too, so they
   depend only on W0 and the unit itself and clean up after themselves (`flatArea` restores its area).
-- Selftests that need the Twilight Forest use `co_await ctx.inTwilight()`; tests of structures compare
+- Selftests that need the Gloaming Forest use `co_await ctx.inGloaming()`; tests of structures compare
   `snapshotVolume(box)` with a golden hash and are reviewed once with screenshots (rule R19).
 - Wait for log lines, never for fixed times: modules log one line per user-visible action, and the client logs
   `client screen: <name>` and `client teleported to x y z`.

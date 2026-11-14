@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:canopy_leaves",
+    "id": "gloamingforest:canopy_leaves",
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
@@ -15,7 +15,7 @@
     }
   },
   {
-    "id": "twilightforest:canopy_sapling",
+    "id": "gloamingforest:canopy_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
@@ -24,7 +24,7 @@
     }
   },
   {
-    "id": "twilightforest:dark_leaves",
+    "id": "gloamingforest:dark_leaves",
     "family": "leaves",
     "params": {
       "class": "DarkLeavesBlock",
@@ -43,7 +43,7 @@
     }
   },
   {
-    "id": "twilightforest:darkwood_sapling",
+    "id": "gloamingforest:darkwood_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
@@ -52,16 +52,7 @@
     }
   },
   {
-    "id": "twilightforest:hollow_oak_sapling",
-    "family": "sapling",
-    "params": {
-      "class": "SaplingBlock",
-      "states": ["stage"],
-      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
-    }
-  },
-  {
-    "id": "twilightforest:mangrove_leaves",
+    "id": "gloamingforest:gloaming_oak_leaves",
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
@@ -76,7 +67,40 @@
     }
   },
   {
-    "id": "twilightforest:mangrove_sapling",
+    "id": "gloamingforest:gloaming_oak_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
+    }
+  },
+  {
+    "id": "gloamingforest:hollow_oak_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
+    }
+  },
+  {
+    "id": "gloamingforest:mangrove_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
+    }
+  },
+  {
+    "id": "gloamingforest:mangrove_sapling",
     "family": "sapling",
     "params": {
       "class": "MangroveSaplingBlock",
@@ -87,7 +111,7 @@
     }
   },
   {
-    "id": "twilightforest:mining_leaves",
+    "id": "gloamingforest:mining_leaves",
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
@@ -102,7 +126,7 @@
     }
   },
   {
-    "id": "twilightforest:mining_log_core",
+    "id": "gloamingforest:mining_log_core",
     "family": "pillar",
     "params": {
       "class": "MineLogCoreBlock",
@@ -112,7 +136,7 @@
     }
   },
   {
-    "id": "twilightforest:mining_sapling",
+    "id": "gloamingforest:mining_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
@@ -121,77 +145,77 @@
     }
   },
   {
-    "id": "twilightforest:potted_canopy_sapling",
+    "id": "gloamingforest:potted_canopy_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_darkwood_sapling",
+    "id": "gloamingforest:potted_darkwood_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_hollow_oak_sapling",
+    "id": "gloamingforest:potted_gloaming_oak_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_mangrove_sapling",
+    "id": "gloamingforest:potted_hollow_oak_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_mining_sapling",
+    "id": "gloamingforest:potted_mangrove_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_rainbow_oak_sapling",
+    "id": "gloamingforest:potted_mining_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_sorting_sapling",
+    "id": "gloamingforest:potted_rainbow_oak_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_time_sapling",
+    "id": "gloamingforest:potted_sorting_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_transformation_sapling",
+    "id": "gloamingforest:potted_time_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:potted_twilight_oak_sapling",
+    "id": "gloamingforest:potted_transformation_sapling",
     "family": "potted",
     "params": {
       "class": "FlowerPotBlock"
     }
   },
   {
-    "id": "twilightforest:rainbow_oak_leaves",
+    "id": "gloamingforest:rainbow_oak_leaves",
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
@@ -206,7 +230,7 @@
     }
   },
   {
-    "id": "twilightforest:rainbow_oak_sapling",
+    "id": "gloamingforest:rainbow_oak_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
@@ -215,7 +239,7 @@
     }
   },
   {
-    "id": "twilightforest:sorting_leaves",
+    "id": "gloamingforest:sorting_leaves",
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
@@ -230,7 +254,7 @@
     }
   },
   {
-    "id": "twilightforest:sorting_log_core",
+    "id": "gloamingforest:sorting_log_core",
     "family": "pillar",
     "params": {
       "class": "SortLogCoreBlock",
@@ -240,7 +264,7 @@
     }
   },
   {
-    "id": "twilightforest:sorting_sapling",
+    "id": "gloamingforest:sorting_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
@@ -249,7 +273,7 @@
     }
   },
   {
-    "id": "twilightforest:time_leaves",
+    "id": "gloamingforest:time_leaves",
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
@@ -264,7 +288,7 @@
     }
   },
   {
-    "id": "twilightforest:time_log_core",
+    "id": "gloamingforest:time_log_core",
     "family": "pillar",
     "params": {
       "class": "TimeLogCoreBlock",
@@ -274,7 +298,7 @@
     }
   },
   {
-    "id": "twilightforest:time_sapling",
+    "id": "gloamingforest:time_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
@@ -283,7 +307,7 @@
     }
   },
   {
-    "id": "twilightforest:transformation_leaves",
+    "id": "gloamingforest:transformation_leaves",
     "family": "leaves",
     "params": {
       "class": "TransformationLeavesBlock",
@@ -299,7 +323,7 @@
     }
   },
   {
-    "id": "twilightforest:transformation_log_core",
+    "id": "gloamingforest:transformation_log_core",
     "family": "pillar",
     "params": {
       "class": "TransLogCoreBlock",
@@ -309,31 +333,7 @@
     }
   },
   {
-    "id": "twilightforest:transformation_sapling",
-    "family": "sapling",
-    "params": {
-      "class": "SaplingBlock",
-      "states": ["stage"],
-      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
-    }
-  },
-  {
-    "id": "twilightforest:twilight_oak_leaves",
-    "family": "leaves",
-    "params": {
-      "class": "LeavesBlock",
-      "traits": ["waterloggable"],
-      "states": ["distance", "persistent"],
-      "tags": [
-        "minecraft:is_hoe_item_destructible",
-        "minecraft:leaves",
-        "minecraft:is_shears_item_destructible",
-        "minecraft:is_sword_item_destructible"
-      ]
-    }
-  },
-  {
-    "id": "twilightforest:twilight_oak_sapling",
+    "id": "gloamingforest:transformation_sapling",
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",

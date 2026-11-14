@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/markerhandler/TemplateMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/TemplateMarkerHandlerType.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/BlockPlaceMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/DryingRackMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/LootMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/PaintingMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/RotationMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/markerhandler/SwitchMarkerHandler.java
-//   src/main/java/twilightforest/world/components/structures/util/TemplateMarkerHandlerList.java
-//   src/main/java/twilightforest/init/custom/TemplateMarkerHandlers.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichBossRoom.java (placePainting)
-//   src/main/java/twilightforest/util/EntityUtil.java (getPaintingsOfSizeOrSmaller)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/TemplateMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/TemplateMarkerHandlerType.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/BlockPlaceMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/DryingRackMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/LootMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/PaintingMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/RotationMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/markerhandler/SwitchMarkerHandler.java
+//   src/main/java/gloamingforest/world/components/structures/util/TemplateMarkerHandlerList.java
+//   src/main/java/gloamingforest/init/custom/TemplateMarkerHandlers.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichBossRoom.java (placePainting)
+//   src/main/java/gloamingforest/util/EntityUtil.java (getPaintingsOfSizeOrSmaller)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -20,9 +20,9 @@
 //  - GloamingForest block entity markers of a .gft template ("loot", "spawner", "sign",
 //    "block_entity"), registered through the contract's registerMarkerHandler and applied by
 //    every template placement;
-//  - TF's TemplateMarkerHandler types (block_placement, drying_rack, loot, painting, rotation,
-//    handler_switch) configured by twilight/template_marker_handler_list JSON and run on a
-//    template's TF data markers by TwilightJigsawPiece#handleDataMarker.
+//  - upstream's TemplateMarkerHandler types (block_placement, drying_rack, loot, painting, rotation,
+//    handler_switch) configured by gloaming/template_marker_handler_list JSON and run on a
+//    template's upstream data markers by GloamingJigsawPiece#handleDataMarker.
 #include "feature/structure/Internal.h"
 
 #include <algorithm>
@@ -99,12 +99,12 @@ Block const* provide(Json const& provider, RandomSource& random, BlockPos const&
 bool handle(Json const& handler, std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunkBounds,
             Rotation rotation) {
     auto type = handler.value("type", std::string{});
-    if (type == "twilightforest:block_placement") {
+    if (type == "gloamingforest:block_placement") {
         auto const* b = provide(handler["block_state"], random, pos);
         if (!b) return false;
         return region.setBlock(pos, blocks::rotate(*b, rotation), 3);
     }
-    if (type == "twilightforest:drying_rack") {
+    if (type == "gloamingforest:drying_rack") {
         auto const* b = provide(handler["drying_rack_block"], random, pos);
         // state.getBlock() instanceof DryingRackBlock
         if (!b || !blocks::id(*b).ends_with("_drying_rack")) return false;
@@ -114,7 +114,7 @@ bool handle(Json const& handler, std::string const& label, BlockPos const& pos, 
         blockentities::fillRack(region, pos, handler.value("loot_table", std::string{}), random.nextLong());
         return true;
     }
-    if (type == "twilightforest:loot") {
+    if (type == "gloamingforest:loot") {
         auto const* b = provide(handler["loot_block"], random, pos);
         if (!b) return false;
         if (!region.setBlock(pos, blocks::rotate(*b, rotation), 3)) return false;
@@ -122,13 +122,13 @@ bool handle(Json const& handler, std::string const& label, BlockPos const& pos, 
         blockentities::lootTable(region, pos, handler.value("loot_table", std::string{}), random.nextLong());
         return true;
     }
-    if (type == "twilightforest:painting") {
+    if (type == "gloamingforest:painting") {
         // LichBossRoom.placePainting(pos, random, 1, paintings, level, 1, 1, rotation.rotate(NORTH))
         auto tagId = handler.value("paintings", std::string("minecraft:placeable"));
         if (!tagId.empty() && tagId[0] == '#') tagId = tagId.substr(1);
         return paintings::place(pos, random, 1, tagId, region, 1, 1, rotateDir(Orientation::North, rotation));
     }
-    if (type == "twilightforest:rotation") {
+    if (type == "gloamingforest:rotation") {
         std::string delimiter = handler.value("delimiter", std::string("@"));
         auto        parts     = split(label, delimiter.empty() ? '@' : delimiter[0], 2);
         Rotation    dataRotation =
@@ -136,13 +136,13 @@ bool handle(Json const& handler, std::string const& label, BlockPos const& pos, 
                               : relativeRotation(Orientation::North, blocks::parseDirection(parts[1]).value_or(Orientation::South));
         auto const& rotated = handler["rotated"];
         if (rotated.is_string()) {
-            // a registry reference to a template_marker_handler; not shipped by TF
+            // a registry reference to a template_marker_handler; not shipped by upstream
             warnOnce("marker-ref:" + rotated.get<std::string>(), "structure: unknown template marker handler " + rotated.get<std::string>());
             return false;
         }
         return handle(rotated, parts[0], pos, region, random, chunkBounds, addRotation(rotation, dataRotation));
     }
-    if (type == "twilightforest:handler_switch") {
+    if (type == "gloamingforest:handler_switch") {
         std::string g      = handler.value("group_character_delimiter", std::string("|"));
         std::string e      = handler.value("entry_character_delimiter", std::string(":"));
         auto        groups = split(label, g.empty() ? '|' : g[0]);
@@ -169,7 +169,7 @@ Json const* list(std::string const& id) {
         std::shared_lock lock(gMutex);
         if (auto it = gLists.find(id); it != gLists.end()) return &it->second;
     }
-    auto doc = data::load("twilight/template_marker_handler_list", id);
+    auto doc = data::load("gloaming/template_marker_handler_list", id);
     if (!doc) return nullptr;
     std::unique_lock lock(gMutex);
     return &(gLists[id] = *doc);
@@ -189,7 +189,7 @@ void registerBuiltins() {
         auto seed = data.contains("seed") ? data["seed"].get<std::int64_t>() : random.nextLong();
         blockentities::lootTable(region, pos, data.value("table", std::string{}), seed);
     });
-    // (the template's block stays: a vanilla spawner is set up, TF's sinister spawner keeps the data)
+    // (the template's block stays: a vanilla spawner is set up, upstream's sinister spawner keeps the data)
     registerMarkerHandler("spawner", [](Region& region, BlockPos const& pos, std::string const&, Json const& data, RandomSource&) {
         blockentities::spawnerData(region, pos, data.value("entity", std::string{}), data);
     });

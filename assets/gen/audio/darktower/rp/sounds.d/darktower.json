@@ -1,154 +1,154 @@
 {
-  "block.twilightforest.builder.create": {
+  "block.gloamingforest.builder.create": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.builder.create",
+    "subtitle": "subtitles.gloamingforest.block.builder.create",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.builder.off": {
+  "block.gloamingforest.builder.off": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.builder.off",
+    "subtitle": "subtitles.gloamingforest.block.builder.off",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.builder.on": {
+  "block.gloamingforest.builder.on": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.builder.on",
+    "subtitle": "subtitles.gloamingforest.block.builder.on",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.builder.replace": {
+  "block.gloamingforest.builder.replace": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.builder.replace",
+    "subtitle": "subtitles.gloamingforest.block.builder.replace",
     "sounds": [
       {
         "name": "sounds/random/pop"
       }
     ]
   },
-  "block.twilightforest.ghast_trap.ambient": {
+  "block.gloamingforest.ghast_trap.ambient": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.ghast_trap.ambient",
+    "subtitle": "subtitles.gloamingforest.block.ghast_trap.ambient",
     "sounds": [
       {
         "name": "sounds/note/harp"
       }
     ]
   },
-  "block.twilightforest.ghast_trap.on": {
+  "block.gloamingforest.ghast_trap.on": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.ghast_trap.on",
+    "subtitle": "subtitles.gloamingforest.block.ghast_trap.on",
     "sounds": [
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on1"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_on1"
       },
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on2"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_on2"
       },
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on3"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_on3"
       },
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on4"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_on4"
       },
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on5"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_on5"
       }
     ]
   },
-  "block.twilightforest.ghast_trap.spindown": {
+  "block.gloamingforest.ghast_trap.spindown": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.ghast_trap.spindown",
+    "subtitle": "subtitles.gloamingforest.block.ghast_trap.spindown",
     "sounds": [
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_spin_down"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_spin_down"
       }
     ]
   },
-  "block.twilightforest.ghast_trap.warmup": {
+  "block.gloamingforest.ghast_trap.warmup": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.ghast_trap.warmup",
+    "subtitle": "subtitles.gloamingforest.block.ghast_trap.warmup",
     "sounds": [
       {
-        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_warmup"
+        "name": "sounds/gloamingforest/darktower/mob/ur_ghast/trap_warmup"
       }
     ]
   },
-  "block.twilightforest.reactor.ambient": {
+  "block.gloamingforest.reactor.ambient": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.reactor.ambient",
+    "subtitle": "subtitles.gloamingforest.block.reactor.ambient",
     "sounds": [
       {
         "name": "sounds/portal/portal"
       }
     ]
   },
-  "block.twilightforest.reappearing_block.reappear": {
+  "block.gloamingforest.reappearing_block.reappear": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.reappearing_block.reappear",
+    "subtitle": "subtitles.gloamingforest.block.reappearing_block.reappear",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.reappearing_block.vanish": {
+  "block.gloamingforest.reappearing_block.vanish": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.reappearing_block.vanish",
+    "subtitle": "subtitles.gloamingforest.block.reappearing_block.vanish",
     "sounds": [
       {
         "name": "sounds/random/pop"
       }
     ]
   },
-  "block.twilightforest.slider.move": {
+  "block.gloamingforest.slider.move": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.block.slider.move",
+    "subtitle": "subtitles.gloamingforest.block.slider.move",
     "sounds": [
       {
-        "name": "sounds/twilightforest/darktower/random/creakgo2"
+        "name": "sounds/gloamingforest/darktower/random/creakgo2"
       }
     ]
   },
-  "block.twilightforest.vanish.locked": {
+  "block.gloamingforest.vanish.locked": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.vanish.locked",
-    "sounds": [
-      {
-        "name": "sounds/random/click"
-      }
-    ]
-  },
-  "block.twilightforest.vanish.unlock": {
-    "category": "block",
-    "subtitle": "subtitles.twilightforest.block.vanish.unlock",
+    "subtitle": "subtitles.gloamingforest.block.vanish.locked",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.vanish.vanish": {
+  "block.gloamingforest.vanish.unlock": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.vanish.vanish",
+    "subtitle": "subtitles.gloamingforest.block.vanish.unlock",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.gloamingforest.vanish.vanish": {
+    "category": "block",
+    "subtitle": "subtitles.gloamingforest.block.vanish.vanish",
     "sounds": [
       {
         "name": "sounds/random/pop"
       }
     ]
   },
-  "entity.twilightforest.carminite_broodling.ambient": {
+  "entity.gloamingforest.carminite_broodling.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_broodling.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_broodling.ambient",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -164,18 +164,18 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_broodling.death": {
+  "entity.gloamingforest.carminite_broodling.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_broodling.death",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_broodling.death",
     "sounds": [
       {
         "name": "sounds/mob/spider/death"
       }
     ]
   },
-  "entity.twilightforest.carminite_broodling.hurt": {
+  "entity.gloamingforest.carminite_broodling.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_broodling.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_broodling.hurt",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -191,7 +191,7 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_broodling.step": {
+  "entity.gloamingforest.carminite_broodling.step": {
     "category": "hostile",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -209,9 +209,9 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastguard.ambient": {
+  "entity.gloamingforest.carminite_ghastguard.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastguard.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastguard.ambient",
     "sounds": [
       {
         "name": "sounds/mob/ghast/moan1"
@@ -236,18 +236,18 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastguard.death": {
+  "entity.gloamingforest.carminite_ghastguard.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastguard.death",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastguard.death",
     "sounds": [
       {
         "name": "sounds/mob/ghast/death"
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastguard.hurt": {
+  "entity.gloamingforest.carminite_ghastguard.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastguard.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastguard.hurt",
     "sounds": [
       {
         "name": "sounds/mob/ghast/scream1"
@@ -266,27 +266,27 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastguard.shoot": {
+  "entity.gloamingforest.carminite_ghastguard.shoot": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastguard.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastguard.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastguard.warn": {
+  "entity.gloamingforest.carminite_ghastguard.warn": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastguard.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastguard.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/charge"
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastling.ambient": {
+  "entity.gloamingforest.carminite_ghastling.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastling.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastling.ambient",
     "sounds": [
       {
         "name": "sounds/mob/ghast/moan1"
@@ -311,18 +311,18 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastling.death": {
+  "entity.gloamingforest.carminite_ghastling.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastling.death",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastling.death",
     "sounds": [
       {
         "name": "sounds/mob/ghast/death"
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastling.hurt": {
+  "entity.gloamingforest.carminite_ghastling.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastling.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastling.hurt",
     "sounds": [
       {
         "name": "sounds/mob/ghast/scream1"
@@ -341,45 +341,45 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastling.shoot": {
+  "entity.gloamingforest.carminite_ghastling.shoot": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastling.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastling.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "entity.twilightforest.carminite_ghastling.warn": {
+  "entity.gloamingforest.carminite_ghastling.warn": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_ghastling.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_ghastling.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/charge"
       }
     ]
   },
-  "entity.twilightforest.carminite_golem.attack": {
+  "entity.gloamingforest.carminite_golem.attack": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_golem.attack",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_golem.attack",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/throw"
       }
     ]
   },
-  "entity.twilightforest.carminite_golem.death": {
+  "entity.gloamingforest.carminite_golem.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_golem.death",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_golem.death",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/death"
       }
     ]
   },
-  "entity.twilightforest.carminite_golem.hurt": {
+  "entity.gloamingforest.carminite_golem.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.carminite_golem.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.carminite_golem.hurt",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/hit1"
@@ -395,7 +395,7 @@
       }
     ]
   },
-  "entity.twilightforest.carminite_golem.step": {
+  "entity.gloamingforest.carminite_golem.step": {
     "category": "hostile",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -413,9 +413,9 @@
       }
     ]
   },
-  "entity.twilightforest.tear.break": {
+  "entity.gloamingforest.tear.break": {
     "category": "ambient",
-    "subtitle": "subtitles.twilightforest.entity.tear.break",
+    "subtitle": "subtitles.gloamingforest.entity.tear.break",
     "sounds": [
       {
         "name": "sounds/random/glass1"
@@ -428,9 +428,9 @@
       }
     ]
   },
-  "entity.twilightforest.towerwood_borer.ambient": {
+  "entity.gloamingforest.towerwood_borer.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.towerwood_borer.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.towerwood_borer.ambient",
     "sounds": [
       {
         "name": "sounds/mob/silverfish/say1"
@@ -446,18 +446,18 @@
       }
     ]
   },
-  "entity.twilightforest.towerwood_borer.death": {
+  "entity.gloamingforest.towerwood_borer.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.towerwood_borer.death",
+    "subtitle": "subtitles.gloamingforest.entity.towerwood_borer.death",
     "sounds": [
       {
         "name": "sounds/mob/silverfish/kill"
       }
     ]
   },
-  "entity.twilightforest.towerwood_borer.hurt": {
+  "entity.gloamingforest.towerwood_borer.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.towerwood_borer.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.towerwood_borer.hurt",
     "sounds": [
       {
         "name": "sounds/mob/silverfish/hit1"
@@ -470,7 +470,7 @@
       }
     ]
   },
-  "entity.twilightforest.towerwood_borer.step": {
+  "entity.gloamingforest.towerwood_borer.step": {
     "category": "hostile",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -488,9 +488,9 @@
       }
     ]
   },
-  "entity.twilightforest.ur_ghast.ambient": {
+  "entity.gloamingforest.ur_ghast.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ur_ghast.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.ur_ghast.ambient",
     "sounds": [
       {
         "name": "sounds/mob/ghast/moan1"
@@ -515,18 +515,18 @@
       }
     ]
   },
-  "entity.twilightforest.ur_ghast.death": {
+  "entity.gloamingforest.ur_ghast.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ur_ghast.death",
+    "subtitle": "subtitles.gloamingforest.entity.ur_ghast.death",
     "sounds": [
       {
         "name": "sounds/mob/ghast/death"
       }
     ]
   },
-  "entity.twilightforest.ur_ghast.hurt": {
+  "entity.gloamingforest.ur_ghast.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ur_ghast.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.ur_ghast.hurt",
     "sounds": [
       {
         "name": "sounds/mob/ghast/scream1"
@@ -545,18 +545,18 @@
       }
     ]
   },
-  "entity.twilightforest.ur_ghast.shoot": {
+  "entity.gloamingforest.ur_ghast.shoot": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ur_ghast.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.ur_ghast.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "entity.twilightforest.ur_ghast.tantrum": {
+  "entity.gloamingforest.ur_ghast.tantrum": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ur_ghast.tantrum",
+    "subtitle": "subtitles.gloamingforest.entity.ur_ghast.tantrum",
     "sounds": [
       {
         "name": "sounds/mob/ghast/scream1"
@@ -575,9 +575,9 @@
       }
     ]
   },
-  "entity.twilightforest.ur_ghast.warn": {
+  "entity.gloamingforest.ur_ghast.warn": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ur_ghast.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.ur_ghast.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/charge"

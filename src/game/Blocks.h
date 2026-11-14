@@ -24,7 +24,7 @@ class Dimension;
 
 namespace gf::game {
 
-/// The block's full id ("minecraft:stone", "twilightforest:naga_stone", ...).
+/// The block's full id ("minecraft:stone", "gloamingforest:naga_stone", ...).
 [[nodiscard]] std::string blockId(Block const& block);
 /// The block at `pos` ("" when the chunk isn't loaded).
 [[nodiscard]] std::string blockIdAt(BlockSource& region, BlockPos const& pos);

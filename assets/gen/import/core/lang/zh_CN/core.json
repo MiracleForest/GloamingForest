@@ -1,14 +1,14 @@
 {
   "commands.tffeature.usage": "/%s <信息 | 重新激活 | 征服 | 中心>",
-  "misc.twilightforest.advancement_hidden": "<隐藏进度>",
-  "misc.twilightforest.advancement_required": "前置进度：",
-  "misc.twilightforest.core_disabled": "%s已被配置禁用",
-  "misc.twilightforest.firefly_spawner_radius": "萤火粒子半径：%s个方块",
-  "misc.twilightforest.pedestal_ineligible": "你还不够格。",
-  "misc.twilightforest.wip": "这个特性仍在制作当中，可能会有Bug或不可预料的特性导致存档损坏。",
-  "twilightforest.configuration.section.twilightforest.client.toml": "客户端设置",
-  "twilightforest.configuration.section.twilightforest.client.toml.title": "客户端设置",
-  "twilightforest.configuration.section.twilightforest.common.toml": "通用设置",
-  "twilightforest.configuration.section.twilightforest.common.toml.title": "通用设置",
-  "twilightforest.configuration.title": "暮色森林配置"
+  "gloamingforest.configuration.section.gloamingforest.client.toml": "客户端设置",
+  "gloamingforest.configuration.section.gloamingforest.client.toml.title": "客户端设置",
+  "gloamingforest.configuration.section.gloamingforest.common.toml": "通用设置",
+  "gloamingforest.configuration.section.gloamingforest.common.toml.title": "通用设置",
+  "gloamingforest.configuration.title": "薄暮森林配置",
+  "misc.gloamingforest.advancement_hidden": "<隐藏进度>",
+  "misc.gloamingforest.advancement_required": "前置进度：",
+  "misc.gloamingforest.core_disabled": "%s已被配置禁用",
+  "misc.gloamingforest.firefly_spawner_radius": "萤火粒子半径：%s个方块",
+  "misc.gloamingforest.pedestal_ineligible": "你还不够格。",
+  "misc.gloamingforest.wip": "这个特性仍在制作当中，可能会有Bug或不可预料的特性导致存档损坏。"
 }

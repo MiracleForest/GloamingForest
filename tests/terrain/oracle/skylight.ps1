@@ -1,10 +1,10 @@
-# Skylight goldens (unit U2): F13's Java oracle (TF 4.8 on NeoForge 1.21.1) dumps the density router
-# and the noise heights of the Twilight Forest generated with TF's Skylight noise settings
-# (twilightforest:skylight_noise_gen), which F13's goldens do not cover (tests/golden is twilight_noise_gen).
+# Skylight goldens (unit U2): F13's Java oracle (upstream 4.8 on NeoForge 1.21.1) dumps the density router
+# and the noise heights of the Gloaming Forest generated with upstream's Skylight noise settings
+# (gloamingforest:skylight_noise_gen), which F13's goldens do not cover (tests/golden is gloaming_noise_gen).
 #
 # It reuses F13's oracle installation, dumper and RCON client unchanged (tools/oracle/lib/Oracle.psm1)
 # and differs from tools/oracle/run.ps1 in one thing: each fresh world gets a world datapack that
-# points the twilightforest:twilight_forest dimension at skylight_noise_gen, as TF's "Skylight"
+# points the gloamingforest:gloaming_forest dimension at skylight_noise_gen, as upstream's "Skylight"
 # world preset does (TFDimensionData#SKYLIGHT_NOISE_GEN). The vanilla server loads a pack it finds
 # in world/datapacks when it creates the world ("Found new data pack file/gf_skylight, loading it
 # automatically"), before the dimension registry is built.
@@ -12,7 +12,7 @@
 #     pwsh tests/terrain/oracle/skylight.ps1 -AcceptEula            # -> tests/terrain/golden/skylight/{density,heights}/seed-*.json
 #     pwsh tests/terrain/oracle/skylight.ps1 -AcceptEula -Check     # reproducible? (exit 1 on a difference)
 #
-# Exit 2 = NOT RUN (no bds slot in time). Only derived numbers are written (no TF asset, R10/R11).
+# Exit 2 = NOT RUN (no bds slot in time). Only derived numbers are written (no upstream asset, R10/R11).
 #     pwsh tests/terrain/oracle/skylight.ps1 -MarkGoldens    # adds source.settings to the committed goldens (no server)
 param(
     [long[]]$Seeds,
@@ -37,8 +37,8 @@ $pins = Get-OraclePins
 if (-not $Seeds) { $Seeds = @($spec.seeds | ForEach-Object { [long]$_ }) }
 $golden = Join-Path $PSScriptRoot '../golden/skylight'
 function Get-SeedName([long]$Seed) { if ($Seed -lt 0) { "seed-m$(-[decimal]$Seed)" } else { "seed-$Seed" } }
-$settingsId = 'twilightforest:skylight_noise_gen'
-# The dumper writes its own "source" object (TF, Minecraft and NeoForge versions) and ignores the
+$settingsId = 'gloamingforest:skylight_noise_gen'
+# The dumper writes its own "source" object (upstream, Minecraft and NeoForge versions) and ignores the
 # spec's: the settings the dimension used are added to it here, so every golden names them.
 function Add-SourceSettings([string]$Path) {
     $text = [IO.File]::ReadAllText($Path)
@@ -57,16 +57,16 @@ if (-not ($AcceptEula -or $env:GF_ORACLE_ACCEPT_EULA -eq '1')) {
     exit 1
 }
 
-# The datapack: TF's own dimension JSON with the Skylight settings.
+# The datapack: upstream's own dimension JSON with the Skylight settings.
 $dimension = [ordered]@{
-    type      = 'twilightforest:twilight_forest_type'
+    type      = 'gloamingforest:gloaming_forest_type'
     generator = [ordered]@{
         type         = 'minecraft:noise'
-        biome_source = [ordered]@{ type = 'twilightforest:twilight_biomes'; terrain_data = 'twilightforest:biome_grid' }
-        settings     = 'twilightforest:skylight_noise_gen'
+        biome_source = [ordered]@{ type = 'gloamingforest:gloaming_biomes'; terrain_data = 'gloamingforest:biome_grid' }
+        settings     = 'gloamingforest:skylight_noise_gen'
     }
 }
-$mcmeta = [ordered]@{ pack = [ordered]@{ pack_format = 48; description = 'GloamingForest U2: the Twilight Forest with skylight_noise_gen' } }
+$mcmeta = [ordered]@{ pack = [ordered]@{ pack_format = 48; description = 'GloamingForest U2: the Gloaming Forest with skylight_noise_gen' } }
 
 $work = Join-Path (Get-OracleHome) "runs/skylight-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$PID"
 $dumpDir = Join-Path $work 'out'
@@ -96,8 +96,8 @@ try {
         $runSpec = [ordered]@{}
         foreach ($k in $spec.Keys) { $runSpec[$k] = $spec[$k] }
         $runSpec['source'] = [ordered]@{
-            twilightforest = $pins.twilightforest.version; commit = $pins.twilightforest.commit
-            minecraft = $pins.minecraft; neoforge = $pins.neoforge.version; settings = 'twilightforest:skylight_noise_gen'
+            gloamingforest = $pins.gloamingforest.version; commit = $pins.gloamingforest.commit
+            minecraft = $pins.minecraft; neoforge = $pins.neoforge.version; settings = 'gloamingforest:skylight_noise_gen'
         }
         [IO.File]::WriteAllText((Join-Path $server 'gf-oracle-spec.json'), ($runSpec | ConvertTo-Json -Depth 20))
         [IO.File]::WriteAllText((Join-Path $server 'eula.txt'), "# accepted for the oracle's private server (tests/terrain/oracle/skylight.ps1 -AcceptEula)`neula=true`n")
@@ -110,9 +110,9 @@ try {
             $world = Join-Path $server 'world'
             if (Test-Path $world) { Remove-Item -Recurse -Force $world }
             $pack = Join-Path $world 'datapacks/gf_skylight'
-            New-Item -ItemType Directory -Force (Join-Path $pack 'data/twilightforest/dimension') | Out-Null
+            New-Item -ItemType Directory -Force (Join-Path $pack 'data/gloamingforest/dimension') | Out-Null
             [IO.File]::WriteAllText((Join-Path $pack 'pack.mcmeta'), ($mcmeta | ConvertTo-Json -Depth 5))
-            [IO.File]::WriteAllText((Join-Path $pack 'data/twilightforest/dimension/twilight_forest.json'), ($dimension | ConvertTo-Json -Depth 5))
+            [IO.File]::WriteAllText((Join-Path $pack 'data/gloamingforest/dimension/gloaming_forest.json'), ($dimension | ConvertTo-Json -Depth 5))
             $port = Get-OracleFreePort
             $rconPort = Get-OracleFreePort
             while ($rconPort -eq $port) { $rconPort = Get-OracleFreePort }
@@ -165,18 +165,18 @@ try {
         $errs = @(Select-String -LiteralPath $log -Pattern '/ERROR\] \[gf_oracle/|gf_oracle: dump .* failed' -ErrorAction SilentlyContinue)
         if ($errs.Count) { throw "the dumper logged errors: $($errs[0].Line)" }
         foreach ($kind in $kinds) { Add-SourceSettings (Join-Path $dumpDir "$kind/$(Get-SeedName $seed).json") }
-        # the dumps really are Skylight's (TF's skylight_terrain): neither the final density nor the
-        # heights equal twilight_noise_gen's (F13's goldens)
+        # the dumps really are Skylight's (upstream's skylight_terrain): neither the final density nor the
+        # heights equal gloaming_noise_gen's (F13's goldens)
         $density = Get-Content (Join-Path $dumpDir "density/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
-        $twilight = Get-Content (Join-Path $repo "tests/golden/density/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
-        if (($density.router.final_density.values -join ',') -eq ($twilight.router.final_density.values -join ',')) {
-            throw "seed $seed`: the final density equals twilight_noise_gen's: the datapack did not apply"
+        $gloaming = Get-Content (Join-Path $repo "tests/golden/density/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
+        if (($density.router.final_density.values -join ',') -eq ($gloaming.router.final_density.values -join ',')) {
+            throw "seed $seed`: the final density equals gloaming_noise_gen's: the datapack did not apply"
         }
         $heights = Get-Content (Join-Path $dumpDir "heights/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
-        $twilightHeights = Get-Content (Join-Path $repo "tests/golden/heights/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
+        $gloamingHeights = Get-Content (Join-Path $repo "tests/golden/heights/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
         foreach ($field in 'worldSurfaceWg', 'oceanFloorWg') {
-            if ((($heights.$field | ForEach-Object { $_ -join ',' }) -join ';') -eq (($twilightHeights.$field | ForEach-Object { $_ -join ',' }) -join ';')) {
-                throw "seed $seed`: the $field heights equal twilight_noise_gen's: the datapack did not apply"
+            if ((($heights.$field | ForEach-Object { $_ -join ',' }) -join ';') -eq (($gloamingHeights.$field | ForEach-Object { $_ -join ',' }) -join ';')) {
+                throw "seed $seed`: the $field heights equal gloaming_noise_gen's: the datapack did not apply"
             }
         }
     }

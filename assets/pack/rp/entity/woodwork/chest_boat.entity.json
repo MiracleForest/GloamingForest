@@ -2,41 +2,41 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:chest_boat",
+      "identifier": "gloamingforest:chest_boat",
       "materials": {
         "default": "entity"
       },
       "textures": {
-        "tf_twilight_oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
-        "tf_canopy": "textures/twilightforest/entity/chest_boat/canopy",
-        "tf_mangrove": "textures/twilightforest/entity/chest_boat/mangrove",
-        "tf_dark": "textures/twilightforest/entity/chest_boat/dark",
-        "tf_time": "textures/twilightforest/entity/chest_boat/time",
-        "tf_transformation": "textures/twilightforest/entity/chest_boat/transformation",
-        "tf_mining": "textures/twilightforest/entity/chest_boat/mining",
-        "tf_sorting": "textures/twilightforest/entity/chest_boat/sorting",
-        "oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
-        "default": "textures/twilightforest/entity/chest_boat/twilight_oak",
-        "spruce": "textures/twilightforest/entity/chest_boat/canopy",
-        "birch": "textures/twilightforest/entity/chest_boat/mangrove",
-        "jungle": "textures/twilightforest/entity/chest_boat/dark",
-        "acacia": "textures/twilightforest/entity/chest_boat/time",
-        "darkoak": "textures/twilightforest/entity/chest_boat/transformation",
-        "dark_oak": "textures/twilightforest/entity/chest_boat/transformation",
-        "mangrove": "textures/twilightforest/entity/chest_boat/mining",
-        "cherry": "textures/twilightforest/entity/chest_boat/sorting",
+        "tf_gloaming_oak": "textures/gloamingforest/entity/chest_boat/gloaming_oak",
+        "tf_canopy": "textures/gloamingforest/entity/chest_boat/canopy",
+        "tf_mangrove": "textures/gloamingforest/entity/chest_boat/mangrove",
+        "tf_dark": "textures/gloamingforest/entity/chest_boat/dark",
+        "tf_time": "textures/gloamingforest/entity/chest_boat/time",
+        "tf_transformation": "textures/gloamingforest/entity/chest_boat/transformation",
+        "tf_mining": "textures/gloamingforest/entity/chest_boat/mining",
+        "tf_sorting": "textures/gloamingforest/entity/chest_boat/sorting",
+        "oak": "textures/gloamingforest/entity/chest_boat/gloaming_oak",
+        "default": "textures/gloamingforest/entity/chest_boat/gloaming_oak",
+        "spruce": "textures/gloamingforest/entity/chest_boat/canopy",
+        "birch": "textures/gloamingforest/entity/chest_boat/mangrove",
+        "jungle": "textures/gloamingforest/entity/chest_boat/dark",
+        "acacia": "textures/gloamingforest/entity/chest_boat/time",
+        "darkoak": "textures/gloamingforest/entity/chest_boat/transformation",
+        "dark_oak": "textures/gloamingforest/entity/chest_boat/transformation",
+        "mangrove": "textures/gloamingforest/entity/chest_boat/mining",
+        "cherry": "textures/gloamingforest/entity/chest_boat/sorting",
         "vanilla_chest": "textures/entity/boat/chest_boat_oak"
       },
       "geometry": {
-        "default": "geometry.twilightforest.chest_boat",
-        "chest": "geometry.twilightforest.chest_boat_chest"
+        "default": "geometry.gloamingforest.chest_boat",
+        "chest": "geometry.gloamingforest.chest_boat_chest"
       },
       "render_controllers": [
-        "controller.render.twilightforest.chest_boat",
-        "controller.render.twilightforest.chest_boat_chest"
+        "controller.render.gloamingforest.chest_boat",
+        "controller.render.gloamingforest.chest_boat_chest"
       ],
       "animations": {
-        "paddles": "animation.twilightforest.boat.paddles"
+        "paddles": "animation.gloamingforest.boat.paddles"
       },
       "scripts": {
         "pre_animation": [

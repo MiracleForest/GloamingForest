@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/GiantBlock.java
-//   src/main/java/twilightforest/block/GiantLeavesBlock.java
-//   src/main/java/twilightforest/item/GiantPickItem.java
-//   src/main/java/twilightforest/events/ToolEvents.java (handleGiantPickaxeMining)
-//   src/main/java/twilightforest/components/entity/GiantPickaxeMiningAttachment.java
-//   src/main/java/twilightforest/loot/conditions/GiantPickUsedCondition.java
-//   src/main/java/twilightforest/loot/modifiers/GiantToolGroupingModifier.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/GiantBlock.java
+//   src/main/java/gloamingforest/block/GiantLeavesBlock.java
+//   src/main/java/gloamingforest/item/GiantPickItem.java
+//   src/main/java/gloamingforest/events/ToolEvents.java (handleGiantPickaxeMining)
+//   src/main/java/gloamingforest/components/entity/GiantPickaxeMiningAttachment.java
+//   src/main/java/gloamingforest/loot/conditions/GiantPickUsedCondition.java
+//   src/main/java/gloamingforest/loot/modifiers/GiantToolGroupingModifier.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -287,22 +287,22 @@ void installGiantBlocks() {
     gf::item::registerItem(id::GiantSword, {
         .repairWith = [](ItemStack const&, ItemStack const& material) {
             auto m = game::items::idOf(material);
-            return m == "twilightforest:ironwood_ingot" || m == id::GiantCobblestone;
+            return m == "gloamingforest:ironwood_ingot" || m == id::GiantCobblestone;
         },
     });
     gf::item::addTooltip(id::GiantPickaxe, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
-        auto text = viewer ? gf::trFor(*viewer, "item.twilightforest.giant_pickaxe.desc", "Breaks giant blocks")
-                           : gf::tr("item.twilightforest.giant_pickaxe.desc", "Breaks giant blocks");
+        auto text = viewer ? gf::trFor(*viewer, "item.gloamingforest.giant_pickaxe.desc", "Breaks giant blocks")
+                           : gf::tr("item.gloamingforest.giant_pickaxe.desc", "Breaks giant blocks");
         lines.push_back("§7" + text);
     });
 
     ia::onDestroy({.item = id::GiantPickaxe}, beforeBreak);
     ia::onDestroyed({.item = id::GiantPickaxe}, afterBreak);
-    gf::loot::registerCondition("twilightforest:giant_pick_used", [](gf::loot::LootContext const& ctx, gf::loot::Json const&, gf::loot::RandomSource&) {
+    gf::loot::registerCondition("gloamingforest:giant_pick_used", [](gf::loot::LootContext const& ctx, gf::loot::Json const&, gf::loot::RandomSource&) {
         return giantPickUsed(ctx.thisEntity ? ctx.thisEntity : ctx.player);
     });
-    // GiantToolGroupingModifier (data: twilightforest:giant_pick_grouping, condition giant_pick_used)
-    gf::loot::addGlobalModifier("twilightforest:giant_block_grouping", [](std::vector<ItemStack>& loot, gf::loot::LootContext const& ctx, std::string const&) {
+    // GiantToolGroupingModifier (data: gloamingforest:giant_pick_grouping, condition giant_pick_used)
+    gf::loot::addGlobalModifier("gloamingforest:giant_block_grouping", [](std::vector<ItemStack>& loot, gf::loot::LootContext const& ctx, std::string const&) {
         Actor const* who = ctx.thisEntity ? ctx.thisEntity : ctx.player;
         if (!giantPickUsed(who) || loot.empty()) return;
         auto giant = cg::giantConversionOf(game::items::idOf(loot.front()));

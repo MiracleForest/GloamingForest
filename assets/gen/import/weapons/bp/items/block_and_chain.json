@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:block_and_chain",
+      "identifier": "gloamingforest:block_and_chain",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:block_and_chain.name"
+        "value": "item.gloamingforest:block_and_chain.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -22,7 +22,7 @@
       },
       "minecraft:hand_equipped": true,
       "minecraft:tags": {
-        "tags": ["alexscaves:ferromagnetic_items", "twilightforest:enchantable/block_and_chain"]
+        "tags": ["alexscaves:ferromagnetic_items", "gloamingforest:enchantable/block_and_chain"]
       }
     }
   }

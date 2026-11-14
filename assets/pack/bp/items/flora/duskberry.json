@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:duskberry",
+      "identifier": "gloamingforest:duskberry",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:duskberry.name"
+        "value": "item.gloamingforest:duskberry.name"
       },
       "minecraft:tags": {
         "tags": [

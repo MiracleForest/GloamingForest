@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
   Downloads and installs the Java oracle's runtime: a JDK, a NeoForge 1.21.1 dedicated server and
-  the TF 4.8 jar (unit F13).
+  the upstream 4.8 jar (unit F13).
 
 .DESCRIPTION
   Everything is pinned in tools/oracle/oracle.json (URL + SHA-256) and lands in
   $env:GF_ORACLE_HOME or %LOCALAPPDATA%\gf-oracle, outside every repository:
 
-    downloads/   the JDK zip, the NeoForge installer, twilightforest-<version>-universal.jar
+    downloads/   the JDK zip, the NeoForge installer, gloamingforest-<version>-universal.jar
     jdk/<ver>/   the extracted JDK (Eclipse Temurin 21)
     server/      the NeoForge server installed by the installer (libraries/, run scripts)
 
-  The TF jar is only ever loaded by the server (and put on javac's class path to compile the
+  The upstream jar is only ever loaded by the server (and put on javac's class path to compile the
   dumper mod): no file is ever extracted from it, in particular none of its All Rights Reserved
   .ogg sounds or .nbt structure templates (rules R10, R11).
 
@@ -70,9 +70,11 @@ try {
     $java = Get-OracleJava
     Say "JDK: $java"
 
-    # 2. TF jar (loaded by the server; never extracted)
-    $tfJar = Get-OracleDownload $pins.twilightforest.url (Get-OracleTfJar) $pins.twilightforest.sha256 { param($m) Say $m }
-    Say "TF $($pins.twilightforest.version): $tfJar"
+    # 2. upstream jar (loaded by the server; never extracted)
+    $upUrl = if ($env:GF_ORACLE_UPSTREAM_URL) { $env:GF_ORACLE_UPSTREAM_URL } else { $pins.upstream.url }
+    if (-not $upUrl) { throw 'set GF_ORACLE_UPSTREAM_URL to the download URL of the pinned upstream jar (tools/oracle/oracle.json, upstream.provenance)' }
+    $tfJar = Get-OracleDownload $upUrl (Get-OracleTfJar) $pins.upstream.sha256 { param($m) Say $m }
+    Say "upstream $($pins.upstream.version): $tfJar"
 
     # 3. NeoForge server
     $installed = (Test-Path $stamp) -and ((Get-Content $stamp -Raw).Trim() -eq $wantStamp) -and (Test-Path (Get-OracleServerArgsFile))

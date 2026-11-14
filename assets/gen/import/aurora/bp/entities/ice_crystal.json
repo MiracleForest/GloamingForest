@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:ice_crystal",
+      "identifier": "gloamingforest:ice_crystal",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "ice_crystal", "monster", "mob"]
+        "family": ["gloamingforest", "ice_crystal", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

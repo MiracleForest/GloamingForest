@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:knight_phantom_trophy",
+      "identifier": "gloamingforest:knight_phantom_trophy",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:knight_phantom_trophy.name"
+        "value": "tile.gloamingforest:knight_phantom_trophy.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:knight_phantom_trophy",
+        "block": "gloamingforest:knight_phantom_trophy",
         "replace_block_item": true
       },
       "minecraft:wearable": {

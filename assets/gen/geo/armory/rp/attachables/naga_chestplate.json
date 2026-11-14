@@ -2,13 +2,13 @@
   "format_version": "1.10.0",
   "minecraft:attachable": {
     "description": {
-      "identifier": "twilightforest:naga_chestplate",
+      "identifier": "gloamingforest:naga_chestplate",
       "materials": {
         "default": "armor",
         "enchanted": "armor_enchanted"
       },
       "textures": {
-        "default": "textures/twilightforest/models/armor/naga_scale_layer_1",
+        "default": "textures/gloamingforest/models/armor/naga_scale_layer_1",
         "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {

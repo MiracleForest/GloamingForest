@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:ironwood_helmet",
+      "identifier": "gloamingforest:ironwood_helmet",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:ironwood_helmet.name"
+        "value": "item.gloamingforest:ironwood_helmet.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -32,13 +32,13 @@
         "repair_items": [
           {
             "items": [
-              "twilightforest:ironwood_ingot"
+              "gloamingforest:ironwood_ingot"
             ],
             "repair_amount": "query.max_durability * 0.25"
           },
           {
             "items": [
-              "twilightforest:ironwood_helmet"
+              "gloamingforest:ironwood_helmet"
             ],
             "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
           }

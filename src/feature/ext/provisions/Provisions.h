@@ -1,12 +1,12 @@
 #pragma once
 
 // Extension by U10 (provisions) (rule R18; to be folded by A8): the enchantment effect types and
-// the frosted helper other units call by TF's design.
+// the frosted helper other units call by upstream's design.
 //
-// TF's apply_frosted, smash_blocks and recharge_scepter are enchantment effect types (data-driven
+// upstream's apply_frosted, smash_blocks and recharge_scepter are enchantment effect types (data-driven
 // effects Java runs from the enchantment JSON). Bedrock runs no enchantment effects, so U10 runs its
 // four enchantments itself (fire_react / chill_aura on post-attack through gf::combat, destruction's
-// damage, renewal's tick) and exposes the effects that another unit's code triggers in TF:
+// damage, renewal's tick) and exposes the effects that another unit's code triggers in upstream:
 // - ApplyFrostedEffect#doChillAuraEffect: the yeti armour set (U7), the ice sword / ice bomb /
 //   ice arrows (U8) apply frosted with its immunity rules;
 // - SmashBlocksEffect (the destruction enchantment's HIT_BLOCK) and the smash_blocks attachment:
@@ -29,7 +29,7 @@ class Player;
 namespace gf::provisions::ext {
 
 /// The frosted effect's id.
-inline constexpr char kFrosted[] = "twilightforest:frosted";
+inline constexpr char kFrosted[] = "gloamingforest:frosted";
 
 /// ApplyFrostedEffect#doChillAuraEffect: frosted for `duration` ticks at `amplifier` unless the
 /// victim is a freeze-immune type (#minecraft:freeze_immune_entity_types), wears a piece in
@@ -41,19 +41,19 @@ bool doChillAuraEffect(Actor& victim, int duration, int amplifier, bool shouldHi
 void               setBlocksSmashed(Actor& entity, int count);
 
 /// ChainBlockItem#isCorrectToolForDrops of a thrown block and chain: the block is in
-/// #twilightforest:mineable_with_block_and_chain and the stack's destruction level (1 wood, 2 stone,
+/// #gloamingforest:mineable_with_block_and_chain and the stack's destruction level (1 wood, 2 stone,
 /// 3 iron) is the correct tier (false without destruction).
 [[nodiscard]] bool destructionCanBreak(ItemStack const& stack, Block const& block);
 
 /// SmashBlocksEffect of the stack's destruction enchantment (max_smash 12, radius 1, immune
-/// #twilightforest:block_and_chain_never_breaks): `projectile` (carrying the smash_blocks
+/// #gloamingforest:block_and_chain_never_breaks): `projectile` (carrying the smash_blocks
 /// attachment) thrown by `owner` hit at `pos`; the horizontal square around it is smashed (no
 /// drops, then the owner's harvest drops unless creative). Returns the blocks smashed now (0
 /// without destruction or for a non-player owner).
 int smashBlocks(Player& owner, Actor& projectile, ItemStack const& stack, Vec3 const& pos);
 
 /// RechargeScepterEffect#applyRecharge: an empty scepter (damage == max) in `player`'s hands is
-/// refilled from an exanimate essence or the ingredients of its twilightforest:scepter_repair
+/// refilled from an exanimate essence or the ingredients of its gloamingforest:scepter_repair
 /// recipe found in the inventory. True when it was recharged.
 bool rechargeScepter(Player& player, ItemStack& scepter);
 

@@ -1,7 +1,7 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:adherent": {
+      "gloamingforest:adherent": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
@@ -9,7 +9,7 @@
           "death": "game.player.die"
         }
       },
-      "twilightforest:harbinger_cube": {
+      "gloamingforest:harbinger_cube": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
@@ -17,7 +17,7 @@
           "death": "game.player.die"
         }
       },
-      "twilightforest:roving_cube": {
+      "gloamingforest:roving_cube": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
@@ -25,7 +25,7 @@
           "death": "game.player.die"
         }
       },
-      "twilightforest:plateau_boss": {
+      "gloamingforest:plateau_boss": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {

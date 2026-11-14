@@ -1,0 +1,29 @@
+{
+  "parent": "gloamingforest:craft_travellers_gear",
+  "criteria": {
+    "add_any_modifier": {
+      "trigger": "gloamingforest:add_modifier"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.modify_travellers_gear.desc"
+    },
+    "icon": {
+      "components": {
+        "gloamingforest:water_walk": {}
+      },
+      "count": 1,
+      "id": "gloamingforest:travellers_boots"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.modify_travellers_gear"
+    }
+  },
+  "requirements": [
+    [
+      "add_any_modifier"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

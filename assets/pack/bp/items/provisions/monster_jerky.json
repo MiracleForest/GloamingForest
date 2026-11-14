@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:monster_jerky",
+      "identifier": "gloamingforest:monster_jerky",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:monster_jerky.name"
+        "value": "item.gloamingforest:monster_jerky.name"
       },
       "minecraft:tags": {
         "tags": [

@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/twisted_stone/twisted_stone_pillar"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:twisted_stone"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:twisted_stone"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:twisted_stone_pillar"
+    }
+  }
+}

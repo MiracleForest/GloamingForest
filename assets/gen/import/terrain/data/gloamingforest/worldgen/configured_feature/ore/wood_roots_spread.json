@@ -1,0 +1,28 @@
+{
+  "type": "gloamingforest:wood_roots",
+  "config": {
+    "root_block": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "gloamingforest:root"
+          },
+          "weight": 6
+        },
+        {
+          "data": {
+            "Name": "gloamingforest:liveroot_block"
+          },
+          "weight": 1
+        }
+      ]
+    },
+    "root_ore": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "gloamingforest:liveroot_block"
+      }
+    }
+  }
+}

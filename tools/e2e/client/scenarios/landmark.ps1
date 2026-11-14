@@ -1,8 +1,8 @@
 # Landmark (F6), client: the protection boxes and particles of a refused landmark interaction.
 # The selftest landmark.display builds the fixture landmark (a stone brick shell, protected like
-# TF's lich tower) in its test area and lets a simulated survival player without progress_naga try
+# upstream's lich tower) in its test area and lets a simulated survival player without progress_naga try
 # its wall every 2 s for 24 s; this scenario brings the camera there and takes the screenshots.
-#   local          the client mod: twilightforest:protection_box entities (60 ticks, refreshed) and
+#   local          the client mod: gloamingforest:protection_box entities (60 ticks, refreshed) and
 #                  the protection particles; the client also logs landmark.area_protection
 #   remote-mod     the same against BDS, the companion packet travels over the network
 #   remote-vanilla a vanilla client: the same boxes and particles, no companion packet
@@ -12,7 +12,7 @@ else { Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null }
 
 Invoke-Chat '/gamemode creative'
 $mark = Get-LogMark
-Invoke-Chat '/twilightforest selftest "landmark.display"'
+Invoke-Chat '/gloamingforest selftest "landmark.display"'
 $area = Wait-LogLine 'landmark\.display: area at (-?\d+) (-?\d+) (-?\d+)' 90 -Since $mark
 if ($area -notmatch 'area at (-?\d+) (-?\d+) (-?\d+)') { throw "no display area in '$area'" }
 $x = [int]$Matches[1]; $y = [int]$Matches[2]; $z = [int]$Matches[3]

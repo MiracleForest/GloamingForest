@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponentTemplate.java
-//   src/main/java/twilightforest/world/components/structures/TwilightTemplateStructurePiece.java
-//   src/main/java/twilightforest/world/components/structures/TwilightDoubleTemplateStructurePiece.java
-//   src/main/java/twilightforest/world/components/structures/TwilightJigsawPiece.java
-//   src/main/java/twilightforest/util/jigsaw/JigsawRecord.java
-//   src/main/java/twilightforest/util/jigsaw/JigsawPlaceContext.java
-//   src/main/java/twilightforest/util/jigsaw/JigsawUtil.java
-//   src/main/java/twilightforest/util/RotationUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentTemplate.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingTemplateStructurePiece.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingDoubleTemplateStructurePiece.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java
+//   src/main/java/gloamingforest/util/jigsaw/JigsawRecord.java
+//   src/main/java/gloamingforest/util/jigsaw/JigsawPlaceContext.java
+//   src/main/java/gloamingforest/util/jigsaw/JigsawUtil.java
+//   src/main/java/gloamingforest/util/RotationUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/structure/bases/TemplatePieces.h"
@@ -316,7 +316,7 @@ void ComponentTemplate::setTemplatePositionFromRotation() {
     if (r == Rotation::Clockwise180 || r == Rotation::Counterclockwise90) templatePosition.z += size.x - 1;
 }
 
-// ---- TwilightTemplateStructurePiece -----------------------------------------------------------------------------
+// ---- GloamingTemplateStructurePiece -----------------------------------------------------------------------------
 
 TemplatePiece::TemplatePiece(std::string typeId, int depth, std::string templateId, PlaceSettings settings, BlockPos const& startPosition)
 : Piece(std::move(typeId)),
@@ -375,7 +375,7 @@ void TemplatePiece::placePieceAdjusted(Region& region, RandomSource& random, Blo
     bbox             = originalBox;
 }
 
-// ---- TwilightDoubleTemplateStructurePiece -----------------------------------------------------------------------
+// ---- GloamingDoubleTemplateStructurePiece -----------------------------------------------------------------------
 
 DoubleTemplatePiece::DoubleTemplatePiece(std::string typeId, int depth, std::string templateId, PlaceSettings settings, std::string overlayTemplateId,
                                          PlaceSettings overlaySettings, BlockPos const& start)
@@ -387,7 +387,7 @@ void DoubleTemplatePiece::postProcess(Region& region, RandomSource& random, Bloc
     TemplatePiece::postProcess(region, random, chunkBox, pivot);
     auto const* overlay = templates::parsed(templateOverlayLocation);
     if (!overlay) return;
-    // [VanillaCopy] TemplateStructurePiece.postProcess with the overlay. TF passes the overlay's data
+    // [VanillaCopy] TemplateStructurePiece.postProcess with the overlay. upstream passes the overlay's data
     // markers to the deprecated five-argument handleDataMarker, which does nothing.
     auto p = detail::placement(placeSettingsOverlay, templatePosition, pivot, chunkBox);
     (void)templates::placeInWorld(*overlay, region, p, random, nullptr);
@@ -506,7 +506,7 @@ BlockBox JigsawPlaceContext::makeBoundingBox() const {
 
 bool JigsawPlaceContext::isWithoutCollision(PieceList const& pieces) const { return findCollisionPiece(pieces, makeBoundingBox()) == nullptr; }
 
-// ---- TwilightJigsawPiece -----------------------------------------------------------------------------------------
+// ---- GloamingJigsawPiece -----------------------------------------------------------------------------------------
 
 JigsawPiece::JigsawPiece(std::string typeId, int depth, std::string templateId, JigsawPlaceContext const& context)
 : TemplatePiece(std::move(typeId), depth, std::move(templateId), context.placementSettings, context.templatePos),

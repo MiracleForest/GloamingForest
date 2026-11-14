@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:material/blasted_gold_nugget"
+    },
+    "tags": ["blast_furnace"],
+    "input": "gloamingforest:gold_berry",
+    "output": "minecraft:gold_nugget",
+    "unlock": [
+      {
+        "item": "gloamingforest:gold_berry"
+      }
+    ]
+  }
+}

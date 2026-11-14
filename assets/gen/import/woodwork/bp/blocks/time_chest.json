@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:time_chest",
+      "identifier": "gloamingforest:time_chest",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:type": ["single", "left", "right"]
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:type": ["single", "left", "right"]
       }
     },
     "components": {

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "gloamingforest:charm_of_keeping_1"
+    },
+    {
+      "item": "gloamingforest:charm_of_keeping_1"
+    },
+    {
+      "item": "gloamingforest:charm_of_keeping_1"
+    },
+    {
+      "item": "gloamingforest:charm_of_keeping_1"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:charm_of_keeping_2"
+  }
+}

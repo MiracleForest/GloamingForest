@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/hydra (U24): the Hydra head state machine, poses and part geometry, and the
 // Hydra's attributes against the Java oracle's tests/golden/mobs.json (F13).
 #include <gtest/gtest.h>
@@ -189,8 +189,8 @@ TEST(HydraHead, OracleAttributes) {
     nlohmann::json const* hydra = nullptr;
     // the file nests the mobs under one object level
     for (auto const& [k, v] : mobs.items()) {
-        if (k == "twilightforest:hydra") hydra = &v;
-        else if (v.is_object() && v.contains("twilightforest:hydra")) hydra = &v["twilightforest:hydra"];
+        if (k == "gloamingforest:hydra") hydra = &v;
+        else if (v.is_object() && v.contains("gloamingforest:hydra")) hydra = &v["gloamingforest:hydra"];
     }
     ASSERT_NE(hydra, nullptr);
     EXPECT_DOUBLE_EQ((*hydra)["maxHealth"].get<double>(), kMaxHealth);

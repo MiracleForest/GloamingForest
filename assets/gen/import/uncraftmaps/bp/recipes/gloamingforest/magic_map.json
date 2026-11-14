@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:magic_map"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#A#", "###"],
+    "key": {
+      "#": {
+        "item": "minecraft:paper"
+      },
+      "A": {
+        "item": "gloamingforest:magic_map_focus"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:magic_map_focus"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:magic_map"
+    }
+  }
+}

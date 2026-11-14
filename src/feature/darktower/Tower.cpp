@@ -1,22 +1,22 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerEntranceBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerMainBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBossBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBossTrapComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBalconyComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBeardComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofAntennaComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofCactusComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofFourPostComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofRingsComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/StructureDecoratorDarkTower.java
-//   src/main/java/twilightforest/world/components/structures/type/DarkTowerStructure.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerEntranceBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerMainBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBossBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBossTrapComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBalconyComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBeardComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofAntennaComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofCactusComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofFourPostComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofRingsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/StructureDecoratorDarkTower.java
+//   src/main/java/gloamingforest/world/components/structures/type/DarkTowerStructure.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/darktower/Tower.h"
@@ -51,13 +51,13 @@ std::unique_ptr<Decorator> darkTowerDecorator() {
     auto def         = ::gf::structure::bases::defaultDecorator();
     d->floorState    = def->floorState; // TFStructureDecorator's defaults the dark tower keeps
     d->roofState     = def->roofState;
-    d->blockState    = &J("twilightforest:towerwood");
-    d->accentState   = &J("twilightforest:encased_towerwood");
+    d->blockState    = &J("gloamingforest:towerwood");
+    d->accentState   = &J("gloamingforest:encased_towerwood");
     d->fenceState    = &J("minecraft:oak_fence");
     d->stairState    = &J("minecraft:spruce_stairs");
-    d->pillarState   = &J("twilightforest:encased_towerwood");
-    d->platformState = &J("twilightforest:encased_towerwood");
-    d->randomBlocks  = ::gf::structure::selectors::get("twilightforest:towerwood");
+    d->pillarState   = &J("gloamingforest:encased_towerwood");
+    d->platformState = &J("gloamingforest:encased_towerwood");
+    d->randomBlocks  = ::gf::structure::selectors::get("gloamingforest:towerwood");
     return d;
 }
 
@@ -220,7 +220,7 @@ void Wing::netherTransformBlob(Region& region, RandomSource& inRand, int sx, int
         for (int dy = 0; dy <= rad; dy++)
             for (int dz = 0; dz <= rad; dz++) {
                 if (blobDist(dx, dy, dz) > rad) continue;
-                // do eight at a time for easiness! (TF tests the first corner twice)
+                // do eight at a time for easiness! (upstream tests the first corner twice)
                 testAndChangeToNetherrack(region, rand, sx + dx, sy + dy, sz + dz, sbb);
                 testAndChangeToNetherrack(region, rand, sx + dx, sy + dy, sz + dz, sbb);
                 testAndChangeToNetherrack(region, rand, sx + dx, sy + dy, sz - dz, sbb);
@@ -269,7 +269,7 @@ void Wing::addHalfFloors(Region& region, RandomSource& rand, BlockBox const& sbb
             if (isDeadEnd()) decorateTreasureRoom(region, sbb, rotation, y, 4, *deco);
         } else {
             makeHalfFloor(region, sbb, rotation, y);
-            // decorate (TF's fallthrough: case 1 gets double weight when size >= 11)
+            // decorate (upstream's fallthrough: case 1 gets double weight when size >= 11)
             switch (rand.nextInt(8)) {
             case 0:
                 if (size < 11) {
@@ -318,8 +318,8 @@ void Wing::decorateSpawner(Region& region, RandomSource& rand, BlockBox const& s
     int         x = size > 9 ? 4 : 3;
     int         z = size > 9 ? 5 : 4;
     std::string mobID;
-    if (size > 9) mobID = rand.nextBoolean() ? "twilightforest:carminite_golem" : "twilightforest:carminite_broodling";
-    else mobID = "twilightforest:carminite_broodling";
+    if (size > 9) mobID = rand.nextBoolean() ? "gloamingforest:carminite_golem" : "gloamingforest:carminite_broodling";
+    else mobID = "gloamingforest:carminite_broodling";
     // pillar frame
     makePillarFrame(region, sbb, *deco, rotation, x, y, z, true);
     setSpawnerRotated(region, x + 1, y + 2, z + 1, rotation, mobID, sbb);
@@ -338,7 +338,7 @@ void Wing::decorateWingLounge(Region& region, BlockBox const& sbb, Rotation rota
 }
 
 void Wing::decorateReappearingFloor(Region& region, BlockBox const& sbb, Rotation rotation, int y) {
-    Block const& inactiveReappearing = J("twilightforest:reappearing_block");
+    Block const& inactiveReappearing = J("gloamingforest:reappearing_block");
     Block const& woodenPressurePlate = J("minecraft:oak_pressure_plate");
     // floor
     fillBlocksRotated(region, sbb, 4, y, 3, 7, y, 5, inactiveReappearing, rotation);
@@ -428,7 +428,7 @@ void Wing::makePillarFrame(Region& region, BlockBox const& sbb, Decorator const&
             if ((dx % 3 == 0 || dx == width - 1) && (dz % 3 == 0 || dz == length - 1)) {
                 for (int py = 1; py <= frameHeight; py++) setBlockStateRotated(region, *myDeco.pillarState, x + dx, y + py, z + dz, rotation, sbb);
             } else {
-                // the stairs come from this tower's decorator (deco.stairState), as in TF
+                // the stairs come from this tower's decorator (deco.stairState), as in upstream
                 std::optional<Orientation> stairDir;
                 if (dx == 0) stairDir = Orientation::West;
                 else if (dx == width - 1) stairDir = Orientation::East;
@@ -469,8 +469,8 @@ void Wing::addSmallTimberBeams(Region& region, RandomSource& rand, BlockBox cons
         if (y >= top - spacing && isDeadEnd()) {
             makeTimberFloor(region, sbb, rotation, y);
             auto logDeco           = darkTowerDecorator();
-            logDeco->pillarState   = &J("twilightforest:dark_log");
-            logDeco->platformState = &J("twilightforest:dark_log");
+            logDeco->pillarState   = &J("gloamingforest:dark_log");
+            logDeco->platformState = &J("gloamingforest:dark_log");
             decorateTreasureRoom(region, sbb, rotation, y, 4, *logDeco);
         } else {
             makeSmallTimberBeams(region, rand, sbb, rotation, y, y == bottom && bottom != spacing);
@@ -479,9 +479,9 @@ void Wing::addSmallTimberBeams(Region& region, RandomSource& rand, BlockBox cons
 }
 
 void Wing::makeTimberFloor(Region& region, BlockBox const& sbb, Rotation rotation, int y) {
-    Block const& beamStateNS = J("twilightforest:dark_log", Json{{"axis", "z"}});
-    Block const& beamStateUD = J("twilightforest:dark_log", Json{{"axis", "y"}});
-    Block const& beamStateEW = J("twilightforest:dark_log", Json{{"axis", "x"}});
+    Block const& beamStateNS = J("gloamingforest:dark_log", Json{{"axis", "z"}});
+    Block const& beamStateUD = J("gloamingforest:dark_log", Json{{"axis", "y"}});
+    Block const& beamStateEW = J("gloamingforest:dark_log", Json{{"axis", "x"}});
     for (int z = 1; z < size - 1; z++)
         for (int x = 1; x < size - 1; x++) setBlockStateRotated(region, x < z ? beamStateNS : beamStateEW, x, y, z, rotation, sbb);
     // beams going down
@@ -497,10 +497,10 @@ void Wing::makeTimberFloor(Region& region, BlockBox const& sbb, Rotation rotatio
 }
 
 void Wing::makeSmallTimberBeams(Region& region, RandomSource& rand, BlockBox const& sbb, Rotation rotation, int y, bool bottom) {
-    // TF's names: "NS" is axis X and "EW" axis Z here
-    Block const& beamStateNS = J("twilightforest:dark_log", Json{{"axis", "x"}});
-    Block const& beamStateUD = J("twilightforest:dark_log", Json{{"axis", "y"}});
-    Block const& beamStateEW = J("twilightforest:dark_log", Json{{"axis", "z"}});
+    // upstream's names: "NS" is axis X and "EW" axis Z here
+    Block const& beamStateNS = J("gloamingforest:dark_log", Json{{"axis", "x"}});
+    Block const& beamStateUD = J("gloamingforest:dark_log", Json{{"axis", "y"}});
+    Block const& beamStateEW = J("gloamingforest:dark_log", Json{{"axis", "z"}});
     // two beams going e/w
     for (int z = 1; z < size - 1; z++) {
         setBlockStateRotated(region, beamStateEW, 2, y, z, rotation, sbb);
@@ -554,7 +554,7 @@ void Wing::makeEncasedWalls(Region& region, RandomSource& rand, BlockBox const& 
         for (int y = minY; y <= maxY; y++)
             for (int z = minZ; z <= maxZ; z++) {
                 if (x != minX && x != maxX && y != minY && y != maxY && z != minZ && z != maxZ) continue;
-                // wall (TF compares x with minY here)
+                // wall (upstream compares x with minY here)
                 if (((y == minY || y == maxY) && ((x == minY || x == maxX) || (z == minZ || z == maxZ))) ||
                     ((z == minZ || z == maxZ) && ((x == minY || x == maxX) || (y == minY || y == maxY)))) {
                     placeBlock(region, *deco->accentState, x, y, z, sbb);
@@ -625,7 +625,7 @@ void Wing::makeOpenings(Region& region, BlockBox const& sbb) {
 }
 
 void Wing::makeDoorOpening(Region& region, int dx, int dy, int dz, BlockBox const& sbb) {
-    Block const& inactiveVanish = J("twilightforest:unbreakable_vanishing_block");
+    Block const& inactiveVanish = J("gloamingforest:unbreakable_vanishing_block");
     if (dx == 0 || dx == size - 1) {
         fill(region, sbb, dx, dy - 1, dz - 2, dx, dy + 3, dz + 2, *deco->accentState, air(), false);
         fill(region, sbb, dx, dy, dz - 1, dx, dy + 2, dz + 1, inactiveVanish, air(), false);
@@ -637,7 +637,7 @@ void Wing::makeDoorOpening(Region& region, int dx, int dy, int dz, BlockBox cons
 }
 
 void Wing::makeReappearingDoorOpening(Region& region, int dx, int dy, int dz, BlockBox const& sbb) {
-    Block const& inactiveReappearing = J("twilightforest:reappearing_block");
+    Block const& inactiveReappearing = J("gloamingforest:reappearing_block");
     if (dx == 0 || dx == size - 1) {
         fill(region, sbb, dx, dy - 1, dz - 2, dx, dy + 3, dz + 2, *deco->accentState, air(), false);
         fill(region, sbb, dx, dy, dz - 1, dx, dy + 2, dz + 1, inactiveReappearing, air(), false);
@@ -649,8 +649,8 @@ void Wing::makeReappearingDoorOpening(Region& region, int dx, int dy, int dz, Bl
 }
 
 void Wing::makeLockedDoorOpening(Region& region, int dx, int dy, int dz, BlockBox const& sbb) {
-    Block const& lockedVanish   = J("twilightforest:locked_vanishing_block");
-    Block const& inactiveVanish = J("twilightforest:unbreakable_vanishing_block");
+    Block const& lockedVanish   = J("gloamingforest:locked_vanishing_block");
+    Block const& inactiveVanish = J("gloamingforest:unbreakable_vanishing_block");
     if (dx == 0 || dx == size - 1) {
         fill(region, sbb, dx, dy - 1, dz - 2, dx, dy + 3, dz + 2, *deco->accentState, air(), false);
         fill(region, sbb, dx, dy, dz - 1, dx, dy + 2, dz + 1, inactiveVanish, air(), false);
@@ -859,7 +859,7 @@ void BossTrap::postProcess(Region& region, RandomSource& rand, BlockBox const& s
     fill(region, sbb, 1, 0, 1, size / 2, 0, size - 2, *deco->blockState, air(), false);
     fill(region, sbb, 1, 1, 1, size / 2, 1, size - 2, air(), air(), false);
     // add boss trap
-    placeBlock(region, J("twilightforest:ghast_trap"), 5, 1, 5, sbb);
+    placeBlock(region, J("gloamingforest:ghast_trap"), 5, 1, 5, sbb);
     placeBlock(region, J("minecraft:redstone_wire"), 5, 1, 6, sbb);
     placeBlock(region, J("minecraft:redstone_wire"), 5, 1, 7, sbb);
     placeBlock(region, J("minecraft:redstone_wire"), 5, 1, 8, sbb);
@@ -923,7 +923,7 @@ void Beard::load(Json const& data) {
 void Beard::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) { makeDarkBeard(region, sbb, 0, 0, size - 1, height - 1, size - 1); }
 
 void Beard::makeDarkBeard(Region& region, BlockBox const& sbb, int minX, int minZ, int maxX, int maxY, int maxZ) {
-    Block const& frameState = J("twilightforest:encased_towerwood");
+    Block const& frameState = J("gloamingforest:encased_towerwood");
     for (int x = minX; x <= maxX; x++)
         for (int z = minZ; z <= maxZ; z++) {
             if (x != minX && x != maxX && z != minZ && z != maxZ) continue;
@@ -969,7 +969,7 @@ void Roof::postProcess(Region& region, RandomSource&, BlockBox const& sbb, Block
 }
 
 void RoofAntenna::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
-    // stick with a ball on top antenna (no fence: TF does not call super)
+    // stick with a ball on top antenna (no fence: upstream does not call super)
     Block const& a = *deco->accentState;
     int          c = size / 2;
     for (int y = 1; y < 10; y++) placeBlock(region, a, c, y, c, sbb);
@@ -992,7 +992,7 @@ void RoofAntenna::postProcess(Region& region, RandomSource&, BlockBox const& sbb
 void RoofCactus::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
     Block const& a = *deco->accentState;
     int          c = size / 2;
-    // antenna (no fence: TF does not call super)
+    // antenna (no fence: upstream does not call super)
     for (int y = 1; y < 10; y++) placeBlock(region, *deco->blockState, c, y, c, sbb);
     placeBlock(region, a, c, 10, c, sbb);
     placeBlock(region, a, c - 1, 1, c, sbb);

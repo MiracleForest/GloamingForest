@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/registration/biomes/BiomeHelper.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/registration/biomes/BiomeHelper.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U1 `biomes`, client build: the biomes' ambient particles drawn by the client mod itself, as Java's
 // ClientLevel#animateTick draws them around the local player (feature/biomes/Ambient.cpp's sampler,
-// every client tick in a TF biome). A particle with a native factory (F12's registry) is drawn by
+// every client tick in an upstream biome). A particle with a native factory (F12's registry) is drawn by
 // it, any other as its resource pack effect added to the client level. The server sends these
 // samples only to players without the client mod, so nothing is drawn twice.
 

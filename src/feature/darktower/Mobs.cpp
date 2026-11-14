@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/CarminiteGolem.java
-//   src/main/java/twilightforest/entity/monster/TowerBroodling.java
-//   src/main/java/twilightforest/entity/monster/TowerwoodBorer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/CarminiteGolem.java
+//   src/main/java/gloamingforest/entity/monster/TowerBroodling.java
+//   src/main/java/gloamingforest/entity/monster/TowerwoodBorer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Bedrock: the vanilla parts of their AI (melee attack, wander, look, hurt-by / player targets,
 // the silverfish-like borer's float and stroll) are the BP's vanilla behaviour components; what
-// TF adds is native here.
+// upstream adds is native here.
 
 #include "feature/darktower/Mobs.h"
 
@@ -55,7 +55,7 @@ void golemTick(Actor& self) {
     auto& timer = golemTimers()[uidOf(self)];
     if (timer > 0) {
         --timer;
-        ge::setProperty(self, "twilightforest:attack_timer", timer);
+        ge::setProperty(self, "gloamingforest:attack_timer", timer);
     }
     if (random().nextBoolean()) {
         auto  b = self.getAABB();
@@ -148,8 +148,8 @@ void install() {
     combat::onDealt(combat::priority::Normal, [](combat::DamageInfo const& d) {
         if (!d.attacker || typeOf(*d.attacker) != id::Golem || d.direct != d.attacker && d.direct) return;
         golemTimers()[uidOf(*d.attacker)] = 10;
-        ge::setProperty(*d.attacker, "twilightforest:attack_timer", 10);
-        soundAt(d.attacker->getDimensionBlockSource(), d.attacker->getFeetPos(), "entity.twilightforest.carminite_golem.attack", 1.0f, 1.0f);
+        ge::setProperty(*d.attacker, "gloamingforest:attack_timer", 10);
+        soundAt(d.attacker->getDimensionBlockSource(), d.attacker->getFeetPos(), "entity.gloamingforest.carminite_golem.attack", 1.0f, 1.0f);
         push(d.victim, Vec3{0.0f, 0.4f, 0.0f});
     });
     ge::registerType(id::Borer, {.tick = borerTick, .die = [](Actor& a, std::string const&, Actor*) { borers().erase(uidOf(a)); }});

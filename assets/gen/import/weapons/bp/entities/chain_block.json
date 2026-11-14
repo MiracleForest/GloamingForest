@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:chain_block",
+      "identifier": "gloamingforest:chain_block",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "chain_block"]
+        "family": ["gloamingforest", "chain_block"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

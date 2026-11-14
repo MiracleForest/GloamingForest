@@ -2,18 +2,18 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:snow_queen",
+      "identifier": "gloamingforest:snow_queen",
       "materials": {
         "default": "entity_alphatest",
         "shields": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/snowqueen",
+        "default": "textures/gloamingforest/entity/snowqueen",
         "shields": "textures/blocks/ice_packed"
       },
       "geometry": {
-        "default": "geometry.twilightforest.snow_queen",
-        "shields": "geometry.twilightforest.snow_queen_shields"
+        "default": "geometry.gloamingforest.snow_queen",
+        "shields": "geometry.gloamingforest.snow_queen_shields"
       },
       "scripts": {
         "scale": "1.2",
@@ -22,9 +22,9 @@
           "v.gliding_speed_value = 1.0;",
           "v.attack_time = v.attack_time ?? 0;",
           "v.shield_last = v.shield_last ?? -1;",
-          "v.shield_sync = (q.property('twilightforest:shield_tick') != v.shield_last) ? q.life_time : (v.shield_sync ?? q.life_time);",
-          "v.shield_last = q.property('twilightforest:shield_tick');",
-          "v.shield_t = q.property('twilightforest:shield_tick') + (q.life_time - v.shield_sync) * 20;"
+          "v.shield_sync = (q.property('gloamingforest:shield_tick') != v.shield_last) ? q.life_time : (v.shield_sync ?? q.life_time);",
+          "v.shield_last = q.property('gloamingforest:shield_tick');",
+          "v.shield_t = q.property('gloamingforest:shield_tick') + (q.life_time - v.shield_sync) * 20;"
         ],
         "animate": [
           "humanoid_base_pose",
@@ -46,17 +46,17 @@
         "move": "animation.humanoid.move",
         "attack": "animation.humanoid.attack.rotations",
         "bob": "animation.humanoid.bob",
-        "base": "animation.twilightforest.snow_queen.base",
-        "beam_arms": "animation.twilightforest.snow_queen.beam_arms",
-        "arms_up": "animation.twilightforest.snow_queen.arms_up",
-        "phase": "controller.animation.twilightforest.snow_queen.phase",
-        "shields_spin": "animation.twilightforest.snow_queen.shields",
-        "snow_aura": "controller.animation.twilightforest.ice_mob.snow",
-        "ice_beam": "animation.twilightforest.snow_queen.ice_beam",
-        "drop_warning": "animation.twilightforest.snow_queen.drop_warning",
-        "effects": "controller.animation.twilightforest.snow_queen.effects"
+        "base": "animation.gloamingforest.snow_queen.base",
+        "beam_arms": "animation.gloamingforest.snow_queen.beam_arms",
+        "arms_up": "animation.gloamingforest.snow_queen.arms_up",
+        "phase": "controller.animation.gloamingforest.snow_queen.phase",
+        "shields_spin": "animation.gloamingforest.snow_queen.shields",
+        "snow_aura": "controller.animation.gloamingforest.ice_mob.snow",
+        "ice_beam": "animation.gloamingforest.snow_queen.ice_beam",
+        "drop_warning": "animation.gloamingforest.snow_queen.drop_warning",
+        "effects": "controller.animation.gloamingforest.snow_queen.effects"
       },
-      "render_controllers": ["controller.render.default", "controller.render.twilightforest.snow_queen_shields"],
+      "render_controllers": ["controller.render.default", "controller.render.gloamingforest.snow_queen_shields"],
       "spawn_egg": {
         "base_color": "#b1b2d4",
         "overlay_color": "#87006e"

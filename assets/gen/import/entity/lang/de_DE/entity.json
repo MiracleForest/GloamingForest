@@ -1,6 +1,6 @@
 {
-  "config.twilightforest.multiplayer_fight_adjuster.more_loot": "Mehr Loot",
-  "config.twilightforest.multiplayer_fight_adjuster.more_loot_and_health": "Mehr Loot und Gesundheit",
-  "config.twilightforest.multiplayer_fight_adjuster.none": "Keine",
-  "subtitles.twilightforest.block.boss_chest.appear": "Bosskiste erscheint"
+  "config.gloamingforest.multiplayer_fight_adjuster.more_loot": "Mehr Loot",
+  "config.gloamingforest.multiplayer_fight_adjuster.more_loot_and_health": "Mehr Loot und Gesundheit",
+  "config.gloamingforest.multiplayer_fight_adjuster.none": "Keine",
+  "subtitles.gloamingforest.block.boss_chest.appear": "Bosskiste erscheint"
 }

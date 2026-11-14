@@ -9,8 +9,8 @@
 #   death60, death140  the death animation (shaking; the crown sinking);
 #   tower_far, tower_yard, tower_side  a generated lich tower from afar, its yard (paths, graves,
 #               lights, perimeter fence) and the shaft from the base.
-# Compare them with TF's twilightlich64.png / twilightlich64_eyes.png, the zombie and enchanting
-# table book textures, the particle sheet and TF's lich tower. Local mode also runs the lich.*
+# Compare them with upstream's gloaminglich64.png / gloaminglich64_eyes.png, the zombie and enchanting
+# table book textures, the particle sheet and upstream's lich tower. Local mode also runs the lich.*
 # selftests on the integrated server.
 Save-Screenshot 'hud' | Out-Null
 $remote = $script:Mode -ne 'local'

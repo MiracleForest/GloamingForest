@@ -1,32 +1,32 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/resources/data/twilightforest/function/dev_new_world.mcfunction
-//   src/main/resources/data/twilightforest/function/dev_powerwash_chunk.mcfunction
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/resources/data/gloamingforest/function/dev_new_world.mcfunction
+//   src/main/resources/data/gloamingforest/function/dev_powerwash_chunk.mcfunction
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's two world generation dev functions as Bedrock functions, run as in Java with
-// `/function twilightforest/dev_new_world` and `/function twilightforest/dev_powerwash_chunk`.
+// upstream's two world generation dev functions as Bedrock functions, run as in Java with
+// `/function gloamingforest/dev_new_world` and `/function gloamingforest/dev_powerwash_chunk`.
 // F5 owns the function ids but no pack directory (its paths are code only), so the module writes
 // them into the mod's behavior pack when the mod loads, before a world (and its functions) loads;
 // the selftest worldgen.functions runs both in the world.
 //
-// dev_new_world, line by line against TF's:
+// dev_new_world, line by line against upstream's:
 // - doDaylightCycle, doEntityDrops, doMobLoot, doMobSpawning, doTileDrops, doWeatherCycle,
 //   keepInventory: the same Bedrock gamerules.
 // - randomTickSpeed -1 is written as 0: Java ticks no random block for any value <= 0
 //   (ServerLevel#tickChunk `if (randomTickSpeed > 0)`), Bedrock's randomtickspeed means the same
 //   at 0, so the effect is identical.
 // - announceAdvancements, doPatrolSpawning, doTraderSpawning: Bedrock has no such gamerules (its
-//   patrols and wandering traders have no switch; TF's advancements are the mod's, U14).
-// - tfEnforcedProgression false and `execute in twilightforest:twilight_forest run teleport ~ 128 ~`:
-//   a pack function cannot name the mod's /twilightforest gamerule (BDS parses functions before
+//   patrols and wandering traders have no switch; upstream's advancements are the mod's, U14).
+// - tfEnforcedProgression false and `execute in gloamingforest:gloaming_forest run teleport ~ 128 ~`:
+//   a pack function cannot name the mod's /gloamingforest gamerule (BDS parses functions before
 //   mod commands exist) nor a custom dimension, so the function ends with
-//   `scriptevent twilightforest:dev_new_world`, which this module answers: the rule is set through
-//   gf::gamerules and the entity running the function (if any) goes to the Twilight Forest at
+//   `scriptevent gloamingforest:dev_new_world`, which this module answers: the rule is set through
+//   gf::gamerules and the entity running the function (if any) goes to the Gloaming Forest at
 //   y 128, its x / z scaled like Java's `execute in` (coordinate scale of the source over the
-//   Twilight Forest's).
+//   Gloaming Forest's).
 #include <atomic>
 #include <filesystem>
 #include <fstream>
@@ -54,12 +54,12 @@ namespace gf::worldgen::detail {
 
 namespace {
 
-constexpr char kDevNewWorldEvent[] = "twilightforest:dev_new_world";
+constexpr char kDevNewWorldEvent[] = "gloamingforest:dev_new_world";
 
-constexpr char kDevNewWorld[] = R"(# twilightforest:dev_new_world (The Twilight Forest 4.8): development world settings.
+constexpr char kDevNewWorld[] = R"(# gloamingforest:dev_new_world (the upstream 4.8): development world settings.
 # Java's randomTickSpeed -1 is 0 here (no random ticks either way). Java's announceAdvancements,
 # doPatrolSpawning and doTraderSpawning have no Bedrock gamerule. The scriptevent sets the mod's
-# tfEnforcedProgression rule to false and sends the caller into the Twilight Forest at y 128.
+# tfEnforcedProgression rule to false and sends the caller into the Gloaming Forest at y 128.
 gamerule dodaylightcycle false
 gamerule doentitydrops false
 gamerule domobloot false
@@ -68,10 +68,10 @@ gamerule dotiledrops false
 gamerule doweathercycle false
 gamerule keepinventory true
 gamerule randomtickspeed 0
-scriptevent twilightforest:dev_new_world teleport
+scriptevent gloamingforest:dev_new_world teleport
 )";
 
-constexpr char kDevPowerwashChunk[] = R"(# twilightforest:dev_powerwash_chunk (The Twilight Forest 4.8): clears the natural ground around the caller.
+constexpr char kDevPowerwashChunk[] = R"(# gloamingforest:dev_powerwash_chunk (the upstream 4.8): clears the natural ground around the caller.
 fill ~-10 -32 ~-10 ~10 15 ~10 air replace grass_block
 fill ~-10 -32 ~-10 ~10 15 ~10 air replace dirt
 fill ~-10 -32 ~-10 ~10 15 ~10 air replace stone
@@ -98,16 +98,16 @@ bool writeIfChanged(std::filesystem::path const& file, std::string_view content)
     return static_cast<bool>(out);
 }
 
-/// Java's DimensionType#getTeleportationScale(from, twilight): the source's coordinate scale over
-/// the Twilight Forest's (overworld and end 1, nether 8).
+/// Java's DimensionType#getTeleportationScale(from, gloaming): the source's coordinate scale over
+/// the Gloaming Forest's (overworld and end 1, nether 8).
 double teleportationScale(DimensionType from) {
     double to = world::coordinateScale();
     if (to <= 0) to = 0.125;
-    double source = world::isTwilight(from) ? to : (static_cast<int>(from) == 1 ? 8.0 : 1.0);
+    double source = world::isGloaming(from) ? to : (static_cast<int>(from) == 1 ? 8.0 : 1.0);
     return source / to;
 }
 
-/// The Twilight Forest part of dev_new_world (tfEnforcedProgression, the teleport).
+/// The Gloaming Forest part of dev_new_world (tfEnforcedProgression, the teleport).
 void runDevNewWorld(CommandOrigin const& origin, CommandOutput& output) {
     ++gDevNewWorldRuns;
     bool rule = gamerules::set("tfEnforcedProgression", false);
@@ -119,10 +119,10 @@ void runDevNewWorld(CommandOrigin const& origin, CommandOutput& output) {
         output.success("dev_new_world: no entity to teleport");
         return;
     }
-    auto twilight = world::twilight();
-    if (!twilight) {
-        gf::log().warn("worldgen: dev_new_world: the Twilight Forest dimension is not available, no teleport");
-        output.success("dev_new_world: the Twilight Forest dimension is not available");
+    auto gloaming = world::gloaming();
+    if (!gloaming) {
+        gf::log().warn("worldgen: dev_new_world: the Gloaming Forest dimension is not available, no teleport");
+        output.success("dev_new_world: the Gloaming Forest dimension is not available");
         return;
     }
     if (!entity->isPlayer()) {
@@ -133,8 +133,8 @@ void runDevNewWorld(CommandOrigin const& origin, CommandOutput& output) {
     double scale  = teleportationScale(player.getDimensionId());
     Vec3   pos    = player.getFeetPos();
     Vec3   target{static_cast<float>(pos.x * scale), 128.0F, static_cast<float>(pos.z * scale)};
-    bool   ok = world::teleport(player, *twilight, target, player.getRotation().y);
-    gf::log().info("worldgen: dev_new_world: {} -> Twilight Forest {:.1f} 128 {:.1f} ({})", player.getRealName(), target.x, target.z, ok ? "teleported" : "failed");
+    bool   ok = world::teleport(player, *gloaming, target, player.getRotation().y);
+    gf::log().info("worldgen: dev_new_world: {} -> Gloaming Forest {:.1f} 128 {:.1f} ({})", player.getRealName(), target.x, target.z, ok ? "teleported" : "failed");
     output.success(ok ? "dev_new_world: teleported" : "dev_new_world: teleport failed");
 }
 
@@ -142,7 +142,7 @@ void runDevNewWorld(CommandOrigin const& origin, CommandOutput& output) {
 
 /// The directory the functions are written to.
 std::filesystem::path functionsDir() {
-    return Mod::getInstance().getSelf().getModDir() / "behavior_packs" / "GloamingForest_BP" / "functions" / "twilightforest";
+    return Mod::getInstance().getSelf().getModDir() / "behavior_packs" / "GloamingForest_BP" / "functions" / "gloamingforest";
 }
 
 /// How often the scriptevent of dev_new_world was answered (selftests).

@@ -1,0 +1,11 @@
+{
+  "feature": "gloamingforest:thorns",
+  "placement": [
+    {
+      "type": "gloamingforest:chunk_blanketing",
+      "biome_lock": "gloamingforest:thornlands",
+      "heightmap": "OCEAN_FLOOR_WG",
+      "integrity": 0.7
+    }
+  ]
+}

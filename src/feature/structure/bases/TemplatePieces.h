@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponentTemplate.java
-//   src/main/java/twilightforest/world/components/structures/TwilightTemplateStructurePiece.java
-//   src/main/java/twilightforest/world/components/structures/TwilightDoubleTemplateStructurePiece.java
-//   src/main/java/twilightforest/world/components/structures/TwilightJigsawPiece.java
-//   src/main/java/twilightforest/util/jigsaw/JigsawRecord.java
-//   src/main/java/twilightforest/util/jigsaw/JigsawPlaceContext.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentTemplate.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingTemplateStructurePiece.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingDoubleTemplateStructurePiece.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java
+//   src/main/java/gloamingforest/util/jigsaw/JigsawRecord.java
+//   src/main/java/gloamingforest/util/jigsaw/JigsawPlaceContext.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). The
-// template-backed piece bases. Rule R19: TF's .nbt templates are All Rights Reserved, so every
+// template-backed piece bases. Rule R19: upstream's .nbt templates are All Rights Reserved, so every
 // template here is an original GloamingForest template (.gft.json, structure::templates) with the
-// id of the TF template it stands in for ("twilightforest:lich_tower/root/foyer"); data markers are
-// the template's markers (TF's STRUCTURE_BLOCK DATA mode "metadata" strings).
+// id of the upstream template it stands in for ("gloamingforest:lich_tower/root/foyer"); data markers are
+// the template's markers (upstream's STRUCTURE_BLOCK DATA mode "metadata" strings).
 
 #include <functional>
 #include <map>
@@ -65,7 +65,7 @@ protected:
     std::string   templateId; ///< Java's TEMPLATE
 };
 
-/// TwilightTemplateStructurePiece: TemplateStructurePiece without vanilla's jigsaw handling; data
+/// GloamingTemplateStructurePiece: TemplateStructurePiece without vanilla's jigsaw handling; data
 /// markers go to handleDataMarker with the region and the rotation.
 class TemplatePiece : public Piece {
 public:
@@ -89,7 +89,7 @@ protected:
     int           placeFlag = 2; ///< Block.UPDATE_CLIENTS
 };
 
-/// TwilightDoubleTemplateStructurePiece: a template plus an overlay template on the same spot.
+/// GloamingDoubleTemplateStructurePiece: a template plus an overlay template on the same spot.
 class DoubleTemplatePiece : public TemplatePiece {
 public:
     DoubleTemplatePiece(std::string typeId, int genDepth, std::string templateId, PlaceSettings settings, std::string overlayTemplateId,
@@ -135,7 +135,7 @@ struct JigsawPlaceContext {
     [[nodiscard]] bool                isWithoutCollision(PieceList const& pieces) const;
 };
 
-/// TwilightJigsawPiece: a template piece that grows children from its spare jigsaws.
+/// GloamingJigsawPiece: a template piece that grows children from its spare jigsaws.
 class JigsawPiece : public TemplatePiece {
 public:
     JigsawPiece(std::string typeId, int genDepth, std::string templateId, JigsawPlaceContext const& context);

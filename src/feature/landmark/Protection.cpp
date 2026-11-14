@@ -1,24 +1,24 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/ProgressionEvents.java
-//   src/main/java/twilightforest/network/AreaProtectionPacket.java
-//   src/main/java/twilightforest/network/StructureProtectionPacket.java
-//   src/main/java/twilightforest/entity/ProtectionBox.java
-//   src/main/java/twilightforest/util/PlayerHelper.java
-//   src/main/java/twilightforest/util/landmarks/LandmarkUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/ProgressionEvents.java
+//   src/main/java/gloamingforest/network/AreaProtectionPacket.java
+//   src/main/java/gloamingforest/network/StructureProtectionPacket.java
+//   src/main/java/gloamingforest/entity/ProtectionBox.java
+//   src/main/java/gloamingforest/util/PlayerHelper.java
+//   src/main/java/gloamingforest/util/landmarks/LandmarkUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Landmark protection (ProgressionEvents). While tfEnforcedProgression is on, a player without the
 // advancements a progression landmark requires cannot break, use or place blocks in its protected
-// pieces, nor hurt its monsters (kobolds excepted). Every refusal shows the protected boxes: TF
+// pieces, nor hurt its monsters (kobolds excepted). Every refusal shows the protected boxes: upstream
 // sends AreaProtectionPacket to the clients within 64 blocks, which spawn client-side
 // ProtectionBox entities and 20 protection particles. Here the companion clients get
 // landmark.area_protection, and every player near (vanilla clients too) sees the boxes as
-// twilightforest:protection_box entities (BP timer: 60 ticks, refreshed while the protection
+// gloamingforest:protection_box entities (BP timer: 60 ticks, refreshed while the protection
 // repeats; never kept with the world: a box loaded back with its chunk is removed) and the
-// twilightforest:protection particles. Every 100 ticks companions also get the locked structure's
+// gloamingforest:protection particles. Every 100 ticks companions also get the locked structure's
 // boxes (landmark.structure_protection, StructureProtectionPacket) for the protection weather.
 // Handlers run at interactions priority Highest (rule R8).
 #include <algorithm>
@@ -66,8 +66,8 @@ namespace ia = gf::interactions;
 
 namespace {
 
-constexpr char kProtectionBox[]      = "twilightforest:protection_box";
-constexpr char kProtectionParticle[] = "twilightforest:protection";
+constexpr char kProtectionBox[]      = "gloamingforest:protection_box";
+constexpr char kProtectionParticle[] = "gloamingforest:protection";
 constexpr int  kBoxLifetime          = 60; ///< ProtectionBox#lifeTime
 /// The size and refresh properties of the box entity (BP entity, synced to every client).
 constexpr char kSizeX[] = "gf:size_x", kSizeY[] = "gf:size_y", kSizeZ[] = "gf:size_z", kEpoch[] = "gf:epoch";
@@ -96,7 +96,7 @@ State& state() {
 
 /// ProgressionEvents#isBlockProtectedFromBreaking: blocks tagged progression_allow_breaking may be broken.
 bool blockProtectedFromBreaking(std::string const& blockId) {
-    return !tags::has(tags::Registry::Block, "twilightforest:progression_allow_breaking", blockId);
+    return !tags::has(tags::Registry::Block, "gloamingforest:progression_allow_breaking", blockId);
 }
 
 /// Java's Enemy: Bedrock's "monster" family.
@@ -261,7 +261,7 @@ void checkForLockedStructures(Player& player) {
     int  dim  = static_cast<int>(player.getDimensionId());
     auto feet = player.getFeetBlockPos();
     auto rec  = nearestLandmark(dim, feet.x >> 4, feet.z >> 4, GlobalPos{dim, feet.x, feet.y, feet.z});
-    if (!rec) return; // TF: no start, nothing sent
+    if (!rec) return; // upstream: no start, nothing sent
     auto const* inf = info(rec->start.key);
     if (inf && inf->traits.progression && !hasRequiredAdvancements(player, *inf)) {
         Json boxes = Json::array();
@@ -290,7 +290,7 @@ bool enforced() {
         if (s.enforcedOverride) return *s.enforcedOverride;
     }
     bool value = gamerules::getBool("tfEnforcedProgression");
-    // TF's default (true) while the gamerule store is the F0 stub
+    // upstream's default (true) while the gamerule store is the F0 stub
     static bool const storeIsStub = stubHit("gamerules.get");
     return storeIsStub ? true : value;
 }
@@ -303,7 +303,7 @@ void setEnforcedOverride(std::optional<bool> value) {
 bool hasRequiredAdvancements(Player const& player, Info const& inf) {
     // PlayerHelper#playerHasRequiredAdvancements (through doesPlayerHaveRequiredAdvancements): its
     // loop returns at the first advancement, done or not, so the first one of the lock decides (every
-    // TF structure has at most one); no lock: allowed. The progression store answers isDone()
+    // upstream structure has at most one); no lock: allowed. The progression store answers isDone()
     auto const& lock = inf.d.lockAdvancements;
     return lock.empty() || progression::has(player, lock.front());
 }
@@ -435,7 +435,7 @@ void protectionTick(std::uint64_t tick) {
         std::lock_guard lock(state().mutex);
         std::erase_if(state().boxes, [t](LiveBox const& b) { return t > b.expires + 5; });
     }
-    // TF's ProtectionBox is a client entity, never saved: a box that came back with its chunk goes
+    // upstream's ProtectionBox is a client entity, never saved: a box that came back with its chunk goes
     // (every 5 s: a loaded box's own BP timer runs out after 3 s anyway once its chunk ticks)
     if (tick % 100 == 50) (void)sweepStrayProtectionBoxes();
     // ProgressionEvents#performProtectionAndPortalChecks: every 100 ticks the nearby locked structure
@@ -484,13 +484,13 @@ void installProtection() {
     }, ia::priority::Highest));
     // preventLockedAreaEntityDamage (melee: the attack itself is refused)
     s.handlers.push_back(ia::onAttack({}, [](ia::EntityContext const& c) {
-        if (!isEnemy(c.entity) || c.entityId == "twilightforest:kobold") return ia::Result::Pass;
+        if (!isEnemy(c.entity) || c.entityId == "gloamingforest:kobold") return ia::Result::Pass;
         auto pos = c.entity.getFeetBlockPos();
         int  dim = static_cast<int>(c.entity.getDimensionId());
         return isAreaProtected(c.player, dim, pos.x, pos.y, pos.z, true) ? ia::Result::Deny : ia::Result::Pass;
     }, ia::priority::Highest));
     // a companion that joins (again) starts with no structure boxes: send them on the next check
-    // (TF sends every 100 ticks without remembering what it sent)
+    // (upstream sends every 100 ticks without remembering what it sent)
     s.disconnect = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& e) {
         auto            id = e.self().getOrCreateUniqueID().rawID;
         std::lock_guard lock(state().mutex);
@@ -507,7 +507,7 @@ void installProtection() {
         // preventLockedAreaEntityDamage (any damage a player causes: projectiles, ...)
         combat::onIncoming(combat::priority::Highest, [](combat::DamageInfo& d) {
             if (!d.attacker || !d.attacker->isPlayer()) return combat::Verdict::Pass;
-            if (!isEnemy(d.victim) || d.victim.getTypeName() == "twilightforest:kobold") return combat::Verdict::Pass;
+            if (!isEnemy(d.victim) || d.victim.getTypeName() == "gloamingforest:kobold") return combat::Verdict::Pass;
             auto pos = d.victim.getFeetBlockPos();
             int  dim = static_cast<int>(d.victim.getDimensionId());
             return isAreaProtected(*static_cast<Player*>(d.attacker), dim, pos.x, pos.y, pos.z, true) ? combat::Verdict::Cancel : combat::Verdict::Pass;

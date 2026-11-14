@@ -1,6 +1,6 @@
 #pragma once
 
-// U6 flora (unit-internal header): TF's small plants, berry bushes, critters and jars.
+// U6 flora (unit-internal header): upstream's small plants, berry bushes, critters and jars.
 //
 //   Util.cpp      block / item / sound helpers shared by the unit's files
 //   Bushes.cpp    berry, dark tower and oreberry bushes (TFBushBlock family)
@@ -11,7 +11,7 @@
 //                 capture in a mason jar, worn on the head (cicada sound), dispensers
 //   Jars.cpp      firefly / cicada / mason jars (lids, release, mason jar storage) and the firefly
 //                 particle spawner
-//   Features.cpp  TF's 8 flora feature types
+//   Features.cpp  upstream's 8 flora feature types
 //   Module.cpp    the module and the config section "flora"
 //
 // Directions are Bedrock FacingIDs: 0 down, 1 up, 2 north, 3 south, 4 west, 5 east.
@@ -56,42 +56,42 @@ struct FloraConfig {
 [[nodiscard]] FloraConfig const& config();
 
 namespace ids {
-inline constexpr char MossPatch[]        = "twilightforest:moss_patch";
-inline constexpr char CloverPatch[]      = "twilightforest:clover_patch";
-inline constexpr char Mayapple[]         = "twilightforest:mayapple";
-inline constexpr char Fiddlehead[]       = "twilightforest:fiddlehead";
-inline constexpr char Mushgloom[]        = "twilightforest:mushgloom";
-inline constexpr char FallenLeaves[]     = "twilightforest:fallen_leaves";
-inline constexpr char Root[]             = "twilightforest:root";
-inline constexpr char LiverootBlock[]    = "twilightforest:liveroot_block";
-inline constexpr char Liveroot[]         = "twilightforest:liveroot";
-inline constexpr char RootStrand[]       = "twilightforest:root_strand";
-inline constexpr char TorchberryPlant[]  = "twilightforest:torchberry_plant";
-inline constexpr char Torchberries[]     = "twilightforest:torchberries";
-inline constexpr char HugeLilyPad[]      = "twilightforest:huge_lily_pad";
-inline constexpr char HugeWaterLily[]    = "twilightforest:huge_water_lily";
-inline constexpr char Firefly[]          = "twilightforest:firefly";
-inline constexpr char Cicada[]           = "twilightforest:cicada";
-inline constexpr char Moonworm[]         = "twilightforest:moonworm";
-inline constexpr char FireflyJar[]       = "twilightforest:firefly_jar";
-inline constexpr char CicadaJar[]        = "twilightforest:cicada_jar";
-inline constexpr char MasonJar[]         = "twilightforest:mason_jar";
-inline constexpr char FireflySpawner[]   = "twilightforest:firefly_particle_spawner";
-inline constexpr char EssenceBerry[]     = "twilightforest:essence_berry";
-inline constexpr char UberousSoil[]      = "twilightforest:uberous_soil";
+inline constexpr char MossPatch[]        = "gloamingforest:moss_patch";
+inline constexpr char CloverPatch[]      = "gloamingforest:clover_patch";
+inline constexpr char Mayapple[]         = "gloamingforest:mayapple";
+inline constexpr char Fiddlehead[]       = "gloamingforest:fiddlehead";
+inline constexpr char Mushgloom[]        = "gloamingforest:mushgloom";
+inline constexpr char FallenLeaves[]     = "gloamingforest:fallen_leaves";
+inline constexpr char Root[]             = "gloamingforest:root";
+inline constexpr char LiverootBlock[]    = "gloamingforest:liveroot_block";
+inline constexpr char Liveroot[]         = "gloamingforest:liveroot";
+inline constexpr char RootStrand[]       = "gloamingforest:root_strand";
+inline constexpr char TorchberryPlant[]  = "gloamingforest:torchberry_plant";
+inline constexpr char Torchberries[]     = "gloamingforest:torchberries";
+inline constexpr char HugeLilyPad[]      = "gloamingforest:huge_lily_pad";
+inline constexpr char HugeWaterLily[]    = "gloamingforest:huge_water_lily";
+inline constexpr char Firefly[]          = "gloamingforest:firefly";
+inline constexpr char Cicada[]           = "gloamingforest:cicada";
+inline constexpr char Moonworm[]         = "gloamingforest:moonworm";
+inline constexpr char FireflyJar[]       = "gloamingforest:firefly_jar";
+inline constexpr char CicadaJar[]        = "gloamingforest:cicada_jar";
+inline constexpr char MasonJar[]         = "gloamingforest:mason_jar";
+inline constexpr char FireflySpawner[]   = "gloamingforest:firefly_particle_spawner";
+inline constexpr char EssenceBerry[]     = "gloamingforest:essence_berry";
+inline constexpr char UberousSoil[]      = "gloamingforest:uberous_soil";
 } // namespace ids
 
 namespace st {
-inline constexpr char Age[]       = "twilightforest:age";
-inline constexpr char Layers[]    = "twilightforest:layers";
-inline constexpr char Facing[]    = "twilightforest:facing";
-inline constexpr char Piece[]     = "twilightforest:piece";
-inline constexpr char Berries[]   = "twilightforest:has_torchberries";
-inline constexpr char Radius[]    = "twilightforest:particle_radius";
-inline constexpr char North[]     = "twilightforest:north";
-inline constexpr char South[]     = "twilightforest:south";
-inline constexpr char West[]      = "twilightforest:west";
-inline constexpr char East[]      = "twilightforest:east";
+inline constexpr char Age[]       = "gloamingforest:age";
+inline constexpr char Layers[]    = "gloamingforest:layers";
+inline constexpr char Facing[]    = "gloamingforest:facing";
+inline constexpr char Piece[]     = "gloamingforest:piece";
+inline constexpr char Berries[]   = "gloamingforest:has_torchberries";
+inline constexpr char Radius[]    = "gloamingforest:particle_radius";
+inline constexpr char North[]     = "gloamingforest:north";
+inline constexpr char South[]     = "gloamingforest:south";
+inline constexpr char West[]      = "gloamingforest:west";
+inline constexpr char East[]      = "gloamingforest:east";
 } // namespace st
 
 // ---- directions -------------------------------------------------------------------------------------
@@ -157,7 +157,7 @@ void actionBar(Player& player, std::string const& text);
 
 // ---- effects ---------------------------------------------------------------------------------------
 
-/// Plays a TF / vanilla sound event at the block centre (gf::fx) for the players near it.
+/// Plays an upstream / vanilla sound event at the block centre (gf::fx) for the players near it.
 void sound(BlockSource& region, BlockPos const& pos, std::string const& event, float volume = 1.f, float pitch = 1.f);
 /// A Bedrock vanilla sound by name at the block centre (PlaySoundPacket).
 void vanillaSound(BlockSource& region, BlockPos const& pos, std::string const& name, float volume = 1.f, float pitch = 1.f);
@@ -203,7 +203,7 @@ enum class Kind { Overworld, DarkTower, Oreberry, Essence };
 [[nodiscard]] Kind kindOf(std::string const& blockId);
 /// TFBushBlock#randomTick (+ BerryBushBlock / dark tower / oreberry overrides) with `random`.
 void randomTick(BlockSource& region, BlockPos const& pos, RandomSource& random);
-/// The berry loot table of a bush ("twilightforest:blocks/raspberry_bush_berries").
+/// The berry loot table of a bush ("gloamingforest:blocks/raspberry_bush_berries").
 [[nodiscard]] std::string berryTable(std::string const& blockId);
 [[nodiscard]] bool canGrowAt(BlockSource& region, BlockPos const& pos, Block const& block);
 /// TFBushBlock#canSurvive (+ OreBerryBlock's light limit).

@@ -1,4 +1,4 @@
--- GloamingForest: The Twilight Forest 4.8 for Minecraft Bedrock Edition (LeviLamina native mod).
+-- GloamingForest: the upstream 4.8 for Minecraft Bedrock Edition (LeviLamina native mod).
 -- Build through tools/build.ps1 (it takes a build throttle slot, rule R23).
 -- Adapted from LiteLDev/Levitate v0.1.0 (LGPL-3.0).
 

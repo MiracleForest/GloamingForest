@@ -1,4 +1,4 @@
-// GloamingForest import tool (contract "import", unit F1): reads TF's registration code
+// GloamingForest import tool (contract "import", unit F1): reads upstream's registration code
 // (init/TFBlocks.java, TFItems.java, TFEntities.java, TFCreativeTabs.java) for the facts the data
 // files do not carry: block classes and properties, item stack sizes, entity sizes and spawn egg
 // colours, and the creative tab order. Facts only; no Java code is translated here.
@@ -19,7 +19,7 @@ namespace GfImport
         public double Hardness = 0, Resistance = 0;
         public int Light = 0;
         public bool DynamicLight, NoCollision, NoOcclusion, Unbreakable, Flammable, Replaceable;
-        public bool RequiresTool;      // requiresCorrectToolForDrops(): only a correct tool (TF's / vanilla's tool tags) drops it
+        public bool RequiresTool;      // requiresCorrectToolForDrops(): only a correct tool (upstream's / vanilla's tool tags) drops it
         /// <summary>instabreak() = strength(0): from the final values, whatever call set them.</summary>
         public bool Instabreak { get { return Hardness == 0 && Resistance == 0; } }
         public string Sound = "STONE", MapColor;
@@ -28,7 +28,7 @@ namespace GfImport
         public double Friction = -1;
         public int FireEncouragement = -1, FireFlammability = -1;   // FireBlock.setFlammable (RegistrationEvents)
         public string LightExpr;   // the lightLevel lambda body when it is not a constant
-        public string CopyOf;      // TF constant or "Blocks.X"
+        public string CopyOf;      // upstream constant or "Blocks.X"
         public double CopyScale = 1;   // copyAndScaleProperties(X, scale): destroyTime and explosionResistance x scale
     }
 
@@ -85,8 +85,8 @@ namespace GfImport
 
         static double F(string s) { return double.Parse(s.TrimEnd('F', 'f', 'D', 'd'), CultureInfo.InvariantCulture); }
 
-        /// <summary>A sound type of TF's own (init/TFSoundTypes.java): NeoForge's DeferredSoundType(volume, pitch,
-        /// break, step, place, hit, fall), the sounds as TF's sound event names (init/TFSounds.java createEvent).</summary>
+        /// <summary>A sound type of upstream's own (init/TFSoundTypes.java): NeoForge's DeferredSoundType(volume, pitch,
+        /// break, step, place, hit, fall), the sounds as upstream's sound event names (init/TFSounds.java createEvent).</summary>
         public sealed class SoundTypeInfo
         {
             public string Name;            // "JAR"
@@ -94,7 +94,7 @@ namespace GfImport
             public string Break, Step, Place, Hit, Fall;
         }
 
-        /// <summary>TF's sound types by constant name.</summary>
+        /// <summary>upstream's sound types by constant name.</summary>
         public static Dictionary<string, SoundTypeInfo> SoundTypes(Ctx ctx)
         {
             var events = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -132,7 +132,7 @@ namespace GfImport
                 // the parameter names, in order ("String name, MapColor mapColor, Block candle" -> name, mapColor, candle)
                 helperParams[m.Groups[2].Value] = m.Groups[3].Value.Split(',').Select(p => p.Trim().Split(' ').Last()).ToList();
             }
-            // methods returning BlockBehaviour.Properties anywhere in TF: the import reads logProperties (map colour)
+            // methods returning BlockBehaviour.Properties anywhere in upstream: the import reads logProperties (map colour)
             // and copyAndScaleProperties (a copy with scaled destroyTime / explosionResistance); a block whose
             // properties come from any other one is a warning (one pass over the class-file index's texts)
             var propHelpers = new SortedSet<string>(StringComparer.Ordinal);
@@ -163,7 +163,7 @@ namespace GfImport
                 }
                 var cm = Regex.Match(body, @"new\s+(\w+)\s*[(<]");
                 if (b.Cls == null) b.Cls = cm.Success ? cm.Groups[1].Value : Regex.Match(f.Item1, @"DeferredBlock<(\w+)").Groups[1].Value;
-                // inline named property sets in place (TWILIGHT_OAK_LOG_PROPS): calls chained onto the set apply after its own
+                // inline named property sets in place (GLOAMING_OAK_LOG_PROPS): calls chained onto the set apply after its own
                 body = Regex.Replace(body, @"\b([A-Z][A-Z0-9_]*_PROPS)\b", pm => { string p; return props.TryGetValue(pm.Groups[1].Value, out p) ? p : pm.Value; });
                 b.PropText = body;
                 foreach (var h in propHelpers)
@@ -177,7 +177,7 @@ namespace GfImport
             }
             // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X, and copyAndScaleProperties(X, k)
             // (TFBlocks: ofFullCopy(X), then destroyTime and explosionResistance x k), then the calls chained after the
-            // copy; then the calls a TF block class chains onto the properties in its constructor (SpecialMagicLogBlock:
+            // copy; then the calls an upstream block class chains onto the properties in its constructor (SpecialMagicLogBlock:
             // super(properties.strength(2.0F).sound(SoundType.WOOD)...)), the leaf class first. A block is resolved
             // completely (its own copy and its class's calls) before a block copies it: Java's ofFullCopy reads the
             // Properties the source block's constructor has already changed (chains: A copies B copies C)
@@ -220,7 +220,7 @@ namespace GfImport
                 }
             };
             foreach (var b in res.Values) resolve(b);
-            // flammability: only the blocks TF registers with FireBlock.setFlammable(block, encouragement,
+            // flammability: only the blocks upstream registers with FireBlock.setFlammable(block, encouragement,
             // flammability) in events/RegistrationEvents.java burn (ignitedByLava alone does not make a block
             // burn in Java)
             string reg = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "events", "RegistrationEvents.java")));
@@ -235,8 +235,8 @@ namespace GfImport
             int calls = Regex.Matches(reg, @"\.setFlammable\(\s*([\w.]+)").Cast<Match>().Select(x => x.Groups[1].Value).Distinct().Count();
             int parsed = res.Values.Count(b => b.FireEncouragement >= 0);
             if (calls != parsed) ctx.Warn("RegistrationEvents: setFlammable registers " + calls + " blocks, " + parsed + " parsed");
-            foreach (var v in unknownVanilla) ctx.Warn("TF copies the properties of Blocks." + v + ", which Java.VanillaProps does not know");
-            foreach (var v in unknownCopies) ctx.Warn("block " + v + ": the copied block is neither a TF block nor Blocks.X (properties not copied)");
+            foreach (var v in unknownVanilla) ctx.Warn("upstream copies the properties of Blocks." + v + ", which Java.VanillaProps does not know");
+            foreach (var v in unknownCopies) ctx.Warn("block " + v + ": the copied block is neither an upstream block nor Blocks.X (properties not copied)");
             foreach (var v in unknownHelpers) ctx.Warn("block " + v + ": its properties come from a helper the import does not read (BlockBehaviour.Properties)");
             foreach (var v in noProperties) ctx.Warn("block " + v + ": no BlockBehaviour.Properties in its registration (Java defaults assumed)");
             foreach (var v in unparsedStrength) ctx.Warn("block property not parsed: " + v);
@@ -246,10 +246,10 @@ namespace GfImport
         // the helpers returning BlockBehaviour.Properties that ParseProps reads (TFBlocks.java)
         static readonly string[] KnownPropHelpers = { "logProperties", "copyAndScaleProperties" };
         const string Num = @"-?[\d.]+[FfDd]?(?:\s*[*/]\s*[\d.]+[FfDd]?)*";
-        // ofFullCopy(X) / ofLegacyCopy(X) / copyAndScaleProperties(X, k), X a TF constant (.get()) or Blocks.X
+        // ofFullCopy(X) / ofLegacyCopy(X) / copyAndScaleProperties(X, k), X an upstream constant (.get()) or Blocks.X
         static readonly Regex CopyCall = new Regex(@"(?:of(?:Full|Legacy)Copy\(\s*([\w.]+?)(?:\.get\(\))?\s*|copyAndScaleProperties\(\s*([\w.]+?)(?:\.get\(\))?\s*,\s*(" + Num + @")\s*)\)", RegexOptions.Compiled);
 
-        /// <summary>A float expression of TF's block properties: a literal, or a product / quotient of literals
+        /// <summary>A float expression of upstream's block properties: a literal, or a product / quotient of literals
         /// ("0.2F * 64F").</summary>
         public static bool TryFloat(string expr, out double v)
         {
@@ -282,7 +282,7 @@ namespace GfImport
 
         static void VanillaProps(JBlock b, string v)
         {
-            // the vanilla blocks TF copies properties from (Minecraft 1.21.1 Blocks.java values); flammability is
+            // the vanilla blocks upstream copies properties from (Minecraft 1.21.1 Blocks.java values); flammability is
             // not a block property in Java (FireBlock.setFlammable, see Blocks())
             b.Hardness = 0; b.Resistance = 0; b.Sound = "STONE"; b.MapColor = null; b.Friction = -1; b.Light = 0;
             b.MapColorSide = null; b.MapColorProp = null; b.MapColorIf = null;
@@ -303,7 +303,7 @@ namespace GfImport
             }
             else if (wood != null && (v.EndsWith("_WOOD") || v.EndsWith("_LOG") || v.EndsWith("_HYPHAE") || v.EndsWith("_STEM")))
             {
-                // logs / wood / hyphae: strength 2.0 (TF copies only wood and hyphae, logs use logProperties)
+                // logs / wood / hyphae: strength 2.0 (upstream copies only wood and hyphae, logs use logProperties)
                 bool stripped = v.StartsWith("STRIPPED_", StringComparison.Ordinal);
                 bool bark = v.EndsWith("_WOOD") || v.EndsWith("_HYPHAE");
                 b.Hardness = 2; b.Resistance = 2;
@@ -386,7 +386,7 @@ namespace GfImport
             m = Regex.Match(s, @"\.lightLevel\(\s*\(?\s*\w+\s*\)?\s*->\s*(\d+)\s*\)");
             if (m.Success) { b.Light = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); b.DynamicLight = false; b.LightExpr = null; }
             else if (s.Contains(".lightLevel(")) { b.DynamicLight = true; b.Light = 0; b.LightExpr = Light.LambdaOf(s); }
-            // a vanilla SoundType by its constant ("WOOD"), one of TF's own as "TFSoundTypes.JAR"
+            // a vanilla SoundType by its constant ("WOOD"), one of upstream's own as "TFSoundTypes.JAR"
             m = Regex.Match(s, @"\.sound\(\s*(SoundType|TFSoundTypes)\.(\w+)\s*\)");
             if (m.Success) b.Sound = (m.Groups[1].Value == "TFSoundTypes" ? "TFSoundTypes." : "") + m.Groups[2].Value;
             // map colour: MapColor.X, DyeColor.X (its map colour), logProperties(top[, side]) (side: a lying log's bark), or
@@ -458,7 +458,7 @@ namespace GfImport
             JavaStates.Reset();
         }
 
-        /// <summary>The comment-stripped text of a TF class file (cached), or null for a vanilla class.</summary>
+        /// <summary>The comment-stripped text of an upstream class file (cached), or null for a vanilla class.</summary>
         public static string ClassText(Ctx ctx, string cls)
         {
             return JavaStates.Text(ctx, cls);
@@ -467,14 +467,14 @@ namespace GfImport
         public static Dictionary<string, JItem> Items(Ctx ctx)
         {
             // TFToolMaterials: new SimpleTier(incorrectBlocks, uses, speed, damage, enchantability, repair); the incorrect-blocks
-            // tag (BlockTagGenerator.INCORRECT_FOR_X_TOOL = twilightforest:incorrect_for_x_tool) includes the vanilla
+            // tag (BlockTagGenerator.INCORRECT_FOR_X_TOOL = gloamingforest:incorrect_for_x_tool) includes the vanilla
             // #minecraft:incorrect_for_<tier>_tool whose blocks the tier does not drop
             tfTiers = new Dictionary<string, TierInfo>(StringComparer.Ordinal);
             string tiers = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "util", "TFToolMaterials.java")));
             foreach (Match tm in Regex.Matches(tiers, @"Tier\s+(\w+)\s*=\s*new\s+SimpleTier\(\s*(?:\w+\.)?(\w+)\s*,\s*(\d+)\s*,\s*([\d.]+)[Ff]?\s*,"))
             {
                 var ti = new TierInfo { Uses = int.Parse(tm.Groups[3].Value, CultureInfo.InvariantCulture), Speed = F(tm.Groups[4].Value) };
-                var tag = ctx.TagFile("block", "twilightforest:" + tm.Groups[2].Value.ToLowerInvariant());
+                var tag = ctx.TagFile("block", "gloamingforest:" + tm.Groups[2].Value.ToLowerInvariant());
                 var vref = tag != null && tag["values"] != null ? tag["values"].A.Select(v => v.IsStr ? v.AsString() : null)
                     .Select(v => v == null ? null : Regex.Match(v, @"^#minecraft:incorrect_for_(\w+)_tool$")).FirstOrDefault(x => x != null && x.Success) : null;
                 if (vref != null) ti.Drops = vref.Groups[1].Value;
@@ -505,7 +505,7 @@ namespace GfImport
                     it.Durability = mult * int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
                 }
                 // tools: a TieredItem's durability is its tier's uses (TieredItem: properties.durability(tier.getUses())),
-                // whatever the TF subclass is called (KnightmetalPickItem, MinotaurAxeItem, CustomDamageSwordItem, ...)
+                // whatever the upstream subclass is called (KnightmetalPickItem, MinotaurAxeItem, CustomDamageSwordItem, ...)
                 var chain = ClassChain(ctx, it.Cls, itemChains);
                 if (chain.Any(c => TieredBases.Contains(c)))
                 {
@@ -659,13 +659,13 @@ namespace GfImport
                 int from = starts[t].Index, to = t + 1 < starts.Count ? starts[t + 1].Index : text.IndexOf("private static void", from, StringComparison.Ordinal);
                 if (to < 0) to = text.Length;
                 string body = text.Substring(from, to - from);
-                var tab = new Tab { Id = "twilightforest:" + starts[t].Groups[1].Value };
+                var tab = new Tab { Id = "gloamingforest:" + starts[t].Groups[1].Value };
                 var tk = Regex.Match(body, @"translatable\(""([^""]+)""\)");
                 if (tk.Success) tab.TitleKey = tk.Groups[1].Value;
-                var ic = Regex.Match(body, @"\.icon\(\(\)\s*->\s*new ItemStack\((TF\w+\.\w+)");
-                if (ic.Success) { tab.IconConst = ic.Groups[1].Value; string icon; if (constId.TryGetValue(tab.IconConst, out icon)) tab.Icon = "twilightforest:" + icon; }
+                var ic = Regex.Match(body, @"\.icon\(\(\)\s*->\s*new ItemStack\((upstream\w+\.\w+)");
+                if (ic.Success) { tab.IconConst = ic.Groups[1].Value; string icon; if (constId.TryGetValue(tab.IconConst, out icon)) tab.Icon = "gloamingforest:" + icon; }
                 var seen = new HashSet<string>();
-                foreach (Match m in Regex.Matches(body, @"output\.accept\((TF(?:Blocks|Items)\.\w+)|(generateGearWithEnchants|createDefaultSkullCandle)\(output,\s*(TF(?:Blocks|Items)\.\w+)|(createSpawnEggsAlphabetical|createCaskets|createGlassSwordAndLoreVer)\(output"))
+                foreach (Match m in Regex.Matches(body, @"output\.accept\((upstream(?:Blocks|Items)\.\w+)|(generateGearWithEnchants|createDefaultSkullCandle)\(output,\s*(upstream(?:Blocks|Items)\.\w+)|(createSpawnEggsAlphabetical|createCaskets|createGlassSwordAndLoreVer)\(output"))
                 {
                     var add = new List<string>();
                     if (m.Groups[1].Success || m.Groups[3].Success)
@@ -678,7 +678,7 @@ namespace GfImport
                     else if (m.Groups[4].Value == "createSpawnEggsAlphabetical") add.AddRange(spawnEggs.OrderBy(x => x, StringComparer.Ordinal));
                     else if (m.Groups[4].Value == "createCaskets") add.Add("keepsake_casket");
                     else if (m.Groups[4].Value == "createGlassSwordAndLoreVer") add.Add("glass_sword");
-                    foreach (var a in add) if (seen.Add(a)) tab.Items.Add("twilightforest:" + a);
+                    foreach (var a in add) if (seen.Add(a)) tab.Items.Add("gloamingforest:" + a);
                 }
                 if (tab.Icon == null && tab.Items.Count > 0) tab.Icon = tab.Items[0];
                 tabs.Add(tab);
@@ -686,20 +686,20 @@ namespace GfImport
             return tabs;
         }
 
-        /// <summary>The superclass chain of a TF block class (TF classes from block/*.java, then the vanilla base).</summary>
+        /// <summary>The superclass chain of an upstream block class (upstream classes from block/*.java, then the vanilla base).</summary>
         static Dictionary<string, string> classFiles;
 
         static List<string> allJavaFiles;
         static readonly Dictionary<string, string> sourceTexts = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        /// <summary>Every TF Java source file, in ordinal order (listed once per run, with the class-file index).</summary>
+        /// <summary>Every upstream Java source file, in ordinal order (listed once per run, with the class-file index).</summary>
         public static List<string> AllClassFiles(Ctx ctx)
         {
             ClassFile(ctx, "");
             return allJavaFiles;
         }
 
-        /// <summary>The text of a TF Java source file, read once per run (line endings normalised).</summary>
+        /// <summary>The text of an upstream Java source file, read once per run (line endings normalised).</summary>
         public static string SourceText(string file)
         {
             string t;
@@ -707,7 +707,7 @@ namespace GfImport
             return t;
         }
 
-        /// <summary>The source file of a TF class by simple name (null for vanilla classes).</summary>
+        /// <summary>The source file of an upstream class by simple name (null for vanilla classes).</summary>
         public static string ClassFile(Ctx ctx, string cls)
         {
             if (classFiles == null)

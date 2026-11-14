@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/overlay/ShieldOverlay.java
-//   src/main/java/twilightforest/client/event/OverlayHandler.java (fortification_shield_count, ore_meter_stats)
-//   src/main/java/twilightforest/client/event/ColorHandler.java
-//   src/main/java/twilightforest/client/event/ClientRegistrationEvents.java
-//   src/main/java/twilightforest/asmhooks/ArmorHooks.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/overlay/ShieldOverlay.java
+//   src/main/java/gloamingforest/client/event/OverlayHandler.java (fortification_shield_count, ore_meter_stats)
+//   src/main/java/gloamingforest/client/event/ColorHandler.java
+//   src/main/java/gloamingforest/client/event/ClientRegistrationEvents.java
+//   src/main/java/gloamingforest/asmhooks/ArmorHooks.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Client build only. TF's two HUD overlays of U9 on F12's HUD layers:
+// Client build only. upstream's two HUD overlays of U9 on F12's HUD layers:
 //   - the fortification shield count ("artifacts.shields" from the server): up to 10
-//     twilightforest:fortification_shield sprites (9 x 9) at x = width / 2 - 91 + 8i above the
+//     gloamingforest:fortification_shield sprites (9 x 9) at x = width / 2 - 91 + 8i above the
 //     armour row, while shields are up, the player can be hurt (or the creative key is on) and the
 //     indicator key is on (config section "artifacts", the client's copy);
 //   - the ore meter's stats while one is held: the loading box ("Loading" and 1..3 dots) or the
@@ -57,7 +57,7 @@ namespace icons = ::gf::ext::tgear::client;
 
 namespace {
 
-constexpr char kShieldSprite[] = "textures/twilightforest/gui/sprites/fortification_shield";
+constexpr char kShieldSprite[] = "textures/gloamingforest/gui/sprites/fortification_shield";
 constexpr unsigned kBox        = 0x9B000000u;
 constexpr unsigned kWhite      = 0xFFFFFFFFu;
 constexpr unsigned kGray       = 0xFFAAAAAAu;
@@ -106,7 +106,7 @@ void drawOreMeter(screen::Canvas& canvas, float) {
     auto  loadingJ = items::getData(*meter, ar::kDataOreLoading);
     if (!loadingJ.is_null()) {
         int         dots = (loadingJ.get<int>() / 5) % 3;
-        std::string text = ctr("misc.twilightforest.ore_meter_loading", "Loading") + std::string(static_cast<std::size_t>(dots + 1), '.');
+        std::string text = ctr("misc.gloamingforest.ore_meter_loading", "Loading") + std::string(static_cast<std::size_t>(dots + 1), '.');
         canvas.fill(screen::Rect{ox, oy, 56, 16}, kBox);
         canvas.text(ox + 4, oy + 4, text, kWhite, screen::Align::Left, false);
         return;
@@ -117,8 +117,8 @@ void drawOreMeter(screen::Canvas& canvas, float) {
     int  total = data.value("total", 0);
     int  range = data.value("range", 1);
     std::vector<std::string> headers{
-        ctr("misc.twilightforest.ore_meter_range", "Radius: %s, Origin: [%s, %s]", std::to_string(range), chunk[0].dump(), chunk[1].dump()),
-        ctr("misc.twilightforest.ore_meter_total", "Total blocks scanned: %s", std::to_string(total)),
+        ctr("misc.gloamingforest.ore_meter_range", "Radius: %s, Origin: [%s, %s]", std::to_string(range), chunk[0].dump(), chunk[1].dump()),
+        ctr("misc.gloamingforest.ore_meter_total", "Total blocks scanned: %s", std::to_string(total)),
     };
     std::vector<std::pair<std::string, int>> rows;
     for (auto const& [k, v] : data.value("counts", nlohmann::json::object()).items()) rows.emplace_back(k, v.get<int>());
@@ -132,18 +132,18 @@ void drawOreMeter(screen::Canvas& canvas, float) {
     auto measure = [&](Column& c) {
         for (auto const& [t, _] : c.cells) c.width = std::max(c.width, canvas.textWidth(t));
     };
-    std::string sep = ctr("misc.twilightforest.ore_meter_separator", "-");
+    std::string sep = ctr("misc.gloamingforest.ore_meter_separator", "-");
     if (ar::config().prettifyOreMeterGui) {
         Column names, dash, counts, ratios, pad;
-        names.cells.emplace_back(ctr("misc.twilightforest.ore_meter_header_block", "Block"), kGray);
+        names.cells.emplace_back(ctr("misc.gloamingforest.ore_meter_header_block", "Block"), kGray);
         dash.cells.emplace_back("", kWhite);
-        counts.cells.emplace_back(ctr("misc.twilightforest.ore_meter_header_count", "Count"), kGray);
-        ratios.cells.emplace_back(ctr("misc.twilightforest.ore_meter_header_ratio", "Ratio"), kGray);
+        counts.cells.emplace_back(ctr("misc.gloamingforest.ore_meter_header_count", "Count"), kGray);
+        ratios.cells.emplace_back(ctr("misc.gloamingforest.ore_meter_header_ratio", "Ratio"), kGray);
         for (auto const& [id, n] : rows) {
             names.cells.emplace_back(oreName(data, id), kWhite);
             dash.cells.emplace_back(sep, kWhite);
             counts.cells.emplace_back(std::to_string(n), kWhite);
-            ratios.cells.emplace_back(ctr("misc.twilightforest.ore_meter_ratio", "(%s%%)", core::artifacts::oreRatio(n, total)), kWhite);
+            ratios.cells.emplace_back(ctr("misc.gloamingforest.ore_meter_ratio", "(%s%%)", core::artifacts::oreRatio(n, total)), kWhite);
         }
         dash.align = 1, counts.align = 2, ratios.align = 2;
         pad.width  = canvas.textWidth(" ");
@@ -152,7 +152,7 @@ void drawOreMeter(screen::Canvas& canvas, float) {
     } else {
         Column one;
         for (auto const& [id, n] : rows)
-            one.cells.emplace_back(oreName(data, id) + " " + sep + " " + std::to_string(n) + " " + ctr("misc.twilightforest.ore_meter_ratio", "(%s%%)", core::artifacts::oreRatio(n, total)), kWhite);
+            one.cells.emplace_back(oreName(data, id) + " " + sep + " " + std::to_string(n) + " " + ctr("misc.gloamingforest.ore_meter_ratio", "(%s%%)", core::artifacts::oreRatio(n, total)), kWhite);
         measure(one);
         columns = {one};
     }
@@ -180,12 +180,12 @@ void drawOreMeter(screen::Canvas& canvas, float) {
     }
 }
 
-/// The flask contents of a stack: U9's item data, else TF's component as an advancement icon carries
-/// it ("twilightforest:flask_contents" {potion: {potion: <Java id>}, doses, breakage, breakable}).
+/// The flask contents of a stack: U9's item data, else upstream's component as an advancement icon carries
+/// it ("gloamingforest:flask_contents" {potion: {potion: <Java id>}, doses, breakage, breakable}).
 core::artifacts::Flask flaskLook(ItemStack const& stack) {
     auto f = ar::flaskOf(stack);
     if (!f.empty() || f.doses > 0 || f.breakage > 0) return f;
-    auto j = items::getData(stack, "twilightforest:flask_contents");
+    auto j = items::getData(stack, "gloamingforest:flask_contents");
     if (!j.is_object()) return f;
     f.doses        = j.value("doses", 0);
     f.breakage     = j.value("breakage", 0);

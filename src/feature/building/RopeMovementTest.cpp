@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/RopeBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/RopeBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -73,13 +73,13 @@ GF_REGISTER_SELFTEST("building.rope_movement", [](Context& ctx) -> ll::coro::Cor
     auto west = at(p, 0, 3, 0), east = at(p, 4, 3, 0);
     ctx.require(ctx.setBlock(west, "minecraft:stone") && ctx.setBlock(east, "minecraft:stone"), "two posts");
     for (int x = 1; x <= 3; ++x)
-        ctx.require(ctx.setBlock(at(p, x, 3, 0), "twilightforest:rope", {{"twilightforest:x", true}, {"twilightforest:y", false}, {"twilightforest:z", false}}), "a tightrope");
+        ctx.require(ctx.setBlock(at(p, x, 3, 0), "gloamingforest:rope", {{"gloamingforest:x", true}, {"gloamingforest:y", false}, {"gloamingforest:z", false}}), "a tightrope");
     // a vertical rope from x 6 dy 7 down to dy 2, hanging from stone at dy 8
     auto top = at(p, 6, 8, 0);
     ctx.require(ctx.setBlock(top, "minecraft:stone"), "a beam");
-    for (int y = 2; y <= 7; ++y) ctx.require(ctx.setBlock(at(p, 6, y, 0), "twilightforest:rope"), "a hanging rope");
+    for (int y = 2; y <= 7; ++y) ctx.require(ctx.setBlock(at(p, 6, y, 0), "gloamingforest:rope"), "a hanging rope");
     co_await ctx.ticks(3);
-    ctx.require(ctx.blockAt(at(p, 2, 3, 0)) == "twilightforest:rope" && ctx.blockAt(at(p, 6, 2, 0)) == "twilightforest:rope", "the ropes are supported");
+    ctx.require(ctx.blockAt(at(p, 2, 3, 0)) == "gloamingforest:rope" && ctx.blockAt(at(p, 6, 2, 0)) == "gloamingforest:rope", "the ropes are supported");
 
     // the collision the game asks for an entity's movement
     {
@@ -192,11 +192,11 @@ GF_REGISTER_SELFTEST("building.knightmetal_path", [](Context& ctx) -> ll::coro::
         ctx.setBlock(mid, "minecraft:stone");
         co_return on;
     };
-    for (auto const* id : {"minecraft:magma", "minecraft:stone", "twilightforest:knightmetal_block", "minecraft:sweet_berry_bush"})
+    for (auto const* id : {"minecraft:magma", "minecraft:stone", "gloamingforest:knightmetal_block", "minecraft:sweet_berry_bush"})
         if (auto const* bl = gf::game::blockWith(id))
             ctx.info(std::string(id) + " properties 0x" + fmt::format("{:x}", static_cast<std::uint64_t>(bl->getBlockType().mProperties)));
     int magma       = co_await walk("minecraft:magma");
-    int knightmetal = co_await walk("twilightforest:knightmetal_block");
+    int knightmetal = co_await walk("gloamingforest:knightmetal_block");
     // Known deviation (PR #63, not ported): KnightmetalBlock#getBlockPathType DAMAGE_OTHER. Bedrock's
     // walk evaluator avoids magma but not a custom block, whatever its CausesDamage property; the
     // node classification is MCNAPI and BlockType::$checkIsPathable / $dealsContactDamage are MCFOLD
@@ -204,7 +204,7 @@ GF_REGISTER_SELFTEST("building.knightmetal_path", [](Context& ctx) -> ll::coro::
     // asserts the documented Bedrock behaviour: magma (the control) is avoided, knightmetal is
     // walked over. When a later fix makes navigation avoid knightmetal, the second check fails:
     // turn it into "knightmetal == 0" then.
-    ctx.info("navigation over magma " + std::to_string(magma) + " tick(s), over knightmetal " + std::to_string(knightmetal) + " tick(s) (TF: mobs path around both)");
+    ctx.info("navigation over magma " + std::to_string(magma) + " tick(s), over knightmetal " + std::to_string(knightmetal) + " tick(s) (upstream: mobs path around both)");
     ctx.check(magma == 0, "control: Bedrock's navigation steps around magma (" + std::to_string(magma) + " ticks over it)");
     ctx.check(knightmetal > 0, "known deviation still as documented: navigation walks over knightmetal (DAMAGE_OTHER not ported); if this fails, knightmetal is avoided now: update the test");
     gf::log().info("building: KNOWN DEVIATION knightmetal DAMAGE_OTHER path type: navigation walked {} tick(s) over knightmetal, {} over magma", knightmetal, magma);

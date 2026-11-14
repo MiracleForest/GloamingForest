@@ -5,12 +5,12 @@
 // params.grower: Java's TreeGrower with its secondary chance, mega trees of 2x2 saplings and
 // secondary trees); what data cannot express registers here by string id (rule R2):
 //
-//     // TF StructureTreeGrower (hollow oak saplings): params.grower.structure names the structure
-//     gf::families_ext::registerStructureGrower("twilightforest:hollow_tree", [](auto& region, auto const& pos, auto const& id, auto& random) {
+//     // upstream StructureTreeGrower (hollow oak saplings): params.grower.structure names the structure
+//     gf::families_ext::registerStructureGrower("gloamingforest:hollow_tree", [](auto& region, auto const& pos, auto const& id, auto& random) {
 //         return growHollowTree(region, pos, random);   // true when the structure was placed
 //     });
 //     // a sapling that grows its own way (replaces its data's grower)
-//     gf::families_ext::registerGrower("twilightforest:some_sapling", [](auto& region, auto const& pos, Block const& sapling, auto& random) { ... });
+//     gf::families_ext::registerGrower("gloamingforest:some_sapling", [](auto& region, auto const& pos, Block const& sapling, auto& random) { ... });
 //
 // Both run on the server thread when the sapling advances past its last stage (Java
 // SaplingBlock.advanceTree: random ticks, bone meal); the sapling is still in place when they
@@ -31,7 +31,7 @@ using RandomSource = core::jrand::RandomSource;
 
 /// Grows the sapling at `pos` (Java TreeGrower.growTree); true when a tree grew.
 using GrowerFn = std::function<bool(BlockSource& region, BlockPos const& pos, Block const& sapling, RandomSource& random)>;
-/// Grows structure `structureId` from the sapling at `pos` (TF StructureTreeGrower); true when it grew.
+/// Grows structure `structureId` from the sapling at `pos` (upstream StructureTreeGrower); true when it grew.
 using StructureGrowerFn = std::function<bool(BlockSource& region, BlockPos const& pos, std::string const& structureId, RandomSource& random)>;
 
 /// Replaces the data grower of sapling `saplingId` (a later registration replaces an earlier one).

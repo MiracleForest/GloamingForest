@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U24 (hydra): installs the Hydra, its mortar, the fire jets and smokers, the hydra lair and the
 // fire jet feature type.
 

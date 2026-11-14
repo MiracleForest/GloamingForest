@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.hydra_trophy_r0",
+        "identifier": "geometry.gloamingforest.building.hydra_trophy_r0",
         "texture_width": 512,
         "texture_height": 256,
         "visible_bounds_width": 3,
@@ -1254,7 +1254,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.hydra_trophy_r1",
+        "identifier": "geometry.gloamingforest.building.hydra_trophy_r1",
         "texture_width": 512,
         "texture_height": 256,
         "visible_bounds_width": 3,
@@ -2505,7 +2505,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.hydra_trophy_r2",
+        "identifier": "geometry.gloamingforest.building.hydra_trophy_r2",
         "texture_width": 512,
         "texture_height": 256,
         "visible_bounds_width": 3,
@@ -3756,7 +3756,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.hydra_trophy_r3",
+        "identifier": "geometry.gloamingforest.building.hydra_trophy_r3",
         "texture_width": 512,
         "texture_height": 256,
         "visible_bounds_width": 3,

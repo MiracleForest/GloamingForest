@@ -2,15 +2,15 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:dark_fence",
+      "identifier": "gloamingforest:dark_fence",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {
@@ -27,12 +27,12 @@
         "destroy_chance_modifier": 20
       },
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.dark_fence.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.dark_fence.multipart",
         "bone_visibility": {
-          "part1": "q.block_state('twilightforest:north')",
-          "part2": "q.block_state('twilightforest:south')",
-          "part3": "q.block_state('twilightforest:west')",
-          "part4": "q.block_state('twilightforest:east')"
+          "part1": "q.block_state('gloamingforest:north')",
+          "part2": "q.block_state('gloamingforest:south')",
+          "part3": "q.block_state('gloamingforest:west')",
+          "part4": "q.block_state('gloamingforest:east')"
         }
       },
       "minecraft:material_instances": {
@@ -40,7 +40,7 @@
           "texture": "tf_block_wood_planks_darkwood_0",
           "render_method": "opaque"
         },
-        "t_twilightforest_block_wood_planks_darkwood_0": {
+        "t_gloamingforest_block_wood_planks_darkwood_0": {
           "texture": "tf_block_wood_planks_darkwood_0",
           "render_method": "opaque"
         }

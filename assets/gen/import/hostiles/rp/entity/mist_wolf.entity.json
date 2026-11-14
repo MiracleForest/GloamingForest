@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:mist_wolf",
+      "identifier": "gloamingforest:mist_wolf",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/mistwolf"
+        "default": "textures/gloamingforest/entity/mistwolf"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.mist_wolf"

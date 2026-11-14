@@ -1,7 +1,7 @@
 {
   "format_version": "1.10.0",
   "render_controllers": {
-    "controller.render.twilightforest.hydra": {
+    "controller.render.gloamingforest.hydra": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -32,10 +32,10 @@
         "r": 1.0,
         "g": 0.0,
         "b": 0.0,
-        "a": "q.property('twilightforest:red') ? 0.5 : 0.0"
+        "a": "q.property('gloamingforest:red') ? 0.5 : 0.0"
       }
     },
-    "controller.render.twilightforest.hydra_part": {
+    "controller.render.gloamingforest.hydra_part": {
       "arrays": {
         "geometries": {
           "Array.geos": [
@@ -44,7 +44,7 @@
           ]
         }
       },
-      "geometry": "Array.geos[(q.property('twilightforest:part') >= 2 && math.mod(q.property('twilightforest:part') - 2, 6) == 0) ? 0 : 1]",
+      "geometry": "Array.geos[(q.property('gloamingforest:part') >= 2 && math.mod(q.property('gloamingforest:part') - 2, 6) == 0) ? 0 : 1]",
       "materials": [
         {
           "*": "Material.default"
@@ -55,17 +55,17 @@
       ],
       "part_visibility": [
         {
-          "*": "q.property('twilightforest:active') && q.property('twilightforest:part') >= 2"
+          "*": "q.property('gloamingforest:active') && q.property('gloamingforest:part') >= 2"
         }
       ],
       "overlay_color": {
         "r": 1.0,
         "g": 0.0,
         "b": 0.0,
-        "a": "q.property('twilightforest:red') ? 0.5 : 0.0"
+        "a": "q.property('gloamingforest:red') ? 0.5 : 0.0"
       }
     },
-    "controller.render.twilightforest.hydra_mortar": {
+    "controller.render.gloamingforest.hydra_mortar": {
       "geometry": "Geometry.default",
       "materials": [
         {

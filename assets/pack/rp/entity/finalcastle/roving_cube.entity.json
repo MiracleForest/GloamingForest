@@ -2,13 +2,13 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:roving_cube",
+      "identifier": "gloamingforest:roving_cube",
       "materials": { "default": "entity_alphatest" },
-      "textures": { "default": "textures/twilightforest/entity/cubeofannihilation" },
-      "geometry": { "default": "geometry.twilightforest.roving_cube" },
+      "textures": { "default": "textures/gloamingforest/entity/cubeofannihilation" },
+      "geometry": { "default": "geometry.gloamingforest.roving_cube" },
       "render_controllers": ["controller.render.default"],
       "animations": {
-        "spin": "animation.twilightforest.roving_cube.spin"
+        "spin": "animation.gloamingforest.roving_cube.spin"
       },
       "scripts": { "animate": ["spin"] }
     }

@@ -1,16 +1,16 @@
 {
-  "twilightforest:block.twilightforest.drying_rack.add_item": {
+  "gloamingforest:block.gloamingforest.drying_rack.add_item": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.drying_rack.add_item",
+    "subtitle": "subtitles.gloamingforest.block.drying_rack.add_item",
     "sounds": [
       {
         "event": "entity.item_frame.add_item"
       }
     ]
   },
-  "twilightforest:block.twilightforest.drying_rack.remove_item": {
+  "gloamingforest:block.gloamingforest.drying_rack.remove_item": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.drying_rack.remove_item",
+    "subtitle": "subtitles.gloamingforest.block.drying_rack.remove_item",
     "sounds": [
       {
         "event": "entity.item_frame.add_item"

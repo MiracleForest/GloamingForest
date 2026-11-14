@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:gradually_gliding_multiplier": 0.8333333
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.gradual_glide.description"
+    }
+  ],
+  "equipment_slots": "legs"
+}

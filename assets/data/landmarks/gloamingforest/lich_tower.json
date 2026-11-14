@@ -1,0 +1,152 @@
+{
+  "key": "gloamingforest:lich_tower",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/lich_tower.json",
+  "structure": {
+    "advancements_required": [
+      "gloamingforest:progress_naga"
+    ],
+    "biomes": "#gloamingforest:valid_lich_tower_biomes",
+    "controlled_spawns": {
+      "ambient_spawns": [],
+      "labelled_monster_spawns": {
+        "0": [
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:rising_zombie",
+            "weight": 2
+          }
+        ],
+        "1": [
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "minecraft:zombie",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "minecraft:skeleton",
+            "weight": 10
+          },
+          {
+            "maxCount": 1,
+            "minCount": 1,
+            "type": "minecraft:creeper",
+            "weight": 1
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "minecraft:enderman",
+            "weight": 1
+          },
+          {
+            "maxCount": 3,
+            "minCount": 2,
+            "type": "gloamingforest:death_tome",
+            "weight": 10
+          },
+          {
+            "maxCount": 1,
+            "minCount": 1,
+            "type": "minecraft:witch",
+            "weight": 1
+          }
+        ]
+      },
+      "water_spawns": []
+    },
+    "decoration_clearance": {
+      "adjust_structure_elevation": true,
+      "allow_biome_surface_decorations": false,
+      "allow_biome_underground_decorations": true,
+      "allow_biome_vegetation": false,
+      "chunk_clearance_radius": 0
+    },
+    "hint_creature": {
+      "hint_item": {
+        "components": {
+          "minecraft:written_book_content": {
+            "author": "gloamingforest.book.author",
+            "generation": 3,
+            "pages": [
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.lichtower.1\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.lichtower.2\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.lichtower.3\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.lichtower.4\"}"
+              }
+            ],
+            "resolved": true,
+            "title": {
+              "raw": "gloamingforest.book.lichtower"
+            }
+          },
+          "gloamingforest:translatable_book": {}
+        },
+        "count": 1,
+        "id": "minecraft:written_book"
+      },
+      "hint_mob": "gloamingforest:kobold"
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "surface_structures",
+    "structure_icon": "gloamingforest:lich_tower",
+    "terrain_adaptation": "beard_thin",
+    "type": "gloamingforest:lich_tower"
+  },
+  "structure_set": {
+    "id": "gloamingforest:lich_tower",
+    "placement": {
+      "structure_grid_lock": "gloamingforest:lich_tower",
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:lich_tower",
+        "weight": 1
+      }
+    ]
+  }
+}

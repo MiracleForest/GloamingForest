@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:firefly_jar"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:firefly"
+      },
+      {
+        "item": "gloamingforest:mason_jar"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:firefly"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:firefly_jar"
+    }
+  }
+}

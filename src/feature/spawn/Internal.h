@@ -35,14 +35,14 @@ int spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeId
     double                     y,
     double                     z
 );
-/// Holder#is(biome tag): gf::tags (TF's biome tags), plus the vanilla biome tags the spawner reads
+/// Holder#is(biome tag): gf::tags (upstream's biome tags), plus the vanilla biome tags the spawner reads
 /// (minecraft:is_river, minecraft:reduce_water_ambient_spawns) built in.
 [[nodiscard]] bool biomeHasTag(std::string const& biome, std::string const& tag);
 
 /// The spawn table of a biome (registered, else read from its imported JSON); thread-safe.
 [[nodiscard]] Table tableOf(std::string const& biomeId);
 
-/// NaturalSpawner#mobsAt in the Twilight Forest: ChunkGenerator#getMobsAt changed by NeoForge's
+/// NaturalSpawner#mobsAt in the Gloaming Forest: ChunkGenerator#getMobsAt changed by NeoForge's
 /// PotentialSpawns event. The special spawn functions (onSpecialSpawn) answer first: F6's
 /// EntityEvents#structureSpecialSpawns gives a landmark start's controlled list (its
 /// gatherPotentialSpawns) or a structure's spawn override; otherwise the biome's list of `category`.

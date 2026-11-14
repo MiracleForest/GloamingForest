@@ -1,7 +1,7 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:giant_miner": {
+      "gloamingforest:giant_miner": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
@@ -9,7 +9,7 @@
           "death": "game.player.die"
         }
       },
-      "twilightforest:armored_giant": {
+      "gloamingforest:armored_giant": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {

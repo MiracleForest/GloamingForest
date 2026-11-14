@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/KnightmetalBlock.java
-//   src/main/java/twilightforest/block/FieryBlock.java
-//   src/main/java/twilightforest/block/ArcticFurBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/KnightmetalBlock.java
+//   src/main/java/gloamingforest/block/FieryBlock.java
+//   src/main/java/gloamingforest/block/ArcticFurBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -47,9 +47,9 @@ namespace gf::feature::building {
 
 namespace {
 
-constexpr char const* kKnightmetal = "twilightforest:knightmetal_block";
-constexpr char const* kFiery       = "twilightforest:fiery_block";
-constexpr char const* kArcticFur   = "twilightforest:arctic_fur_block";
+constexpr char const* kKnightmetal = "gloamingforest:knightmetal_block";
+constexpr char const* kFiery       = "gloamingforest:fiery_block";
+constexpr char const* kArcticFur   = "gloamingforest:arctic_fur_block";
 
 bool gInstalled = false;
 
@@ -69,7 +69,7 @@ float arcticFurFallDamage(float amount) {
 bool fieryHurts(Actor& entity) {
     if (entity.isFireImmune()) return false;
     if (!entity.hasCategory(ActorCategory::Mob) && !entity.isPlayer()) return false; // LivingEntity
-    return game::items::idOf(entity.getArmor(SharedTypes::Legacy::ArmorSlot::Feet)) != "twilightforest:fiery_boots";
+    return game::items::idOf(entity.getArmor(SharedTypes::Legacy::ArmorSlot::Feet)) != "gloamingforest:fiery_boots";
 }
 
 BlockType const* applyBlockProperties() {
@@ -92,7 +92,7 @@ BlockType const* applyBlockProperties() {
     // LivingEntity#handleOnClimbable holds a sneaking player only on non-scaffolding climbables);
     // Bedrock's climb movement does the same for BlockProperty::Scaffolding types. The rope is
     // already climbable (F11's climbable family).
-    auto const* rope = add("twilightforest:rope", BlockProperty::Scaffolding);
+    auto const* rope = add("gloamingforest:rope", BlockProperty::Scaffolding);
     log().debug("building: block properties (fiery infiniburn {}, rope scaffolding {})", fiery != nullptr, rope != nullptr);
     return rope;
 }
@@ -105,10 +105,10 @@ void installStorage() {
     item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);
     blockevents::onEntityInside(kKnightmetal, [](BlockSource&, BlockPos const&, Actor& entity) {
         // entity.hurt(KNIGHTMETAL, BLOCK_DAMAGE)
-        combat::hurt(entity, kKnightmetalDamage, "twilightforest:knightmetal");
+        combat::hurt(entity, kKnightmetalDamage, "gloamingforest:knightmetal");
     });
     blockevents::onSteppedOn(kFiery, [](BlockSource&, BlockPos const&, Actor& entity) {
-        if (fieryHurts(entity)) combat::hurt(entity, kFieryDamage, "twilightforest:fiery");
+        if (fieryHurts(entity)) combat::hurt(entity, kFieryDamage, "gloamingforest:fiery");
     });
     combat::onIncoming(combat::priority::Normal, [](combat::DamageInfo& d) {
         if (d.type != "minecraft:fall") return combat::Verdict::Pass;
@@ -121,13 +121,13 @@ void installStorage() {
         return d.amount <= 0 ? combat::Verdict::Cancel : combat::Verdict::Pass;
     });
     item::addTooltip(kKnightmetal, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
-        auto text = viewer ? trFor(*viewer, "block.twilightforest.knightmetal_block.desc", "Deals strong contact damage")
-                           : tr("block.twilightforest.knightmetal_block.desc", "Deals strong contact damage");
+        auto text = viewer ? trFor(*viewer, "block.gloamingforest.knightmetal_block.desc", "Deals strong contact damage")
+                           : tr("block.gloamingforest.knightmetal_block.desc", "Deals strong contact damage");
         lines.push_back(gray(text));
     });
     item::addTooltip(kArcticFur, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
-        auto text = viewer ? trFor(*viewer, "block.twilightforest.arctic_fur_block.desc", "Reduces fall damage by 90%")
-                           : tr("block.twilightforest.arctic_fur_block.desc", "Reduces fall damage by 90%");
+        auto text = viewer ? trFor(*viewer, "block.gloamingforest.arctic_fur_block.desc", "Reduces fall damage by 90%")
+                           : tr("block.gloamingforest.arctic_fur_block.desc", "Reduces fall damage by 90%");
         lines.push_back(gray(text));
     });
 }

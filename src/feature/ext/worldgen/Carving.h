@@ -8,13 +8,13 @@
 // quart y 0; "carvers" -> "air" of the biome JSON) and, for the carver at index k of that list,
 // calls the CarverFn registered for its configured carver id (or, failing that, its "type") once
 // with the random set by WorldgenRandom#setLargeFeatureSeed(seed + k, S.x, S.z). The carver then
-// runs WorldCarver#isStartChunk(random) itself (TF's highland caves override it) and carves the
+// runs WorldCarver#isStartChunk(random) itself (upstream's highland caves override it) and carves the
 // part of S's tunnels that falls inside C. The context below says which S, k and configured carver
 // the call is for and holds C's carving mask (shared by every call for C, like Java's
 // ProtoChunk#getOrCreateCarvingMask(AIR)). The mask is kept until the chunk is decorated, where
 // the minecraft:carving_mask placement modifier (CarvingMaskPlacement) streams its blocks.
 //
-//     gf::worldgen::registerCarver("twilightforest:tf_caves", [](Chunk& c, Region& r, RandomSource& random) {
+//     gf::worldgen::registerCarver("gloamingforest:tf_caves", [](Chunk& c, Region& r, RandomSource& random) {
 //         auto& ctx = *gf::worldgen::ext::carverContext();
 //         if (!gf::worldgen::ext::isStartChunk(random, ctx)) return;
 //         ...  // ctx.sourceChunkX / ctx.sourceChunkZ, ctx.config, ctx.mask
@@ -53,7 +53,7 @@ struct CarverContext {
     int                   sourceChunkX = 0; ///< the chunk whose seed started the tunnels (Java's chunkPos argument)
     int                   sourceChunkZ = 0;
     int                   index        = 0; ///< the carver's index in the source biome's list
-    std::string           configuredId;     ///< "twilightforest:tf_caves"
+    std::string           configuredId;     ///< "gloamingforest:tf_caves"
     nlohmann::json const* config = nullptr; ///< the configured carver's "config" ({} when unknown)
     CarvingMask*          mask   = nullptr; ///< the carving mask of the chunk being carved
 };

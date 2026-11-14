@@ -2,12 +2,12 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:magic_painting",
+      "identifier": "gloamingforest:magic_painting",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:variant": {
+        "gloamingforest:variant": {
           "type": "int",
           "range": [
             0,
@@ -21,7 +21,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "magic_painting",
           "inanimate"
         ]
@@ -62,29 +62,29 @@
       }
     },
     "events": {
-      "twilightforest:variant_castaway_paradise": {
+      "gloamingforest:variant_castaway_paradise": {
         "set_property": {
-          "twilightforest:variant": 0
+          "gloamingforest:variant": 0
         }
       },
-      "twilightforest:variant_darkness": {
+      "gloamingforest:variant_darkness": {
         "set_property": {
-          "twilightforest:variant": 1
+          "gloamingforest:variant": 1
         }
       },
-      "twilightforest:variant_lucid_lands": {
+      "gloamingforest:variant_lucid_lands": {
         "set_property": {
-          "twilightforest:variant": 2
+          "gloamingforest:variant": 2
         }
       },
-      "twilightforest:variant_music_in_the_mire": {
+      "gloamingforest:variant_music_in_the_mire": {
         "set_property": {
-          "twilightforest:variant": 3
+          "gloamingforest:variant": 3
         }
       },
-      "twilightforest:variant_the_hostile_paradise": {
+      "gloamingforest:variant_the_hostile_paradise": {
         "set_property": {
-          "twilightforest:variant": 4
+          "gloamingforest:variant": 4
         }
       }
     }

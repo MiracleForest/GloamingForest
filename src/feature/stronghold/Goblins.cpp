@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/LowerGoblinKnight.java
-//   src/main/java/twilightforest/entity/monster/UpperGoblinKnight.java
-//   src/main/java/twilightforest/entity/ai/goal/RiderSpearAttackGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/HeavySpearAttackGoal.java
-//   src/main/java/twilightforest/entity/monster/BlockChainGoblin.java
-//   src/main/java/twilightforest/entity/SpikeBlock.java
-//   src/main/java/twilightforest/entity/ai/goal/ThrowSpikeBlockGoal.java
-//   src/main/java/twilightforest/entity/monster/HelmetCrab.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/LowerGoblinKnight.java
+//   src/main/java/gloamingforest/entity/monster/UpperGoblinKnight.java
+//   src/main/java/gloamingforest/entity/ai/goal/RiderSpearAttackGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/HeavySpearAttackGoal.java
+//   src/main/java/gloamingforest/entity/monster/BlockChainGoblin.java
+//   src/main/java/gloamingforest/entity/SpikeBlock.java
+//   src/main/java/gloamingforest/entity/ai/goal/ThrowSpikeBlockGoal.java
+//   src/main/java/gloamingforest/entity/monster/HelmetCrab.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -138,17 +138,17 @@ bool shieldDisabled(Actor& a) { return flag(a, "goblin:shield_disabled", false);
 
 void setSpearTimer(Actor& a, int t) {
     dataOf(a, "goblin:spear_timer") = t;
-    ge::setProperty(a, "twilightforest:spear_timer", std::clamp(t, 0, kHeavySpearTimerStart));
+    ge::setProperty(a, "gloamingforest:spear_timer", std::clamp(t, 0, kHeavySpearTimerStart));
 }
 
 void breakArmor(Actor& a) {
     breakEffects(a);
-    setFlag(a, "goblin:has_armor", "twilightforest:armor", false);
+    setFlag(a, "goblin:has_armor", "gloamingforest:armor", false);
 }
 
 void breakShield(Actor& a) {
     breakEffects(a);
-    setFlag(a, "goblin:has_shield", "twilightforest:shield", false);
+    setFlag(a, "goblin:has_shield", "gloamingforest:shield", false);
 }
 
 void damageShield(Actor& upper) {
@@ -169,7 +169,7 @@ bool takeHitOnShield(Mob& upper, Actor* attacker, float amount) {
     if (shieldDisabled(upper)) return false;
     auto& r = levelRandom();
     if (attacker && holdsAxe(*attacker)) {
-        setFlag(upper, "goblin:shield_disabled", "twilightforest:shield_disabled", true);
+        setFlag(upper, "goblin:shield_disabled", "gloamingforest:shield_disabled", true);
         dataOf(upper, "goblin:shield_disabled_ticks") = 0;
         playSound(upper, "minecraft:item.shield.break", 1.0F, 0.8F + r.nextFloat() * 0.4F);
         return true;
@@ -312,7 +312,7 @@ float chainLength(Mob& m, Chain const& c) { return isSwingingChain(m, c) ? 0.9F 
 
 void setThrowing(Mob& m, Chain& c, bool t) {
     c.throwing = t;
-    ge::setProperty(m, "twilightforest:throwing", t);
+    ge::setProperty(m, "gloamingforest:throwing", t);
 }
 
 /// The spike block's position (BlockChainGoblin#tick).
@@ -365,7 +365,7 @@ void applyBlockCollisions(Mob& m, Chain& c) {
         }
         if (hurt) {
             fe::push(*e, Vec3{0.0f, 0.4f, 0.0f});
-            playSound(m, "item.twilightforest.block_and_chain.hit", 1.0F, 1.0F);
+            playSound(m, "item.gloamingforest.block_and_chain.hit", 1.0F, 1.0F);
             c.recoilCounter = 40;
             if (c.throwing) setThrowing(m, c, false);
         }
@@ -376,7 +376,7 @@ void applyBlockCollisions(Mob& m, Chain& c) {
         auto&    region = m.getDimensionBlockSource();
         if (!fe::mobs::emptyCollision(region, at) && !region.getBlock(at).isAir()) {
             setThrowing(m, c, false);
-            gf::fx::sound(m.getDimension(), "item.twilightforest.block_and_chain.collide", ball, 0.65F, 0.75F);
+            gf::fx::sound(m.getDimension(), "item.gloamingforest.block_and_chain.collide", ball, 0.65F, 0.75F);
         }
     }
 }
@@ -417,9 +417,9 @@ void chainTick(Actor& self) {
     c.chainAngle += 16.0F;
     c.chainAngle = std::fmod(c.chainAngle, 360.0F);
     // DATA_CHAINLENGTH / DATA_CHAINPOS for the renderers
-    ge::setProperty(self, "twilightforest:chain_length", static_cast<int>(std::floor(chainLength(*m, c) * 127.0F)));
-    ge::setProperty(self, "twilightforest:chain_pos", static_cast<int>(std::floor(c.chainAngle / 360.0F * 255.0F)));
-    ge::setProperty(self, "twilightforest:throw_length", static_cast<int>(std::floor(c.chainMoveLength * 10.0F)));
+    ge::setProperty(self, "gloamingforest:chain_length", static_cast<int>(std::floor(chainLength(*m, c) * 127.0F)));
+    ge::setProperty(self, "gloamingforest:chain_pos", static_cast<int>(std::floor(c.chainAngle / 360.0F * 255.0F)));
+    ge::setProperty(self, "gloamingforest:throw_length", static_cast<int>(std::floor(c.chainMoveLength * 10.0F)));
     if (m->isAlive() && c.chainMoveLength >= 6.0F) setThrowing(*m, c, false);
     // collide things with the block
     if (m->isAlive() && (c.throwing || isSwingingChain(*m, c))) applyBlockCollisions(*m, c);
@@ -455,7 +455,7 @@ void startThrowForTest(Mob& goblin) { setThrowing(goblin, chainOf(goblin), true)
 
 bool isBlue(Actor const& crab) { return flag(const_cast<Actor&>(crab), "helmet_crab:blue", false); }
 
-void setBlueForTest(Actor& crab, bool blue) { setFlag(crab, "helmet_crab:blue", "twilightforest:blue", blue); }
+void setBlueForTest(Actor& crab, bool blue) { setFlag(crab, "helmet_crab:blue", "gloamingforest:blue", blue); }
 
 void install() {
     // ---- LowerGoblinKnight
@@ -465,20 +465,20 @@ void install() {
                              [](Actor& self) {
                                  auto* m = fe::asMob(self);
                                  if (!m) return;
-                                 ge::setProperty(self, "twilightforest:armor", hasArmor(self));
+                                 ge::setProperty(self, "gloamingforest:armor", hasArmor(self));
                                  ge::addGoal(*m, 0, std::make_shared<RiderSpearAttackGoal>(fe::uidOf(self)));
                              },
                          .tick =
                              [](Actor& self) {
                                  auto* m = fe::asMob(self);
                                  if (!m || !m->isAlive()) return;
-                                 ambientVoice(*m, hasArmor(self) ? "entity.twilightforest.goblin_knight.muffled.ambient" : "entity.twilightforest.goblin_knight.ambient");
+                                 ambientVoice(*m, hasArmor(self) ? "entity.gloamingforest.goblin_knight.muffled.ambient" : "entity.gloamingforest.goblin_knight.ambient");
                                  // the rider's body follows the mount (positionRider)
                                  if (auto* rider = riderOf(*m)) {
                                      rider->setYBodyRotation(m->getRotation().y);
                                      const_cast<Vec2&>(rider->getRotation()) = Vec2{rider->getRotation().x, m->getRotation().y};
                                  }
-                                 ge::setProperty(self, "twilightforest:ridden", riderOf(*m) != nullptr);
+                                 ge::setProperty(self, "gloamingforest:ridden", riderOf(*m) != nullptr);
                              },
                          .hurt =
                              [](Actor& self, float& amount, std::string const& type, Actor* attacker) {
@@ -491,13 +491,13 @@ void install() {
                                  // break armor?
                                  if (hasArmor(self) && (difference > 300 || difference < 60)) {
                                      breakEffects(self);
-                                     setFlag(self, "goblin:has_armor", "twilightforest:armor", false);
+                                     setFlag(self, "goblin:has_armor", "gloamingforest:armor", false);
                                  }
                                  (void)type;
                                  return true;
                              },
                          .die = [](Actor& self, std::string const&, Actor*) {
-                             playSound(self, hasArmor(self) ? "entity.twilightforest.goblin_knight.muffled.death" : "entity.twilightforest.goblin_knight.death", 1.0F,
+                             playSound(self, hasArmor(self) ? "entity.gloamingforest.goblin_knight.muffled.death" : "entity.gloamingforest.goblin_knight.death", 1.0F,
                                        voicePitch(levelRandom()));
                          },
                      });
@@ -508,9 +508,9 @@ void install() {
                              [](Actor& self) {
                                  auto* m = fe::asMob(self);
                                  if (!m) return;
-                                 ge::setProperty(self, "twilightforest:armor", upperHasArmor(self));
-                                 ge::setProperty(self, "twilightforest:shield", upperHasShield(self));
-                                 ge::setProperty(self, "twilightforest:shield_disabled", shieldDisabled(self));
+                                 ge::setProperty(self, "gloamingforest:armor", upperHasArmor(self));
+                                 ge::setProperty(self, "gloamingforest:shield", upperHasShield(self));
+                                 ge::setProperty(self, "gloamingforest:shield_disabled", shieldDisabled(self));
                                  ge::addGoal(*m, 0, std::make_shared<HeavySpearAttackGoal>(fe::uidOf(self)));
                              },
                          .tick =
@@ -523,7 +523,7 @@ void install() {
                                      dataOf(self, "goblin:shield_disabled_ticks") = t + 1;
                                      if (t >= 100) {
                                          dataOf(self, "goblin:shield_disabled_ticks") = 0;
-                                         setFlag(self, "goblin:shield_disabled", "twilightforest:shield_disabled", false);
+                                         setFlag(self, "goblin:shield_disabled", "gloamingforest:shield_disabled", false);
                                      }
                                  }
                                  // synch target with lower goblin
@@ -582,7 +582,7 @@ void install() {
                                                .die  = [](Actor& self, std::string const&, Actor*) {
                                                    // the ball falls and clangs once on landing
                                                    auto* m = fe::asMob(self);
-                                                   if (m) gf::fx::sound(self.getDimension(), "item.twilightforest.block_and_chain.collide",
+                                                   if (m) gf::fx::sound(self.getDimension(), "item.gloamingforest.block_and_chain.collide",
                                                                         ballPosition(*m, chainOf(self)), 0.65F, 0.75F);
                                                    chains().erase(fe::uidOf(self));
                                                },
@@ -596,7 +596,7 @@ void install() {
                                                  // finalizeSpawn: blue with chance 1 / 10000 (kept in the save)
                                                  auto& blue = ge::data(self, "helmet_crab:blue");
                                                  if (!blue.is_boolean()) blue = levelRandom().nextInt(10000) == 0;
-                                                 ge::setProperty(self, "twilightforest:blue", blue.get<bool>());
+                                                 ge::setProperty(self, "gloamingforest:blue", blue.get<bool>());
                                                  ge::addGoal(*m, 1, ge::goals::alwaysWatchTarget(*m));
                                              },
                                      });
@@ -622,7 +622,7 @@ void install() {
                 auto&  c    = chainOf(*d.attacker);
                 if (c.block.valid()) part = ge::partActor(c.block);
                 VanillaMelee guard;
-                gf::combat::hurt(d.victim, d.amount, "twilightforest:spiked", d.attacker, part ? part : d.attacker);
+                gf::combat::hurt(d.victim, d.amount, "gloamingforest:spiked", d.attacker, part ? part : d.attacker);
                 return gf::combat::Verdict::Cancel;
             }
         }
@@ -633,7 +633,7 @@ void install() {
     gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
         // the lower knight's hurt voice depends on its armour
         if (d.victim.getTypeName() == id::LowerGoblinKnight && d.victim.isAlive())
-            playSound(d.victim, hasArmor(d.victim) ? "entity.twilightforest.goblin_knight.muffled.hurt" : "entity.twilightforest.goblin_knight.hurt", 1.0F,
+            playSound(d.victim, hasArmor(d.victim) ? "entity.gloamingforest.goblin_knight.muffled.hurt" : "entity.gloamingforest.goblin_knight.hurt", 1.0F,
                       voicePitch(levelRandom()));
     });
     for (char const* t : {id::BlockChainGoblin, id::LowerGoblinKnight, id::UpperGoblinKnight, id::HelmetCrab})

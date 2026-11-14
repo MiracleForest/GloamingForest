@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "gloamingforest:hollow_gloaming_oak_log",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "item.gloamingforest:hollow_gloaming_oak_log.name"
+      },
+      "minecraft:block_placer": {
+        "block": "gloamingforest:hollow_gloaming_oak_log_horizontal"
+      },
+      "minecraft:fuel": {
+        "duration": 15
+      }
+    }
+  }
+}

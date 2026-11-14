@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/PatchBlock.java (shapeFromLong)
-//   src/main/java/twilightforest/block/MasonJarBlock.java (getAnalogOutputSignal)
-//   src/main/java/twilightforest/block/FallenLeavesBlock.java (entityInside)
-//   src/main/java/twilightforest/world/components/feature/BerryBushFeature.java (chooseSize)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/PatchBlock.java (shapeFromLong)
+//   src/main/java/gloamingforest/block/MasonJarBlock.java (getAnalogOutputSignal)
+//   src/main/java/gloamingforest/block/FallenLeavesBlock.java (entityInside)
+//   src/main/java/gloamingforest/world/components/feature/BerryBushFeature.java (chooseSize)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U6 flora: the pure arithmetic of TF's flora blocks (no game types), shared by the unit's runtime
+// U6 flora: the pure arithmetic of upstream's flora blocks (no game types), shared by the unit's runtime
 // and gtested in tests/flora.
 
 #include <array>

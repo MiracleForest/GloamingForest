@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "gloamingforest:sorting_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_drying_rack"
+    }
+  }
+}

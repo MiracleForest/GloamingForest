@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:wood/transformation_planks_2"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:transformation_wood"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:stripped_transformation_log"
+      },
+      {
+        "item": "gloamingforest:stripped_transformation_wood"
+      },
+      {
+        "item": "gloamingforest:transformation_log"
+      },
+      {
+        "item": "gloamingforest:transformation_wood"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:transformation_planks",
+      "count": 4
+    }
+  }
+}

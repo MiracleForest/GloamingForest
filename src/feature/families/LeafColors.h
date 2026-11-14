@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/ColorHandler.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/ColorHandler.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// Block families (F11): the leaf colours TF's ColorHandler computes from the position alone (time,
+// Block families (F11): the leaf colours upstream's ColorHandler computes from the position alone (time,
 // transformation, mining and sorting leaves fade between two colours, rainbow oak leaves), as
 // 0xRRGGBB. The client mod tints those leaves with them (src/client/families, gf::client::tint);
 // without a world (an item, a vanilla client: tools/families pre-tints the textures) Java uses the
@@ -84,23 +84,23 @@ struct Blend {
     BlendFn  fn;
     unsigned withoutWorld;
 };
-/// The blend ColorHandler applies to a TF leaf block id (nullopt: none; those leaves take the
+/// The blend ColorHandler applies to an upstream leaf block id (nullopt: none; those leaves take the
 /// foliage colour as it is, or one of `of`).
 [[nodiscard]] constexpr std::optional<Blend> blendOf(std::string_view id) {
-    if (id == "twilightforest:canopy_leaves") return Blend{&canopy, kEvergreen};
-    if (id == "twilightforest:mangrove_leaves") return Blend{&mangrove, kBirch};
+    if (id == "gloamingforest:canopy_leaves") return Blend{&canopy, kEvergreen};
+    if (id == "gloamingforest:mangrove_leaves") return Blend{&mangrove, kBirch};
     return std::nullopt;
 }
 
 using ColorFn = unsigned (*)(int x, int y, int z);
-/// The position colour of a TF leaf block id (nullopt: not one ColorHandler colours by position
+/// The position colour of an upstream leaf block id (nullopt: not one ColorHandler colours by position
 /// alone).
 [[nodiscard]] constexpr std::optional<ColorFn> of(std::string_view id) {
-    if (id == "twilightforest:time_leaves") return &time;
-    if (id == "twilightforest:transformation_leaves") return &transformation;
-    if (id == "twilightforest:mining_leaves") return &mining;
-    if (id == "twilightforest:sorting_leaves") return &sorting;
-    if (id == "twilightforest:rainbow_oak_leaves") return &rainbow;
+    if (id == "gloamingforest:time_leaves") return &time;
+    if (id == "gloamingforest:transformation_leaves") return &transformation;
+    if (id == "gloamingforest:mining_leaves") return &mining;
+    if (id == "gloamingforest:sorting_leaves") return &sorting;
+    if (id == "gloamingforest:rainbow_oak_leaves") return &rainbow;
     return std::nullopt;
 }
 

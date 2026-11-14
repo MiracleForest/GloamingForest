@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/enums/extensions/TFBoatTypeEnumExtension.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/enums/extensions/TFBoatTypeEnumExtension.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract extension of U4 woodwork (BoatDrops.h): Boat#getDropItem of TF's boat types on the game's
+// Contract extension of U4 woodwork (BoatDrops.h): Boat#getDropItem of upstream's boat types on the game's
 // boat. The game's destroy spawns the item of the boat's variant (Boat::getWoodID: oak_boat,
 // spruce_boat, ..., bamboo_raft; the chest boat's <wood>_chest_boat) and, for a chest boat, the
 // chest's contents. Only a NEW item actor of exactly that item (one plain item, no user data) is

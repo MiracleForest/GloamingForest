@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/canopy_hanging_sign"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["| |", "###", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:stripped_canopy_log"
+      },
+      "|": {
+        "item": "minecraft:chain"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:stripped_canopy_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:canopy_hanging_sign",
+      "count": 6
+    }
+  }
+}

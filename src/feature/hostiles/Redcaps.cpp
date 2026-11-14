@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/Redcap.java
-//   src/main/java/twilightforest/entity/monster/RedcapSapper.java
-//   src/main/java/twilightforest/entity/ai/goal/RedcapBaseGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/RedcapShyGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/RedcapLightTNTGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/RedcapPlantTNTGoal.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/Redcap.java
+//   src/main/java/gloamingforest/entity/monster/RedcapSapper.java
+//   src/main/java/gloamingforest/entity/ai/goal/RedcapBaseGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/RedcapShyGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/RedcapLightTNTGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/RedcapPlantTNTGoal.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The redcap and the redcap sapper. Float, look and the targets are the BP's behaviours; TF's goals
+// The redcap and the redcap sapper. Float, look and the targets are the BP's behaviours; upstream's goals
 // run natively: 1 AvoidAnyEntity primed TNT, 2 RedcapShy, 3 RedcapLightTNT, (4 RedcapPlantTNT); the
 // BP's melee (5) and stroll (6) yield while one of them holds MOVE (group gf:vanilla_move). The held
-// stacks (pick, flint and steel, TNT) are swapped into the main hand as in TF; TNTLeft is saved.
+// stacks (pick, flint and steel, TNT) are swapped into the main hand as in upstream; TNTLeft is saved.
 
 #include <cmath>
 #include <memory>
@@ -70,7 +70,7 @@ void setTntCount(Actor& redcap, int n) { ge::data(redcap, "hostiles:tnt_left") =
 ItemStack heldPick(Actor& redcap) {
     auto const& saved = ge::data(redcap, "hostiles:pick");
     if (saved.is_object()) return gf::game::items::fromJson(saved);
-    auto s = gf::game::items::make(isSapper(redcap) ? "twilightforest:ironwood_pickaxe" : "minecraft:iron_pickaxe");
+    auto s = gf::game::items::make(isSapper(redcap) ? "gloamingforest:ironwood_pickaxe" : "minecraft:iron_pickaxe");
     return s ? *s : gf::game::items::empty();
 }
 
@@ -88,13 +88,13 @@ void holdTnt(Mob& m) {
 }
 
 /// Mob#playAmbientSound.
-void playAmbient(Mob& m) { playSound(m, "entity.twilightforest.redcap.ambient", 1.0F, voicePitch(m)); }
+void playAmbient(Mob& m) { playSound(m, "entity.gloamingforest.redcap.ambient", 1.0F, voicePitch(m)); }
 
 /// Redcap#finalizeSpawn: populateDefaultEquipmentSlots + enchantments, drop chances 0.2.
 void finalizeSpawn(Mob& m) {
     bool sapper = isSapper(m);
-    if (auto s = gf::game::items::make(sapper ? "twilightforest:ironwood_pickaxe" : "minecraft:iron_pickaxe")) setMainHand(m, *s);
-    if (auto s = gf::game::items::make(sapper ? "twilightforest:ironwood_boots" : "minecraft:iron_boots")) setFeet(m, *s);
+    if (auto s = gf::game::items::make(sapper ? "gloamingforest:ironwood_pickaxe" : "minecraft:iron_pickaxe")) setMainHand(m, *s);
+    if (auto s = gf::game::items::make(sapper ? "gloamingforest:ironwood_boots" : "minecraft:iron_boots")) setFeet(m, *s);
     enchantSpawnEquipment(m);
     ge::data(m, "hostiles:pick") = gf::game::items::toJson(m.getItemSlot(Slot::Mainhand));
     (void)tntCount(m);

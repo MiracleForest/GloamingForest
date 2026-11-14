@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/HollowTreeStructure.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreePiece.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreeTrunk.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreeLargeBranch.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreeMedBranch.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreeSmallBranch.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreeRoot.java
-//   src/main/java/twilightforest/world/components/structures/hollowtree/HollowTreeLeafDungeon.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/HollowTreeStructure.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreePiece.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreeTrunk.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreeLargeBranch.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreeMedBranch.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreeSmallBranch.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreeRoot.java
+//   src/main/java/gloamingforest/world/components/structures/hollowtree/HollowTreeLeafDungeon.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The hollow trees (twilightforest:hollow_tree, twilightforest:swamp_hollow_tree): not landmarks,
+// The hollow trees (gloamingforest:hollow_tree, gloamingforest:swamp_hollow_tree): not landmarks,
 // but F6 keeps their starts (the avoid_landmark_grid structure set) and builds them through this
-// generator; the robust twilight oak sapling (U3) grows one with landmark::generateAt.
+// generator; the robust gloaming oak sapling (U3) grows one with landmark::generateAt.
 #include "feature/minorlandmarks/Internal.h"
 
 #include <algorithm>
@@ -44,7 +44,7 @@ BlockPos fromP(cml::Pos const& p) { return BlockPos{p.x, p.y, p.z}; }
 cml::Pos toP(BlockPos const& p) { return {p.x, p.y, p.z}; }
 BlockPos translate(BlockPos const& p, double distance, double angle, double tilt) { return fromP(cml::translate(toP(p), distance, angle, tilt)); }
 
-/// HollowTreePiece: a vanilla StructurePiece with TF's drawing helpers.
+/// HollowTreePiece: a vanilla StructurePiece with upstream's drawing helpers.
 class HollowTreePiece : public st::Piece {
 public:
     HollowTreePiece(char const* type, int depth, BlockBox const& box) : Piece(type) {
@@ -323,8 +323,8 @@ public:
         if (auto it = d.find("leaves"); it != d.end()) leaves = *it;
         if (auto it = d.find("air"); it != d.end()) inside = *it;
         if (auto it = d.find("loot_block"); it != d.end()) lootContainer = *it;
-        lootTable = d.value("loot_table", std::string("twilightforest:tree_cache"));
-        monster   = d.value("monster", std::string("twilightforest:swarm_spider"));
+        lootTable = d.value("loot_table", std::string("gloamingforest:tree_cache"));
+        monster   = d.value("monster", std::string("gloamingforest:swarm_spider"));
     }
 
     void postProcess(Region& level, RandomSource&, BlockBox const& writeableBounds, BlockPos const&) override {
@@ -348,7 +348,7 @@ private:
         Block const* state = sampleProvider(lootContainer, random, pos);
         std::string  id    = providerBlockId(lootContainer);
         if (id.empty()) id = "minecraft:chest";
-        (void)state; // a simple provider: no draw (TF samples the state before the checks)
+        (void)state; // a simple provider: no draw (upstream samples the state before the checks)
         if (sbb.contains(pos.x, pos.y, pos.z) && !st::blocks::is(world.getBlock(pos), id)) {
             // the chest faces away from the center (ChestBlock.FACING = direction.getOpposite());
             // RandomizableContainerBlockEntity#setLootTable(table, random.nextLong())
@@ -392,8 +392,8 @@ public:
         if (auto it = d.find("dungeon_wood"); it != d.end()) dungeonWood = *it;
         if (auto it = d.find("dungeon_air"); it != d.end()) dungeonAir = *it;
         if (auto it = d.find("dungeon_loot_block"); it != d.end()) dungeonLootBlock = *it;
-        dungeonLootTable = d.value("dungeon_loot_table", std::string("twilightforest:tree_cache"));
-        dungeonMonster   = d.value("dungeon_monster", std::string("twilightforest:swarm_spider"));
+        dungeonLootTable = d.value("dungeon_loot_table", std::string("gloamingforest:tree_cache"));
+        dungeonMonster   = d.value("dungeon_monster", std::string("gloamingforest:swarm_spider"));
     }
 
     void addChildren(st::Piece&, std::vector<std::unique_ptr<st::Piece>>& list, RandomSource& rand) override {
@@ -601,7 +601,7 @@ void chunkOf(gf::landmark::Start const& start, int& cx, int& cz) {
 }
 
 int maxBuildHeightOf(int dimension) {
-    // the Twilight Forest: min_y -32, height 288; the overworld (a sapling grown there): 320
+    // the Gloaming Forest: min_y -32, height 288; the overworld (a sapling grown there): 320
     return dimension == 0 ? 320 : 256;
 }
 
@@ -611,14 +611,14 @@ HollowTreeConfig HollowTreeConfig::defaults() {
     HollowTreeConfig c;
     c.height           = Json{{"type", "minecraft:uniform"}, {"min_inclusive", 32}, {"max_inclusive", 95}};
     c.radius           = Json{{"type", "minecraft:uniform"}, {"min_inclusive", 1}, {"max_inclusive", 4}};
-    c.log              = simpleProvider("twilightforest:twilight_oak_log", Json{{"axis", "y"}});
-    c.wood             = simpleProvider("twilightforest:twilight_oak_wood", Json{{"axis", "y"}});
-    c.root             = simpleProvider("twilightforest:root");
-    c.leaves           = simpleProvider("twilightforest:twilight_oak_leaves", Json{{"distance", "7"}, {"persistent", "false"}, {"waterlogged", "false"}});
+    c.log              = simpleProvider("gloamingforest:gloaming_oak_log", Json{{"axis", "y"}});
+    c.wood             = simpleProvider("gloamingforest:gloaming_oak_wood", Json{{"axis", "y"}});
+    c.root             = simpleProvider("gloamingforest:root");
+    c.leaves           = simpleProvider("gloamingforest:gloaming_oak_leaves", Json{{"distance", "7"}, {"persistent", "false"}, {"waterlogged", "false"}});
     c.vine             = simpleProvider("minecraft:vine");
     c.bug              = Json{{"type", "minecraft:weighted_state_provider"},
-                              {"entries", Json::array({Json{{"data", Json{{"Name", "twilightforest:firefly"}, {"Properties", {{"facing", "north"}}}}}, {"weight", 1}},
-                                                       Json{{"data", Json{{"Name", "twilightforest:cicada"}, {"Properties", {{"facing", "north"}}}}}, {"weight", 1}}})}};
+                              {"entries", Json::array({Json{{"data", Json{{"Name", "gloamingforest:firefly"}, {"Properties", {{"facing", "north"}}}}}, {"weight", 1}},
+                                                       Json{{"data", Json{{"Name", "gloamingforest:cicada"}, {"Properties", {{"facing", "north"}}}}}, {"weight", 1}}})}};
     c.dungeonWood      = c.wood;
     c.dungeonAir       = simpleProvider("minecraft:air");
     c.dungeonLootBlock = simpleProvider("minecraft:chest", Json{{"type", "single"}, {"facing", "west"}, {"waterlogged", "false"}});
@@ -680,7 +680,7 @@ void installHollowTrees() {
                     // same source for findGenerationPoint and generateFromSapling. A natural start
                     // arrives at its chunk's corner (a new start) or at the point findGenerationPoint
                     // found (a start rebuilt); any other center is a placed one (the sapling,
-                    // /twilightforest place, selftests) and grows as generateFromSapling does.
+                    // /gloamingforest place, selftests) and grows as generateFromSapling does.
                     core::jrand::LegacyRandom probe(core::mth::ladd(core::mth::ladd(ctx.start.seed, static_cast<std::int64_t>(cx) * 25117LL),
                                                                     static_cast<std::int64_t>(cz) * 151121LL));
                     int px = cx * 16 + probe.nextInt(16), pz = cz * 16 + probe.nextInt(16);

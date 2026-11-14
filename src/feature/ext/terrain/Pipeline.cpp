@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Extension added by U2 (terrain), rule R18: see Pipeline.h. The only U2 file that includes F5's
 // internals (feature/worldgen/Internal.h).
 #include "feature/ext/terrain/Pipeline.h"

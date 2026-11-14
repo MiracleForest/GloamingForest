@@ -1,8 +1,8 @@
 {
   "commands.tffeature.usage": "/%s <info | reactivate | conquer | center>",
-  "misc.twilightforest.advancement_hidden": "<Скрытое достижение>",
-  "misc.twilightforest.advancement_required": "Требуется достижение:",
-  "misc.twilightforest.core_disabled": "%s отключен через конфигурацию",
-  "misc.twilightforest.firefly_spawner_radius": "Радиус частицы Светлячка: %s блоков",
-  "misc.twilightforest.pedestal_ineligible": "Вы недостойны."
+  "misc.gloamingforest.advancement_hidden": "<Скрытое достижение>",
+  "misc.gloamingforest.advancement_required": "Требуется достижение:",
+  "misc.gloamingforest.core_disabled": "%s отключен через конфигурацию",
+  "misc.gloamingforest.firefly_spawner_radius": "Радиус частицы Светлячка: %s блоков",
+  "misc.gloamingforest.pedestal_ineligible": "Вы недостойны."
 }

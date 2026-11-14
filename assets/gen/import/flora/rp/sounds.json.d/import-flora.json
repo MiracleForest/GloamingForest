@@ -1,22 +1,22 @@
 {
   "block_sounds": {
-    "twilightforest.jar": {
+    "gloamingforest.jar": {
       "volume": 1,
       "pitch": 1,
       "events": {
         "default": "",
         "break": {
-          "sound": "block.twilightforest.jar.break",
+          "sound": "block.gloamingforest.jar.break",
           "volume": 1,
           "pitch": 0.8
         },
         "place": {
-          "sound": "block.twilightforest.jar.place",
+          "sound": "block.gloamingforest.jar.place",
           "volume": 1,
           "pitch": 0.8
         },
         "hit": {
-          "sound": "block.twilightforest.jar.hit",
+          "sound": "block.gloamingforest.jar.hit",
           "volume": 0.25,
           "pitch": 0.5
         }
@@ -25,18 +25,18 @@
   },
   "interactive_sounds": {
     "block_sounds": {
-      "twilightforest.jar": {
+      "gloamingforest.jar": {
         "volume": 1,
         "pitch": 1,
         "events": {
           "default": "",
           "step": {
-            "sound": "block.twilightforest.jar.step",
+            "sound": "block.gloamingforest.jar.step",
             "volume": 0.15,
             "pitch": 1
           },
           "fall": {
-            "sound": "block.twilightforest.jar.fall",
+            "sound": "block.gloamingforest.jar.fall",
             "volume": 0.5,
             "pitch": 0.75
           },

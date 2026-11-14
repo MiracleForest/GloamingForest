@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/ForceFieldBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/ForceFieldBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -10,7 +10,7 @@
 // the block is unbreakable (strength -1, BP: not destructible by mining or explosions). The shape,
 // collision and model (arms per connection, corner panels where two connected arms meet) are the BP
 // permutations of assets/pack/bp/blocks/finalcastle; a corner panel is drawn when both of its arms
-// are connected (TF also asks cornerConnects: a sturdy neighbour or a force field connected the
+// are connected (upstream also asks cornerConnects: a sturdy neighbour or a force field connected the
 // other way, which no block state can hold).
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockSource.h"

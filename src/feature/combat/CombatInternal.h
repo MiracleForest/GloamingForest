@@ -20,10 +20,10 @@ namespace gf::combat {
 
 /// A damage type (data/<ns>/damage_type/<path>.json, Java's DamageType).
 struct DamageTypeSpec {
-    std::string id;               ///< "twilightforest:hydra_bite"
-    std::string messageId;        ///< "twilightforest.hydraBite" (death.attack.<messageId>)
+    std::string id;               ///< "gloamingforest:hydra_bite"
+    std::string messageId;        ///< "gloamingforest.hydraBite" (death.attack.<messageId>)
     float       exhaustion = 0.f; ///< food exhaustion added to a hurt player
-    std::string effects = "hurt"; ///< hurt / burning / freezing / ... / "twilightforest:pinch"
+    std::string effects = "hurt"; ///< hurt / burning / freezing / ... / "gloamingforest:pinch"
     std::string scaling = "when_caused_by_living_non_player";
     std::string deathMessageType = "default";
     /// One of Minecraft 1.21.1's damage types (data/minecraft/damage_type, and NeoForge's
@@ -33,26 +33,26 @@ struct DamageTypeSpec {
     std::string bedrockMessageId;
 };
 
-/// The damage type `id` (TF's 40 and Minecraft's 47 (+ neoforge:poison) are known without data;
+/// The damage type `id` (upstream's 40 and Minecraft's 47 (+ neoforge:poison) are known without data;
 /// data files override and add).
 [[nodiscard]] DamageTypeSpec const* damageType(std::string const& id);
 /// Every known damage type id, sorted.
 [[nodiscard]] std::vector<std::string> damageTypeIds();
 /// Whether damage type `id` is in damage type tag `tag` ("minecraft:bypasses_armor"): the tag data
-/// through gf::tags (TF's memberships, the units' fragments) plus Minecraft 1.21.1's and NeoForge
+/// through gf::tags (upstream's memberships, the units' fragments) plus Minecraft 1.21.1's and NeoForge
 /// 21.1's own damage type tags (built in: Bedrock has no data for them), nested tags resolved.
 [[nodiscard]] bool damageTypeHasTag(std::string const& id, std::string const& tag);
 /// The Bedrock cause that carries damage type `id` (armour, resistances, enchantments): a vanilla
 /// type its Bedrock counterpart, any other type the cause its tags call for.
 [[nodiscard]] SharedTypes::Legacy::ActorDamageCause causeFor(std::string const& id, bool hasAttacker);
 /// The Java damage type id of a Bedrock source ("minecraft:player_attack", ...) for `victim`;
-/// the TF type while gf::combat::hurt applies it.
+/// the upstream type while gf::combat::hurt applies it.
 [[nodiscard]] std::string typeOf(Actor& victim, ActorDamageSource const& source);
 /// Attacker (responsible entity) and direct entity of a source (nullptr when none).
 [[nodiscard]] std::pair<Actor*, Actor*> entitiesOf(ActorDamageSource const& source);
-/// The TF death message of `victim` (Java's DamageSource#getLocalizedDeathMessage for the last
+/// The upstream death message of `victim` (Java's DamageSource#getLocalizedDeathMessage for the last
 /// gf::combat::hurt that hit it this tick or the previous one): {key, params} with params[0] the
-/// victim's name; an empty key when the last damage was not a TF one.
+/// victim's name; an empty key when the last damage was not an upstream one.
 [[nodiscard]] std::pair<std::string, std::vector<std::string>>
 deathMessageFor(Actor& victim, std::string const& deadName, std::optional<SharedTypes::Legacy::ActorDamageCause> killingCause = std::nullopt);
 /// The Bedrock display name of an entity for a death message ("Steve", "%entity.zombie.name").

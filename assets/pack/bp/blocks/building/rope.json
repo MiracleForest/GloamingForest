@@ -2,20 +2,20 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:rope",
+      "identifier": "gloamingforest:rope",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:x": [
+        "gloamingforest:x": [
           false,
           true
         ],
-        "twilightforest:y": [
+        "gloamingforest:y": [
           true,
           false
         ],
-        "twilightforest:z": [
+        "gloamingforest:z": [
           false,
           true
         ]
@@ -29,12 +29,12 @@
         "explosion_resistance": 15
       },
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.rope.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.rope.multipart",
         "bone_visibility": {
-          "part0": "q.block_state('twilightforest:y')",
-          "part1": "q.block_state('twilightforest:x')",
-          "part2": "q.block_state('twilightforest:z')",
-          "part3": "(q.block_state('twilightforest:x') && q.block_state('twilightforest:y')) || (q.block_state('twilightforest:y') && q.block_state('twilightforest:z')) || (q.block_state('twilightforest:x') && q.block_state('twilightforest:z'))"
+          "part0": "q.block_state('gloamingforest:y')",
+          "part1": "q.block_state('gloamingforest:x')",
+          "part2": "q.block_state('gloamingforest:z')",
+          "part3": "(q.block_state('gloamingforest:x') && q.block_state('gloamingforest:y')) || (q.block_state('gloamingforest:y') && q.block_state('gloamingforest:z')) || (q.block_state('gloamingforest:x') && q.block_state('gloamingforest:z'))"
         }
       },
       "minecraft:material_instances": {
@@ -42,11 +42,11 @@
           "texture": "tf_block_rope",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_rope": {
+        "t_gloamingforest_block_rope": {
           "texture": "tf_block_rope",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_rope_knot": {
+        "t_gloamingforest_block_rope_knot": {
           "texture": "tf_block_rope_knot",
           "render_method": "alpha_test"
         }
@@ -77,7 +77,7 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:x') && !q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "condition": "!q.block_state('gloamingforest:x') && !q.block_state('gloamingforest:y') && q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -106,7 +106,7 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && !q.block_state('twilightforest:z')",
+        "condition": "!q.block_state('gloamingforest:x') && q.block_state('gloamingforest:y') && !q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -124,7 +124,7 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "condition": "!q.block_state('gloamingforest:x') && q.block_state('gloamingforest:y') && q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -153,7 +153,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:x') && !q.block_state('twilightforest:y') && !q.block_state('twilightforest:z')",
+        "condition": "q.block_state('gloamingforest:x') && !q.block_state('gloamingforest:y') && !q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -182,7 +182,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:x') && !q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "condition": "q.block_state('gloamingforest:x') && !q.block_state('gloamingforest:y') && q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -225,7 +225,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && !q.block_state('twilightforest:z')",
+        "condition": "q.block_state('gloamingforest:x') && q.block_state('gloamingforest:y') && !q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -254,7 +254,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "condition": "q.block_state('gloamingforest:x') && q.block_state('gloamingforest:y') && q.block_state('gloamingforest:z')",
         "components": {
           "minecraft:selection_box": {
             "origin": [

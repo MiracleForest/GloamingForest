@@ -2,17 +2,17 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:lower_goblin_knight",
+      "identifier": "gloamingforest:lower_goblin_knight",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:armor": {
+        "gloamingforest:armor": {
           "type": "bool",
           "default": true,
           "client_sync": true
         },
-        "twilightforest:ridden": {
+        "gloamingforest:ridden": {
           "type": "bool",
           "default": true,
           "client_sync": true
@@ -22,7 +22,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "lower_goblin_knight",
           "goblin_knight",
           "monster",
@@ -87,7 +87,7 @@
         }
       },
       "minecraft:addrider": {
-        "entity_type": "twilightforest:upper_goblin_knight"
+        "entity_type": "gloamingforest:upper_goblin_knight"
       },
       "minecraft:behavior.float": {
         "priority": 1

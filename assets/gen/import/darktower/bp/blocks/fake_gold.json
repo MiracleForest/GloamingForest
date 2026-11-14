@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:fake_gold",
+      "identifier": "gloamingforest:fake_gold",
       "menu_category": {
         "category": "none"
       }

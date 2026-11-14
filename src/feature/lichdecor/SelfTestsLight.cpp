@@ -163,7 +163,7 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_slots", [](Context& ctx) -> ll::coro:
     auto box = co_await ctx.flatArea(2200, 4);
     (void)box;
     auto g = ctx.testPos(2200, 1);
-    ctx.require(ctx.setBlock(g, kCandelabra, {{"twilightforest:facing", "south"}, {"twilightforest:on_wall", false}}), "candelabra set");
+    ctx.require(ctx.setBlock(g, kCandelabra, {{"gloamingforest:facing", "south"}, {"gloamingforest:on_wall", false}}), "candelabra set");
     // facing south, standing: slot by hit x (dir = up x south = (1, 0, 0)); not reversed
     hold(ctx, "minecraft:red_candle", 4);
     click(ctx, g, 1, {0.2, 1.0, 0.5});
@@ -248,7 +248,7 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_signal", [](Context& ctx) -> ll::coro
     auto support = ctx.testPos(2210, 1);
     auto g       = up(support);
     ctx.require(ctx.setBlock(support, "minecraft:stone"), "support");
-    ctx.require(ctx.setBlock(g, kCandelabra, {{"twilightforest:has_candle_1", true}, {"twilightforest:has_candle_2", true}, {"twilightforest:lighting", "dim"}}), "candelabra");
+    ctx.require(ctx.setBlock(g, kCandelabra, {{"gloamingforest:has_candle_1", true}, {"gloamingforest:has_candle_2", true}, {"gloamingforest:lighting", "dim"}}), "candelabra");
     setDataAt(*r, bp(g), Json{{"candles", Json::array({"minecraft:candle", "minecraft:candle", nullptr})}});
     syncCandelabraPower(*r, bp(g));
     ctx.check(gf::redstone::signalFrom(*r, bp(g), bp(support)) == 6, "DIM standing: 3 per candle into the block below");
@@ -270,7 +270,7 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_signal", [](Context& ctx) -> ll::coro
     // a wall candelabra powers only its support behind it
     auto wall = g.offset(0, 0, 1);
     ctx.require(ctx.setBlock(wall, kCandelabra,
-                             {{"twilightforest:has_candle_1", true}, {"twilightforest:lighting", "dim"}, {"twilightforest:on_wall", true}, {"twilightforest:facing", "north"}}),
+                             {{"gloamingforest:has_candle_1", true}, {"gloamingforest:lighting", "dim"}, {"gloamingforest:on_wall", true}, {"gloamingforest:facing", "north"}}),
                 "wall candelabra");
     r = ctx.region();
     ctx.check(gf::redstone::signalFrom(*r, bp(wall), bp(g)) == 3, "DIM wall: 3 per candle into the support at FACING");
@@ -294,7 +294,7 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_circuit", [](Context& ctx) -> ll::cor
     ctx.require(ctx.setBlock(support, "minecraft:stone"), "support");
     ctx.require(ctx.setBlock(lamp, "minecraft:redstone_lamp"), "lamp");
     co_await ctx.ticks(2);
-    ctx.require(ctx.setBlock(g, kCandelabra, {{"twilightforest:has_candle_1", true}, {"twilightforest:has_candle_2", true}, {"twilightforest:lighting", "dim"}}), "candelabra");
+    ctx.require(ctx.setBlock(g, kCandelabra, {{"gloamingforest:has_candle_1", true}, {"gloamingforest:has_candle_2", true}, {"gloamingforest:lighting", "dim"}}), "candelabra");
     r = ctx.region();
     setDataAt(*r, bp(g), Json{{"candles", Json::array({"minecraft:candle", "minecraft:candle", nullptr})}});
     syncCandelabraPower(*r, bp(g));
@@ -320,7 +320,7 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_circuit", [](Context& ctx) -> ll::cor
     // a side: turn the rear direction by 90 degrees
     int  sideFace = *rear <= 3 ? 5 : 3;
     auto side     = comparator.offset(kOff[sideFace][0], 0, kOff[sideFace][2]);
-    Json ominous{{"twilightforest:has_candle_1", true}, {"twilightforest:has_candle_2", true}, {"twilightforest:lighting", "ominous"}};
+    Json ominous{{"gloamingforest:has_candle_1", true}, {"gloamingforest:has_candle_2", true}, {"gloamingforest:lighting", "ominous"}};
     ctx.require(ctx.setBlock(behind, kCandelabra, ominous), "candelabra behind");
     r = ctx.region();
     setDataAt(*r, bp(behind), Json{{"candles", Json::array({"minecraft:candle", "minecraft:candle", nullptr})}});
@@ -340,8 +340,8 @@ GF_REGISTER_SELFTEST("lichdecor.brazier_cycle", [](Context& ctx) -> ll::coro::Co
     (void)box;
     auto lower = ctx.testPos(2216, 1);
     auto upper = up(lower);
-    ctx.require(ctx.setBlock(lower, kBrazier, {{"twilightforest:half", "lower"}}), "lower half");
-    ctx.require(ctx.setBlock(upper, kBrazier, {{"twilightforest:half", "upper"}}), "upper half");
+    ctx.require(ctx.setBlock(lower, kBrazier, {{"gloamingforest:half", "lower"}}), "lower half");
+    ctx.require(ctx.setBlock(upper, kBrazier, {{"gloamingforest:half", "upper"}}), "upper half");
     char const* order[] = {"dim", "half", "bright", "full"};
     for (auto const* want : order) {
         hold(ctx, "minecraft:flint_and_steel");
@@ -350,7 +350,7 @@ GF_REGISTER_SELFTEST("lichdecor.brazier_cycle", [](Context& ctx) -> ll::coro::Co
     }
     hold(ctx, "minecraft:fire_charge");
     ctx.check(click(ctx, upper) == ia::Result::Pass && st(ctx, upper, "light") == "full", "no further at full");
-    ctx.check(st(ctx, lower, "light") == "off", "the lower half's state is not cycled (as TF)");
+    ctx.check(st(ctx, lower, "light") == "off", "the lower half's state is not cycled (as upstream)");
     hold(ctx, "minecraft:water_bucket");
     click(ctx, upper);
     ctx.check(st(ctx, upper, "light") == "off", "a water bucket puts it out");
@@ -369,7 +369,7 @@ GF_REGISTER_SELFTEST("lichdecor.skull_candle_create", [](Context& ctx) -> ll::co
     ctx.require(ctx.setBlock(g, "minecraft:skeleton_skull", {{"facing_direction", 1}}), "skull");
     auto& cfg    = gf::config::mut<LichdecorConfig>();
     bool  saved  = cfg.disableSkullCandleCreation;
-    long long before = gf::stats::value(ctx.player(), "twilightforest:skull_candles_made");
+    long long before = gf::stats::value(ctx.player(), "gloamingforest:skull_candles_made");
     // config off: nothing happens
     cfg.disableSkullCandleCreation = true;
     hold(ctx, "minecraft:red_candle", 2);
@@ -381,12 +381,12 @@ GF_REGISTER_SELFTEST("lichdecor.skull_candle_create", [](Context& ctx) -> ll::co
     ctx.check(ctx.blockAt(g) == "minecraft:skeleton_skull", "sneaking does not make a skull candle");
     hold(ctx, "minecraft:red_candle", 2);
     ctx.check(click(ctx, g) == ia::Result::Consume, "the candle is used on the skull");
-    ctx.check(ctx.blockAt(g) == "twilightforest:skeleton_skull_candle", "the skull becomes a skeleton skull candle");
+    ctx.check(ctx.blockAt(g) == "gloamingforest:skeleton_skull_candle", "the skull becomes a skeleton skull candle");
     auto* r = ctx.region();
     ctx.require(r != nullptr, "region");
-    ctx.check(dataAt(*r, bp(g)).value("color", -1) == 5, "the candle colour is TF's RED (5)");
+    ctx.check(dataAt(*r, bp(g)).value("color", -1) == 5, "the candle colour is upstream's RED (5)");
     ctx.check(st(ctx, g, "candles") == "1" && st(ctx, g, "lighting") == "none", "one unlit candle");
-    ctx.check(gf::stats::value(ctx.player(), "twilightforest:skull_candles_made") == before + 1, "skull_candles_made counts it");
+    ctx.check(gf::stats::value(ctx.player(), "gloamingforest:skull_candles_made") == before + 1, "skull_candles_made counts it");
     // the same colour adds one; sneaking with an empty hand takes them back to the skull
     hold(ctx, "minecraft:red_candle", 1);
     click(ctx, g);
@@ -403,7 +403,7 @@ GF_REGISTER_SELFTEST("lichdecor.ominous_candle_revert", [](Context& ctx) -> ll::
     auto box = co_await ctx.flatArea(2224, 4);
     (void)box;
     auto g = ctx.testPos(2224, 1);
-    ctx.require(ctx.setBlock(g, "twilightforest:ominous_red_candle", {{"twilightforest:candles", 2}}), "ominous candle");
+    ctx.require(ctx.setBlock(g, "gloamingforest:ominous_red_candle", {{"gloamingforest:candles", 2}}), "ominous candle");
     hold(ctx, "minecraft:red_candle");
     click(ctx, g);
     ctx.check(st(ctx, g, "candles") == "3", "the matching vanilla candle adds one");
@@ -480,7 +480,7 @@ GF_REGISTER_SELFTEST("lichdecor.ominous_fire_entity", [](Context& ctx) -> ll::co
         id.rawID = uid;
         return level ? level->fetchEntity(id, false) : nullptr;
     };
-    ctx.check(hits[pigId] > 0, "a pig in it takes twilightforest:ominous_fire damage");
+    ctx.check(hits[pigId] > 0, "a pig in it takes gloamingforest:ominous_fire damage");
     if (auto* p = find(pigId)) {
         ctx.check(!p->isOnFire(), "and is never set on fire");
         p->remove();
@@ -512,8 +512,8 @@ GF_REGISTER_SELFTEST("lichdecor.ominous_fire_portal", [](Context& ctx) -> ll::co
     ctx.check(ctx.blockAt(inside) == "minecraft:portal", "in the Overworld the frame lights a nether portal (" + ctx.blockAt(inside) + ")");
     for (int x = 1; x < 3; ++x)
         for (int y = 1; y < 4; ++y) ctx.setBlock(base.offset(x, y, 0), "minecraft:air");
-    if (!co_await ctx.inTwilight()) {
-        ctx.info("the Twilight Forest is not available: its half of the test is skipped");
+    if (!co_await ctx.inGloaming()) {
+        ctx.info("the Gloaming Forest is not available: its half of the test is skipped");
         co_return;
     }
     auto tbox = co_await ctx.flatArea(2240, 6);
@@ -521,9 +521,9 @@ GF_REGISTER_SELFTEST("lichdecor.ominous_fire_portal", [](Context& ctx) -> ll::co
     auto tbase = ctx.testPos(2240, 2);
     build(tbase);
     auto tin = tbase.offset(1, 1, 0);
-    ctx.require(ctx.setBlock(tin, kOminousFire), "fire in the Twilight frame");
+    ctx.require(ctx.setBlock(tin, kOminousFire), "fire in the Gloaming frame");
     co_await ctx.ticks(4);
-    ctx.check(ctx.blockAt(tin) == kOminousFire, "in the Twilight Forest it does not (" + ctx.blockAt(tin) + ")");
+    ctx.check(ctx.blockAt(tin) == kOminousFire, "in the Gloaming Forest it does not (" + ctx.blockAt(tin) + ")");
     co_return;
 });
 

@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/WroughtIronFenceBlock.java
-//   src/main/java/twilightforest/item/WroughtIronFenceItem.java
-//   src/main/java/twilightforest/events/EntityEvents.java (attachLeadToWroughtFence)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/WroughtIronFenceBlock.java
+//   src/main/java/gloamingforest/item/WroughtIronFenceItem.java
+//   src/main/java/gloamingforest/events/EntityEvents.java (attachLeadToWroughtFence)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U22 (lichdecor): twilightforest:wrought_iron_fence. Its sides connect to walls, iron bars / panes
+// U22 (lichdecor): gloamingforest:wrought_iron_fence. Its sides connect to walls, iron bars / panes
 // and sturdy faces (not to other wrought iron fences: those are not sturdy and not IronBarsBlock);
 // each connected side is full / top / bottom / middle by whether the fence above / below also
 // connects that way; `post` is capped while the block above is replaceable, else post when this
@@ -54,7 +54,7 @@ namespace {
 namespace cl = gf::core::lichdecor;
 namespace ia = gf::interactions;
 
-constexpr char kFence[] = "twilightforest:wrought_iron_fence";
+constexpr char kFence[] = "gloamingforest:wrought_iron_fence";
 
 bool isFence(Block const& b) { return game::blockId(b) == kFence; }
 
@@ -198,7 +198,7 @@ public:
                 auto post = capped ? makePost(*region, block, pos, false, shouldBePost(block)) : cl::PostState::Capped;
                 setStates(*region, pos, block, Json{{"post", cl::postStateName(post)}});
             }
-            playSound(*region, Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, "block.twilightforest.wrought_iron_fence.extend", 0.35F, randomFloat() * 0.1F + 0.75F);
+            playSound(*region, Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, "block.gloamingforest.wrought_iron_fence.extend", 0.35F, randomFloat() * 0.1F + 0.75F);
             return ia::Result::Consume;
         }, ia::priority::High);
         // attachLeadToWroughtFence
@@ -210,8 +210,8 @@ public:
             return ia::Result::Consume;
         });
         gf::item::addTooltip(kFence, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
-            auto text = viewer ? trFor(*viewer, "block.twilightforest.wrought_iron_fence.cap", "Shift + right-click the same block to place finial")
-                               : tr("block.twilightforest.wrought_iron_fence.cap", "Shift + right-click the same block to place finial");
+            auto text = viewer ? trFor(*viewer, "block.gloamingforest.wrought_iron_fence.cap", "Shift + right-click the same block to place finial")
+                               : tr("block.gloamingforest.wrought_iron_fence.cap", "Shift + right-click the same block to place finial");
             lines.push_back(std::string("\xC2\xA7") + "7" + text);
         });
     }

@@ -1,0 +1,41 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "gloamingforest:gloaming_oak_trapped_chest",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:type": ["single", "left", "right"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 12.5
+      },
+      "minecraft:tags": ["minecraft:is_axe_item_destructible"],
+      "minecraft:map_color": "#8f7748",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_gloaming_oak_0",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-7, 0, -7],
+        "size": [14, 14, 14]
+      },
+      "minecraft:selection_box": {
+        "origin": [-7, 0, -7],
+        "size": [14, 14, 14]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

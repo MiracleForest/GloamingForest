@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:water_walk": {}
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.water_walk.description"
+    }
+  ],
+  "equipment_slots": "feet"
+}

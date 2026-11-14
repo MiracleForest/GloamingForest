@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/BaseIceMob.java
-//   src/main/java/twilightforest/entity/monster/SnowGuardian.java
-//   src/main/java/twilightforest/entity/monster/StableIceCore.java
-//   src/main/java/twilightforest/entity/monster/UnstableIceCore.java
-//   src/main/java/twilightforest/entity/monster/IceCrystal.java
-//   src/main/java/twilightforest/entity/projectile/IceSnowball.java
-//   src/main/java/twilightforest/block/AuroraBrickBlock.java (getDestroyProgress)
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/BaseIceMob.java
+//   src/main/java/gloamingforest/entity/monster/SnowGuardian.java
+//   src/main/java/gloamingforest/entity/monster/StableIceCore.java
+//   src/main/java/gloamingforest/entity/monster/UnstableIceCore.java
+//   src/main/java/gloamingforest/entity/monster/IceCrystal.java
+//   src/main/java/gloamingforest/entity/projectile/IceSnowball.java
+//   src/main/java/gloamingforest/block/AuroraBrickBlock.java (getDestroyProgress)
 //   net/minecraft/world/entity/ai/goal/RangedAttackGoal.java (vanilla, the stable ice core's goal)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U28's ice mobs. Their vanilla goals (float, melee, stroll, look, hurt-by / nearest-player
-// targets) are the BP's behaviours (assets/pack/bp/entities/aurora); what is TF's own is native
+// targets) are the BP's behaviours (assets/pack/bp/entities/aurora); what is upstream's own is native
 // here: the slow fall, the snow particles, burning in hot biomes, the snow guardian's gear, the
 // stable core's snowballs (RangedAttackGoal + IceSnowball), the unstable core's delayed explosion
 // and block transformation, and the ice crystal's 30 second life.
@@ -98,11 +98,11 @@ bool mobGriefing() {
     return level->getGameRules().getBool(griefing, true);
 }
 
-/// The Java biome id at the actor (TF's biomes in the Twilight Forest, Bedrock's names elsewhere).
+/// The Java biome id at the actor (upstream's biomes in the Gloaming Forest, Bedrock's names elsewhere).
 std::string biomeIdAt(Actor& actor) {
     auto     p = feet(actor);
     BlockPos pos{static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y)), static_cast<int>(std::floor(p.z))};
-    if (gf::world::isTwilight(actor.getDimension())) {
+    if (gf::world::isGloaming(actor.getDimension())) {
         auto id = gf::worldgen::biomeAt(pos);
         if (!id.empty()) return id;
     }
@@ -110,9 +110,9 @@ std::string biomeIdAt(Actor& actor) {
     return name.find(':') == std::string::npos ? "minecraft:" + name : name;
 }
 
-/// #minecraft:snow_golem_melts (vanilla hot biomes, TF's oak savannah and fire swamp).
+/// #minecraft:snow_golem_melts (vanilla hot biomes, upstream's oak savannah and fire swamp).
 bool meltsSnowIn(std::string const& id) {
-    if (id == "twilightforest:oak_savannah" || id == "twilightforest:fire_swamp") return true;
+    if (id == "gloamingforest:oak_savannah" || id == "gloamingforest:fire_swamp") return true;
     return gf::tags::has(gf::tags::Registry::Biome, "minecraft:snow_golem_melts", id);
 }
 
@@ -126,19 +126,19 @@ float eyeHeightOf(std::string const& type) {
 
 namespace {
 
-constexpr char kIceSnowball[] = "twilightforest:ice_snowball";
+constexpr char kIceSnowball[] = "gloamingforest:ice_snowball";
 
 /// BaseIceMob#aiStep: slow fall, burning in hot biomes. The snow particles around the eyes (3 a tick,
-/// the snow guardian 3 more) are client side as in TF: a looping emitter of the client entity
-/// (gloamingforest:aurora_snow_*, controller.animation.twilightforest.ice_mob.snow).
+/// the snow guardian 3 more) are client side as in upstream: a looping emitter of the client entity
+/// (gloamingforest:aurora_snow_*, controller.animation.gloamingforest.ice_mob.snow).
 void baseIceMobTick(Actor& self, std::string const& type) {
     if (!self.isAlive()) return;
     auto v = self.getPosDelta();
     if (!self.isOnGround() && v.y < 0.0f) fe::setMotion(self, Vec3{v.x, v.y * 0.6f, v.z});
     bool melts = meltsSnow(self);
-    // the melting particles of TF's snow particle loop: 3 spots a tick around the eyes, each a cloud
+    // the melting particles of upstream's snow particle loop: 3 spots a tick around the eyes, each a cloud
     // (1 in 4) and a falling water drop (1 in 2); not while dying (!isDeadOrDying, the unstable core's
-    // 60 ticks included). Sent through fx (the vanilla particles a client draws): TF spawns them on
+    // 60 ticks included). Sent through fx (the vanilla particles a client draws): upstream spawns them on
     // the client, the server's draws give the same rate.
     bool dying = type == kUnstableIceCore && gf::entity::data(self, "aurora:dying").is_number_integer();
     if (melts && !dying) {
@@ -212,13 +212,13 @@ void equipSnowGuardian(Actor& self) {
     auto* mob = fe::asMob(self);
     if (!mob) return;
     int type = rng().nextInt(4);
-    static char const* swords[]  = {"twilightforest:ironwood_sword", "twilightforest:steeleaf_sword", "twilightforest:knightmetal_sword", "twilightforest:knightmetal_sword"};
-    static char const* chests[]  = {"twilightforest:ironwood_chestplate", "twilightforest:steeleaf_chestplate", "twilightforest:knightmetal_chestplate", "twilightforest:arctic_chestplate"};
-    static char const* helmets[] = {"twilightforest:ironwood_helmet", "twilightforest:steeleaf_helmet", "twilightforest:knightmetal_helmet", "twilightforest:arctic_helmet"};
+    static char const* swords[]  = {"gloamingforest:ironwood_sword", "gloamingforest:steeleaf_sword", "gloamingforest:knightmetal_sword", "gloamingforest:knightmetal_sword"};
+    static char const* chests[]  = {"gloamingforest:ironwood_chestplate", "gloamingforest:steeleaf_chestplate", "gloamingforest:knightmetal_chestplate", "gloamingforest:arctic_chestplate"};
+    static char const* helmets[] = {"gloamingforest:ironwood_helmet", "gloamingforest:steeleaf_helmet", "gloamingforest:knightmetal_helmet", "gloamingforest:arctic_helmet"};
     if (auto s = gf::game::items::make(swords[type], 1, 0)) mob->setItemSlot(Slot::Mainhand, *s);
     if (auto s = gf::game::items::make(chests[type], 1, 0)) {
         // the engine's setItemSlot refuses an item without minecraft:wearable in the chest slot (the
-        // TF chestplates' wearable component is U7's): the armour container takes it directly
+        // upstream chestplates' wearable component is U7's): the armour container takes it directly
         if (!mob->setItemSlot(Slot::Torso, *s) || gf::game::items::isEmpty(mob->getItemSlot(Slot::Torso))) mob->setArmor(SharedTypes::Legacy::ArmorSlot::Torso, *s);
     }
     if (auto s = gf::game::items::make(helmets[type], 1, 0)) mob->setItemSlot(Slot::Head, *s);
@@ -274,7 +274,7 @@ void performRangedAttack(Mob& self, Actor& target) {
     double d3   = to.z - from.z;
     float  f    = static_cast<float>(std::sqrt(static_cast<float>(d1 * d1 + d3 * d3))) * 0.2F;
     gf::projectile::shoot(self, kIceSnowball, Vec3{static_cast<float>(d1), static_cast<float>(d2 + f), static_cast<float>(d3)}, 1.6F, 6.0F);
-    gf::fx::sound(self.getDimension(), "entity.twilightforest.ice.shoot", from, 1.0F, 1.0F / (rng().nextFloat() * 0.4F + 0.8F));
+    gf::fx::sound(self.getDimension(), "entity.gloamingforest.ice.shoot", from, 1.0F, 1.0F / (rng().nextFloat() * 0.4F + 0.8F));
 }
 
 class RangedAttackGoal final : public gf::entity::Goal {
@@ -442,7 +442,7 @@ void transformBlock(BlockSource& region, BlockPos const& pos) {
     bool solid = state._isSolid();
     // shouldTransformGlass: a full-cube shape and (not solid, leaves, ice or the aurora block)
     bool glassLike = isBlockNormalBounds(region, pos, state) &&
-                     (!solid || gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id) || id == "minecraft:ice" || id == "twilightforest:aurora_block");
+                     (!solid || gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id) || id == "minecraft:ice" || id == "gloamingforest:aurora_block");
     if (glassLike) {
         if (auto const* b = gf::game::blockWithStates(std::string("minecraft:") + closestDye(color) + "_stained_glass", nlohmann::json::object()))
             gf::game::setBlock(region, pos, *b);
@@ -485,14 +485,14 @@ void unstableCoreTick(Actor& self) {
         fe::setMotion(self, Vec3{0.0f, std::min(v.y, 0.0f), 0.0f});
     }
     // deathTime, every tick (the client renderer flashes on (t / 2) % 2 and swells with sin(t x 100))
-    gf::entity::setProperty(self, "twilightforest:dying", std::min(t, 60));
+    gf::entity::setProperty(self, "gloamingforest:dying", std::min(t, 60));
     if (t == 60) {
         auto level = ll::service::getLevel();
         bool grief = mobGriefing();
         if (level) level->explode(self.getDimensionBlockSource(), &self, feet(self), 1.0f, false, grief, 8.0f * 5.0f, false);
         if (grief) transformBlocks(self);
         gf::entity::data(self, "aurora:explode") = true;
-        // the death was already the killer's (TF's tickDeath only delays the removal): finish it with
+        // the death was already the killer's (upstream's tickDeath only delays the removal): finish it with
         // the lethal hit's type and entities, so the kill credit, looting and XP stay theirs
         auto const& lethal   = gf::entity::data(self, "aurora:lethal");
         std::string type     = lethal.is_object() ? lethal.value("type", std::string("minecraft:generic")) : std::string("minecraft:generic");
@@ -620,12 +620,12 @@ void installMobs() {
                                                                    {"direct", info.direct ? info.direct->getOrCreateUniqueID().rawID : std::int64_t{0}}};
         // LivingEntity#hurt plays the death sound at the lethal hit (the RP gives the core no engine
         // death sound, so the final removal is silent)
-        gf::fx::sound(victim.getDimension(), "entity.twilightforest.ice.death", feet(victim));
+        gf::fx::sound(victim.getDimension(), "entity.gloamingforest.ice.death", feet(victim));
         if (auto* mob = fe::asMob(victim)) {
             mobs::stopNavigation(*mob);
             mob->setTarget(nullptr);
         }
-        gf::entity::setProperty(victim, "twilightforest:dying", 1);
+        gf::entity::setProperty(victim, "gloamingforest:dying", 1);
         gf::log().info("aurora: unstable ice core dying at {:.1f} {:.1f} {:.1f}", feet(victim).x, feet(victim).y, feet(victim).z);
         return true;
     });
@@ -636,7 +636,7 @@ void installMobs() {
     snowball.drag        = 0.99f;
     snowball.tick        = [](Actor& p) { gf::projectile::ext::makeTrail(p, "minecraft:item_snowball", 2); };
     snowball.onHitEntity = [](Actor& p, Actor& target) {
-        if (target.hasCategory(ActorCategory::Mob)) gf::combat::hurt(target, 2.0f, "twilightforest:snowball_fight", gf::projectile::ext::owner(p), &p);
+        if (target.hasCategory(ActorCategory::Mob)) gf::combat::hurt(target, 2.0f, "gloamingforest:snowball_fight", gf::projectile::ext::owner(p), &p);
         gf::fx::particle(p.getDimension(), "minecraft:item_snowball", feet(p), Vec3{}, 8);
         return true;
     };

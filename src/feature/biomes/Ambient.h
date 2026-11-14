@@ -16,7 +16,7 @@ class BlockSource;
 
 namespace gf::feature::biomes {
 
-/// The effect of TF's ambient particle `particleId` in the resource pack (the particle's own id).
+/// The effect of upstream's ambient particle `particleId` in the resource pack (the particle's own id).
 [[nodiscard]] char const* ambientEffectOf(std::string const& particleId);
 
 /// One tick of ClientLevel#animateTick's ambient particles around the block `at` (the player's):

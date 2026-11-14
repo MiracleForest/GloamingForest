@@ -1,9 +1,9 @@
-tile.twilightforest:naga_wall_trophy.name=Trofeum Nagi
-tile.twilightforest:lich_wall_trophy.name=Trofeum Licza
-tile.twilightforest:hydra_wall_trophy.name=Trofeum Hydry
-tile.twilightforest:snow_queen_wall_trophy.name=Trofeum Królowej Śniegu
-tile.twilightforest:alpha_yeti_wall_trophy.name=Trofeum Alpha Yetiego
-tile.twilightforest:quest_ram_wall_trophy.name=Trofeum Poszukiwawczego Tryka
+tile.gloamingforest:naga_wall_trophy.name=Trofeum Nagi
+tile.gloamingforest:lich_wall_trophy.name=Trofeum Licza
+tile.gloamingforest:hydra_wall_trophy.name=Trofeum Hydry
+tile.gloamingforest:snow_queen_wall_trophy.name=Trofeum Królowej Śniegu
+tile.gloamingforest:alpha_yeti_wall_trophy.name=Trofeum Alpha Yetiego
+tile.gloamingforest:quest_ram_wall_trophy.name=Trofeum Poszukiwawczego Tryka
 item.banner.tf_naga.white=Białe łuski Nagi
 item.banner.tf_naga.orange=Pomarańczowe łuski Nagi
 item.banner.tf_naga.magenta=Karmazynowe łuski Nagi

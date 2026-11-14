@@ -1,0 +1,12 @@
+{
+  "advancements": [
+    "gloamingforest:progress_merge"
+  ],
+  "enforcement": "gloamingforest:acid_rain",
+  "locked_biome_toast": {
+    "count": 1,
+    "id": "gloamingforest:uberous_soil"
+  },
+  "multiplier": 0.5,
+  "structure_key": "gloamingforest:troll_cave"
+}

@@ -2,11 +2,11 @@
 
 // Contract "entity" (header owned by F0, implemented by F8; spike S4).
 //
-// TF's 80 entity types are BP/RP entities (imported skeleton + F2 geometry); their behaviour is
+// upstream's 80 entity types are BP/RP entities (imported skeleton + F2 geometry); their behaviour is
 // native and registered by id. Every hook into the engine's actors (tick, hurt, die, AI goals,
 // multipart, hostile mounts) lives in F8 (rule R8); units only register:
 //
-//     gf::entity::registerType("twilightforest:boar", {
+//     gf::entity::registerType("gloamingforest:boar", {
 //         .onSpawn = [](Actor& a) { ... },
 //         .tick    = [](Actor& a) { ... },
 //     });
@@ -85,7 +85,7 @@ void addGoal(Mob& mob, int priority, GoalPtr goal);
 /// Adds a goal to the mob's target selector.
 void addTargetGoal(Mob& mob, int priority, GoalPtr goal);
 
-/// The shared goals of TF's entity/ai package.
+/// The shared goals of upstream's entity/ai package.
 namespace goals {
 struct ChargeSpec {
     double speed = 2.0;       ///< ChargeAttackGoal speed
@@ -104,7 +104,7 @@ struct BreathSpec {
 [[nodiscard]] GoalPtr avoidAny(Mob& mob, std::function<bool(Actor&)> avoid, float distance, double walkSpeed, double sprintSpeed); ///< AvoidAnyEntityGoal
 [[nodiscard]] GoalPtr goHome(Mob& mob, double speed);                     ///< AttemptToGoHomeGoal
 [[nodiscard]] GoalPtr alwaysWatchTarget(Mob& mob);                        ///< AlwaysWatchTargetGoal
-[[nodiscard]] GoalPtr randomLookIfBored(Mob& mob);                        ///< (TF's random look when idle)
+[[nodiscard]] GoalPtr randomLookIfBored(Mob& mob);                        ///< (upstream's random look when idle)
 [[nodiscard]] GoalPtr simplifiedAttack(Mob& mob);                         ///< SimplifiedAttackGoal
 } // namespace goals
 

@@ -15,7 +15,7 @@
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:mossy_stone_bricks"},
     {"Name":"minecraft:water","Properties":{"level":"0"}},
-    {"Name":"twilightforest:nagastone_pillar","Properties":{"axis":"y"}}
+    {"Name":"gloamingforest:nagastone_pillar","Properties":{"axis":"y"}}
   ],
   "blocks": [
     [2, 29], [10, 2], [2, 1], [9, 1], [2, 5], [9, 1], [2, 2], [10, 2], [2, 9], [9, 1], [10, 2], [2, 7], [10, 8], [2, 4], [10, 8], [2, 7],

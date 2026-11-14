@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "#": {
+      "item": "gloamingforest:encased_towerwood"
+    },
+    "^": {
+      "item": "gloamingforest:smoker"
+    },
+    "∴": {
+      "tag": "c:dusts/redstone"
+    }
+  },
+  "pattern": [
+    "#∴#",
+    "∴^∴",
+    "#∴#"
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:encased_smoker"
+  }
+}

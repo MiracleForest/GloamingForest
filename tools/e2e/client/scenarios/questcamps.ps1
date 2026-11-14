@@ -8,7 +8,7 @@
 #                  seeded camp and the druid hut, wells, grove ruins, stone circle and graveyard side by
 #                  side for the one-time review of the golden hashes (rule R19)
 #   remote-vanilla the same scene on a vanilla client: the ram's segments come from the resource pack
-#                  (entity property twilightforest:color_flags); no indicator (client mod only)
+#                  (entity property gloamingforest:color_flags); no indicator (client mod only)
 # Screenshots: out/questcamps/{ram,ram-indicator-x,ram-indicator-check,grove,camp,features,graveyard}-<mode>.png
 $remote = $script:Mode -ne 'local'
 if ($remote) { Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null }

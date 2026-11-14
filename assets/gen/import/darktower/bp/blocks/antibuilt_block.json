@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:antibuilt_block",
+      "identifier": "gloamingforest:antibuilt_block",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 10000
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.antibuilt_block",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.antibuilt_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerdev_antibuilt",

@@ -53,7 +53,7 @@ struct DifficultyScope {
 
 std::string coords(core::GlobalPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
 
-st::CommandResult tf(st::Context& ctx, std::string const& rest) { return st::runServerCommand("twilightforest " + rest, ctx.dimension()); }
+st::CommandResult tf(st::Context& ctx, std::string const& rest) { return st::runServerCommand("gloamingforest " + rest, ctx.dimension()); }
 
 /// A use-on as the hooks dispatch it.
 ia::Result useOn(st::Context& ctx, core::GlobalPos const& pos, std::string const& itemId, int face, ia::Vec hit, bool sneaking) {
@@ -69,33 +69,33 @@ ia::Result useOn(st::Context& ctx, core::GlobalPos const& pos, std::string const
 ll::coro::CoroTask<> sinisterCommand(st::Context& ctx) {
     auto pos = ctx.testPos(2250);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
-    ctx.require(ctx.setBlock(pos, "twilightforest:sinister_spawner"), "sinister spawner placed");
+    ctx.require(ctx.setBlock(pos, "gloamingforest:sinister_spawner"), "sinister spawner placed");
     auto other = ctx.testPos(2251);
     ctx.require(ctx.setBlock(other, "minecraft:stone"), "stone placed");
     auto at = coords(pos), stone = coords(other);
     auto expect = [&](std::string const& cmd, int count) {
         auto r = tf(ctx, cmd);
-        ctx.check(r.successCount == count, "/twilightforest " + cmd + " returns " + std::to_string(count) + " (got " + std::to_string(r.successCount) + ": " + r.messages + ")");
+        ctx.check(r.successCount == count, "/gloamingforest " + cmd + " returns " + std::to_string(count) + " (got " + std::to_string(r.successCount) + ": " + r.messages + ")");
     };
     expect("sinister_spawner add_particle minecraft:smoke " + at, 1);
     expect("sinister_spawner add_particle minecraft:smoke " + at, 0);
     expect("sinister_spawner remove_particle minecraft:smoke " + at, 1);
     expect("sinister_spawner remove_particle minecraft:smoke " + at, 0);
-    expect("sinister_spawner set_loot twilightforest:blocks/ominous_spawner_drops " + at, 1);
-    expect("sinister_spawner set_loot twilightforest:blocks/ominous_spawner_drops " + at, 0);
-    ctx.check(gf::boss::ext::sinisterLootTable(*ctx.region(), game::blockPos(pos)) == "twilightforest:blocks/ominous_spawner_drops", "the loot key is in the spawner's data");
+    expect("sinister_spawner set_loot gloamingforest:blocks/ominous_spawner_drops " + at, 1);
+    expect("sinister_spawner set_loot gloamingforest:blocks/ominous_spawner_drops " + at, 0);
+    ctx.check(gf::boss::ext::sinisterLootTable(*ctx.region(), game::blockPos(pos)) == "gloamingforest:blocks/ominous_spawner_drops", "the loot key is in the spawner's data");
     expect("sinister_spawner clear_loot " + at, 1);
     expect("sinister_spawner clear_loot " + at, 0);
     // not a sinister spawner: 0 everywhere
     expect("sinister_spawner add_particle minecraft:smoke " + stone, 0);
     expect("sinister_spawner remove_particle minecraft:smoke " + stone, 0);
-    expect("sinister_spawner set_loot twilightforest:blocks/ominous_spawner_drops " + stone, 0);
+    expect("sinister_spawner set_loot gloamingforest:blocks/ominous_spawner_drops " + stone, 0);
     expect("sinister_spawner clear_loot " + stone, 0);
     // argument errors fail the command and change nothing
-    auto bad = tf(ctx, "sinister_spawner add_particle twilightforest:no_such_particle " + at);
-    ctx.check(!bad.ok && bad.messages.find("Unknown particle: twilightforest:no_such_particle") != std::string::npos, "an unknown particle fails: " + bad.messages);
-    auto badLoot = tf(ctx, "sinister_spawner set_loot twilightforest:no_such_table " + at);
-    ctx.check(!badLoot.ok && badLoot.messages.find("Failed to parse structure: Failed to get element ResourceKey[minecraft:loot_table / twilightforest:no_such_table]") != std::string::npos,
+    auto bad = tf(ctx, "sinister_spawner add_particle gloamingforest:no_such_particle " + at);
+    ctx.check(!bad.ok && bad.messages.find("Unknown particle: gloamingforest:no_such_particle") != std::string::npos, "an unknown particle fails: " + bad.messages);
+    auto badLoot = tf(ctx, "sinister_spawner set_loot gloamingforest:no_such_table " + at);
+    ctx.check(!badLoot.ok && badLoot.messages.find("Failed to parse structure: Failed to get element ResourceKey[minecraft:loot_table / gloamingforest:no_such_table]") != std::string::npos,
               "an unknown loot table fails: " + badLoot.messages);
     auto s = gf::boss::ext::sinisterSpawner(*ctx.region(), game::blockPos(pos));
     ctx.check(s && s->particles.empty() && s->lootTable.empty(), "the failed commands changed nothing");
@@ -106,13 +106,13 @@ ll::coro::CoroTask<> sinisterCommand(st::Context& ctx) {
     expect("sinister_spawner remove_particle " + dust + " " + at, 0);
     // no 'spawner' alias
     auto alias = tf(ctx, "spawner add_particle minecraft:smoke " + at);
-    ctx.check(!alias.ok, "/twilightforest spawner is not registered");
+    ctx.check(!alias.ok, "/gloamingforest spawner is not registered");
 }
 
 ll::coro::CoroTask<> skullChestLock(st::Context& ctx) {
     auto pos = ctx.testPos(2255);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
-    ctx.require(ctx.setBlock(pos, "twilightforest:skull_chest"), "skull chest placed");
+    ctx.require(ctx.setBlock(pos, "gloamingforest:skull_chest"), "skull chest placed");
     auto bp = game::blockPos(pos);
     setSkullChestOwner(*ctx.region(), bp, Json{{"name", "SomeoneElse"}, {"uuid", "00000000-0000-0000-0000-000000000001"}});
     bool op = static_cast<int>(ctx.player().getCommandPermissionLevel()) >= 3;
@@ -123,7 +123,7 @@ ll::coro::CoroTask<> skullChestLock(st::Context& ctx) {
     r = useOn(ctx, pos, "", 1, {0.5, 1.0, 0.5}, false);
     ctx.check(r != ia::Result::Deny, "the owner's skull chest opens");
     setSkullChestOwner(*ctx.region(), bp, nullptr);
-    ctx.require(ctx.setBlock(pos, "twilightforest:skull_chest", Json{{"twilightforest:multilogged", "obsidian"}}), "obsidian-logged skull chest");
+    ctx.require(ctx.setBlock(pos, "gloamingforest:skull_chest", Json{{"gloamingforest:multilogged", "obsidian"}}), "obsidian-logged skull chest");
     r = useOn(ctx, pos, "", 1, {0.5, 1.0, 0.5}, false);
     ctx.check(r == ia::Result::Deny, "a chest filled by a block does not open");
 }
@@ -140,7 +140,7 @@ ll::coro::CoroTask<> fenceFinial(st::Context& ctx) {
     stoneHigh.x += 1;
     stoneHigh.y += 1;
     ctx.require(ctx.setBlock(stoneLow, "minecraft:stone") && ctx.setBlock(stoneHigh, "minecraft:stone"), "stone column");
-    ctx.require(ctx.setBlock(lower, "twilightforest:wrought_iron_fence") && ctx.setBlock(upper, "twilightforest:wrought_iron_fence"), "fences placed");
+    ctx.require(ctx.setBlock(lower, "gloamingforest:wrought_iron_fence") && ctx.setBlock(upper, "gloamingforest:wrought_iron_fence"), "fences placed");
     updateFenceForTest(*region, b);
     updateFenceForTest(*region, BlockPos{b.x, b.y + 1, b.z});
     updateFenceForTest(*region, b);
@@ -151,13 +151,13 @@ ll::coro::CoroTask<> fenceFinial(st::Context& ctx) {
     ctx.check(state(upB, "west_fence") == "none", "no connection to the open west side");
     ctx.check(state(upB, "post") == "post", "an end of a panel is a post (" + state(upB, "post") + ")");
     // the finial: sneak-use with the fence item on the top fence
-    auto r = useOn(ctx, upper, "twilightforest:wrought_iron_fence", 1, {0.5, 1.0, 0.5}, true);
+    auto r = useOn(ctx, upper, "gloamingforest:wrought_iron_fence", 1, {0.5, 1.0, 0.5}, true);
     ctx.check(r == ia::Result::Consume, "the sneak-use is taken");
     ctx.check(state(region->getBlock(BlockPos{b.x, b.y + 1, b.z}), "post") == "capped", "the finial is placed");
-    r = useOn(ctx, upper, "twilightforest:wrought_iron_fence", 1, {0.5, 1.0, 0.5}, true);
+    r = useOn(ctx, upper, "gloamingforest:wrought_iron_fence", 1, {0.5, 1.0, 0.5}, true);
     ctx.check(state(region->getBlock(BlockPos{b.x, b.y + 1, b.z}), "post") == "post", "the finial is removed again");
     // the lower fence (a fence above it): no finial
-    r = useOn(ctx, lower, "twilightforest:wrought_iron_fence", 1, {0.5, 1.0, 0.5}, true);
+    r = useOn(ctx, lower, "gloamingforest:wrought_iron_fence", 1, {0.5, 1.0, 0.5}, true);
     ctx.check(r == ia::Result::Pass && state(region->getBlock(b), "post") != "capped", "only the top fence of a column takes a finial");
 }
 
@@ -166,12 +166,12 @@ ll::coro::CoroTask<> bookshelfSpawner(st::Context& ctx) {
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     DifficultyScope difficulty;
     // a plain shelf takes a book through the front face
-    ctx.require(ctx.setBlock(pos, "twilightforest:chiseled_canopy_bookshelf", Json{{"twilightforest:facing", "north"}}), "shelf placed");
+    ctx.require(ctx.setBlock(pos, "gloamingforest:chiseled_canopy_bookshelf", Json{{"gloamingforest:facing", "north"}}), "shelf placed");
     auto r = useOn(ctx, pos, "minecraft:book", 2, {0.9, 0.75, 0.0}, false);
     ctx.check(r == ia::Result::Consume, "a book goes into the shelf");
     ctx.check(boolState(ctx.region()->getBlock(game::blockPos(pos)), "slot_0_occupied"), "slot 0 (top left seen from the front) is occupied");
     // a spawner shelf refuses interaction and spawns a Death Tome from its book
-    ctx.require(ctx.setBlock(pos, "twilightforest:chiseled_canopy_bookshelf", Json{{"twilightforest:facing", "north"}, {"twilightforest:spawner", true}}), "spawner shelf");
+    ctx.require(ctx.setBlock(pos, "gloamingforest:chiseled_canopy_bookshelf", Json{{"gloamingforest:facing", "north"}, {"gloamingforest:spawner", true}}), "spawner shelf");
     auto h = gf::inventory::find(*ctx.region(), game::blockPos(pos));
     ctx.require(h.has_value() && h->set, "the shelf is an inventory block");
     if (auto book = game::items::make("minecraft:book", 1)) h->set(pos, 3, *book);
@@ -200,9 +200,9 @@ ll::coro::CoroTask<> magicPainting(st::Context& ctx) {
             ctx.setBlock(p, "minecraft:stone");
         }
     BlockPos at{base.x, base.y + 1, base.z + 1};
-    Actor*   painting = spawnMagicPaintingForTest(*ctx.region(), at, 3, "twilightforest:darkness");
+    Actor*   painting = spawnMagicPaintingForTest(*ctx.region(), at, 3, "gloamingforest:darkness");
     ctx.require(painting != nullptr, "a 64 x 32 painting hangs on a 5 x 4 wall");
-    ctx.check(spawnMagicPaintingForTest(*ctx.region(), BlockPos{base.x + 10, base.y + 1, base.z + 1}, 3, "twilightforest:darkness") == nullptr,
+    ctx.check(spawnMagicPaintingForTest(*ctx.region(), BlockPos{base.x + 10, base.y + 1, base.z + 1}, 3, "gloamingforest:darkness") == nullptr,
               "no painting without a wall");
     auto id = painting->getOrCreateUniqueID();
     // the wall goes: the painting drops within 100 ticks
@@ -224,14 +224,14 @@ void recipes(st::Context& ctx) {
         ctx.check(r != nullptr, std::string("recipe ") + id + " is loaded");
         if (r) ctx.check(r->resultItem == result && r->resultCount == count, std::string(id) + " makes " + std::to_string(count) + " " + result);
     };
-    expect("twilightforest:candelabra", "twilightforest:candelabra", 2);
-    expect("twilightforest:wrought_iron_fence", "twilightforest:wrought_iron_fence", 3);
+    expect("gloamingforest:candelabra", "gloamingforest:candelabra", 2);
+    expect("gloamingforest:wrought_iron_fence", "gloamingforest:wrought_iron_fence", 3);
     for (char const* to : {"arcs", "curves", "lines"}) {
-        std::string out = std::string("twilightforest:terrorcotta_") + to;
-        expect(("twilightforest:stonecutting/stone/terrorcotta_" + std::string(to)).c_str(), out.c_str(), 1);
+        std::string out = std::string("gloamingforest:terrorcotta_") + to;
+        expect(("gloamingforest:stonecutting/stone/terrorcotta_" + std::string(to)).c_str(), out.c_str(), 1);
         for (char const* from : {"arcs", "curves", "lines"}) {
             if (std::string(from) == to) continue;
-            expect(("twilightforest:stonecutting/terrorcotta_" + std::string(from) + "/terrorcotta_" + to).c_str(), out.c_str(), 1);
+            expect(("gloamingforest:stonecutting/terrorcotta_" + std::string(from) + "/terrorcotta_" + to).c_str(), out.c_str(), 1);
         }
     }
 }

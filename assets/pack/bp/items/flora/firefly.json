@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:firefly",
+      "identifier": "gloamingforest:firefly",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:firefly.name"
+        "value": "tile.gloamingforest:firefly.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:firefly",
+        "block": "gloamingforest:firefly",
         "replace_block_item": true
       },
       "minecraft:wearable": {

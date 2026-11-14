@@ -1,118 +1,118 @@
 {
-  "block.twilightforest.jet.active": {
+  "block.gloamingforest.jet.active": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.jet.active",
+    "subtitle": "subtitles.gloamingforest.block.jet.active",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "block.twilightforest.jet.pop": {
+  "block.gloamingforest.jet.pop": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.jet.pop",
+    "subtitle": "subtitles.gloamingforest.block.jet.pop",
     "sounds": [
       {
         "name": "sounds/liquid/lavapop"
       }
     ]
   },
-  "block.twilightforest.jet.start": {
+  "block.gloamingforest.jet.start": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.jet.start",
+    "subtitle": "subtitles.gloamingforest.block.jet.start",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "block.twilightforest.smoker.start": {
+  "block.gloamingforest.smoker.start": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.smoker.start",
+    "subtitle": "subtitles.gloamingforest.block.smoker.start",
     "sounds": [
       {
         "name": "sounds/random/click"
       }
     ]
   },
-  "entity.twilightforest.hydra.death": {
+  "entity.gloamingforest.hydra.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.death",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.death",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/death"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/death"
       }
     ]
   },
-  "entity.twilightforest.hydra.growl": {
+  "entity.gloamingforest.hydra.growl": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.growl",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.growl",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/growl1"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/growl1"
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/growl2"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/growl2"
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/growl3"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/growl3"
       }
     ]
   },
-  "entity.twilightforest.hydra.hurt": {
+  "entity.gloamingforest.hydra.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.hurt",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/hurt1"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/hurt1"
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/hurt2"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/hurt2"
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/hurt3"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/hurt3"
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/hurt4"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/hurt4"
       }
     ]
   },
-  "entity.twilightforest.hydra.roar": {
+  "entity.gloamingforest.hydra.roar": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.roar",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.roar",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/roar1"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/roar1"
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/roar2"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/roar2"
       }
     ]
   },
-  "entity.twilightforest.hydra.shoot": {
+  "entity.gloamingforest.hydra.shoot": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "entity.twilightforest.hydra.shoot_fire": {
+  "entity.gloamingforest.hydra.shoot_fire": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.shoot_fire",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.shoot_fire",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "entity.twilightforest.hydra.warn": {
+  "entity.gloamingforest.hydra.warn": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.hydra.warn",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.warn",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/warn"
+        "name": "sounds/gloamingforest/hydra/mob/hydra/warn"
       }
     ]
   }

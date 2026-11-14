@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:experiment_115",
+      "identifier": "gloamingforest:experiment_115",
       "menu_category": {
         "category": "items"
       }
@@ -14,13 +14,13 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:experiment_115.name"
+        "value": "tile.gloamingforest:experiment_115.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:experiment_115",
+        "block": "gloamingforest:experiment_115",
         "replace_block_item": true,
         "use_on": [
-          "twilightforest:experiment_115"
+          "gloamingforest:experiment_115"
         ]
       },
       "minecraft:food": {

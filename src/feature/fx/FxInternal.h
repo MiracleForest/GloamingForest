@@ -192,7 +192,7 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 [[nodiscard]] Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback);
 
 /// FallingDustParticle's colour of a block (FxBlockColor.cpp): a FallingBlock's dust colour, else
-/// the block's BlockColor without a level (vanilla's and TF's, tint index 0) as 0xRRGGBB, -1 for
+/// the block's BlockColor without a level (vanilla's and upstream's, tint index 0) as 0xRRGGBB, -1 for
 /// one that draws white; nullopt when the block has none (the map colour applies). `intState`
 /// reads the block's integer states (redstone_signal, growth, facing_direction, fill_level),
 /// `stringState` its string states (cauldron_liquid).

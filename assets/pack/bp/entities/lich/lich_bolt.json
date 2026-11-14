@@ -2,13 +2,13 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:lich_bolt",
+      "identifier": "gloamingforest:lich_bolt",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "lich_bolt", "inanimate"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "lich_bolt", "inanimate"] },
       "minecraft:collision_box": { "width": 0.25, "height": 0.25 },
       "minecraft:custom_hit_test": { "hitboxes": [ { "pivot": [0, 0.125, 0], "width": 2.25, "height": 2.25 } ] },
       "minecraft:health": { "value": 1000, "max": 1000 },

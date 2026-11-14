@@ -1,13 +1,13 @@
 {
   "values": [
-    "twilightforest:time_log_core",
-    "twilightforest:transformation_log_core",
-    "twilightforest:mining_log_core",
-    "twilightforest:sorting_log_core",
-    "twilightforest:root",
-    "twilightforest:liveroot_block",
-    "twilightforest:mangrove_root",
-    "twilightforest:firefly",
-    "twilightforest:cicada"
+    "gloamingforest:time_log_core",
+    "gloamingforest:transformation_log_core",
+    "gloamingforest:mining_log_core",
+    "gloamingforest:sorting_log_core",
+    "gloamingforest:root",
+    "gloamingforest:liveroot_block",
+    "gloamingforest:mangrove_root",
+    "gloamingforest:firefly",
+    "gloamingforest:cicada"
   ]
 }

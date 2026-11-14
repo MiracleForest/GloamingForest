@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java-parity PerlinSimplexNoise (Minecraft 1.21.1) and Biome's static noises. Written from the
 // published algorithm; checked against Java values in tests/worldgen.
 #include "core/noise/PerlinSimplex.h"

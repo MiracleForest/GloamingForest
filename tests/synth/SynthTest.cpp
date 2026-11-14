@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of the sound synthesizer (contract "synth", F3): deterministic math, JSON, expressions,
 // the MDCT, the Vorbis encoder against an independent decoder (stb_vorbis), patches and tracks, and
-// the committed audio (assets/gen/audio): every file decodes, every definition is TF's.
+// the committed audio (assets/gen/audio): every file decodes, every definition is upstream's.
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -470,8 +470,8 @@ TEST(SynthAssets, EveryFileDecodes) {
     EXPECT_GT(files, 200);
 }
 
-// Every committed sound_definitions fragment has TF's variants (count, volume, pitch, stream),
-// subtitle and category (tools/sounds/baseline/inventory.json, generated from TF's sounds.json), and
+// Every committed sound_definitions fragment has upstream's variants (count, volume, pitch, stream),
+// subtitle and category (tools/sounds/baseline/inventory.json, generated from upstream's sounds.json), and
 // every file it names exists.
 TEST(SynthAssets, DefinitionsMatchTheInventory) {
     auto const root = repoRoot();
@@ -488,7 +488,7 @@ TEST(SynthAssets, DefinitionsMatchTheInventory) {
             defs[id] = def;
             for (auto const& s : def["sounds"].items()) {
                 auto const name = s.isString() ? s.string() : s.str("name", "");
-                if (name.rfind("sounds/twilightforest/", 0) == 0)
+                if (name.rfind("sounds/gloamingforest/", 0) == 0)
                     EXPECT_TRUE(fs::exists(unit.path() / "rp" / (name + ".ogg"))) << id << ": " << name;
             }
         }
@@ -522,8 +522,8 @@ TEST(SynthAssets, DefinitionsMatchTheInventory) {
         EXPECT_EQ(def.str("subtitle", ""), want.str("subtitle", "")) << id;
         EXPECT_EQ(keys(def["sounds"]), keys(want["variants"])) << id;
     }
-    // TF's parrot imitations: the imitated mob's sounds at pitch 1.8, volume 0.6
-    auto const& parrot = defs["entity.twilightforest.parrot.imitate.alpha_yeti"];
+    // upstream's parrot imitations: the imitated mob's sounds at pitch 1.8, volume 0.6
+    auto const& parrot = defs["entity.gloamingforest.parrot.imitate.alpha_yeti"];
     ASSERT_TRUE(parrot["sounds"].isArray());
     for (auto const& s : parrot["sounds"].items()) {
         EXPECT_DOUBLE_EQ(s["pitch"].number(), 1.8);

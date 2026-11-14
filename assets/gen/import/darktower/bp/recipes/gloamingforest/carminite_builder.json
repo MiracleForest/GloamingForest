@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:carminite_builder"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#6#", "6o6", "#6#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:encased_towerwood"
+      },
+      "6": {
+        "item": "gloamingforest:carminite"
+      },
+      "o": {
+        "item": "minecraft:dispenser"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:carminite"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:carminite_builder"
+    }
+  }
+}

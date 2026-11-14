@@ -1,13 +1,13 @@
 [
   {
-    "block": "twilightforest:skull_chest",
+    "block": "gloamingforest:skull_chest",
     "rows": 5,
-    "title": "block.twilightforest.skull_chest",
+    "title": "block.gloamingforest.skull_chest",
     "chest": false,
     "pairs": false,
     "sounds": {
-      "open": "block.twilightforest.skull_chest.open",
-      "close": "block.twilightforest.skull_chest.close"
+      "open": "block.gloamingforest.skull_chest.open",
+      "close": "block.gloamingforest.skull_chest.close"
     },
     "stat": "",
     "comparator": true

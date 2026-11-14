@@ -1,0 +1,44 @@
+{
+  "criteria": {
+    "in_tf": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "dimension": "gloamingforest:gloaming_forest"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    },
+    "make_portal": {
+      "trigger": "gloamingforest:make_tf_portal"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "gloamingforest:textures/block/mazestone_large_brick.png",
+    "description": {
+      "translate": "advancement.gloamingforest.root.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:gloaming_portal_miniature_structure"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.root"
+    }
+  },
+  "requirements": [
+    [
+      "in_tf",
+      "make_portal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

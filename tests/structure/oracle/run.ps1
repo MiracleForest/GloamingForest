@@ -5,7 +5,7 @@
 #   -Lists         regenerates src/feature/structure/JavaListsGolden.inc (StructureTemplate#addToLists
 #                  of every 1.21.1 block state) for the selftest structure.java_lists;
 #   -Randomizable  lists the 1.21.1 blocks whose block entity is a RandomizableContainer.
-# Plain vanilla classes on a class path (no NeoForge, no TF): Bootstrap.bootStrap() registers 1.21.1's
+# Plain vanilla classes on a class path (no NeoForge, no upstream): Bootstrap.bootStrap() registers 1.21.1's
 # blocks.
 param([switch]$Lists, [switch]$Randomizable)
 $ErrorActionPreference = 'Stop'

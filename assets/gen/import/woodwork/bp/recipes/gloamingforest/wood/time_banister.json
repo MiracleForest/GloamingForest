@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/time_banister"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---", "| |"],
+    "key": {
+      "-": {
+        "item": "gloamingforest:time_slab"
+      },
+      "|": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:time_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:time_banister",
+      "count": 3
+    }
+  }
+}

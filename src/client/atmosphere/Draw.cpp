@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/renderer/TFWeatherRenderer.java (renderEffect)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java (renderEffect)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -251,7 +251,7 @@ void drawSmoothQuads(ScreenContext& screen, mce::MaterialPtr const& material, mc
     constexpr std::size_t kBatch = 16000 * 4;
     // Vibrant Visuals lights the material by its MERS (metalness, emissive, roughness, subsurface):
     // the sky's stars and aurora glow by themselves (emissive and rough, the bytes 1 and 2 whatever
-    // the channel order), as TF draws them without light
+    // the channel order), as upstream draws them without light
     bool const emissive = vibrantVisuals();
     for (std::size_t from = 0; from + 3 < quads.size(); from += kBatch) {
         std::size_t to = std::min(quads.size() - quads.size() % 4, from + kBatch);
@@ -322,7 +322,7 @@ void drawColumns(ScreenContext& screen, mce::MaterialPtr const& material, mce::T
                 auto const& s  = useg[i];
                 float       x0 = c.x0 + (c.x1 - c.x0) * s.s0, z0 = c.z0 + (c.z1 - c.z0) * s.s0;
                 float       x1 = c.x0 + (c.x1 - c.x0) * s.s1, z1 = c.z0 + (c.z1 - c.z0) * s.s1;
-                if (vv && c.fullBright) tess.mNextMERS = 0x00FFFF00u; // Vibrant Visuals: TF's full-bright columns glow
+                if (vv && c.fullBright) tess.mNextMERS = 0x00FFFF00u; // Vibrant Visuals: upstream's full-bright columns glow
                 tess.simpleQuad(Vec3{x0, ya, z0}, Vec2{s.tu0, ta}, Vec3{x1, ya, z1}, Vec2{s.tu1, ta}, Vec3{x1, yb, z1}, Vec2{s.tu1, tb}, Vec3{x0, yb, z0}, Vec2{s.tu0, tb});
                 ++quads;
             }

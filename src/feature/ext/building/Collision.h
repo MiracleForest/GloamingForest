@@ -9,7 +9,7 @@
 // moving entity (GetCollisionShapeInterface: its box, whether it descends through blocks, as for
 // scaffolding). A registered provider replaces the block's boxes for those queries:
 //
-//   gf::building::ext::registerCollision("twilightforest:rope", [](Block const& b, BlockPos const& pos,
+//   gf::building::ext::registerCollision("gloamingforest:rope", [](Block const& b, BlockPos const& pos,
 //       std::optional<gf::building::ext::CollisionEntity> e, std::vector<gf::building::ext::Box>& out) { ... });
 //
 // Queries without an entity (CollisionContext.empty()) get the provider with `entity` empty. Every

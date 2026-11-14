@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/gallery/slabs_roof_even",
+  "id": "gloamingforest:lich_tower/gallery/slabs_roof_even",
   "size": [10, 4, 13],
   "palette": [
     {"Name":"minecraft:structure_void"},

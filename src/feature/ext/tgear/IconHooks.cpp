@@ -86,13 +86,13 @@ void warnOnce(std::string const& key) {
     if (seen.emplace(key, true).second) gf::log().warn("tgear: no item atlas entry '{}' (icon layer skipped)", key);
 }
 
-/// One line per (pass, TF item id), at most 24 in all: which GUI pass draws which TF item and whether it has layers
+/// One line per (pass, upstream item id), at most 24 in all: which GUI pass draws which upstream item and whether it has layers
 /// (diagnostics of the icon passes on this game version).
 void tracePass(char const* pass, ItemStackBase const& item, bool layered) {
     static std::atomic<int> left{40};
     if (left.load(std::memory_order_relaxed) <= 0 || item.isNull()) return;
     std::string id = item.getTypeName();
-    if (id.rfind("twilightforest:", 0) != 0) return;
+    if (id.rfind("gloamingforest:", 0) != 0) return;
     static std::mutex                      m;
     static std::unordered_map<std::string, bool> seen;
     {
@@ -224,7 +224,7 @@ LL_TYPE_INSTANCE_HOOK(
     return self;
 }
 
-// Diagnostics: which GUI paths see the TF items of the slots (the hotbar and the inventory slots reach none of the
+// Diagnostics: which GUI paths see the upstream items of the slots (the hotbar and the inventory slots reach none of the
 // hooks above on 1.26.51): InventoryItemRenderer::getItemRenderInfo and ItemRendererDataHelpers::setItemRendererBindings.
 LL_TYPE_STATIC_HOOK(
     TgearRenderInfoProbeHook,
@@ -254,7 +254,7 @@ LL_STATIC_HOOK(
     origin(itemData, item);
 }
 
-// Diagnostics: which TF items the GUI's other item path draws (ItemRenderer::renderGuiItemNew).
+// Diagnostics: which upstream items the GUI's other item path draws (ItemRenderer::renderGuiItemNew).
 LL_TYPE_INSTANCE_HOOK(
     TgearGuiNewProbeHook,
     ll::memory::HookPriority::Normal,

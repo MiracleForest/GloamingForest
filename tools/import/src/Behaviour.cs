@@ -1,4 +1,4 @@
-// GloamingForest import tool (contract "import", unit F1): state-dependent block behaviour values. A few TF
+// GloamingForest import tool (contract "import", unit F1): state-dependent block behaviour values. A few upstream
 // block classes override getExplosionResistance / getDestroyProgress with a value that depends only on the
 // block's own state (VanishingBlock: an inactive block resists 6000; LockedVanishingBlock: a locked one
 // 6000000; SkullChestBlock: Float.MAX_VALUE; TrophyPedestalBlock: unbreakable while inactive). The import
@@ -35,14 +35,14 @@ namespace GfImport
             RegexOptions.Compiled | RegexOptions.Singleline);
 
         /// <summary>The block's explosion resistance by state (getExplosionResistance overrides along the class chain,
-        /// super = the registration's explosionResistance), or null when no TF class overrides it.</summary>
+        /// super = the registration's explosionResistance), or null when no upstream class overrides it.</summary>
         public static StateValue Explosion(Ctx ctx, BlockInfo bi, Action<string> warn, ICollection<string> runtime)
         {
             return Of(ctx, bi, "getExplosionResistance", bi.J.Resistance, warn, runtime);
         }
 
         /// <summary>The block's mining value by state: the registration's hardness, or Unminable where a
-        /// getDestroyProgress override returns -1 for the state; null when no TF class overrides it by state.</summary>
+        /// getDestroyProgress override returns -1 for the state; null when no upstream class overrides it by state.</summary>
         public static StateValue Mining(Ctx ctx, BlockInfo bi, Action<string> warn, ICollection<string> runtime)
         {
             return Of(ctx, bi, "getDestroyProgress", bi.J.Unbreakable ? Unminable : bi.J.Hardness, warn, runtime);

@@ -1,32 +1,32 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/stronghold/KnightStrongholdComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdAccessChamberComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdAtriumComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdBalconyRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdBossRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdCrossingComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdDeadEndComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdDecorator.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdFoundryComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdLeftTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdPieceWeight.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdPieces.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdRightTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdShieldStructure.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdSmallHallwayComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdSmallStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdTrainingRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdTreasureCorridorComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdTreasureRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperAscenderComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperCorridorComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperLeftTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperRightTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperTIntersectionComponent.java
-//   src/main/java/twilightforest/world/components/structures/type/KnightStrongholdStructure.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/stronghold/KnightStrongholdComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdAccessChamberComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdAtriumComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdBalconyRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdBossRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdCrossingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdDeadEndComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdFoundryComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdLeftTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdPieceWeight.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdPieces.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdRightTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdShieldStructure.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdSmallHallwayComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdSmallStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdTrainingRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdTreasureCorridorComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdTreasureRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperAscenderComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperCorridorComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperLeftTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperRightTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperTIntersectionComponent.java
+//   src/main/java/gloamingforest/world/components/structures/type/KnightStrongholdStructure.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -58,32 +58,32 @@ using ::gf::structure::Rotation;
 using ::gf::structure::bases::Decorator;
 using ::gf::structure::bases::PieceList;
 
-inline constexpr char kStructure[] = "twilightforest:knight_stronghold";
+inline constexpr char kStructure[] = "gloamingforest:knight_stronghold";
 
-inline constexpr char kEntrance[]        = "twilightforest:TFSEnter";
-inline constexpr char kAccessChamber[]   = "twilightforest:TFSAC";
-inline constexpr char kSmallHallway[]    = "twilightforest:TFSSH";
-inline constexpr char kLeftTurn[]        = "twilightforest:TFSLT";
-inline constexpr char kRightTurn[]       = "twilightforest:TFSRT";
-inline constexpr char kCrossing[]        = "twilightforest:TFSCr";
-inline constexpr char kDeadEnd[]         = "twilightforest:TFSDE";
-inline constexpr char kBalconyRoom[]     = "twilightforest:TFSBalR";
-inline constexpr char kTrainingRoom[]    = "twilightforest:TFSTR";
-inline constexpr char kSmallStairs[]     = "twilightforest:TFSSS";
-inline constexpr char kTreasureCorridor[] = "twilightforest:TFSTC";
-inline constexpr char kAtrium[]          = "twilightforest:TFSAt";
-inline constexpr char kFoundry[]         = "twilightforest:TFSFo";
-inline constexpr char kTreasureRoom[]    = "twilightforest:TFTreaR";
-inline constexpr char kBossRoom[]        = "twilightforest:TFSBR";
-inline constexpr char kUpperAscender[]   = "twilightforest:TFSUA";
-inline constexpr char kUpperCorridor[]   = "twilightforest:TFSUCo";
-inline constexpr char kUpperLeftTurn[]   = "twilightforest:TFSULT";
-inline constexpr char kUpperRightTurn[]  = "twilightforest:TFSURT";
-inline constexpr char kUpperTIntersection[] = "twilightforest:TFSUTI";
-inline constexpr char kShield[]          = "twilightforest:TFSShield";
+inline constexpr char kEntrance[]        = "gloamingforest:TFSEnter";
+inline constexpr char kAccessChamber[]   = "gloamingforest:TFSAC";
+inline constexpr char kSmallHallway[]    = "gloamingforest:TFSSH";
+inline constexpr char kLeftTurn[]        = "gloamingforest:TFSLT";
+inline constexpr char kRightTurn[]       = "gloamingforest:TFSRT";
+inline constexpr char kCrossing[]        = "gloamingforest:TFSCr";
+inline constexpr char kDeadEnd[]         = "gloamingforest:TFSDE";
+inline constexpr char kBalconyRoom[]     = "gloamingforest:TFSBalR";
+inline constexpr char kTrainingRoom[]    = "gloamingforest:TFSTR";
+inline constexpr char kSmallStairs[]     = "gloamingforest:TFSSS";
+inline constexpr char kTreasureCorridor[] = "gloamingforest:TFSTC";
+inline constexpr char kAtrium[]          = "gloamingforest:TFSAt";
+inline constexpr char kFoundry[]         = "gloamingforest:TFSFo";
+inline constexpr char kTreasureRoom[]    = "gloamingforest:TFTreaR";
+inline constexpr char kBossRoom[]        = "gloamingforest:TFSBR";
+inline constexpr char kUpperAscender[]   = "gloamingforest:TFSUA";
+inline constexpr char kUpperCorridor[]   = "gloamingforest:TFSUCo";
+inline constexpr char kUpperLeftTurn[]   = "gloamingforest:TFSULT";
+inline constexpr char kUpperRightTurn[]  = "gloamingforest:TFSURT";
+inline constexpr char kUpperTIntersection[] = "gloamingforest:TFSUTI";
+inline constexpr char kShield[]          = "gloamingforest:TFSShield";
 
-inline constexpr char kLootCache[] = "twilightforest:stronghold_cache";
-inline constexpr char kLootRoom[]  = "twilightforest:stronghold_room";
+inline constexpr char kLootCache[] = "gloamingforest:stronghold_cache";
+inline constexpr char kLootRoom[]  = "gloamingforest:stronghold_room";
 
 /// StrongholdDecorator ("DecoStronghold").
 [[nodiscard]] std::unique_ptr<Decorator> strongholdDecorator();
@@ -165,7 +165,7 @@ public:
     void markBossRoomUsed();
     [[nodiscard]] std::unique_ptr<Knight> getNextComponent(Piece& parent, PieceList& list, RandomSource& random, int index, Orientation facing, int x,
                                                            int y, int z);
-    /// The static lastPieceMade (TF keeps it across starts; it only ever matches a weight of the
+    /// The static lastPieceMade (upstream keeps it across starts; it only ever matches a weight of the
     /// current list, which prepareStructurePieces makes anew).
     static void resetLastPieceMade();
 

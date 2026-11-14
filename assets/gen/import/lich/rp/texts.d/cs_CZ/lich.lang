@@ -1,4 +1,4 @@
-entity.twilightforest.death_tome=Kniha smrti
-entity.twilightforest.rising_zombie=Zombie
-entity.twilightforest:death_tome.name=Kniha smrti
-entity.twilightforest:rising_zombie.name=Zombie
+entity.gloamingforest.death_tome=Kniha smrti
+entity.gloamingforest.rising_zombie=Zombie
+entity.gloamingforest:death_tome.name=Kniha smrti
+entity.gloamingforest:rising_zombie.name=Zombie

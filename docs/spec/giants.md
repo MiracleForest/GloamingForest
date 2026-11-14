@@ -1,7 +1,7 @@
 # giants (U29): Beanstalk, cloud castle and giants
 
-Behaviour spec of unit **U29** (`giants`), written by F15 from The Twilight Forest 4.8 (`9e40a757`). Java paths are
-relative to `src/main/java/twilightforest/`; data paths to `src/generated/resources/`.
+Behaviour spec of unit **U29** (`giants`), written by F15 from the upstream 4.8 (`9e40a757`). Java paths are
+relative to `src/main/java/gloamingforest/`; data paths to `src/generated/resources/`.
 
 | Unit fact | Value |
 |---|---|
@@ -11,36 +11,36 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, families+blockevents, item, loot, entity, client.render (+ fx, progression, combat by string) |
 | Config | section `giants` (R13), 3 keys (section 9) |
 
-**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
-owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
-1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
-`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#gloamingforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are upstream data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (upstream adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). Upstream's damage-type and tool-tier
 tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
 `#neoforge:needs_wood_tool`), never `#c:`.
 
-## 1. Structure `twilightforest:giant_house`
+## 1. Structure `gloamingforest:giant_house`
 
-Sources: `world/components/structures/type/GiantHouseStructure.java`; the pieces are U27's (`twilightforest:TFClCa`
-CloudCastleComponent, `twilightforest:TFCloud`, `twilightforest:TFClTr`; see `docs/spec/caves.md` section 1.1), used here
+Sources: `world/components/structures/type/GiantHouseStructure.java`; the pieces are U27's (`gloamingforest:TFClCa`
+CloudCastleComponent, `gloamingforest:TFCloud`, `gloamingforest:TFClTr`; see `docs/spec/caves.md` section 1.1), used here
 by piece-type id through F7 (R2).
 
 | Field | Value |
 |---|---|
-| Structure type | `twilightforest:giant_house` (`GiantHouseStructure extends ProgressionStructure implements ConfigurableSpawns`) |
-| Structure set | `twilightforest:giant_house`, placement `twilightforest:landmark_grid` (`forceStructureForCenters`), weight 1 |
-| Biomes | `#twilightforest:valid_giant_house_biomes` = `twilightforest:highlands` (U1 tag): every highlands landmark centre gets both this cloud castle and U27's troll cave below it |
+| Structure type | `gloamingforest:giant_house` (`GiantHouseStructure extends ProgressionStructure implements ConfigurableSpawns`) |
+| Structure set | `gloamingforest:giant_house`, placement `gloamingforest:landmark_grid` (`forceStructureForCenters`), weight 1 |
+| Biomes | `#gloamingforest:valid_giant_house_biomes` = `gloamingforest:highlands` (U1 tag): every highlands landmark centre gets both this cloud castle and U27's troll cave below it |
 | Step | `top_layer_modification`, terrain adjustment `none` |
-| Progression lock | `twilightforest:progress_merge` |
-| Hint | `twilightforest:kobold` with book `twilightforest.book.trollcave` ("Notes on the Highlands", 3 pages) |
+| Progression lock | `gloamingforest:progress_merge` |
+| Hint | `gloamingforest:kobold` with book `gloamingforest.book.trollcave` ("Notes on the Highlands", 3 pages) |
 | Decoration clearance | chunk clearance radius 1, surface decorations true, underground decorations true, vegetation true, adjust elevation false |
 | Centred in chunk | **false** |
-| Controlled spawns label 0 | `twilightforest:giant_miner` 10 1-1, `twilightforest:armored_giant` 10 1-1 |
+| Controlled spawns label 0 | `gloamingforest:giant_miner` 10 1-1, `gloamingforest:armored_giant` 10 1-1 |
 | Spawn overrides | every mob category empty over the structure box |
-| Map icon | none; not in `#twilightforest:landmark` |
+| Map icon | none; not in `#gloamingforest:landmark` |
 
 Start position: `x = chunkX x 16`, `z = chunkZ x 16` (not centred), y = sea level (0); piece random
 `RandomSource.create(seed + chunkX x 25117 + chunkZ x 151121)`. First piece: `CloudCastleComponent(1, x, y + 168, z)`
-(type id `twilightforest:TFClCa`, U27), rounded to multiples of 4; its box starts 4 lower (minY 164): fluffy cloud slab y 164..167, castle walls from y 168, the `TFCloud` at minY + 3 = 167, plus the two
+(type id `gloamingforest:TFClCa`, U27), rounded to multiples of 4; its box starts 4 lower (minY 164): fluffy cloud slab y 164..167, castle walls from y 168, the `TFCloud` at minY + 3 = 167, plus the two
 `TFClTr` cloud trees (all U27 pieces). The castle places one giant miner and one armored giant (persistent). The
 structure is conquerable (`ConquerableStructure`) but has no boss; F6 handles the lock and hint.
 
@@ -57,23 +57,23 @@ Sources: `init/TFBlocks.java`, `block/UberousSoilBlock.java`, `block/GrowingBean
 
 | Id | Class | Properties | Tags |
 |---|---|---|---|
-| `twilightforest:uberous_soil` | UberousSoilBlock (BonemealableBlock) | DIRT map colour, gravel sound, strength 0.6; shape 16 x 15 x 16 (used for light occlusion) | `#minecraft:dirt`, `#minecraft:mushroom_grow_block`, `#minecraft:small_dripleaf_placeable`, mineable/shovel |
-| `twilightforest:huge_stalk` | RotatedPillarBlock (`axis`) | PLANT, BASS, stem sound, strength 1.5 / 3, ignited by lava | mineable/axe |
-| `twilightforest:beanstalk_leaves` | SpecialStemLeavesBlock (`distance` 1..7, `persistent`, `waterlogged`) | PLANT, azalea leaves sound, strength 0.2, random ticks, no occlusion, push DESTROY, not suffocating / view blocking / conductor, ignited by lava | `#minecraft:leaves`, mineable/hoe |
-| `twilightforest:beanstalk_grower` | GrowingBeanstalkBlock + block entity | no collision, empty shape, no loot, no occlusion, no terrain particles, strength -1 / 6000000 (unbreakable) | `#c:relocation_not_supported` |
-| `twilightforest:wispy_cloud` | WispyCloudBlock | SNOW map colour, HAT, wool sound, strength 0.3 / 0, no occlusion, push DESTROY, **replaceable**, force solid off; collision 16 x 14 x 16; light block 0; faces against another wispy cloud are culled; precipitation NONE; no random ticks | `#twilightforest:clouds`, `#minecraft:dampens_vibrations` |
-| `twilightforest:fluffy_cloud` | CloudBlock (precipitation dynamic) | ICE, HAT, wool, strength 0.8 / 0, push DESTROY, random ticks; light block 1 | same |
-| `twilightforest:rainy_cloud` | CloudBlock (RAIN) | as fluffy | same |
-| `twilightforest:snowy_cloud` | CloudBlock (SNOW) | as fluffy | same |
-| `twilightforest:giant_cobblestone` | GiantBlock | copy of cobblestone, strength 128 / 50, requires tool, push BLOCK | mineable/pickaxe, `#c:relocation_not_supported`, oreberry `#twilightforest:oreberry_bushes_survive` member (U6 tag) |
-| `twilightforest:giant_log` | GiantBlock | copy of oak planks, strength 128 / 30, requires tool, push BLOCK | **mineable/pickaxe** (not axe), relocation not supported |
-| `twilightforest:giant_leaves` | GiantLeavesBlock | copy of oak leaves, azalea leaves sound, strength 12.8 / 15 (`0.2 x 64`), requires tool, no occlusion, push BLOCK, no mob spawning, not suffocating / view blocking / conductor; support shape empty | mineable/pickaxe, portal decoration tag member (F4), relocation not supported |
-| `twilightforest:giant_obsidian` | GiantBlock | copy of obsidian, strength 204800 / 8192000 (`50 x 64 x 64`, `2000 x 64 x 64`), requires tool, push BLOCK, no mob spawning | mineable/pickaxe, `#minecraft:dragon_immune`, block-and-chain never breaks (U25 tag), relocation not supported |
+| `gloamingforest:uberous_soil` | UberousSoilBlock (BonemealableBlock) | DIRT map colour, gravel sound, strength 0.6; shape 16 x 15 x 16 (used for light occlusion) | `#minecraft:dirt`, `#minecraft:mushroom_grow_block`, `#minecraft:small_dripleaf_placeable`, mineable/shovel |
+| `gloamingforest:huge_stalk` | RotatedPillarBlock (`axis`) | PLANT, BASS, stem sound, strength 1.5 / 3, ignited by lava | mineable/axe |
+| `gloamingforest:beanstalk_leaves` | SpecialStemLeavesBlock (`distance` 1..7, `persistent`, `waterlogged`) | PLANT, azalea leaves sound, strength 0.2, random ticks, no occlusion, push DESTROY, not suffocating / view blocking / conductor, ignited by lava | `#minecraft:leaves`, mineable/hoe |
+| `gloamingforest:beanstalk_grower` | GrowingBeanstalkBlock + block entity | no collision, empty shape, no loot, no occlusion, no terrain particles, strength -1 / 6000000 (unbreakable) | `#c:relocation_not_supported` |
+| `gloamingforest:wispy_cloud` | WispyCloudBlock | SNOW map colour, HAT, wool sound, strength 0.3 / 0, no occlusion, push DESTROY, **replaceable**, force solid off; collision 16 x 14 x 16; light block 0; faces against another wispy cloud are culled; precipitation NONE; no random ticks | `#gloamingforest:clouds`, `#minecraft:dampens_vibrations` |
+| `gloamingforest:fluffy_cloud` | CloudBlock (precipitation dynamic) | ICE, HAT, wool, strength 0.8 / 0, push DESTROY, random ticks; light block 1 | same |
+| `gloamingforest:rainy_cloud` | CloudBlock (RAIN) | as fluffy | same |
+| `gloamingforest:snowy_cloud` | CloudBlock (SNOW) | as fluffy | same |
+| `gloamingforest:giant_cobblestone` | GiantBlock | copy of cobblestone, strength 128 / 50, requires tool, push BLOCK | mineable/pickaxe, `#c:relocation_not_supported`, oreberry `#gloamingforest:oreberry_bushes_survive` member (U6 tag) |
+| `gloamingforest:giant_log` | GiantBlock | copy of oak planks, strength 128 / 30, requires tool, push BLOCK | **mineable/pickaxe** (not axe), relocation not supported |
+| `gloamingforest:giant_leaves` | GiantLeavesBlock | copy of oak leaves, azalea leaves sound, strength 12.8 / 15 (`0.2 x 64`), requires tool, no occlusion, push BLOCK, no mob spawning, not suffocating / view blocking / conductor; support shape empty | mineable/pickaxe, portal decoration tag member (F4), relocation not supported |
+| `gloamingforest:giant_obsidian` | GiantBlock | copy of obsidian, strength 204800 / 8192000 (`50 x 64 x 64`, `2000 x 64 x 64`), requires tool, push BLOCK, no mob spawning | mineable/pickaxe, `#minecraft:dragon_immune`, block-and-chain never breaks (U25 tag), relocation not supported |
 
-Block items: `twilightforest:uberous_soil`, `twilightforest:huge_stalk`, `twilightforest:beanstalk_leaves`,
-`twilightforest:wispy_cloud`, `twilightforest:fluffy_cloud`, `twilightforest:rainy_cloud`, `twilightforest:snowy_cloud`,
-`twilightforest:giant_cobblestone`, `twilightforest:giant_log`, `twilightforest:giant_leaves`,
-`twilightforest:giant_obsidian` (11; the grower has no item).
+Block items: `gloamingforest:uberous_soil`, `gloamingforest:huge_stalk`, `gloamingforest:beanstalk_leaves`,
+`gloamingforest:wispy_cloud`, `gloamingforest:fluffy_cloud`, `gloamingforest:rainy_cloud`, `gloamingforest:snowy_cloud`,
+`gloamingforest:giant_cobblestone`, `gloamingforest:giant_log`, `gloamingforest:giant_leaves`,
+`gloamingforest:giant_obsidian` (11; the grower has no item).
 
 Colours (client, F12 `tint::registerBlock`): giant leaves = biome foliage colour (item: default foliage);
 beanstalk leaves = evergreen foliage colour (0x619961). Render types (model JSON): `wispy_cloud` translucent,
@@ -88,38 +88,38 @@ beanstalk leaves = evergreen foliage colour (0x619961). Render types (model JSON
 - Neighbour above changes: if the new block above is not a bonemealable plant (or is uberous soil): when solid the soil
   turns to dirt (`FarmBlock.turnToDirt`), else nothing. If it is a bonemealable plant: the soil becomes farmland
   (moisture 7) for `#minecraft:crops`, mycelium for mushrooms, grass block for bushes, moss block for moss, else dirt
-  (entities pushed up); a `twilightforest:mushgloom` (U6 block) grows directly with `growMushroom` (no bonemeal); others
+  (entities pushed up); a `gloamingforest:mushgloom` (U6 block) grows directly with `growMushroom` (no bonemeal); others
   get the growth particles (level event 1505, data 15) and, on the next server tick, **15 bone meal applications** with a
   fake player.
 - Neighbour below changes to a bonemealable block: the soil becomes dirt and the plant below gets 15 bone meals next tick.
 - Bone meal on the soil (`isBonemealSuccess` always true): spreads to one shuffled horizontal neighbour that is dirt /
   farmland (not uberous soil) with a non-solid block above, or one block up / down of it with the same rule; the new
   soil immediately runs the plant logic for its block above.
-- Client `animateTick`: 1 in 5, when the local player holds `twilightforest:magic_beans`, 2 `minecraft:happy_villager`
+- Client `animateTick`: 1 in 5, when the local player holds `gloamingforest:magic_beans`, 2 `minecraft:happy_villager`
   particles at a random point 1.25 above.
-- Loot `twilightforest:blocks/uberous_soil`: `minecraft:dirt` (survives explosion). Generated by U27's troll cave
+- Loot `gloamingforest:blocks/uberous_soil`: `minecraft:dirt` (survives explosion). Generated by U27's troll cave
   garden and the `uberous_soil_patch_*` features (U2 / U27 data).
 
 ### 2.2 Magic beans and the beanstalk
 
-`twilightforest:magic_beans` (`item/MagicBeansItem.java`, plain item): `useOn` with `maxY = max(clickedY + 100, 175)`:
+`gloamingforest:magic_beans` (`item/MagicBeansItem.java`, plain item): `useOn` with `maxY = max(clickedY + 100, 175)`:
 if the clicked block is uberous soil, `y < maxY` and the block above is air: server shrinks the stack by 1, places
-`beanstalk_grower` above, plays `block.twilightforest.beanstalk.grow` (BLOCKS, volume 4, pitch 1) at the soil, awards
+`beanstalk_grower` above, plays `block.gloamingforest.beanstalk.grow` (BLOCKS, volume 4, pitch 1) at the soil, awards
 the item-used stat (`Stats.ITEM_USED` for magic beans); returns SUCCESS on both sides, else PASS. Magic beans come from
 troll loot (U27) and beanstalk leaves.
 
-Advancement: TF's "fallback" award of the `use_beans` criterion in `useOn` is **dead code**, do not translate it: it
+Advancement: upstream's "fallback" award of the `use_beans` criterion in `useOn` is **dead code**, do not translate it: it
 awards only when `!manager.getAllAdvancements().contains(holder)`, which is always false for the holder that
-`manager.get(prefix("beanstalk"))` has just returned. The criterion `use_beans` of `twilightforest:beanstalk` (U14) is
+`manager.get(prefix("beanstalk"))` has just returned. The criterion `use_beans` of `gloamingforest:beanstalk` (U14) is
 granted by the vanilla `minecraft:item_used_on_block` trigger (advancement `beanstalk.json`: `location_check` block
-`twilightforest:uberous_soil` + `match_tool` `twilightforest:magic_beans`), which vanilla fires in
+`gloamingforest:uberous_soil` + `match_tool` `gloamingforest:magic_beans`), which vanilla fires in
 `ServerPlayerGameMode.useItemOn` after `useOn` returns a result that consumes the action (SUCCESS here), with the
 clicked position (the soil, still uberous soil) and a copy of the stack taken before the use. It is a vanilla trigger
 type that U14's criteria engine consumes from the progression bus; U29 never fires a custom trigger id for it. The
 progression header (`src/feature/progression/Progression.h`) has no item-used-on-block event, so whether F10 already
 raises `minecraft:item_used_on_block` for a custom item's successful use-on is not fixed by the contract. U29 decides it
 with a selftest instead of guessing: `giants.beans_trigger` registers `progression::onTrigger(
-"minecraft:item_used_on_block", ...)` counting the calls whose data names `twilightforest:magic_beans`, uses one magic
+"minecraft:item_used_on_block", ...)` counting the calls whose data names `gloamingforest:magic_beans`, uses one magic
 bean on uberous soil and requires **exactly one** call (it does not check `progression::done`: the criteria engine is
 U14's, and R12 lets a selftest depend only on W0 and its own unit; U14 tests the criterion). If F10 raises the trigger
 (count 1 without U29 code), U29 fires nothing. If it does not (count 0), U29 fires `progression::trigger(player,
@@ -153,18 +153,18 @@ Beanstalk grower (block entity, `GrowingBeanstalkBlockEntity.tick`, every tick):
 - Saved: `ticker`, `layer`, `isAreaClearEnough`, `nextLeafY`, `beardifierGroundDelta` (= yOffset), `cScale`, `rScale`,
   `maxY`, `blocksSkipped`.
 
-`twilightforest:beanstalk_leaves` (`SpecialStemLeavesBlock`): vanilla leaves whose distance is measured from
-`twilightforest:huge_stalk` (stem predicate) instead of `#minecraft:logs`; the scheduled tick recomputes the distance
+`gloamingforest:beanstalk_leaves` (`SpecialStemLeavesBlock`): vanilla leaves whose distance is measured from
+`gloamingforest:huge_stalk` (stem predicate) instead of `#minecraft:logs`; the scheduled tick recomputes the distance
 (min over the 6 neighbours: stalk 0, leaves their distance, else 7) and random ticks decay non-persistent leaves at
-distance 7 (vanilla). Loot `twilightforest:blocks/beanstalk_leaves`: shears or Silk Touch -> itself, else
-`twilightforest:magic_beans` with Fortune chances 2.5 / 2.78 / 3.125 / 4.17 / 10 % (survives explosion); plus (not
-shears / silk) 1-2 sticks with chances 2 / 2.22 / 2.5 / 3.33 / 10 % (explosion decay). `twilightforest:blocks/huge_stalk`
+distance 7 (vanilla). Loot `gloamingforest:blocks/beanstalk_leaves`: shears or Silk Touch -> itself, else
+`gloamingforest:magic_beans` with Fortune chances 2.5 / 2.78 / 3.125 / 4.17 / 10 % (survives explosion); plus (not
+shears / silk) 1-2 sticks with chances 2 / 2.22 / 2.5 / 3.33 / 10 % (explosion decay). `gloamingforest:blocks/huge_stalk`
 drops itself.
 
 ### 2.3 Clouds
 
 Common (`CloudBlock`): `fallOn` -> fall damage x 0.1; landing (server `addLandingEffects`): `n = clamp(fallDistance x 2,
-8, 40)` `twilightforest:cloud_puff` particles at feet level, horizontal offset `(r - 0.5) x width x 2.5`, speed `offset x
+8, 40)` `gloamingforest:cloud_puff` particles at feet level, horizontal offset `(r - 0.5) x width x 2.5`, speed `offset x
 0.0035 x n`, y speed `0.0005 x n`, sent to players tracking the chunk; `stepOn` and running effects: cloud puffs from
 `addEntityMovementParticles` (half the time; only if the entity moves or 1/20, on even ticks, not spectators): at feet
 `+(r - 0.5) x width`, velocity `(-0.5 x motion.x, 0.015, -0.5 x motion.z)` (x2 spread / y speed when jumping); a living
@@ -205,8 +205,8 @@ rain / snow sheets per column from the cloud down to the stop y (alpha `((1 - d^
 `render::onWorld`; vanilla clients get `minecraft:rain_splash_particle` / falling snow particles under rainy and
 snowy clouds sent by the server at a reduced rate (deviation).
 
-Loot: `twilightforest:blocks/fluffy_cloud`, `twilightforest:blocks/rainy_cloud`, `twilightforest:blocks/snowy_cloud`
-drop themselves (survives explosion); `twilightforest:blocks/wispy_cloud` drops itself only with Silk Touch.
+Loot: `gloamingforest:blocks/fluffy_cloud`, `gloamingforest:blocks/rainy_cloud`, `gloamingforest:blocks/snowy_cloud`
+drop themselves (survives explosion); `gloamingforest:blocks/wispy_cloud` drops itself only with Silk Touch.
 
 ### 2.4 Giant blocks (4 x 4 x 4)
 
@@ -225,8 +225,8 @@ drop themselves (survives explosion); `twilightforest:blocks/wispy_cloud` drops 
   on every block (deviation) unless F1 adds a hidden position state (R1 allows adding states).
 - Outline (client, `renderGiantBlockOutlines`): while the main hand holds a giant pickaxe or a giant block item, the
   vanilla block highlight is replaced by a 4 x 4 x 4 box (black, alpha 0.45) at the aligned cell of the targeted block.
-- Loot: each giant block drops itself (`twilightforest:blocks/giant_cobblestone`, `twilightforest:blocks/giant_log`,
-  `twilightforest:blocks/giant_leaves`, `twilightforest:blocks/giant_obsidian`, survives explosion).
+- Loot: each giant block drops itself (`gloamingforest:blocks/giant_cobblestone`, `gloamingforest:blocks/giant_log`,
+  `gloamingforest:blocks/giant_leaves`, `gloamingforest:blocks/giant_obsidian`, survives explosion).
 
 ## 3. Items
 
@@ -234,15 +234,15 @@ Sources: `item/GiantPickItem.java`, `item/GiantSwordItem.java`, `util/TFToolMate
 `components/entity/GiantPickaxeMiningAttachment.java`, `loot/conditions/GiantPickUsedCondition.java`,
 `loot/modifiers/GiantToolGroupingModifier.java`, `events/RegistrationEvents.java` (conversions).
 
-Tier `TFToolMaterials.GIANT`: incorrect blocks `block/#twilightforest:incorrect_for_giant_tool`, durability 1024,
-speed 4.0, attack bonus 1.0, enchantability 5, repair `#twilightforest:repairs_giant_tools` (= giant cobblestone; U7 tag).
+Tier `TFToolMaterials.GIANT`: incorrect blocks `block/#gloamingforest:incorrect_for_giant_tool`, durability 1024,
+speed 4.0, attack bonus 1.0, enchantability 5, repair `#gloamingforest:repairs_giant_tools` (= giant cobblestone; U7 tag).
 
 | Id | Class | Attributes (main hand) | Behaviour |
 |---|---|---|---|
-| `twilightforest:giant_pickaxe` | GiantPickItem (PickaxeItem) | attack damage 8 + 1 (tier) -> 10 total, attack speed -3.5 (0.5 per s), block and entity interaction range +2.5 (`twilightforest:reach_modifier`, `twilightforest:range_modifier`) | destroy speed = pickaxe speed x 64 on `GiantBlock`s and x 64 again on giant obsidian; tooltip `item.twilightforest.giant_pickaxe.desc` "Breaks giant blocks" (gray); 4 x 4 x 4 mining (below); item tags `#minecraft:pickaxes`, `#minecraft:cluster_max_harvestables` |
-| `twilightforest:giant_sword` | GiantSwordItem (SwordItem) | attack damage 10 + 1 -> 12 total, speed -3.5, interaction ranges +2.5 | repairable with ironwood ingot or giant cobblestone; item tag `#minecraft:swords` |
+| `gloamingforest:giant_pickaxe` | GiantPickItem (PickaxeItem) | attack damage 8 + 1 (tier) -> 10 total, attack speed -3.5 (0.5 per s), block and entity interaction range +2.5 (`gloamingforest:reach_modifier`, `gloamingforest:range_modifier`) | destroy speed = pickaxe speed x 64 on `GiantBlock`s and x 64 again on giant obsidian; tooltip `item.gloamingforest.giant_pickaxe.desc` "Breaks giant blocks" (gray); 4 x 4 x 4 mining (below); item tags `#minecraft:pickaxes`, `#minecraft:cluster_max_harvestables` |
+| `gloamingforest:giant_sword` | GiantSwordItem (SwordItem) | attack damage 10 + 1 -> 12 total, speed -3.5, interaction ranges +2.5 | repairable with ironwood ingot or giant cobblestone; item tag `#minecraft:swords` |
 
-**Giant pickaxe mining** (attachment `twilightforest:giant_pickaxe_mining`: `mining` game time, `breaking`,
+**Giant pickaxe mining** (attachment `gloamingforest:giant_pickaxe_mining`: `mining` game time, `breaking`,
 `giantBlockConversion`; never saved):
 
 1. `canAttackBlock` (each attack tick with a giant pickaxe in the main hand): when `mining != gameTime`, set `mining =
@@ -254,13 +254,13 @@ speed 4.0, attack bonus 1.0, enchantability 5, repair `#twilightforest:repairs_g
    the broken block's type, `giantBlockConversion = 64`, else 0. Cancel the original break, play the destroy effect and
    destroy the block through the game mode, then destroy every other block of the cell that has the same block type
    (each with destroy particles and its own loot / tool damage); clear `breaking`.
-3. Loot modifier `twilightforest:giant_block_grouping` (condition `twilightforest:giant_pick_used` with entity `this`:
+3. Loot modifier `gloamingforest:giant_block_grouping` (condition `gloamingforest:giant_pick_used` with entity `this`:
    the player's `mining == gameTime` and `giantBlockConversion > 0`): for a drop list whose first item is a convertible
    block item, decrement the counter; the 64th (first) call returns one giant block item, the other 63 return nothing.
    So mining a full cell of stone with a giant pickaxe yields one `giant_cobblestone`.
 
 Bedrock: the attachment is per-player state in the U29 module (keyed by unique id, R16); the break hook is
-`interactions::onDestroy({.item = "twilightforest:giant_pickaxe"})`; the modifier and condition are registered with F10
+`interactions::onDestroy({.item = "gloamingforest:giant_pickaxe"})`; the modifier and condition are registered with F10
 `loot::addGlobalModifier` / `loot::registerCondition`; the reach bonus uses F9 attributes (vanilla Bedrock has no
 interaction-range attribute: companions extend the pick ray locally, the server validates with `movement::validate`).
 
@@ -268,14 +268,14 @@ interaction-range attribute: companions extend the pick ray locally, the server 
 
 | Recipe | Type | Input | Result | Advancement (criterion) |
 |---|---|---|---|---|
-| `twilightforest:equipment/giant_pickaxe` | shaped (equipment) | `###`, ` X `, ` X ` (# giant cobblestone, X giant log) | giant_pickaxe | `twilightforest:recipes/tools/equipment/giant_pickaxe` (has giant cobblestone) |
-| `twilightforest:equipment/giant_sword` | shaped (equipment) | `#`, `#`, `X` | giant_sword | `twilightforest:recipes/tools/equipment/giant_sword` (has giant cobblestone) |
-| `twilightforest:giant_cobblestone_to_cobblestone` | shapeless (building) | giant cobblestone | 64 cobblestone | `twilightforest:recipes/building_blocks/giant_cobblestone_to_cobblestone` |
-| `twilightforest:giant_log_to_oak_log` | shapeless | giant log | 64 oak log | `twilightforest:recipes/building_blocks/giant_log_to_oak_log` |
-| `twilightforest:giant_leaves_to_oak_leaves` | shapeless | giant leaves | 64 oak leaves | `twilightforest:recipes/building_blocks/giant_leaves_to_oak_leaves` |
-| `twilightforest:giant_obsidian_to_obsidian` | shapeless | giant obsidian | 64 obsidian | `twilightforest:recipes/building_blocks/giant_obsidian_to_obsidian` |
-| `twilightforest:rainy_cloud` | shaped (building) | `ccc`, `cbc`, `ccc` (c fluffy cloud, b water bucket) | 8 rainy cloud (bucket returned) | `twilightforest:recipes/building_blocks/rainy_cloud` (has fluffy cloud) |
-| `twilightforest:snowy_cloud` | shaped | same with a powder snow bucket | 8 snowy cloud | `twilightforest:recipes/building_blocks/snowy_cloud` (has fluffy cloud) |
+| `gloamingforest:equipment/giant_pickaxe` | shaped (equipment) | `###`, ` X `, ` X ` (# giant cobblestone, X giant log) | giant_pickaxe | `gloamingforest:recipes/tools/equipment/giant_pickaxe` (has giant cobblestone) |
+| `gloamingforest:equipment/giant_sword` | shaped (equipment) | `#`, `#`, `X` | giant_sword | `gloamingforest:recipes/tools/equipment/giant_sword` (has giant cobblestone) |
+| `gloamingforest:giant_cobblestone_to_cobblestone` | shapeless (building) | giant cobblestone | 64 cobblestone | `gloamingforest:recipes/building_blocks/giant_cobblestone_to_cobblestone` |
+| `gloamingforest:giant_log_to_oak_log` | shapeless | giant log | 64 oak log | `gloamingforest:recipes/building_blocks/giant_log_to_oak_log` |
+| `gloamingforest:giant_leaves_to_oak_leaves` | shapeless | giant leaves | 64 oak leaves | `gloamingforest:recipes/building_blocks/giant_leaves_to_oak_leaves` |
+| `gloamingforest:giant_obsidian_to_obsidian` | shapeless | giant obsidian | 64 obsidian | `gloamingforest:recipes/building_blocks/giant_obsidian_to_obsidian` |
+| `gloamingforest:rainy_cloud` | shaped (building) | `ccc`, `cbc`, `ccc` (c fluffy cloud, b water bucket) | 8 rainy cloud (bucket returned) | `gloamingforest:recipes/building_blocks/rainy_cloud` (has fluffy cloud) |
+| `gloamingforest:snowy_cloud` | shaped | same with a powder snow bucket | 8 snowy cloud | `gloamingforest:recipes/building_blocks/snowy_cloud` (has fluffy cloud) |
 
 All are vanilla crafting recipes owned by U29 (R4, owners.tsv); unlock advancements generated by F1 (R21).
 
@@ -284,7 +284,7 @@ All are vanilla crafting recipes owned by U29 (R4, owners.tsv); unlock advanceme
 Sources: `entity/monster/GiantMiner.java`, `entity/monster/ArmoredGiant.java`, `client/renderer/entity/TFGiantRenderer.java`,
 `init/TFEntities.java`, `events/RegistrationEvents.java`.
 
-| Field | `twilightforest:giant_miner` | `twilightforest:armored_giant` (extends GiantMiner) |
+| Field | `gloamingforest:giant_miner` | `gloamingforest:armored_giant` (extends GiantMiner) |
 |---|---|---|
 | Size | 2.4 x 7.2 | 2.4 x 7.2 |
 | Attributes | max health 80, speed 0.23, attack damage 2, follow range 40, step height 1.2 | same (`GiantMiner.registerAttributes`) |
@@ -292,12 +292,12 @@ Sources: `entity/monster/GiantMiner.java`, `entity/monster/ArmoredGiant.java`, `
 | Drop chances | 0 for every slot | 0 |
 | Enchanting | `populateDefaultEquipmentEnchantments` runs but `enchantSpawnedWeapon` / `enchantSpawnedArmor` are no-ops (never enchanted) | same |
 | Goals | 1 Float, 4 MeleeAttack 1.0 (no memory), 5 WaterAvoidingRandomStroll 1.0, 6 LookAtPlayer 8, 6 RandomLookAround; targets 1 HurtBy, 2 NearestAttackable Player | same |
-| Attack | `doHurtTarget` uses `twilightforest:ant` (U17 damage type: "squashed like an ant"), damage = attack attribute incl. the weapon (pickaxe 2 + 9 = 11, sword 2 + 11 = 13) via F10 `combat::hurt` | same |
-| Spawning | cluster max 1; `checkSpawnRules`: fewer than 5 `GiantMiner`s (armored giants included) in the box inflated (100, 10, 100); placement ON_GROUND, `MOTION_BLOCKING_NO_LEAVES`, block below in `block/#twilightforest:giants_spawnable_on` | same |
+| Attack | `doHurtTarget` uses `gloamingforest:ant` (U17 damage type: "squashed like an ant"), damage = attack attribute incl. the weapon (pickaxe 2 + 9 = 11, sword 2 + 11 = 13) via F10 `combat::hurt` | same |
+| Spawning | cluster max 1; `checkSpawnRules`: fewer than 5 `GiantMiner`s (armored giants included) in the box inflated (100, 10, 100); placement ON_GROUND, `MOTION_BLOCKING_NO_LEAVES`, block below in `block/#gloamingforest:giants_spawnable_on` | same |
 | Riding | cannot ride | same |
-| Sounds | vanilla hostile defaults (no TF sound events) | same |
-| Loot | `twilightforest:entities/giant_miner`: giant pickaxe, killed by player | `twilightforest:entities/armored_giant`: giant sword, killed by player |
-| Egg | `twilightforest:giant_miner_spawn_egg` 0x211b52 / 0x9a9a9a | `twilightforest:armored_giant_spawn_egg` 0x239391 / 0x9a9a9a |
+| Sounds | vanilla hostile defaults (no upstream sound events) | same |
+| Loot | `gloamingforest:entities/giant_miner`: giant pickaxe, killed by player | `gloamingforest:entities/armored_giant`: giant sword, killed by player |
+| Egg | `gloamingforest:giant_miner_spawn_egg` 0x211b52 / 0x9a9a9a | `gloamingforest:armored_giant_spawn_egg` 0x239391 / 0x9a9a9a |
 
 Render (`TFGiantRenderer`): vanilla player model (wide or slim) scaled x 4, shadow 1.8, humanoid armour layer, held items
 through `GiantItemInHandLayer` (vanilla item-in-hand with the item moved `(+-1/16, 0, -0.5)` and scaled 0.25 so it fits
@@ -305,10 +305,10 @@ the hand). Skin: if `client.giantSkinUUIDs` is not empty, the profile at `abs((i
 (fetched once at config load on a worker thread; slim model when that skin is slim); else the **viewing player's own
 skin** (and model). Bedrock: client mod renders the giant with the local player's skin texture (F12 entity renderer);
 vanilla clients see the default Steve / Alex skin (README deviation). Progression: killing a giant miner is the `giant`
-criterion of `twilightforest:giants` (U14; TF's `pickaxe` criterion actually checks magic beans: keep the data as is).
-Both giants are criteria of `twilightforest:twilight_hunter`.
+criterion of `gloamingforest:giants` (U14; upstream's `pickaxe` criterion actually checks magic beans: keep the data as is).
+Both giants are criteria of `gloamingforest:gloaming_hunter`.
 
-## 6. Particle `twilightforest:cloud_puff` (owned by U29)
+## 6. Particle `gloamingforest:cloud_puff` (owned by U29)
 
 `CloudPuffParticle` (sprites `minecraft:generic_7` .. `generic_0`, age-based): initial velocity `0.1 x random + given
 speed`, friction 0.96, grey `1 - r x 0.3`, size x 0.875, lifetime `max(i x 2.5, 1)` with `i = (int)(8 / (r x 0.8 +
@@ -320,14 +320,14 @@ speed`, friction 0.96, grey `1 - r x 0.3`, size x 0.875, lifetime `max(i x 2.5, 
 
 | Tag | Members | Consumers |
 |---|---|---|
-| `block/#twilightforest:clouds` | fluffy_cloud, wispy_cloud, rainy_cloud, snowy_cloud | `giants_spawnable_on`, `#minecraft:dampens_vibrations` |
-| `block/#twilightforest:giants_spawnable_on` | `#twilightforest:clouds` | giant spawn placement |
-| `block/#twilightforest:incorrect_for_giant_tool` | `#minecraft:incorrect_for_stone_tool` | giant tier (stone-tier harvest level) |
+| `block/#gloamingforest:clouds` | fluffy_cloud, wispy_cloud, rainy_cloud, snowy_cloud | `giants_spawnable_on`, `#minecraft:dampens_vibrations` |
+| `block/#gloamingforest:giants_spawnable_on` | `#gloamingforest:clouds` | giant spawn placement |
+| `block/#gloamingforest:incorrect_for_giant_tool` | `#minecraft:incorrect_for_stone_tool` | giant tier (stone-tier harvest level) |
 
-## 8. Sound event `block.twilightforest.beanstalk.grow` (owned by U29)
+## 8. Sound event `block.gloamingforest.beanstalk.grow` (owned by U29)
 
-Subtitle `subtitles.twilightforest.block.beanstalk.grow` "Ground rumbles"; one long low rumble synthesized by F3
-from `tools/sounds/recipes/giants.json` (never TF audio); played by magic beans at volume 4.
+Subtitle `subtitles.gloamingforest.block.beanstalk.grow` "Ground rumbles"; one long low rumble synthesized by F3
+from `tools/sounds/recipes/giants.json` (never upstream audio); played by magic beans at volume 4.
 
 ## 9. Config section `giants` (R13)
 
@@ -337,7 +337,7 @@ from `tools/sounds/recipes/giants.json` (never TF audio); played by magic beans 
 | `client.cloudBlockPrecipitationDistance` | -1 | -1..2^31-1 | client render distance of cloud precipitation; -1 = use the common value, 0 = off |
 | `client.giantSkinUUIDs` | `[]` | UUID strings (5 dash-separated groups) | skins giants use; empty = the viewer's skin |
 
-Lang keys `config.twilightforest.cloud_precipitation` / `giant_skin_uuid_list` (+ `.tooltip`) belong to U29 (R9).
+Lang keys `config.gloamingforest.cloud_precipitation` / `giant_skin_uuid_list` (+ `.tooltip`) belong to U29 (R9).
 Client keys are per client (companion config file); the common key lives in the server config.
 
 ## 10. Bedrock adaptation notes

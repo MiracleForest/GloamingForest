@@ -2,16 +2,16 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:wrought_iron_fence",
+      "identifier": "gloamingforest:wrought_iron_fence",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:east_fence": ["none", "middle", "bottom", "top", "full"],
-        "twilightforest:north_fence": ["none", "middle", "bottom", "top", "full"],
-        "twilightforest:post": ["post", "none", "capped"],
-        "twilightforest:south_fence": ["none", "middle", "bottom", "top", "full"],
-        "twilightforest:west_fence": ["none", "middle", "bottom", "top", "full"]
+        "gloamingforest:east_fence": ["none", "middle", "bottom", "top", "full"],
+        "gloamingforest:north_fence": ["none", "middle", "bottom", "top", "full"],
+        "gloamingforest:post": ["post", "none", "capped"],
+        "gloamingforest:south_fence": ["none", "middle", "bottom", "top", "full"],
+        "gloamingforest:west_fence": ["none", "middle", "bottom", "top", "full"]
       }
     },
     "components": {
@@ -23,26 +23,26 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.wrought_iron_fence.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.wrought_iron_fence.multipart",
         "bone_visibility": {
-          "part0": "q.block_state('twilightforest:post') == 'post'",
-          "part1": "q.block_state('twilightforest:post') == 'capped'",
-          "part2": "q.block_state('twilightforest:north_fence') == 'full'",
-          "part3": "q.block_state('twilightforest:north_fence') == 'top'",
-          "part4": "q.block_state('twilightforest:north_fence') == 'middle'",
-          "part5": "q.block_state('twilightforest:north_fence') == 'bottom'",
-          "part6": "q.block_state('twilightforest:east_fence') == 'full'",
-          "part7": "q.block_state('twilightforest:east_fence') == 'top'",
-          "part8": "q.block_state('twilightforest:east_fence') == 'middle'",
-          "part9": "q.block_state('twilightforest:east_fence') == 'bottom'",
-          "part10": "q.block_state('twilightforest:south_fence') == 'full'",
-          "part11": "q.block_state('twilightforest:south_fence') == 'top'",
-          "part12": "q.block_state('twilightforest:south_fence') == 'middle'",
-          "part13": "q.block_state('twilightforest:south_fence') == 'bottom'",
-          "part14": "q.block_state('twilightforest:west_fence') == 'full'",
-          "part15": "q.block_state('twilightforest:west_fence') == 'top'",
-          "part16": "q.block_state('twilightforest:west_fence') == 'middle'",
-          "part17": "q.block_state('twilightforest:west_fence') == 'bottom'"
+          "part0": "q.block_state('gloamingforest:post') == 'post'",
+          "part1": "q.block_state('gloamingforest:post') == 'capped'",
+          "part2": "q.block_state('gloamingforest:north_fence') == 'full'",
+          "part3": "q.block_state('gloamingforest:north_fence') == 'top'",
+          "part4": "q.block_state('gloamingforest:north_fence') == 'middle'",
+          "part5": "q.block_state('gloamingforest:north_fence') == 'bottom'",
+          "part6": "q.block_state('gloamingforest:east_fence') == 'full'",
+          "part7": "q.block_state('gloamingforest:east_fence') == 'top'",
+          "part8": "q.block_state('gloamingforest:east_fence') == 'middle'",
+          "part9": "q.block_state('gloamingforest:east_fence') == 'bottom'",
+          "part10": "q.block_state('gloamingforest:south_fence') == 'full'",
+          "part11": "q.block_state('gloamingforest:south_fence') == 'top'",
+          "part12": "q.block_state('gloamingforest:south_fence') == 'middle'",
+          "part13": "q.block_state('gloamingforest:south_fence') == 'bottom'",
+          "part14": "q.block_state('gloamingforest:west_fence') == 'full'",
+          "part15": "q.block_state('gloamingforest:west_fence') == 'top'",
+          "part16": "q.block_state('gloamingforest:west_fence') == 'middle'",
+          "part17": "q.block_state('gloamingforest:west_fence') == 'bottom'"
         }
       },
       "minecraft:material_instances": {
@@ -50,7 +50,7 @@
           "texture": "tf_block_wrought_iron",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_wrought_iron": {
+        "t_gloamingforest_block_wrought_iron": {
           "texture": "tf_block_wrought_iron",
           "render_method": "alpha_test"
         }

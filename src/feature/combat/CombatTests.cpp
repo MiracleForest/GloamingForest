@@ -1,5 +1,5 @@
 // Selftests of F10 (prefix "combat.", testPos dx 6000..6099): the hurt hook and damage types, death
-// messages, the death pipeline (lethal, keepers, drops, respawn), the loot interpreter with TF's
+// messages, the death pipeline (lethal, keepers, drops, respawn), the loot interpreter with upstream's
 // functions, containers (loot placement, the BlockData backend and its persistence over a world
 // reload), the progression store / trigger bus / events, gamerules and fx.
 //
@@ -139,7 +139,7 @@ GF_REGISTER_SELFTEST("combat.gamerules", [](Context& ctx) {
     auto stored = db::get("gf:gamerules:values");
     ctx.check(stored && stored->value("gfTestIntRule", 0) == 12, "values are stored in the world DB");
     ctx.check(gr::parse("gfTestIntRule", "34").has_value() && !gr::parse("gfTestIntRule", "3x").has_value(), "command values parse");
-    ctx.check(gr::snapshot().contains("tfEnforcedProgression"), "the snapshot lists TF's rules");
+    ctx.check(gr::snapshot().contains("tfEnforcedProgression"), "the snapshot lists upstream's rules");
     // the test rules leave no trace (registry and stored values)
     gr::unregisterRule("gfTestIntRule");
     gr::unregisterRule("gfTestBoolRule");
@@ -152,9 +152,9 @@ GF_REGISTER_SELFTEST("combat.fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace fx = gf::fx;
     ctx.check(fx::resolveParticle("minecraft:flame").effect == "minecraft:basic_flame_particle", "vanilla particle types map to Bedrock effects");
     ctx.check(fx::resolveParticle("minecraft:no_such_particle").effect.empty(), "unknown particles are silent");
-    ctx.check(fx::resolveParticle("twilightforest:firefly").native, "TF particles go to companions natively");
+    ctx.check(fx::resolveParticle("gloamingforest:firefly").native, "upstream particles go to companions natively");
     ctx.check(fx::resolveSound("minecraft:entity.ghast.shoot") == "mob.ghast.fireball", "vanilla sound events map to Bedrock names");
-    ctx.check(fx::resolveSound("entity.twilightforest.no_such_sound").empty(), "unknown TF sound events are silent");
+    ctx.check(fx::resolveSound("entity.gloamingforest.no_such_sound").empty(), "unknown upstream sound events are silent");
     auto pos = ctx.testPos(6000);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto& p      = ctx.player();
@@ -195,14 +195,14 @@ GF_REGISTER_SELFTEST("combat.fx", [](Context& ctx) -> ll::coro::CoroTask<> {
         vars.setVelocity(Vec3{0.1f, 0.2f, 0.3f});
         ctx.check(!vars.get().mVariables->empty(), "the molang map holds variable.velocity");
     }
-    // companions get TF particles over fx.particle
+    // companions get upstream particles over fx.particle
     gf::net::setTestCompanion(p, true);
     (void)gf::net::takeTestMessages(p);
-    fx::particle(dim, "twilightforest:firefly", p.getPosition(), Vec3{0, 0.1f, 0}, 1, JsonT{{"colour", 1}});
+    fx::particle(dim, "gloamingforest:firefly", p.getPosition(), Vec3{0, 0.1f, 0}, 1, JsonT{{"colour", 1}});
     auto msgs = gf::net::takeTestMessages(p);
     gf::net::setTestCompanion(p, false);
-    bool got = std::any_of(msgs.begin(), msgs.end(), [](auto const& m) { return m.channel == "fx.particle" && m.payload.value("id", std::string{}) == "twilightforest:firefly"; });
-    ctx.check(got, "a companion got fx.particle for a TF particle");
+    bool got = std::any_of(msgs.begin(), msgs.end(), [](auto const& m) { return m.channel == "fx.particle" && m.payload.value("id", std::string{}) == "gloamingforest:firefly"; });
+    ctx.check(got, "a companion got fx.particle for an upstream particle");
 });
 
 // The molang variables of the vanilla effects gf::fx maps Java's particle types to: every effect
@@ -359,11 +359,11 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
                       colour("minecraft:mangrove_leaves") == 0x92C648,
                   "vanilla leaves use FoliageColor's colours without a level");
         ctx.check(colour("minecraft:water") == -1 && fx::dustRgb(-1).r == 1.f && fx::dustRgb(-1).b == 1.f, "water's BlockColor needs a level: white");
-        ctx.check(colour("twilightforest:canopy_leaves") == 0x619961 && colour("twilightforest:mangrove_leaves") == 0x80A755 && colour("twilightforest:twilight_oak_leaves") == 0x48B518 &&
-                      colour("twilightforest:time_leaves") == 0x6A9C17 && colour("twilightforest:violet_force_field") == 0x5C1074,
-                  "TF's ColorHandler colours without a level");
-        ctx.check(colour("twilightforest:aurora_block") == 0x00FFB2, "the aurora block is hsvToRGB(0.45, 1, 1) (float: t = 0.6999999, 178)");
-        auto pale = colour("twilightforest:aurora_pillar");
+        ctx.check(colour("gloamingforest:canopy_leaves") == 0x619961 && colour("gloamingforest:mangrove_leaves") == 0x80A755 && colour("gloamingforest:gloaming_oak_leaves") == 0x48B518 &&
+                      colour("gloamingforest:time_leaves") == 0x6A9C17 && colour("gloamingforest:violet_force_field") == 0x5C1074,
+                  "upstream's ColorHandler colours without a level");
+        ctx.check(colour("gloamingforest:aurora_block") == 0x00FFB2, "the aurora block is hsvToRGB(0.45, 1, 1) (float: t = 0.6999999, 178)");
+        auto pale = colour("gloamingforest:aurora_pillar");
         ctx.check(pale && *pale != 0x00FFB2 && ((*pale >> 8) & 0xFF) == 0xE6, "the aurora pillar is the aurora colour paled (value 0.9)");
         auto signal = [](int power) { return [power](std::string_view s) -> std::optional<int> { return s == "redstone_signal" ? std::optional<int>(power) : std::nullopt; }; };
         auto lit = fx::fallingDustColor("minecraft:redstone_wire", signal(15)).value_or(0);
@@ -413,7 +413,7 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     fx::particle(dim, "minecraft:item", at, Vec3{0, 0.1f, 0}, 2, JsonT{{"item", "minecraft:bone"}});
     fx::particle(dim, "minecraft:block", at, Vec3{}, 1, JsonT{{"block", "minecraft:oak_leaves"}});
     fx::particle(dim, "minecraft:item_slime", at);
-    fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "twilightforest:twilight_oak_log"}}); // a block item (negative id)
+    fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "gloamingforest:gloaming_oak_log"}}); // a block item (negative id)
     auto c2 = fx::counters();
     ctx.check(c2.legacyPackets >= c1.legacyPackets + 5, "item, block item, block and slime particles go as legacy particles (" + std::to_string(c2.legacyPackets - c1.legacyPackets) + ")");
     fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "minecraft:no_such_item"}});
@@ -482,20 +482,20 @@ GF_REGISTER_SELFTEST("combat.damage_types", [](Context& ctx) {
     using Cause = SharedTypes::Legacy::ActorDamageCause;
     int tf      = 0;
     for (auto const& id : c::damageTypeIds())
-        if (id.rfind("twilightforest:", 0) == 0) ++tf;
-    ctx.check(tf >= 40, "TF's 40 damage types are known (" + std::to_string(tf) + ")");
-    auto const* bite = c::damageType("twilightforest:hydra_bite");
+        if (id.rfind("gloamingforest:", 0) == 0) ++tf;
+    ctx.check(tf >= 40, "upstream's 40 damage types are known (" + std::to_string(tf) + ")");
+    auto const* bite = c::damageType("gloamingforest:hydra_bite");
     ctx.require(bite != nullptr, "hydra_bite is known");
-    ctx.check(bite->messageId == "twilightforest.hydraBite", "message ids follow TFDamageTypes");
-    ctx.check(c::damageType("twilightforest:slam")->messageId == "twilightforest.axing", "slam reuses the axing message");
-    ctx.check(c::damageType("twilightforest:thorns")->exhaustion > 0.09f, "exhaustion follows TFDamageTypes");
-    ctx.check(c::causeFor("twilightforest:lich_bolt", true) == Cause::Magic, "bypasses_armor -> Magic");
-    ctx.check(c::causeFor("twilightforest:hydra_fire", true) == Cause::Fire, "is_fire -> Fire");
-    ctx.check(c::causeFor("twilightforest:yeeted", true) == Cause::Fall, "is_fall -> Fall");
-    ctx.check(c::causeFor("twilightforest:expired", false) == Cause::Override, "bypasses_invulnerability -> Override");
-    ctx.check(c::causeFor("twilightforest:thrown_axe", true) == Cause::Projectile, "is_projectile -> Projectile");
-    ctx.check(c::causeFor("twilightforest:hydra_bite", true) == Cause::EntityAttack, "plain damage with an attacker -> EntityAttack");
-    ctx.check(c::damageTypeHasTag("twilightforest:clamped", "minecraft:no_knockback"), "TF's tag memberships come from the tag data (F9)");
+    ctx.check(bite->messageId == "gloamingforest.hydraBite", "message ids follow TFDamageTypes");
+    ctx.check(c::damageType("gloamingforest:slam")->messageId == "gloamingforest.axing", "slam reuses the axing message");
+    ctx.check(c::damageType("gloamingforest:thorns")->exhaustion > 0.09f, "exhaustion follows TFDamageTypes");
+    ctx.check(c::causeFor("gloamingforest:lich_bolt", true) == Cause::Magic, "bypasses_armor -> Magic");
+    ctx.check(c::causeFor("gloamingforest:hydra_fire", true) == Cause::Fire, "is_fire -> Fire");
+    ctx.check(c::causeFor("gloamingforest:yeeted", true) == Cause::Fall, "is_fall -> Fall");
+    ctx.check(c::causeFor("gloamingforest:expired", false) == Cause::Override, "bypasses_invulnerability -> Override");
+    ctx.check(c::causeFor("gloamingforest:thrown_axe", true) == Cause::Projectile, "is_projectile -> Projectile");
+    ctx.check(c::causeFor("gloamingforest:hydra_bite", true) == Cause::EntityAttack, "plain damage with an attacker -> EntityAttack");
+    ctx.check(c::damageTypeHasTag("gloamingforest:clamped", "minecraft:no_knockback"), "upstream's tag memberships come from the tag data (F9)");
 });
 
 GF_REGISTER_SELFTEST("combat.hurt_hook", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -525,20 +525,20 @@ GF_REGISTER_SELFTEST("combat.hurt_hook", [](Context& ctx) -> ll::coro::CoroTask<
     float before = healthOf(p);
     sDoubled = true;
     sDealt   = -1;
-    bool hit = c::hurt(p, 2.f, "twilightforest:hydra_bite");
+    bool hit = c::hurt(p, 2.f, "gloamingforest:hydra_bite");
     sDoubled = false;
     ctx.check(hit, "gf::combat::hurt applied the damage");
-    ctx.check(sSeenType == "twilightforest:hydra_bite", "onIncoming saw the TF damage type (got " + sSeenType + ")");
+    ctx.check(sSeenType == "gloamingforest:hydra_bite", "onIncoming saw the upstream damage type (got " + sSeenType + ")");
     ctx.check(sDealt >= 3.9f, "onDealt heard the doubled amount (got " + std::to_string(sDealt) + ")");
     ctx.check(healthOf(p) <= before - 3.9f, "the doubled damage was applied");
     sCancel     = true;
     float mid   = healthOf(p);
-    bool  again = c::hurt(p, 3.f, "twilightforest:squish");
+    bool  again = c::hurt(p, 3.f, "gloamingforest:squish");
     sCancel     = false;
     ctx.check(!again && healthOf(p) == mid, "a cancelled hurt does nothing");
-    // death message of the last TF damage: TF's key with the victim's name
+    // death message of the last upstream damage: upstream's key with the victim's name
     auto msg = c::deathMessageFor(p, "Victim");
-    ctx.check(msg.first == "death.attack.twilightforest.hydraBite" || msg.first == "death.attack.twilightforest.hydraBite.player", "TF death message key (got " + msg.first + ")");
+    ctx.check(msg.first == "death.attack.gloamingforest.hydraBite" || msg.first == "death.attack.gloamingforest.hydraBite.player", "upstream death message key (got " + msg.first + ")");
     ctx.check(!msg.second.empty() && msg.second[0] == "Victim", "the victim's name is the first parameter");
     // vanilla damage gets Java's type id
     sSeenType.clear();
@@ -572,7 +572,7 @@ GF_REGISTER_SELFTEST("combat.lethal", [](Context& ctx) -> ll::coro::CoroTask<> {
     {
         ActiveScope active(p);
         saves = 0;
-        gf::combat::hurt(p, 1000.f, "twilightforest:expired");
+        gf::combat::hurt(p, 1000.f, "gloamingforest:expired");
     }
     co_await ctx.ticks(2);
     auto level = ll::service::getLevel();
@@ -618,7 +618,7 @@ GF_REGISTER_SELFTEST("combat.keepers", [](Context& ctx) -> ll::coro::CoroTask<> 
     respawns  = 0;
     {
         ActiveScope active(sp);
-        gf::combat::hurt(sp, 1000.f, "twilightforest:expired");
+        gf::combat::hurt(sp, 1000.f, "gloamingforest:expired");
     }
     co_await ctx.ticks(2);
     auto level = ll::service::getLevel();
@@ -648,22 +648,22 @@ GF_REGISTER_SELFTEST("combat.keepers", [](Context& ctx) -> ll::coro::CoroTask<> 
 
 namespace {
 
-/// A table using every TF loot extension with constant numbers (exact expected counts).
+/// A table using every upstream loot extension with constant numbers (exact expected counts).
 JsonT tfFunctionsTable() {
     return JsonT::parse(R"({
       "type": "minecraft:entity",
       "pools": [
-        { "rolls": { "type": "twilightforest:multiplayer_rolls", "default_rolls": 1, "per_player_rolls": 1 },
+        { "rolls": { "type": "gloamingforest:multiplayer_rolls", "default_rolls": 1, "per_player_rolls": 1 },
           "entries": [ { "type": "minecraft:item", "name": "minecraft:stick" } ] },
         { "rolls": 1,
           "entries": [ { "type": "minecraft:item", "name": "minecraft:diamond",
             "functions": [ { "function": "minecraft:set_count", "count": 2 },
-                           { "function": "twilightforest:multiplayer_addition", "extra_count_per_player": 2 } ] } ] },
-        { "rolls": { "type": "twilightforest:looting_rolls", "enchantment": "minecraft:looting", "base_value": 1 },
+                           { "function": "gloamingforest:multiplayer_addition", "extra_count_per_player": 2 } ] } ] },
+        { "rolls": { "type": "gloamingforest:looting_rolls", "enchantment": "minecraft:looting", "base_value": 1 },
           "entries": [ { "type": "minecraft:item", "name": "minecraft:emerald" } ] },
-        { "rolls": 1, "conditions": [ { "condition": "twilightforest:mod_exists", "mod_id": "twilightforest" } ],
+        { "rolls": 1, "conditions": [ { "condition": "gloamingforest:mod_exists", "mod_id": "gloamingforest" } ],
           "entries": [ { "type": "minecraft:item", "name": "minecraft:gold_ingot" } ] },
-        { "rolls": 1, "conditions": [ { "condition": "twilightforest:mod_exists", "mod_id": "examplemod" } ],
+        { "rolls": 1, "conditions": [ { "condition": "gloamingforest:mod_exists", "mod_id": "examplemod" } ],
           "entries": [ { "type": "minecraft:item", "name": "minecraft:iron_ingot" } ] }
       ]
     })");
@@ -726,7 +726,7 @@ GF_REGISTER_SELFTEST("combat.loot_tf_functions", [](Context& ctx) -> ll::coro::C
     ctx.check(countIn(many, "minecraft:stick") == 3, "multiplayer_rolls: 1 + (3 - 1) x 1 rolls (got " + std::to_string(countIn(many, "minecraft:stick")) + ")");
     ctx.check(countIn(many, "minecraft:diamond") == 6, "multiplayer_addition: 2 + (3 - 1) x 2 (got " + std::to_string(countIn(many, "minecraft:diamond")) + ")");
     ctx.check(countIn(many, "minecraft:emerald") == 4, "looting_rolls: looting 3 + base 1 (got " + std::to_string(countIn(many, "minecraft:emerald")) + ")");
-    ctx.check(countIn(many, "minecraft:gold_ingot") == 1 && countIn(many, "minecraft:iron_ingot") == 0, "mod_exists: twilightforest yes, examplemod no");
+    ctx.check(countIn(many, "minecraft:gold_ingot") == 1 && countIn(many, "minecraft:iron_ingot") == 0, "mod_exists: gloamingforest yes, examplemod no");
     ctx.check(countIn(plain, "minecraft:stick") == 1 && countIn(plain, "minecraft:diamond") == 2, "without the loot adjuster the default rolls and counts apply");
     loot::registerTable("gf_test:combat/tf_functions", nullptr);
 });
@@ -758,7 +758,7 @@ GF_REGISTER_SELFTEST("combat.loot_interpreter", [](Context& ctx) {
     gf::loot::JavaRandom jr(42);
     int first = jr.nextInt(10), second = jr.nextInt(10);
     ctx.check(first == 0 && second == 3, "JavaRandom matches java.util.Random (got " + std::to_string(first) + ", " + std::to_string(second) + ")");
-    // the F0 fixture chest table (TF number provider and function shapes)
+    // the F0 fixture chest table (upstream number provider and function shapes)
     loot::LootContext fixtureCtx;
     fixtureCtx.seed = 7;
     auto fx         = loot::roll("gf_test:chests/fixture_chest", fixtureCtx);
@@ -979,8 +979,8 @@ GF_REGISTER_SELFTEST("combat.progression", [](Context& ctx) -> ll::coro::CoroTas
     ActiveScope active(p);
     sData = nullptr;
     sGranted = sInvFired = sTicks = 0;
-    pr::trigger(p, "gf_test:fixture_trigger", {{"bug", "twilightforest:firefly"}});
-    ctx.check(sData.value("bug", std::string{}) == "twilightforest:firefly", "the trigger reached the fixture listener with its data");
+    pr::trigger(p, "gf_test:fixture_trigger", {{"bug", "gloamingforest:firefly"}});
+    ctx.check(sData.value("bug", std::string{}) == "gloamingforest:firefly", "the trigger reached the fixture listener with its data");
     pr::revoke(p, "gf_test:fixture_advancement");
     ctx.check(!pr::has(p, "gf_test:fixture_advancement"), "not granted yet");
     pr::grant(p, "gf_test:fixture_advancement", "fixture_criterion");
@@ -1034,7 +1034,7 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     sType.clear();
     {
         ActiveScope active(p);
-        gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe", &p);
+        gf::combat::hurt(*mob, 1000.f, "gloamingforest:thrown_axe", &p);
         // LivingEntity#dropFromLootTable: the Java table's drops are in the world in the death tick
         ctx.check(itemEntitiesNear(pos, 4) >= 1, "the Java table dropped in the death tick");
         ctx.check(gf::loot::pendingDeathCount() >= 1, "the merge with the game's drops waits for the next tick");
@@ -1044,7 +1044,7 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(sFixture == 1, "the Java table gf_test:entities/boss dropped the fixture item (" + std::to_string(sFixture) + ")");
     ctx.check(sAdded == 1, "a handler added a stack to the drops");
     ctx.check(sKiller, "the loot context names the killing player");
-    ctx.check(sType == "twilightforest:thrown_axe", "the loot context has the damage type (" + sType + ")");
+    ctx.check(sType == "gloamingforest:thrown_axe", "the loot context has the damage type (" + sType + ")");
     ctx.check(itemEntitiesNear(ctx.testPos(6008), 4) == 0, "the handler took every drop: no item entity is left");
 });
 
@@ -1078,7 +1078,7 @@ GF_REGISTER_SELFTEST("combat.entity_drops_vanilla", [](Context& ctx) -> ll::coro
     sCalls = 0;
     {
         ActiveScope active(p);
-        gf::combat::hurt(*cow, 1000.f, "twilightforest:thrown_axe", &p);
+        gf::combat::hurt(*cow, 1000.f, "gloamingforest:thrown_axe", &p);
         co_await ctx.ticks(2); // the drop pass runs on the next tick, while the test is active
     }
     co_await ctx.ticks(2);
@@ -1099,7 +1099,7 @@ GF_REGISTER_SELFTEST("combat.loot_number_rounding", [](Context& ctx) {
     // constant rolls 1.5 -> 2; binomial n 5.5 -> 6 trials (p 1); set_count 2.5 -> 3
     loot::registerTable("gf_test:combat/rounding", JsonT::parse(R"({
       "pools": [
-        { "rolls": { "type": "twilightforest:multiplayer_rolls", "default_rolls": 1, "per_player_rolls": 1.5 },
+        { "rolls": { "type": "gloamingforest:multiplayer_rolls", "default_rolls": 1, "per_player_rolls": 1.5 },
           "entries": [ { "type": "minecraft:item", "name": "minecraft:stick" } ] },
         { "rolls": 1.5, "entries": [ { "type": "minecraft:item", "name": "minecraft:flint" } ] },
         { "rolls": { "type": "minecraft:binomial", "n": 5.5, "p": 1.0 }, "entries": [ { "type": "minecraft:item", "name": "minecraft:clay_ball" } ] },
@@ -1123,7 +1123,7 @@ GF_REGISTER_SELFTEST("combat.loot_number_rounding", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("combat.loot_set_contents", [](Context& ctx) {
     namespace loot = gf::loot;
-    // the shape of TF's entities/questing_ram_rewards: a bundle filled by set_contents with an item
+    // the shape of upstream's entities/questing_ram_rewards: a bundle filled by set_contents with an item
     // entry and a nested loot table entry (every pool of it rolls into the bundle)
     loot::registerTable("gf_test:combat/bundle_blocks", JsonT::parse(R"({"pools":[
         {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:coal_block"}]},
@@ -1463,22 +1463,22 @@ GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTas
     namespace tags = gf::tags;
     auto pos = ctx.testPos(6020);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
-    // a real member of TF's tag: the keeper asks F9's tag data (gf::tags), no test lookup
-    auto        members = tags::members(tags::Registry::Item, "twilightforest:kept_on_death");
+    // a real member of upstream's tag: the keeper asks F9's tag data (gf::tags), no test lookup
+    auto        members = tags::members(tags::Registry::Item, "gloamingforest:kept_on_death");
     std::string kept;
     for (auto const& m : members)
         if (items::make(m, 1)) {
             kept = m;
             break;
         }
-    ctx.require(!kept.empty(), "twilightforest:kept_on_death has an item member in F9's tag data (" + std::to_string(members.size()) + " members)");
-    ctx.check(tags::has(tags::Registry::Item, "twilightforest:kept_on_death", kept), "gf::tags::has answers the member");
+    ctx.require(!kept.empty(), "gloamingforest:kept_on_death has an item member in F9's tag data (" + std::to_string(members.size()) + " members)");
+    ctx.check(tags::has(tags::Registry::Item, "gloamingforest:kept_on_death", kept), "gf::tags::has answers the member");
     auto& sp = ctx.spawnPlayer("gf_combat_tag_keeper");
     auto  id = sp.getOrCreateUniqueID();
     auto  stack = items::make(kept, 1);
     ctx.require(stack.has_value(), "the kept item exists");
     ctx.give(sp, *stack);
-    gf::combat::hurt(sp, 1000.f, "twilightforest:expired");
+    gf::combat::hurt(sp, 1000.f, "gloamingforest:expired");
     co_await ctx.ticks(2);
     auto* p = ll::service::getLevel()->getPlayer(id);
     ctx.require(p != nullptr, "the player is still in the level");
@@ -1486,7 +1486,7 @@ GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTas
     bool kept1  = record && record->is_array() && std::any_of(record->begin(), record->end(), [&](JsonT const& e) {
         return e.value("item", JsonT::object()).value("id", std::string{}) == kept;
     });
-    ctx.check(kept1, "the twilightforest:kept_on_death keeper kept " + kept);
+    ctx.check(kept1, "the gloamingforest:kept_on_death keeper kept " + kept);
     ctx.check(itemEntitiesNear(pos, 6) == 0, "the kept item did not drop");
     static_cast<SimulatedPlayer&>(*p).simulateRespawn();
     co_await ctx.ticks(10);
@@ -1688,21 +1688,21 @@ GF_REGISTER_SELFTEST("combat.hurt_sound", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto& sp     = ctx.spawnPlayer("gf_combat_hurt_sound");
     int   before = gf::combat::hurtSoundsReplaced();
-    gf::combat::hurt(sp, 1.f, "twilightforest:chilling_breath"); // freezing
+    gf::combat::hurt(sp, 1.f, "gloamingforest:chilling_breath"); // freezing
     ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "the Hurt event of the freezing damage carries the freezing cause (the client's freezing hurt sound)");
     co_await ctx.ticks(11); // the hurt cooldown
     auto* again = ll::service::getLevel()->getPlayer(sp.getOrCreateUniqueID());
     ctx.require(again != nullptr, "the player is still there");
     auto packets = gf::fx::counters().soundPackets;
-    gf::combat::hurt(*again, 1.f, "twilightforest:clamped"); // TF's pinch
+    gf::combat::hurt(*again, 1.f, "gloamingforest:clamped"); // upstream's pinch
     ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "the pinch has no cause of its own: the event stays");
-    if (!gf::fx::resolveSound("twilightforest:entity.twilightforest.pinch_beetle.attack").empty())
+    if (!gf::fx::resolveSound("gloamingforest:entity.gloamingforest.pinch_beetle.attack").empty())
         ctx.check(gf::fx::counters().soundPackets > packets, "the pinch beetle's sound plays through fx");
     else ctx.info("the pinch beetle's sound is not in this build's resource pack (F3's audio): its packet is not checked");
     co_await ctx.ticks(11);
     again = ll::service::getLevel()->getPlayer(sp.getOrCreateUniqueID());
     ctx.require(again != nullptr, "the player is still there");
-    gf::combat::hurt(*again, 1.f, "twilightforest:hydra_bite"); // "hurt": the game's own sound
+    gf::combat::hurt(*again, 1.f, "gloamingforest:hydra_bite"); // "hurt": the game's own sound
     ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "plain damage keeps the game's hurt sound");
 });
 
@@ -1838,7 +1838,7 @@ GF_REGISTER_SELFTEST("combat.death_entries", [](Context& ctx) -> ll::coro::CoroT
     auto* mob = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:bat"), nullptr, at, false, false, false);
     ctx.require(mob != nullptr, "a bat spawned (no drops; the test world is peaceful)");
     auto id = mob->getOrCreateUniqueID().rawID;
-    gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe");
+    gf::combat::hurt(*mob, 1000.f, "gloamingforest:thrown_axe");
     ctx.check(gf::death::deathHandled(id), "the death is kept while the dead mob is in the level");
     co_await ctx.ticks(70); // the death animation (20 ticks), then the sweep (every 20 ticks)
     ctx.check(!gf::death::deathHandled(id), "the entry went with the mob (" + std::to_string(gf::death::handledDeathCount()) + " kept)");

@@ -1,122 +1,122 @@
 {
-  "twilightforest:brazier": {
+  "gloamingforest:brazier": {
     "sound": "wood"
   },
-  "twilightforest:candelabra": {
+  "gloamingforest:candelabra": {
     "sound": "stone"
   },
-  "twilightforest:chiseled_canopy_bookshelf": {
+  "gloamingforest:chiseled_canopy_bookshelf": {
     "sound": "chiseled_bookshelf"
   },
-  "twilightforest:coronation_carpet": {
+  "gloamingforest:coronation_carpet": {
     "sound": "cloth"
   },
-  "twilightforest:creeper_skull_candle": {
+  "gloamingforest:creeper_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:creeper_wall_skull_candle": {
+  "gloamingforest:creeper_wall_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:ominous_black_candle": {
+  "gloamingforest:ominous_black_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_blue_candle": {
+  "gloamingforest:ominous_blue_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_brown_candle": {
+  "gloamingforest:ominous_brown_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_candle": {
+  "gloamingforest:ominous_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_cyan_candle": {
+  "gloamingforest:ominous_cyan_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_fire": {
+  "gloamingforest:ominous_fire": {
     "sound": "cloth"
   },
-  "twilightforest:ominous_gray_candle": {
+  "gloamingforest:ominous_gray_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_green_candle": {
+  "gloamingforest:ominous_green_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_light_blue_candle": {
+  "gloamingforest:ominous_light_blue_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_light_gray_candle": {
+  "gloamingforest:ominous_light_gray_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_lime_candle": {
+  "gloamingforest:ominous_lime_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_magenta_candle": {
+  "gloamingforest:ominous_magenta_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_orange_candle": {
+  "gloamingforest:ominous_orange_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_pink_candle": {
+  "gloamingforest:ominous_pink_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_purple_candle": {
+  "gloamingforest:ominous_purple_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_red_candle": {
+  "gloamingforest:ominous_red_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_white_candle": {
+  "gloamingforest:ominous_white_candle": {
     "sound": "candle"
   },
-  "twilightforest:ominous_yellow_candle": {
+  "gloamingforest:ominous_yellow_candle": {
     "sound": "candle"
   },
-  "twilightforest:piglin_skull_candle": {
+  "gloamingforest:piglin_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:piglin_wall_skull_candle": {
+  "gloamingforest:piglin_wall_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:player_skull_candle": {
+  "gloamingforest:player_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:player_wall_skull_candle": {
+  "gloamingforest:player_wall_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:sinister_spawner": {
+  "gloamingforest:sinister_spawner": {
     "sound": "metal"
   },
-  "twilightforest:skeleton_skull_candle": {
+  "gloamingforest:skeleton_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:skeleton_wall_skull_candle": {
+  "gloamingforest:skeleton_wall_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:skull_chest": {
+  "gloamingforest:skull_chest": {
     "sound": "netherite"
   },
-  "twilightforest:terrorcotta_arcs": {
+  "gloamingforest:terrorcotta_arcs": {
     "sound": "stone"
   },
-  "twilightforest:terrorcotta_curves": {
+  "gloamingforest:terrorcotta_curves": {
     "sound": "stone"
   },
-  "twilightforest:terrorcotta_lines": {
+  "gloamingforest:terrorcotta_lines": {
     "sound": "stone"
   },
-  "twilightforest:wither_skeleton_skull_candle": {
+  "gloamingforest:wither_skeleton_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:wither_skeleton_wall_skull_candle": {
+  "gloamingforest:wither_skeleton_wall_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:wrought_iron_fence": {
+  "gloamingforest:wrought_iron_fence": {
     "sound": "metal"
   },
-  "twilightforest:zombie_skull_candle": {
+  "gloamingforest:zombie_skull_candle": {
     "sound": "stone"
   },
-  "twilightforest:zombie_wall_skull_candle": {
+  "gloamingforest:zombie_wall_skull_candle": {
     "sound": "stone"
   }
 }

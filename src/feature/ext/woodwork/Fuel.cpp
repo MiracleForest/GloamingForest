@@ -1,4 +1,4 @@
-// Contract extension of U4 woodwork (Fuel.h): Java's vanilla fuel tags for the TF items without a
+// Contract extension of U4 woodwork (Fuel.h): Java's vanilla fuel tags for the upstream items without a
 // neoforge:furnace_fuels row.
 
 #include "feature/ext/woodwork/Fuel.h"

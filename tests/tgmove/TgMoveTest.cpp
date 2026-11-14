@@ -1,4 +1,4 @@
-// Tests of src/core/tgmove (U12): the numbers and state machines of TF's Travellers' Gear movement.
+// Tests of src/core/tgmove (U12): the numbers and state machines of upstream's Travellers' Gear movement.
 #include <cmath>
 #include <vector>
 
@@ -295,7 +295,7 @@ TEST(TgMove, InputModifiers) {
 
 TEST(TgMove, UnsneakImpulseEngineScalesLater) {
     // Bedrock applies its sneak factor after the impulses: 1 / 0.3 of the unit input, so the
-    // engine's 0.3 brings it back to TF's full input
+    // engine's 0.3 brings it back to upstream's full input
     float f = 1.0f, l = 0.0f;
     unsneakImpulse(f, l, true, 0.3f);
     EXPECT_NEAR(f * 0.3f, 1.0f, 1e-6);
@@ -317,7 +317,7 @@ TEST(TgMove, UnrestrainedFriction) {
     EXPECT_NEAR(std::sqrt(a.x * a.x + a.z * a.z), 0.1, 1e-9);
     EXPECT_DOUBLE_EQ(inputAcceleration(0, 0, 0, 0.1).x, 0.0);
 
-    // TF's 0.6 ground step against a simulated engine with ice friction: the engine moves by
+    // upstream's 0.6 ground step against a simulated engine with ice friction: the engine moves by
     // v + a(f) and keeps (v + a(f)) x f x 0.91; with unrestrainedStep in front the positions and
     // velocities follow Java's 0.6 sequence
     double const f = 0.98, speed = 0.1;
@@ -325,8 +325,8 @@ TEST(TgMove, UnrestrainedFriction) {
     Velocity     tf{0, 0, 0.3}, engine{0, 0, 0.3};
     double       rescale = 1.0, tfPos = 0, enginePos = 0;
     for (int i = 0; i < 20; ++i) {
-        if (i == 10) acc = {}; // the key released: TF stops within a block
-        // TF
+        if (i == 10) acc = {}; // the key released: upstream stops within a block
+        // upstream
         double move = tf.z + acc.z * groundAccelFactor(0.6);
         tfPos += move;
         tf.z = move * 0.6 * 0.91;
@@ -354,7 +354,7 @@ TEST(TgMove, UnrestrainedFriction) {
 }
 
 TEST(TgMove, UnrestrainedSoulSandAndHoneyJump) {
-    // an engine that slows the input acceleration (soul sand): the extra makes it TF's full one
+    // an engine that slows the input acceleration (soul sand): the extra makes it upstream's full one
     double const k = 0.5;
     Velocity     acc{0, 0, 0.1};
     auto         s = unrestrainedStep({}, 1.0, acc, 0.6, 1.0, true, true, k);
@@ -364,7 +364,7 @@ TEST(TgMove, UnrestrainedSoulSandAndHoneyJump) {
     auto   j        = unrestrainedJump(vyEngine, 0.42);
     ASSERT_TRUE(j.has_value());
     EXPECT_NEAR(j->lost, 0.42 * 0.4, 1e-9);
-    // the step moves TF's jump step plus the lost height; the velocity after it, less lost x 0.98, is TF's
+    // the step moves upstream's jump step plus the lost height; the velocity after it, less lost x 0.98, is upstream's
     double tfVy = (0.42 - kGravity) * 0.98;
     EXPECT_NEAR(j->vy, tfVy + j->lost, 1e-9);
     EXPECT_NEAR((j->vy - kGravity) * 0.98 - j->lost * 0.98, (tfVy - kGravity) * 0.98, 1e-9);
@@ -380,7 +380,7 @@ TEST(TgMove, HoneyCatchUpLate) {
         v = (v - kGravity) * 0.98;
     };
     for (int late = 0; late <= 4; ++late) {
-        double fy = 0, fv = power; // TF
+        double fy = 0, fv = power; // upstream
         double cy = 0, cv = engine; // the client: the engine's jump, then the catch-up
         step(fy, fv);
         step(cy, cv);

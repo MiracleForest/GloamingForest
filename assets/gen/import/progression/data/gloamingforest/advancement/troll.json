@@ -1,0 +1,45 @@
+{
+  "parent": "gloamingforest:progress_merge",
+  "criteria": {
+    "troll": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:troll",
+              "location": {
+                "structures": "gloamingforest:troll_cave"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.troll.desc",
+      "with": [
+        {
+          "translate": "entity.gloamingforest.troll"
+        }
+      ]
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:magic_beans"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.troll"
+    }
+  },
+  "requirements": [
+    [
+      "troll"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

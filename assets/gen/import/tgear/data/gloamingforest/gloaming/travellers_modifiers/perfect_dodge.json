@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:perfect_dodge_probability": 0.3
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.perfect_dodge.description"
+    }
+  ],
+  "equipment_slots": "chest"
+}

@@ -1,4 +1,4 @@
-# U19 (questcamps): the Questing Ram, the quest grove, camps and TF's template features on BDS. The
+# U19 (questcamps): the Questing Ram, the quest grove, camps and upstream's template features on BDS. The
 # selftests questcamps.* prove: the quest data (16 wools, the reward and loot tables), every one of
 # the 57 original templates exists and keeps its golden volume hash (rule R19), the template
 # features' 15 x 15 limit and the graves' shared footprint, the ram taking each colour once (by hand)

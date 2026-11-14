@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Contract "client.ui" (F12): hiding effect icons of the game's HUD effect list
 // (feature/ext/ui/Client.h, hud::hideEffectIcons). Java leaves an effect whose MobEffectInstance

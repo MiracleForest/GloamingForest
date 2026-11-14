@@ -1,7 +1,7 @@
 {
   "remove": [
-    "twilightforest:phantom_helmet",
-    "twilightforest:phantom_chestplate"
+    "gloamingforest:phantom_helmet",
+    "gloamingforest:phantom_chestplate"
   ],
   "values": []
 }

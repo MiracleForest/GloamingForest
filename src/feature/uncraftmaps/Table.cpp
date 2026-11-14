@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/UncraftingTableBlock.java
-//   src/main/java/twilightforest/inventory/UncraftingMenu.java (stillValid)
-//   src/main/java/twilightforest/network/UncraftingGuiPacket.java
-//   src/main/java/twilightforest/loot/conditions/UncraftingTableEnabledCondition.java
-//   src/main/java/twilightforest/item/recipe/UncraftingRecipe.java (Serializer)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/UncraftingTableBlock.java
+//   src/main/java/gloamingforest/inventory/UncraftingMenu.java (stillValid)
+//   src/main/java/gloamingforest/network/UncraftingGuiPacket.java
+//   src/main/java/gloamingforest/loot/conditions/UncraftingTableEnabledCondition.java
+//   src/main/java/gloamingforest/item/recipe/UncraftingRecipe.java (Serializer)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -18,7 +18,7 @@
 // uncrafting recipe; picking one shows its ingredients (broken parts marked), the level cost and the
 // cycle buttons, and "Uncraft" takes the ingredients as the menu would (the levels, the input count,
 // the uncraft_item trigger). "Repair" puts the input's broken parts from the inventory into the
-// assembly grid over the shown recipe and takes the result (the combined recipe of TF's screen, with
+// assembly grid over the shown recipe and takes the result (the combined recipe of upstream's screen, with
 // the enchantments and the recrafting cost); free recrafting into another recipe needs the client
 // mod's screen.
 #include <algorithm>
@@ -71,7 +71,7 @@ namespace ia    = feature::common::interactions;
 namespace items = game::items;
 using core::GlobalPos;
 
-constexpr char kActivateSound[] = "block.twilightforest.uncrafting_table.activate";
+constexpr char kActivateSound[] = "block.gloamingforest.uncrafting_table.activate";
 
 void actionBar(Player& player, std::string const& text) {
     auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::SetTitle);
@@ -152,7 +152,7 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
     menu.slotsChanged(Menu::Changed::Input);
     std::string body = stackLabel(player, stack) + "\n\n";
     if (menu.inputBanned() || !state.ghost) {
-        body += "§c" + trFor(player, "container.twilightforest.uncrafting_table.disabled_item", "Uncrafting this item is disabled.") + "§r";
+        body += "§c" + trFor(player, "container.gloamingforest.uncrafting_table.disabled_item", "Uncrafting this item is disabled.") + "§r";
     } else {
         for (int r = 0; r < 3; ++r) {
             std::string row;
@@ -165,7 +165,7 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
             body += row + "\n";
         }
         int cost = state.uncraftingCost;
-        if (config().disableUncrafting) body += "\n§4" + trFor(player, "container.twilightforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config") + "§r";
+        if (config().disableUncrafting) body += "\n§4" + trFor(player, "container.gloamingforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config") + "§r";
         if (cost > 0) body += "\n" + trFor(player, "gf.uncraftmaps.form.cost", "Cost: {} levels", cost);
     }
     // repairing: the broken parts from the inventory over the ghost recipe (the page has read the ghost)
@@ -177,7 +177,7 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
         return [pos, slot, c](Player& p) { openRecipeForm(p, pos, slot, c); };
     };
     if (state.ghost && !menu.inputBanned()) {
-        buttons.push_back({trFor(player, "gui.twilightforest.uncrafting_jei", "Uncrafting"), "", [pos, slot, cycles, stack](Player& p) {
+        buttons.push_back({trFor(player, "gui.gloamingforest.uncrafting_jei", "Uncrafting"), "", [pos, slot, cycles, stack](Player& p) {
                                if (!stillValid(p, pos)) return;
                                auto now = ItemStack(p.getInventory().getItem(slot));
                                if (!items::sameItemSameData(now, stack) || items::countOf(now) != items::countOf(stack)) return openRecipeForm(p, pos, slot, cycles);
@@ -205,23 +205,23 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
                                log().info("uncraftmaps: {} uncrafted {} with the form", p.getRealName(), items::idOf(now));
                                openForm(p, pos);
                            }});
-        buttons.push_back({trFor(player, "container.twilightforest.uncrafting_table.cycle_next_uncraft", "Next Uncrafting Recipe"), "", [=](Player& p) {
+        buttons.push_back({trFor(player, "container.gloamingforest.uncrafting_table.cycle_next_uncraft", "Next Uncrafting Recipe"), "", [=](Player& p) {
                                auto c = cycles;
                                ++c.unrecipe;
                                reopen(c)(p);
                            }});
-        buttons.push_back({trFor(player, "container.twilightforest.uncrafting_table.cycle_back_uncraft", "Previous Uncrafting Recipe"), "", [=](Player& p) {
+        buttons.push_back({trFor(player, "container.gloamingforest.uncrafting_table.cycle_back_uncraft", "Previous Uncrafting Recipe"), "", [=](Player& p) {
                                auto c = cycles;
                                --c.unrecipe;
                                reopen(c)(p);
                            }});
         if (!config().disableIngredientSwitching) {
-            buttons.push_back({trFor(player, "container.twilightforest.uncrafting_table.cycle_next_ingredient", "Next Uncrafting Ingredients"), "", [=](Player& p) {
+            buttons.push_back({trFor(player, "container.gloamingforest.uncrafting_table.cycle_next_ingredient", "Next Uncrafting Ingredients"), "", [=](Player& p) {
                                    auto c = cycles;
                                    ++c.ingredients;
                                    reopen(c)(p);
                                }});
-            buttons.push_back({trFor(player, "container.twilightforest.uncrafting_table.cycle_back_ingredient", "Previous Uncrafting Ingredients"), "", [=](Player& p) {
+            buttons.push_back({trFor(player, "container.gloamingforest.uncrafting_table.cycle_back_ingredient", "Previous Uncrafting Ingredients"), "", [=](Player& p) {
                                    auto c = cycles;
                                    --c.ingredients;
                                    reopen(c)(p);
@@ -244,7 +244,7 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
                            }});
     }
     buttons.push_back({trFor(player, "gui.back", "Back"), "", [pos](Player& p) { openForm(p, pos); }});
-    ui::form(player, trFor(player, "container.twilightforest.uncrafting_table", "Uncrafting Table"), body, std::move(buttons));
+    ui::form(player, trFor(player, "container.gloamingforest.uncrafting_table", "Uncrafting Table"), body, std::move(buttons));
 }
 
 /// The list page: every inventory stack the table can uncraft.
@@ -260,8 +260,8 @@ void openForm(Player& player, GlobalPos const& pos) {
     }
     std::string body = buttons.empty() ? trFor(player, "gf.uncraftmaps.form.empty", "Nothing in your inventory can be uncrafted.")
                                        : trFor(player, "gf.uncraftmaps.form.pick", "Pick an item to uncraft:");
-    if (config().disableUncrafting) body += "\n§4" + trFor(player, "container.twilightforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config") + "§r";
-    ui::form(player, trFor(player, "container.twilightforest.uncrafting_table", "Uncrafting Table"), body, std::move(buttons));
+    if (config().disableUncrafting) body += "\n§4" + trFor(player, "container.gloamingforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config") + "§r";
+    ui::form(player, trFor(player, "container.gloamingforest.uncrafting_table", "Uncrafting Table"), body, std::move(buttons));
 }
 
 // ---- the uncrafting recipe loader --------------------------------------------------------------------
@@ -270,7 +270,7 @@ void openForm(Player& player, GlobalPos const& pos) {
 std::optional<recipes::CraftingRecipe> loadUncrafting(std::string const& id, Json const& j) {
     recipes::CraftingRecipe r;
     r.id   = id;
-    r.type = "twilightforest:uncrafting";
+    r.type = "gloamingforest:uncrafting";
     r.data = j;
     auto p = j.find("pattern");
     auto k = j.find("key");
@@ -304,11 +304,11 @@ void updatePowered(BlockSource& region, BlockPos const& pos) {
     auto const& block = region.getBlock(pos);
     if (game::blockId(block) != kTable) return;
     bool powered = redstone::power(region, pos) > 0;
-    bool was     = game::intState(block, "twilightforest:powered").value_or(0) != 0;
+    bool was     = game::intState(block, "gloamingforest:powered").value_or(0) != 0;
     if (powered == was) return;
     if (powered && game::blockIdAt(region, {pos.x, pos.y - 1, pos.z}) == "minecraft:amethyst_block")
         fx::sound(region.getDimension(), kActivateSound, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 0.5f, 1.0f);
-    if (auto const* next = game::blockWithStates(kTable, {{"twilightforest:powered", powered}})) game::setBlock(region, pos, *next);
+    if (auto const* next = game::blockWithStates(kTable, {{"gloamingforest:powered", powered}})) game::setBlock(region, pos, *next);
 }
 
 } // namespace
@@ -317,7 +317,7 @@ void updatePowered(BlockSource& region, BlockPos const& pos) {
 
 /// Fills `st.assembly` from the inventory (taking nothing yet) and computes the result; nullopt (the
 /// assembly grid empty again) when the input is not damaged, a broken part is missing from the
-/// inventory, the combined grid makes nothing, or the filled cells alone form the recipe (TF then
+/// inventory, the combined grid makes nothing, or the filled cells alone form the recipe (upstream then
 /// crafts normally from the assembly grid and keeps the input: no repair).
 std::optional<RepairPlan> planRepair(Player& player, int inputSlot, MenuState& st, Menu& menu) {
     auto fail = [&]() -> std::optional<RepairPlan> {
@@ -437,7 +437,7 @@ private:
             if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // the item is used instead
             if (!c.firstEvent) return ia::Result::Consume;
             if (config().disableUncraftingTable) {
-                actionBar(c.player, trFor(c.player, "block.twilightforest.uncrafting_table.disabled", "This block has been disabled."));
+                actionBar(c.player, trFor(c.player, "block.gloamingforest.uncrafting_table.disabled", "This block has been disabled."));
                 return ia::Result::Pass;
             }
             auto& player = c.player;
@@ -447,7 +447,7 @@ private:
                 endMenu(player);
                 return ia::Result::Consume;
             }
-            stats::award(player, "twilightforest:uncrafting_table_interactions");
+            stats::award(player, "gloamingforest:uncrafting_table_interactions");
             log().info("uncraftmaps: {} opened the uncrafting table at {} {} {}", player.getRealName(), pos.x, pos.y, pos.z);
             return ia::Result::Consume;
         });
@@ -499,17 +499,17 @@ private:
         // UncraftingTableBlock#appendHoverText
         gf::item::addTooltip(kTable, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
             if (!config().disableUncraftingTable) return;
-            auto text = viewer ? trFor(*viewer, "block.twilightforest.uncrafting_table.disabled", "This block has been disabled.")
-                               : tr("block.twilightforest.uncrafting_table.disabled", "This block has been disabled.");
+            auto text = viewer ? trFor(*viewer, "block.gloamingforest.uncrafting_table.disabled", "This block has been disabled.")
+                               : tr("block.gloamingforest.uncrafting_table.disabled", "This block has been disabled.");
             lines.push_back("§c" + text);
         });
 
         // UncraftingTableEnabledCondition
-        loot::registerCondition("twilightforest:uncrafting_table_enabled", [](loot::LootContext const&, Json const&, loot::RandomSource&) {
+        loot::registerCondition("gloamingforest:uncrafting_table_enabled", [](loot::LootContext const&, Json const&, loot::RandomSource&) {
             return !config().disableUncraftingTable;
         });
 
-        recipes::registerType("twilightforest:uncrafting", loadUncrafting);
+        recipes::registerType("gloamingforest:uncrafting", loadUncrafting);
     }
 
     ll::event::ListenerPtr mTick;

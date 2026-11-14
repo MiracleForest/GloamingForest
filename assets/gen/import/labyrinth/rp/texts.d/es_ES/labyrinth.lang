@@ -1,6 +1,6 @@
-entity.twilightforest.maze_slime=Laberinto de Slime
-entity.twilightforest.minoshroom=Minoseta
-entity.twilightforest.minotaur=Minotauro
-entity.twilightforest:maze_slime.name=Laberinto de Slime
-entity.twilightforest:minoshroom.name=Minoseta
-entity.twilightforest:minotaur.name=Minotauro
+entity.gloamingforest.maze_slime=Laberinto de Slime
+entity.gloamingforest.minoshroom=Minoseta
+entity.gloamingforest.minotaur=Minotauro
+entity.gloamingforest:maze_slime.name=Laberinto de Slime
+entity.gloamingforest:minoshroom.name=Minoseta
+entity.gloamingforest:minotaur.name=Minotauro

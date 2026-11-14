@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/enums/extensions/TFBoatTypeEnumExtension.java
-//   src/main/java/twilightforest/init/TFItems.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/enums/extensions/TFBoatTypeEnumExtension.java
+//   src/main/java/gloamingforest/init/TFItems.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's eight boat types (Boat.Type extensions: the wood's planks, minecraft:stick) are vanilla
-// Boat / ChestBoat entities with TF's textures. Bedrock has no boat types to add: the boats are
-// the entities twilightforest:boat and twilightforest:chest_boat (BP runtime identifiers
+// upstream's eight boat types (Boat.Type extensions: the wood's planks, minecraft:stick) are vanilla
+// Boat / ChestBoat entities with upstream's textures. Bedrock has no boat types to add: the boats are
+// the entities gloamingforest:boat and gloamingforest:chest_boat (BP runtime identifiers
 // minecraft:boat / minecraft:chest_boat: the game's own boat physics, seats, paddling and chest)
-// with the wood as the entity property twilightforest:wood (0..7, kTfWoods order), which picks the
-// texture. The items place them as Java's BoatItem#use does, a destroyed TF boat drops its TF item
-// instead of the game's boat item (src/feature/ext/woodwork/BoatDrops.h), and a TF boat breaks on a
+// with the wood as the entity property gloamingforest:wood (0..7, kTfWoods order), which picks the
+// texture. The items place them as Java's BoatItem#use does, a destroyed upstream boat drops its upstream item
+// instead of the game's boat item (src/feature/ext/woodwork/BoatDrops.h), and an upstream boat breaks on a
 // fall as Java's Boat#checkFallDamage (the entity contract's tick).
 
 #include "feature/woodwork/Woodwork.h"
@@ -65,16 +65,16 @@ namespace ia = interactions;
 
 namespace {
 
-constexpr char kBoat[]      = "twilightforest:boat";
-constexpr char kChestBoat[] = "twilightforest:chest_boat";
-constexpr char kWood[]      = "twilightforest:wood";
+constexpr char kBoat[]      = "gloamingforest:boat";
+constexpr char kChestBoat[] = "gloamingforest:chest_boat";
+constexpr char kWood[]      = "gloamingforest:wood";
 
 std::vector<ia::HandlerId>& handlerIds() {
     static std::vector<ia::HandlerId> ids;
     return ids;
 }
 
-/// The boat's wood (property twilightforest:wood).
+/// The boat's wood (property gloamingforest:wood).
 int woodOf(Actor& boat) {
     int  wood  = 0;
     auto props = boat.getEntityContext().tryGetComponent<PropertyComponent>();
@@ -127,7 +127,7 @@ bool onLand(Actor& boat) {
 /// Player#blockInteractionRange (Attributes.BLOCK_INTERACTION_RANGE: 4.5, creative 5).
 double reachOf(Player const& player) { return player.isCreative() ? 5.0 : 4.5; }
 
-/// The TF item a boat entity drops (Boat#getDropItem).
+/// The upstream item a boat entity drops (Boat#getDropItem).
 std::optional<std::string> dropItemOf(Actor& boat) {
     auto const& type = boat.getTypeName();
     bool        chest = type == kChestBoat;
@@ -197,7 +197,7 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
     }
     std::string event = std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]);
     ActorUniqueID id{};
-    auto*         boat = CommandUtils::spawnEntityAt(region, at, ActorDefinitionIdentifier("twilightforest", chest ? "chest_boat" : "boat", event), id, nullptr);
+    auto*         boat = CommandUtils::spawnEntityAt(region, at, ActorDefinitionIdentifier("gloamingforest", chest ? "chest_boat" : "boat", event), id, nullptr);
     if (!boat) {
         log().warn("woodwork: could not spawn a {} boat", event);
         return ia::Result::Deny;
@@ -217,7 +217,7 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
 /// (Entity#causeFallDamage propagates to the passengers), the boat goes without its item (kill) and,
 /// with doEntityDrops, drops 3 planks of its wood and 2 sticks (Boat.Type: the wood's planks,
 /// minecraft:stick). Landing in water resets the distance. The game's boats never break on a fall:
-/// this runs for the TF boats only.
+/// this runs for the upstream boats only.
 void checkFallDamage(Actor& boat) {
     auto& fall = entity::data(boat, "woodwork_fall"); // {"d": fallDistance, "y": last y}
     if (!fall.is_object()) fall = Json{{"d", 0.0}, {"y", boat.getPosition().y}};
@@ -296,7 +296,7 @@ void installBoats() {
         // registrations of the entity contract last for the process
         for (auto const* type : {kBoat, kChestBoat}) entity::registerType(type, {.tick = [](Actor& boat) { checkFallDamage(boat); }});
     }
-    // Boat#getDropItem: the TF item of the boat's wood instead of the game's boat item
+    // Boat#getDropItem: the upstream item of the boat's wood instead of the game's boat item
     // (src/feature/ext/woodwork/BoatDrops.h)
     woodwork_ext::boatdrops::setReplacement([](Actor& boat) { return dropItemOf(boat); });
     woodwork_ext::boatdrops::install();

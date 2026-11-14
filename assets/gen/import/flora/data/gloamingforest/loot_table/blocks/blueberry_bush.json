@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "block": "gloamingforest:blueberry_bush",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "age": "3"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "gloamingforest:blocks/blueberry_bush_berries"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gloamingforest:blueberry_bush"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "gloamingforest:blocks/blueberry_bush"
+}

@@ -22,15 +22,15 @@ enum class TimePacket { None, SetTime, WorldClocks, DaylightRule };
 [[nodiscard]] char const* timePacketName(TimePacket kind);
 /// Time of day 0..23999 of a level / clock time.
 [[nodiscard]] int timeOfDay(int time);
-/// The time a Twilight player's clock shows: the same day, time of day 13000 (fixed_time).
-[[nodiscard]] int twilightClock(int time);
+/// The time a Gloaming player's clock shows: the same day, time of day 13000 (fixed_time).
+[[nodiscard]] int gloamingClock(int time);
 /// The id of the overworld world clock (the one the sky follows), 0 while unknown.
 [[nodiscard]] std::uint64_t overworldClockId();
 /// The overworld clock's time and paused flag.
 [[nodiscard]] std::optional<std::pair<int, bool>> overworldClockState();
-/// Corrects a time packet in place for a player in the Twilight Forest; returns how to undo it
+/// Corrects a time packet in place for a player in the Gloaming Forest; returns how to undo it
 /// (empty: nothing changed).
-[[nodiscard]] std::function<void()> fixForTwilight(Packet& packet);
+[[nodiscard]] std::function<void()> fixForGloaming(Packet& packet);
 
 /// The clock a client was last sent over the network (remote clients only), and the checks of it.
 struct ClientClock {
@@ -38,7 +38,7 @@ struct ClientClock {
     bool        clockPaused   = false;
     bool        daylightCycle = true;
     int         packets       = 0; ///< time packets since the last reset
-    int         wrongTicks    = 0; ///< ticks in the Twilight Forest that ended with another time of day
+    int         wrongTicks    = 0; ///< ticks in the Gloaming Forest that ended with another time of day
     std::string lastPacket;        ///< the packet that set timeOfDay
     std::string wrongPacket;       ///< the packet behind the first wrong tick
 };

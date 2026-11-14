@@ -1,23 +1,23 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerEntranceBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerMainBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBossBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBossTrapComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBalconyComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerBeardComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofAntennaComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofCactusComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofFourPostComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerRoofRingsComponent.java
-//   src/main/java/twilightforest/world/components/structures/darktower/EnumDarkTowerDoor.java
-//   src/main/java/twilightforest/world/components/structures/darktower/StructureDecoratorDarkTower.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerEntranceBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerMainBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBossBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBossTrapComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBalconyComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerBeardComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofAntennaComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofCactusComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofFourPostComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerRoofRingsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/EnumDarkTowerDoor.java
+//   src/main/java/gloamingforest/world/components/structures/darktower/StructureDecoratorDarkTower.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -45,23 +45,23 @@ using ::gf::structure::Rotation;
 using ::gf::structure::bases::Decorator;
 using ::gf::structure::bases::PieceList;
 
-inline constexpr char kWing[]           = "twilightforest:TFDTWin";
-inline constexpr char kMain[]           = "twilightforest:TFDTMai";
-inline constexpr char kBridge[]         = "twilightforest:TFDTBri";
-inline constexpr char kEntranceBridge[] = "twilightforest:TFDTEB";
-inline constexpr char kMainBridge[]     = "twilightforest:TFDTMB";
-inline constexpr char kBossBridge[]     = "twilightforest:TFDTBB";
-inline constexpr char kEntrance[]       = "twilightforest:TFDTEnt";
-inline constexpr char kBossTrap[]       = "twilightforest:TFDTBT";
-inline constexpr char kBalcony[]        = "twilightforest:TFDTBal";
-inline constexpr char kBeard[]          = "twilightforest:TFDTBea";
-inline constexpr char kRoof[]           = "twilightforest:TFDTRooS";
-inline constexpr char kRoofAntenna[]    = "twilightforest:TFDTRA";
-inline constexpr char kRoofCactus[]     = "twilightforest:TFDTRC";
-inline constexpr char kRoofFourPost[]   = "twilightforest:TFDTRFP";
-inline constexpr char kRoofRings[]      = "twilightforest:TFDTRR";
+inline constexpr char kWing[]           = "gloamingforest:TFDTWin";
+inline constexpr char kMain[]           = "gloamingforest:TFDTMai";
+inline constexpr char kBridge[]         = "gloamingforest:TFDTBri";
+inline constexpr char kEntranceBridge[] = "gloamingforest:TFDTEB";
+inline constexpr char kMainBridge[]     = "gloamingforest:TFDTMB";
+inline constexpr char kBossBridge[]     = "gloamingforest:TFDTBB";
+inline constexpr char kEntrance[]       = "gloamingforest:TFDTEnt";
+inline constexpr char kBossTrap[]       = "gloamingforest:TFDTBT";
+inline constexpr char kBalcony[]        = "gloamingforest:TFDTBal";
+inline constexpr char kBeard[]          = "gloamingforest:TFDTBea";
+inline constexpr char kRoof[]           = "gloamingforest:TFDTRooS";
+inline constexpr char kRoofAntenna[]    = "gloamingforest:TFDTRA";
+inline constexpr char kRoofCactus[]     = "gloamingforest:TFDTRC";
+inline constexpr char kRoofFourPost[]   = "gloamingforest:TFDTRFP";
+inline constexpr char kRoofRings[]      = "gloamingforest:TFDTRR";
 
-inline constexpr char kDarkTower[] = "twilightforest:dark_tower";
+inline constexpr char kDarkTower[] = "gloamingforest:dark_tower";
 
 /// EnumDarkTowerDoor.
 enum class Door { Vanishing, Reappearing, Locked };

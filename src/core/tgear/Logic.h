@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/components/item/ItemDisplayContents.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorBeltItem.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/item/travellers_gear/modifiers/TooltipStringInterpolator.java
-//   src/main/java/twilightforest/client/overlay/display/ClockDisplay.java
-//   src/main/java/twilightforest/client/overlay/display/MoonDialDisplay.java
-//   src/main/java/twilightforest/util/TFMathUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/components/item/ItemDisplayContents.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorBeltItem.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/item/travellers_gear/modifiers/TooltipStringInterpolator.java
+//   src/main/java/gloamingforest/client/overlay/display/ClockDisplay.java
+//   src/main/java/gloamingforest/client/overlay/display/MoonDialDisplay.java
+//   src/main/java/gloamingforest/util/TFMathUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -76,7 +76,7 @@ int cycleChosenMapSlot(DisplayContents& contents);
 // ---- belt (TravellersArmorBeltItem#travellersTrySwapHotbar) ----------------------------------------
 
 /// One hotbar slot for the swap: whether it holds an item, and whether that item may be exchanged
-/// (canFitInsideContainerItems and not #twilightforest:travellers_belt_blacklisted).
+/// (canFitInsideContainerItems and not #gloamingforest:travellers_belt_blacklisted).
 struct HotbarSlot {
     bool empty   = true;
     bool allowed = true;
@@ -93,12 +93,12 @@ struct BeltSwapPlan {
 // ---- auto repair (TravellersGearLogic#getAutoRepairChance) -----------------------------------------
 
 inline constexpr double kAutoRepairSunlightBoost = 3;
-inline constexpr double kAutoRepairTwilightBoost = kAutoRepairSunlightBoost / 2;
+inline constexpr double kAutoRepairGloamingBoost = kAutoRepairSunlightBoost / 2;
 /// Ticks after the last armour damage during which nothing repairs (10 s; `<=` returns).
 inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
 /// TFMathUtil#probabilityOfAtLeastOneSuccess.
 [[nodiscard]] double probabilityOfAtLeastOneSuccess(double successProbability, double tries);
-[[nodiscard]] double autoRepairChance(double baseProbability, bool canSeeSky, bool twilightDimension, bool isDay);
+[[nodiscard]] double autoRepairChance(double baseProbability, bool canSeeSky, bool gloamingDimension, bool isDay);
 
 // ---- HUD texts (ClockDisplay, MoonDialDisplay) ------------------------------------------------------
 
@@ -109,7 +109,7 @@ inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
 /// (12500..13999), 3 night (14000..21999); the icon is (frame % 2 * 8, frame / 2 % 2 * 8) of time.png.
 [[nodiscard]] int clockFrame(std::int64_t dayTime);
 /// DimensionType#moonPhase(dayTime) = (dayTime / 24000 % 8 + 8) % 8 (the level's day time, never the
-/// dimension's fixed_time: day 3 in the Twilight Forest is phase 3).
+/// dimension's fixed_time: day 3 in the Gloaming Forest is phase 3).
 [[nodiscard]] inline int moonPhaseOf(std::int64_t dayTime) { return static_cast<int>((dayTime / 24000 % 8 + 8) % 8); }
 /// MoonDialDisplay's icon of moon phase k: (k % 4 * 8, k / 4 % 2 * 8) of moon.png (32 x 16).
 [[nodiscard]] std::array<int, 2> moonIconUv(int phase);
@@ -124,7 +124,7 @@ inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
 // ---- TooltipStringInterpolator -------------------------------------------------------------------
 
 /// Replaces every ${tfkeybinds/<key name>} in `text` with `keyName(<key name>)`. Other forms are
-/// left as they are (TF throws for them: none of its strings has one).
+/// left as they are (upstream throws for them: none of its strings has one).
 [[nodiscard]] std::string interpolate(std::string const& text, std::function<std::string(std::string const&)> const& keyName);
 
 } // namespace gf::core::tgear

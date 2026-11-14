@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/advancements/predicate/ItemColorPredicate.java
-//   src/main/java/twilightforest/advancements/DrinkFromFlaskTrigger.java
-//   src/main/java/twilightforest/advancements/KillBugTrigger.java
-//   src/main/java/twilightforest/advancements/UncraftItemTrigger.java
-//   src/main/java/twilightforest/advancements/HurtBossTrigger.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/advancements/predicate/ItemColorPredicate.java
+//   src/main/java/gloamingforest/advancements/DrinkFromFlaskTrigger.java
+//   src/main/java/gloamingforest/advancements/KillBugTrigger.java
+//   src/main/java/gloamingforest/advancements/UncraftItemTrigger.java
+//   src/main/java/gloamingforest/advancements/HurtBossTrigger.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 
@@ -23,7 +23,7 @@ std::string withNamespace(std::string id) {
     return id;
 }
 
-/// A block / item id without a Java state suffix ("twilightforest:firefly[facing=up]").
+/// A block / item id without a Java state suffix ("gloamingforest:firefly[facing=up]").
 std::string bareId(std::string id) {
     if (auto p = id.find('['); p != std::string::npos) id.resize(p);
     return withNamespace(std::move(id));
@@ -50,7 +50,7 @@ bool matchLocation(Json const& loc, EntityView const& e, Env const& env) {
             });
             if (!any) return false;
         } else {
-            return false; // a field TF's advancements never use: fail closed
+            return false; // a field upstream's advancements never use: fail closed
         }
     }
     return true;
@@ -63,7 +63,7 @@ bool matchTypeSpecific(Json const& ts, EntityView const& e) {
         for (auto const& [id, want] : a->items()) {
             bool done = e.advancements.contains(withNamespace(id));
             if (want.is_boolean() && done != want.get<bool>()) return false;
-            if (want.is_object()) return false; // per-criterion checks are not used by TF
+            if (want.is_object()) return false; // per-criterion checks are not used by upstream
         }
     }
     if (auto s = ts.find("stats"); s != ts.end() && s->is_array()) {
@@ -122,7 +122,7 @@ bool matchItem(Json const& predicate, ItemView const& item, Env const& env) {
         } else if (key == "predicates") {
             if (!value.is_object()) return false;
             for (auto const& [type, sub] : value.items()) {
-                if (type == "twilightforest:color") {
+                if (type == "gloamingforest:color") {
                     if (!matchItemColor(sub, item)) return false;
                 } else {
                     return false;
@@ -185,13 +185,13 @@ bool matchConditions(Json const& conditions, Context const& ctx, Env const& env)
                 if (auto b = block.find("blocks"); b != block.end() && !matchIds(*b, bareId(ctx.block->id), env.blockTag)) return false;
                 if (auto s = block.find("state"); s != block.end() && s->is_object()) {
                     for (auto const& [name, want] : s->items()) {
-                        // Bedrock names TF's states with the namespace ("twilightforest:regenerate")
+                        // Bedrock names upstream's states with the namespace ("gloamingforest:regenerate")
                         auto have = ctx.block->states.find(name);
                         if (have == ctx.block->states.end())
                             for (auto it = ctx.block->states.begin(); it != ctx.block->states.end(); ++it)
                                 if (it.key().size() > name.size() && it.key().ends_with(":" + name)) have = it;
                         if (have == ctx.block->states.end()) return false;
-                        if (want.is_object()) return false; // ranges are not used by TF
+                        if (want.is_object()) return false; // ranges are not used by upstream
                         auto w = scalarText(want), h = scalarText(*have);
                         // Bedrock keeps boolean states as bools or 0/1 integers
                         if (w == "true" && h == "1") h = "true";
@@ -243,21 +243,21 @@ std::string idIn(Json const& data, std::initializer_list<char const*> keys) {
 
 bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json const& data, Env const& env) {
     Json const& c = conditions.is_object() ? conditions : Json::object();
-    if (trigger == "twilightforest:hurt_boss") {
+    if (trigger == "gloamingforest:hurt_boss") {
         // HurtBossTrigger(player, boss): hurt_entity tested against the boss
         EntityView boss;
         boss.type = idIn(data, {"entity", "hurt_entity", "boss", "type"});
         if (auto h = c.find("hurt_entity"); h != c.end()) return matchConditions(*h, Context{&boss}, env);
         return true;
     }
-    if (trigger == "twilightforest:kill_bug") {
+    if (trigger == "gloamingforest:kill_bug") {
         // KillBugTrigger(player, BlockState bug): bug == the block's state's block
         auto want = c.find("bug");
         if (want == c.end() || want->is_null()) return true;
         auto bug = idIn(data, {"bug", "block"});
         return want->is_string() && bareId(want->get<std::string>()) == bug;
     }
-    if (trigger == "twilightforest:drink_from_flask") {
+    if (trigger == "gloamingforest:drink_from_flask") {
         // doses (default 0..4), seconds (default exactly 8), potion (required)
         Json doses   = c.contains("doses") ? c["doses"] : Json{{"min", 0}, {"max", 4}};
         Json seconds = c.contains("seconds") ? c["seconds"] : Json(8);
@@ -266,7 +266,7 @@ bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json con
         auto want = c.value("potion", std::string{});
         return !want.empty() && withNamespace(want) == idIn(data, {"potion"});
     }
-    if (trigger == "twilightforest:uncraft_item") {
+    if (trigger == "gloamingforest:uncraft_item") {
         auto pred = c.find("item");
         if (pred == c.end() || pred->is_null()) return true;
         ItemView item;
@@ -274,13 +274,13 @@ bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json con
         if (auto it = data.find("item"); it != data.end() && it->is_object()) item.count = it->value("count", 1);
         return matchItem(*pred, item, env);
     }
-    if (trigger == "twilightforest:add_modifier") {
+    if (trigger == "gloamingforest:add_modifier") {
         // AddModifierTrigger: modifier (optional ResourceLocation) equals the added one
         auto want = c.find("modifier");
         if (want == c.end() || want->is_null()) return true;
         return want->is_string() && withNamespace(want->get<std::string>()) == idIn(data, {"modifier"});
     }
-    if (trigger == "twilightforest:structure_cleared") {
+    if (trigger == "gloamingforest:structure_cleared") {
         // StructureClearedTrigger: structure (a required ResourceKey<Structure>) equals the cleared one
         auto want = c.find("structure");
         if (want == c.end() || !want->is_string()) return false;

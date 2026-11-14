@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/TravellersGearEvents.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorItem.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGogglesItem.java
-//   src/main/java/twilightforest/network/GogglesZoomPacket.java
-//   src/main/java/twilightforest/network/SwapHotbarPacket.java
-//   src/main/java/twilightforest/network/CycleMapSlotPacket.java
-//   src/main/java/twilightforest/block/RedThreadBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorItem.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGogglesItem.java
+//   src/main/java/gloamingforest/network/GogglesZoomPacket.java
+//   src/main/java/gloamingforest/network/SwapHotbarPacket.java
+//   src/main/java/gloamingforest/network/CycleMapSlotPacket.java
+//   src/main/java/gloamingforest/block/RedThreadBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -176,11 +176,11 @@ bool wearsGear(Actor const& a) {
 
 // ---- per-tick modifiers ------------------------------------------------------------------------------
 
-/// PlayerHooks (efficient eater): TF divides the exhaustion of checkMovementStatistics and of jumps by the
+/// PlayerHooks (efficient eater): upstream divides the exhaustion of checkMovementStatistics and of jumps by the
 /// component value (2). Bedrock's movement exhaustion is the FoodExhaustionSystem's, from the player's
 /// ExhaustionComponent coefficients: while the modifier is active its walk, sprint, swim, jump and sprint
 /// jump coefficients are the player's own divided by the value (mining, attacking, damage and healing
-/// keep theirs, as in TF).
+/// keep theirs, as in upstream).
 void applyEfficientEater(Player& player) {
     auto c = player.getEntityContext().tryGetComponent<ExhaustionComponent>();
     if (!c) return;
@@ -250,11 +250,11 @@ bool refreshBrokenName(ItemStack& stack, Player const* holder) {
     bool foreign = !current.empty() && !ours;
     if (isBroken(stack) && !foreign) {
         auto id   = items::idOf(stack);
-        auto key  = "item.twilightforest." + id.substr(id.find(':') + 1);
+        auto key  = "item.gloamingforest." + id.substr(id.find(':') + 1);
         auto name = holder ? trFor(*holder, key, key) : tr(key, key);
         auto mark2 = holder ? trFor(*holder, "travellers_gear.broken", " (Broken)") : tr("travellers_gear.broken", " (Broken)");
         // Component.translatable(descriptionId).append(" (Broken)" gray); Bedrock draws custom names
-        // in italics: the reset keeps TF's upright name
+        // in italics: the reset keeps upstream's upright name
         auto text = "§r" + name + "§7" + mark2;
         if (ours && current == text) return false;
         stack.setCustomName(Bedrock::Safety::RedactableString(text));
@@ -317,7 +317,7 @@ void tickWearer(Actor& wearer, std::int64_t now) {
 /// ("camera <player> fov_set <fov>" / "fov_clear", run as the server). The round-3 e2e probes: the
 /// command narrows the view (49 % of the pixels change) while a hand-built CameraInstructionPacket with
 /// the same FOV instruction is accepted without effect. `fov` is the client's FOV times the zoom; the
-/// camera takes [30, 110] only ("Custom FOV value must be within [30.0, 110.0]"), so TF's 21 degrees
+/// camera takes [30, 110] only ("Custom FOV value must be within [30.0, 110.0]"), so upstream's 21 degrees
 /// becomes 30.
 void sendZoomFov(Player& player, bool zoom, float fov) {
     if (player.isSimulatedPlayer()) return;
@@ -548,7 +548,7 @@ bool bypassesArmor(std::string const& type) {
 }
 
 /// Perfect dodge (TravellersGearEvents#performPerfectDodge): the impact is cancelled, so the projectile
-/// flies on through the wearer. A TF projectile (simulated by gf::projectile) gets the impact itself
+/// flies on through the wearer. An upstream projectile (simulated by gf::projectile) gets the impact itself
 /// cancelled (F8's ext::cancelImpact, NeoForge's ProjectileImpactEvent#setCanceled): no hit, no
 /// removal, it flies on with its velocity. A vanilla projectile (Bedrock's own hit): the damage is
 /// cancelled and, a tick later, the projectile gets back the motion it hit with, one step further
@@ -569,7 +569,7 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
     if (projectile) {
         auto key = std::make_pair(uidOf(d.victim), uidOf(*projectile));
         {
-            // TF cancels the whole impact: the explosion a dodged fireball / skull would cause on that
+            // upstream cancels the whole impact: the explosion a dodged fireball / skull would cause on that
             // impact (the same tick, the same victim) is cancelled with it
             std::lock_guard lock(state().mutex);
             auto&           dodged = state().dodgedImpacts;
@@ -580,13 +580,13 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
         }
         // only the projectile's own impact (ProjectileImpactEvent with an EntityHitResult on the wearer),
         // never the explosion, fire or magic damage a projectile causes
-        // (a TF projectile's hit deals its own TF damage type: the types TF's projectiles deal in
+        // (an upstream projectile's hit deals its own upstream damage type: the types upstream's projectiles deal in
         // onHitEntity; not the ice bomb's area freeze, the falling ice or the mortar's blast)
         static std::unordered_set<std::string> const kTfImpacts{
-            "twilightforest:lich_bolt",      "twilightforest:lich_bomb",     "twilightforest:moonworm",
-            "twilightforest:leaf_brain",     "twilightforest:thrown_block",  "twilightforest:thrown_axe",
-            "twilightforest:thrown_pickaxe", "twilightforest:lost_words",    "twilightforest:schooled",
-            "twilightforest:twilight_scepter", "twilightforest:snowball_fight", "twilightforest:spiked",
+            "gloamingforest:lich_bolt",      "gloamingforest:lich_bomb",     "gloamingforest:moonworm",
+            "gloamingforest:leaf_brain",     "gloamingforest:thrown_block",  "gloamingforest:thrown_axe",
+            "gloamingforest:thrown_pickaxe", "gloamingforest:lost_words",    "gloamingforest:schooled",
+            "gloamingforest:gloaming_scepter", "gloamingforest:snowball_fight", "gloamingforest:spiked",
         };
         bool impact = core::tgear::isProjectileImpactType(d.type) || (simulated && kTfImpacts.contains(d.type));
         if (impact && rollPerfectDodge(d.victim, projectile)) {
@@ -677,7 +677,7 @@ bool targetFilter(Mob& attacker, Actor& candidate) {
 
 // ---- red thread (RedThreadBlock: a MultifaceBlock) -------------------------------------------------------
 
-constexpr char const* kFaceStates[6]     = {"twilightforest:down", "twilightforest:up", "twilightforest:north", "twilightforest:south", "twilightforest:west", "twilightforest:east"};
+constexpr char const* kFaceStates[6]     = {"gloamingforest:down", "gloamingforest:up", "gloamingforest:north", "gloamingforest:south", "gloamingforest:west", "gloamingforest:east"};
 constexpr int         kFaceOffsets[6][3] = {{0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {-1, 0, 0}, {1, 0, 0}};
 
 int oppositeFace(int f) { return f ^ 1; }
@@ -792,14 +792,14 @@ int autoRepair(Actor& wearer, std::int64_t now) {
         ItemStack stack = wearer.getArmor(static_cast<Slot>(i));
         if (items::isEmpty(stack) || !hasModifier(stack, ids::kAutoRepair) || !isActiveOn(wearer, stack, ids::kAutoRepair)) continue;
         if (!stack.isDamageableItem() || stack.getDamageValue() <= 0) {
-            (void)nextFloat(); // the roll happens either way in TF
+            (void)nextFloat(); // the roll happens either way in upstream
             continue;
         }
         auto&    dim  = wearer.getDimension();
         BlockPos pos  = game::blockPosOf(feetOf(wearer)); // entity.blockPosition()
         bool     sky  = wearer.getDimensionBlockSource().canSeeSky(pos);
         double   base = numberOf(ids::kAutoRepair, 0.001);
-        double   p    = core::tgear::autoRepairChance(base, sky, gf::world::isTwilight(dim), isDay(dim, wearer.getLevel().getTime()));
+        double   p    = core::tgear::autoRepairChance(base, sky, gf::world::isGloaming(dim), isDay(dim, wearer.getLevel().getTime()));
         if (p > nextFloat()) {
             stack.setDamageValue(static_cast<short>(std::max(stack.getDamageValue() - 1, 0)));
             wearer.setArmor(static_cast<Slot>(i), stack);
@@ -820,10 +820,10 @@ bool rollPerfectDodge(Actor& victim, Actor* projectile) {
     if (probability <= nextFloat()) return false;
     // projectile.position().add(projectile.getDeltaMovement())
     Vec3 hit = projectile ? projectile->getPosition() + projectile->getPosDelta() : feetOf(victim);
-    fx::sound(victim.getDimension(), "item.twilightforest.travellers_gear.perfect_dodge", hit, 1.5f, voicePitch());
+    fx::sound(victim.getDimension(), "item.gloamingforest.travellers_gear.perfect_dodge", hit, 1.5f, voicePitch());
     for (int n = 0; n < 20; ++n) {
         Vec3 v{static_cast<float>(nextDouble() - 0.5), static_cast<float>(nextDouble() - 0.5), static_cast<float>(nextDouble() - 0.5)};
-        fx::particle(victim.getDimension(), "twilightforest:perfect_dodge", hit, v, 1);
+        fx::particle(victim.getDimension(), "gloamingforest:perfect_dodge", hit, v, 1);
     }
     {
         std::lock_guard lock(state().mutex);
@@ -937,7 +937,7 @@ public:
         });
         // TravellersGearEvents#cancelPhantomSpawns (PlayerSpawnPhantomsEvent DENY): Bedrock spawns the
         // phantoms of an insomniac player around it; a natural phantom spawn whose nearest player wears
-        // active all-night goggles is cancelled (the time since rest runs on, as in TF)
+        // active all-night goggles is cancelled (the time since rest runs on, as in upstream)
         mPhantom = ll::event::EventBus::getInstance().emplaceListener<ll::event::SpawningMobEvent>([](ll::event::SpawningMobEvent& ev) {
             if (ev.identifier().mFullName.get() != "minecraft:phantom" && ev.identifier().mIdentifier.get() != "phantom") return;
             if (!ev.naturalSpawn() || ev.fromSpawner()) return;

@@ -48,7 +48,7 @@ Entry const* familyAt(GlobalPos const& p, Family family) {
 
 bool redstoneFamily(Entry const* e) { return e && (e->family == Family::Door || e->family == Family::Trapdoor || e->family == Family::FenceGate); }
 
-/// Java BlockSetType / WoodType sounds: TF's wood sets have the wooden door, trapdoor and gate
+/// Java BlockSetType / WoodType sounds: upstream's wood sets have the wooden door, trapdoor and gate
 /// sounds (params.block_set "iron": the iron ones), at volume 1 and pitch nextFloat() * 0.1 + 0.9.
 void doorSound(BlockSource& region, BlockPos const& pos, Entry const& e, bool open) {
     bool        iron = e.str("block_set") == "iron";

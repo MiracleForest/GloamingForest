@@ -1,136 +1,136 @@
 {
-  "entity.twilightforest.ice.ambient": {
+  "entity.gloamingforest.ice.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ice.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.ice.ambient",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/crackle1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/crackle2"
       }
     ]
   },
-  "entity.twilightforest.ice.death": {
+  "entity.gloamingforest.ice.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ice.death",
+    "subtitle": "subtitles.gloamingforest.entity.ice.death",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/death1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/death1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/death2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/death2"
       }
     ]
   },
-  "entity.twilightforest.ice.hurt": {
+  "entity.gloamingforest.ice.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ice.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.ice.hurt",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/hurt1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/hurt1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/hurt2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/hurt2"
       }
     ]
   },
-  "entity.twilightforest.ice.shoot": {
+  "entity.gloamingforest.ice.shoot": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.ice.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.ice.shoot",
     "sounds": [
       {
         "name": "sounds/random/bow"
       }
     ]
   },
-  "entity.twilightforest.snow_guardian.ambient": {
+  "entity.gloamingforest.snow_guardian.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_guardian.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.snow_guardian.ambient",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/crackle1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/crackle2"
       }
     ]
   },
-  "entity.twilightforest.snow_guardian.death": {
+  "entity.gloamingforest.snow_guardian.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_guardian.death",
+    "subtitle": "subtitles.gloamingforest.entity.snow_guardian.death",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/death1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/death1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/death2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/death2"
       }
     ]
   },
-  "entity.twilightforest.snow_guardian.hurt": {
+  "entity.gloamingforest.snow_guardian.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_guardian.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.snow_guardian.hurt",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/hurt1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/hurt1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/hurt2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/hurt2"
       }
     ]
   },
-  "entity.twilightforest.snow_queen.ambient": {
+  "entity.gloamingforest.snow_queen.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.ambient",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/crackle1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/crackle2"
       }
     ]
   },
-  "entity.twilightforest.snow_queen.attack": {
+  "entity.gloamingforest.snow_queen.attack": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.attack",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.attack",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/throw"
       }
     ]
   },
-  "entity.twilightforest.snow_queen.break": {
+  "entity.gloamingforest.snow_queen.break": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.break",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.break",
     "sounds": [
       {
         "name": "sounds/random/break"
       }
     ]
   },
-  "entity.twilightforest.snow_queen.death": {
+  "entity.gloamingforest.snow_queen.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.death",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.death",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/death1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/death1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/death2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/death2"
       }
     ]
   },
-  "entity.twilightforest.snow_queen.hurt": {
+  "entity.gloamingforest.snow_queen.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.hurt",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/hurt1"
+        "name": "sounds/gloamingforest/aurora/mob/ice/hurt1"
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/hurt2"
+        "name": "sounds/gloamingforest/aurora/mob/ice/hurt2"
       }
     ]
   }

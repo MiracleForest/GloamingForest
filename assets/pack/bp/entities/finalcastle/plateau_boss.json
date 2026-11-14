@@ -2,13 +2,13 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:plateau_boss",
+      "identifier": "gloamingforest:plateau_boss",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "plateau_boss", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "plateau_boss", "monster", "mob"] },
       "minecraft:collision_box": { "width": 1.0, "height": 1.0 },
       "minecraft:health": { "value": 20, "max": 20 },
       "minecraft:movement": { "value": 0.7 },

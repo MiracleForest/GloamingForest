@@ -4,7 +4,7 @@
 # hollow trees and the three fallen trunk sizes placed in memory against golden volume hashes (rule
 # R19), with their piece tags read back through the piece factories; a forced hedge maze start in
 # the world (5 room spawners, the chests, the hedge walls, its map icon); a hollow tree grown through
-# landmark::generateAt (the robust twilight oak sapling's path); every feature type (block spike,
+# landmark::generateAt (the robust gloaming oak sapling's path); every feature type (block spike,
 # dark forest placer, fallen hollow log, small fallen log, foundation, hollow stump, lampposts,
 # monolith, mycelium blob, small lake, webs, wood roots) against golden hashes; a monolith in the
 # world with its two ravens; the generators, piece factories and descriptors of the seven structures.

@@ -2,11 +2,11 @@
 
 // Contract "data", tags (header owned by F0, implemented by F9).
 //
-// TF's 154 tags plus the vanilla / c: tags they reference, imported as data (F1) and merged
+// upstream's 154 tags plus the vanilla / c: tags they reference, imported as data (F1) and merged
 // from union fragments assets/tags/<registry>/<tag>.d/<u>.json (rule R6: members are added only
-// through fragments). Tag ids are written without '#': "twilightforest:portal/activator".
+// through fragments). Tag ids are written without '#': "gloamingforest:portal/activator".
 //
-//     if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:mazestone", blockId)) ...;
+//     if (gf::tags::has(gf::tags::Registry::Block, "gloamingforest:mazestone", blockId)) ...;
 //
 // Interactions matchers (feature/common/Interactions.h, Match::tag) use these.
 

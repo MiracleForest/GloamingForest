@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": {
+      "tag": "gloamingforest:arctic_fur"
+    },
+    "m": {
+      "item": "gloamingforest:arctic_fur"
+    }
+  },
+  "pattern": [
+    "###",
+    "#m#",
+    "###"
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:arctic_fur_block"
+  }
+}

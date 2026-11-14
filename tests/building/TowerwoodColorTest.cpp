@@ -1,5 +1,5 @@
-// U5 (building): the towerwood colour against TF 4.8's own SimplexNoiseHelper / ColorUtil, run on
-// a JDK 21 (the goldens were printed by TF's SimplexNoiseHelper.java with stub BlockPos / Mth).
+// U5 (building): the towerwood colour against upstream 4.8's own SimplexNoiseHelper / ColorUtil, run on
+// a JDK 21 (the goldens were printed by upstream's SimplexNoiseHelper.java with stub BlockPos / Mth).
 
 #include <gtest/gtest.h>
 

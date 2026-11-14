@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/gloaming_oak_banister"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---", "| |"],
+    "key": {
+      "-": {
+        "item": "gloamingforest:gloaming_oak_slab"
+      },
+      "|": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:gloaming_oak_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:gloaming_oak_banister",
+      "count": 3
+    }
+  }
+}

@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:towerwood_borer",
+      "identifier": "gloamingforest:towerwood_borer",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/towertermite"
+        "default": "textures/gloamingforest/entity/towertermite"
       },
       "geometry": {
         "default": "geometry.silverfish"

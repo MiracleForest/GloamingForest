@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:deer",
+      "identifier": "gloamingforest:deer",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "deer", "creature", "mob"]
+        "family": ["gloamingforest", "deer", "creature", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.7,

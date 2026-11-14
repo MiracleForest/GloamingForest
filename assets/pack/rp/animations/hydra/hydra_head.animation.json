@@ -1,19 +1,19 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.hydra_head.pose": {
+    "animation.gloamingforest.hydra_head.pose": {
       "loop": true,
       "bones": {
         "head": {
           "rotation": [
-            "query.target_x_rotation - q.property('twilightforest:mouth') * 15.0",
+            "query.target_x_rotation - q.property('gloamingforest:mouth') * 15.0",
             "query.target_y_rotation",
-            "math.min(math.sqrt(math.max(q.property('twilightforest:death') - 1.0, 0.0) / 20.0 * 1.6), 1.0) * 90.0"
+            "math.min(math.sqrt(math.max(q.property('gloamingforest:death') - 1.0, 0.0) / 20.0 * 1.6), 1.0) * 90.0"
           ]
         },
         "jaw": {
           "rotation": [
-            "q.property('twilightforest:mouth') * 60.0",
+            "q.property('gloamingforest:mouth') * 60.0",
             0,
             0
           ]

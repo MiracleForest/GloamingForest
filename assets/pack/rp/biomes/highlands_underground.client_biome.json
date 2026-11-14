@@ -2,7 +2,7 @@
   "format_version": "1.21.120",
   "minecraft:client_biome": {
     "description": {
-      "identifier": "twilightforest:highlands_underground"
+      "identifier": "gloamingforest:highlands_underground"
     },
     "components": {
       "minecraft:sky_color": {
@@ -18,7 +18,7 @@
         "atmosphere_identifier": "gloamingforest:highlands_underground_atmospherics"
       },
       "minecraft:biome_music": {
-        "music_definition": "twilightforest:highlands_underground"
+        "music_definition": "gloamingforest:highlands_underground"
       },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",

@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U29 (giants): the unit's internal header (its own files and selftests only; rule R2).
 //
-//   Beanstalk.cpp   magic beans, the beanstalk grower (a block entity in TF: BlockData "grower"
+//   Beanstalk.cpp   magic beans, the beanstalk grower (a block entity in upstream: BlockData "grower"
 //                   + gf:giants:growers), uberous soil
 //   Clouds.cpp      cloud blocks: fall damage, cloud puffs, precipitation (random ticks,
 //                   isRainingAt), the vanilla clients' rain / snow
 //   GiantBlocks.cpp the 4 x 4 x 4 giant blocks, their tiling state and the giant pickaxe / sword
 //   Mobs.cpp        giant miner and armored giant
-//   Structure.cpp   twilightforest:giant_house
+//   Structure.cpp   gloamingforest:giant_house
 
 #include <cstdint>
 #include <optional>
@@ -46,26 +46,26 @@ struct GiantsConfig {
 [[nodiscard]] GiantsConfig const& config();
 
 namespace id {
-inline constexpr char UberousSoil[]      = "twilightforest:uberous_soil";
-inline constexpr char HugeStalk[]        = "twilightforest:huge_stalk";
-inline constexpr char BeanstalkGrower[]  = "twilightforest:beanstalk_grower";
-inline constexpr char BeanstalkLeaves[]  = "twilightforest:beanstalk_leaves";
-inline constexpr char WispyCloud[]       = "twilightforest:wispy_cloud";
-inline constexpr char FluffyCloud[]      = "twilightforest:fluffy_cloud";
-inline constexpr char RainyCloud[]       = "twilightforest:rainy_cloud";
-inline constexpr char SnowyCloud[]       = "twilightforest:snowy_cloud";
-inline constexpr char GiantCobblestone[] = "twilightforest:giant_cobblestone";
-inline constexpr char GiantLog[]         = "twilightforest:giant_log";
-inline constexpr char GiantLeaves[]      = "twilightforest:giant_leaves";
-inline constexpr char GiantObsidian[]    = "twilightforest:giant_obsidian";
-inline constexpr char MagicBeans[]       = "twilightforest:magic_beans";
-inline constexpr char GiantPickaxe[]     = "twilightforest:giant_pickaxe";
-inline constexpr char GiantSword[]       = "twilightforest:giant_sword";
-inline constexpr char GiantMiner[]       = "twilightforest:giant_miner";
-inline constexpr char ArmoredGiant[]     = "twilightforest:armored_giant";
-inline constexpr char GiantHouse[]       = "twilightforest:giant_house";
-inline constexpr char CloudPuff[]        = "twilightforest:cloud_puff";
-/// The giant blocks' tiling states (GloamingForest's own, outside the frozen twilightforest: states): tiled false = the whole texture (item, a
+inline constexpr char UberousSoil[]      = "gloamingforest:uberous_soil";
+inline constexpr char HugeStalk[]        = "gloamingforest:huge_stalk";
+inline constexpr char BeanstalkGrower[]  = "gloamingforest:beanstalk_grower";
+inline constexpr char BeanstalkLeaves[]  = "gloamingforest:beanstalk_leaves";
+inline constexpr char WispyCloud[]       = "gloamingforest:wispy_cloud";
+inline constexpr char FluffyCloud[]      = "gloamingforest:fluffy_cloud";
+inline constexpr char RainyCloud[]       = "gloamingforest:rainy_cloud";
+inline constexpr char SnowyCloud[]       = "gloamingforest:snowy_cloud";
+inline constexpr char GiantCobblestone[] = "gloamingforest:giant_cobblestone";
+inline constexpr char GiantLog[]         = "gloamingforest:giant_log";
+inline constexpr char GiantLeaves[]      = "gloamingforest:giant_leaves";
+inline constexpr char GiantObsidian[]    = "gloamingforest:giant_obsidian";
+inline constexpr char MagicBeans[]       = "gloamingforest:magic_beans";
+inline constexpr char GiantPickaxe[]     = "gloamingforest:giant_pickaxe";
+inline constexpr char GiantSword[]       = "gloamingforest:giant_sword";
+inline constexpr char GiantMiner[]       = "gloamingforest:giant_miner";
+inline constexpr char ArmoredGiant[]     = "gloamingforest:armored_giant";
+inline constexpr char GiantHouse[]       = "gloamingforest:giant_house";
+inline constexpr char CloudPuff[]        = "gloamingforest:cloud_puff";
+/// The giant blocks' tiling states (GloamingForest's own, outside the frozen gloamingforest: states): tiled false = the whole texture (item, a
 /// block nobody fixed yet); else the position in the cell (0..3 each).
 inline constexpr char GiantTiled[] = "gf:giant_tiled";
 inline constexpr char GiantX[]     = "gf:giant_x";

@@ -1,7 +1,7 @@
 {
-  "twilightforest:block.twilightforest.beanstalk.grow": {
+  "gloamingforest:block.gloamingforest.beanstalk.grow": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.beanstalk.grow",
+    "subtitle": "subtitles.gloamingforest.block.beanstalk.grow",
     "sounds": [
       {
         "file": "random/beanstalk_grow"

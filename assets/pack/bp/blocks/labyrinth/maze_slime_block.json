@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:maze_slime_block",
+      "identifier": "gloamingforest:maze_slime_block",
       "menu_category": {
         "category": "construction"
       }
@@ -16,7 +16,7 @@
       },
       "minecraft:map_color": "#707070",
       "minecraft:friction": 0.2,
-      "minecraft:geometry": "geometry.twilightforest.maze_slime_block",
+      "minecraft:geometry": "geometry.gloamingforest.maze_slime_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_maze_slime_block",

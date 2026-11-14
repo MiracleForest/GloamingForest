@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/IHostileMount.java
-//   src/main/java/twilightforest/events/HostileMountEvents.java
-//   src/main/java/twilightforest/components/entity/YetiThrowAttachment.java
-//   src/main/java/twilightforest/entity/ai/goal/ThrowRiderGoal.java
-//   src/main/java/twilightforest/network/MovePlayerPacket.java
-//   src/main/java/twilightforest/network/UpdateThrownPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/IHostileMount.java
+//   src/main/java/gloamingforest/events/HostileMountEvents.java
+//   src/main/java/gloamingforest/components/entity/YetiThrowAttachment.java
+//   src/main/java/gloamingforest/entity/ai/goal/ThrowRiderGoal.java
+//   src/main/java/gloamingforest/network/MovePlayerPacket.java
+//   src/main/java/gloamingforest/network/UpdateThrownPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -14,7 +14,7 @@
 // can't dismount, crouch off or teleport away, takes no suffocation damage while held, and is
 // thrown with YetiThrowAttachment's state (fall damage while thrown becomes "yeeted" damage by
 // the thrower; ThrowRiderGoal#stop sets that state for a Player rider only, any other rider is
-// just pushed, so non-player riders keep plain fall damage as in TF). A mob is a hostile mount
+// just pushed, so non-player riders keep plain fall damage as in upstream). A mob is a hostile mount
 // when its type is marked (ext::markHostileMount, Java's IHostileMount marker) or when it grabbed
 // its rider (mount::grab).
 //   - preventTeleportingOffHostileMounts (EntityTeleportEvent of any living rider: ender pearl,
@@ -473,7 +473,7 @@ void installMounts() {
             auto it = S().throws.find(uidOf(d.victim));
             if (it != S().throws.end() && it->second.thrown) {
                 float amount = d.amount;
-                gf::combat::hurt(d.victim, amount, "twilightforest:yeeted", actorById(it->second.thrower));
+                gf::combat::hurt(d.victim, amount, "gloamingforest:yeeted", actorById(it->second.thrower));
                 return gf::combat::Verdict::Cancel;
             }
         }

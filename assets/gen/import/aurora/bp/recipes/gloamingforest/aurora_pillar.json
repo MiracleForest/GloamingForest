@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:aurora_pillar"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#", "#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:aurora_block"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:aurora_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:aurora_pillar",
+      "count": 2
+    }
+  }
+}

@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:cicada_jar",
+      "identifier": "gloamingforest:cicada_jar",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 15
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.mason_jar",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.mason_jar",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_jar_side",

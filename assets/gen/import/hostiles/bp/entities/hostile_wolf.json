@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:hostile_wolf",
+      "identifier": "gloamingforest:hostile_wolf",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "hostile_wolf", "monster", "mob"]
+        "family": ["gloamingforest", "hostile_wolf", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

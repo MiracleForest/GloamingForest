@@ -1,7 +1,7 @@
 {
-  "about": "Sounds of other owners that fauna's events play ({\"event\": id} variants), copied under sounds/twilightforest/fauna/alias/ as rendered from their recipes at fauna's last render, by tools/sounds/synth.ps1: do not edit. synth.ps1 -Check renders the copies from here and warns when an owner changed its event since: pwsh tools/sounds/synth.ps1 -Unit fauna refreshes them.",
+  "about": "Sounds of other owners that fauna's events play ({\"event\": id} variants), copied under sounds/gloamingforest/fauna/alias/ as rendered from their recipes at fauna's last render, by tools/sounds/synth.ps1: do not edit. synth.ps1 -Check renders the copies from here and warns when an owner changed its event since: pwsh tools/sounds/synth.ps1 -Unit fauna refreshes them.",
   "events": {
-    "entity.twilightforest.alpha_yeti.growl": {
+    "entity.gloamingforest.alpha_yeti.growl": {
       "owner": "caves",
       "variants": [
         {
@@ -165,7 +165,7 @@
         }
       ]
     },
-    "entity.twilightforest.carminite_golem.hurt": {
+    "entity.gloamingforest.carminite_golem.hurt": {
       "owner": "darktower",
       "variants": [
         {
@@ -182,7 +182,7 @@
         }
       ]
     },
-    "entity.twilightforest.death_tome.ambient": {
+    "entity.gloamingforest.death_tome.ambient": {
       "owner": "lich",
       "variants": [
         {
@@ -213,7 +213,7 @@
         }
       ]
     },
-    "entity.twilightforest.hostile_wolf.ambient": {
+    "entity.gloamingforest.hostile_wolf.ambient": {
       "owner": "hostiles",
       "variants": [
         {
@@ -272,7 +272,7 @@
         }
       ]
     },
-    "entity.twilightforest.hydra.growl": {
+    "entity.gloamingforest.hydra.growl": {
       "owner": "hydra",
       "variants": [
         {
@@ -319,7 +319,7 @@
         }
       ]
     },
-    "entity.twilightforest.ice.ambient": {
+    "entity.gloamingforest.ice.ambient": {
       "owner": "aurora",
       "variants": [
         {
@@ -408,7 +408,7 @@
         }
       ]
     },
-    "entity.twilightforest.minotaur.ambient": {
+    "entity.gloamingforest.minotaur.ambient": {
       "owner": "labyrinth",
       "variants": [
         {
@@ -425,7 +425,7 @@
         }
       ]
     },
-    "entity.twilightforest.naga.hiss": {
+    "entity.gloamingforest.naga.hiss": {
       "owner": "naga",
       "variants": [
         {
@@ -589,7 +589,7 @@
         }
       ]
     },
-    "entity.twilightforest.redcap.ambient": {
+    "entity.gloamingforest.redcap.ambient": {
       "owner": "hostiles",
       "variants": [
         {
@@ -1216,7 +1216,7 @@
         }
       ]
     },
-    "entity.twilightforest.wraith.ambient": {
+    "entity.gloamingforest.wraith.ambient": {
       "owner": "hostiles",
       "variants": [
         {

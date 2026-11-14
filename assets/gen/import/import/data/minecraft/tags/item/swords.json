@@ -1,11 +1,11 @@
 {
   "values": [
-    "twilightforest:ironwood_sword",
-    "twilightforest:steeleaf_sword",
-    "twilightforest:knightmetal_sword",
-    "twilightforest:fiery_sword",
-    "twilightforest:giant_sword",
-    "twilightforest:ice_sword",
-    "twilightforest:glass_sword"
+    "gloamingforest:ironwood_sword",
+    "gloamingforest:steeleaf_sword",
+    "gloamingforest:knightmetal_sword",
+    "gloamingforest:fiery_sword",
+    "gloamingforest:giant_sword",
+    "gloamingforest:ice_sword",
+    "gloamingforest:glass_sword"
   ]
 }

@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:minotaur_labyrinth_miniature_structure",
+      "identifier": "gloamingforest:minotaur_labyrinth_miniature_structure",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"]
+        "gloamingforest:facing": ["north", "south", "west", "east"]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_mazestone",
@@ -62,9 +62,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_mazestone",
@@ -109,9 +109,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_mazestone",
@@ -156,9 +156,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_mazestone",
@@ -203,9 +203,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_mazestone",

@@ -1,23 +1,23 @@
 {
   "tf_item_red_thread": {
-    "textures": "textures/twilightforest/item/red_thread"
+    "textures": "textures/gloamingforest/item/red_thread"
   },
   "tf_item_travellers_belt": {
-    "textures": "textures/twilightforest/item/travellers_belt"
+    "textures": "textures/gloamingforest/item/travellers_belt"
   },
   "tf_item_travellers_boots": {
-    "textures": "textures/twilightforest/item/travellers_boots"
+    "textures": "textures/gloamingforest/item/travellers_boots"
   },
   "tf_item_travellers_gloves": {
-    "textures": "textures/twilightforest/item/travellers_gloves"
+    "textures": "textures/gloamingforest/item/travellers_gloves"
   },
   "tf_item_travellers_goggles": {
-    "textures": "textures/twilightforest/item/travellers_goggles"
+    "textures": "textures/gloamingforest/item/travellers_goggles"
   },
   "tf_item_travellers_vest": {
-    "textures": "textures/twilightforest/item/travellers_vest"
+    "textures": "textures/gloamingforest/item/travellers_vest"
   },
   "tf_item_travellers_wings": {
-    "textures": "textures/twilightforest/item/travellers_wings"
+    "textures": "textures/gloamingforest/item/travellers_wings"
   }
 }

@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:hollow_sorting_log_climbable",
+      "identifier": "gloamingforest:hollow_sorting_log_climbable",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:variant": ["vine", "ladder", "ladder_waterlogged"]
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:variant": ["vine", "ladder", "ladder_waterlogged"]
       }
     },
     "components": {
@@ -24,7 +24,7 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 5
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_sorting_log",
@@ -72,9 +72,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:variant') == 'ladder'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -126,9 +126,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -180,9 +180,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:variant') == 'vine'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -230,9 +230,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:variant') == 'ladder'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -284,9 +284,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -338,9 +338,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:variant') == 'vine'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -388,9 +388,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:variant') == 'ladder'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -442,9 +442,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -496,9 +496,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:variant') == 'vine'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -546,9 +546,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:variant') == 'ladder'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -600,9 +600,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",
@@ -654,9 +654,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:variant') == 'vine'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_sorting_log",

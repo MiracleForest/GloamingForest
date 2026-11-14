@@ -2,7 +2,7 @@
   "format_version": "1.21.120",
   "minecraft:client_biome": {
     "description": {
-      "identifier": "twilightforest:firefly_forest"
+      "identifier": "gloamingforest:firefly_forest"
     },
     "components": {
       "minecraft:sky_color": {
@@ -18,7 +18,7 @@
         "atmosphere_identifier": "gloamingforest:firefly_forest_atmospherics"
       },
       "minecraft:biome_music": {
-        "music_definition": "twilightforest:firefly_forest"
+        "music_definition": "gloamingforest:firefly_forest"
       },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",

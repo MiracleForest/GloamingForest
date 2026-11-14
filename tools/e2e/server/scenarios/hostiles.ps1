@@ -3,7 +3,7 @@
 # the pinch beetle's grab, the redcap sapper planting and the redcaps lighting TNT, the druid's
 # poisoning nature bolt and the log it turns into birch leaves, the slime blob's 4 damage, the swarm
 # spider's 1-in-4 bite, the king spider's druid rider, the wraith's flight home through a wall and
-# the entity loot tables, and the A5 spawn sweep over all 80 TF entity types (attributes against the
+# the entity loot tables, and the A5 spawn sweep over all 80 upstream entity types (attributes against the
 # Java goldens, loot, sounds, despawn rules, /summon) with two players for the targeting check; the
 # BDS content log stays clean (run.ps1 fails on content errors).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null

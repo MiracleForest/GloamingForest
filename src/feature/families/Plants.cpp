@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/SpecialFlowerPotBlock.java
-//   src/main/java/twilightforest/block/SnowLoggable.java
-//   src/main/java/twilightforest/block/TFBushBlock.java
-//   src/main/java/twilightforest/block/LightableBlock.java
-//   src/main/java/twilightforest/world/components/feature/trees/growers/StructureTreeGrower.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/SpecialFlowerPotBlock.java
+//   src/main/java/gloamingforest/block/SnowLoggable.java
+//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/LightableBlock.java
+//   src/main/java/gloamingforest/world/components/feature/trees/growers/StructureTreeGrower.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Block families (F11): leaves (Java LeavesBlock: distance to a log, persistence, decay), saplings
 // (SaplingBlock: two stages; the tree is Java's TreeGrower from params.grower: the 2x2 mega tree,
-// the secondary chance and trees, placed through gf::features; TF's StructureTreeGrower and units'
-// own growers through feature/ext/families/Growers.h), potted plants (FlowerPotBlock and TF's
-// SpecialFlowerPotBlock), log / wood stripping (AxeItem with TF's strippables), TF's snowloggable
-// blocks (snow layers inside the block) and TF's lightable blocks.
+// the secondary chance and trees, placed through gf::features; upstream's StructureTreeGrower and units'
+// own growers through feature/ext/families/Growers.h), potted plants (FlowerPotBlock and upstream's
+// SpecialFlowerPotBlock), log / wood stripping (AxeItem with upstream's strippables), upstream's snowloggable
+// blocks (snow layers inside the block) and upstream's lightable blocks.
 
 #include <algorithm>
 #include <cmath>
@@ -202,7 +202,7 @@ bool growTree(BlockSource& region, BlockPos const& pos, Block const& sapling, En
     Json g = e.params.contains("grower") && e.params["grower"].is_object() ? e.params["grower"] : Json{{"feature", e.str("feature")}};
     auto str = [&](char const* key) { return g.contains(key) && g[key].is_string() ? g[key].get<std::string>() : std::string(); };
     if (auto structure = str("structure"); !structure.empty()) {
-        // TF StructureTreeGrower: the structure's owner grows it
+        // upstream StructureTreeGrower: the structure's owner grows it
         if (auto const* grow = families_ext::structureGrowerOf(structure)) return (*grow)(region, pos, structure, random);
         static std::set<std::string> warned;
         if (warned.insert(structure).second) log().warn("families: no grower for the structure {} of {}", structure, e.id);
@@ -361,7 +361,7 @@ std::optional<Vec3> clipBox(Vec3 const& from, Vec3 const& dir, AABB const& box) 
     return Vec3{from.x + dir.x * tmin, from.y + dir.y * tmin, from.z + dir.z * tmin};
 }
 
-/// TF SnowLoggable.clip: the player's look against the block's outline (the plant's selection box
+/// upstream SnowLoggable.clip: the player's look against the block's outline (the plant's selection box
 /// and its snow), the height of the hit inside the block.
 std::optional<float> clipHeight(Player& player, BlockPos const& pos, Block const& block, Entry const& e, int layers) {
     Vec3 eye = player.getEyePos();
@@ -465,11 +465,11 @@ void installPlants() {
             auto const* e = entryOf(c.block);
             if (!e || (c.sneaking && !c.itemId.empty())) return ia::Result::Pass; // sneaking with an item: the item's use
             if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
-            // FlowerPotBlock.useItemOn: a plant (TF's or vanilla) on a full pot does nothing; any
+            // FlowerPotBlock.useItemOn: a plant (upstream's or vanilla) on a full pot does nothing; any
             // other item takes the plant out (PASS_TO_DEFAULT_BLOCK_INTERACTION -> useWithoutItem)
             if (!c.itemId.empty() && (pottedFor(c.itemId) || vanillaPottable(c.itemId))) return ia::Result::Consume;
             if (!c.itemId.empty() && c.offhand) return ia::Result::Pass; // useWithoutItem: the main hand only
-            // useWithoutItem: the plant back to the player (TF's SpecialFlowerPotBlock keeps it)
+            // useWithoutItem: the plant back to the player (upstream's SpecialFlowerPotBlock keeps it)
             if (!e->flag("special")) {
                 if (auto plant = makeItem(e->str("plant")); !plant.isNull()) give(c.player, plant);
             }
@@ -510,7 +510,7 @@ void installPlants() {
             }));
         }
     }
-    // ---- snowloggable (TF TFBushBlock.useItemOn with snow, SnowLoggable.handleBreakingLogic)
+    // ---- snowloggable (upstream TFBushBlock.useItemOn with snow, SnowLoggable.handleBreakingLogic)
     for (auto const* e : entries()) {
         if (!e->has(Snowloggable)) continue;
         ia::Match m;
@@ -566,7 +566,7 @@ void installPlants() {
             return ia::Result::Consume;
         }));
     }
-    // ---- lightable (TF LightableBlock.tryLightCandles / FIRESTARTER_LIGHT)
+    // ---- lightable (upstream LightableBlock.tryLightCandles / FIRESTARTER_LIGHT)
     for (auto const* e : entries()) {
         if (!e->has(Lightable)) continue;
         ia::Match m;
@@ -648,7 +648,7 @@ void installPlants() {
     }
     for (auto const* e : entries()) {
         if (e->has(Snowloggable)) {
-            // TF SnowLoggable.meltSnow (the melted snow drops what a snow layer broken without a
+            // upstream SnowLoggable.meltSnow (the melted snow drops what a snow layer broken without a
             // tool drops: nothing)
             blockevents::onRandomTick(e->id, [](BlockSource& region, BlockPos const& pos, Block const& block, blockevents::RandomSource&) {
                 int layers = intState(block, state::Layers).value_or(0);
@@ -664,7 +664,7 @@ void installPlants() {
             });
         }
         if (e->has(Lightable)) {
-            // TF LightableBlock.lightCandlesWithProjectile: burning projectiles light it
+            // upstream LightableBlock.lightCandlesWithProjectile: burning projectiles light it
             blockevents::onProjectileHit(e->id, [](BlockSource& region, BlockPos const& pos, Actor& projectile) {
                 Block const* b = blockAt(region, pos);
                 if (!b || !projectile.isOnFire() || strState(*b, state::Lighting) != "none") return;

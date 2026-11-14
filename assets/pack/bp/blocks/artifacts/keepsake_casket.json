@@ -2,23 +2,23 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:keepsake_casket",
+      "identifier": "gloamingforest:keepsake_casket",
       "menu_category": {
         "category": "items"
       },
       "states": {
-        "twilightforest:damage": [
+        "gloamingforest:damage": [
           0,
           1,
           2
         ],
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
           "east"
         ],
-        "twilightforest:multilogged": [
+        "gloamingforest:multilogged": [
           "air",
           "water",
           "lava",
@@ -38,7 +38,7 @@
       ],
       "minecraft:map_color": "#191919",
       "minecraft:loot": "loot_tables/artifacts/empty.json",
-      "minecraft:geometry": "geometry.twilightforest.keepsake_casket_block",
+      "minecraft:geometry": "geometry.gloamingforest.keepsake_casket_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_artifacts_casket_0",
@@ -73,7 +73,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:damage') == 1",
+        "condition": "q.block_state('gloamingforest:damage') == 1",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -84,7 +84,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:damage') == 2",
+        "condition": "q.block_state('gloamingforest:damage') == 2",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -95,7 +95,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -107,7 +107,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -119,7 +119,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -131,7 +131,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -143,9 +143,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'obsidian'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'obsidian'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_obsidian",
@@ -187,9 +187,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'stone'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'stone'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_stone",
@@ -231,9 +231,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'basalt'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'basalt'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_basalt_side",
@@ -275,7 +275,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'lava'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'lava'",
         "components": {
           "minecraft:light_emission": 15
         }

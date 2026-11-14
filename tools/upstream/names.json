@@ -1,0 +1,9 @@
+{
+  "comment": "This project's names, which tools/upstream/Upstream.psm1 gives the upstream reference view: the namespace (ids, packages, paths) and the mod's name per locale (lang texts).",
+  "namespace": "gloamingforest",
+  "names": {
+    "en_us": "Gloaming Forest",
+    "zh_cn": "薄暮森林",
+    "zh_tw": "薄暮森林"
+  }
+}

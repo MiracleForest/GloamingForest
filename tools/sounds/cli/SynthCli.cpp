@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Contract "synth" (F3): the renderer behind tools/sounds/synth.ps1.
 //
 // Built by synth.ps1 with clang-cl straight from this file and src/core/synth/*.cpp (standard

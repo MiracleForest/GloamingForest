@@ -8,27 +8,27 @@
 // take their biome colour from BiomeColorSampling's tessellation policies instead
 // (getTessellationPolicy(tint method).get(block, region, pos, biomeTintCache)), so a tint
 // registered for a vanilla block was never asked. This file hooks the grass and foliage policies:
-// - in TF's biomes a block with a registered tint gets it (the policy's own colour is the game's
+// - in upstream's biomes a block with a registered tint gets it (the policy's own colour is the game's
 //   colour of its tint method, the other methods are asked from their policies when the tint
 //   function wants them);
-// - every other block the game draws with the biome grass or (default) foliage colour gets TF's
+// - every other block the game draws with the biome grass or (default) foliage colour gets upstream's
 //   colour there too (Java's BiomeColors.getAverageGrassColor / getAverageFoliageColor at the
-//   block: TF's own blocks drawn with the biome colour, such as twilight oak leaves and the
-//   fiddlehead, and the probe blocks F12's resolver asks for the game's colour of a TF block).
-// Outside TF's biomes (every other dimension) the game's colour stays, after one biome lookup.
+//   block: upstream's own blocks drawn with the biome colour, such as gloaming oak leaves and the
+//   fiddlehead, and the probe blocks F12's resolver asks for the game's colour of an upstream block).
+// Outside upstream's biomes (every other dimension) the game's colour stays, after one biome lookup.
 // While a tint function runs, gf::biomes::ext::tintRegion() is the block source being tessellated
 // (U1 reads the biome at a position from it). Nested policy calls (a tint asking the game's other
 // colours) get the game's own colour.
 //
-// Two more hooks finish TF's biome colours with the client mod:
-// - LeavesBlock::isSeasonTinted is false in TF's biomes. In a cold biome (snowy forest, glacier)
+// Two more hooks finish upstream's biome colours with the client mod:
+// - LeavesBlock::isSeasonTinted is false in upstream's biomes. In a cold biome (snowy forest, glacier)
 //   Bedrock draws leaves through its seasons map (the tint is not a colour but a place in that map
-//   plus a snow amount); Java has no seasons, and TF's snowy forest draws its leaves white
+//   plus a snow amount); Java has no seasons, and upstream's snowy forest draws its leaves white
 //   (#FFFFFF), the glacier the colour map's foliage colour.
 // - the water: BiomeColorSampling::WaterTessellationPolicy (the water mesh) and getWaterColor
-//   answer TF's water colour (BiomeSpecialEffects#waterColor: the swamp's green, the fire swamp's
-//   red, ...) in TF's biomes, blended over the columns as Java's BiomeColors.getAverageWaterColor.
-// - MaterialRepository::initializeMaterials: the plant faces of TF's grass-tinted blocks of other
+//   answer upstream's water colour (BiomeSpecialEffects#waterColor: the swamp's green, the fire swamp's
+//   red, ...) in upstream's biomes, blended over the columns as Java's BiomeColors.getAverageWaterColor.
+// - MaterialRepository::initializeMaterials: the plant faces of upstream's grass-tinted blocks of other
 //   units (the fiddlehead and its pot) get the grass tint method (their data-driven material
 //   instances declare none, so the client would never ask a tint for them).
 
@@ -153,12 +153,12 @@ private:
     mutable std::optional<unsigned> mColors[3];
 };
 
-/// TF's colour of `block` at `pos` (nullopt: not in a TF biome, or a nested call): its registered
-/// tint, else TF's biome colour of the policy's tint method.
+/// upstream's colour of `block` at `pos` (nullopt: not in an upstream biome, or a nested call): its registered
+/// tint, else upstream's biome colour of the policy's tint method.
 std::optional<mce::Color>
 dispatch(Block const& block, BlockSource& region, BlockPos const& pos, BiomeTintCache const* cache, TintMethod method, mce::Color const& game) {
     if (tlDepth > 0) return std::nullopt;
-    // only TF's biomes have TF colours (one lookup for every block of the other dimensions)
+    // only upstream's biomes have upstream colours (one lookup for every block of the other dimensions)
     if (!isTfBiome(biomeIdOf(region.getBiome(pos)))) return std::nullopt;
     std::string const& id = idOf(block);
     PolicyColors       colors(block, region, pos, cache, method, game);
@@ -177,14 +177,14 @@ dispatch(Block const& block, BlockSource& region, BlockPos const& pos, BiomeTint
     if (!rgb) return std::nullopt;
     if (gApplied.fetch_add(1, std::memory_order_relaxed) == 0)
         gf::log().info("biomes: vanilla tint hook applied the tint of {} at {} {} {} (#{:06X} over the game's #{:06X})", id, pos.x, pos.y, pos.z, *rgb, rgbOf(game));
-    // the first tint that changed the game's colour, per tint method, and the first TF block given
-    // TF's biome colour (the e2e scenario waits for them)
+    // the first tint that changed the game's colour, per tint method, and the first upstream block given
+    // upstream's biome colour (the e2e scenario waits for them)
     static std::atomic<unsigned> changed{0};
     unsigned                     bit = method == TintMethod::Grass ? 1u : 2u;
     if (*rgb != rgbOf(game) && !(changed.fetch_or(bit) & bit))
         gf::log().info("biomes: vanilla tint hook changed the {} colour of {} at {} {} {} to #{:06X} (the game's #{:06X})", method == TintMethod::Grass ? "grass" : "foliage", id, pos.x, pos.y, pos.z, *rgb, rgbOf(game));
-    if (!registered && id.starts_with("twilightforest:") && !(changed.fetch_or(bit << 2) & (bit << 2)))
-        gf::log().info("biomes: TF's biome {} colour drawn on {} at {} {} {} (#{:06X})", method == TintMethod::Grass ? "grass" : "foliage", id, pos.x, pos.y, pos.z, *rgb);
+    if (!registered && id.starts_with("gloamingforest:") && !(changed.fetch_or(bit << 2) & (bit << 2)))
+        gf::log().info("biomes: upstream's biome {} colour drawn on {} at {} {} {} (#{:06X})", method == TintMethod::Grass ? "grass" : "foliage", id, pos.x, pos.y, pos.z, *rgb);
     return colorOf(*rgb, game.a);
 }
 
@@ -235,15 +235,15 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     mce::Color game = origin(block, region, pos, cache);
     // the foliage policy serves every foliage method (birch and evergreen are fixed colours in Java):
-    // only the biome foliage (oak and its kin) takes TF's colours
+    // only the biome foliage (oak and its kin) takes upstream's colours
     if (static_cast<TintMethod>(mTintMethod) != TintMethod::DefaultFoliage) return game;
     if (auto c = dispatch(block, region, pos, cache, TintMethod::DefaultFoliage, game)) return *c;
     return game;
 }
 
-// Java has no seasons: leaves in TF's cold biomes are drawn with their foliage colour.
+// Java has no seasons: leaves in upstream's cold biomes are drawn with their foliage colour.
 LL_TYPE_INSTANCE_HOOK(
-    TwilightLeavesSeasonsHook,
+    GloamingLeavesSeasonsHook,
     ll::memory::HookPriority::Normal,
     LeavesBlock,
     &LeavesBlock::$isSeasonTinted,
@@ -258,7 +258,7 @@ LL_TYPE_INSTANCE_HOOK(
         std::string const biome = client::biomes::biomeIdOf(region.getBiome(p));
         if (client::biomes::isTfBiome(biome)) {
             if (gSeasonsOff.fetch_add(1, std::memory_order_relaxed) == 0)
-                gf::log().info("biomes: leaves at {} {} {} drawn without Bedrock's seasons map (TF's biome {})", p.x, p.y, p.z, biome);
+                gf::log().info("biomes: leaves at {} {} {} drawn without Bedrock's seasons map (upstream's biome {})", p.x, p.y, p.z, biome);
             return false;
         }
     } catch (...) {}
@@ -268,7 +268,7 @@ LL_TYPE_INSTANCE_HOOK(
 // ... and in the render layer the leaves of any other biome use (the seasons layers read the tint as
 // a place in the seasons map): seasons opaque -> opaque, seasons alpha test -> alpha test.
 LL_TYPE_INSTANCE_HOOK(
-    TwilightLeavesLayerHook,
+    GloamingLeavesLayerHook,
     ll::memory::HookPriority::Normal,
     LeavesBlock,
     &LeavesBlock::$getRenderLayer,
@@ -286,10 +286,10 @@ LL_TYPE_INSTANCE_HOOK(
     return game;
 }
 
-// The water mesh: BiomeColors.getAverageWaterColor in TF's biomes (each column's TF water colour,
+// The water mesh: BiomeColors.getAverageWaterColor in upstream's biomes (each column's upstream water colour,
 // blended), the game's alpha (the surface opacity) kept.
 LL_TYPE_INSTANCE_HOOK(
-    TwilightWaterTessellationHook,
+    GloamingWaterTessellationHook,
     ll::memory::HookPriority::Normal,
     BiomeColorSampling::WaterTessellationPolicy,
     static_cast<mce::Color (BiomeColorSampling::WaterTessellationPolicy::*)(Block const&, BlockSource&, BlockPos const&, BiomeTintCache const*) const>(
@@ -307,7 +307,7 @@ LL_TYPE_INSTANCE_HOOK(
         if (auto rgb = client::biomes::waterAt(region, pos, rgbOf(game))) {
             if (gWaterDrawn.fetch_add(1, std::memory_order_relaxed) == 0)
                 gf::log().info(
-                    "biomes: water tessellation hook drew TF's water of {} at {} {} {} (#{:06X} over the game's #{:06X})",
+                    "biomes: water tessellation hook drew upstream's water of {} at {} {} {} (#{:06X} over the game's #{:06X})",
                     client::biomes::biomeIdOf(region.getBiome(pos)),
                     pos.x,
                     pos.y,
@@ -321,13 +321,13 @@ LL_TYPE_INSTANCE_HOOK(
     return game;
 }
 
-// TF's grass-tinted blocks owned by other units (the fiddlehead, the potted fiddlehead: ColorHandler
+// upstream's grass-tinted blocks owned by other units (the fiddlehead, the potted fiddlehead: ColorHandler
 // tints their plant faces with the grass colour) are data-driven blocks whose material instances
 // declare no tint method, so the client never asks a tint for them. Before the client builds their
 // materials, the instances drawn with those faces' textures get the grass tint method; the client
-// then asks the grass colour (TF's, through the hooks above and F12's registry) for them.
+// then asks the grass colour (upstream's, through the hooks above and F12's registry) for them.
 LL_TYPE_INSTANCE_HOOK(
-    TwilightPlantTintMethodHook,
+    GloamingPlantTintMethodHook,
     ll::memory::HookPriority::Normal,
     ClientBlockPipeline::MaterialRepository,
     &ClientBlockPipeline::MaterialRepository::initializeMaterials,
@@ -346,16 +346,16 @@ LL_TYPE_INSTANCE_HOOK(
                 if (texture != t) continue;
                 instance.mTintMethod = TintMethod::Grass;
                 if (gPlantTints.fetch_add(1, std::memory_order_relaxed) == 0)
-                    gf::log().info("biomes: TF's grass tint given to the material instance {} ({})", name.getString(), texture);
+                    gf::log().info("biomes: upstream's grass tint given to the material instance {} ({})", name.getString(), texture);
             }
         }
     } catch (...) {}
     origin(materialInstance, atlasItemManager, textureShiftManager, experiments, fromBlockItemVisualComponent);
 }
 
-// BiomeSpecialEffects#waterColor of TF's biomes (the game's water colour lookup by biome).
+// BiomeSpecialEffects#waterColor of upstream's biomes (the game's water colour lookup by biome).
 LL_STATIC_HOOK(
-    TwilightWaterColorHook,
+    GloamingWaterColorHook,
     ll::memory::HookPriority::Normal,
     &BiomeColorSampling::getWaterColor,
     int,
@@ -368,7 +368,7 @@ LL_STATIC_HOOK(
         if (auto w = colors::water(id)) {
             int tf = static_cast<int>((static_cast<unsigned>(game) & 0xFF000000u) | static_cast<unsigned>(*w));
             if (gWaterApplied.fetch_add(1, std::memory_order_relaxed) == 0)
-                gf::log().info("biomes: water colour hook applied TF's water of {} at {} {} {} (#{:06X}, the game's #{:08X})", id, pos.x, pos.y, pos.z, *w, static_cast<unsigned>(game));
+                gf::log().info("biomes: water colour hook applied upstream's water of {} at {} {} {} (#{:06X}, the game's #{:08X})", id, pos.x, pos.y, pos.z, *w, static_cast<unsigned>(game));
             return tf;
         }
     } catch (...) {}
@@ -379,9 +379,9 @@ struct VanillaTintModule {
     void install() {
         int a = VanillaGrassTintHook::hook();
         int b = VanillaFoliageTintHook::hook();
-        int c = TwilightLeavesSeasonsHook::hook() | TwilightLeavesLayerHook::hook();
-        int d = TwilightWaterColorHook::hook() | TwilightWaterTessellationHook::hook();
-        int e = TwilightPlantTintMethodHook::hook();
+        int c = GloamingLeavesSeasonsHook::hook() | GloamingLeavesLayerHook::hook();
+        int d = GloamingWaterColorHook::hook() | GloamingWaterTessellationHook::hook();
+        int e = GloamingPlantTintMethodHook::hook();
         gf::log().info(
             "biomes: vanilla tint hooks installed (grass {}, foliage {}, seasons {}, water {}, plants {})",
             a == 0 ? "ok" : "failed",
@@ -392,13 +392,13 @@ struct VanillaTintModule {
         );
     }
     void uninstall() {
-        TwilightWaterTessellationHook::unhook();
-        TwilightPlantTintMethodHook::unhook();
+        GloamingWaterTessellationHook::unhook();
+        GloamingPlantTintMethodHook::unhook();
         VanillaGrassTintHook::unhook();
         VanillaFoliageTintHook::unhook();
-        TwilightLeavesSeasonsHook::unhook();
-        TwilightLeavesLayerHook::unhook();
-        TwilightWaterColorHook::unhook();
+        GloamingLeavesSeasonsHook::unhook();
+        GloamingLeavesLayerHook::unhook();
+        GloamingWaterColorHook::unhook();
     }
 };
 

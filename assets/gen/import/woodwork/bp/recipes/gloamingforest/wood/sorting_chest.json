@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_chest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#C#", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:sorting_planks"
+      },
+      "C": {
+        "item": "minecraft:chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_chest",
+      "count": 2
+    }
+  }
+}

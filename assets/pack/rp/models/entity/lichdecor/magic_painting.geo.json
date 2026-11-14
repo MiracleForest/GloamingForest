@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.magic_painting_castaway_paradise",
+        "identifier": "geometry.gloamingforest.lichdecor.magic_painting_castaway_paradise",
         "texture_width": 32,
         "texture_height": 64,
         "visible_bounds_width": 5,
@@ -307,7 +307,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.magic_painting_darkness",
+        "identifier": "geometry.gloamingforest.lichdecor.magic_painting_darkness",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 5,
@@ -611,7 +611,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.magic_painting_lucid_lands",
+        "identifier": "geometry.gloamingforest.lichdecor.magic_painting_lucid_lands",
         "texture_width": 48,
         "texture_height": 48,
         "visible_bounds_width": 5,
@@ -1265,7 +1265,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.magic_painting_music_in_the_mire",
+        "identifier": "geometry.gloamingforest.lichdecor.magic_painting_music_in_the_mire",
         "texture_width": 64,
         "texture_height": 48,
         "visible_bounds_width": 5,
@@ -1709,7 +1709,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.magic_painting_the_hostile_paradise",
+        "identifier": "geometry.gloamingforest.lichdecor.magic_painting_the_hostile_paradise",
         "texture_width": 48,
         "texture_height": 32,
         "visible_bounds_width": 5,

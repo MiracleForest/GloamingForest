@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/MagicPainting.java
-//   src/main/java/twilightforest/entity/MagicPaintingVariant.java
-//   src/main/java/twilightforest/item/MagicPaintingItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/MagicPainting.java
+//   src/main/java/gloamingforest/entity/MagicPaintingVariant.java
+//   src/main/java/gloamingforest/item/MagicPaintingItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U22 (lichdecor): the magic painting, a hanging entity of five variants (registry
-// twilight/magic_paintings). Bedrock has no hanging entities for add-ons: the entity
-// twilightforest:magic_painting stands at the bottom centre of its picture, 1/32 off the wall,
-// turned to face away from it; its variant is the entity property twilightforest:variant (0..4 in
-// kVariants order, drives the RP) and the actor data "variant" (TF's id), its wall block and facing
+// gloaming/magic_paintings). Bedrock has no hanging entities for add-ons: the entity
+// gloamingforest:magic_painting stands at the bottom centre of its picture, 1/32 off the wall,
+// turned to face away from it; its variant is the entity property gloamingforest:variant (0..4 in
+// kVariants order, drives the RP) and the actor data "variant" (upstream's id), its wall block and facing
 // the actor data "block" / "direction". U21's lich tower gallery spawns it with "variant" and
 // "direction" at the marker block; the first tick hangs it there.
 //
@@ -63,21 +63,21 @@ namespace ia    = gf::interactions;
 namespace ge    = gf::entity;
 namespace items = gf::game::items;
 
-constexpr char kEntity[] = "twilightforest:magic_painting";
-constexpr char kItem[]   = "twilightforest:magic_painting";
+constexpr char kEntity[] = "gloamingforest:magic_painting";
+constexpr char kItem[]   = "gloamingforest:magic_painting";
 
 struct Variant {
     char const* id;
     int         width;  ///< pixels
     int         height; ///< pixels
 };
-/// The registry's five entries (data/twilightforest/twilight/magic_paintings), sorted by id.
+/// The registry's five entries (data/gloamingforest/gloaming/magic_paintings), sorted by id.
 constexpr std::array<Variant, 5> kVariants{{
-    {"twilightforest:castaway_paradise", 32, 64},
-    {"twilightforest:darkness", 64, 32},
-    {"twilightforest:lucid_lands", 48, 48},
-    {"twilightforest:music_in_the_mire", 64, 48},
-    {"twilightforest:the_hostile_paradise", 48, 32},
+    {"gloamingforest:castaway_paradise", 32, 64},
+    {"gloamingforest:darkness", 64, 32},
+    {"gloamingforest:lucid_lands", 48, 48},
+    {"gloamingforest:music_in_the_mire", 64, 48},
+    {"gloamingforest:the_hostile_paradise", 48, 32},
 }};
 
 int variantIndex(std::string const& id) {
@@ -157,7 +157,7 @@ void hang(Actor& actor, BlockPos const& pos, int face, int variant) {
     ge::data(actor, "variant")   = v.id;
     ge::data(actor, "direction") = faceName(face);
     ge::data(actor, "block")     = Json::array({pos.x, pos.y, pos.z});
-    ge::setProperty(actor, "twilightforest:variant", variant);
+    ge::setProperty(actor, "gloamingforest:variant", variant);
     actor.moveTo(positionOf(pos, face, v), Vec2{0.0F, yawOf(face)});
 }
 

@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:seeker_arrow",
+      "identifier": "gloamingforest:seeker_arrow",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "seeker_arrow"]
+        "family": ["gloamingforest", "seeker_arrow"]
       },
       "minecraft:collision_box": {
         "width": 0.5,

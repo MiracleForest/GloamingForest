@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U30 (finalcastle) selftests of the final castle structure (rule R12: "finalcastle.*", testPos dx
 // 3050..3059 and 3090..3099; rule R19 golden hash). The castle (the keep, two tower mazes, the
@@ -59,7 +59,7 @@ public:
         return true;
     }
     [[nodiscard]] int          height(worldgen::Heightmap, int, int) const override { return 0; }
-    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "twilightforest:final_plateau"; }
+    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "gloamingforest:final_plateau"; }
     [[nodiscard]] std::int64_t seed() const override { return kSeed; }
     [[nodiscard]] int          dimension() const override { return -1; } // scratch: no block entity work
 
@@ -155,7 +155,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
     ctx.check(actual == expected, name + ": expected " + expected + ", got " + actual);
 }
 
-/// The final castle site nearest to the test world's origin (its start chunk), from the Twilight
+/// The final castle site nearest to the test world's origin (its start chunk), from the Gloaming
 /// Forest's landmark grid; (cx, cz) of kFallback when none is found.
 struct Site {
     int  cx = 0, cz = 0;
@@ -175,7 +175,7 @@ constexpr char kHash[]   = "5de8f9303d4ac1b0"; // site chunk (-31, 29)
 } // namespace
 
 GF_REGISTER_SELFTEST("finalcastle.castle_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     auto site   = siteNear(ctx.testPos(3050).dim);
     ctx.info("final castle site chunk " + std::to_string(site.cx) + " " + std::to_string(site.cz) + (site.located ? "" : " (fallback)"));
     auto pieces = layoutAt(site.cx, site.cz, 0);
@@ -196,7 +196,7 @@ GF_REGISTER_SELFTEST("finalcastle.castle_layout", [](Context& ctx) -> ll::coro::
     ctx.check(types[type::DungeonSteps] >= 5, "four flights from the keep and one per exit");
     ctx.check(types[type::ForgeRoom] <= 1, "at most one forge room");
     ctx.check(types[type::Mural] == 2, "two murals");
-    ctx.check(types["twilightforest:TFJigsawTemplate"] == 3, "three template pieces (gazebo, large tower, bell tower)");
+    ctx.check(types["gloamingforest:TFJigsawTemplate"] == 3, "three template pieces (gazebo, large tower, bell tower)");
 
     // the murals: 35 x 30 on the front, 19 x 12 inside
     int murals = 0;
@@ -208,7 +208,7 @@ GF_REGISTER_SELFTEST("finalcastle.castle_layout", [](Context& ctx) -> ll::coro::
             murals++;
         }
 
-    // the template pieces sit where TF's jigsaws put them
+    // the template pieces sit where upstream's jigsaws put them
     for (auto const& p : pieces) {
         auto name = templateOf(*p);
         if (name.empty()) continue;
@@ -254,7 +254,7 @@ GF_REGISTER_SELFTEST("finalcastle.castle_layout", [](Context& ctx) -> ll::coro::
 });
 
 GF_REGISTER_SELFTEST("finalcastle.castle_hash", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     auto         site   = siteNear(ctx.testPos(3052).dim);
     auto         pieces = layoutAt(site.cx, site.cz, 0);
     MemoryRegion mem;
@@ -294,14 +294,14 @@ GF_REGISTER_SELFTEST("finalcastle.castle_hash", [](Context& ctx) -> ll::coro::Co
         ctx.check(set > 20 && ok == set, "mural pixels in yellow runes: " + std::to_string(ok) + " / " + std::to_string(set));
     }
 
-    ctx.check(mem.count("twilightforest:castle_brick") > 10000, "castle brick");
-    ctx.check(mem.count("twilightforest:violet_castle_rune_brick") > 2000, "the violet rune roof");
-    ctx.check(mem.count("twilightforest:blue_force_field") > 100, "the bell tower's force-field windows");
-    ctx.check(mem.count("twilightforest:bold_castle_brick_pillar") > 500, "bold pillars");
+    ctx.check(mem.count("gloamingforest:castle_brick") > 10000, "castle brick");
+    ctx.check(mem.count("gloamingforest:violet_castle_rune_brick") > 2000, "the violet rune roof");
+    ctx.check(mem.count("gloamingforest:blue_force_field") > 100, "the bell tower's force-field windows");
+    ctx.check(mem.count("gloamingforest:bold_castle_brick_pillar") > 500, "bold pillars");
     ctx.check(mem.count("minecraft:quartz_stairs") > 300, "quartz stairs");
-    ctx.check(mem.count("twilightforest:yellow_castle_door") > 20 && mem.count("twilightforest:blue_castle_door") > 10, "yellow and blue doors");
-    ctx.check(mem.count("twilightforest:violet_castle_door") >= 18, "the stair towers' roof doors");
-    ctx.check(mem.count("twilightforest:brown_thorns") > 0 || site.located == false, "thorns around the damaged towers");
+    ctx.check(mem.count("gloamingforest:yellow_castle_door") > 20 && mem.count("gloamingforest:blue_castle_door") > 10, "yellow and blue doors");
+    ctx.check(mem.count("gloamingforest:violet_castle_door") >= 18, "the stair towers' roof doors");
+    ctx.check(mem.count("gloamingforest:brown_thorns") > 0 || site.located == false, "thorns around the damaged towers");
     golden(ctx, "finalcastle_hash", kHash, mem.hash());
     co_return;
 });
@@ -344,7 +344,7 @@ GF_REGISTER_SELFTEST("finalcastle.castle_templates", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("finalcastle.castle_start", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     // a start forced far from the test rows (removed afterwards; its chunks are not loaded, so no block is placed)
     auto pos = ctx.testPos(3090);
     pos.x = ((pos.x + 12288) >> 8 << 8) + 7; // a chunk centre on the 256 grid, as the landmark grid's
@@ -360,7 +360,7 @@ GF_REGISTER_SELFTEST("finalcastle.castle_start", [](Context& ctx) -> ll::coro::C
         ctx.check(types[type::Main] == 1 && types[type::EntranceTower] == 1 && types[type::BellTower] == 1 && types[type::DungeonEntrance] == 2,
                   "the stored start holds the keep, both maze ends and the dungeon levels");
         auto const* d = gf::landmark::descriptor(kFinalCastle);
-        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "twilightforest:progress_troll", "locked behind the trolls");
+        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "gloamingforest:progress_troll", "locked behind the trolls");
     }
     co_return;
 });

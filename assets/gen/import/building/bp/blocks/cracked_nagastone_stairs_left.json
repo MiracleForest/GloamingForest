@@ -2,14 +2,14 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:cracked_nagastone_stairs_left",
+      "identifier": "gloamingforest:cracked_nagastone_stairs_left",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:half": ["bottom", "top"],
-        "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:half": ["bottom", "top"],
+        "gloamingforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
       }
     },
     "components": {
@@ -21,7 +21,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_etched_nagastone_left_weathered",
@@ -47,9 +47,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -76,9 +76,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -105,9 +105,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -134,9 +134,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -163,9 +163,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -192,9 +192,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -221,9 +221,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -250,9 +250,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -279,9 +279,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -308,9 +308,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -337,9 +337,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -366,9 +366,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -395,9 +395,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -424,9 +424,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -453,9 +453,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -482,9 +482,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -511,9 +511,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -540,9 +540,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -569,9 +569,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -598,9 +598,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -627,9 +627,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -656,9 +656,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -685,9 +685,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -714,9 +714,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -743,9 +743,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -772,9 +772,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -801,9 +801,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -830,9 +830,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -859,9 +859,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -888,9 +888,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -917,9 +917,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -946,9 +946,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -975,9 +975,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1004,9 +1004,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1033,9 +1033,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1062,9 +1062,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1091,9 +1091,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1120,9 +1120,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1149,9 +1149,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_outer_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_outer_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",
@@ -1178,9 +1178,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.bisected_stairs",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_etched_nagastone_left_weathered",

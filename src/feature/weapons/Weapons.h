@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U8 (weapons): the unit's internal declarations shared by its files (rule R2: no other unit
@@ -30,40 +30,40 @@ using Json = nlohmann::json;
 namespace cw = gf::core::weapons;
 
 // ---- ids ----------------------------------------------------------------------------------------------
-inline constexpr char kBlockAndChain[]  = "twilightforest:block_and_chain";
-inline constexpr char kChainBlock[]     = "twilightforest:chain_block";
-inline constexpr char kCrumbleHorn[]    = "twilightforest:crumble_horn";
-inline constexpr char kCube[]           = "twilightforest:cube_of_annihilation";
-inline constexpr char kCubeTalisman[]   = "twilightforest:cube_talisman";
-inline constexpr char kEnderBow[]       = "twilightforest:ender_bow";
-inline constexpr char kGlassSword[]     = "twilightforest:glass_sword";
-inline constexpr char kIceBomb[]        = "twilightforest:ice_bomb";
-inline constexpr char kThrownIce[]      = "twilightforest:thrown_ice";
-inline constexpr char kIceBow[]         = "twilightforest:ice_bow";
-inline constexpr char kIceArrow[]       = "twilightforest:ice_arrow";
-inline constexpr char kIceSword[]       = "twilightforest:ice_sword";
-inline constexpr char kShield[]         = "twilightforest:knightmetal_shield";
-inline constexpr char kLamp[]           = "twilightforest:lamp_of_cinders";
-inline constexpr char kMoonwormQueen[]  = "twilightforest:moonworm_queen";
-inline constexpr char kMoonwormShot[]   = "twilightforest:moonworm_shot";
-inline constexpr char kMoonworm[]       = "twilightforest:moonworm";
-inline constexpr char kOreMagnet[]      = "twilightforest:ore_magnet";
-inline constexpr char kFan[]            = "twilightforest:peacock_feather_fan";
-inline constexpr char kSeekerBow[]      = "twilightforest:seeker_bow";
-inline constexpr char kSeekerArrow[]    = "twilightforest:seeker_arrow";
-inline constexpr char kPowder[]         = "twilightforest:transformation_powder";
-inline constexpr char kTripleBow[]      = "twilightforest:triple_bow";
-inline constexpr char kTorchberries[]   = "twilightforest:torchberries";
+inline constexpr char kBlockAndChain[]  = "gloamingforest:block_and_chain";
+inline constexpr char kChainBlock[]     = "gloamingforest:chain_block";
+inline constexpr char kCrumbleHorn[]    = "gloamingforest:crumble_horn";
+inline constexpr char kCube[]           = "gloamingforest:cube_of_annihilation";
+inline constexpr char kCubeTalisman[]   = "gloamingforest:cube_talisman";
+inline constexpr char kEnderBow[]       = "gloamingforest:ender_bow";
+inline constexpr char kGlassSword[]     = "gloamingforest:glass_sword";
+inline constexpr char kIceBomb[]        = "gloamingforest:ice_bomb";
+inline constexpr char kThrownIce[]      = "gloamingforest:thrown_ice";
+inline constexpr char kIceBow[]         = "gloamingforest:ice_bow";
+inline constexpr char kIceArrow[]       = "gloamingforest:ice_arrow";
+inline constexpr char kIceSword[]       = "gloamingforest:ice_sword";
+inline constexpr char kShield[]         = "gloamingforest:knightmetal_shield";
+inline constexpr char kLamp[]           = "gloamingforest:lamp_of_cinders";
+inline constexpr char kMoonwormQueen[]  = "gloamingforest:moonworm_queen";
+inline constexpr char kMoonwormShot[]   = "gloamingforest:moonworm_shot";
+inline constexpr char kMoonworm[]       = "gloamingforest:moonworm";
+inline constexpr char kOreMagnet[]      = "gloamingforest:ore_magnet";
+inline constexpr char kFan[]            = "gloamingforest:peacock_feather_fan";
+inline constexpr char kSeekerBow[]      = "gloamingforest:seeker_bow";
+inline constexpr char kSeekerArrow[]    = "gloamingforest:seeker_arrow";
+inline constexpr char kPowder[]         = "gloamingforest:transformation_powder";
+inline constexpr char kTripleBow[]      = "gloamingforest:triple_bow";
+inline constexpr char kTorchberries[]   = "gloamingforest:torchberries";
 
-inline constexpr char kThrownKey[]        = "twilightforest:thrown_projectile";   ///< item data: the thrown entity's uid
-inline constexpr char kInfiniteGlassKey[] = "twilightforest:infinite_glass_sword"; ///< item data: unbreakable glass sword
+inline constexpr char kThrownKey[]        = "gloamingforest:thrown_projectile";   ///< item data: the thrown entity's uid
+inline constexpr char kInfiniteGlassKey[] = "gloamingforest:infinite_glass_sword"; ///< item data: unbreakable glass sword
 inline constexpr char kFanFallingKey[]    = "gf:weapons:feather_fan_falling";      ///< player data (world DB key prefix)
 
 // ---- config (section "weapons", docs/spec/config.md) -----------------------------------------------
 struct WeaponsConfig {
     int version = 1;
-    /// common."Shield Parrying".parryNonTwilightAttacks
-    bool parryNonTwilightAttacks = false;
+    /// common."Shield Parrying".parryNonGloamingAttacks
+    bool parryNonGloamingAttacks = false;
     /// common."Shield Parrying".shieldParryTicksArrow
     int shieldParryTicksArrow = 40;
 };
@@ -97,12 +97,12 @@ void destroyParticles(BlockSource& region, BlockPos const& pos, Block const& blo
 /// EntityTypeTags.FREEZE_IMMUNE_ENTITY_TYPES / FREEZE_HURTS_EXTRA_TYPES of 1.21.1.
 [[nodiscard]] bool freezeImmune(Actor const& actor);
 [[nodiscard]] bool freezeHurtsExtra(Actor const& actor);
-/// ApplyFrostedEffect#doChillAuraEffect (TF's frosted, U10's effect, by id).
+/// ApplyFrostedEffect#doChillAuraEffect (upstream's frosted, U10's effect, by id).
 void chillAura(Actor& victim, int duration, int amplifier, bool shouldHit);
 /// Whether the item in a player's hand is a shield raised to block (vanilla shield or the
 /// knightmetal shield); `ticks` gets the ticks it has been used.
 [[nodiscard]] bool isBlocking(Player& player, int* ticks = nullptr);
-/// NeoForge's BlockEvent.BreakEvent as TF's landmark protection answers it (F6), plus the adventure
+/// NeoForge's BlockEvent.BreakEvent as upstream's landmark protection answers it (F6), plus the adventure
 /// mode rule (isBlockPlacingRestricted: no breaking without can_destroy).
 [[nodiscard]] bool mayBreak(Player& player, BlockPos const& pos);
 /// A dispensed projectile's launch velocity (world::shootFrom) handed to the projectile kit; call

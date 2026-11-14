@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/OminousFireBlock.java
-//   src/main/java/twilightforest/events/EntityEvents.java (ominousFireConversion, zombifiedPlayerAttacks)
-//   src/main/java/twilightforest/init/TFDataMaps.java (OMINOUS_FIRE)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/OminousFireBlock.java
+//   src/main/java/gloamingforest/events/EntityEvents.java (ominousFireConversion, zombifiedPlayerAttacks)
+//   src/main/java/gloamingforest/init/TFDataMaps.java (OMINOUS_FIRE)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U22 (lichdecor): the ominous fire and the conversion of what it kills. A custom block gets none
 // of vanilla's BaseFireBlock, so each inherited part is added here:
 //   - survival (sturdy top below, no fluid), re-checked on every neighbour change, silent removal;
-//   - entities inside: not #minecraft:undead -> 1.0 twilightforest:ominous_fire damage (never
+//   - entities inside: not #minecraft:undead -> 1.0 gloamingforest:ominous_fire damage (never
 //     ignited); item entities lose 1 health per hit (an item at rest is hit every 4th tick, as
 //     Java's ItemEntity only moves then), so an item is gone after 5 hits;
 //   - BaseFireBlock#onPlace: an empty obsidian frame in the Overworld or the Nether lights a nether
@@ -19,7 +19,7 @@
 //   - a player's break plays minecraft:block.fire.extinguish (level event 1009); the RP removes the
 //     break particles / sound;
 //   - death by its damage converts: a player becomes a named persistent zombie whose attacks deal
-//     ominous fire damage, other entities follow the data map twilightforest:ominous_fire (owned
+//     ominous fire damage, other entities follow the data map gloamingforest:ominous_fire (owned
 //     here, rule R7).
 // The ambient sound and large smoke (BaseFireBlock#animateTick) are client-side.
 
@@ -152,11 +152,11 @@ bool onLethal(Actor& victim, gf::combat::DamageInfo const& d) {
         }
         return false;
     }
-    auto const* map = gf::datamaps::get("twilightforest:ominous_fire", victim.getTypeName());
+    auto const* map = gf::datamaps::get("gloamingforest:ominous_fire", victim.getTypeName());
     if (!map) {
         // Bedrock's villager is villager_v2 (the data map holds Java's ids turned into Bedrock's)
         auto id = victim.getTypeName();
-        if (id.size() > 3 && id.ends_with("_v2")) map = gf::datamaps::get("twilightforest:ominous_fire", id.substr(0, id.size() - 3));
+        if (id.size() > 3 && id.ends_with("_v2")) map = gf::datamaps::get("gloamingforest:ominous_fire", id.substr(0, id.size() - 3));
     }
     if (!map || !map->is_object()) return false;
     auto to = map->value("transform_to", std::string());

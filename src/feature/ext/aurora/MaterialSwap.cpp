@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U28's contract extension (R18): see MaterialSwap.h.
 #include "feature/ext/aurora/MaterialSwap.h"

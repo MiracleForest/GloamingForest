@@ -1,0 +1,10 @@
+{
+  "banister": "gloamingforest:sorting_banister",
+  "button": "gloamingforest:sorting_button",
+  "fence": "gloamingforest:sorting_fence",
+  "gate": "gloamingforest:sorting_fence_gate",
+  "planks": "gloamingforest:sorting_planks",
+  "plate": "gloamingforest:sorting_pressure_plate",
+  "slab": "gloamingforest:sorting_slab",
+  "stairs": "gloamingforest:sorting_stairs"
+}

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
@@ -52,11 +52,11 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import twilightforest.config.TFConfig;
-import twilightforest.data.tags.ItemTagGenerator;
-import twilightforest.inventory.UncraftingContainer;
-import twilightforest.inventory.UncraftingMenu;
-import twilightforest.item.recipe.travellers.TravellersGearModifierRecipe;
+import gloamingforest.config.TFConfig;
+import gloamingforest.data.tags.ItemTagGenerator;
+import gloamingforest.inventory.UncraftingContainer;
+import gloamingforest.inventory.UncraftingMenu;
+import gloamingforest.item.recipe.travellers.TravellersGearModifierRecipe;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -73,14 +73,14 @@ final class DataDumps {
 	private DataDumps() {
 	}
 
-	static final String TF = "twilightforest";
+	static final String upstream = "gloamingforest";
 
-	/** Whether a resource comes from TF's own data pack (the mod jar). */
+	/** Whether a resource comes from upstream's own data pack (the mod jar). */
 	static boolean fromTf(Resource r) {
-		return r.sourcePackId().contains(TF);
+		return r.sourcePackId().contains(upstream);
 	}
 
-	/** Ids of the TF data pack's files under data/<ns>/<dir>/ (all namespaces), sorted. */
+	/** Ids of the upstream data pack's files under data/<ns>/<dir>/ (all namespaces), sorted. */
 	static TreeMap<String, ResourceLocation> tfData(MinecraftServer server, String dir, TreeSet<String> packs) {
 		TreeMap<String, ResourceLocation> out = new TreeMap<>();
 		Map<ResourceLocation, Resource> res = server.getResourceManager().listResources(dir, loc -> loc.getPath().endsWith(".json"));
@@ -99,7 +99,7 @@ final class DataDumps {
 	}
 
 	/**
-	 * A fake player of the overworld. Never of the Twilight Forest level: making a ServerPlayer
+	 * A fake player of the overworld. Never of the Gloaming Forest level: making a ServerPlayer
 	 * picks a spawn position near (0, 0) of its level and generates the chunks there, which would
 	 * leak features into the surface dump.
 	 */
@@ -118,11 +118,11 @@ final class DataDumps {
 	// mobs
 
 	static Object mobs(Ctx ctx) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		TreeMap<String, EntityType<?>> types = new TreeMap<>();
 		for (EntityType<?> t : BuiltInRegistries.ENTITY_TYPE) {
 			ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(t);
-			if (id.getNamespace().equals(TF)) types.put(id.toString(), t);
+			if (id.getNamespace().equals(upstream)) types.put(id.toString(), t);
 		}
 		TreeMap<String, Holder<Attribute>> attributes = new TreeMap<>();
 		BuiltInRegistries.ATTRIBUTE.holders().forEach(h -> attributes.put(Ctx.id(h), h));
@@ -190,8 +190,8 @@ final class DataDumps {
 			entities.put(e.getKey(), m);
 		}
 		Map<String, Object> out = Json.obj();
-		out.put("note", "Every twilightforest entity type: EntityType properties, DefaultAttributes base values, and the attributes (base, value with modifiers), "
-			+ "health, armor and experience reward range (min/max of 256 draws) of an instance made with EntityType#create (before finalizeSpawn, so no difficulty or spawn-time changes). Default TF config.");
+		out.put("note", "Every gloamingforest entity type: EntityType properties, DefaultAttributes base values, and the attributes (base, value with modifiers), "
+			+ "health, armor and experience reward range (min/max of 256 draws) of an instance made with EntityType#create (before finalizeSpawn, so no difficulty or spawn-time changes). Default upstream config.");
 		out.put("entities", entities);
 		return out;
 	}
@@ -201,7 +201,7 @@ final class DataDumps {
 
 	static Object loot(Ctx ctx) {
 		MinecraftServer server = ctx.server;
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		int rolls = Ctx.getInt(ctx.section(), "rolls", 2048);
 		long seed = Ctx.getLong(ctx.section(), "seed", 20121220L);
 		FakePlayer player = fakePlayer(ctx);
@@ -289,8 +289,8 @@ final class DataDumps {
 			}
 		}
 		Map<String, Object> out = Json.obj();
-		out.put("note", "Every loot table of TF's data pack rolled 'rolls' times with LootTable#getRandomItems(params, RandomSource.create(seed ^ id.hashCode())). "
-			+ "Default context: origin (8.5, 64, 8.5) in twilightforest:twilight_forest; this_entity = the table's entity for entities/<type>[/...] (else a fake player); "
+		out.put("note", "Every loot table of upstream's data pack rolled 'rolls' times with LootTable#getRandomItems(params, RandomSource.create(seed ^ id.hashCode())). "
+			+ "Default context: origin (8.5, 64, 8.5) in gloamingforest:gloaming_forest; this_entity = the table's entity for entities/<type>[/...] (else a fake player); "
 			+ "killer, direct killer and last damage player = a fake player (player attack) with an empty hand; block_state = the default state of blocks/<block>; tool = empty hand. "
 			+ "Per item: present = rolls containing it, total = items over all rolls, min/max = per-roll count when present (statistics, not exact rules: compare with a tolerance). "
 			+ "variants: the same rolls (same seed) with the fake player holding variantStacks[name] - blocks/*: shears, a silk touch pickaxe, a fortune III pickaxe "
@@ -394,7 +394,7 @@ final class DataDumps {
 		TreeMap<String, RecipeHolder<?>> holders = new TreeMap<>();
 		for (RecipeHolder<?> h : server.getRecipeManager().getRecipes()) {
 			String id = h.id().toString();
-			if (tfIds.containsKey(id) || h.id().getNamespace().equals(TF)) holders.put(id, h);
+			if (tfIds.containsKey(id) || h.id().getNamespace().equals(upstream)) holders.put(id, h);
 		}
 		Map<String, Object> recipes = Json.obj();
 		for (Map.Entry<String, RecipeHolder<?>> e : holders.entrySet()) {
@@ -451,13 +451,13 @@ final class DataDumps {
 		List<Object> notLoaded = Json.arr();
 		for (String id : tfIds.keySet()) if (!holders.containsKey(id)) notLoaded.add(id);
 		Map<String, Object> out = Json.obj();
-		out.put("note", "Every recipe of TF's data pack (any namespace) and every twilightforest:* recipe: type, serializer, getResultItem (id, count), isSpecial, "
+		out.put("note", "Every recipe of upstream's data pack (any namespace) and every gloamingforest:* recipe: type, serializer, getResultItem (id, count), isSpecial, "
 			+ "width/height of shaped recipes, cookingTime/experience of cooking recipes, getIngredients() (each the item ids of Ingredient#getItems in order, tags expanded; [] = empty slot) "
-			+ "and data: the recipe encoded with its serializer's codec (the recipe JSON as TF loaded it: drying time, modifier keys, scepter repair durability, ...; object keys sorted). "
+			+ "and data: the recipe encoded with its serializer's codec (the recipe JSON as upstream loaded it: drying time, modifier keys, scepter repair durability, ...; object keys sorted). "
 			+ "probe (travellers' gear modifier recipes, whose result depends on the input): the first item of each ingredient crafted with the recipe. "
 			+ "probes: recipes whose result is code, crafted from the inputs of tools/oracle/spec.json: matches, and when it matches the assembled result and the remaining items. "
 			+ "Stacks: \"\" = empty, an item id = one item without components, else ItemStack's codec {count, components (the patch over the item's defaults), id}. "
-			+ "notLoaded lists recipe files of TF's data pack the recipe manager did not load (their load conditions failed, e.g. compat recipes of absent mods).");
+			+ "notLoaded lists recipe files of upstream's data pack the recipe manager did not load (their load conditions failed, e.g. compat recipes of absent mods).");
 		out.put("packs", new ArrayList<>(packs));
 		out.put("notLoaded", notLoaded);
 		out.put("recipes", recipes);
@@ -482,7 +482,7 @@ final class DataDumps {
 
 	/** Crafts a grid (crafting: w x h; smithing: template, base, addition) with one recipe. */
 	static Map<String, Object> probe(Ctx ctx, RegistryOps<JsonElement> ops, Recipe<?> r, int w, int h, List<ItemStack> grid) {
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		Map<String, Object> m = Json.obj();
 		m.put("width", w);
 		m.put("height", h);
@@ -521,11 +521,11 @@ final class DataDumps {
 	}
 
 	// -----------------------------------------------------------------------------------------
-	// uncrafting (TF's UncraftingMenu itself)
+	// uncrafting (upstream's UncraftingMenu itself)
 
 	static Object uncrafting(Ctx ctx) {
 		MinecraftServer server = ctx.server;
-		ServerLevel level = ctx.twilight();
+		ServerLevel level = ctx.gloaming();
 		FakePlayer player = fakePlayer(ctx);
 		RegistryOps<JsonElement> ops = Stacks.ops(server);
 		JsonObject s = ctx.section();
@@ -554,8 +554,8 @@ final class DataDumps {
 			results.put(id, options);
 			if (cut) truncated.add(id);
 
-			// ingredient switching (ingredientsInCycle) for TF's items and the examples of spec.json
-			if (id.startsWith(TF + ":") || cycleExamples.contains(id)) {
+			// ingredient switching (ingredientsInCycle) for upstream's items and the examples of spec.json
+			if (id.startsWith(upstream + ":") || cycleExamples.contains(id)) {
 				List<Object> per = Json.arr();
 				for (int u = 0; u < recipes.size(); u++) {
 					int alternatives = alternatives(recipes.get(u));
@@ -655,11 +655,11 @@ final class DataDumps {
 		config.put("disableUncraftingOnly", TFConfig.disableUncraftingOnly);
 		config.put("disableEntireTable", TFConfig.disableEntireTable);
 		Map<String, Object> out = Json.obj();
-		out.put("note", "TF's UncraftingMenu itself (default config, every UNCRAFTING_STUFFS value in config). items: for every item, a stack of 64 in the input slot, "
+		out.put("note", "upstream's UncraftingMenu itself (default config, every UNCRAFTING_STUFFS value in config). items: for every item, a stack of 64 in the input slot, "
 			+ "unrecipeInCycle cycled through every recipe it offers (ingredientsInCycle 0): the recipe, inputCount (items consumed), cost (XP levels, getUncraftingCost) and the "
 			+ "3x3 uncrafting grid row by row (\"\" empty, \"!\" prefix = marked: damaged or problematic, cannot be taken); items without options are omitted; truncated lists the "
-			+ "items whose options did not wrap around within maxCycles. ingredientCycles: for TF's items and ingredientCycleItems, every option whose ingredients have more than one "
-			+ "alternative (after twilightforest:banned_uncrafting_ingredients), ingredientsInCycle 0 .. alternatives-1 (at most maxCycles; truncated otherwise). damaged: every "
+			+ "items whose options did not wrap around within maxCycles. ingredientCycles: for upstream's items and ingredientCycleItems, every option whose ingredients have more than one "
+			+ "alternative (after gloamingforest:banned_uncrafting_ingredients), ingredientsInCycle 0 .. alternatives-1 (at most maxCycles; truncated otherwise). damaged: every "
 			+ "damageable item with options, one item damaged by maxDamage/4, /2 and maxDamage-1, every option (damagedTruncated: items cut at maxCycles options). "
 			+ "recraft: the cases of tools/oracle/spec.json: the input, its uncrafting "
 			+ "grid and cost, the items put into the assembly matrix, the result slot (tinkerResult), getRecraftingCost and getUncraftingCost after. "

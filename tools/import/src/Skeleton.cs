@@ -17,7 +17,7 @@ namespace GfImport
         public const string EntityFormat = "1.21.40";
         readonly SortedSet<string> skeletonItems = new SortedSet<string>(StringComparer.Ordinal);
 
-        // item id (no namespace) -> TF item tags ("twilightforest:fiery_vial", "c:ingots/iron")
+        // item id (no namespace) -> upstream item tags ("gloamingforest:fiery_vial", "c:ingots/iron")
         public Dictionary<string, SortedSet<string>> ItemTags = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
 
         string ItemIcon(string id, Model m, string owner)
@@ -25,25 +25,25 @@ namespace GfImport
             string tex = null;
             if (m != null && m.ItemGenerated)
             {
-                // one icon per item: layer0, or TF's own layer when layer0 is a vanilla base (chest boats)
+                // one icon per item: layer0, or upstream's own layer when layer0 is a vanilla base (chest boats)
                 var layers = Enumerable.Range(0, 5).Select(i => m.Resolve("#layer" + i)).Where(x => x != null).ToList();
-                tex = layers.FirstOrDefault(l => l.StartsWith("twilightforest:", StringComparison.Ordinal)) ?? layers.FirstOrDefault();
+                tex = layers.FirstOrDefault(l => l.StartsWith("gloamingforest:", StringComparison.Ordinal)) ?? layers.FirstOrDefault();
             }
-            if (tex == null && TfTextures.ContainsKey("twilightforest:item/" + id)) tex = "twilightforest:item/" + id;
+            if (tex == null && TfTextures.ContainsKey("gloamingforest:item/" + id)) tex = "gloamingforest:item/" + id;
             if (tex == null && m != null) tex = m.Particle;
             return tex == null ? null : UseTexture(tex, owner, "item");
         }
 
         Model ItemModel(string id)
         {
-            string mid = "twilightforest:item/" + id;
+            string mid = "gloamingforest:item/" + id;
             return ModelLib.Raw.ContainsKey(mid) ? ModelLib.Get(mid) : null;
         }
 
         J ItemDoc(string id, string owner, Model m, JItem ji, bool blockPlacer, bool inCatalog, string nameKey)
         {
-            var desc = J.Obj().Set("identifier", "twilightforest:" + id);
-            desc.Set("menu_category", J.Obj().Set("category", inCatalog ? CatalogCategory("twilightforest:" + id) : "none"));
+            var desc = J.Obj().Set("identifier", "gloamingforest:" + id);
+            desc.Set("menu_category", J.Obj().Set("category", inCatalog ? CatalogCategory("gloamingforest:" + id) : "none"));
             var comps = J.Obj();
             string icon = ItemIcon(id, m, owner);
             if (icon != null) comps.Set("minecraft:icon", J.Obj().Set("textures", J.Obj().Set("default", icon)));
@@ -52,12 +52,12 @@ namespace GfImport
             if (stack != 64) comps.Set("minecraft:max_stack_size", stack);
             if (ji != null && ji.Durability > 0) comps.Set("minecraft:durability", J.Obj().Set("max_durability", ji.Durability));
             if (m != null && m.Chain.Contains("minecraft:item/handheld")) comps.Set("minecraft:hand_equipped", true);
-            if (blockPlacer) comps.Set("minecraft:block_placer", J.Obj().Set("block", "twilightforest:" + id).Set("replace_block_item", true));
+            if (blockPlacer) comps.Set("minecraft:block_placer", J.Obj().Set("block", "gloamingforest:" + id).Set("replace_block_item", true));
             // a tiered tool: Bedrock's tool tags (kind, tool, the tier whose blocks it drops) and its minecraft:digger (Harvest.cs)
             var toolTags = new List<string>();
             var digger = blockPlacer ? null : Digger(ji, toolTags);
             if (digger != null) comps.Set("minecraft:digger", digger);
-            // the TF item tags it is in (recipes use them: only TF items can carry tags on Bedrock)
+            // the upstream item tags it is in (recipes use them: only upstream items can carry tags on Bedrock)
             SortedSet<string> tags;
             // (Java's minecraft-namespace tags carry engine meaning on Bedrock, e.g. trim materials: left to the owners;
             // the tool tags above are Bedrock's own)
@@ -73,7 +73,7 @@ namespace GfImport
             // items registered in TFItems (some share their id with the block they place)
             foreach (var full in Ids("item"))
             {
-                string id = full.Substring("twilightforest:".Length);
+                string id = full.Substring("gloamingforest:".Length);
                 string owner = OwnerOf("item", full);
                 JItem ji;
                 JItems.TryGetValue(id, out ji);
@@ -88,7 +88,7 @@ namespace GfImport
             // block items whose Java item model is a flat icon get an item with the block's id (block_placer)
             foreach (var full in Ids("block_item"))
             {
-                string id = full.Substring("twilightforest:".Length);
+                string id = full.Substring("gloamingforest:".Length);
                 BlockInfo bi;
                 if (!BlockInfos.TryGetValue(id, out bi)) continue;
                 var m = ItemModel(id);
@@ -101,7 +101,7 @@ namespace GfImport
                 skeletonItems.Add(full);
             }
             if (RuntimeDigger.Count > 0)
-                Log.Add(RuntimeDigger.Count + " tool(s) change their mining speed by block in their TF class (left to the item owners, on top of the digger): " + string.Join(", ", RuntimeDigger));
+                Log.Add(RuntimeDigger.Count + " tool(s) change their mining speed by block in their upstream class (left to the item owners, on top of the digger): " + string.Join(", ", RuntimeDigger));
             if (RoundedDigger.Count > 0)
                 Log.Add(RoundedDigger.Count + " digger speed(s) rounded to Bedrock's integer speeds (the owner refines them with item::Behaviour::destroySpeed): " + string.Join(", ", RoundedDigger));
         }
@@ -134,16 +134,16 @@ namespace GfImport
             string squash = id.Replace("_", "");
             if (entityTextures == null)
             {
-                entityTextures = TfTextures.Keys.Where(k => k.StartsWith("twilightforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+                entityTextures = TfTextures.Keys.Where(k => k.StartsWith("gloamingforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
                 // entity textures sit directly in textures/entity (or in a folder named after the entity);
                 // banner, boat, chest, shield and sign folders hold block / item textures
-                topEntityTextures = entityTextures.Where(k => k.IndexOf('/', "twilightforest:entity/".Length) < 0).ToList();
+                topEntityTextures = entityTextures.Where(k => k.IndexOf('/', "gloamingforest:entity/".Length) < 0).ToList();
             }
             var all = entityTextures;
             var top = topEntityTextures;
             Func<string, string> sq = k => k.Substring(k.LastIndexOf('/') + 1).Replace("_", "").Replace("-", "");
-            var hit = all.FirstOrDefault(k => k == "twilightforest:entity/" + id)
-                ?? all.FirstOrDefault(k => k.StartsWith("twilightforest:entity/" + id + "/", StringComparison.Ordinal))
+            var hit = all.FirstOrDefault(k => k == "gloamingforest:entity/" + id)
+                ?? all.FirstOrDefault(k => k.StartsWith("gloamingforest:entity/" + id + "/", StringComparison.Ordinal))
                 ?? top.FirstOrDefault(k => sq(k) == squash)
                 ?? top.FirstOrDefault(k => sq(k).StartsWith(squash, StringComparison.Ordinal))
                 ?? top.FirstOrDefault(k => sq(k).Contains(squash));
@@ -154,14 +154,14 @@ namespace GfImport
         {
             foreach (var full in Ids("entity"))
             {
-                string id = full.Substring("twilightforest:".Length);
+                string id = full.Substring("gloamingforest:".Length);
                 string owner = OwnerOf("entity", full);
                 JEntity e;
                 if (!JEntities.TryGetValue(id, out e)) { Warn("entity " + id + " not found in TFEntities.java"); e = new JEntity { Id = id }; }
-                // TF registers a spawn egg only for the entities owners.tsv lists one for (make(..., 0, 0) has none)
+                // upstream registers a spawn egg only for the entities owners.tsv lists one for (make(..., 0, 0) has none)
                 e.HasEgg = OwnerOf("spawn_egg", full + "_spawn_egg") != null;
                 var comps = J.Obj();
-                var fam = J.Arr().Add("twilightforest").Add(id);
+                var fam = J.Arr().Add("gloamingforest").Add(id);
                 string cat = (e.Category ?? "MISC").ToLowerInvariant();
                 if (cat == "monster") fam.Add("monster");
                 else if (cat == "creature") fam.Add("creature");
@@ -178,7 +178,7 @@ namespace GfImport
                 EmitJson("skeleton", owner, "bp/entities/" + id + ".json",
                     J.Obj().Set("format_version", EntityFormat).Set("minecraft:entity", J.Obj().Set("description", desc).Set("components", comps)));
 
-                // client entity: a placeholder box of the entity's size with its TF texture (F2 / the owner replace it)
+                // client entity: a placeholder box of the entity's size with its upstream texture (F2 / the owner replace it)
                 string tex = EntityTexture(id);
                 int tw = 64, th = 32;
                 if (tex != null)
@@ -212,13 +212,13 @@ namespace GfImport
 
         // ---- creative catalog ----------------------------------------------------------------------------
 
-        // TF's 4 tabs -> Bedrock catalog groups (the closest Bedrock category for each)
+        // upstream's 4 tabs -> Bedrock catalog groups (the closest Bedrock category for each)
         static readonly Dictionary<string, string> TabCategory = new Dictionary<string, string>
         {
-            { "twilightforest:blocks", "construction" }, { "twilightforest:items", "items" }, { "twilightforest:equipment", "equipment" }, { "twilightforest:food", "items" },
+            { "gloamingforest:blocks", "construction" }, { "gloamingforest:items", "items" }, { "gloamingforest:equipment", "equipment" }, { "gloamingforest:food", "items" },
         };
 
-        /// <summary>The Bedrock creative category of an item listed in a TF tab (its first tab).</summary>
+        /// <summary>The Bedrock creative category of an item listed in an upstream tab (its first tab).</summary>
         public string CatalogCategory(string full)
         {
             var tab = Tabs.FirstOrDefault(t => t.Items.Contains(full));
@@ -238,7 +238,7 @@ namespace GfImport
                 {
                     var items = tab.Items.Where(ItemExists).ToList();
                     string icon = tab.Icon != null && ItemExists(tab.Icon) ? tab.Icon : items.FirstOrDefault();
-                    var gid = J.Obj().Set("name", "twilightforest:" + (tab.TitleKey ?? tab.Id));
+                    var gid = J.Obj().Set("name", "gloamingforest:" + (tab.TitleKey ?? tab.Id));
                     if (icon != null) gid.Set("icon", icon);
                     groups.Add(J.Obj().Set("group_identifier", gid).Set("items", J.Strs(items)));
                 }
@@ -279,9 +279,9 @@ namespace GfImport
             var t = new List<string>();
             if (bi.JavaProps.Any(p => p.Name == "waterlogged")) t.Add("waterloggable");
             if (JavaStates.Implements(this, bi.Chain, "SnowLoggable")) t.Add("snowloggable");
-            if (bi.Chain.Contains("LadderBlock") || climbable.Contains("twilightforest:" + bi.Id)) t.Add("climbable");
+            if (bi.Chain.Contains("LadderBlock") || climbable.Contains("gloamingforest:" + bi.Id)) t.Add("climbable");
             if (JavaStates.Implements(this, bi.Chain, "LightableBlock")) t.Add("lightable");
-            if (BlockModelLoaders(bi).Contains("twilightforest:connected_texture_block")) t.Add("connected_texture");
+            if (BlockModelLoaders(bi).Contains("gloamingforest:connected_texture_block")) t.Add("connected_texture");
             return t;
         }
 
@@ -289,7 +289,7 @@ namespace GfImport
         HashSet<string> BlockModelLoaders(BlockInfo bi)
         {
             var res = new HashSet<string>(StringComparer.Ordinal);
-            string f = Path.Combine(GenRes, "assets", "twilightforest", "blockstates", bi.Id + ".json");
+            string f = Path.Combine(GenRes, "assets", "gloamingforest", "blockstates", bi.Id + ".json");
             if (!File.Exists(f)) return res;
             var bs = ReadJson(f);
             var models = new List<string>();
@@ -349,13 +349,13 @@ namespace GfImport
                 if (bm.Success)
                 {
                     var src = JBlocks.Values.FirstOrDefault(b => b.Const == bm.Groups[1].Value);
-                    if (src != null) p.Set("base", "twilightforest:" + src.Id);
+                    if (src != null) p.Set("base", "gloamingforest:" + src.Id);
                 }
                 var cm = Regex.Match(bi.J.Stmt ?? "", @"of(?:Full|Legacy)Copy\(\s*(\w+)\.get\(\)");
                 if (cm.Success && !p.Has("base"))
                 {
                     var src = JBlocks.Values.FirstOrDefault(b => b.Const == cm.Groups[1].Value);
-                    if (src != null) p.Set("copyOf", "twilightforest:" + src.Id);
+                    if (src != null) p.Set("copyOf", "gloamingforest:" + src.Id);
                 }
                 var wm = Regex.Match(bi.J.Stmt ?? "", @"TFWoodTypes\.(\w+)");
                 if (wm.Success) p.Set("woodType", wm.Groups[1].Value.ToLowerInvariant());
@@ -363,9 +363,9 @@ namespace GfImport
                 if (pot.Success)
                 {
                     var src = JBlocks.Values.FirstOrDefault(b => b.Const == pot.Groups[1].Value);
-                    if (src != null) p.Set("plant", "twilightforest:" + src.Id);
+                    if (src != null) p.Set("plant", "gloamingforest:" + src.Id);
                 }
-                // Java property names; the Bedrock state is "twilightforest:<name>" (docs/spec/blockstates.md)
+                // Java property names; the Bedrock state is "gloamingforest:<name>" (docs/spec/blockstates.md)
                 if (bi.States.Count > 0) p.Set("states", J.Strs(bi.States.Select(s => s.Java)));
                 // the block's Bedrock block tags (tools and tier, Harvest.cs), free of the block format: the kit writes
                 // them in the form of the format it writes the block in ("tag:<id>" components up to 1.26.10, one
@@ -375,7 +375,7 @@ namespace GfImport
                 J arr;
                 string unit = NameOf(bi.Owner);
                 if (!perUnit.TryGetValue(bi.Owner, out arr)) perUnit[bi.Owner] = arr = J.Arr();
-                arr.Add(J.Obj().Set("id", "twilightforest:" + bi.Id).Set("family", fam).Set("params", p));
+                arr.Add(J.Obj().Set("id", "gloamingforest:" + bi.Id).Set("family", fam).Set("params", p));
             }
             foreach (var kv in perUnit) EmitJson("families", kv.Key, "data/gf/families/" + NameOf(kv.Key) + ".json", kv.Value);
         }
@@ -439,7 +439,7 @@ namespace GfImport
                 J fam;
                 // a missing skeleton file or families entry is reported by CheckEmittedBlocks
                 if (!Out.TryGetValue(NameOf(bi.Owner), out files) || !files.TryGetValue("bp/blocks/" + bi.Id + ".json", out f)) continue;
-                if (!entries.TryGetValue("twilightforest:" + bi.Id, out fam)) continue;
+                if (!entries.TryGetValue("gloamingforest:" + bi.Id, out fam)) continue;
                 string rel = "bp/blocks/" + bi.Id + ".json";
                 var root = J.Parse(Encoding.UTF8.GetString(f.Bytes));
                 var comps = root["minecraft:block"] != null ? root["minecraft:block"]["components"] : null;
@@ -451,17 +451,17 @@ namespace GfImport
                 if (!new HashSet<string>(current, StringComparer.Ordinal).SetEquals(generated))
                 {
                     Errors.Add(rel + ": an override changes the family block's tags [" + string.Join(", ", generated) + "] to [" + string.Join(", ", current)
-                        + "]: override them with \"familyTags\": {\"twilightforest:" + bi.Id + "\": [...]} in tools/import/overrides/" + NameOf(bi.Owner) + ".json instead (params.tags, their single source, docs/spec/import.md Overrides)");
+                        + "]: override them with \"familyTags\": {\"gloamingforest:" + bi.Id + "\": [...]} in tools/import/overrides/" + NameOf(bi.Owner) + ".json instead (params.tags, their single source, docs/spec/import.md Overrides)");
                     familyTagOverrides.Add(bi.Id);
                     continue;
                 }
                 var pt = fam["params"] != null ? fam["params"]["tags"] : null;
                 if (pt != null && !(pt.IsArr && pt.A.All(x => x.IsStr)))
                 {
-                    Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags is not an array of tag ids: " + pt.ToCompact());
+                    Errors.Add("data/gf/families: gloamingforest:" + bi.Id + " params.tags is not an array of tag ids: " + pt.ToCompact());
                     continue;
                 }
-                if (pt != null) ReportDuplicateTags("data/gf/families: twilightforest:" + bi.Id + " params.tags", pt.A.Select(x => x.S));
+                if (pt != null) ReportDuplicateTags("data/gf/families: gloamingforest:" + bi.Id + " params.tags", pt.A.Select(x => x.S));
                 var want = pt != null ? pt.A.Select(x => x.S).Distinct(StringComparer.Ordinal).ToList() : new List<string>();
                 if (new HashSet<string>(want, StringComparer.Ordinal).SetEquals(current)) continue;
                 foreach (var k in comps.Keys.Where(k => k.StartsWith("tag:", StringComparison.Ordinal)).ToList()) comps.Remove(k);
@@ -481,11 +481,11 @@ namespace GfImport
 
         public void ImportParticles()
         {
-            string dir = Path.Combine(GenRes, "assets", "twilightforest", "particles");
+            string dir = Path.Combine(GenRes, "assets", "gloamingforest", "particles");
             foreach (var rel in Files(dir, "*.json"))
             {
                 string id = StripExt(rel);
-                string full = "twilightforest:" + id;
+                string full = "gloamingforest:" + id;
                 string owner = OwnerOf("particle", full) ?? ImportUnit;
                 var j = ReadJson(Path.Combine(dir, rel));
                 var texs = j["textures"] != null ? j["textures"].A.Select(t => t.AsString()).ToList() : new List<string>();
@@ -494,7 +494,7 @@ namespace GfImport
                 int w = 8, h = 8;
                 J uv = null;
                 bool visible = true;
-                if (first != null && first.StartsWith("twilightforest:", StringComparison.Ordinal) && TfTextures.ContainsKey(first))
+                if (first != null && first.StartsWith("gloamingforest:", StringComparison.Ordinal) && TfTextures.ContainsKey(first))
                 {
                     UseTexture(first, owner, "path");
                     path = TexPath(first);
@@ -541,7 +541,7 @@ namespace GfImport
                          .Set("minecraft:particle_motion_dynamic", J.Obj());
                 }
                 J size = suspendedTown ? J.Arr(new[] { J.Str("variable.gf_size"), J.Str("variable.gf_size") }) : J.Arr(new[] { J.Num(0.1), J.Num(0.1) });
-                // no lighting component: drawn at full brightness (TF's ProtectionParticle: getLightColor 0xF000F0) and
+                // no lighting component: drawn at full brightness (upstream's ProtectionParticle: getLightColor 0xF000F0) and
                 // untinted (its factory's setColor(1, 1, 1) replaces SuspendedTownParticle's grey)
                 comps.Set("minecraft:particle_appearance_billboard", J.Obj()
                         .Set("size", size)
@@ -551,12 +551,12 @@ namespace GfImport
                     J.Obj().Set("format_version", "1.10.0").Set("particle_effect", J.Obj().Set("description", desc).Set("components", comps)));
                 // the Java description (every frame, as resource pack paths) for the native particle factory (F12) and the owner
                 var frames = texs.Select(t => t.Contains(":") ? t : "minecraft:" + t).Select(t => t.Insert(t.IndexOf(':') + 1, "particle/"))
-                    .Select(t => t.StartsWith("twilightforest:", StringComparison.Ordinal) ? TexPath(t) : "minecraft:" + t.Substring(t.IndexOf(':') + 1));
+                    .Select(t => t.StartsWith("gloamingforest:", StringComparison.Ordinal) ? TexPath(t) : "minecraft:" + t.Substring(t.IndexOf(':') + 1));
                 Fragment("particles", owner, "data/gf/particles/" + NameOf(owner) + ".json", full, J.Obj().Set("textures", J.Strs(frames)));
             }
         }
 
-        /// <summary>TF particles whose class extends vanilla's SuspendedTownParticle (the happy villager): protection
+        /// <summary>upstream particles whose class extends vanilla's SuspendedTownParticle (the happy villager): protection
         /// (client/particle/ProtectionParticle.java). Their skeleton translates that class's lifetime, size and drift.</summary>
         static readonly HashSet<string> SuspendedTownParticles = new HashSet<string>(StringComparer.Ordinal) { "protection" };
 
@@ -633,17 +633,17 @@ namespace GfImport
 
         // ---- sound events -----------------------------------------------------------------------------------
 
-        // Sound events: F3 (tools/sounds) writes the resource pack's sound_definitions for all of TF's events
+        // Sound events: F3 (tools/sounds) writes the resource pack's sound_definitions for all of upstream's events
         // (assets/gen/audio/<u>/rp/sounds.d), and one event defined twice in the generated layers fails the
-        // merge, so the import emits no sounds.d fragment. It validates that every event of TF's sounds.json
+        // merge, so the import emits no sounds.d fragment. It validates that every event of upstream's sounds.json
         // has an owner in owners.tsv (a missing one fails the run) and writes a plain data listing per owner
-        // (data/gf/sound_events/<unit>.json: category, subtitle key, TF's sound names) for F3 and the owners.
+        // (data/gf/sound_events/<unit>.json: category, subtitle key, upstream's sound names) for F3 and the owners.
         public void ImportSounds()
         {
-            var sj = ReadJson(Path.Combine(GenRes, "assets", "twilightforest", "sounds.json"));
+            var sj = ReadJson(Path.Combine(GenRes, "assets", "gloamingforest", "sounds.json"));
             var unowned = sj.Keys.Where(ev => OwnerOf("sound_event", ev) == null).ToList();
             if (unowned.Count > 0)
-                throw new Exception(unowned.Count + " sound event(s) of TF's sounds.json have no owner in docs/spec/owners.tsv: " + string.Join(", ", unowned.Take(10)));
+                throw new Exception(unowned.Count + " sound event(s) of upstream's sounds.json have no owner in docs/spec/owners.tsv: " + string.Join(", ", unowned.Take(10)));
             Log.Add(sj.Count + " sound events, every one owned in owners.tsv (no sound_definitions emitted: F3 writes them)");
             foreach (var ev in sj.Keys)
             {
@@ -655,8 +655,8 @@ namespace GfImport
                 if (src["sounds"] != null)
                     foreach (var s in src["sounds"].A)
                     {
-                        // names only: TF's .ogg files are never opened (rule R10); "file" is the path below
-                        // TF's sounds/ directory (TF namespace), "event" a vanilla Java sound event
+                        // names only: upstream's .ogg files are never opened (rule R10); "file" is the path below
+                        // upstream's sounds/ directory (upstream namespace), "event" a vanilla Java sound event
                         if (s.IsStr) sounds.Add(J.Obj().Set("file", SoundFile(s.AsString())));
                         else
                         {
@@ -669,13 +669,13 @@ namespace GfImport
                         }
                     }
                 entry.Set("sounds", sounds);
-                Fragment("sounds", owner, "data/gf/sound_events/" + NameOf(owner) + ".json", "twilightforest:" + ev, entry);
+                Fragment("sounds", owner, "data/gf/sound_events/" + NameOf(owner) + ".json", "gloamingforest:" + ev, entry);
             }
         }
 
         static string SoundFile(string name)
         {
-            return name.StartsWith("twilightforest:", StringComparison.Ordinal) ? name.Substring("twilightforest:".Length) : name;
+            return name.StartsWith("gloamingforest:", StringComparison.Ordinal) ? name.Substring("gloamingforest:".Length) : name;
         }
 
         static string SoundCategory(string ev)
@@ -693,7 +693,7 @@ namespace GfImport
         public void ImportSkeletonIndex()
         {
             // blocks with their frozen states (the first value is the default state), and the Java class chain of each
-            // (the TF classes, then the vanilla class reached: import.place_blocks gives a block the support the
+            // (the upstream classes, then the vanilla class reached: import.place_blocks gives a block the support the
             // canSurvive of its classes needs)
             var blocks = J.Obj();
             var classes = J.Obj();
@@ -701,14 +701,14 @@ namespace GfImport
             {
                 var st = J.Obj();
                 foreach (var s in bi.States) st.Set(s.Bedrock, J.Strs(s.Values));
-                blocks.Set("twilightforest:" + bi.Id, st);
-                classes.Set("twilightforest:" + bi.Id, J.Strs(bi.Chain));
+                blocks.Set("gloamingforest:" + bi.Id, st);
+                classes.Set("gloamingforest:" + bi.Id, J.Strs(bi.Chain));
             }
             var data = J.Obj();
-            foreach (var reg in new[] { "loot_table", "recipe", "advancement", "tags", "worldgen", "twilight", "data_maps" })
+            foreach (var reg in new[] { "loot_table", "recipe", "advancement", "tags", "worldgen", "gloaming", "data_maps" })
             {
-                int n = Out.Values.SelectMany(u => u.Keys).Count(r => r.StartsWith("data/twilightforest/" + reg + "/", StringComparison.Ordinal));
-                data.Set("twilightforest/" + reg, n);
+                int n = Out.Values.SelectMany(u => u.Keys).Count(r => r.StartsWith("data/gloamingforest/" + reg + "/", StringComparison.Ordinal));
+                data.Set("gloamingforest/" + reg, n);
             }
             var doc = J.Obj()
                 .Set("blocks", blocks)

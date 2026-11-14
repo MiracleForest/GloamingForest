@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:yeti",
+      "identifier": "gloamingforest:yeti",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/yeti2"
+        "default": "textures/gloamingforest/entity/yeti2"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.yeti"

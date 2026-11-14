@@ -2,20 +2,20 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:locked_vanishing_block",
+      "identifier": "gloamingforest:locked_vanishing_block",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:active": [false, true],
-        "twilightforest:locked": [true, false]
+        "gloamingforest:active": [false, true],
+        "gloamingforest:locked": [true, false]
       }
     },
     "components": {
       "minecraft:destructible_by_mining": false,
       "minecraft:destructible_by_explosion": false,
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.locked_vanishing_block",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.locked_vanishing_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerdev_lock_on",
@@ -98,9 +98,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:locked')",
+        "condition": "!q.block_state('gloamingforest:locked')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.locked_vanishing_block_unlocked",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.locked_vanishing_block_unlocked",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_lock_off",
@@ -184,9 +184,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:locked')",
+        "condition": "q.block_state('gloamingforest:locked')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.locked_vanishing_block",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.locked_vanishing_block",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_lock_on",
@@ -270,7 +270,7 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:locked') && !q.block_state('twilightforest:active')",
+        "condition": "!q.block_state('gloamingforest:locked') && !q.block_state('gloamingforest:active')",
         "components": {
           "minecraft:destructible_by_explosion": {
             "explosion_resistance": 30000
@@ -278,7 +278,7 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:locked') && q.block_state('twilightforest:active')",
+        "condition": "!q.block_state('gloamingforest:locked') && q.block_state('gloamingforest:active')",
         "components": {
           "minecraft:destructible_by_explosion": {
             "explosion_resistance": 10000

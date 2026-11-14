@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/7x7/elbow_junction",
+  "id": "gloamingforest:lich_tower/7x7/elbow_junction",
   "size": [9, 9, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -10,7 +10,7 @@
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:iron_bars"},
-    {"Name":"twilightforest:twisted_stone_pillar"}
+    {"Name":"gloamingforest:twisted_stone_pillar"}
   ],
   "blocks": [
     [1, 81], [3, 1], [1, 3], [2, 1], [1, 3], [3, 1], [1, 1], [2, 7], [1, 2], [2, 1], [6, 1], [2, 5], [1, 2], [2, 7], [1, 2], [2, 8],

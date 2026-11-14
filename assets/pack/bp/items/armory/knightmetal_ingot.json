@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:knightmetal_ingot",
+      "identifier": "gloamingforest:knightmetal_ingot",
       "menu_category": {
         "category": "items"
       }
@@ -14,14 +14,14 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:knightmetal_ingot.name"
+        "value": "item.gloamingforest:knightmetal_ingot.name"
       },
       "minecraft:tags": {
         "tags": [
           "alexscaves:ferromagnetic_items",
           "c:ingots",
           "c:ingots/knightmetal",
-          "twilightforest:repairs_knightmetal_tools"
+          "gloamingforest:repairs_knightmetal_tools"
         ]
       }
     }

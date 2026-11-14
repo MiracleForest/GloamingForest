@@ -46,13 +46,13 @@ Json readJson(fs::path const& p) {
     return Json::parse(ss.str(), nullptr, false);
 }
 
-fs::path dataDir() { return repoDir() / "assets/gen/import/biomes/data/twilightforest/twilight"; }
+fs::path dataDir() { return repoDir() / "assets/gen/import/biomes/data/gloamingforest/gloaming"; }
 
 LayerStackRegistry const& stacks() {
     static LayerStackRegistry const r = [] {
         LayerStackRegistry reg;
         for (auto const& f : fs::directory_iterator(dataDir() / "biome_layer_stack")) {
-            reg.entries["twilightforest:" + f.path().stem().string()] = readJson(f.path());
+            reg.entries["gloamingforest:" + f.path().stem().string()] = readJson(f.path());
         }
         return reg;
     }();
@@ -171,10 +171,10 @@ TEST(Biomes, PossibleBiomesInJavaOrder) {
     // the columns sorted by path: clearing first, its layers in ascending elevation (underground at -3)
     ASSERT_GE(b.size(), 22u);
     EXPECT_EQ(b.size(), 22u);
-    EXPECT_EQ(b[0], "twilightforest:underground");
-    EXPECT_EQ(b[1], "twilightforest:clearing");
-    EXPECT_EQ(b[2], "twilightforest:dark_forest");
-    EXPECT_NE(std::find(b.begin(), b.end(), "twilightforest:highlands_underground"), b.end());
+    EXPECT_EQ(b[0], "gloamingforest:underground");
+    EXPECT_EQ(b[1], "gloamingforest:clearing");
+    EXPECT_EQ(b[2], "gloamingforest:dark_forest");
+    EXPECT_NE(std::find(b.begin(), b.end(), "gloamingforest:highlands_underground"), b.end());
     // the provider's columns are the grid's (the list above is in their order)
     auto cols = gf::core::biomes::terrainColumnsOf(grid());
     ASSERT_EQ(cols.size(), p.columns().size());
@@ -193,16 +193,16 @@ TEST(Biomes, KeyBiomeQuadrantsAndCompanions) {
     for (int qz = -256; qz < 256; qz += 2)
         for (int qx = -256; qx < 256; qx += 2) seen.insert(p.mainBiome(qx, qz));
     for (char const* id :
-         {"twilightforest:glacier",
-          "twilightforest:fire_swamp",
-          "twilightforest:dark_forest_center",
-          "twilightforest:final_plateau",
-          "twilightforest:snowy_forest",
-          "twilightforest:swamp",
-          "twilightforest:dark_forest",
-          "twilightforest:highlands",
-          "twilightforest:thornlands",
-          "twilightforest:stream"})
+         {"gloamingforest:glacier",
+          "gloamingforest:fire_swamp",
+          "gloamingforest:dark_forest_center",
+          "gloamingforest:final_plateau",
+          "gloamingforest:snowy_forest",
+          "gloamingforest:swamp",
+          "gloamingforest:dark_forest",
+          "gloamingforest:highlands",
+          "gloamingforest:thornlands",
+          "gloamingforest:stream"})
         EXPECT_TRUE(seen.contains(id)) << id;
 }
 

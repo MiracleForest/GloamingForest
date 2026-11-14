@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorItem.java (ArmorRender, getArmorTexture)
-//   src/main/java/twilightforest/client/event/TravellersClientEvents.java (renderGlovesInFirstPerson)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorItem.java (ArmorRender, getArmorTexture)
+//   src/main/java/gloamingforest/client/event/TravellersClientEvents.java (renderGlovesInFirstPerson)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -14,7 +14,7 @@
 //   2  the wearer's skin has slim arms (ArmorRender#isModelSlim: chest_gloves_slim)
 //   4  the legs piece shows the belt (TRAVELLERS_HAS_BELT, or swap_hotbar on the wings)
 //   8  zooming with the goggles (IS_USING_GOGGLES_ZOOM_MODIFIER: travellers_layer_1_down)
-//   16 the wearer's firstPersonGloveOverlay (the client mod sends its config value; TF's default on)
+//   16 the wearer's firstPersonGloveOverlay (the client mod sends its config value; upstream's default on)
 // The attachables that read them belong to F2's generated partition (docs/units/tgear.md: the
 // conditional parts are routed to F2).
 #include <algorithm>

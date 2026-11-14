@@ -1,6 +1,6 @@
 # U18 (minorlandmarks) on a real client (post-merge acceptance). The selftest
 # minorlandmarks.client_showcase forces a hedge maze start next to the player: the maze from outside
-# (hedge walls, the entrance jack o'lanterns, the grass floor) and the hedge close up (TF's hedge
+# (hedge walls, the entrance jack o'lanterns, the grass floor) and the hedge close up (upstream's hedge
 # texture, its 15/16 collision box). The hedge item and the structures' map icons are covered by
 # the uncraftmaps scenario's magic map. Then the minorlandmarks.* selftests run on the integrated
 # server in local mode (golden hashes of the hills, the maze, the hollow trees, the fallen trunks and

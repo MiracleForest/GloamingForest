@@ -1,49 +1,49 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:snow_queen": {
+      "gloamingforest:snow_queen": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.snow_queen.ambient",
-          "hurt": "entity.twilightforest.snow_queen.hurt",
-          "death": "entity.twilightforest.snow_queen.death"
+          "ambient": "entity.gloamingforest.snow_queen.ambient",
+          "hurt": "entity.gloamingforest.snow_queen.hurt",
+          "death": "entity.gloamingforest.snow_queen.death"
         }
       },
-      "twilightforest:snow_guardian": {
+      "gloamingforest:snow_guardian": {
         "volume": 1.0,
         "pitch": [0.6, 1.0],
         "events": {
-          "ambient": "entity.twilightforest.snow_guardian.ambient",
-          "hurt": "entity.twilightforest.snow_guardian.hurt",
-          "death": "entity.twilightforest.snow_guardian.death"
+          "ambient": "entity.gloamingforest.snow_guardian.ambient",
+          "hurt": "entity.gloamingforest.snow_guardian.hurt",
+          "death": "entity.gloamingforest.snow_guardian.death"
         }
       },
-      "twilightforest:stable_ice_core": {
+      "gloamingforest:stable_ice_core": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.ice.ambient",
-          "hurt": "entity.twilightforest.ice.hurt",
-          "death": "entity.twilightforest.ice.death"
+          "ambient": "entity.gloamingforest.ice.ambient",
+          "hurt": "entity.gloamingforest.ice.hurt",
+          "death": "entity.gloamingforest.ice.death"
         }
       },
-      "twilightforest:unstable_ice_core": {
+      "gloamingforest:unstable_ice_core": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.ice.ambient",
-          "hurt": "entity.twilightforest.ice.hurt",
+          "ambient": "entity.gloamingforest.ice.ambient",
+          "hurt": "entity.gloamingforest.ice.hurt",
           "death": ""
         }
       },
-      "twilightforest:ice_crystal": {
+      "gloamingforest:ice_crystal": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.ice.ambient",
-          "hurt": "entity.twilightforest.ice.hurt",
-          "death": "entity.twilightforest.ice.death"
+          "ambient": "entity.gloamingforest.ice.ambient",
+          "hurt": "entity.gloamingforest.ice.hurt",
+          "death": "entity.gloamingforest.ice.death"
         }
       }
     }

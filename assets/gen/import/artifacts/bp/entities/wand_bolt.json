@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:wand_bolt",
+      "identifier": "gloamingforest:wand_bolt",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "wand_bolt"]
+        "family": ["gloamingforest", "wand_bolt"]
       },
       "minecraft:collision_box": {
         "width": 0.25,

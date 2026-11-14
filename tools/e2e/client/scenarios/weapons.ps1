@@ -1,4 +1,4 @@
-# U8 (weapons): TF's weapons and throwables on a real client (post-merge acceptance; workers do not
+# U8 (weapons): upstream's weapons and throwables on a real client (post-merge acceptance; workers do not
 # run it). The selftest weapons.client_showcase fills the hotbar and inventory with the 17 items
 # (icons, the knightmetal shield's derived icon, rarity colours), throws a block and chain (the
 # spiked ball; with the client mod its chain links to the player's eye) and a cube of annihilation
@@ -34,7 +34,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'weapons.client_showcase failed' 
 
 # The bows' held model (RP attachables, every client): slot 5 holds the ender bow (standby), then the
 # use button held for ~1.2 s draws it (pulling_0 -> _1 at 0.65 s -> _2 at 0.9 s, ItemModelGenerator
-# bowTex): compare with TF's ender_bow / ender_bow_pulling_2 textures, held like a vanilla bow.
+# bowTex): compare with upstream's ender_bow / ender_bow_pulling_2 textures, held like a vanilla bow.
 Focus-Game
 Press-Key '5'
 Start-Sleep -Milliseconds 500

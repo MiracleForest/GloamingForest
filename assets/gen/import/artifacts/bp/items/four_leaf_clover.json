@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:four_leaf_clover",
+      "identifier": "gloamingforest:four_leaf_clover",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:four_leaf_clover.name"
+        "value": "item.gloamingforest:four_leaf_clover.name"
       }
     }
   }

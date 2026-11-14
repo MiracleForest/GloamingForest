@@ -16,14 +16,14 @@
 //     (void)gf::landmark::forceStart("gf_test:landmark_fixture", center);
 //     gf::landmark::ext::forgetStartForTest(center, "gf_test:landmark_fixture");
 //
-// Prefer ScopedStart, above all with a real landmark key (twilightforest:dark_tower, ...): it puts
+// Prefer ScopedStart, above all with a real landmark key (gloamingforest:dark_tower, ...): it puts
 // back the natural start a forced one replaced, conquest state included. The by-hand form is for
 // forced starts only; forcedOnly = false (also erasing a natural start) is for a test that stored a
 // stand-in natural start itself.
 //
 // Users: F5 worldgen.landmark_rules (its forced fixture and dark tower), F7 structure.count_loot,
 // F8 entity.boss_conquest (in place of Internal.h's eraseRecord + flushRecords), F6's own selftests.
-// The fixtures are gf_test:landmark_fixture (locked by twilightforest:progress_naga, controlled
+// The fixtures are gf_test:landmark_fixture (locked by gloamingforest:progress_naga, controlled
 // spawns: labelled monster list 1 on the shell's upper floor, list 0 on the porch, none on the
 // shell's ground floor) and gf_test:landmark_fixture_open (no lock, spawn overrides: monsters in its
 // pieces, no ambient mobs in its box); see feature/landmark/Helpers.cpp.

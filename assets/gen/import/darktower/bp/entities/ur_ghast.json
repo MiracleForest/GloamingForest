@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:ur_ghast",
+      "identifier": "gloamingforest:ur_ghast",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "ur_ghast", "monster", "mob"]
+        "family": ["gloamingforest", "ur_ghast", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 14,

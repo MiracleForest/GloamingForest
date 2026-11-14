@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/registration/surface_rules/TFSurfaceRules.java
-//   src/main/java/twilightforest/world/components/chunkblanketing/CanopyBlanketProcessor.java
-//   src/main/java/twilightforest/world/components/chunkblanketing/GlacierBlanketProcessor.java
-//   src/main/java/twilightforest/world/components/chunkblanketing/ChunkBlanketProcessor.java
-//   src/main/java/twilightforest/init/custom/ChunkBlanketProcessors.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/registration/surface_rules/TFSurfaceRules.java
+//   src/main/java/gloamingforest/world/components/chunkblanketing/CanopyBlanketProcessor.java
+//   src/main/java/gloamingforest/world/components/chunkblanketing/GlacierBlanketProcessor.java
+//   src/main/java/gloamingforest/world/components/chunkblanketing/ChunkBlanketProcessor.java
+//   src/main/java/gloamingforest/init/custom/ChunkBlanketProcessors.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -397,20 +397,20 @@ bool Blankets::add(std::string const& id, Json const& json, BlockTable& table) {
         if (b.is_string()) p.biomes.push_back(normalize(b.get<std::string>()));
     if (json.contains("biome_mask") && json["biome_mask"].is_string()) p.biomes.push_back(normalize(json["biome_mask"].get<std::string>()));
     p.height = json.value("height", 0);
-    // simple_state_provider {"state": {...}} (the only provider TF's two processors use)
+    // simple_state_provider {"state": {...}} (the only provider upstream's two processors use)
     auto stateOf = [&](char const* key) -> std::optional<std::uint16_t> {
         if (!json.contains(key) || !json[key].is_object()) return std::nullopt;
         auto const& prov = json[key];
         if (normalize(prov.value("type", std::string())) != "minecraft:simple_state_provider" || !prov.contains("state")) return std::nullopt;
         return table.codeOf(prov["state"]);
     };
-    if (p.type == "twilightforest:canopy") {
+    if (p.type == "gloamingforest:canopy") {
         auto b = stateOf("block");
         if (!b) return false;
         p.block = *b;
         for (auto const& s : json.value("avoid_structures", Json::array()))
             if (s.is_string()) p.avoidStructures.push_back(normalize(s.get<std::string>()));
-    } else if (p.type == "twilightforest:glacier") {
+    } else if (p.type == "gloamingforest:glacier") {
         auto b = stateOf("body_block"), t = stateOf("top_block");
         if (!b || !t) return false;
         p.block = *b;
@@ -502,8 +502,8 @@ void Blankets::apply(int chunkX, int chunkZ, Grid& grid, BlockTable const& table
         });
         if (!applies) continue;
         if (fork) fork();
-        if (p.type == "twilightforest:canopy") canopy(p, chunkX, chunkZ, grid, table, biome, references);
-        else if (p.type == "twilightforest:glacier") glacier(p, chunkX, chunkZ, grid, biome);
+        if (p.type == "gloamingforest:canopy") canopy(p, chunkX, chunkZ, grid, table, biome, references);
+        else if (p.type == "gloamingforest:glacier") glacier(p, chunkX, chunkZ, grid, biome);
     }
 }
 

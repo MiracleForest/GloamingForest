@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.lich_wall_trophy",
+        "identifier": "geometry.gloamingforest.building.lich_wall_trophy",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 3,

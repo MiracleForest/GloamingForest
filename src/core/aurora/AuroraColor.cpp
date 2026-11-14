@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/SimplexNoiseHelper.java
-//   src/main/java/twilightforest/util/ColorUtil.java (rgbToHSV, hsvToRGB)
-//   src/main/java/twilightforest/client/event/ColorHandler.java (aurora block colours)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/SimplexNoiseHelper.java
+//   src/main/java/gloamingforest/util/ColorUtil.java (rgbToHSV, hsvToRGB)
+//   src/main/java/gloamingforest/client/event/ColorHandler.java (aurora block colours)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 // SimplexNoiseHelper's 3D simplex noise is Stefan Gustavson's public domain example code.
@@ -181,7 +181,7 @@ unsigned hsvToRGB(float hue, float saturation, float value) {
     case 2: return rgb(pp, value, tt);
     case 3: return rgb(pp, q, value);
     case 4: return rgb(tt, pp, value);
-    default: return rgb(value, pp, q); // 5 (TF throws on anything else; unreachable for finite input)
+    default: return rgb(value, pp, q); // 5 (upstream throws on anything else; unreachable for finite input)
     }
 }
 
@@ -193,7 +193,7 @@ std::array<float, 3> rgbToHSV(int r, int g, int b) {
     float babs = static_cast<float>(b) / 255.0F;
     float v    = std::max(rabs, std::max(gabs, babs));
     float diff = v - std::min(rabs, std::min(gabs, babs));
-    // TF: c -> (v - c) / 6 / diff + 1 / 2, where 1 / 2 is an int division (0)
+    // upstream: c -> (v - c) / 6 / diff + 1 / 2, where 1 / 2 is an int division (0)
     auto diffc = [&](float c) { return (v - c) / 6 / diff + 0; };
     if (diff == 0) {
         h = s = 0;

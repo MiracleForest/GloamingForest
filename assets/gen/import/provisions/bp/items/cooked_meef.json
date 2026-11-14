@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:cooked_meef",
+      "identifier": "gloamingforest:cooked_meef",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:cooked_meef.name"
+        "value": "item.gloamingforest:cooked_meef.name"
       },
       "minecraft:tags": {
         "tags": ["c:foods/cooked_meat"]

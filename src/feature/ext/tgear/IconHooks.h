@@ -3,7 +3,7 @@
 // U11 extension (rule R18: new files only; to be folded into F12's client render contract by A8 in W2b).
 // Client build only.
 //
-// Item icon layers in GUI slots (Java's item model overrides and layered item models: TF's
+// Item icon layers in GUI slots (Java's item model overrides and layered item models: upstream's
 // TravellersGearItemModel and the red thread's "size" property). Bedrock draws a slot's icon from the
 // item atlas through ItemRenderer::renderGuiItemInChunk (the inventory, the hotbar and every
 // container screen); this hook asks the provider of the item's id for its layers: the base icon is
@@ -12,7 +12,7 @@
 // (InventoryItemRenderer::render) does not fire for these slots on 1.26.51, so the layers go through
 // the icon path itself; A8 folds this into client.render (an icon-layer registry).
 //
-//     gf::ext::tgear::client::setIconLayers("twilightforest:red_thread", [](ItemStack const& s) {
+//     gf::ext::tgear::client::setIconLayers("gloamingforest:red_thread", [](ItemStack const& s) {
 //         return IconLayers{.base = "tf_tgear_red_thread_bundle_2"};
 //     });
 

@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/AbstractTrophyBlock.java
-//   src/main/java/twilightforest/block/TrophyBlock.java
-//   src/main/java/twilightforest/block/TrophyWallBlock.java
-//   src/main/java/twilightforest/item/TrophyItem.java
-//   src/main/java/twilightforest/dispenser/TFDispenserBehaviors.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/AbstractTrophyBlock.java
+//   src/main/java/gloamingforest/block/TrophyBlock.java
+//   src/main/java/gloamingforest/block/TrophyWallBlock.java
+//   src/main/java/gloamingforest/item/TrophyItem.java
+//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //

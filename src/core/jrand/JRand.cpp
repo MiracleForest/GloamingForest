@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java-parity random sources: bit-exact equivalents of java.util.Random and of Minecraft 1.21.1's
 // LegacyRandomSource, XoroshiroRandomSource (Xoroshiro128PlusPlus, RandomSupport), WorldgenRandom,
-// MarsagliaPolarGaussian, the positional random factories and Mth#getSeed, which The Twilight
+// MarsagliaPolarGaussian, the positional random factories and Mth#getSeed, which The Gloaming
 // Forest 4.8 relies on for its world generation. Written from the published algorithms; checked
 // against Java values in tests/worldgen.
 #include "core/jrand/JRand.h"

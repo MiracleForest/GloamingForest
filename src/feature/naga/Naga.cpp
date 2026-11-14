@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/Naga.java
-//   src/main/java/twilightforest/entity/boss/NagaSegment.java
-//   src/main/java/twilightforest/entity/ai/goal/NagaMovementPattern.java
-//   src/main/java/twilightforest/entity/ai/goal/NagaSmashGoal.java
-//   src/main/java/twilightforest/entity/ai/control/NagaMoveControl.java
-//   src/main/java/twilightforest/entity/ai/goal/AttemptToGoHomeGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/SimplifiedAttackGoal.java
-//   src/main/java/twilightforest/block/entity/spawner/NagaSpawnerBlockEntity.java
-//   src/main/java/twilightforest/util/entities/EntityUtil.java (canDestroyBlock, bossChestLocation)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/Naga.java
+//   src/main/java/gloamingforest/entity/boss/NagaSegment.java
+//   src/main/java/gloamingforest/entity/ai/goal/NagaMovementPattern.java
+//   src/main/java/gloamingforest/entity/ai/goal/NagaSmashGoal.java
+//   src/main/java/gloamingforest/entity/ai/control/NagaMoveControl.java
+//   src/main/java/gloamingforest/entity/ai/goal/AttemptToGoHomeGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/SimplifiedAttackGoal.java
+//   src/main/java/gloamingforest/block/entity/spawner/NagaSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java (canDestroyBlock, bossChestLocation)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The Naga (U20) on F8's entity and boss kits: the 12 NagaSegments are F8 part actors of type
-// twilightforest:naga_part (2 x 2 when active, 0 x 0 and hidden through the part's
-// twilightforest:active property otherwise), moved by moveSegments every tick. The goals run in
+// gloamingforest:naga_part (2 x 2 when active, 0 x 0 and hidden through the part's
+// gloamingforest:active property otherwise), moved by moveSegments every tick. The goals run in
 // F8's goal selector; the engine's walk navigation finds the paths (Java's PathNavigation) and the
 // Naga's move control adds the slither (xxa). Synced data (DATA_DAZE, DATA_CHARGE, DATA_STUNLESS)
 // are BP entity properties, which the resource pack's render controller and animations read on
@@ -219,23 +219,23 @@ bool hasCollision(BlockSource& region, BlockPos const& pos) {
 /// The blocks whose Block#canEntityDestroy always refuses (BossSpawnerBlock, ForceFieldBlock,
 /// StrongholdShieldBlock, SkullChestBlock).
 std::unordered_set<std::string> const kRefusesEntityDestroy{
-    "twilightforest:naga_boss_spawner",       "twilightforest:lich_boss_spawner",          "twilightforest:hydra_boss_spawner",
-    "twilightforest:ur_ghast_boss_spawner",   "twilightforest:knight_phantom_boss_spawner", "twilightforest:snow_queen_boss_spawner",
-    "twilightforest:minoshroom_boss_spawner", "twilightforest:alpha_yeti_boss_spawner",     "twilightforest:final_boss_boss_spawner",
-    "twilightforest:violet_force_field",      "twilightforest:pink_force_field",           "twilightforest:orange_force_field",
-    "twilightforest:green_force_field",       "twilightforest:blue_force_field",           "twilightforest:stronghold_shield",
-    "twilightforest:skull_chest",
+    "gloamingforest:naga_boss_spawner",       "gloamingforest:lich_boss_spawner",          "gloamingforest:hydra_boss_spawner",
+    "gloamingforest:ur_ghast_boss_spawner",   "gloamingforest:knight_phantom_boss_spawner", "gloamingforest:snow_queen_boss_spawner",
+    "gloamingforest:minoshroom_boss_spawner", "gloamingforest:alpha_yeti_boss_spawner",     "gloamingforest:final_boss_boss_spawner",
+    "gloamingforest:violet_force_field",      "gloamingforest:pink_force_field",           "gloamingforest:orange_force_field",
+    "gloamingforest:green_force_field",       "gloamingforest:blue_force_field",           "gloamingforest:stronghold_shield",
+    "gloamingforest:skull_chest",
 };
 /// The VanishingBlock family (`instanceof VanishingBlock`).
 std::unordered_set<std::string> const kVanishingBlocks{
-    "twilightforest:vanishing_block",
-    "twilightforest:unbreakable_vanishing_block",
-    "twilightforest:locked_vanishing_block",
-    "twilightforest:reappearing_block",
+    "gloamingforest:vanishing_block",
+    "gloamingforest:unbreakable_vanishing_block",
+    "gloamingforest:locked_vanishing_block",
+    "gloamingforest:reappearing_block",
 };
 
 bool isLeaves(Block const& block) {
-    // state.is(BlockTags.LEAVES) only (R6: TF leaves join the tag through their owners' fragments)
+    // state.is(BlockTags.LEAVES) only (R6: upstream leaves join the tag through their owners' fragments)
     return gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", game::blockId(block));
 }
 
@@ -254,7 +254,7 @@ float javaHardness(Block const& block) {
     return block.getBlockType().getDestroySpeed();
 }
 
-/// `world.getBlockEntity(pos) instanceof Container`: a TF container (gf::inventory, custom blocks
+/// `world.getBlockEntity(pos) instanceof Container`: an upstream container (gf::inventory, custom blocks
 /// keep no block entity) or a vanilla block entity whose Java counterpart implements Container
 /// (chests, furnaces, hoppers, dispensers, droppers, barrels, shulker boxes, brewing stands,
 /// crafters, jukeboxes, decorated pots, chiseled bookshelves; Bedrock's shelf). Signs, banners,
@@ -296,7 +296,7 @@ bool vanishingBlocksLocked(BlockSource& region, BlockPos const& start) {
         queue.pop_front();
         Block const& block = region.getBlock(cur);
         auto         id    = game::blockId(block);
-        if (id == "twilightforest:locked_vanishing_block" && boolState(block, "twilightforest:locked")) return true;
+        if (id == "gloamingforest:locked_vanishing_block" && boolState(block, "gloamingforest:locked")) return true;
         checked.insert({cur.x, cur.y, cur.z});
         if (kVanishingBlocks.contains(id))
             for (auto [dx, dy, dz] : {std::tuple{0, -1, 0}, std::tuple{0, 1, 0}, std::tuple{0, 0, -1}, std::tuple{0, 0, 1}, std::tuple{-1, 0, 0}, std::tuple{1, 0, 0}}) {
@@ -307,7 +307,7 @@ bool vanishingBlocksLocked(BlockSource& region, BlockPos const& start) {
     return false;
 }
 
-/// Block#canEntityDestroy of TF's blocks that override it (by id, R2; their states read as TF
+/// Block#canEntityDestroy of upstream's blocks that override it (by id, R2; their states read as upstream
 /// reads them): BossSpawnerBlock, ForceFieldBlock, StrongholdShieldBlock and SkullChestBlock refuse;
 /// VanishingBlock (vanishing, unbreakable vanishing, reappearing) refuses an inactive block whose
 /// connected vanishing blocks are locked; LockedVanishingBlock refuses while locked, else as a
@@ -315,8 +315,8 @@ bool vanishingBlocksLocked(BlockSource& region, BlockPos const& start) {
 bool canEntityDestroy(BlockSource& region, BlockPos const& pos, Block const& block) {
     auto id = game::blockId(block);
     if (kRefusesEntityDestroy.contains(id)) return false;
-    if (id == "twilightforest:locked_vanishing_block" && boolState(block, "twilightforest:locked")) return false;
-    if (kVanishingBlocks.contains(id) && !boolState(block, "twilightforest:active")) return !vanishingBlocksLocked(region, pos);
+    if (id == "gloamingforest:locked_vanishing_block" && boolState(block, "gloamingforest:locked")) return false;
+    if (kVanishingBlocks.contains(id) && !boolState(block, "gloamingforest:active")) return !vanishingBlocksLocked(region, pos);
     return true;
 }
 
@@ -376,17 +376,17 @@ NagaState& stateFor(Actor& naga) {
 void setDazed(Actor& naga, NagaState& s, bool v) {
     if (s.dazed == v) return;
     s.dazed = v;
-    ge::setProperty(naga, "twilightforest:dazed", v);
+    ge::setProperty(naga, "gloamingforest:dazed", v);
 }
 void setStunless(Actor& naga, NagaState& s, bool v) {
     if (s.stunless == v) return;
     s.stunless = v;
-    ge::setProperty(naga, "twilightforest:stunless", v);
+    ge::setProperty(naga, "gloamingforest:stunless", v);
 }
 void setCharging(Actor& naga, NagaState& s, bool v) {
     if (s.charging != v) {
         s.charging = v;
-        ge::setProperty(naga, "twilightforest:charging", v);
+        ge::setProperty(naga, "gloamingforest:charging", v);
     }
     if (!v) setStunless(naga, s, false);
 }
@@ -496,7 +496,7 @@ void makePoofAt(Actor& naga, NagaState& s, Vec3 const& pos) {
 void setSegmentActive(Actor& naga, Segment& seg, bool active) {
     seg.active = active;
     ge::ext::setPartSize(seg.part, active ? ge::PartSize{2.0f, 2.0f} : ge::PartSize{0.0f, 0.0f});
-    if (auto* a = ge::partActor(seg.part)) ge::setProperty(*a, "twilightforest:active", active);
+    if (auto* a = ge::partActor(seg.part)) ge::setProperty(*a, "gloamingforest:active", active);
     (void)naga;
 }
 
@@ -541,11 +541,11 @@ void applySpeedBoost(Mob& naga, int segments) {
     auto  attr = naga.getMutableAttribute(SharedAttributes::MOVEMENT_SPEED());
     auto* inst = attr.mInstance->mPtr;
     if (!inst) return;
-    auto id = mce::UUID::fromStringHash("twilightforest:segment_speed_boost");
+    auto id = mce::UUID::fromStringHash("gloamingforest:segment_speed_boost");
     inst->removeModifier(id, attr.mContext);
     if (segments <= 0) return;
     double speedMod = static_cast<float>(kMaxSegments) / segments * 0.02F;
-    AttributeModifier mod(id, "twilightforest:segment_speed_boost", static_cast<float>(speedMod), AttributeModifierOperation::OperationAddition,
+    AttributeModifier mod(id, "gloamingforest:segment_speed_boost", static_cast<float>(speedMod), AttributeModifierOperation::OperationAddition,
                           AttributeOperands::OperandCurrent, false);
     inst->addModifier(mod, attr.mContext);
 }
@@ -653,7 +653,7 @@ void tickSegment(Mob& naga, NagaState& s, int i) {
         if (seg.deathCounter <= 0) {
             makePoofAt(naga, s, seg.pos);
             float pitch = (voicePitch(s.random) * 0.75F) + (0.5F * s.random.nextFloat());
-            gf::fx::sound(naga.getDimension(), "entity.twilightforest.naga.hurt", naga.getFeetPos(), 0.25F, pitch);
+            gf::fx::sound(naga.getDimension(), "entity.gloamingforest.naga.hurt", naga.getFeetPos(), 0.25F, pitch);
             // naga.deathTime = 0: while segments still pop, the death animation (the trail, the
             // chest) waits for the last one (no effect on a live Naga)
             gf::boss::ext::setDeathTime(naga, 0);
@@ -756,7 +756,7 @@ void doCharge(NagaState& s, bool stunless) {
 
 void doIntimidate(Mob& naga, NagaState& s) {
     setState(s, MovementState::Intimidate);
-    gf::fx::sound(naga.getDimension(), "entity.twilightforest.naga.rattle", naga.getFeetPos(), 4.0F, voicePitch(s.random));
+    gf::fx::sound(naga.getDimension(), "entity.gloamingforest.naga.rattle", naga.getFeetPos(), 4.0F, voicePitch(s.random));
     s.stateCounter += 15 + s.random.nextInt(10);
     log().info("naga: {} intimidates (counter {})", s.uid, s.stateCounter);
 }
@@ -838,10 +838,10 @@ void tickPattern(Mob& naga, NagaState& s) {
     case MovementState::Intimidate:
         navStop(naga, s);
         if (target) turnTowards(naga, *target, 30.0F);
-        // TF sets naga.zza = 0.1 here, but in the same Mob#serverAiStep the MoveControl ticks after
+        // upstream sets naga.zza = 0.1 here, but in the same Mob#serverAiStep the MoveControl ticks after
         // the goals with its operation at WAIT (the path is done: nothing set a wanted position)
         // and MoveControl#tick's WAIT branch calls mob.setZza(0): travel() never sees the 0.1, the
-        // Naga does not creep forward in TF either. Nothing to port.
+        // Naga does not creep forward in upstream either. Nothing to port.
         if (!s.stunCalculated) {
             // the stunless charge has a higher chance to happen the lower the naga's health gets;
             // difficulty is also factored in
@@ -1277,7 +1277,7 @@ public:
         }));
         if (!best) return false;
         mFound = uidOf(*best);
-        // Naga's override checks the mob's current target (TF), not the one just found
+        // Naga's override checks the mob's current target (upstream), not the one just found
         return areSelfAndTargetInHome(*m, targetOf(*m));
     }
     bool canContinueToUse() override {
@@ -1391,7 +1391,7 @@ void tickEffects(Mob& naga, NagaState& s) {
 
 // ---- damage ----------------------------------------------------------------------------------------
 
-/// DamageTypeTags.IS_EXPLOSION: the imported tag holds only TF's additions (lich_bomb), so the
+/// DamageTypeTags.IS_EXPLOSION: the imported tag holds only upstream's additions (lich_bomb), so the
 /// vanilla 1.21.1 members (data/minecraft/tags/damage_type/is_explosion.json: fireworks, explosion,
 /// player_explosion, bad_respawn_point) are listed here; fireball and wither_skull are not members.
 bool isExplosion(std::string const& type) {
@@ -1494,7 +1494,7 @@ void applyHealthBoost(Mob& naga) {
     auto  attr  = naga.getMutableAttribute(SharedAttributes::HEALTH());
     auto* inst  = attr.mInstance->mPtr;
     if (!inst) return;
-    auto id = mce::UUID::fromStringHash("twilightforest:difficulty_health_boost");
+    auto id = mce::UUID::fromStringHash("gloamingforest:difficulty_health_boost");
     bool fresh = !saved.is_number();
     float boost = 0.0F;
     if (fresh) {
@@ -1506,7 +1506,7 @@ void applyHealthBoost(Mob& naga) {
     if (boost <= 0.0F) return;
     for (auto const& m : inst->getModifiers())
         if (m.mId.get() == id) return; // already there (Bedrock saved it)
-    AttributeModifier mod(id, "twilightforest:difficulty_health_boost", boost, AttributeModifierOperation::OperationAddition, AttributeOperands::OperandMax, true);
+    AttributeModifier mod(id, "gloamingforest:difficulty_health_boost", boost, AttributeModifierOperation::OperationAddition, AttributeOperands::OperandMax, true);
     inst->addModifier(mod, attr.mContext);
     if (fresh) naga.heal(naga.getMaxHealth());
 }
@@ -1527,15 +1527,15 @@ void onSpawn(Actor& self) {
     ge::setMoveControl(*naga, [](Mob& m) { moveControl(m); });
     // Naga#getBossBarOverlay NOTCHED_10, #getBossBarColor 0x5E9916
     gf::boss::ext::setBarStyle(*naga, 0x5E9916, gf::boss::ext::Overlay::Notched10, false);
-    ge::setProperty(self, "twilightforest:dazed", s.dazed);
-    ge::setProperty(self, "twilightforest:charging", s.charging);
-    ge::setProperty(self, "twilightforest:stunless", s.stunless);
+    ge::setProperty(self, "gloamingforest:dazed", s.dazed);
+    ge::setProperty(self, "gloamingforest:charging", s.charging);
+    ge::setProperty(self, "gloamingforest:stunless", s.stunless);
     s.initialized = true;
     log().info("naga: {} spawned with {} health ({} segments)", s.uid, naga->getHealth(), segmentsFor(float(naga->getHealth()), s.healthPerSegment));
 }
 
 /// A Naga whose U20 state was dropped while F8 kept its own (its chunk was unloaded for a while,
-/// F8 did not run onSpawn again): TF saves neither the segments nor the movement pattern nor the
+/// F8 did not run onSpawn again): upstream saves neither the segments nor the movement pattern nor the
 /// synced flags (Naga#addAdditionalSaveData has none of them), so it comes back as a fresh one:
 /// DATA_DAZE / DATA_CHARGE / DATA_STUNLESS off (the entity properties Bedrock saved are reset), the
 /// segments re-attached to the part actors F8 kept and inactive until setSegmentsPerHealth activates
@@ -1553,9 +1553,9 @@ void reattach(Mob& naga, NagaState& s) {
             setSegmentActive(naga, seg, false);
         }
     } else addSegments(naga, s);
-    ge::setProperty(naga, "twilightforest:dazed", false);
-    ge::setProperty(naga, "twilightforest:charging", false);
-    ge::setProperty(naga, "twilightforest:stunless", false);
+    ge::setProperty(naga, "gloamingforest:dazed", false);
+    ge::setProperty(naga, "gloamingforest:charging", false);
+    ge::setProperty(naga, "gloamingforest:stunless", false);
     log().info("naga: {} came back without its state: reset (health {})", s.uid, naga.getHealth());
 }
 
@@ -1744,8 +1744,8 @@ void installNaga() {
     gf::boss::registerBoss({
         .entityId        = kNagaId,
         .homeStructure   = kCourtyard,
-        .lootTable       = "twilightforest:entities/naga",
-        .deathChestBlock = "twilightforest:twilight_oak_chest",
+        .lootTable       = "gloamingforest:entities/naga",
+        .deathChestBlock = "gloamingforest:gloaming_oak_chest",
         .bar             = {.rgb = 0x5E9916, .darken = false, .fog = false},
         .deathTicks      = kDeathAnimationDuration + kDeathParticlesDuration,
     });
@@ -1755,14 +1755,14 @@ void installNaga() {
                                              .deathAnimationFinished = [](Mob&, int deathTime) { return deathTime >= kDeathAnimationDuration + kDeathParticlesDuration; },
                                              .deathContainer =
                                                  [](Mob&, core::jrand::RandomSource& random) {
-                                                     return std::string(random.nextBoolean() ? "twilightforest:twilight_oak_chest" : "twilightforest:canopy_chest");
+                                                     return std::string(random.nextBoolean() ? "gloamingforest:gloaming_oak_chest" : "gloamingforest:canopy_chest");
                                                  },
                                              .onPostRemoval =
                                                  [](Mob& boss) {
                                                      // Naga#makePoofParticles: the death sound, then 20 explosions
                                                      auto* s = stateOf(boss);
                                                      if (!s) return;
-                                                     gf::fx::sound(boss.getDimension(), "entity.twilightforest.naga.hurt", boss.getFeetPos(), 1.25F, voicePitch(s->random) * 0.25F);
+                                                     gf::fx::sound(boss.getDimension(), "entity.gloamingforest.naga.hurt", boss.getFeetPos(), 1.25F, voicePitch(s->random) * 0.25F);
                                                      makePoofAt(boss, *s, boss.getFeetPos());
                                                  },
                                          });

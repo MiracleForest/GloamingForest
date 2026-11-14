@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:moon_dial",
+      "identifier": "gloamingforest:moon_dial",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:moon_dial.name"
+        "value": "item.gloamingforest:moon_dial.name"
       }
     }
   }

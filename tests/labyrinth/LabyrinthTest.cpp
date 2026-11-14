@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/labyrinth (U23): the labyrinth's terraformer (LabyrinthStructure), the maze
 // helpers of MinotaurMazeComponent, the mob rules, and the unit's BP entities against F13's Java
 // goldens (tests/golden/mobs.json).
@@ -96,42 +96,42 @@ TEST(Labyrinth, IsNearRoom) {
 }
 
 TEST(Labyrinth, PieceKinds) {
-    EXPECT_STREQ(roomType(0, 1), "twilightforest:TFMMR");
-    EXPECT_STREQ(roomType(1, 1), "twilightforest:TFMMRE");
-    EXPECT_STREQ(roomType(1, 2), "twilightforest:TFMMRB");
-    EXPECT_STREQ(roomType(2, 1), "twilightforest:TFMMRC");
-    EXPECT_STREQ(roomType(3, 2), "twilightforest:TFMMMR");
-    EXPECT_STREQ(roomType(4, 1), "twilightforest:TFMMRF");
-    EXPECT_STREQ(roomType(4, 2), "twilightforest:TFMMRV");
-    EXPECT_STREQ(roomType(5, 1), "twilightforest:TFMMRSC");
-    EXPECT_STREQ(roomType(6, 2), "twilightforest:TFMMRSC");
-    EXPECT_STREQ(deadEndType(0, false, 1), "twilightforest:TFMMDE");
-    EXPECT_STREQ(deadEndType(1, false, 1), "twilightforest:TFMMDEC");
-    EXPECT_STREQ(deadEndType(2, true, 1), "twilightforest:TFMMDETC");
-    EXPECT_STREQ(deadEndType(2, false, 1), "twilightforest:TFMMDETrC");
-    EXPECT_STREQ(deadEndType(5, false, 2), "twilightforest:TFMMDEFL");
-    EXPECT_STREQ(deadEndType(7, false, 1), "twilightforest:TFMMDER");
-    EXPECT_STREQ(deadEndType(7, false, 2), "twilightforest:TFMMDES");
+    EXPECT_STREQ(roomType(0, 1), "gloamingforest:TFMMR");
+    EXPECT_STREQ(roomType(1, 1), "gloamingforest:TFMMRE");
+    EXPECT_STREQ(roomType(1, 2), "gloamingforest:TFMMRB");
+    EXPECT_STREQ(roomType(2, 1), "gloamingforest:TFMMRC");
+    EXPECT_STREQ(roomType(3, 2), "gloamingforest:TFMMMR");
+    EXPECT_STREQ(roomType(4, 1), "gloamingforest:TFMMRF");
+    EXPECT_STREQ(roomType(4, 2), "gloamingforest:TFMMRV");
+    EXPECT_STREQ(roomType(5, 1), "gloamingforest:TFMMRSC");
+    EXPECT_STREQ(roomType(6, 2), "gloamingforest:TFMMRSC");
+    EXPECT_STREQ(deadEndType(0, false, 1), "gloamingforest:TFMMDE");
+    EXPECT_STREQ(deadEndType(1, false, 1), "gloamingforest:TFMMDEC");
+    EXPECT_STREQ(deadEndType(2, true, 1), "gloamingforest:TFMMDETC");
+    EXPECT_STREQ(deadEndType(2, false, 1), "gloamingforest:TFMMDETrC");
+    EXPECT_STREQ(deadEndType(5, false, 2), "gloamingforest:TFMMDEFL");
+    EXPECT_STREQ(deadEndType(7, false, 1), "gloamingforest:TFMMDER");
+    EXPECT_STREQ(deadEndType(7, false, 2), "gloamingforest:TFMMDES");
     EXPECT_EQ(corridorType(0, 1), nullptr);
     EXPECT_EQ(corridorType(3, 1), nullptr); // painting
-    EXPECT_STREQ(corridorType(2, 2), "twilightforest:TFMMCIF");
-    EXPECT_STREQ(corridorType(4, 1), "twilightforest:TFMMCR");
-    EXPECT_STREQ(corridorType(4, 2), "twilightforest:TFMMCS");
+    EXPECT_STREQ(corridorType(2, 2), "gloamingforest:TFMMCIF");
+    EXPECT_STREQ(corridorType(4, 1), "gloamingforest:TFMMCR");
+    EXPECT_STREQ(corridorType(4, 2), "gloamingforest:TFMMCS");
     EXPECT_EQ(kMazeRadius, 55);
     EXPECT_EQ(kMazeDiameter, 110);
 }
 
 TEST(Labyrinth, MobRules) {
     EXPECT_FLOAT_EQ(weaponModifier("minecraft:golden_axe"), 6.0F);
-    EXPECT_FLOAT_EQ(weaponModifier("twilightforest:gold_minotaur_axe"), 6.0F);
-    EXPECT_FLOAT_EQ(weaponModifier("twilightforest:diamond_minotaur_axe"), 9.0F);
+    EXPECT_FLOAT_EQ(weaponModifier("gloamingforest:gold_minotaur_axe"), 6.0F);
+    EXPECT_FLOAT_EQ(weaponModifier("gloamingforest:diamond_minotaur_axe"), 9.0F);
     EXPECT_FLOAT_EQ(weaponModifier("minecraft:stick"), 0.0F);
     // the Minoshroom's slam with its diamond minotaur axe: (2 + 9) / 2
-    EXPECT_FLOAT_EQ(slamDamage(2.0F + weaponModifier("twilightforest:diamond_minotaur_axe")), 5.5F);
+    EXPECT_FLOAT_EQ(slamDamage(2.0F + weaponModifier("gloamingforest:diamond_minotaur_axe")), 5.5F);
     // Minotaur: (int)(nextInt(10) / (effective difficulty + 1)) == 0 -> gold minotaur axe
-    EXPECT_STREQ(minotaurAxe(0, 0.0F), "twilightforest:gold_minotaur_axe");
+    EXPECT_STREQ(minotaurAxe(0, 0.0F), "gloamingforest:gold_minotaur_axe");
     EXPECT_STREQ(minotaurAxe(1, 0.0F), "minecraft:golden_axe");
-    EXPECT_STREQ(minotaurAxe(3, 3.0F), "twilightforest:gold_minotaur_axe");
+    EXPECT_STREQ(minotaurAxe(3, 3.0F), "gloamingforest:gold_minotaur_axe");
     EXPECT_STREQ(minotaurAxe(4, 3.0F), "minecraft:golden_axe");
     // MazeSlime: three times the slime's health
     EXPECT_FLOAT_EQ(mazeSlimeHealth(1), 3.0F);
@@ -156,7 +156,7 @@ TEST(Labyrinth, MobsMatchJavaGoldens) {
     ASSERT_TRUE(golden.contains("entities"));
     for (char const* name : {"minotaur", "minoshroom"}) {
         SCOPED_TRACE(name);
-        std::string const id  = std::string("twilightforest:") + name;
+        std::string const id  = std::string("gloamingforest:") + name;
         auto const&       row = golden.at("entities").at(id);
         auto const        bp  = load(gf::tests::golden::repoDir() / "assets/pack/bp/entities/labyrinth" / (std::string(name) + ".json"));
         auto const&       c   = bp.at("minecraft:entity").at("components");
@@ -175,7 +175,7 @@ TEST(Labyrinth, MobsMatchJavaGoldens) {
     }
     // the maze slime's size groups follow Slime#setSize + MazeSlime's double health
     auto const  bp  = load(gf::tests::golden::repoDir() / "assets/pack/bp/entities/labyrinth/maze_slime.json");
-    auto const& row = golden.at("entities").at("twilightforest:maze_slime");
+    auto const& row = golden.at("entities").at("gloamingforest:maze_slime");
     auto const& groups = bp.at("minecraft:entity").at("component_groups");
     for (int size : {1, 2, 4}) {
         SCOPED_TRACE(size);

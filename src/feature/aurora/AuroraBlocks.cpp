@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/AuroraBrickBlock.java (getDestroyProgress)
-//   src/main/java/twilightforest/client/model/block/variant/NoiseVaryingModel.java (the variant choice)
-//   src/main/java/twilightforest/block/AuroralizedGlassBlock.java (getBeaconColorMultiplier)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/AuroraBrickBlock.java (getDestroyProgress)
+//   src/main/java/gloamingforest/client/model/block/variant/NoiseVaryingModel.java (the variant choice)
+//   src/main/java/gloamingforest/block/AuroralizedGlassBlock.java (getBeaconColorMultiplier)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The aurora block: TF draws one of its 16 animated textures per position (NoiseVaryingModel with
+// The aurora block: upstream draws one of its 16 animated textures per position (NoiseVaryingModel with
 // SimplexNoiseHelper#calcVariant). Bedrock materials cannot vary by position, so the block has a
 // GloamingForest state `gloamingforest:variant` (0..15, one permutation per texture, F1's animated
 // atlas tiles); every aurora block the palace or a player places gets calcVariant of its position.
@@ -50,7 +50,7 @@ namespace fe = gf::feature::entity;
 
 namespace {
 
-constexpr char kAuroraBlock[] = "twilightforest:aurora_block";
+constexpr char kAuroraBlock[] = "gloamingforest:aurora_block";
 constexpr char kVariant[]     = "gloamingforest:variant";
 
 /// The block pointers of the current world. Pack blocks are registered per world (the client opens
@@ -161,7 +161,7 @@ void tickMining() {
         // 0.1 per tick: the block breaks on the tenth tick of mining
         ++m.ticks;
         if (m.progressed) {
-            // server-authoritative breaking: the engine's own progress becomes TF's 0.1 a tick, so the
+            // server-authoritative breaking: the engine's own progress becomes upstream's 0.1 a tick, so the
             // engine breaks the block itself (drops, sound, particles) when it reaches 1
             m.written                  = std::max(static_cast<float>(gameMode->mDestroyProgress), std::min(1.0F, 0.1F * static_cast<float>(m.ticks)));
             gameMode->mDestroyProgress = m.written;
@@ -216,7 +216,7 @@ void applyAuroraVariants(structure::Region& region, structure::BlockBox const& p
 bool isMiningAuroraBlockForTest(Player const& player) { return mining().contains(player.getOrCreateUniqueID().rawID); }
 
 void installAuroraBlocks() {
-    // a placed aurora block takes its position's variant (setPlacedBy; the model has no state in TF)
+    // a placed aurora block takes its position's variant (setPlacedBy; the model has no state in upstream)
     gf::blockevents::onPlaced(kAuroraBlock, [](BlockSource& region, BlockPos const& pos, Block const& block, Actor*) {
         if (!isPlainAuroraBlock(block)) return;
         // the next tick: a world edit inside the placement could be rolled back with it (R16)
@@ -231,7 +231,7 @@ void installAuroraBlocks() {
     gf::interactions::onStartDestroy({.block = kAuroraBlock}, [](gf::interactions::DestroyContext const& ctx) {
         // survival only (creative breaks at once; adventure cannot break it)
         if (ctx.player.getPlayerGameType() != GameType::Survival) return gf::interactions::Result::Pass;
-        if (gf::progression::has(ctx.player, "twilightforest:progress_glacier"))
+        if (gf::progression::has(ctx.player, "gloamingforest:progress_glacier"))
             mining()[ctx.player.getOrCreateUniqueID().rawID] = Mining{BlockPos{ctx.pos.x, ctx.pos.y, ctx.pos.z}, ctx.face};
         return gf::interactions::Result::Pass;
     });
@@ -244,7 +244,7 @@ void installAuroraBlocks() {
     });
     fe::onLevelTick(tickMining);
     // AuroralizedGlassBlock#getBeaconColorMultiplier: the aurora colour of its position
-    gf::feature::ext::aurora::beacon::registerColorMultiplier("twilightforest:auroralized_glass",
+    gf::feature::ext::aurora::beacon::registerColorMultiplier("gloamingforest:auroralized_glass",
                                                              [](BlockPos const& p) { return core::aurora::auroraBlockColor(p.x, p.y, p.z); });
     gf::game::db::onWorldClosed([] {
         mining().clear();

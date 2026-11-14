@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U19's only door into W0 internals (rule R18 extension request, for A8 to fold in W2b).
@@ -11,10 +11,10 @@
 //     stopNavigation}: Java's Mob / PathNavigation / LookControl calls of the Questing Ram's goals
 //     (QuestRamEatWoolGoal, TemptGoal);
 //   F7 feature/structure/Internal.h: structure::{blocks::*, blockentities::{spawner, lootTable,
-//     entity}, rotateDir, relativeRotation, transformPos}: the block helpers of TF's template
+//     entity}, rotateDir, relativeRotation, transformPos}: the block helpers of upstream's template
 //     features (FeatureLogic, the druid hut's and wells' marker handling, the graveyard);
 //     feature/structure/Region.h (BlockSourceRegion: the selftests place into the live world);
-//   F9 feature/item/DataFiles.h: data::{list, read, onReload}: the twilight/quests registry
+//   F9 feature/item/DataFiles.h: data::{list, read, onReload}: the gloaming/quests registry
 //     (QuestReloadListener).
 // The fold: expose these in feature/entity/Entity.h (a `mobs` namespace), feature/structure/
 // Structure.h (blocks / block entity helpers) and a data contract.

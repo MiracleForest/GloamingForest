@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:encased_smoker",
+      "identifier": "gloamingforest:encased_smoker",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:active": [false, true]
+        "gloamingforest:active": [false, true]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.encased_smoker",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_smoker",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_encased_towerwood",
@@ -58,9 +58,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:active')",
+        "condition": "!q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.encased_smoker",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_smoker",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_encased_towerwood",
@@ -100,9 +100,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.encased_smoker_on",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_smoker_on",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_encased_towerwood",

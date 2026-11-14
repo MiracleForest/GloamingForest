@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.tiny_bird": {
+    "controller.render.gloamingforest.tiny_bird": {
       "arrays": {
         "textures": {
           "Array.skins": [
@@ -22,7 +22,7 @@
         "Array.skins[q.variant]"
       ]
     },
-    "controller.render.twilightforest.dwarf_rabbit": {
+    "controller.render.gloamingforest.dwarf_rabbit": {
       "arrays": {
         "textures": {
           "Array.skins": [
@@ -42,7 +42,7 @@
         "Array.skins[q.variant]"
       ]
     },
-    "controller.render.twilightforest.bighorn_sheep_fur": {
+    "controller.render.gloamingforest.bighorn_sheep_fur": {
       "geometry": "Geometry.fur",
       "materials": [
         {

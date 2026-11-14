@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of U28's mobs (rule R12: "aurora.*", testPos dx 2800..2899): the attributes against
 // F13's goldens, the snow guardian's gear, the ice crystal's 600-tick life, the unstable ice core's
@@ -98,7 +98,7 @@ std::vector<Actor*> around(core::GlobalPos const& pos, std::string const& type, 
 }
 
 void discardAround(core::GlobalPos const& pos, float r) {
-    for (char const* t : {kSnowQueen, kSnowGuardian, kStableIceCore, kUnstableIceCore, kIceCrystal, "twilightforest:ice_snowball"})
+    for (char const* t : {kSnowQueen, kSnowGuardian, kStableIceCore, kUnstableIceCore, kIceCrystal, "gloamingforest:ice_snowball"})
         for (auto* a : around(pos, t, r)) a->remove();
 }
 
@@ -157,8 +157,8 @@ GF_REGISTER_SELFTEST("aurora.mob_attributes", [](Context& ctx) -> ll::coro::Coro
     }
     if (auto* g = mobById(spawned[0])) {
         auto id = game::items::idOf(g->getCarriedItem());
-        ctx.check(id == "twilightforest:ironwood_sword" || id == "twilightforest:steeleaf_sword" || id == "twilightforest:knightmetal_sword",
-                  "the snow guardian carries a TF sword: " + id);
+        ctx.check(id == "gloamingforest:ironwood_sword" || id == "gloamingforest:steeleaf_sword" || id == "gloamingforest:knightmetal_sword",
+                  "the snow guardian carries an upstream sword: " + id);
     }
     if (auto* q = mobById(spawned[4])) {
         ctx.check(gf::entity::ext::parts(*q).size() == 7, "the Snow Queen has seven ice shields");
@@ -188,7 +188,7 @@ GF_REGISTER_SELFTEST("aurora.ice_crystal_lifetime", [](Context& ctx) -> ll::coro
 });
 
 namespace {
-/// Who progression's onKilled credits for the last unstable ice core (twilight_hunter, U14).
+/// Who progression's onKilled credits for the last unstable ice core (gloaming_hunter, U14).
 std::int64_t& coreKilledBy() {
     static std::int64_t who        = 0;
     static bool         registered = false;
@@ -229,7 +229,7 @@ GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::C
     }
     co_await ctx.ticks(60);
     ctx.check(!fe::actorById(uid) || !fe::actorById(uid)->isAlive(), "then it explodes and is gone");
-    ctx.check(coreKilledBy() == uidOf(ctx.player()), "the delayed death is the player's kill (onKilled, twilight_hunter)");
+    ctx.check(coreKilledBy() == uidOf(ctx.player()), "the delayed death is the player's kill (onKilled, gloaming_hunter)");
     auto stone = game::blockIdAt(*region, game::blockPos(stonePos));
     auto ice   = game::blockIdAt(*region, game::blockPos(icePos));
     ctx.check(stone.ends_with("_terracotta"), "the stone became terracotta: " + stone);
@@ -270,7 +270,7 @@ GF_REGISTER_SELFTEST("aurora.map_colors", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(javaMapColor("minecraft:grass_block") == 0x7FB238u, "grass block: Java's MapColor.GRASS");
     ctx.check(javaMapColor("minecraft:oak_leaves") == 0x007C00u && javaMapColor("minecraft:azalea_leaves_flowered") == 0x007C00u, "leaves: MapColor.PLANT");
     ctx.check(javaMapColor("minecraft:red_terracotta") == 0x8E3C2Eu && javaMapColor("minecraft:lime_wool") == 0x7FCC19u, "terracotta and wool colours");
-    ctx.check(!javaMapColor("twilightforest:aurora_block").has_value(), "other blocks use Bedrock's map colour");
+    ctx.check(!javaMapColor("gloamingforest:aurora_block").has_value(), "other blocks use Bedrock's map colour");
     int i = 0, same = 0, n = 0;
     std::string differ;
     for (char const* id : {"minecraft:stone", "minecraft:ice", "minecraft:dirt", "minecraft:snow", "minecraft:packed_ice", "minecraft:grass_block", "minecraft:oak_leaves",
@@ -301,7 +301,7 @@ GF_REGISTER_SELFTEST("aurora.stable_ice_core_snowballs", [](Context& ctx) -> ll:
     if (!registered) {
         registered = true;
         gf::combat::onDealt(0, [](gf::combat::DamageInfo const& d) {
-            if (d.type == "twilightforest:snowball_fight") snowballHits++;
+            if (d.type == "gloamingforest:snowball_fight") snowballHits++;
         });
     }
     snowballHits = 0;
@@ -469,7 +469,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
         // (again after the wait: a beam that starts and hits within it ends the loop)
         if (auto* q = mobById(uid)) breathing = breathing || queenBreathingForTest(*q);
         for (auto const& [type, amount] : dealt().hits)
-            if (type == "twilightforest:chilling_breath") {
+            if (type == "gloamingforest:chilling_breath") {
                 breath++;
                 ctx.check(std::abs(amount - 4.0f) < 0.01f || amount < 4.0f, "a ray hit deals BREATH_DAMAGE 4 (armour may lower it): " + std::to_string(amount));
             }
@@ -596,7 +596,7 @@ std::int64_t& queenKilledBy() {
 } // namespace
 
 GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // F8's boss kit: the death chest (twilight oak) with her loot; the kill grants progress_glacier
+    // F8's boss kit: the death chest (gloaming oak) with her loot; the kill grants progress_glacier
     DifficultyScope normal(Difficulty::Normal);
     auto            box   = co_await ctx.flatArea(2870, 24, 24);
     auto            pos   = core::GlobalPos{ctx.dimension(), box.minX + 12, box.minY + 1, box.minZ + 12};
@@ -604,9 +604,9 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::Co
     ctx.require(queen != nullptr, "the Snow Queen");
     auto uid = uidOf(*queen);
     queenKilledBy() = 0;
-    gf::progression::revoke(ctx.player(), "twilightforest:progress_glacier");
+    gf::progression::revoke(ctx.player(), "gloamingforest:progress_glacier");
     // progress_glacier asks for progress_yeti first (previous_progression)
-    gf::progression::grant(ctx.player(), "twilightforest:progress_yeti");
+    gf::progression::grant(ctx.player(), "gloamingforest:progress_yeti");
     ctx.player().teleportTo(Vec3{pos.x + 3.5f, float(pos.y), pos.z + 0.5f}, true, 0, 1, false);
     co_await ctx.ticks(2);
     if (auto* q = mobById(uid)) gf::combat::hurt(*q, 10000.0f, "minecraft:player_attack", &ctx.player(), &ctx.player());
@@ -616,16 +616,16 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::Co
         for (int dx = -6; dx <= 6 && !chest; dx++)
             for (int dy = -2; dy <= 6 && !chest; dy++)
                 for (int dz = -6; dz <= 6 && !chest; dz++)
-                    if (ctx.blockAt(at(pos, dx, dy, dz)) == "twilightforest:twilight_oak_chest") chest = true;
+                    if (ctx.blockAt(at(pos, dx, dy, dz)) == "gloamingforest:gloaming_oak_chest") chest = true;
     }
-    ctx.check(chest, "a twilight oak death chest");
+    ctx.check(chest, "a gloaming oak death chest");
     // the advancement itself is U14's criteria engine (player_killed_entity / hurt_boss on
-    // twilightforest:snow_queen); this unit's part is the kill credit those triggers read
+    // gloamingforest:snow_queen); this unit's part is the kill credit those triggers read
     ctx.check(queenKilledBy() == uidOf(ctx.player()), "the kill is the player's (player_killed_entity for progress_glacier)");
-    for (int i = 0; i < 10 && !gf::progression::has(ctx.player(), "twilightforest:progress_glacier"); i++) co_await ctx.ticks(5);
-    ctx.info(std::string("progress_glacier ") + (gf::progression::has(ctx.player(), "twilightforest:progress_glacier") ? "granted" : "not granted (U14's criteria engine)"));
-    gf::progression::revoke(ctx.player(), "twilightforest:progress_glacier");
-    gf::progression::revoke(ctx.player(), "twilightforest:progress_yeti");
+    for (int i = 0; i < 10 && !gf::progression::has(ctx.player(), "gloamingforest:progress_glacier"); i++) co_await ctx.ticks(5);
+    ctx.info(std::string("progress_glacier ") + (gf::progression::has(ctx.player(), "gloamingforest:progress_glacier") ? "granted" : "not granted (U14's criteria engine)"));
+    gf::progression::revoke(ctx.player(), "gloamingforest:progress_glacier");
+    gf::progression::revoke(ctx.player(), "gloamingforest:progress_yeti");
     discardAround(pos, 30);
 });
 
@@ -638,9 +638,9 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro:
     auto  block = core::GlobalPos{ctx.dimension(), box.minX + 4, box.minY + 1, box.minZ + 2};
     sp.teleportTo(Vec3{block.x + 0.5f, float(block.y), block.z - 1.5f}, true, 0, 1, false);
     sp.setPlayerGameType(GameType::Survival);
-    gf::progression::grant(sp, "twilightforest:progress_glacier");
-    ctx.require(gf::progression::has(sp, "twilightforest:progress_glacier"), "the miner has progress_glacier");
-    ctx.require(ctx.setBlock(block, "twilightforest:aurora_block"), "an aurora block");
+    gf::progression::grant(sp, "gloamingforest:progress_glacier");
+    ctx.require(gf::progression::has(sp, "gloamingforest:progress_glacier"), "the miner has progress_glacier");
+    ctx.require(ctx.setBlock(block, "gloamingforest:aurora_block"), "an aurora block");
     co_await ctx.ticks(2);
     // a tap: start, stop at once
     auto* p = static_cast<SimulatedPlayer*>(fe::actorById(spId));
@@ -656,7 +656,7 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro:
         pp->simulateStopDestroyingBlock();
     }
     co_await ctx.ticks(15);
-    ctx.check(ctx.blockAt(block) == "twilightforest:aurora_block", "a tap does not break it: " + ctx.blockAt(block));
+    ctx.check(ctx.blockAt(block) == "gloamingforest:aurora_block", "a tap does not break it: " + ctx.blockAt(block));
     // held: broken in about 10 ticks (far below the 15 s of a hardness 10 block)
     p = static_cast<SimulatedPlayer*>(fe::actorById(spId));
     ctx.require(p != nullptr, "the miner");
@@ -664,7 +664,7 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro:
     int broken = -1;
     for (int t = 1; t <= 30 && broken < 0; t++) {
         co_await ctx.ticks(1);
-        if (ctx.blockAt(block) != "twilightforest:aurora_block") broken = t;
+        if (ctx.blockAt(block) != "gloamingforest:aurora_block") broken = t;
     }
     ctx.check(broken > 0 && broken <= 14, "held mining breaks it in ~10 ticks: " + std::to_string(broken));
     // the block drops itself (its loot table): an item on the ground, or already in the miner's
@@ -673,18 +673,18 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro:
     for (int t = 0; t < 10 && drops == 0; t++) {
         co_await ctx.ticks(2);
         for (auto* a : around(block, "minecraft:item", 3))
-            if (game::items::idOf(static_cast<ItemActor*>(a)->item()) == "twilightforest:aurora_block") drops++;
+            if (game::items::idOf(static_cast<ItemActor*>(a)->item()) == "gloamingforest:aurora_block") drops++;
         if (auto* pp = static_cast<SimulatedPlayer*>(fe::actorById(spId))) {
             auto& inv = pp->getInventory();
             for (int i = 0; i < inv.getContainerSize(); ++i)
-                if (game::items::idOf(inv.getItem(i)) == "twilightforest:aurora_block") drops += game::items::countOf(inv.getItem(i));
+                if (game::items::idOf(inv.getItem(i)) == "gloamingforest:aurora_block") drops += game::items::countOf(inv.getItem(i));
         }
     }
     ctx.check(broken < 0 || drops > 0, "the broken aurora block drops itself: " + std::to_string(drops));
     for (auto* a : around(block, "minecraft:item", 3)) a->remove();
     if (auto* pp = static_cast<SimulatedPlayer*>(fe::actorById(spId))) {
         pp->simulateStopDestroyingBlock();
-        gf::progression::revoke(*pp, "twilightforest:progress_glacier");
+        gf::progression::revoke(*pp, "gloamingforest:progress_glacier");
     }
     ctx.cleanupBlock(block);
 });
@@ -697,9 +697,9 @@ GF_REGISTER_SELFTEST("aurora.client_miner", [](Context& ctx) {
     if (auto level = ll::service::getLevel())
         level->forEachPlayer([&](Player& p) {
             if (p.isSimulatedPlayer() || p.getPlayerGameType() != GameType::Creative) return true;
-            gf::progression::grant(p, "twilightforest:progress_yeti");
-            gf::progression::grant(p, "twilightforest:progress_glacier");
-            if (gf::progression::has(p, "twilightforest:progress_glacier")) granted++;
+            gf::progression::grant(p, "gloamingforest:progress_yeti");
+            gf::progression::grant(p, "gloamingforest:progress_glacier");
+            if (gf::progression::has(p, "gloamingforest:progress_glacier")) granted++;
             return true;
         });
     ctx.info("progress_glacier granted to " + std::to_string(granted) + " real player(s)");
@@ -711,7 +711,7 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_variant",[](Context& ctx) -> ll::coro:
     int  differs = 0;
     for (int i = 0; i < 6; i++) {
         auto p = core::GlobalPos{ctx.dimension(), box.minX + 1 + i, box.minY + 1, box.minZ + 2};
-        ctx.require(ctx.setBlock(p, "twilightforest:aurora_block"), "placed");
+        ctx.require(ctx.setBlock(p, "gloamingforest:aurora_block"), "placed");
         auto const* expected = auroraBlockAt(p.x, p.y, p.z);
         ctx.require(expected != nullptr, "the variants resolve");
         int want = game::intState(*expected, "gloamingforest:variant").value_or(-1);
@@ -723,7 +723,7 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_variant",[](Context& ctx) -> ll::coro:
     int cmdChecked = 0, cmdOk = 0;
     for (int i = 0; i < 6; i++) {
         auto p = core::GlobalPos{ctx.dimension(), box.minX + 1 + i, box.minY + 3, box.minZ + 2};
-        auto r = gf::selftest::runServerCommand("setblock " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + " twilightforest:aurora_block",
+        auto r = gf::selftest::runServerCommand("setblock " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + " gloamingforest:aurora_block",
                                                 ctx.dimension());
         if (!r) {
             std::string why;
@@ -747,7 +747,7 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_variant",[](Context& ctx) -> ll::coro:
     // a structure's plain aurora blocks get theirs
     auto* region = ctx.region();
     auto  p      = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY + 2, box.minZ + 3};
-    ctx.require(ctx.setBlock(p, "twilightforest:aurora_block"), "placed plain");
+    ctx.require(ctx.setBlock(p, "gloamingforest:aurora_block"), "placed plain");
     structure::BlockSourceRegion live(*region, game::blockPos(p));
     structure::BlockBox          one{p.x, p.y, p.z, p.x, p.y, p.z};
     applyAuroraVariants(live, one, one);
@@ -756,11 +756,11 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_variant",[](Context& ctx) -> ll::coro:
 });
 
 GF_REGISTER_SELFTEST("aurora.ice_mobs_melt", [](Context& ctx) {
-    // BaseIceMob#aiStep: #snow_golem_melts biomes (TF's fire swamp and oak savannah too) burn ice mobs
-    ctx.check(meltsSnowIn("twilightforest:fire_swamp"), "the fire swamp melts ice mobs");
-    ctx.check(meltsSnowIn("twilightforest:oak_savannah"), "the oak savannah melts ice mobs");
-    ctx.check(!meltsSnowIn("twilightforest:glacier"), "the glacier does not");
-    ctx.check(!meltsSnowIn("twilightforest:snowy_forest"), "the snowy forest does not");
+    // BaseIceMob#aiStep: #snow_golem_melts biomes (upstream's fire swamp and oak savannah too) burn ice mobs
+    ctx.check(meltsSnowIn("gloamingforest:fire_swamp"), "the fire swamp melts ice mobs");
+    ctx.check(meltsSnowIn("gloamingforest:oak_savannah"), "the oak savannah melts ice mobs");
+    ctx.check(!meltsSnowIn("gloamingforest:glacier"), "the glacier does not");
+    ctx.check(!meltsSnowIn("gloamingforest:snowy_forest"), "the snowy forest does not");
 });
 
 GF_REGISTER_SELFTEST("aurora.snow_guardian_gear", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -798,7 +798,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_spawner", [](Context& ctx) -> ll::coro::
     auto            spawner = core::GlobalPos{ctx.dimension(), box.minX + 6, box.minY + 8, box.minZ + 6};
     // a player below spawnerY - 4 does not wake her
     ctx.player().teleportTo(Vec3{spawner.x + 3.5f, float(box.minY + 1), spawner.z + 0.5f}, true, 0, 1, false);
-    ctx.require(ctx.setBlock(spawner, "twilightforest:snow_queen_boss_spawner"), "spawner placed");
+    ctx.require(ctx.setBlock(spawner, "gloamingforest:snow_queen_boss_spawner"), "spawner placed");
     co_await ctx.ticks(40);
     ctx.check(around(spawner, kSnowQueen, 12).empty(), "no queen for a player more than 4 below the spawner");
     ctx.player().teleportTo(Vec3{spawner.x + 3.5f, float(spawner.y - 2), spawner.z + 0.5f}, true, 0, 1, false);
@@ -808,7 +808,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_spawner", [](Context& ctx) -> ll::coro::
         spawned = !around(spawner, kSnowQueen, 12).empty();
     }
     ctx.check(spawned, "the queen appears for a player within 9 and above spawnerY - 4");
-    ctx.check(ctx.blockAt(spawner) != "twilightforest:snow_queen_boss_spawner", "the spawner is used up");
+    ctx.check(ctx.blockAt(spawner) != "gloamingforest:snow_queen_boss_spawner", "the spawner is used up");
     discardAround(spawner, 30);
 });
 

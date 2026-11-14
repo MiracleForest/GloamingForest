@@ -3,14 +3,14 @@
 // Contract extension of "inventory" by F10 (rule R18; to be folded into
 // feature/inventory/Inventory.h by A8 as optional members of gf::inventory::Handler).
 //
-// WorldlyContainer: a container block whose automation access depends on the side (TF's cinder
+// WorldlyContainer: a container block whose automation access depends on the side (upstream's cinder
 // furnace is a FurnaceBlockEntity: UP reaches the input slot 0, the sides the fuel slot 1, DOWN the
 // result 2 and the fuel 1; only an empty bucket leaves the fuel slot downwards). The rules of a
 // block id apply to the game's hoppers, hopper minecarts and droppers reaching its native container
 // (the block's minecraft:block_entity, F10's backend; a family chest's double view included), and
 // code asks faceAllows for its own automation.
 //
-//     gf::inventory::ext::setFaceRules("twilightforest:cinder_furnace", {
+//     gf::inventory::ext::setFaceRules("gloamingforest:cinder_furnace", {
 //         .slotsForFace = [](auto const&, int face) { return face == 0 ? std::vector{2, 1} : face == 1 ? std::vector{0} : std::vector{1}; },
 //     });
 //

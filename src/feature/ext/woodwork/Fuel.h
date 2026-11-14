@@ -3,8 +3,8 @@
 // Contract extension of U4 woodwork (rule R18: new files only; A8 folds it into F9's data maps).
 // Java burns every member of the vanilla fuel item tags (AbstractFurnaceBlockEntity#buildFuels,
 // NeoForge's neoforge:furnace_fuels data map of vanilla: #minecraft:logs 300, #minecraft:planks 300,
-// #minecraft:wooden_slabs 150, ...), TF's wood sets included; the imported neoforge:furnace_fuels map
-// holds only TF's own rows (#twilightforest:banisters), so F9's furnace hook gives the TF wood items
+// #minecraft:wooden_slabs 150, ...), upstream's wood sets included; the imported neoforge:furnace_fuels map
+// holds only upstream's own rows (#gloamingforest:banisters), so F9's furnace hook gives the upstream wood items
 // no fuel value. A provider gives the burn time (Java ticks) of the items that have no data map row:
 //
 //     gf::woodwork_ext::fuel::setProvider([](std::string const& itemId) -> std::optional<int> { ... });

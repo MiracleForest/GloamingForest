@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleFoundation48Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleRoof48CrenellatedComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleStairTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleLargeTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMuralComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleFoundation48Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleRoof48CrenellatedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleStairTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleLargeTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMuralComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U30 (finalcastle): the keep and what stands on it. The gazebo, the large tower's interior and the
-// bell tower's interior are template pieces (F7 TwilightJigsawPiece) of original .gft templates
+// bell tower's interior are template pieces (F7 GloamingJigsawPiece) of original .gft templates
 // (assets/structures/finalcastle/final_castle/temp, rule R19).
 #include "feature/finalcastle/Castle.h"
 
@@ -87,7 +87,7 @@ void Main::addChildren(Piece&, PieceList& list, RandomSource& rand) {
     // mural on front
     BlockPos mc = offsetTowerCCoords(48, 23, 25, 1, Orientation::South);
     add(list, std::make_unique<MuralPiece>(7, mc.x, mc.y, mc.z, 35, 30, Orientation::South, mOverworldSeed))->addChildren(*this, list, rand);
-    // mural inside (TF passes the first mural's z)
+    // mural inside (upstream passes the first mural's z)
     BlockPos mc1 = offsetTowerCCoords(48, 33, 24, -1, Orientation::South);
     add(list, std::make_unique<MuralPiece>(7, mc1.x, mc1.y, mc.z, 19, 12, Orientation::North, mOverworldSeed))->addChildren(*this, list, rand);
 }
@@ -357,7 +357,7 @@ void Gazebo::addChildren(Piece&, PieceList& list, RandomSource& rand) {
 }
 
 void Gazebo::postProcess(Region&, RandomSource&, BlockBox const&, BlockPos const&) {
-    // placed by the template (TF 4.8 comments out the procedural walls, roof and texts)
+    // placed by the template (upstream 4.8 comments out the procedural walls, roof and texts)
 }
 
 // ==== FinalCastleStairTowerComponent =============================================================================

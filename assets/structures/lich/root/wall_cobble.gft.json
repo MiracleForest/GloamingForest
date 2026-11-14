@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/wall_cobble",
+  "id": "gloamingforest:lich_tower/wall_cobble",
   "size": [3, 3, 1],
   "palette": [
     {"Name":"minecraft:structure_void"},

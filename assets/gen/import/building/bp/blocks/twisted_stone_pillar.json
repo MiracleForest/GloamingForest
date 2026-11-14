@@ -2,18 +2,18 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:twisted_stone_pillar",
+      "identifier": "gloamingforest:twisted_stone_pillar",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"],
-        "twilightforest:down": [false, true],
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:up": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:axis": ["y", "x", "z"],
+        "gloamingforest:down": [false, true],
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:up": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {
@@ -26,23 +26,23 @@
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.twisted_stone_pillar.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.twisted_stone_pillar.multipart",
         "bone_visibility": {
-          "part0": "q.block_state('twilightforest:axis') == 'x'",
-          "part1": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:east')",
-          "part2": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:west')",
-          "part3": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:east')",
-          "part4": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:west')",
-          "part5": "q.block_state('twilightforest:axis') == 'y'",
-          "part6": "q.block_state('twilightforest:axis') == 'y' && !q.block_state('twilightforest:up')",
-          "part7": "q.block_state('twilightforest:axis') == 'y' && !q.block_state('twilightforest:down')",
-          "part8": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:up')",
-          "part9": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:down')",
-          "part10": "q.block_state('twilightforest:axis') == 'z'",
-          "part11": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:north')",
-          "part12": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:south')",
-          "part13": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'y') && q.block_state('twilightforest:north')",
-          "part14": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'y') && q.block_state('twilightforest:south')"
+          "part0": "q.block_state('gloamingforest:axis') == 'x'",
+          "part1": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:east')",
+          "part2": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:west')",
+          "part3": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'z') && q.block_state('gloamingforest:east')",
+          "part4": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'z') && q.block_state('gloamingforest:west')",
+          "part5": "q.block_state('gloamingforest:axis') == 'y'",
+          "part6": "q.block_state('gloamingforest:axis') == 'y' && !q.block_state('gloamingforest:up')",
+          "part7": "q.block_state('gloamingforest:axis') == 'y' && !q.block_state('gloamingforest:down')",
+          "part8": "(q.block_state('gloamingforest:axis') == 'x' || q.block_state('gloamingforest:axis') == 'z') && q.block_state('gloamingforest:up')",
+          "part9": "(q.block_state('gloamingforest:axis') == 'x' || q.block_state('gloamingforest:axis') == 'z') && q.block_state('gloamingforest:down')",
+          "part10": "q.block_state('gloamingforest:axis') == 'z'",
+          "part11": "q.block_state('gloamingforest:axis') == 'z' && !q.block_state('gloamingforest:north')",
+          "part12": "q.block_state('gloamingforest:axis') == 'z' && !q.block_state('gloamingforest:south')",
+          "part13": "(q.block_state('gloamingforest:axis') == 'x' || q.block_state('gloamingforest:axis') == 'y') && q.block_state('gloamingforest:north')",
+          "part14": "(q.block_state('gloamingforest:axis') == 'x' || q.block_state('gloamingforest:axis') == 'y') && q.block_state('gloamingforest:south')"
         }
       },
       "minecraft:material_instances": {
@@ -50,15 +50,15 @@
           "texture": "tf_block_twisted_stone_pillar",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_twisted_stone_cap_end": {
+        "t_gloamingforest_block_twisted_stone_cap_end": {
           "texture": "tf_block_twisted_stone_cap_end",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_twisted_stone_cap_side": {
+        "t_gloamingforest_block_twisted_stone_cap_side": {
           "texture": "tf_block_twisted_stone_cap_side",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_twisted_stone_pillar": {
+        "t_gloamingforest_block_twisted_stone_pillar": {
           "texture": "tf_block_twisted_stone_pillar",
           "render_method": "alpha_test"
         }

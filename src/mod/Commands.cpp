@@ -1,10 +1,10 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/mod/Commands.cpp), LGPL-3.0-or-later.
 //
-// `/twilightforest` (aliases `/tf`, `/tffeature`, as TF's TFCommand):
-//   /twilightforest                     usage (TF: commands.tffeature.usage)
-//   /twilightforest selftest [glob]     (op / console) run selftests
-//   /twilightforest reload              (op / console) reload configs and translations
-//   /twilightforest stubs               (op / console) list the contract stubs that were called
+// `/gloamingforest` (no aliases; upstream's TFCommand):
+//   /gloamingforest                     usage (upstream: commands.tffeature.usage)
+//   /gloamingforest selftest [glob]     (op / console) run selftests
+//   /gloamingforest reload              (op / console) reload configs and translations
+//   /gloamingforest stubs               (op / console) list the contract stubs that were called
 //
 // Feature units add subcommands with GF_REGISTER_SUBCOMMAND (see Commands.h).
 
@@ -114,13 +114,11 @@ namespace {
 void registerAll() {
     if (!ll::service::getCommandRegistry()) return;
     auto& cmd = ll::command::CommandRegistrar::getServerInstance()
-                    .getOrCreateCommand(kRootCommand, "The Twilight Forest (GloamingForest)", CommandPermissionLevel::Any);
-    cmd.alias("tf");
-    cmd.alias("tffeature");
+                    .getOrCreateCommand(kRootCommand, "The Gloaming Forest (GloamingForest)", CommandPermissionLevel::Any);
 
-    // TF: a bare /twilightforest fails with its usage line.
+    // upstream: a bare /gloamingforest fails with its usage line.
     cmd.overload().execute([](CommandOrigin const&, CommandOutput& output) {
-        output.error(tr("commands.tffeature.usage", "Usage: /twilightforest <subcommand>", "/twilightforest"));
+        output.error(tr("commands.tffeature.usage", "Usage: /gloamingforest <subcommand>", "/gloamingforest"));
     });
 
     auto selftest = [](CommandOrigin const& origin, CommandOutput& output, std::string const& glob) {

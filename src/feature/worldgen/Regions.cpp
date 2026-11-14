@@ -191,10 +191,10 @@ SourceRegionAdapter::SourceRegionAdapter(
   mDim(dimension),
   mSeed(seed),
   mFallback(std::move(fallback)) {
-    // the Twilight Forest's chunks come from this generator while it is installed: they hold the
+    // the Gloaming Forest's chunks come from this generator while it is installed: they hold the
     // zoomed biome of every block (whoever builds the region)
-    auto twilight = world::twilight();
-    mZoomed       = twilight && static_cast<int>(*twilight) == dimension && ext::generatorActive();
+    auto gloaming = world::gloaming();
+    mZoomed       = gloaming && static_cast<int>(*gloaming) == dimension && ext::generatorActive();
 }
 
 bool SourceRegionAdapter::isInside(int x, int z) const {

@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:ice_bomb",
+      "identifier": "gloamingforest:ice_bomb",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:ice_bomb.name"
+        "value": "item.gloamingforest:ice_bomb.name"
       },
       "minecraft:max_stack_size": 16,
       "minecraft:allow_off_hand": true

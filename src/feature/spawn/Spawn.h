@@ -2,12 +2,12 @@
 
 // Contract "spawn" (header owned by F0, implemented by F5).
 //
-// The spawn engine of the Twilight Forest: per-biome spawn tables (U1, from BiomeMaker), per-entity
-// placement rules (SpawnPlacements / TF's registerSpawnPlacements), controlled spawns inside
-// landmarks (read from the landmark descriptors, F6) and TF's structureSpecialSpawns.
+// The spawn engine of the Gloaming Forest: per-biome spawn tables (U1, from BiomeMaker), per-entity
+// placement rules (SpawnPlacements / upstream's registerSpawnPlacements), controlled spawns inside
+// landmarks (read from the landmark descriptors, F6) and upstream's structureSpecialSpawns.
 //
-//     gf::spawn::registerPlacement("twilightforest:boar", gf::spawn::PlacementRule::OnGround);
-//     Actor* a = gf::spawn::spawnMob(region, "twilightforest:boar", pos, gf::spawn::SpawnReason::Spawner);
+//     gf::spawn::registerPlacement("gloamingforest:boar", gf::spawn::PlacementRule::OnGround);
+//     Actor* a = gf::spawn::spawnMob(region, "gloamingforest:boar", pos, gf::spawn::SpawnReason::Spawner);
 
 #include <functional>
 #include <map>
@@ -75,7 +75,7 @@ void registerPlacement(std::string const& entityId, PlacementRule rule, Predicat
 Actor* spawnMob(BlockSource& region, std::string const& entityId, Vec3 const& pos, SpawnReason reason, InitFn init = {});
 /// Replaces the spawn table of `biomeId`.
 void setBiomeSpawns(std::string const& biomeId, Table table);
-/// Natural-spawn override for a position (TF's structureSpecialSpawns, landmark controlled
+/// Natural-spawn override for a position (upstream's structureSpecialSpawns, landmark controlled
 /// spawns): return a list to use instead of the biome's for `category`, nullopt to pass.
 using SpecialSpawnFn = std::function<std::optional<std::vector<SpawnEntry>>(BlockSource& region, BlockPos const& pos, std::string const& category)>;
 void onSpecialSpawn(SpecialSpawnFn fn);

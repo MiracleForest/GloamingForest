@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:trollber",
+      "identifier": "gloamingforest:trollber",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -17,7 +17,7 @@
       "minecraft:light_emission": 15,
       "minecraft:map_color": "#007c00",
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.twilightforest.block.trollber",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.trollber",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_trollber",

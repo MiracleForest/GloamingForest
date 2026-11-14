@@ -1,43 +1,43 @@
 {
-  "entity.twilightforest.naga.hiss": {
+  "entity.gloamingforest.naga.hiss": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.naga.hiss",
+    "subtitle": "subtitles.gloamingforest.entity.naga.hiss",
     "sounds": [
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hiss1"
+        "name": "sounds/gloamingforest/naga/mob/naga/hiss1"
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hiss2"
+        "name": "sounds/gloamingforest/naga/mob/naga/hiss2"
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hiss3"
+        "name": "sounds/gloamingforest/naga/mob/naga/hiss3"
       }
     ]
   },
-  "entity.twilightforest.naga.hurt": {
+  "entity.gloamingforest.naga.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.naga.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.naga.hurt",
     "sounds": [
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hurt1"
+        "name": "sounds/gloamingforest/naga/mob/naga/hurt1"
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hurt2"
+        "name": "sounds/gloamingforest/naga/mob/naga/hurt2"
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hurt3"
+        "name": "sounds/gloamingforest/naga/mob/naga/hurt3"
       }
     ]
   },
-  "entity.twilightforest.naga.rattle": {
+  "entity.gloamingforest.naga.rattle": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.naga.rattle",
+    "subtitle": "subtitles.gloamingforest.entity.naga.rattle",
     "sounds": [
       {
-        "name": "sounds/twilightforest/naga/mob/naga/rattle1"
+        "name": "sounds/gloamingforest/naga/mob/naga/rattle1"
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/rattle2"
+        "name": "sounds/gloamingforest/naga/mob/naga/rattle2"
       }
     ]
   }

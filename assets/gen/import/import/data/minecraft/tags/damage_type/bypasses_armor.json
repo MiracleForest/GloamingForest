@@ -1,16 +1,16 @@
 {
   "values": [
-    "twilightforest:ghast_tear",
-    "twilightforest:lich_bolt",
-    "twilightforest:lich_bomb",
-    "twilightforest:slam",
-    "twilightforest:yeeted",
-    "twilightforest:leaf_brain",
-    "twilightforest:lost_words",
-    "twilightforest:schooled",
-    "twilightforest:lifedrain",
-    "twilightforest:expired",
-    "twilightforest:acid_rain",
-    "twilightforest:ominous_fire"
+    "gloamingforest:ghast_tear",
+    "gloamingforest:lich_bolt",
+    "gloamingforest:lich_bomb",
+    "gloamingforest:slam",
+    "gloamingforest:yeeted",
+    "gloamingforest:leaf_brain",
+    "gloamingforest:lost_words",
+    "gloamingforest:schooled",
+    "gloamingforest:lifedrain",
+    "gloamingforest:expired",
+    "gloamingforest:acid_rain",
+    "gloamingforest:ominous_fire"
   ]
 }

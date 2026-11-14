@@ -6,7 +6,7 @@
       {
         "name": "golden_canopy_tree",
         "kind": "feature",
-        "id": "twilightforest:tree/canopy_tree",
+        "id": "gloamingforest:tree/canopy_tree",
         "seed": 20240611,
         "pos": [
           59,
@@ -33,7 +33,7 @@
       {
         "name": "golden_darkwood_tree",
         "kind": "feature",
-        "id": "twilightforest:tree/darkwood_tree",
+        "id": "gloamingforest:tree/darkwood_tree",
         "seed": 20240611,
         "pos": [
           69,
@@ -60,7 +60,7 @@
       {
         "name": "golden_mangrove_tree",
         "kind": "feature",
-        "id": "twilightforest:tree/mangrove_tree",
+        "id": "gloamingforest:tree/mangrove_tree",
         "seed": 20240611,
         "pos": [
           74,
@@ -87,7 +87,7 @@
       {
         "name": "golden_mega_canopy_tree",
         "kind": "feature",
-        "id": "twilightforest:tree/mega_canopy_tree",
+        "id": "gloamingforest:tree/mega_canopy_tree",
         "seed": 20240611,
         "pos": [
           64,
@@ -124,8 +124,8 @@
         ],
         "saplings": [
           {
-            "name": "sapling_twilight_oak_sapling",
-            "id": "twilightforest:twilight_oak_sapling",
+            "name": "sapling_gloaming_oak_sapling",
+            "id": "gloamingforest:gloaming_oak_sapling",
             "seed": 77000,
             "pos": [
               81,
@@ -144,7 +144,7 @@
           },
           {
             "name": "sapling_canopy_sapling",
-            "id": "twilightforest:canopy_sapling",
+            "id": "gloamingforest:canopy_sapling",
             "seed": 77001,
             "pos": [
               129,
@@ -163,7 +163,7 @@
           },
           {
             "name": "sapling_mangrove_sapling",
-            "id": "twilightforest:mangrove_sapling",
+            "id": "gloamingforest:mangrove_sapling",
             "seed": 77002,
             "pos": [
               177,
@@ -182,7 +182,7 @@
           },
           {
             "name": "sapling_darkwood_sapling",
-            "id": "twilightforest:darkwood_sapling",
+            "id": "gloamingforest:darkwood_sapling",
             "seed": 77003,
             "pos": [
               81,
@@ -201,7 +201,7 @@
           },
           {
             "name": "sapling_time_sapling",
-            "id": "twilightforest:time_sapling",
+            "id": "gloamingforest:time_sapling",
             "seed": 77004,
             "pos": [
               129,
@@ -220,7 +220,7 @@
           },
           {
             "name": "sapling_transformation_sapling",
-            "id": "twilightforest:transformation_sapling",
+            "id": "gloamingforest:transformation_sapling",
             "seed": 77005,
             "pos": [
               177,
@@ -239,7 +239,7 @@
           },
           {
             "name": "sapling_mining_sapling",
-            "id": "twilightforest:mining_sapling",
+            "id": "gloamingforest:mining_sapling",
             "seed": 77006,
             "pos": [
               81,
@@ -258,7 +258,7 @@
           },
           {
             "name": "sapling_sorting_sapling",
-            "id": "twilightforest:sorting_sapling",
+            "id": "gloamingforest:sorting_sapling",
             "seed": 77007,
             "pos": [
               129,
@@ -277,7 +277,7 @@
           },
           {
             "name": "sapling_rainbow_oak_sapling",
-            "id": "twilightforest:rainbow_oak_sapling",
+            "id": "gloamingforest:rainbow_oak_sapling",
             "seed": 77008,
             "pos": [
               177,
@@ -301,9 +301,9 @@
         "kind": "sapling",
         "area": [66, -60, -49, 209, 19, 94],
         "saplings": [
-          {"name": "mega_canopy_sapling", "id": "twilightforest:canopy_sapling", "seed": 78000, "mega": true, "pos": [90, -60, -25], "pedestal": false, "box": [66, -60, -49, 113, 19, -2]},
-          {"name": "mega_twilight_oak_sapling_forest", "id": "twilightforest:twilight_oak_sapling", "seed": 78001, "mega": true, "pos": [138, -60, -25], "pedestal": false, "box": [114, -60, -49, 161, 19, -2]},
-          {"name": "mega_twilight_oak_sapling_savannah", "id": "twilightforest:twilight_oak_sapling", "seed": 83748, "mega": true, "pos": [186, -60, -25], "pedestal": false, "box": [162, -60, -49, 209, 19, -2]}
+          {"name": "mega_canopy_sapling", "id": "gloamingforest:canopy_sapling", "seed": 78000, "mega": true, "pos": [90, -60, -25], "pedestal": false, "box": [66, -60, -49, 113, 19, -2]},
+          {"name": "mega_gloaming_oak_sapling_forest", "id": "gloamingforest:gloaming_oak_sapling", "seed": 78001, "mega": true, "pos": [138, -60, -25], "pedestal": false, "box": [114, -60, -49, 161, 19, -2]},
+          {"name": "mega_gloaming_oak_sapling_savannah", "id": "gloamingforest:gloaming_oak_sapling", "seed": 83748, "mega": true, "pos": [186, -60, -25], "pedestal": false, "box": [162, -60, -49, 209, 19, -2]}
         ]
       },
       {
@@ -327,7 +327,7 @@
         ],
         "features": [
           {
-            "id": "twilightforest:tree/twilight_oak_tree",
+            "id": "gloamingforest:tree/gloaming_oak_tree",
             "seed": 1234,
             "pos": [
               23,
@@ -337,7 +337,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/large_twilight_oak_tree",
+            "id": "gloamingforest:tree/large_gloaming_oak_tree",
             "seed": 1235,
             "pos": [
               59,
@@ -347,7 +347,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/swampy_oak_tree",
+            "id": "gloamingforest:tree/swampy_oak_tree",
             "seed": 1236,
             "pos": [
               95,
@@ -357,7 +357,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/canopy_tree",
+            "id": "gloamingforest:tree/canopy_tree",
             "seed": 1237,
             "pos": [
               131,
@@ -367,7 +367,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/firefly_canopy_tree",
+            "id": "gloamingforest:tree/firefly_canopy_tree",
             "seed": 1238,
             "pos": [
               23,
@@ -377,7 +377,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/dead_canopy_tree",
+            "id": "gloamingforest:tree/dead_canopy_tree",
             "seed": 1239,
             "pos": [
               59,
@@ -387,7 +387,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/mega_canopy_tree",
+            "id": "gloamingforest:tree/mega_canopy_tree",
             "seed": 1240,
             "pos": [
               95,
@@ -397,7 +397,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/forest_mega_oak_tree",
+            "id": "gloamingforest:tree/forest_mega_oak_tree",
             "seed": 1241,
             "pos": [
               131,
@@ -407,7 +407,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/savannah_mega_oak_tree",
+            "id": "gloamingforest:tree/savannah_mega_oak_tree",
             "seed": 1242,
             "pos": [
               23,
@@ -417,7 +417,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/mangrove_tree",
+            "id": "gloamingforest:tree/mangrove_tree",
             "seed": 1243,
             "pos": [
               59,
@@ -427,7 +427,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/darkwood_tree",
+            "id": "gloamingforest:tree/darkwood_tree",
             "seed": 1244,
             "pos": [
               95,
@@ -437,7 +437,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/homegrown_darkwood_tree",
+            "id": "gloamingforest:tree/homegrown_darkwood_tree",
             "seed": 1245,
             "pos": [
               131,
@@ -447,7 +447,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/darkwood_lantern_tree",
+            "id": "gloamingforest:tree/darkwood_lantern_tree",
             "seed": 1246,
             "pos": [
               23,
@@ -457,7 +457,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/dark_forest_oak_tree",
+            "id": "gloamingforest:tree/dark_forest_oak_tree",
             "seed": 1247,
             "pos": [
               59,
@@ -467,7 +467,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/dark_forest_birch_tree",
+            "id": "gloamingforest:tree/dark_forest_birch_tree",
             "seed": 1248,
             "pos": [
               95,
@@ -477,7 +477,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/dark_oak_bush",
+            "id": "gloamingforest:tree/dark_oak_bush",
             "seed": 1249,
             "pos": [
               131,
@@ -509,7 +509,7 @@
         ],
         "features": [
           {
-            "id": "twilightforest:tree/oak_bush",
+            "id": "gloamingforest:tree/oak_bush",
             "seed": 1234,
             "pos": [
               33,
@@ -519,7 +519,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/rainbow_oak",
+            "id": "gloamingforest:tree/rainbow_oak",
             "seed": 1235,
             "pos": [
               69,
@@ -529,7 +529,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/large_rainbow_oak",
+            "id": "gloamingforest:tree/large_rainbow_oak",
             "seed": 1236,
             "pos": [
               105,
@@ -539,7 +539,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/time_tree",
+            "id": "gloamingforest:tree/time_tree",
             "seed": 1237,
             "pos": [
               141,
@@ -549,7 +549,7 @@
             "pedestal": true
           },
           {
-            "id": "twilightforest:tree/transformation_tree",
+            "id": "gloamingforest:tree/transformation_tree",
             "seed": 1238,
             "pos": [
               33,
@@ -559,7 +559,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/mining_tree",
+            "id": "gloamingforest:tree/mining_tree",
             "seed": 1239,
             "pos": [
               69,
@@ -569,7 +569,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/sorting_tree",
+            "id": "gloamingforest:tree/sorting_tree",
             "seed": 1240,
             "pos": [
               105,
@@ -579,7 +579,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/snowy_spruce_tree",
+            "id": "gloamingforest:tree/snowy_spruce_tree",
             "seed": 1241,
             "pos": [
               141,
@@ -589,7 +589,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/mega_spruce_tree",
+            "id": "gloamingforest:tree/mega_spruce_tree",
             "seed": 1242,
             "pos": [
               33,
@@ -599,7 +599,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/large_winter_tree",
+            "id": "gloamingforest:tree/large_winter_tree",
             "seed": 1243,
             "pos": [
               69,
@@ -609,7 +609,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/smaller_jungle_tree",
+            "id": "gloamingforest:tree/smaller_jungle_tree",
             "seed": 1244,
             "pos": [
               105,
@@ -619,7 +619,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/vanilla_oak_tree",
+            "id": "gloamingforest:tree/vanilla_oak_tree",
             "seed": 1245,
             "pos": [
               141,
@@ -629,7 +629,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:tree/vanilla_birch_tree",
+            "id": "gloamingforest:tree/vanilla_birch_tree",
             "seed": 1246,
             "pos": [
               33,
@@ -639,7 +639,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:mushroom/brown_canopy_mushroom",
+            "id": "gloamingforest:mushroom/brown_canopy_mushroom",
             "seed": 1247,
             "pos": [
               69,
@@ -649,7 +649,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:mushroom/canopy_red_vanilla_mushroom",
+            "id": "gloamingforest:mushroom/canopy_red_vanilla_mushroom",
             "seed": 1248,
             "pos": [
               105,
@@ -659,7 +659,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:mushroom/canopy_red_smooth_mushroom",
+            "id": "gloamingforest:mushroom/canopy_red_smooth_mushroom",
             "seed": 1249,
             "pos": [
               141,
@@ -691,7 +691,7 @@
         ],
         "features": [
           {
-            "id": "twilightforest:mushroom/canopy_red_spheroid_mushroom",
+            "id": "gloamingforest:mushroom/canopy_red_spheroid_mushroom",
             "seed": 1234,
             "pos": [
               43,
@@ -701,7 +701,7 @@
             "pedestal": false
           },
           {
-            "id": "twilightforest:mushroom/canopy_red_flat_mushroom",
+            "id": "gloamingforest:mushroom/canopy_red_flat_mushroom",
             "seed": 1235,
             "pos": [
               79,

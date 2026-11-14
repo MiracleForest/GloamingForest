@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Bedrock geometry writer for the model converter (contract "geo", unit F2). Part of GloamingForest,
 // LGPL-3.0-or-later.
 //

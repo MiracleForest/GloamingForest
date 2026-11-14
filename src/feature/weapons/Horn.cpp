@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/CrumbleHornItem.java
-//   src/main/java/twilightforest/dispenser/CrumbleDispenseBehavior.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/CrumbleHornItem.java
+//   src/main/java/gloamingforest/dispenser/CrumbleDispenseBehavior.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:crumble_horn: held (use duration 72000), it crumbles the blocks around the point
-// 3 blocks ahead every 5 use ticks, by the twilightforest:crumble_horn data map (rule R7: U8's;
+// gloamingforest:crumble_horn: held (use duration 72000), it crumbles the blocks around the point
+// 3 blocks ahead every 5 use ticks, by the gloamingforest:crumble_horn data map (rule R7: U8's;
 // the data's ids are the game's, gf::datamaps::ext converts crumble_to).
 
 #include "feature/weapons/Weapons.h"
@@ -39,7 +39,7 @@ namespace gf::feature::weapons {
 
 namespace {
 
-constexpr char kMap[] = "twilightforest:crumble_horn";
+constexpr char kMap[] = "gloamingforest:crumble_horn";
 
 struct Crumble {
     std::string result;
@@ -109,7 +109,7 @@ int crumble(Player& player, ItemStack& stack) {
             for (int x = lo.x; x <= hi.x; ++x) {
                 if (!crumbleBlock(player, region, BlockPos{x, y, z})) continue;
                 ++n;
-                gf::stats::award(player, "twilightforest:blocks_crumbled");
+                gf::stats::award(player, "gloamingforest:blocks_crumbled");
                 hurtAndBreak(stack, 1, &player);
                 if (game::items::isEmpty(stack) || stack.getDamageValue() >= max) return n;
             }
@@ -130,14 +130,14 @@ void registerHorn() {
         {
             .use =
                 [](Player& player, ItemStack&) {
-                    gf::fx::sound(player.getDimension(), "entity.twilightforest.quest_ram.ambient", player.getFeetPos(), 1.0F, 0.8F);
+                    gf::fx::sound(player.getDimension(), "entity.gloamingforest.quest_ram.ambient", player.getFeetPos(), 1.0F, 0.8F);
                     return gf::item::Result::Pass; // starts using (toot)
                 },
             .useTick =
                 [](Player& player, ItemStack& stack, int remaining) {
                     if (remaining > 10 && remaining % 5 == 0) {
                         crumble(player, stack);
-                        gf::fx::sound(player.getDimension(), "entity.twilightforest.quest_ram.ambient", player.getFeetPos(), 1.0F, 0.8F);
+                        gf::fx::sound(player.getDimension(), "entity.gloamingforest.quest_ram.ambient", player.getFeetPos(), 1.0F, 0.8F);
                     }
                 },
         }

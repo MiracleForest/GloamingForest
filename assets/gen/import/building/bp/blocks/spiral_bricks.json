@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:spiral_bricks",
+      "identifier": "gloamingforest:spiral_bricks",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["x", "y", "z"],
-        "twilightforest:diagonal": ["bottom_right", "top_right", "bottom_left", "top_left"]
+        "gloamingforest:axis": ["x", "y", "z"],
+        "gloamingforest:diagonal": ["bottom_right", "top_right", "bottom_left", "top_left"]
       }
     },
     "components": {
@@ -20,7 +20,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_right",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.x_spiral_bottom_right",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -47,9 +47,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'bottom_left'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:diagonal') == 'bottom_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_left",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.x_spiral_bottom_left",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -77,9 +77,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'bottom_right'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:diagonal') == 'bottom_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_right",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.x_spiral_bottom_right",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -107,9 +107,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'top_left'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:diagonal') == 'top_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_top_left",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.x_spiral_top_left",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -137,9 +137,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'top_right'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:diagonal') == 'top_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_top_right",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.x_spiral_top_right",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -167,9 +167,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'bottom_left'",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:diagonal') == 'bottom_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_bottom_left",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.y_spiral_bottom_left",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -197,9 +197,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'bottom_right'",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:diagonal') == 'bottom_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_bottom_right",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.y_spiral_bottom_right",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -227,9 +227,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'top_left'",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:diagonal') == 'top_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_top_left",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.y_spiral_top_left",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -257,9 +257,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'top_right'",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:diagonal') == 'top_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_top_right",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.y_spiral_top_right",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -287,9 +287,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'bottom_left'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:diagonal') == 'bottom_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_bottom_left",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.z_spiral_bottom_left",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -317,9 +317,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'bottom_right'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:diagonal') == 'bottom_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_bottom_right",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.z_spiral_bottom_right",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -347,9 +347,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'top_left'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:diagonal') == 'top_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_top_left",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.z_spiral_top_left",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",
@@ -377,9 +377,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'top_right'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:diagonal') == 'top_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_top_right",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.spiral_bricks.z_spiral_top_right",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_chiseled_stone_bricks",

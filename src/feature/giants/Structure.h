@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
-// U29 (giants): twilightforest:giant_house's layout (Structure.cpp), for the generator and the
+// U29 (giants): gloamingforest:giant_house's layout (Structure.cpp), for the generator and the
 // selftests.
 
 #include "feature/structure/Structure.h"
@@ -10,7 +10,7 @@
 namespace gf::feature::giants {
 
 /// The cloud castle's piece type (U27's CloudCastleComponent).
-inline constexpr char kCloudCastlePiece[] = "twilightforest:TFClCa";
+inline constexpr char kCloudCastlePiece[] = "gloamingforest:TFClCa";
 /// The saved form of CloudCastleComponent(1, x, y, z).
 [[nodiscard]] structure::Json cloudCastleTag(int x, int y, int z);
 /// Whether the cloud castle piece type is registered (U27 merged).

@@ -2,7 +2,7 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:skeleton_druid",
+      "identifier": "gloamingforest:skeleton_druid",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
@@ -41,7 +41,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "skeleton_druid",
           "skeleton",
           "undead",

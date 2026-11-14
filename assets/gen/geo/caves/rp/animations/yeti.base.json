@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.yeti.base": {
+    "animation.gloamingforest.yeti.base": {
       "loop": true,
       "bones": {
         "head": {

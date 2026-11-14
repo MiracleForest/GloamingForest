@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/Bird.java
-//   src/main/java/twilightforest/entity/passive/FlyingBird.java
-//   src/main/java/twilightforest/entity/passive/Bighorn.java
-//   src/main/java/twilightforest/entity/passive/DwarfRabbit.java
-//   src/main/java/twilightforest/entity/passive/TinyBirdVariant.java
-//   src/main/java/twilightforest/entity/passive/DwarfRabbitVariant.java
-//   src/main/java/twilightforest/entity/monster/Kobold.java
-//   src/main/java/twilightforest/entity/monster/MosquitoSwarm.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/Bird.java
+//   src/main/java/gloamingforest/entity/passive/FlyingBird.java
+//   src/main/java/gloamingforest/entity/passive/Bighorn.java
+//   src/main/java/gloamingforest/entity/passive/DwarfRabbit.java
+//   src/main/java/gloamingforest/entity/passive/TinyBirdVariant.java
+//   src/main/java/gloamingforest/entity/passive/DwarfRabbitVariant.java
+//   src/main/java/gloamingforest/entity/monster/Kobold.java
+//   src/main/java/gloamingforest/entity/monster/MosquitoSwarm.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/fauna/Fauna.h"
@@ -73,9 +73,9 @@ int offspringColor(int a, int b, RandomSource& random) {
 int randomFleeceColor(RandomSource& random) { return random.nextBoolean() ? kBrown : random.nextInt(16); }
 
 std::string bighornLootTable(bool sheared, int color) {
-    if (sheared) return "twilightforest:entities/bighorn_sheep";
+    if (sheared) return "gloamingforest:entities/bighorn_sheep";
     auto name = dyeName(color);
-    return "twilightforest:entities/bighorn_sheep/" + std::string(name.empty() ? "white" : name);
+    return "gloamingforest:entities/bighorn_sheep/" + std::string(name.empty() ? "white" : name);
 }
 
 int shearCount(RandomSource& random) { return 1 + random.nextInt(3); }
@@ -97,7 +97,7 @@ int pickCommonVariant(std::vector<Variant> const& variants, int fallback, Random
 }
 
 int rabbitOffspringVariant(std::vector<Variant> const& variants, int self, int mate, int fallback, RandomSource& random) {
-    // the common variant is drawn first (level random in TF; one source here), then replaced 19 times in 20
+    // the common variant is drawn first (level random in upstream; one source here), then replaced 19 times in 20
     int variant = pickCommonVariant(variants, fallback, random);
     if (random.nextInt(20) != 0) variant = random.nextBoolean() ? self : mate;
     return variant;

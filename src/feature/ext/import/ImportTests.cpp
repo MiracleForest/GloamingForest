@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of the imported content skeleton (unit F1 "import", prefix "import.", testPos dx
 // 5100..5199). They read data/gf/import/skeleton.json (written by tools/import/run.ps1) and check
-// that the game loaded what the import generated: every TF block with its frozen states
+// that the game loaded what the import generated: every upstream block with its frozen states
 // (docs/spec/blockstates.md), every item, block item and spawn egg, every entity definition, the
-// imported lang and data, TF's own sound type in the assembled resource pack, and that every block can be placed.
+// imported lang and data, upstream's own sound type in the assembled resource pack, and that every block can be placed.
 //
 // F1 owns no source directory, so these tests live in src/feature/ext/import/ (new files only,
 // rule R18); A8 may fold them into a unit directory.
@@ -47,7 +47,7 @@ using JDoc = nlohmann::json;
 std::filesystem::path modDir() { return gf::Mod::getInstance().getSelf().getModDir(); }
 
 /// data/gf/import/skeleton.json: {"blocks": {id: {state: [values]}}, "items": [...], "entities": [...],
-/// "spawnEggs": [...], "data": {"twilightforest/<registry>": file count}}.
+/// "spawnEggs": [...], "data": {"gloamingforest/<registry>": file count}}.
 JDoc const& skeleton() {
     static JDoc doc = [] {
         std::ifstream in(modDir() / "data" / "gf" / "import" / "skeleton.json");
@@ -158,17 +158,17 @@ GF_REGISTER_SELFTEST("import.blocks", [](Context& ctx) {
                 break;
             }
         }
-        // the frozen states are all there (above); a unit may add twilightforest: states (R1: "later changes may only
+        // the frozen states are all there (above); a unit may add gloamingforest: states (R1: "later changes may only
         // add", docs/spec/blockstates.md), e.g. U29's giant block tile index, so more states are listed, not failed
         // (a spurious state from the generator itself is caught by tools/import/run.ps1 -Check against
         // tools/import/expected-states.json)
         std::string extra;
         for (auto const& [name, _] : got)
-            if (name.rfind("twilightforest:", 0) == 0 && !states.contains(name)) extra += (extra.empty() ? "" : ", ") + name.substr(15);
+            if (name.rfind("gloamingforest:", 0) == 0 && !states.contains(name)) extra += (extra.empty() ? "" : ", ") + name.substr(15);
         if (!extra.empty() && ++extended <= 8) added += (added.empty() ? "" : "; ") + id + ": " + extra;
     }
-    ctx.check(blocks.size() == 523, "523 TF blocks in the skeleton (got " + std::to_string(blocks.size()) + ")");
-    if (extended) ctx.info(std::to_string(extended) + " blocks carry twilightforest: states added by their owners (R1): " + added + (extended > 8 ? "; ..." : ""));
+    ctx.check(blocks.size() == 523, "523 upstream blocks in the skeleton (got " + std::to_string(blocks.size()) + ")");
+    if (extended) ctx.info(std::to_string(extended) + " blocks carry gloamingforest: states added by their owners (R1): " + added + (extended > 8 ? "; ..." : ""));
     fails.done(static_cast<int>(blocks.size()));
 });
 
@@ -200,16 +200,16 @@ GF_REGISTER_SELFTEST("import.entities", [](Context& ctx) {
         auto def = group->tryGetDefinition(id);
         if (static_cast<ActorDefinition*>(def.mPtr) == nullptr) fails.add(id + " has no entity definition");
     }
-    ctx.check(entities.size() == 80, "80 TF entities in the skeleton (got " + std::to_string(entities.size()) + ")");
+    ctx.check(entities.size() == 80, "80 upstream entities in the skeleton (got " + std::to_string(entities.size()) + ")");
     fails.done(static_cast<int>(entities.size()));
 });
 
 GF_REGISTER_SELFTEST("import.lang_and_data", [](Context& ctx) {
     requireSkeleton(ctx);
-    // TF's en_us and a translation, through the mod's lang files (gf::tr)
-    ctx.check(gf::translate("block.twilightforest.twilight_oak_planks", "?", "en_US") == "Twilight Oak Planks", "en_US TF block name");
-    ctx.check(gf::translate("advancement.twilightforest.root", "?", "en_US") != "?", "en_US TF advancement title");
-    ctx.check(gf::translate("item.twilightforest.naga_scale", "?", "de_DE") == "Nagaschuppe", "de_DE TF item name");
+    // upstream's en_us and a translation, through the mod's lang files (gf::tr)
+    ctx.check(gf::translate("block.gloamingforest.gloaming_oak_planks", "?", "en_US") == "Gloaming Oak Planks", "en_US upstream block name");
+    ctx.check(gf::translate("advancement.gloamingforest.root", "?", "en_US") != "?", "en_US upstream advancement title");
+    ctx.check(gf::translate("item.gloamingforest.naga_scale", "?", "de_DE") == "Nagaschuppe", "de_DE upstream item name");
     // the imported data, file by file, as the import counted it (at least: W1 tag fragments may add tag files)
     namespace fs = std::filesystem;
     for (auto const& [dir, expected] : skeleton()["data"].items()) {
@@ -223,26 +223,26 @@ GF_REGISTER_SELFTEST("import.lang_and_data", [](Context& ctx) {
     }
 });
 
-// The registered states of blocks whose properties come from TF's block classes only (createBlockStateDefinition,
+// The registered states of blocks whose properties come from upstream's block classes only (createBlockStateDefinition,
 // not the blockstate files), written down by hand from the Java sources: independent of the generator's output.
 GF_REGISTER_SELFTEST("import.java_states", [](Context& ctx) {
     std::vector<std::pair<char const*, std::vector<char const*>>> const cases{
-        {"twilightforest:naga_trophy", {"powered", "rotation"}},                       // TrophyBlock
-        {"twilightforest:naga_wall_trophy", {"facing", "powered"}},                    // TrophyWallBlock
-        {"twilightforest:zombie_skull_candle", {"candles", "lighting", "rotation"}},   // SkullCandleBlock < AbstractSkullCandleBlock
-        {"twilightforest:keepsake_casket", {"damage", "facing", "multilogged"}},       // KeepsakeCasketBlock < SkullChestBlock
-        {"twilightforest:candelabra", {"facing", "has_candle_1", "has_candle_2", "has_candle_3", "lighting", "on_wall"}},
-        {"twilightforest:blue_force_field", {"down", "east", "north", "south", "up", "west"}},
-        {"twilightforest:brazier", {"half", "light"}},
-        {"twilightforest:fire_jet", {"state"}},
-        {"twilightforest:locked_vanishing_block", {"active", "locked"}},               // < VanishingBlock
-        {"twilightforest:firefly_particle_spawner", {"particle_radius"}},
-        {"twilightforest:chiseled_canopy_bookshelf", {"facing", "slot_0_occupied", "slot_1_occupied", "slot_2_occupied", "slot_3_occupied", "slot_4_occupied", "slot_5_occupied", "spawner"}},
-        {"twilightforest:twilight_oak_trapped_chest", {"facing", "type"}},             // TrappedChestBlock
-        {"twilightforest:red_thread", {"down", "east", "north", "south", "up", "west"}}, // MultifaceBlock
-        {"twilightforest:clover_patch", {"east", "north", "south", "west"}},           // PatchBlock
-        {"twilightforest:ominous_candle", {"candles"}},
-        {"twilightforest:firefly", {"facing"}},                                        // CritterBlock
+        {"gloamingforest:naga_trophy", {"powered", "rotation"}},                       // TrophyBlock
+        {"gloamingforest:naga_wall_trophy", {"facing", "powered"}},                    // TrophyWallBlock
+        {"gloamingforest:zombie_skull_candle", {"candles", "lighting", "rotation"}},   // SkullCandleBlock < AbstractSkullCandleBlock
+        {"gloamingforest:keepsake_casket", {"damage", "facing", "multilogged"}},       // KeepsakeCasketBlock < SkullChestBlock
+        {"gloamingforest:candelabra", {"facing", "has_candle_1", "has_candle_2", "has_candle_3", "lighting", "on_wall"}},
+        {"gloamingforest:blue_force_field", {"down", "east", "north", "south", "up", "west"}},
+        {"gloamingforest:brazier", {"half", "light"}},
+        {"gloamingforest:fire_jet", {"state"}},
+        {"gloamingforest:locked_vanishing_block", {"active", "locked"}},               // < VanishingBlock
+        {"gloamingforest:firefly_particle_spawner", {"particle_radius"}},
+        {"gloamingforest:chiseled_canopy_bookshelf", {"facing", "slot_0_occupied", "slot_1_occupied", "slot_2_occupied", "slot_3_occupied", "slot_4_occupied", "slot_5_occupied", "spawner"}},
+        {"gloamingforest:gloaming_oak_trapped_chest", {"facing", "type"}},             // TrappedChestBlock
+        {"gloamingforest:red_thread", {"down", "east", "north", "south", "up", "west"}}, // MultifaceBlock
+        {"gloamingforest:clover_patch", {"east", "north", "south", "west"}},           // PatchBlock
+        {"gloamingforest:ominous_candle", {"candles"}},
+        {"gloamingforest:firefly", {"facing"}},                                        // CritterBlock
     };
     for (auto const& [id, want] : cases) {
         auto const* block = gf::game::blockWith(id);
@@ -252,21 +252,21 @@ GF_REGISTER_SELFTEST("import.java_states", [](Context& ctx) {
         }
         std::vector<std::string> got;
         for (auto const& [name, _] : gf::game::statesOf(*block))
-            if (name.rfind("twilightforest:", 0) == 0) got.push_back(name.substr(15));
+            if (name.rfind("gloamingforest:", 0) == 0) got.push_back(name.substr(15));
         std::vector<std::string> expected(want.begin(), want.end());
         auto join = [](std::vector<std::string> const& v) {
             std::string s;
             for (auto const& x : v) s += (s.empty() ? "" : ", ") + x;
             return s;
         };
-        // TF's states are all registered; an owner may add more (R1), which is reported, not failed
+        // upstream's states are all registered; an owner may add more (R1), which is reported, not failed
         bool all = std::all_of(expected.begin(), expected.end(), [&](std::string const& s) { return std::find(got.begin(), got.end(), s) != got.end(); });
-        ctx.check(all, std::string(id) + ": states [" + join(got) + "], TF declares [" + join(expected) + "]");
-        if (all && got.size() > expected.size()) ctx.info(std::string(id) + ": states [" + join(got) + "] add to TF's [" + join(expected) + "] (R1)");
+        ctx.check(all, std::string(id) + ": states [" + join(got) + "], upstream declares [" + join(expected) + "]");
+        if (all && got.size() > expected.size()) ctx.info(std::string(id) + ": states [" + join(got) + "] add to upstream's [" + join(expected) + "] (R1)");
     }
 });
 
-// The rotation of every state of a rotated block, as Bedrock evaluates the assembled block file, against TF's
+// The rotation of every state of a rotated block, as Bedrock evaluates the assembled block file, against upstream's
 // blockstate files (Java x / y -> Bedrock [(360 - x) % 360, (360 - y) % 360, 0]): an unrotated state must not
 // inherit the rotation of another one.
 GF_REGISTER_SELFTEST("import.rotations", [](Context& ctx) {
@@ -275,15 +275,15 @@ GF_REGISTER_SELFTEST("import.rotations", [](Context& ctx) {
         std::map<std::string, std::string> state;
         char const*                        rotation;
     };
-    // twilightforest/blockstates/aurora_pillar.json and twilight_oak_stairs.json (TF 4.8)
+    // gloamingforest/blockstates/aurora_pillar.json and gloaming_oak_stairs.json (upstream 4.8)
     std::vector<Case> const cases{
-        {"twilightforest:aurora_pillar", {{"twilightforest:axis", "y"}}, "0,0,0"},
-        {"twilightforest:aurora_pillar", {{"twilightforest:axis", "x"}}, "270,270,0"},
-        {"twilightforest:aurora_pillar", {{"twilightforest:axis", "z"}}, "270,0,0"},
-        {"twilightforest:twilight_oak_stairs", {{"twilightforest:facing", "east"}, {"twilightforest:half", "bottom"}, {"twilightforest:shape", "straight"}}, "0,0,0"},
-        {"twilightforest:twilight_oak_stairs", {{"twilightforest:facing", "south"}, {"twilightforest:half", "bottom"}, {"twilightforest:shape", "straight"}}, "0,270,0"},
-        {"twilightforest:twilight_oak_stairs", {{"twilightforest:facing", "east"}, {"twilightforest:half", "bottom"}, {"twilightforest:shape", "inner_right"}}, "0,0,0"},
-        {"twilightforest:twilight_oak_stairs", {{"twilightforest:facing", "north"}, {"twilightforest:half", "top"}, {"twilightforest:shape", "straight"}}, "180,90,0"},
+        {"gloamingforest:aurora_pillar", {{"gloamingforest:axis", "y"}}, "0,0,0"},
+        {"gloamingforest:aurora_pillar", {{"gloamingforest:axis", "x"}}, "270,270,0"},
+        {"gloamingforest:aurora_pillar", {{"gloamingforest:axis", "z"}}, "270,0,0"},
+        {"gloamingforest:gloaming_oak_stairs", {{"gloamingforest:facing", "east"}, {"gloamingforest:half", "bottom"}, {"gloamingforest:shape", "straight"}}, "0,0,0"},
+        {"gloamingforest:gloaming_oak_stairs", {{"gloamingforest:facing", "south"}, {"gloamingforest:half", "bottom"}, {"gloamingforest:shape", "straight"}}, "0,270,0"},
+        {"gloamingforest:gloaming_oak_stairs", {{"gloamingforest:facing", "east"}, {"gloamingforest:half", "bottom"}, {"gloamingforest:shape", "inner_right"}}, "0,0,0"},
+        {"gloamingforest:gloaming_oak_stairs", {{"gloamingforest:facing", "north"}, {"gloamingforest:half", "top"}, {"gloamingforest:shape", "straight"}}, "180,90,0"},
     };
     for (auto const& c : cases) {
         auto block = bpBlock(c.id);
@@ -293,11 +293,11 @@ GF_REGISTER_SELFTEST("import.rotations", [](Context& ctx) {
         for (auto const& [k, v] : c.state) states[k] = v;
         ctx.check(gf::game::blockWithStates(c.id, states) != nullptr, std::string(c.id) + " " + states.dump() + " is a registered state");
         auto got = rotationOf(block, c.state);
-        ctx.check(got == c.rotation, std::string(c.id) + " " + states.dump() + ": rotation [" + got + "], TF gives [" + c.rotation + "]");
+        ctx.check(got == c.rotation, std::string(c.id) + " " + states.dump() + ": rotation [" + got + "], upstream gives [" + c.rotation + "]");
     }
 });
 
-// State-dependent light (TF's lightLevel lambdas and getLightEmission overrides, one Bedrock permutation per
+// State-dependent light (upstream's lightLevel lambdas and getLightEmission overrides, one Bedrock permutation per
 // light level), read back from the game's block types.
 GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
     struct Case {
@@ -306,19 +306,19 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
         int         light;
     };
     std::vector<Case> const cases{
-        {"twilightforest:fire_jet", {{"twilightforest:state", "idle"}}, 0},                     // FLAME ? 15 : 0
-        {"twilightforest:fire_jet", {{"twilightforest:state", "flame"}}, 15},
-        {"twilightforest:torchberry_plant", {{"twilightforest:has_torchberries", false}}, 1},   // berries ? 7 : 1
-        {"twilightforest:torchberry_plant", {{"twilightforest:has_torchberries", true}}, 7},
-        {"twilightforest:brazier", {{"twilightforest:half", "upper"}, {"twilightforest:light", "full"}}, 12}, // BrazierLight.FULL
-        {"twilightforest:brazier", {{"twilightforest:half", "lower"}, {"twilightforest:light", "full"}}, 0},
-        {"twilightforest:ominous_candle", {{"twilightforest:candles", 3}}, 6},                  // 2 * candles
-        {"twilightforest:zombie_skull_candle", {{"twilightforest:lighting", "normal"}, {"twilightforest:candles", 4}}, 12}, // 3 * candles
-        {"twilightforest:zombie_skull_candle", {{"twilightforest:lighting", "none"}, {"twilightforest:candles", 4}}, 0},
-        {"twilightforest:keepsake_casket", {{"twilightforest:multilogged", "lava"}}, 15},
-        {"twilightforest:keepsake_casket", {{"twilightforest:multilogged", "air"}}, 0},
-        {"twilightforest:time_log_core", {{"twilightforest:active", true}}, 15},
-        {"twilightforest:firefly", JDoc::object(), 15},                                         // constant
+        {"gloamingforest:fire_jet", {{"gloamingforest:state", "idle"}}, 0},                     // FLAME ? 15 : 0
+        {"gloamingforest:fire_jet", {{"gloamingforest:state", "flame"}}, 15},
+        {"gloamingforest:torchberry_plant", {{"gloamingforest:has_torchberries", false}}, 1},   // berries ? 7 : 1
+        {"gloamingforest:torchberry_plant", {{"gloamingforest:has_torchberries", true}}, 7},
+        {"gloamingforest:brazier", {{"gloamingforest:half", "upper"}, {"gloamingforest:light", "full"}}, 12}, // BrazierLight.FULL
+        {"gloamingforest:brazier", {{"gloamingforest:half", "lower"}, {"gloamingforest:light", "full"}}, 0},
+        {"gloamingforest:ominous_candle", {{"gloamingforest:candles", 3}}, 6},                  // 2 * candles
+        {"gloamingforest:zombie_skull_candle", {{"gloamingforest:lighting", "normal"}, {"gloamingforest:candles", 4}}, 12}, // 3 * candles
+        {"gloamingforest:zombie_skull_candle", {{"gloamingforest:lighting", "none"}, {"gloamingforest:candles", 4}}, 0},
+        {"gloamingforest:keepsake_casket", {{"gloamingforest:multilogged", "lava"}}, 15},
+        {"gloamingforest:keepsake_casket", {{"gloamingforest:multilogged", "air"}}, 0},
+        {"gloamingforest:time_log_core", {{"gloamingforest:active", true}}, 15},
+        {"gloamingforest:firefly", JDoc::object(), 15},                                         // constant
     };
     for (auto const& c : cases) {
         auto const* block = gf::game::blockWithStates(c.id, c.states);
@@ -328,15 +328,15 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
         }
         // the light emission of this permutation (its minecraft:light_emission component, per block state)
         int light = static_cast<int>(block->mDirectData->mLightEmission->mValue);
-        ctx.check(light == c.light, std::string(c.id) + " " + c.states.dump() + ": light " + std::to_string(light) + ", TF gives " + std::to_string(c.light));
+        ctx.check(light == c.light, std::string(c.id) + " " + c.states.dump() + ": light " + std::to_string(light) + ", upstream gives " + std::to_string(c.light));
     }
 });
 
-// Hardness and explosion resistance TF gives (written down by hand from TFBlocks.java and the block classes'
+// Hardness and explosion resistance upstream gives (written down by hand from TFBlocks.java and the block classes'
 // getExplosionResistance / getDestroyProgress overrides, independent of the generator), read back from the game's
 // block permutations. The game's units are calibrated on vanilla blocks, which the game stores at Java's values
-// (minecraft:oak_planks strength(2.0F, 3.0F), stone (1.5F, 6.0F), obsidian (50.0F, 1200.0F)): a TF block must hold
-// the value of the vanilla block with the same Java value (twilight_oak_planks = oak_planks). Measured on 1.26.51: a
+// (minecraft:oak_planks strength(2.0F, 3.0F), stone (1.5F, 6.0F), obsidian (50.0F, 1200.0F)): an upstream block must hold
+// the value of the vanilla block with the same Java value (gloaming_oak_planks = oak_planks). Measured on 1.26.51: a
 // JSON block's destroy speed is its seconds_to_destroy value (-1 for destructible_by_mining false), its explosion
 // resistance a fifth of explosion_resistance (the import writes Java's x 5; FLT_MAX / 5 for false).
 GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
@@ -350,29 +350,29 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         double      resistance;
     };
     std::vector<Case> const cases{
-        {"twilight_oak_planks", JDoc::object(), 2.0, 3.0},                 // strength(2.0F, 3.0F): as minecraft:oak_planks
+        {"gloaming_oak_planks", JDoc::object(), 2.0, 3.0},                 // strength(2.0F, 3.0F): as minecraft:oak_planks
         {"castle_brick", JDoc::object(), 100.0, 50.0},                     // strength(100.0F, 50.0F)
         {"underbrick", JDoc::object(), 1.5, 6.0},                          // strength(1.5F, 6.0F): as minecraft:stone
         {"oak_drying_rack", JDoc::object(), 1.0, 1.5},                     // copyAndScaleProperties(Blocks.OAK_SLAB, 0.5F)
         {"crimson_drying_rack", JDoc::object(), 1.0, 1.5},                 // copyAndScaleProperties(Blocks.CRIMSON_SLAB, 0.5F)
-        {"twilight_oak_drying_rack", JDoc::object(), 1.0, 1.5},            // copyAndScaleProperties(TWILIGHT_OAK_SLAB, 0.5F)
+        {"gloaming_oak_drying_rack", JDoc::object(), 1.0, 1.5},            // copyAndScaleProperties(GLOAMING_OAK_SLAB, 0.5F)
         {"brazier", JDoc::object(), 0.0, 0.0},                             // Properties.of(): no strength call
         {"raspberry_bush", JDoc::object(), 0.4, 0.0},                      // destroyTime(0.4F) only
         {"iron_oreberry", JDoc::object(), 0.4, 0.0},
-        {"twilight_oak_chest", JDoc::object(), 2.5, 2.5},                  // ofFullCopy(TWILIGHT_OAK_PLANKS).strength(2.5F)
+        {"gloaming_oak_chest", JDoc::object(), 2.5, 2.5},                  // ofFullCopy(GLOAMING_OAK_PLANKS).strength(2.5F)
         {"giant_leaves", JDoc::object(), 12.8, 15.0},                      // strength(0.2F * 64.0F, 15.0F)
-        {"twilight_portal", JDoc::object(), kUnbreakable, 0.0},            // strength(-1.0F): resistance max(0, -1)
+        {"gloaming_portal", JDoc::object(), kUnbreakable, 0.0},            // strength(-1.0F): resistance max(0, -1)
         // strength(-1.0F, 6000000.0F), but StrongholdShieldBlock.getDestroyProgress lets a player mine it from its inside
-        // face: U25's manual block has a destroy time for that face (src/feature/stronghold), so only the resistance is TF's here
+        // face: U25's manual block has a destroy time for that face (src/feature/stronghold), so only the resistance is upstream's here
         {"stronghold_shield", JDoc::object(), kOwnerRule, kIndestructible},
         {"skull_chest", JDoc::object(), 3.0, kIndestructible},             // SkullChestBlock: Float.MAX_VALUE
-        {"vanishing_block", {{"twilightforest:active", false}}, 10.0, 6000.0}, // VanishingBlock: !ACTIVE ? 6000F : super
-        {"vanishing_block", {{"twilightforest:active", true}}, 10.0, 35.0},
+        {"vanishing_block", {{"gloamingforest:active", false}}, 10.0, 6000.0}, // VanishingBlock: !ACTIVE ? 6000F : super
+        {"vanishing_block", {{"gloamingforest:active", true}}, 10.0, 35.0},
         {"locked_vanishing_block", JDoc::object(), kUnbreakable, kIndestructible}, // default LOCKED (true): 6000000.0F
-        {"locked_vanishing_block", {{"twilightforest:locked", false}, {"twilightforest:active", false}}, kUnbreakable, 6000.0},
-        {"locked_vanishing_block", {{"twilightforest:locked", false}, {"twilightforest:active", true}}, kUnbreakable, 2000.0},
-        {"trophy_pedestal", {{"twilightforest:active", false}}, kUnbreakable, 2000.0}, // getDestroyProgress: ACTIVE ? super : -1
-        {"trophy_pedestal", {{"twilightforest:active", true}}, 2.0, 2000.0},
+        {"locked_vanishing_block", {{"gloamingforest:locked", false}, {"gloamingforest:active", false}}, kUnbreakable, 6000.0},
+        {"locked_vanishing_block", {{"gloamingforest:locked", false}, {"gloamingforest:active", true}}, kUnbreakable, 2000.0},
+        {"trophy_pedestal", {{"gloamingforest:active", false}}, kUnbreakable, 2000.0}, // getDestroyProgress: ACTIVE ? super : -1
+        {"trophy_pedestal", {{"gloamingforest:active", true}}, 2.0, 2000.0},
     };
     auto stored = [](Block const* block, double& h, double& r) {
         if (!block) return false;
@@ -381,7 +381,7 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         return true;
     };
     auto valuesOf = [&](Case const& c, double& h, double& r) {
-        return stored(gf::game::blockWithStates(std::string("twilightforest:") + c.id, c.states), h, r);
+        return stored(gf::game::blockWithStates(std::string("gloamingforest:") + c.id, c.states), h, r);
     };
     auto near = [](double a, double b) { return std::abs(a - b) <= 1e-4 * std::max(1.0, std::abs(b)); };
     // the calibration: vanilla blocks of known Java values (game units per Java unit, 1 when the game stores Java's)
@@ -395,13 +395,13 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         ctx.require(stored(gf::game::blockWith(id), h, r), std::string(id) + " is registered");
         ctx.check((jh < 0 || near(h, jh * hs)) && near(r, jr * rs), std::string(id) + ": destroy speed " + std::to_string(h) + ", explosion resistance " + std::to_string(r) + " (Java " + (jh < 0 ? std::string("resistance") : std::to_string(jh) + " /") + " " + std::to_string(jr) + ": the calibration holds)");
     }
-    // a TF block holds what the vanilla block of the same Java values holds
+    // an upstream block holds what the vanilla block of the same Java values holds
     {
         double th = 0, tr = 0, vh = 0, vr = 0;
-        ctx.check(stored(gf::game::blockWith("twilightforest:twilight_oak_planks"), th, tr) && stored(gf::game::blockWith("minecraft:oak_planks"), vh, vr) && near(th, vh) && near(tr, vr),
-                  "twilight_oak_planks (strength(2.0F, 3.0F)) holds destroy speed " + std::to_string(th) + " / explosion resistance " + std::to_string(tr) + ", minecraft:oak_planks "
+        ctx.check(stored(gf::game::blockWith("gloamingforest:gloaming_oak_planks"), th, tr) && stored(gf::game::blockWith("minecraft:oak_planks"), vh, vr) && near(th, vh) && near(tr, vr),
+                  "gloaming_oak_planks (strength(2.0F, 3.0F)) holds destroy speed " + std::to_string(th) + " / explosion resistance " + std::to_string(tr) + ", minecraft:oak_planks "
                       + std::to_string(vh) + " / " + std::to_string(vr));
-        ctx.check(stored(gf::game::blockWith("twilightforest:underbrick"), th, tr) && stored(gf::game::blockWith("minecraft:stone"), vh, vr) && near(th, vh) && near(tr, vr),
+        ctx.check(stored(gf::game::blockWith("gloamingforest:underbrick"), th, tr) && stored(gf::game::blockWith("minecraft:stone"), vh, vr) && near(th, vh) && near(tr, vr),
                   "underbrick (strength(1.5F, 6.0F)) holds destroy speed " + std::to_string(th) + " / explosion resistance " + std::to_string(tr) + ", minecraft:stone "
                       + std::to_string(vh) + " / " + std::to_string(vr));
     }
@@ -414,21 +414,21 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         }
         ctx.info(what + ": destroy speed " + std::to_string(h) + ", explosion resistance " + std::to_string(r));
         if (c.hardness == kOwnerRule) {} // the owner's selftests check it
-        else if (c.hardness == kUnbreakable) ctx.check(h < 0, what + ": unbreakable in TF, destroy speed " + std::to_string(h));
-        else ctx.check(near(h, c.hardness * hs), what + ": destroy speed " + std::to_string(h) + ", TF gives " + std::to_string(c.hardness * hs));
+        else if (c.hardness == kUnbreakable) ctx.check(h < 0, what + ": unbreakable in upstream, destroy speed " + std::to_string(h));
+        else ctx.check(near(h, c.hardness * hs), what + ": destroy speed " + std::to_string(h) + ", upstream gives " + std::to_string(c.hardness * hs));
         if (c.resistance == kIndestructible)
-            ctx.check(r >= 3600000.0 * rs, what + ": indestructible by explosions in TF, resistance " + std::to_string(r));
-        else ctx.check(near(r, c.resistance * rs), what + ": explosion resistance " + std::to_string(r) + ", TF gives " + std::to_string(c.resistance * rs));
+            ctx.check(r >= 3600000.0 * rs, what + ": indestructible by explosions in upstream, resistance " + std::to_string(r));
+        else ctx.check(near(r, c.resistance * rs), what + ": explosion resistance " + std::to_string(r) + ", upstream gives " + std::to_string(c.resistance * rs));
     }
 });
 
-// TF's own sound type (TFSoundTypes.JAR = DeferredSoundType(1.0F, 1.0F, JAR_BREAK, JAR_STEP, JAR_PLACE, JAR_HIT, JAR_FALL),
-// TFSounds "block.twilightforest.jar.<event>") in the assembled resource pack the game plays from, written down by hand
-// from TF 4.8 and Minecraft 1.21.1, independent of the generator: a SoundType of volume v and pitch p plays break
+// upstream's own sound type (TFSoundTypes.JAR = DeferredSoundType(1.0F, 1.0F, JAR_BREAK, JAR_STEP, JAR_PLACE, JAR_HIT, JAR_FALL),
+// TFSounds "block.gloamingforest.jar.<event>") in the assembled resource pack the game plays from, written down by hand
+// from upstream 4.8 and Minecraft 1.21.1, independent of the generator: a SoundType of volume v and pitch p plays break
 // (LevelRenderer.levelEvent 2001) and place (BlockItem.place) at (v + 1) / 2, pitch p x 0.8, hit
 // (MultiPlayerGameMode.continueDestroyBlock) at (v + 1) / 8, pitch p x 0.5, step (Entity.playStepSound) at v x 0.15,
 // pitch p, fall (LivingEntity.playBlockFallSound, with fall damage) at v x 0.5, pitch p x 0.75; every event is one of
-// F3's sound definitions, and TF's four jar blocks use the type (RP blocks.json).
+// F3's sound definitions, and upstream's four jar blocks use the type (RP blocks.json).
 GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
     namespace fs = std::filesystem;
     auto rp   = modDir() / "resource_packs" / "GloamingForest_RP";
@@ -463,23 +463,23 @@ GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
         double      pitch;
     };
     std::vector<Event> const events{
-        {false, "break", "block.twilightforest.jar.break", 1.0, 0.8},
-        {false, "place", "block.twilightforest.jar.place", 1.0, 0.8},
-        {false, "hit", "block.twilightforest.jar.hit", 0.25, 0.5},
-        {true, "step", "block.twilightforest.jar.step", 0.15, 1.0},
-        {true, "fall", "block.twilightforest.jar.fall", 0.5, 0.75},
+        {false, "break", "block.gloamingforest.jar.break", 1.0, 0.8},
+        {false, "place", "block.gloamingforest.jar.place", 1.0, 0.8},
+        {false, "hit", "block.gloamingforest.jar.hit", 0.25, 0.5},
+        {true, "step", "block.gloamingforest.jar.step", 0.15, 1.0},
+        {true, "fall", "block.gloamingforest.jar.fall", 0.5, 0.75},
     };
-    JDoc const* type        = at(sounds, {"block_sounds", "twilightforest.jar"});
-    JDoc const* interactive = at(sounds, {"interactive_sounds", "block_sounds", "twilightforest.jar"});
-    ctx.require(type && type->is_object(), "sounds.json block_sounds defines twilightforest.jar");
-    ctx.require(interactive && interactive->is_object(), "sounds.json interactive_sounds.block_sounds defines twilightforest.jar");
+    JDoc const* type        = at(sounds, {"block_sounds", "gloamingforest.jar"});
+    JDoc const* interactive = at(sounds, {"interactive_sounds", "block_sounds", "gloamingforest.jar"});
+    ctx.require(type && type->is_object(), "sounds.json block_sounds defines gloamingforest.jar");
+    ctx.require(interactive && interactive->is_object(), "sounds.json interactive_sounds.block_sounds defines gloamingforest.jar");
     for (auto const* t : {type, interactive})
-        ctx.check(near(num(*t, "volume"), 1.0) && near(num(*t, "pitch"), 1.0), "twilightforest.jar " + t->value("volume", JDoc()).dump() + " / " + t->value("pitch", JDoc()).dump() + ": volume and pitch 1 (the events carry Java's)");
+        ctx.check(near(num(*t, "volume"), 1.0) && near(num(*t, "pitch"), 1.0), "gloamingforest.jar " + t->value("volume", JDoc()).dump() + " / " + t->value("pitch", JDoc()).dump() + ": volume and pitch 1 (the events carry Java's)");
     for (auto const& e : events) {
-        std::string what = std::string(e.interactive ? "interactive_sounds" : "block_sounds") + " twilightforest.jar " + e.event;
+        std::string what = std::string(e.interactive ? "interactive_sounds" : "block_sounds") + " gloamingforest.jar " + e.event;
         JDoc const* ev   = at(e.interactive ? *interactive : *type, {"events", e.event});
         if (!ev || !ev->is_object()) {
-            ctx.check(false, what + " is not defined (TF plays " + e.sound + ")");
+            ctx.check(false, what + " is not defined (upstream plays " + e.sound + ")");
             continue;
         }
         // (a sound that is not a string is a readable failure, not a json type_error)
@@ -487,42 +487,42 @@ GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
         bool named = sound != ev->end() && sound->is_string() && sound->get<std::string>() == e.sound;
         ctx.check(
             named && near(num(*ev, "volume"), e.volume) && near(num(*ev, "pitch"), e.pitch),
-            what + " " + ev->dump() + ", TF plays " + e.sound + " at " + std::to_string(e.volume) + " / " + std::to_string(e.pitch)
+            what + " " + ev->dump() + ", upstream plays " + e.sound + " at " + std::to_string(e.volume) + " / " + std::to_string(e.pitch)
         );
         ctx.check(defs["sound_definitions"].contains(e.sound), what + ": " + e.sound + " is a sound definition (F3)");
     }
-    // Bedrock's jump and land: TF plays no block sound for a jump, nor for a landing without fall damage. The import's
+    // Bedrock's jump and land: upstream plays no block sound for a jump, nor for a landing without fall damage. The import's
     // fragment is the type's only source (the families kit no longer writes a copy of it) and declares both silent
-    // (""), so no engine fallback plays a sound TF does not.
+    // (""), so no engine fallback plays a sound upstream does not.
     for (auto const* x : {"jump", "land"}) {
         JDoc const* ev     = at(*interactive, {"events", x});
         bool        silent = ev && ev->is_string() && ev->get<std::string>().empty();
-        ctx.check(silent, std::string("interactive_sounds twilightforest.jar ") + x + " " + (ev ? ev->dump() : "(none)") + ": TF plays nothing (\"\")");
+        ctx.check(silent, std::string("interactive_sounds gloamingforest.jar ") + x + " " + (ev ? ev->dump() : "(none)") + ": upstream plays nothing (\"\")");
     }
-    for (auto const* id : {"twilightforest:mason_jar", "twilightforest:firefly_jar", "twilightforest:firefly_particle_spawner", "twilightforest:cicada_jar"}) {
+    for (auto const* id : {"gloamingforest:mason_jar", "gloamingforest:firefly_jar", "gloamingforest:firefly_particle_spawner", "gloamingforest:cicada_jar"}) {
         JDoc const* b = at(blocks, {id});
         JDoc const* snd = b ? at(*b, {"sound"}) : nullptr;
         std::string s   = !b || !b->is_object() ? std::string("(no entry)")
                         : !snd                  ? std::string("(none)")
                         : snd->is_string()      ? snd->get<std::string>()
                                                 : snd->dump();
-        ctx.check(s == "twilightforest.jar", std::string(id) + ": RP blocks.json sound " + s + ", TF gives TFSoundTypes.JAR -> twilightforest.jar");
+        ctx.check(s == "gloamingforest.jar", std::string(id) + ": RP blocks.json sound " + s + ", upstream gives TFSoundTypes.JAR -> gloamingforest.jar");
     }
 });
 
-// TF's booleans that default to true (Java's StateDefinition.any(): trophies' powered, HugeMushroomBlock faces, rope y,
+// upstream's booleans that default to true (Java's StateDefinition.any(): trophies' powered, HugeMushroomBlock faces, rope y,
 // terrorcotta rotated, a locked vanishing block) are declared [true, false]: the game's default permutation has them
 // true, the explicit true state is that permutation and the false one another (Bedrock takes the first listed value as
 // the default and reads a boolean by its value, not its position).
 GF_REGISTER_SELFTEST("import.bool_defaults", [](Context& ctx) {
     std::vector<std::pair<char const*, char const*>> const cases{
-        {"twilightforest:naga_trophy", "twilightforest:powered"},
-        {"twilightforest:naga_wall_trophy", "twilightforest:powered"},
-        {"twilightforest:huge_mushgloom", "twilightforest:up"},
-        {"twilightforest:huge_mushgloom_stem", "twilightforest:north"},
-        {"twilightforest:rope", "twilightforest:y"},
-        {"twilightforest:terrorcotta_lines", "twilightforest:rotated"},
-        {"twilightforest:locked_vanishing_block", "twilightforest:locked"},
+        {"gloamingforest:naga_trophy", "gloamingforest:powered"},
+        {"gloamingforest:naga_wall_trophy", "gloamingforest:powered"},
+        {"gloamingforest:huge_mushgloom", "gloamingforest:up"},
+        {"gloamingforest:huge_mushgloom_stem", "gloamingforest:north"},
+        {"gloamingforest:rope", "gloamingforest:y"},
+        {"gloamingforest:terrorcotta_lines", "gloamingforest:rotated"},
+        {"gloamingforest:locked_vanishing_block", "gloamingforest:locked"},
     };
     for (auto const& [id, state] : cases) {
         auto const* def = gf::game::blockWith(id);
@@ -532,7 +532,7 @@ GF_REGISTER_SELFTEST("import.bool_defaults", [](Context& ctx) {
         }
         auto got = gf::game::statesOf(*def);
         auto it  = got.find(state);
-        ctx.check(it != got.end() && it->second == "true", std::string(id) + ": default " + state + "=" + (it != got.end() ? it->second : "?") + ", TF's default is true");
+        ctx.check(it != got.end() && it->second == "true", std::string(id) + ": default " + state + "=" + (it != got.end() ? it->second : "?") + ", upstream's default is true");
         auto const* on  = gf::game::blockWithStates(id, JDoc{{state, true}});
         auto const* off = gf::game::blockWithStates(id, JDoc{{state, false}});
         ctx.check(on == def, std::string(id) + ": " + state + "=true is the default permutation");
@@ -542,11 +542,11 @@ GF_REGISTER_SELFTEST("import.bool_defaults", [](Context& ctx) {
 
 namespace {
 
-/// What a TF block needs around it to stay where it is placed: what the canSurvive (and the updateShape or
-/// neighborChanged that asks it) of its Java classes requires, written down by hand from Minecraft 1.21.1 and TF 4.8.
+/// What an upstream block needs around it to stay where it is placed: what the canSurvive (and the updateShape or
+/// neighborChanged that asks it) of its Java classes requires, written down by hand from Minecraft 1.21.1 and upstream 4.8.
 /// Every block stands on a floor block, minecraft:dirt unless a rule says otherwise: sturdy, solid and in
 /// #minecraft:dirt, it holds StandingSignBlock (isSolid below), PressurePlateBlock, DoorBlock's lower half,
-/// BushBlock.mayPlaceOn (saplings, TFPlantBlock), BerryBushBlock (#twilightforest:tf_berry_bushes_survive),
+/// BushBlock.mayPlaceOn (saplings, TFPlantBlock), BerryBushBlock (#gloamingforest:tf_berry_bushes_survive),
 /// CritterBlock and ThornRoseBlock (default facing up: resting on the block below), MossPatchBlock, FallenLeavesBlock,
 /// MushgloomBlock, OminousFireBlock, Experiment115Block, CarpetBlock and CandelabraBlock (default on_wall false).
 struct Support {
@@ -558,7 +558,7 @@ struct Support {
     bool                             poke = false; ///< a block set above it afterwards: Java's neighbour check runs in place
 };
 
-/// The support of a block from its Java class chain (data/gf/import/skeleton.json "classes": TF's classes, then the
+/// The support of a block from its Java class chain (data/gf/import/skeleton.json "classes": upstream's classes, then the
 /// vanilla class reached); the first class of the chain with a rule decides.
 Support supportOf(JDoc const& chain) {
     Support s;
@@ -567,22 +567,22 @@ Support supportOf(JDoc const& chain) {
         if (cls == "WallSignBlock" || cls == "LadderBlock") {
             // WallSignBlock.canSurvive: the block behind it (facing.getOpposite()) isSolid; LadderBlock.canSurvive: that
             // block's face is sturdy. Facing north: the block south of it.
-            s.states = {{"twilightforest:facing", "north"}};
+            s.states = {{"gloamingforest:facing", "north"}};
             s.sides  = {{0, 1}};
         } else if (cls == "ButtonBlock") {
-            // FaceAttachedHorizontalDirectionalBlock.canSurvive (TF's default face wall, facing north): the block south of
+            // FaceAttachedHorizontalDirectionalBlock.canSurvive (upstream's default face wall, facing north): the block south of
             // it has a sturdy north face
-            s.states = {{"twilightforest:face", "wall"}, {"twilightforest:facing", "north"}};
+            s.states = {{"gloamingforest:face", "wall"}, {"gloamingforest:facing", "north"}};
             s.sides  = {{0, 1}};
         } else if (cls == "WallHangingSignBlock") {
             // WallHangingSignBlock.canPlace: a sturdy block on its clockwise (east of a sign facing north) or
             // counter-clockwise side
-            s.states = {{"twilightforest:facing", "north"}};
+            s.states = {{"gloamingforest:facing", "north"}};
             s.sides  = {{1, 0}};
         } else if (cls == "CeilingHangingSignBlock") {
             s.ceiling = "minecraft:dirt"; // CeilingHangingSignBlock.canSurvive: the block above has a sturdy centre
         } else if (cls == "TorchberryPlantBlock" || cls == "RootStrandBlock") {
-            s.ceiling = "minecraft:dirt"; // TFPlantBlock.canPlaceRootAt: the block above is #twilightforest:plants_hang_on
+            s.ceiling = "minecraft:dirt"; // TFPlantBlock.canPlaceRootAt: the block above is #gloamingforest:plants_hang_on
         } else if (cls == "TrollRootBlock") {
             s.ceiling = "minecraft:stone"; // canPlaceRootBelow: the block above is #minecraft:base_stone_overworld
         } else if (cls == "RopeBlock") {
@@ -592,21 +592,21 @@ Support supportOf(JDoc const& chain) {
             s.ceiling = "minecraft:dirt";
         } else if (cls == "DoorBlock" || cls == "BrazierBlock") {
             // DoorBlock / BrazierBlock.updateShape: the lower half goes when the block above is not its upper half
-            s.states = {{"twilightforest:half", "lower"}};
-            s.upper  = JDoc{{"twilightforest:half", "upper"}};
+            s.states = {{"gloamingforest:half", "lower"}};
+            s.upper  = JDoc{{"gloamingforest:half", "upper"}};
         } else if (cls == "DarkTowerBerryBushBlock") {
-            // canBePlacedAt: #twilightforest:dark_tower_berry_bushes_survive (#c:netherracks, ...); shouldDie on #minecraft:nylium
+            // canBePlacedAt: #gloamingforest:dark_tower_berry_bushes_survive (#c:netherracks, ...); shouldDie on #minecraft:nylium
             s.floor = "minecraft:netherrack";
         } else if (cls == "OreBerryBlock") {
-            s.floor = "minecraft:stone"; // canBePlacedAt: #twilightforest:oreberry_bushes_survive (#c:stones, ...)
+            s.floor = "minecraft:stone"; // canBePlacedAt: #gloamingforest:oreberry_bushes_survive (#c:stones, ...)
         } else if (cls == "WaterlilyBlock") {
             s.floor = "minecraft:ice"; // WaterlilyBlock.mayPlaceOn: water or an IceBlock below, no fluid above
         } else if (cls == "MultifaceBlock") {
-            s.states = {{"twilightforest:down", true}}; // MultifaceBlock.updateShape: a block without a face goes
+            s.states = {{"gloamingforest:down", true}}; // MultifaceBlock.updateShape: a block without a face goes
         } else if (cls == "LeavesBlock") {
-            s.states = {{"twilightforest:persistent", true}}; // LeavesBlock.randomTick: decays unless persistent (player placed)
+            s.states = {{"gloamingforest:persistent", true}}; // LeavesBlock.randomTick: decays unless persistent (player placed)
         } else if (cls == "TFPortalBlock") {
-            // TFPortalBlock.neighborChanged: a sturdy floor and #twilightforest:portal/edge (grass, dirt) on all four sides,
+            // TFPortalBlock.neighborChanged: a sturdy floor and #gloamingforest:portal/edge (grass, dirt) on all four sides,
             // else water again; poked to run that check in its frame
             s.sides = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
             s.poke  = true;
@@ -622,7 +622,7 @@ Support supportOf(JDoc const& chain) {
 
 // Every block placed and read back. Each block gets its own cell, one air gap away from the next, with the support its
 // Java classes need (supportOf: a floor, the block it hangs on or from, its upper half, the portal's frame), so that a
-// block a unit gives TF's survival rules (F11's signs, F4's portal, ...) stays: the supports go first, the blocks and
+// block a unit gives upstream's survival rules (F11's signs, F4's portal, ...) stays: the supports go first, the blocks and
 // then their upper halves, and the blocks are removed before their supports.
 GF_REGISTER_SELFTEST("import.place_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
     requireSkeleton(ctx);

@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/BanisterBlock.java
-//   src/main/java/twilightforest/enums/BanisterShape.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/BanisterBlock.java
+//   src/main/java/gloamingforest/enums/BanisterShape.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -36,18 +36,18 @@ namespace ia = interactions;
 
 namespace {
 
-constexpr char kShape[]    = "twilightforest:shape";
-constexpr char kExtended[] = "twilightforest:extended";
+constexpr char kShape[]    = "gloamingforest:shape";
+constexpr char kExtended[] = "gloamingforest:extended";
 
 std::vector<ia::HandlerId>& handlerIds() {
     static std::vector<ia::HandlerId> ids;
     return ids;
 }
 
-/// BlockTagGenerator.BANISTERS (block tag #twilightforest:banisters), else one of the 19 ids.
+/// BlockTagGenerator.BANISTERS (block tag #gloamingforest:banisters), else one of the 19 ids.
 bool isBanister(Block const& block) {
     auto id = idOf(block);
-    if (tags::has(tags::Registry::Block, "twilightforest:banisters", id)) return true;
+    if (tags::has(tags::Registry::Block, "gloamingforest:banisters", id)) return true;
     return std::find(banisterIds().begin(), banisterIds().end(), id) != banisterIds().end();
 }
 
@@ -120,8 +120,8 @@ void installBanisters() {
             blockevents::onNeighborChanged(id, onNeighborChanged);
             item::addTooltip(id, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
                 // BanisterBlock.appendHoverText: gray
-                lines.push_back("§7" + (viewer ? trFor(*viewer, "block.twilightforest.banister.cycle", "Right-click with axe to cycle")
-                                               : tr("block.twilightforest.banister.cycle", "Right-click with axe to cycle")));
+                lines.push_back("§7" + (viewer ? trFor(*viewer, "block.gloamingforest.banister.cycle", "Right-click with axe to cycle")
+                                               : tr("block.gloamingforest.banister.cycle", "Right-click with axe to cycle")));
             });
         }
     }

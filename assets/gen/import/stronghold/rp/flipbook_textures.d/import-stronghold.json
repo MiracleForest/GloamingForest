@@ -1,30 +1,30 @@
 [
   {
-    "flipbook_texture": "textures/twilightforest/block/pedestal/hydra_glow",
+    "flipbook_texture": "textures/gloamingforest/block/pedestal/hydra_glow",
     "atlas_tile": "tf_block_pedestal_hydra_glow",
     "ticks_per_frame": 4,
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/pedestal/lich_glow",
+    "flipbook_texture": "textures/gloamingforest/block/pedestal/lich_glow",
     "atlas_tile": "tf_block_pedestal_lich_glow",
     "ticks_per_frame": 4,
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/pedestal/naga_glow",
+    "flipbook_texture": "textures/gloamingforest/block/pedestal/naga_glow",
     "atlas_tile": "tf_block_pedestal_naga_glow",
     "ticks_per_frame": 4,
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/pedestal/top_glow",
+    "flipbook_texture": "textures/gloamingforest/block/pedestal/top_glow",
     "atlas_tile": "tf_block_pedestal_top_glow",
     "ticks_per_frame": 4,
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/pedestal/ur-ghast_glow",
+    "flipbook_texture": "textures/gloamingforest/block/pedestal/ur-ghast_glow",
     "atlas_tile": "tf_block_pedestal_ur-ghast_glow",
     "ticks_per_frame": 4,
     "blend_frames": true

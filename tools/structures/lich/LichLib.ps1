@@ -1,6 +1,6 @@
 # U21 (lich): shared shapes of the lich tower templates (original GloamingForest designs, rule R11/R19).
 # Dot-sourced by the *.gfs.ps1 scripts of this folder. The tower is a 13 x 13 stone brick shaft with
-# cut corners; wings are bridges of stone and twilight oak leading to rooms.
+# cut corners; wings are bridges of stone and gloaming oak leading to rooms.
 
 $script:Wall    = 'minecraft:stone_bricks'
 $script:Accent  = 'minecraft:polished_andesite'

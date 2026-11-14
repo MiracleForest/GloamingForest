@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/mangrove_log/hollow_vangrove_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "minecraft:mangrove_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minecraft:mangrove_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hollow_vangrove_log"
+    }
+  }
+}

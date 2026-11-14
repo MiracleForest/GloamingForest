@@ -9,7 +9,7 @@
 // and lets a unit pair a pattern (its nameID, as banners store it) with the one item that unlocks
 // it (Java: the item tag #<ns>:pattern_item/<name> of LoomMenu):
 //
-//   gf::building::ext::registerPatternItem("tf_naga", "twilightforest:naga_banner_pattern");
+//   gf::building::ext::registerPatternItem("tf_naga", "gloamingforest:naga_banner_pattern");
 //
 // A registered pattern is unlocked only by its item; a registered item unlocks no other pattern
 // (vanilla patterns included); the loom's pattern slot (and only it, on a loom screen) takes a

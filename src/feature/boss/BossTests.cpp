@@ -257,7 +257,7 @@ TriggerLog& triggerLog() {
 struct TriggerRecorder {
     TriggerRecorder() {
         static bool const listening = [] {
-            for (auto const* id : {"twilightforest:hurt_boss", "twilightforest:structure_cleared"})
+            for (auto const* id : {"gloamingforest:hurt_boss", "gloamingforest:structure_cleared"})
                 gf::progression::onTrigger(id, [trigger = std::string(id)](Player& p, nlohmann::json const& data) {
                     if (triggerLog().on) triggerLog().events.push_back({trigger, p.getOrCreateUniqueID().rawID, data});
                 });
@@ -379,14 +379,14 @@ GF_REGISTER_SELFTEST("entity.boss_conquest", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(conquest && conquest->first == home && conquest->second == kConquestLandmark, "at the boss's home point, for its home structure");
     ctx.check(lastConquestFound(), "and the kit saw the start conquered");
     // the triggers
-    int cleared = triggers.find("twilightforest:structure_cleared", nearId);
-    int hurt    = triggers.find("twilightforest:hurt_boss", nearId);
+    int cleared = triggers.find("gloamingforest:structure_cleared", nearId);
+    int hurt    = triggers.find("gloamingforest:hurt_boss", nearId);
     ctx.check(cleared >= 0 && triggers.data(cleared).value("structure", std::string()) == kConquestLandmark,
               "structure_cleared fired for the player within 32 blocks (" + triggers.data(cleared).dump() + ")");
-    ctx.check(triggers.count("twilightforest:structure_cleared", nearId) == 1, "once");
-    ctx.check(triggers.find("twilightforest:structure_cleared", farId) < 0, "and not for the player 40 blocks away");
+    ctx.check(triggers.count("gloamingforest:structure_cleared", nearId) == 1, "once");
+    ctx.check(triggers.find("gloamingforest:structure_cleared", farId) < 0, "and not for the player 40 blocks away");
     ctx.check(hurt >= 0 && triggers.data(hurt).value("entity", std::string()) == "gf_test:boss", "hurt_boss fired for the qualified player (" + triggers.data(hurt).dump() + ")");
-    ctx.check(triggers.find("twilightforest:hurt_boss", farId) < 0, "and not for the player who did not hurt the boss");
+    ctx.check(triggers.find("gloamingforest:hurt_boss", farId) < 0, "and not for the player who did not hurt the boss");
     ctx.check(hurt >= 0 && cleared > hurt, "hurt_boss (LivingDeathEvent) came before the conquest (postmortem)");
     // the death chest takes the landmark's floor under the home point
     for (int i = 0; i < 60 && !lastDeathChest(); ++i) co_await ctx.ticks(1);
@@ -401,10 +401,10 @@ GF_REGISTER_SELFTEST("entity.boss_conquest", [](Context& ctx) -> ll::coro::CoroT
     (void)box;
 });
 
-// Entity#canUsePortal: BaseTFBoss and TF's parts refuse portals (canChangeDimensionsUsingPortal,
-// which Bedrock's portals and the Twilight portal ask); other actors keep the engine's answer unless
+// Entity#canUsePortal: BaseTFBoss and upstream's parts refuse portals (canChangeDimensionsUsingPortal,
+// which Bedrock's portals and the Gloaming portal ask); other actors keep the engine's answer unless
 // a type is marked (gf::entity::ext::setCanUsePortal: RisingZombie; non-mob actors such as
-// projectiles too: ChainBlock, CubeOfAnnihilation). Through F4's Twilight portal: a boss standing
+// projectiles too: ChainBlock, CubeOfAnnihilation). Through F4's Gloaming portal: a boss standing
 // in a lit portal is asked every tick and stays where it is.
 GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTask<> {
     FixtureScope    fixture;
@@ -412,7 +412,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
     auto            box    = co_await ctx.flatArea(5841, 8);
     auto*           region = ctx.region();
     ctx.require(region != nullptr, "the test dimension");
-    // a Twilight portal first (its lightning must not strike the probes): a 2x2 pool in the grass
+    // a Gloaming portal first (its lightning must not strike the probes): a 2x2 pool in the grass
     // layer, ringed by grass blocks with plants on the sides (TFPortalBlock#tryToCreatePortal)
     int  y    = box.minY - 1;
     auto pool = core::GlobalPos{ctx.dimension(), box.minX + 4, y, box.minZ + 4};
@@ -431,7 +431,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
             }
         }
     ctx.require(built, "the portal pool is built");
-    ctx.require(gf::portal::tryActivate(*region, game::blockPos(pool)), "the Twilight portal lights");
+    ctx.require(gf::portal::tryActivate(*region, game::blockPos(pool)), "the Gloaming portal lights");
     co_await ctx.ticks(10); // the lightning is gone
     auto at   = ctx.testPos(5842, 2);
     auto* boss = spawnMob(at, "gf_test:boss");
@@ -456,7 +456,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
     boss = mobById(bossId);
     pig  = mobById(pigId);
     ctx.require(boss && pig, "both are there");
-    ctx.check(!boss->canChangeDimensionsUsingPortal(), "a TF boss never goes through a portal (BaseTFBoss#canUsePortal)");
+    ctx.check(!boss->canChangeDimensionsUsingPortal(), "an upstream boss never goes through a portal (BaseTFBoss#canUsePortal)");
     auto* partActor = ge::partActor(handle);
     ctx.require(partActor != nullptr, "the boss has its part");
     auto* partMob = fe::asMob(*partActor);
@@ -485,7 +485,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(ball->canChangeDimensionsUsingPortal() == ballEngine, "and gets the engine's answer back");
     ball->remove();
     ballId = 0;
-    // F4's Twilight portal: a boss standing in the lit portal (getPortalTransitionTime 0 for
+    // F4's Gloaming portal: a boss standing in the lit portal (getPortalTransitionTime 0 for
     // entities: one that may travel leaves on the next ticks) is asked every tick and stays
     auto* standing = spawnMob(pool, "gf_test:boss", 1.0f, 1.0f);
     ctx.require(standing != nullptr, "a fixture boss spawns in the portal");
@@ -494,7 +494,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
     co_await ctx.ticks(40);
     int asked = fe::portalQueriesForTest();
     fe::watchPortalQueriesForTest(0);
-    ctx.check(asked >= 20, "the Twilight portal asked the boss standing in it (" + std::to_string(asked) + " times in 40 ticks)");
+    ctx.check(asked >= 20, "the Gloaming portal asked the boss standing in it (" + std::to_string(asked) + " times in 40 ticks)");
     auto* stayed = mobById(inPortalId);
     ctx.require(stayed != nullptr, "the boss is still here");
     auto sp = stayed->getFeetPos();
@@ -502,12 +502,12 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
               "in the portal, in its own dimension (" + std::to_string(sp.x) + " " + std::to_string(sp.y) + " " + std::to_string(sp.z) + ")");
     int lit = 0;
     for (int dx = 0; dx < 2; ++dx)
-        for (int dz = 0; dz < 2; ++dz) lit += ctx.blockAt(pool.offset(dx, 0, dz)) == "twilightforest:twilight_portal" ? 1 : 0;
+        for (int dz = 0; dz < 2; ++dz) lit += ctx.blockAt(pool.offset(dx, 0, dz)) == "gloamingforest:gloaming_portal" ? 1 : 0;
     ctx.check(lit == 4, "and the portal is still lit (" + std::to_string(lit) + " portal blocks)");
     (void)box;
 });
 
-// TF's bosses leave their loot in one of TF's chests (getDeathContainer: canopy, twilight oak,
+// upstream's bosses leave their loot in one of upstream's chests (getDeathContainer: canopy, gloaming oak,
 // mangrove, dark chest; the block families' chest blocks, containers of the inventory contract):
 // the chest takes the loot buffer through gf::inventory.
 GF_REGISTER_SELFTEST("entity.boss_tf_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -517,7 +517,7 @@ GF_REGISTER_SELFTEST("entity.boss_tf_chest", [](Context& ctx) -> ll::coro::CoroT
         ~LifecycleScope() { clearLifecycleForTest("gf_test:boss"); }
     } lifecycleScope;
     gf::boss::ext::Lifecycle lc;
-    lc.deathContainer = [](Mob&, core::jrand::RandomSource&) { return std::string("twilightforest:canopy_chest"); };
+    lc.deathContainer = [](Mob&, core::jrand::RandomSource&) { return std::string("gloamingforest:canopy_chest"); };
     gf::boss::ext::setLifecycle("gf_test:boss", lc);
     resetTestRecords();
     auto  box  = co_await ctx.flatArea(5846, 4);
@@ -532,14 +532,14 @@ GF_REGISTER_SELFTEST("entity.boss_tf_chest", [](Context& ctx) -> ll::coro::CoroT
     auto chest = lastDeathChest();
     ctx.require(chest.has_value(), "a death chest was placed");
     ctx.check(*chest == home.offset(0, -1, 0), "under the home point");
-    ctx.check(ctx.blockAt(*chest) == "twilightforest:canopy_chest", "of the type's death container (" + ctx.blockAt(*chest) + ")");
+    ctx.check(ctx.blockAt(*chest) == "gloamingforest:canopy_chest", "of the type's death container (" + ctx.blockAt(*chest) + ")");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the test dimension");
     auto states = game::statesOf(region->getBlock(game::blockPos(*chest)));
-    ctx.check(states.contains("twilightforest:facing"), "with its facing (" + states["twilightforest:facing"] + ")");
+    ctx.check(states.contains("gloamingforest:facing"), "with its facing (" + states["gloamingforest:facing"] + ")");
     // the canopy chest is a container of the inventory contract (the block families' chest)
     auto h = gf::inventory::find(*region, game::blockPos(*chest));
-    ctx.require(h.has_value() && h->get && h->set && h->slots >= 27, "twilightforest:canopy_chest is an inventory container (the families' chest)");
+    ctx.require(h.has_value() && h->get && h->set && h->slots >= 27, "gloamingforest:canopy_chest is an inventory container (the families' chest)");
     // the fixture table rolls gf_test:fixture_item into the buffer (the fill may wait a tick for
     // the container)
     int inChest = 0;
@@ -549,7 +549,7 @@ GF_REGISTER_SELFTEST("entity.boss_tf_chest", [](Context& ctx) -> ll::coro::CoroT
                 if (game::items::idOf(h->get(*chest, s)) == "gf_test:fixture_item") inChest += game::items::countOf(h->get(*chest, s));
         if (inChest == 0) co_await ctx.ticks(1);
     }
-    ctx.check(inChest >= 1, "the TF chest holds the loot (" + std::to_string(inChest) + " fixture items)");
+    ctx.check(inChest >= 1, "the upstream chest holds the loot (" + std::to_string(inChest) + " fixture items)");
     ctx.check(pendingFillsForTest() == 0, "nothing waits for a container");
     ctx.check(collectDrops(*chest, "gf_test:fixture_item", 3.0f) == 0, "and nothing dropped");
     if ((h = gf::inventory::find(*region, game::blockPos(*chest))))
@@ -655,9 +655,9 @@ GF_REGISTER_SELFTEST("entity.boss_inclusive", [](Context& ctx) -> ll::coro::Coro
     TriggerRecorder triggers;
     pig->kill();
     co_await ctx.ticks(2);
-    int hurt = triggers.find("twilightforest:hurt_boss", spId);
+    int hurt = triggers.find("gloamingforest:hurt_boss", spId);
     ctx.check(hurt >= 0 && triggers.data(hurt).value("entity", std::string()) == "minecraft:pig", "hurt_boss fired for the qualified player (" + triggers.data(hurt).dump() + ")");
-    ctx.check(triggers.count("twilightforest:hurt_boss", spId) == 1, "once");
+    ctx.check(triggers.count("gloamingforest:hurt_boss", spId) == 1, "once");
     // the attachment goes with the mob: the record is dropped once the body is gone
     for (int i = 0; i < 60 && fe::actorById(pigId); ++i) co_await ctx.ticks(1);
     ctx.check(fe::actorById(pigId) == nullptr, "the dead pig is removed");
@@ -716,7 +716,7 @@ GF_REGISTER_SELFTEST("entity.boss_peaceful", [](Context& ctx) -> ll::coro::CoroT
     (void)box;
 });
 
-// BaseTFBoss's overridable lifecycle (gf::boss::ext::Lifecycle), with the overrides TF's bosses use:
+// BaseTFBoss's overridable lifecycle (gf::boss::ext::Lifecycle), with the overrides upstream's bosses use:
 // a shadow clone (Lich#shouldSpawnLoot / #shouldCreateSpawner false) leaves no chest, no conquest
 // and no spawner; a longer death animation (Naga, Lich, Ur-Ghast, Hydra) keeps the dead body past
 // Bedrock's 20 ticks with tickDeath running, then the death container of the type takes the loot
@@ -891,22 +891,22 @@ GF_REGISTER_SELFTEST("entity.boss_spawner_rules", [](Context& ctx) -> ll::coro::
     auto* p = fe::playerById(spId);
     ctx.require(p != nullptr, "the test player is there");
     // the height rules (closestPlayer.getY() against the spawner's y)
-    for (auto const* id : {"twilightforest:ur_ghast_boss_spawner", "twilightforest:snow_queen_boss_spawner", "twilightforest:alpha_yeti_boss_spawner"}) {
+    for (auto const* id : {"gloamingforest:ur_ghast_boss_spawner", "gloamingforest:snow_queen_boss_spawner", "gloamingforest:alpha_yeti_boss_spawner"}) {
         auto rule = spawnerRuleForTest(id);
         ctx.require(rule.has_value(), std::string(id) + " is a spawner");
         ctx.check(!heightRuleAllows(rule->kind, 100, 96.0) && heightRuleAllows(rule->kind, 100, 96.5), std::string(id) + ": the nearest player must stand above y - 4");
     }
-    auto mino = spawnerRuleForTest("twilightforest:minoshroom_boss_spawner");
+    auto mino = spawnerRuleForTest("gloamingforest:minoshroom_boss_spawner");
     ctx.check(mino && heightRuleAllows(mino->kind, 100, 103.5) && !heightRuleAllows(mino->kind, 100, 104.0), "minoshroom: below y + 4");
-    auto knights = spawnerRuleForTest("twilightforest:knight_phantom_boss_spawner");
+    auto knights = spawnerRuleForTest("gloamingforest:knight_phantom_boss_spawner");
     ctx.check(knights && !heightRuleAllows(knights->kind, 100, 98.0) && heightRuleAllows(knights->kind, 100, 98.5), "knight phantoms: above y - 2");
-    auto hydra = spawnerRuleForTest("twilightforest:hydra_boss_spawner");
+    auto hydra = spawnerRuleForTest("gloamingforest:hydra_boss_spawner");
     ctx.check(hydra && heightRuleAllows(hydra->kind, 100, 0.0), "hydra: no height rule");
     // in the world: the player here wakes an ur-ghast spawner 3 above it (range 9)
     int      fy = static_cast<int>(std::floor(p->getFeetPos().y + 0.001f));
     BlockPos low{home.x, fy + 3, home.z};
-    ctx.check(anyPlayerInRangeForTest(home.dim, low, "twilightforest:ur_ghast_boss_spawner"), "a player 3 below wakes the ur-ghast spawner");
-    ctx.check(!anyPlayerInRangeForTest(home.dim, BlockPos{home.x + 40, fy, home.z}, "twilightforest:ur_ghast_boss_spawner"), "nobody within 9 blocks: it waits");
+    ctx.check(anyPlayerInRangeForTest(home.dim, low, "gloamingforest:ur_ghast_boss_spawner"), "a player 3 below wakes the ur-ghast spawner");
+    ctx.check(!anyPlayerInRangeForTest(home.dim, BlockPos{home.x + 40, fy, home.z}, "gloamingforest:ur_ghast_boss_spawner"), "nobody within 9 blocks: it waits");
     // the death chest's floor rule (PushReaction != BLOCK)
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the test dimension");
@@ -973,7 +973,7 @@ struct UnloadedScope {
 };
 } // namespace
 
-// TF saves a dying boss with its chunk (dyingInventory, deathTime) and finishes BaseTFBoss#tickDeath
+// upstream saves a dying boss with its chunk (dyingInventory, deathTime) and finishes BaseTFBoss#tickDeath
 // when the chunk loads again, so its death chest always appears. Here a boss dies with a long death
 // animation: a companion that comes into range of the dying boss gets its death time although the
 // bar is hidden (KnightPhantom hides knights 1-5); the body leaves the level and its chunk counts
@@ -1213,31 +1213,31 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
     int         rows       = 0;
     for (auto const* v : variants) rows += gf::boss::trophyVariant(v).has_value() ? 1 : 0;
     ctx.check(rows == 10, "10 BossVariant rows (" + std::to_string(rows) + ")");
-    auto naga = gf::boss::trophyVariant("twilightforest:naga_trophy");
-    ctx.check(naga && naga->sound == "entity.twilightforest.naga.rattle" && naga->volume == 1.25f && naga->pitch == 1.2f && naga->comparator == 5, "naga trophy: rattle 1.25 / 1.2, comparator 5");
-    auto wall = gf::boss::trophyVariant("twilightforest:snow_queen_wall_trophy");
-    ctx.check(wall && wall->sound == "entity.twilightforest.snow_queen.ambient" && wall->comparator == 0, "a wall trophy gives no comparator signal");
-    auto ghast = gf::boss::trophyVariant("twilightforest:ur_ghast_trophy");
+    auto naga = gf::boss::trophyVariant("gloamingforest:naga_trophy");
+    ctx.check(naga && naga->sound == "entity.gloamingforest.naga.rattle" && naga->volume == 1.25f && naga->pitch == 1.2f && naga->comparator == 5, "naga trophy: rattle 1.25 / 1.2, comparator 5");
+    auto wall = gf::boss::trophyVariant("gloamingforest:snow_queen_wall_trophy");
+    ctx.check(wall && wall->sound == "entity.gloamingforest.snow_queen.ambient" && wall->comparator == 0, "a wall trophy gives no comparator signal");
+    auto ghast = gf::boss::trophyVariant("gloamingforest:ur_ghast_trophy");
     ctx.check(ghast && ghast->pitch == 0.6f && ghast->comparator == 13, "ur-ghast trophy: pitch 0.6, comparator 13");
-    ctx.check(!gf::boss::trophyVariant("twilightforest:oak_log").has_value(), "no variant for other blocks");
-    auto roar = gf::boss::ext::trophyRareSound("twilightforest:alpha_yeti_trophy");
-    ctx.check(roar && roar->oneIn == 50 && roar->sound == "entity.twilightforest.alpha_yeti.roar", "the alpha yeti trophy roars once in 50");
+    ctx.check(!gf::boss::trophyVariant("gloamingforest:oak_log").has_value(), "no variant for other blocks");
+    auto roar = gf::boss::ext::trophyRareSound("gloamingforest:alpha_yeti_trophy");
+    ctx.check(roar && roar->oneIn == 50 && roar->sound == "entity.gloamingforest.alpha_yeti.roar", "the alpha yeti trophy roars once in 50");
     // AbstractTrophyBlock#createParticle: counts and particle options
-    auto ghastP = gf::boss::ext::trophyParticle("twilightforest:ur_ghast_trophy");
+    auto ghastP = gf::boss::ext::trophyParticle("gloamingforest:ur_ghast_trophy");
     ctx.check(ghastP && ghastP->particle == "minecraft:dust" && ghastP->count == 10 && ghastP->params.value("color", nlohmann::json()) == nlohmann::json({1.0, 0.0, 0.0}) && ghastP->params.value("scale", 0.0) == 1.0, "ur-ghast trophy: 10 red dust (DustParticleOptions.REDSTONE)");
-    auto knightP = gf::boss::ext::trophyParticle("twilightforest:knight_phantom_wall_trophy");
-    ctx.check(knightP && knightP->particle == "minecraft:item" && knightP->params.value("item", std::string()) == "twilightforest:knightmetal_sword", "knight phantom trophy: knightmetal sword item particles");
-    auto minoP = gf::boss::ext::trophyParticle("twilightforest:minoshroom_trophy");
+    auto knightP = gf::boss::ext::trophyParticle("gloamingforest:knight_phantom_wall_trophy");
+    ctx.check(knightP && knightP->particle == "minecraft:item" && knightP->params.value("item", std::string()) == "gloamingforest:knightmetal_sword", "knight phantom trophy: knightmetal sword item particles");
+    auto minoP = gf::boss::ext::trophyParticle("gloamingforest:minoshroom_trophy");
     ctx.check(minoP && minoP->particle == "minecraft:block" && minoP->params.value("block", std::string()) == "below", "minoshroom trophy: block particles of the block below");
-    auto ramP = gf::boss::ext::trophyParticle("twilightforest:quest_ram_trophy");
+    auto ramP = gf::boss::ext::trophyParticle("gloamingforest:quest_ram_trophy");
     ctx.check(ramP && ramP->params.value("color", std::string()) == "random", "quest ram trophy: random colours (ColorParticleOption)");
-    auto lichP = gf::boss::ext::trophyParticle("twilightforest:lich_trophy"), queenP = gf::boss::ext::trophyParticle("twilightforest:snow_queen_trophy");
+    auto lichP = gf::boss::ext::trophyParticle("gloamingforest:lich_trophy"), queenP = gf::boss::ext::trophyParticle("gloamingforest:snow_queen_trophy");
     ctx.check(lichP && lichP->count == 5 && queenP && queenP->count == 20, "5 angry lich particles, 20 snow warnings");
-    ctx.check(!gf::boss::ext::trophyParticle("twilightforest:hydra_trophy") && !gf::boss::ext::trophyParticle("twilightforest:final_boss_trophy"), "no particles for the hydra and final boss trophies");
+    ctx.check(!gf::boss::ext::trophyParticle("gloamingforest:hydra_trophy") && !gf::boss::ext::trophyParticle("gloamingforest:final_boss_trophy"), "no particles for the hydra and final boss trophies");
     if (auto* region = game::regionOf(ctx.testPos(5856).dim)) {
         auto     at = ctx.testPos(5856);
         BlockPos bp{at.x, at.y, at.z};
-        auto     resolved = gf::boss::ext::trophyParticle("twilightforest:minoshroom_wall_trophy", region, &bp);
+        auto     resolved = gf::boss::ext::trophyParticle("gloamingforest:minoshroom_wall_trophy", region, &bp);
         ctx.check(resolved && resolved->params.value("block", std::string()) == ctx.blockAt(at.offset(0, -1, 0)), "with a position: the block under the trophy (" + (resolved ? resolved->params.dump() : std::string()) + ")");
     }
     // the spawner block entities (BossSpawnerBlockEntity and its variants)
@@ -1249,21 +1249,21 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
         SpawnerKind kind;
     };
     Row const spawners[] = {
-        {"twilightforest:naga_boss_spawner", "twilightforest:naga", 50, "minecraft:crit", SpawnerKind::Default},
-        {"twilightforest:lich_boss_spawner", "twilightforest:lich", 9, "twilightforest:ominous_flame", SpawnerKind::Lich},
-        {"twilightforest:hydra_boss_spawner", "twilightforest:hydra", 50, "minecraft:flame", SpawnerKind::Default},
-        {"twilightforest:ur_ghast_boss_spawner", "twilightforest:ur_ghast", 9, "minecraft:dust", SpawnerKind::AboveMinus4},
-        {"twilightforest:knight_phantom_boss_spawner", "twilightforest:knight_phantom", 9, "twilightforest:ominous_flame", SpawnerKind::KnightPhantoms},
-        {"twilightforest:snow_queen_boss_spawner", "twilightforest:snow_queen", 9, "twilightforest:snow", SpawnerKind::AboveMinus4},
-        {"twilightforest:minoshroom_boss_spawner", "twilightforest:minoshroom", 9, "minecraft:crimson_spore", SpawnerKind::BelowPlus4},
-        {"twilightforest:alpha_yeti_boss_spawner", "twilightforest:alpha_yeti", 9, "minecraft:falling_water", SpawnerKind::AboveMinus4},
-        {"twilightforest:final_boss_boss_spawner", "twilightforest:plateau_boss", 9, "twilightforest:annihilate", SpawnerKind::Never},
+        {"gloamingforest:naga_boss_spawner", "gloamingforest:naga", 50, "minecraft:crit", SpawnerKind::Default},
+        {"gloamingforest:lich_boss_spawner", "gloamingforest:lich", 9, "gloamingforest:ominous_flame", SpawnerKind::Lich},
+        {"gloamingforest:hydra_boss_spawner", "gloamingforest:hydra", 50, "minecraft:flame", SpawnerKind::Default},
+        {"gloamingforest:ur_ghast_boss_spawner", "gloamingforest:ur_ghast", 9, "minecraft:dust", SpawnerKind::AboveMinus4},
+        {"gloamingforest:knight_phantom_boss_spawner", "gloamingforest:knight_phantom", 9, "gloamingforest:ominous_flame", SpawnerKind::KnightPhantoms},
+        {"gloamingforest:snow_queen_boss_spawner", "gloamingforest:snow_queen", 9, "gloamingforest:snow", SpawnerKind::AboveMinus4},
+        {"gloamingforest:minoshroom_boss_spawner", "gloamingforest:minoshroom", 9, "minecraft:crimson_spore", SpawnerKind::BelowPlus4},
+        {"gloamingforest:alpha_yeti_boss_spawner", "gloamingforest:alpha_yeti", 9, "minecraft:falling_water", SpawnerKind::AboveMinus4},
+        {"gloamingforest:final_boss_boss_spawner", "gloamingforest:plateau_boss", 9, "gloamingforest:annihilate", SpawnerKind::Never},
     };
     for (auto const& r : spawners) {
         auto rule = spawnerRuleForTest(r.block);
         ctx.check(rule && rule->entityId == r.entity && rule->range == r.range && rule->particle == r.particle && rule->kind == r.kind, std::string(r.block) + ": " + r.entity + ", range " + std::to_string(r.range) + ", " + r.particle);
     }
-    auto ghastRule = spawnerRuleForTest("twilightforest:ur_ghast_boss_spawner");
+    auto ghastRule = spawnerRuleForTest("gloamingforest:ur_ghast_boss_spawner");
     ctx.check(ghastRule && ghastRule->particleParams.is_object() && ghastRule->particleParams["color"] == nlohmann::json({1.0, 0.0, 0.0}), "ur-ghast spawner: DustParticleOptions.REDSTONE (red, scale 1)");
     // the 8-colour fallback
     ctx.check(gf::boss::ext::nearestBarColor(0xFF0000) == 2, "red -> RED");
@@ -1276,16 +1276,16 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
     // .MULTIPLAYER_INCLUSIVE_ENTITIES (the qualified players and the health adjuster) and
     // ItemTagGenerator.KOBOLD_PACIFICATION_BREADS (the kobold's goal)
     using gf::tags::Registry;
-    auto inclusive = gf::tags::members(Registry::EntityType, "twilightforest:multiplayer_inclusive_entities");
-    std::vector<std::string> const tfInclusive{"twilightforest:alpha_yeti", "twilightforest:hydra",        "twilightforest:lich",
-                                               "twilightforest:minoshroom", "twilightforest:naga",         "twilightforest:plateau_boss",
-                                               "twilightforest:snow_queen", "twilightforest:ur_ghast"};
-    ctx.check(inclusive == tfInclusive, "multiplayer_inclusive_entities holds TF's 8 bosses (" + nlohmann::json(inclusive).dump() + ")");
-    ctx.check(!gf::tags::has(Registry::EntityType, "twilightforest:multiplayer_inclusive_entities", "twilightforest:knight_phantom"), "the knight phantoms are not in it");
-    ctx.check(gf::tags::has(Registry::Item, "twilightforest:kobold_pacification_breads", "minecraft:bread"), "kobold_pacification_breads holds bread");
+    auto inclusive = gf::tags::members(Registry::EntityType, "gloamingforest:multiplayer_inclusive_entities");
+    std::vector<std::string> const tfInclusive{"gloamingforest:alpha_yeti", "gloamingforest:hydra",        "gloamingforest:lich",
+                                               "gloamingforest:minoshroom", "gloamingforest:naga",         "gloamingforest:plateau_boss",
+                                               "gloamingforest:snow_queen", "gloamingforest:ur_ghast"};
+    ctx.check(inclusive == tfInclusive, "multiplayer_inclusive_entities holds upstream's 8 bosses (" + nlohmann::json(inclusive).dump() + ")");
+    ctx.check(!gf::tags::has(Registry::EntityType, "gloamingforest:multiplayer_inclusive_entities", "gloamingforest:knight_phantom"), "the knight phantoms are not in it");
+    ctx.check(gf::tags::has(Registry::Item, "gloamingforest:kobold_pacification_breads", "minecraft:bread"), "kobold_pacification_breads holds bread");
     // the death chest's facing: Direction.Plane.HORIZONTAL.getRandomDirection, one draw over north,
     // east, south, west, in the chest's own facing state (the vanilla chest's
-    // minecraft:cardinal_direction; twilightforest:facing on TF's chests, the bosses' containers)
+    // minecraft:cardinal_direction; gloamingforest:facing on upstream's chests, the bosses' containers)
     static char const* const horizontal[] = {"north", "east", "south", "west"};
     std::set<std::string>    tfFacings;
     bool                     javaOrder = true;
@@ -1295,13 +1295,13 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
         auto           seed = seeds.nextLong();
         fe::JavaRandom java(seed);
         auto           expected = horizontal[java.nextInt(4)];
-        auto [tfState, tfValue] = deathChestFacingForTest("twilightforest:canopy_chest", seed);
+        auto [tfState, tfValue] = deathChestFacingForTest("gloamingforest:canopy_chest", seed);
         auto [vState, vValue]   = deathChestFacingForTest("minecraft:chest", seed);
-        javaOrder &= tfState == "twilightforest:facing" && tfValue == expected && vState == "minecraft:cardinal_direction" && vValue == expected;
+        javaOrder &= tfState == "gloamingforest:facing" && tfValue == expected && vState == "minecraft:cardinal_direction" && vValue == expected;
         tfFacings.insert(tfValue);
     }
-    ctx.check(javaOrder, "the death chests face the direction Java draws (twilightforest:facing on TF's chests)");
-    ctx.check(tfFacings.size() == 4, "a TF death chest faces every horizontal direction (" + std::to_string(tfFacings.size()) + " seen)");
+    ctx.check(javaOrder, "the death chests face the direction Java draws (gloamingforest:facing on upstream's chests)");
+    ctx.check(tfFacings.size() == 4, "an upstream death chest faces every horizontal direction (" + std::to_string(tfFacings.size()) + " seen)");
     // config "bosses" defaults (TFConfig)
     ctx.check(gf::boss::ext::dropChests(), "bossesSpawnDropChests defaults to true");
     ctx.check(!gf::boss::ext::adjustsHealth() && !gf::boss::ext::adjustsLootRolls(), "multiplayerFightAdjuster defaults to NONE");
@@ -1352,7 +1352,7 @@ GF_REGISTER_SELFTEST("entity.sinister_spawner", [](Context& ctx) -> ll::coro::Co
         ctx.require(ctx.setBlock(at.offset(-1, 1, 2), "minecraft:air"), "remove the light");
     }
     gf::boss::ext::SinisterSpawner cfg;
-    // a pig: no monster light rule in the daylight test area (TF's spawners spawn monsters in dark rooms)
+    // a pig: no monster light rule in the daylight test area (upstream's spawners spawn monsters in dark rooms)
     cfg.potentials = {{"minecraft:pig", 1}};
     cfg.spawnDelay = 40; // the lazy scan (one step a tick) finds its spots meanwhile
     cfg.particles  = {"minecraft:flame"};

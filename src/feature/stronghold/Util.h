@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U25 (stronghold): small helpers shared by the unit's mobs (Util.cpp).
@@ -18,14 +18,14 @@ class Player;
 namespace gf::feature::stronghold {
 
 namespace id {
-inline constexpr char KnightPhantom[]     = "twilightforest:knight_phantom";
-inline constexpr char ThrownWep[]         = "twilightforest:thrown_wep";
-inline constexpr char LowerGoblinKnight[] = "twilightforest:lower_goblin_knight";
-inline constexpr char UpperGoblinKnight[] = "twilightforest:upper_goblin_knight";
-inline constexpr char BlockChainGoblin[]  = "twilightforest:blockchain_goblin";
-inline constexpr char HelmetCrab[]        = "twilightforest:helmet_crab";
-inline constexpr char Spawner[]           = "twilightforest:knight_phantom_boss_spawner";
-inline constexpr char Stronghold[]        = "twilightforest:knight_stronghold";
+inline constexpr char KnightPhantom[]     = "gloamingforest:knight_phantom";
+inline constexpr char ThrownWep[]         = "gloamingforest:thrown_wep";
+inline constexpr char LowerGoblinKnight[] = "gloamingforest:lower_goblin_knight";
+inline constexpr char UpperGoblinKnight[] = "gloamingforest:upper_goblin_knight";
+inline constexpr char BlockChainGoblin[]  = "gloamingforest:blockchain_goblin";
+inline constexpr char HelmetCrab[]        = "gloamingforest:helmet_crab";
+inline constexpr char Spawner[]           = "gloamingforest:knight_phantom_boss_spawner";
+inline constexpr char Stronghold[]        = "gloamingforest:knight_stronghold";
 } // namespace id
 
 /// Level#getRandom (the unit's own LegacyRandom; selftests reseed it).

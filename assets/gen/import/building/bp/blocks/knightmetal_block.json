@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:knightmetal_block",
+      "identifier": "gloamingforest:knightmetal_block",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -16,7 +16,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:iron_tier_destructible"],
       "minecraft:map_color": "#a7a7a7",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.knightmetal_block",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.knightmetal_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_knightmetal_block",

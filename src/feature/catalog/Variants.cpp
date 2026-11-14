@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFCreativeTabs.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFCreativeTabs.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Creative entry variants of the catalog (F9, gf::catalog::addVariant): TF's tabs accept a few
+// Creative entry variants of the catalog (F9, gf::catalog::addVariant): upstream's tabs accept a few
 // stacks with data next to the plain item (TFCreativeTabs#createGlassSwordAndLoreVer). The behavior
 // pack's item_catalog lists item ids only, so the variant is a new entry of the server's
 // CreativeItemRegistry: a copy of the item's entry with the variant's data, placed right after it

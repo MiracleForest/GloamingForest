@@ -1,32 +1,32 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/NagaCourtyardStructure.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardMain.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/StructureMazeGenerator.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeAbstractComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeCapComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeCapPillarComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeCornerComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeIntersectionComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeLineComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgePadderComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/NagaCourtyardHedgeTJunctionComponent.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardPathPiece.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardTerrace.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardTerraceHedge.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardTerraceTemplateProcessor.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardWall.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardWallCornerInner.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardWallCornerOuter.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardWallPadder.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/NagaCourtyardStructure.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardMain.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/StructureMazeGenerator.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeAbstractComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeCapComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeCapPillarComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeCornerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeIntersectionComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeLineComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgePadderComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/NagaCourtyardHedgeTJunctionComponent.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardPathPiece.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardTerrace.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardTerraceHedge.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardTerraceTemplateProcessor.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardWall.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardWallCornerInner.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardWallCornerOuter.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardWallPadder.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The Naga courtyard (U20): the structure type twilightforest:naga_courtyard as an F6 landmark
+// The Naga courtyard (U20): the structure type gloamingforest:naga_courtyard as an F6 landmark
 // generator, the 15 piece types and the layout of StructureMazeGenerator (src/core/naga). The 32
 // templates are original GloamingForest designs (tools/structures/naga, rule R19). The
-// CourtyardTerraceTemplateProcessor is F7's "twilightforest:courtyard_terrace".
+// CourtyardTerraceTemplateProcessor is F7's "gloamingforest:courtyard_terrace".
 
 #include "feature/naga/NagaInternal.h"
 
@@ -55,7 +55,7 @@ using core::BlockBox;
 
 namespace {
 
-constexpr char kKey[] = "twilightforest:naga_courtyard";
+constexpr char kKey[] = "gloamingforest:naga_courtyard";
 
 // CourtyardMain.HEDGE_FLOOF, WALL_DECAY, WALL_INTEGRITY as inline processors
 std::string blockRot(float integrity) {
@@ -69,19 +69,19 @@ constexpr float kHedgeFloof    = 0.5f;
 constexpr float kWallDecay     = 0.1f;
 constexpr float kWallIntegrity = 0.95f;
 
-constexpr char kNagastone[]   = "twilightforest:nagastone_variants";
-constexpr char kStoneBricks[] = "twilightforest:stone_brick_variants";
-constexpr char kSmoothStone[] = "twilightforest:smooth_stone_variants";
-constexpr char kCobble[]      = "twilightforest:cobble_variants";
-constexpr char kTerrace[]     = "twilightforest:courtyard_terrace";
+constexpr char kNagastone[]   = "gloamingforest:nagastone_variants";
+constexpr char kStoneBricks[] = "gloamingforest:stone_brick_variants";
+constexpr char kSmoothStone[] = "gloamingforest:smooth_stone_variants";
+constexpr char kCobble[]      = "gloamingforest:cobble_variants";
+constexpr char kTerrace[]     = "gloamingforest:courtyard_terrace";
 
 st::Rotation rotationOf(int index) { return static_cast<st::Rotation>(((index % 4) + 4) % 4); }
 
-/// The courtyard's templates: gloamingforest:courtyard/<TF name> (TF: twilightforest:courtyard/<name>;
-/// assemble's dangling reference check refuses a twilightforest: template id that owners.tsv does
-/// not know), the spawner keeping TF's id (its template definition is known).
+/// The courtyard's templates: gloamingforest:courtyard/<upstream name> (upstream: gloamingforest:courtyard/<name>;
+/// assemble's dangling reference check refuses a gloamingforest: template id that owners.tsv does
+/// not know), the spawner keeping upstream's id (its template definition is known).
 std::string tpl(char const* name) { return std::string("gloamingforest:courtyard/") + name; }
-constexpr char kCenterJigsaw[] = "gloamingforest:courtyard_center"; ///< TF: "twilightforest:center"
+constexpr char kCenterJigsaw[] = "gloamingforest:courtyard_center"; ///< upstream: "gloamingforest:center"
 
 // ---- NagaCourtyardHedgeAbstractComponent ---------------------------------------------------------
 
@@ -93,19 +93,19 @@ struct HedgeKind {
 HedgeKind hedgeKind(cn::PieceKind kind) {
     switch (kind) {
     case cn::PieceKind::HedgeCap:
-        return {"twilightforest:TFNCCp", "hedge_end", "hedge_end_big"};
+        return {"gloamingforest:TFNCCp", "hedge_end", "hedge_end_big"};
     case cn::PieceKind::HedgeCapPillar:
-        return {"twilightforest:TFNCCpP", "hedge_end_pillar", "hedge_end_pillar_big"};
+        return {"gloamingforest:TFNCCpP", "hedge_end_pillar", "hedge_end_pillar_big"};
     case cn::PieceKind::HedgeCorner:
-        return {"twilightforest:TFNCCr", "hedge_corner", "hedge_corner_big"};
+        return {"gloamingforest:TFNCCr", "hedge_corner", "hedge_corner_big"};
     case cn::PieceKind::HedgeT:
-        return {"twilightforest:TFNCT", "hedge_t", "hedge_t_big"};
+        return {"gloamingforest:TFNCT", "hedge_t", "hedge_t_big"};
     case cn::PieceKind::HedgeIntersection:
-        return {"twilightforest:TFNCIs", "hedge_intersection", "hedge_intersection_big"};
+        return {"gloamingforest:TFNCIs", "hedge_intersection", "hedge_intersection_big"};
     case cn::PieceKind::HedgePadder:
-        return {"twilightforest:TFNCPd", "hedge_between", "hedge_between_big"};
+        return {"gloamingforest:TFNCPd", "hedge_between", "hedge_between_big"};
     default:
-        return {"twilightforest:TFNCLn", "hedge_line", "hedge_line_big"};
+        return {"gloamingforest:TFNCLn", "hedge_line", "hedge_line_big"};
     }
 }
 
@@ -157,8 +157,8 @@ private:
 class PathPiece final : public sb::TemplatePiece {
 public:
     PathPiece(int depth, int x, int y, int z)
-    : TemplatePiece("twilightforest:TFNCPa", depth, tpl("pathway"), withProcessors(sb::makeSettings(st::Rotation::None), {kNagastone}), BlockPos{x, y + 1, z}) {}
-    explicit PathPiece(Json const& saved) : TemplatePiece("twilightforest:TFNCPa", 0, tpl("pathway"), sb::makeSettings(st::Rotation::None), BlockPos{0, 0, 0}) {
+    : TemplatePiece("gloamingforest:TFNCPa", depth, tpl("pathway"), withProcessors(sb::makeSettings(st::Rotation::None), {kNagastone}), BlockPos{x, y + 1, z}) {}
+    explicit PathPiece(Json const& saved) : TemplatePiece("gloamingforest:TFNCPa", 0, tpl("pathway"), sb::makeSettings(st::Rotation::None), BlockPos{0, 0, 0}) {
         load(saved);
         if (placeSettings.processors.empty()) placeSettings.processors = {kNagastone};
     }
@@ -195,10 +195,10 @@ sb::PlaceSettings terraceSettings() {
 class TerracePiece final : public sb::TemplatePiece {
 public:
     TerracePiece(bool hedge, int depth, int x, int y, int z, std::string const& templateId)
-    : TemplatePiece(hedge ? "twilightforest:TFNCHe" : "twilightforest:TFNCTe", depth, templateId, terraceSettings(), BlockPos{x, y, z}),
+    : TemplatePiece(hedge ? "gloamingforest:TFNCHe" : "gloamingforest:TFNCTe", depth, templateId, terraceSettings(), BlockPos{x, y, z}),
       mHedge(hedge) {}
     TerracePiece(bool hedge, Json const& saved)
-    : TemplatePiece(hedge ? "twilightforest:TFNCHe" : "twilightforest:TFNCTe", 0, tpl(hedge ? "terrace_hedge" : "terrace_fire"), terraceSettings(), BlockPos{0, 0, 0}),
+    : TemplatePiece(hedge ? "gloamingforest:TFNCHe" : "gloamingforest:TFNCTe", 0, tpl(hedge ? "terrace_hedge" : "terrace_fire"), terraceSettings(), BlockPos{0, 0, 0}),
       mHedge(hedge) {
         load(saved);
         if (placeSettings.processors.empty()) placeSettings.processors = terraceSettings().processors;
@@ -233,13 +233,13 @@ struct WallKind {
 WallKind wallKind(cn::PieceKind kind) {
     switch (kind) {
     case cn::PieceKind::WallPadder:
-        return {"twilightforest:TFNCWP", "courtyard_wall_padding", "courtyard_wall_padding_decayed"};
+        return {"gloamingforest:TFNCWP", "courtyard_wall_padding", "courtyard_wall_padding_decayed"};
     case cn::PieceKind::WallCornerOuter:
-        return {"twilightforest:TFNCWC", "courtyard_wall_corner", "courtyard_wall_corner_decayed"};
+        return {"gloamingforest:TFNCWC", "courtyard_wall_corner", "courtyard_wall_corner_decayed"};
     case cn::PieceKind::WallCornerInner:
-        return {"twilightforest:TFNCWA", "courtyard_wall_corner_inner", "courtyard_wall_corner_inner_decayed"};
+        return {"gloamingforest:TFNCWA", "courtyard_wall_corner_inner", "courtyard_wall_corner_inner_decayed"};
     default:
-        return {"twilightforest:TFNCWl", "courtyard_wall", "courtyard_wall_decayed"};
+        return {"gloamingforest:TFNCWl", "courtyard_wall", "courtyard_wall_decayed"};
     }
 }
 
@@ -261,7 +261,7 @@ public:
     WallPiece(WallKind kind, Json const& saved)
     : DoubleTemplatePiece(kind.type, 0, tpl(kind.intact), wallSettings(st::Rotation::None), tpl(kind.decayed), wallDecaySettings(st::Rotation::None), BlockPos{0, 0, 0}) {
         load(saved);
-        // readSettings(nbt) + the processors of the constructor (TF's codec constructor)
+        // readSettings(nbt) + the processors of the constructor (upstream's codec constructor)
         auto rot              = placeSettings.rotation;
         placeSettings         = wallSettings(rot);
         placeSettingsOverlay  = wallDecaySettings(placeSettingsOverlay.rotation);
@@ -274,7 +274,7 @@ class CourtyardMain final : public sb::Component {
 public:
     /// CourtyardMain(rand, i, x, y, z): the maze is generated from `random` (the start piece's
     /// random of LandmarkStructure#findGenerationPoint).
-    CourtyardMain(st::RandomSource& random, int depth, int x, int y, int z) : Component("twilightforest:TFNCMn", depth, x, y, z) {
+    CourtyardMain(st::RandomSource& random, int depth, int x, int y, int z) : Component("gloamingforest:TFNCMn", depth, x, y, z) {
         for (auto& row : mMaze) row.fill(0);
         cn::generateMaze(mMaze, mClipping, random);
         orientation      = st::Orientation::North;
@@ -284,7 +284,7 @@ public:
         mSizeConstraints = cn::sizeConstraints(x, y, z);
         mPlaceSpawner    = false;
     }
-    explicit CourtyardMain(Json const& saved) : Component("twilightforest:TFNCMn", 0, 0, 0, 0) {
+    explicit CourtyardMain(Json const& saved) : Component("gloamingforest:TFNCMn", 0, 0, 0, 0) {
         load(saved);
         for (auto& row : mMaze) row.fill(0);
         if (auto const& m = saved.value("maze", Json::array()); m.is_array())
@@ -306,13 +306,13 @@ public:
             gf::structure::ext::FrontAndTop::UpSouth, gf::structure::ext::FrontAndTop::UpWest, gf::structure::ext::FrontAndTop::UpNorth,
             gf::structure::ext::FrontAndTop::UpEast};
         auto oriented = kUp[random.nextInt(4)];
-        auto spawner  = gf::structure::ext::initializeTemplateFromPool("twilightforest:courtyard/center", pos, oriented, kCenterJigsaw, random, genDepth + 1);
+        auto spawner  = gf::structure::ext::initializeTemplateFromPool("gloamingforest:courtyard/center", pos, oriented, kCenterJigsaw, random, genDepth + 1);
         if (spawner) pieces.push_back(std::move(spawner));
         else log().warn("naga: the courtyard's center pool gave no spawner piece at {} {} {}", pos.x, pos.y, pos.z);
     }
 
     void postProcess(st::Region& region, st::RandomSource&, BlockBox const& chunkBox, BlockPos const&) override {
-        if (mPlaceSpawner) placeBlock(region, "twilightforest:naga_boss_spawner", Json::object(), cn::kRadius / 2, 3, cn::kRadius / 2, chunkBox);
+        if (mPlaceSpawner) placeBlock(region, "gloamingforest:naga_boss_spawner", Json::object(), cn::kRadius / 2, 3, cn::kRadius / 2, chunkBox);
     }
 
     [[nodiscard]] Json save() const override {
@@ -372,8 +372,8 @@ std::vector<std::unique_ptr<st::Piece>> courtyardPieces(st::RandomSource& firstP
     pieces.push_back(std::move(main));
     raw->addChildren(*raw, pieces, contextRandom);
     // no courtyard piece is a SortablePiece; TFStructureComponentTemplate's LAZY_TEMPLATE_LOADER
-    static std::set<std::string> const hedges{"twilightforest:TFNCCp", "twilightforest:TFNCCpP", "twilightforest:TFNCCr", "twilightforest:TFNCT",
-                                              "twilightforest:TFNCLn", "twilightforest:TFNCIs", "twilightforest:TFNCPd"};
+    static std::set<std::string> const hedges{"gloamingforest:TFNCCp", "gloamingforest:TFNCCpP", "gloamingforest:TFNCCr", "gloamingforest:TFNCT",
+                                              "gloamingforest:TFNCLn", "gloamingforest:TFNCIs", "gloamingforest:TFNCPd"};
     for (auto& p : pieces)
         if (hedges.contains(p->typeId)) static_cast<HedgePiece*>(p.get())->runLazyLoader();
     return pieces;
@@ -384,9 +384,9 @@ namespace {
 /// The beardifier of the start, as NeoForge's Beardifier builds its rigids: a piece implementing
 /// PieceBeardifierModifier gives Rigid(getBeardifierBox, getTerrainAdjustment, getGroundLevelDelta)
 /// unless its adjustment is NONE (the terraces CourtyardTerrace / CourtyardTerraceHedge: BEARD_BOX
-/// with a ground level delta of 3; the spawner's TwilightJigsawPiece: its pool entry's adjustment,
+/// with a ground level delta of 3; the spawner's GloamingJigsawPiece: its pool entry's adjustment,
 /// NONE for courtyard/center), every other piece Rigid(box, the structure's BEARD_THIN, 0); plus
-/// TF's inverted pyramid terraformer (CustomDensitySource, 3, 4). Vanilla's rigid term is
+/// upstream's inverted pyramid terraformer (CustomDensitySource, 3, 4). Vanilla's rigid term is
 /// BoxDensityFunction's with the box's bottom raised by the delta (dYMin), so boxDensity computes
 /// it exactly. The boxes near a chunk are gathered once per chunk and thread.
 struct BeardCache {
@@ -398,8 +398,8 @@ struct BeardCache {
 
 /// The beardifier kind of a piece type: 0 BEARD_THIN, 1 BEARD_BOX (delta 3), 2 none.
 int beardKind(std::string const& type) {
-    if (type == "twilightforest:TFNCTe" || type == "twilightforest:TFNCHe") return 1;
-    if (type == "twilightforest:TFJigsawTemplate") return 2;
+    if (type == "gloamingforest:TFNCTe" || type == "gloamingforest:TFNCHe") return 1;
+    if (type == "gloamingforest:TFJigsawTemplate") return 2;
     return 0;
 }
 
@@ -449,10 +449,10 @@ void installCourtyard() {
         auto wk = wallKind(kind);
         st::registerPieceType(wk.type, [wk](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<WallPiece>(wk, saved); });
     }
-    st::registerPieceType("twilightforest:TFNCTe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(false, saved); });
-    st::registerPieceType("twilightforest:TFNCHe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(true, saved); });
-    st::registerPieceType("twilightforest:TFNCPa", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<PathPiece>(saved); });
-    st::registerPieceType("twilightforest:TFNCMn", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<CourtyardMain>(saved); });
+    st::registerPieceType("gloamingforest:TFNCTe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(false, saved); });
+    st::registerPieceType("gloamingforest:TFNCHe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(true, saved); });
+    st::registerPieceType("gloamingforest:TFNCPa", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<PathPiece>(saved); });
+    st::registerPieceType("gloamingforest:TFNCMn", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<CourtyardMain>(saved); });
 
     gf::landmark::registerGenerator(kKey, gf::landmark::Generator{
         .layout =

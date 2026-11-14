@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/ThornsBlock.java
-//   src/main/java/twilightforest/block/BurntThornsBlock.java
-//   src/main/java/twilightforest/block/ConnectableRotatedPillarBlock.java
-//   src/main/java/twilightforest/block/ThornRoseBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/ThornsBlock.java
+//   src/main/java/gloamingforest/block/BurntThornsBlock.java
+//   src/main/java/gloamingforest/block/ConnectableRotatedPillarBlock.java
+//   src/main/java/gloamingforest/block/ThornRoseBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -15,7 +15,7 @@
 //   declared as a plain pillar (assets/data/families/finalcastle.json) so the families kit does not
 //   apply ConnectableRotatedPillarBlock's generic rule (sturdy faces) over ThornsBlock's.
 // - Brown / green thorns hurt anything inside them (and Y-axis thorns anything standing on them) for
-//   4 twilightforest:thorns, items of #twilightforest:immune_to_thorns excepted; a survival player
+//   4 gloamingforest:thorns, items of #gloamingforest:immune_to_thorns excepted; a survival player
 //   cannot break them: the block stays and grows a thorn burst of green thorns (deferred to the next
 //   tick, R16). Creative players break them normally.
 // - Burnt thorns dissolve (destroyBlock without drops) when a living entity or a projectile is inside.
@@ -47,8 +47,8 @@ namespace ia = gf::interactions;
 
 namespace {
 
-constexpr char  kAxis[]       = "twilightforest:axis";
-constexpr char  kFacing[]     = "twilightforest:facing";
+constexpr char  kAxis[]       = "gloamingforest:axis";
+constexpr char  kFacing[]     = "gloamingforest:facing";
 constexpr float kThornDamage  = 4.0f;
 
 bool isLiving(Actor const& e) { return e.hasCategory(ActorCategory::Mob); }
@@ -58,7 +58,7 @@ bool isProjectile(Actor const& e) { return (static_cast<int>(e.getEntityTypeId()
 void thornsHurt(Actor& entity) {
     if (entity.isType(ActorType::ItemEntity)) {
         auto& itemActor = static_cast<ItemActor&>(entity);
-        if (tags::has(tags::Registry::Item, "twilightforest:immune_to_thorns", game::items::idOf(itemActor.item()))) return;
+        if (tags::has(tags::Registry::Item, "gloamingforest:immune_to_thorns", game::items::idOf(itemActor.item()))) return;
         // ItemEntity#hurt: health (5) -= amount, discarded at 0 (Bedrock's item actor ignores a
         // damage source of this kind, so its health is taken here as Java does)
         int& health = itemActor.mHealth;
@@ -66,7 +66,7 @@ void thornsHurt(Actor& entity) {
         if (health <= 0) entity.remove();
         return;
     }
-    combat::hurt(entity, kThornDamage, "twilightforest:thorns");
+    combat::hurt(entity, kThornDamage, "gloamingforest:thorns");
 }
 
 /// BurntThornsBlock#entityInside: dissolve.

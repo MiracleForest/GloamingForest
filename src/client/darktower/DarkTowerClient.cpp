@@ -1,27 +1,27 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/UrGhast.java
-//   src/main/java/twilightforest/client/particle/GhastTearParticle.java
-//   src/main/java/twilightforest/client/renderer/TFWeatherRenderer.java
-//   src/main/java/twilightforest/block/entity/ReactorDebrisBlockEntity.java
-//   src/main/java/twilightforest/client/renderer/block/ReactorDebrisRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/UrGhast.java
+//   src/main/java/gloamingforest/client/particle/GhastTearParticle.java
+//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java
+//   src/main/java/gloamingforest/block/entity/ReactorDebrisBlockEntity.java
+//   src/main/java/gloamingforest/client/renderer/block/ReactorDebrisRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U26 (darktower), client mod only: what TF draws on the client.
+// U26 (darktower), client mod only: what upstream draws on the client.
 // - The Ur-Ghast's client side of UrGhast#aiStep / #tick, from the "darktower.urghast" heartbeat
 //   (uid, tantrum; every 10 ticks for each Ur-Ghast within 160 blocks): redstone dust half the time,
 //   and while it is in a tantrum and not dying one boss tear a tick and TFWeatherRenderer's
 //   urGhastAlive (the rain fades in by 0.1 a tick up to 1 and out by 0.02: the client dimension's rain
 //   level is raised to at least that, which draws the game's own rain). F12's sky provider has no
 //   rain-level input (its weather hook only draws), so the level is written here (a deviation from
-//   spec section 14, docs/units/darktower.md). U15 (atmosphere), which draws the Twilight Forest
+//   spec section 14, docs/units/darktower.md). U15 (atmosphere), which draws the Gloaming Forest
 //   weather, never writes the level: it reads it and adds its Ur-Ghast splashes only where its own
 //   urGhastRain (from "atmosphere.ur_ghast", which the server also sends) exceeds it, so the two agree.
-// - GhastTearParticle: the tear is the resource pack effect twilightforest:boss_tear (its look and
+// - GhastTearParticle: the tear is the resource pack effect gloamingforest:boss_tear (its look and
 //   the shatter burst); its physics are followed here as Particle#tick does (gravity 0.6, friction
-//   0.98, lifetime 60 + rand(40)) so that on landing it plays entity.twilightforest.tear.break half
+//   0.98, lifetime 60 + rand(40)) so that on landing it plays entity.gloamingforest.tear.break half
 //   the time (vol 0.5, pitch 1.65, one block above), which a particle effect cannot.
 // - ReactorDebrisRenderer: a reactor debris block (blank in the pack) is drawn as the block entity's
 //   box: a near-full netherrack cube until its 5th tick, then a random sub-box with a random texture
@@ -145,7 +145,7 @@ bool collides(BlockSource& region, BlockPos const& pos, float& top) {
 void playTearBreak(Vec3 const& at) {
     auto* client = currentClient();
     if (!client) return;
-    client->getSoundEngine()->play("entity.twilightforest.tear.break", at, 0.5f, 1.65f, std::nullopt);
+    client->getSoundEngine()->play("entity.gloamingforest.tear.break", at, 0.5f, 1.65f, std::nullopt);
 }
 
 /// Particle#tick of the tears (GhastTearParticle#tick first: landed -> 50 % the break sound, gone).
@@ -193,7 +193,7 @@ void tickRain(Dimension& dim, bool alive) {
     float& level  = w->mRainLevel;
     float& old    = w->mOldRainLevel;
     float  target = w->mTargetRainLevel;
-    if (s.urGhastRain > 0.0f && gf::world::isTwilight(dim)) {
+    if (s.urGhastRain > 0.0f && gf::world::isGloaming(dim)) {
         if (!s.controlling) {
             s.controlling = true;
             s.raised      = w;
@@ -255,7 +255,7 @@ void onTick() {
         if (it->second.tantrum && !dying) {
             alive = true;
             Vec3 at{float(p.x + (nextDouble() - 0.5) * w * 0.75), float(p.y + nextDouble() * h * 0.5), float(p.z + (nextDouble() - 0.5) * w * 0.75)};
-            level.addParticleEffect(HashedString("twilightforest:boss_tear"), at, emptyMolang());
+            level.addParticleEffect(HashedString("gloamingforest:boss_tear"), at, emptyMolang());
             s.tears.push_back(Tear{at, 0.0, 0, 60 + nextInt(40), false});
             if (!s.loggedTears) {
                 s.loggedTears = true;
@@ -357,7 +357,7 @@ void drawDebris(render::RenderContext& ctx, BlockPos const& pos, Block const&, f
     for (int f = 0; f < 6; ++f) {
         int         tex   = d.textures[static_cast<std::size_t>(f)];
         bool        strip = tex == 2 && portalIsStrip();
-        std::string geo   = std::string("geometry.twilightforest.darktower.debris_") + kFaces[f] + (strip ? "_strip" : "");
+        std::string geo   = std::string("geometry.gloamingforest.darktower.debris_") + kFaces[f] + (strip ? "_strip" : "");
         render::drawGeo(ctx, geo, kTextures[tex], t);
     }
 }
@@ -377,7 +377,7 @@ public:
         if (registered) return;
         registered = true;
         gf::feature::net::client::on("darktower.urghast", onUrGhast);
-        render::registerBlockRenderer("twilightforest:reactor_debris", drawDebris);
+        render::registerBlockRenderer("gloamingforest:reactor_debris", drawDebris);
     }
     void uninstall() {
         auto& s = st();

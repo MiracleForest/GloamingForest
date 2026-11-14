@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/LoyalZombie.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/LoyalZombie.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The zombie scepter's loyal zombie: a tamed zombie (BP behaviours: float, melee, follow owner,
 // stroll, look; owner hurt by / owner hurt / hurt by / nearest monster targets) that decays once its
-// Strength runs out (2 twilightforest:expired damage every 20 ticks), hits for a fixed 7 and lifts
+// Strength runs out (2 gloamingforest:expired damage every 20 ticks), hits for a fixed 7 and lifts
 // its target by 0.2, wears 3 points of armour, and is fed rotten flesh by its owner to renew the
 // summon. Its target choice follows Wolf#wantsToAttack.
 #include <algorithm>
@@ -62,7 +62,7 @@ bool fireEvent(Actor& a, char const* event) {
 
 /// LoyalZombie#aiStep: decay without Strength.
 void tick(Actor& self) {
-    if (self.getEffect(strengthId()) == nullptr && tickCountOf(self) % 20 == 0) gf::combat::hurt(self, 2.0F, "twilightforest:expired");
+    if (self.getEffect(strengthId()) == nullptr && tickCountOf(self) % 20 == 0) gf::combat::hurt(self, 2.0F, "gloamingforest:expired");
 }
 
 /// LoyalZombie#interactAt: the owner feeds it rotten flesh.

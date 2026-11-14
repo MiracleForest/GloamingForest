@@ -2,13 +2,13 @@
   "format_version": "1.26.30",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:boat",
+      "identifier": "gloamingforest:boat",
       "runtime_identifier": "minecraft:boat",
       "is_summonable": true,
       "is_spawnable": false,
       "is_experimental": false,
       "properties": {
-        "twilightforest:wood": {
+        "gloamingforest:wood": {
           "type": "int",
           "range": [
             0,
@@ -466,9 +466,9 @@
           ]
         }
       },
-      "twilightforest:twilight_oak": {
+      "gloamingforest:gloaming_oak": {
         "set_property": {
-          "twilightforest:wood": 0
+          "gloamingforest:wood": 0
         },
         "add": {
           "component_groups": [
@@ -476,9 +476,9 @@
           ]
         }
       },
-      "twilightforest:canopy": {
+      "gloamingforest:canopy": {
         "set_property": {
-          "twilightforest:wood": 1
+          "gloamingforest:wood": 1
         },
         "add": {
           "component_groups": [
@@ -486,9 +486,9 @@
           ]
         }
       },
-      "twilightforest:mangrove": {
+      "gloamingforest:mangrove": {
         "set_property": {
-          "twilightforest:wood": 2
+          "gloamingforest:wood": 2
         },
         "add": {
           "component_groups": [
@@ -496,9 +496,9 @@
           ]
         }
       },
-      "twilightforest:dark": {
+      "gloamingforest:dark": {
         "set_property": {
-          "twilightforest:wood": 3
+          "gloamingforest:wood": 3
         },
         "add": {
           "component_groups": [
@@ -506,9 +506,9 @@
           ]
         }
       },
-      "twilightforest:time": {
+      "gloamingforest:time": {
         "set_property": {
-          "twilightforest:wood": 4
+          "gloamingforest:wood": 4
         },
         "add": {
           "component_groups": [
@@ -516,9 +516,9 @@
           ]
         }
       },
-      "twilightforest:transformation": {
+      "gloamingforest:transformation": {
         "set_property": {
-          "twilightforest:wood": 5
+          "gloamingforest:wood": 5
         },
         "add": {
           "component_groups": [
@@ -526,9 +526,9 @@
           ]
         }
       },
-      "twilightforest:mining": {
+      "gloamingforest:mining": {
         "set_property": {
-          "twilightforest:wood": 6
+          "gloamingforest:wood": 6
         },
         "add": {
           "component_groups": [
@@ -536,9 +536,9 @@
           ]
         }
       },
-      "twilightforest:sorting": {
+      "gloamingforest:sorting": {
         "set_property": {
-          "twilightforest:wood": 7
+          "gloamingforest:wood": 7
         },
         "add": {
           "component_groups": [

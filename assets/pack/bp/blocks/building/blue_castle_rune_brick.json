@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:blue_castle_rune_brick",
+      "identifier": "gloamingforest:blue_castle_rune_brick",
       "menu_category": {
         "category": "construction"
       }
@@ -19,13 +19,13 @@
         "minecraft:diamond_tier_destructible"
       ],
       "minecraft:map_color": "#6699d8",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.castle_rune_brick_0",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.castle_rune_brick_0",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_castle_brick",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_castle_brick": {
+        "t_gloamingforest_block_castle_brick": {
           "texture": "tf_block_castle_brick",
           "render_method": "alpha_test"
         },

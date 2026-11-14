@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:aurora_slab",
+      "identifier": "gloamingforest:aurora_slab",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:type": ["bottom", "top", "double"]
+        "gloamingforest:type": ["bottom", "top", "double"]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#a0a0ff",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.aurora_slab",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_aurora_baked_aurora_slab_side",
@@ -48,7 +48,7 @@
       },
       "minecraft:light_dampening": 0,
       "minecraft:item_visual": {
-        "geometry": "geometry.tf.twilightforest.block.aurora_slab",
+        "geometry": "geometry.tf.gloamingforest.block.aurora_slab",
         "material_instances": {
           "*": {
             "texture": "tf_aurora_item_aurora_slab_side",
@@ -71,9 +71,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:type') == 'bottom'",
+        "condition": "q.block_state('gloamingforest:type') == 'bottom'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.aurora_slab",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_aurora_baked_aurora_slab_side",
@@ -106,7 +106,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:type') == 'double'",
+        "condition": "q.block_state('gloamingforest:type') == 'double'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -147,9 +147,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:type') == 'top'",
+        "condition": "q.block_state('gloamingforest:type') == 'top'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.aurora_slab",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_aurora_baked_aurora_slab_side",

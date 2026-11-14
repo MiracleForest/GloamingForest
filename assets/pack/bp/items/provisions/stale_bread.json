@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:stale_bread",
+      "identifier": "gloamingforest:stale_bread",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:stale_bread.name"
+        "value": "item.gloamingforest:stale_bread.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -64,24 +64,24 @@
               "minecraft:bamboo_planks",
               "minecraft:crimson_planks",
               "minecraft:warped_planks",
-              "twilightforest:twilight_oak_planks",
-              "twilightforest:canopy_planks",
-              "twilightforest:mangrove_planks",
-              "twilightforest:dark_planks",
-              "twilightforest:time_planks",
-              "twilightforest:transformation_planks",
-              "twilightforest:mining_planks",
-              "twilightforest:sorting_planks",
-              "twilightforest:towerwood",
-              "twilightforest:mossy_towerwood",
-              "twilightforest:cracked_towerwood",
-              "twilightforest:infested_towerwood"
+              "gloamingforest:gloaming_oak_planks",
+              "gloamingforest:canopy_planks",
+              "gloamingforest:mangrove_planks",
+              "gloamingforest:dark_planks",
+              "gloamingforest:time_planks",
+              "gloamingforest:transformation_planks",
+              "gloamingforest:mining_planks",
+              "gloamingforest:sorting_planks",
+              "gloamingforest:towerwood",
+              "gloamingforest:mossy_towerwood",
+              "gloamingforest:cracked_towerwood",
+              "gloamingforest:infested_towerwood"
             ],
             "repair_amount": "query.max_durability * 0.25"
           },
           {
             "items": [
-              "twilightforest:stale_bread"
+              "gloamingforest:stale_bread"
             ],
             "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
           }

@@ -1,4 +1,4 @@
-# Woodwork (U4), short: the drying rack items (front and side) and the TF boats, without the block
+# Woodwork (U4), short: the drying rack items (front and side) and the upstream boats, without the block
 # rows of the main scenario (quick checks of the rack display entity and the boat geometry).
 #   out/woodwork.display/woodwork-rack-items.png, woodwork-rack-side.png, woodwork-boat-pond.png,
 #   woodwork-boat-ride-third.png
@@ -10,7 +10,7 @@ Invoke-Build 'gamerule sendcommandfeedback false'
 Invoke-Build 'time set 6000'
 $y = -60; $z = 46
 $mark = Get-LogMark
-if ($script:Mode -eq 'local') { Invoke-SelfTest 'woodwork.fixture_showcase' | Out-Null } else { Send-HostConsole 'tf selftest woodwork.fixture_showcase' }
+if ($script:Mode -eq 'local') { Invoke-SelfTest 'woodwork.fixture_showcase' | Out-Null } else { Send-HostConsole 'gloamingforest selftest woodwork.fixture_showcase' }
 $line = Wait-LogLine 'woodwork: showcase racks at -?\d+ -?\d+ -?\d+' 60 -Since $mark
 if ("$line" -notmatch 'showcase racks at (-?\d+) (-?\d+) (-?\d+)') { throw 'no showcase racks' }
 $rx = [int]$Matches[1]; $ry = [int]$Matches[2]; $rz = [int]$Matches[3]
@@ -27,13 +27,13 @@ Start-Sleep -Seconds 3
 Invoke-Build "fill $($bx - 1) $($y - 1) $($z - 1) $($bx + 9) $($y - 1) $($z + 6) minecraft:stone"
 Invoke-Build "fill $($bx) $($y - 1) $($z) $($bx + 8) $($y - 1) $($z + 5) minecraft:water"
 Start-Sleep -Seconds 2
-Invoke-Build "summon twilightforest:boat $($bx + 2) $($y - 0.5) $($z + 2) 0 0 twilightforest:canopy"
-Invoke-Build "summon twilightforest:chest_boat $($bx + 6) $($y - 0.5) $($z + 2) 0 0 twilightforest:sorting"
+Invoke-Build "summon gloamingforest:boat $($bx + 2) $($y - 0.5) $($z + 2) 0 0 gloamingforest:canopy"
+Invoke-Build "summon gloamingforest:chest_boat $($bx + 6) $($y - 0.5) $($z + 2) 0 0 gloamingforest:sorting"
 Start-Sleep -Seconds 4
 Invoke-Teleport "/tp @s $($bx + 4) $($y + 2) $($z - 3) 0 30"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-boat-pond' | Out-Null
-Invoke-Chat "/ride @s start_riding @e[type=twilightforest:boat,c=1] teleport_rider"
+Invoke-Chat "/ride @s start_riding @e[type=gloamingforest:boat,c=1] teleport_rider"
 Start-Sleep -Seconds 3
 Focus-Game
 [BsE2E.Native]::Key([uint16]0x74, $false); Start-Sleep -Milliseconds 60; [BsE2E.Native]::Key([uint16]0x74, $true)

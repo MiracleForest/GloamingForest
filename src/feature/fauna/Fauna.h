@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U16 (fauna): helpers shared by the unit's files (Common.cpp) and the install entry points.
@@ -21,21 +21,21 @@ class Player;
 
 namespace gf::feature::fauna {
 
-inline constexpr char kBoar[]          = "twilightforest:boar";
-inline constexpr char kBighorn[]       = "twilightforest:bighorn_sheep";
-inline constexpr char kDeer[]          = "twilightforest:deer";
-inline constexpr char kPenguin[]       = "twilightforest:penguin";
-inline constexpr char kTinyBird[]      = "twilightforest:tiny_bird";
-inline constexpr char kRaven[]         = "twilightforest:raven";
-inline constexpr char kSquirrel[]      = "twilightforest:squirrel";
-inline constexpr char kDwarfRabbit[]   = "twilightforest:dwarf_rabbit";
-inline constexpr char kKobold[]        = "twilightforest:kobold";
-inline constexpr char kMosquitoSwarm[] = "twilightforest:mosquito_swarm";
+inline constexpr char kBoar[]          = "gloamingforest:boar";
+inline constexpr char kBighorn[]       = "gloamingforest:bighorn_sheep";
+inline constexpr char kDeer[]          = "gloamingforest:deer";
+inline constexpr char kPenguin[]       = "gloamingforest:penguin";
+inline constexpr char kTinyBird[]      = "gloamingforest:tiny_bird";
+inline constexpr char kRaven[]         = "gloamingforest:raven";
+inline constexpr char kSquirrel[]      = "gloamingforest:squirrel";
+inline constexpr char kDwarfRabbit[]   = "gloamingforest:dwarf_rabbit";
+inline constexpr char kKobold[]        = "gloamingforest:kobold";
+inline constexpr char kMosquitoSwarm[] = "gloamingforest:mosquito_swarm";
 
 /// The ten mob ids of the unit.
 [[nodiscard]] std::vector<std::string> const& mobIds();
 
-/// The unit's random source for TF's gameplay draws (server thread).
+/// The unit's random source for upstream's gameplay draws (server thread).
 [[nodiscard]] core::jrand::RandomSource& rng();
 /// The difficulty of the level (0 peaceful .. 3 hard).
 [[nodiscard]] int difficulty();
@@ -45,7 +45,7 @@ inline constexpr char kMosquitoSwarm[] = "twilightforest:mosquito_swarm";
 bool despawnInPeaceful(Actor& actor);
 /// The actor's block position.
 [[nodiscard]] BlockPos blockPosOf(Actor const& actor);
-/// The Java biome id at the actor (TF's biomes in the Twilight Forest, Bedrock's names elsewhere).
+/// The Java biome id at the actor (upstream's biomes in the Gloaming Forest, Bedrock's names elsewhere).
 [[nodiscard]] std::string biomeIdAt(Actor& actor);
 /// Runs a BP event of the actor's entity definition.
 bool fireEvent(Actor& actor, std::string const& event);
@@ -119,7 +119,7 @@ void                       setKoboldTimers(Actor& kobold, KoboldTimers timers);
 bool koboldPickUp(Mob& kobold, Actor& itemActor);
 /// The parrot imitation sound of an entity type (the neoforge:parrot_imitations data map), "" if none.
 [[nodiscard]] std::string parrotImitation(std::string const& entityId);
-/// Penguin#canSpawn: the block below `pos` is in #twilightforest:penguins_spawnable_on.
+/// Penguin#canSpawn: the block below `pos` is in #gloamingforest:penguins_spawnable_on.
 [[nodiscard]] bool penguinCanSpawnOn(BlockSource& region, BlockPos const& pos);
 /// The prey target goals a vanilla predator type gets (MiscEvents#addPrey): count.
 [[nodiscard]] int preyGoalCount(std::string const& predatorId);

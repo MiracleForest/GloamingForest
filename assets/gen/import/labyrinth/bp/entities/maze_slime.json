@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:maze_slime",
+      "identifier": "gloamingforest:maze_slime",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "maze_slime", "monster", "mob"]
+        "family": ["gloamingforest", "maze_slime", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.52,

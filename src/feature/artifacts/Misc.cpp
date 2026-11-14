@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/MoonDialItem.java
-//   src/main/java/twilightforest/item/PocketWatchItem.java
-//   src/main/java/twilightforest/item/MysticCrownItem.java
-//   src/main/java/twilightforest/events/ToolEvents.java (preventFatigueWithPocketWatch)
-//   src/main/java/twilightforest/events/MiscEvents.java (washOffCloth)
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java (the cloth tooltip)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/MoonDialItem.java
+//   src/main/java/gloamingforest/item/PocketWatchItem.java
+//   src/main/java/gloamingforest/item/MysticCrownItem.java
+//   src/main/java/gloamingforest/events/ToolEvents.java (preventFatigueWithPocketWatch)
+//   src/main/java/gloamingforest/events/MiscEvents.java (washOffCloth)
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java (the cloth tooltip)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -73,7 +73,7 @@ std::string text(Player const* viewer, std::string const& key, std::string_view 
 
 void clothTooltip(ItemStack const& stack, std::vector<std::string>& lines, Player const* viewer) {
     if (!hasCloth(stack)) return;
-    lines.insert(lines.begin(), "§7" + text(viewer, "item.twilightforest.emperors_cloth.desc", "Shrouded"));
+    lines.insert(lines.begin(), "§7" + text(viewer, "item.gloamingforest.emperors_cloth.desc", "Shrouded"));
 }
 
 } // namespace
@@ -83,7 +83,7 @@ std::string moonPhaseKeyFor(Actor const* viewer) {
     bool natural = false;
     if (viewer) {
         int dim = dimOf(*viewer);
-        natural = dim == 0 || gf::world::isTwilight(viewer->getDimension());
+        natural = dim == 0 || gf::world::isGloaming(viewer->getDimension());
     }
     std::int64_t day = level ? static_cast<std::int64_t>(level->getTime()) : 0;
     return core::artifacts::moonPhaseKey(natural && level, day, aprilFools());
@@ -96,7 +96,7 @@ void registerMisc() {
     gf::item::addTooltip(kMoonDial, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
         auto        key = moonPhaseKeyFor(viewer);
         std::string fallback = key == "unknown" ? "Moon phase indeterminate" : key == "unknown_fools" ? "404 moon not found" : kPhases[std::stoi(key) % 8];
-        lines.push_back("§7" + text(viewer, "item.twilightforest.moon_dial.phase_" + key, fallback));
+        lines.push_back("§7" + text(viewer, "item.gloamingforest.moon_dial.phase_" + key, fallback));
     });
     gf::item::registerItem(kPocketWatch, {
         .inventoryTick = [](ItemStack&, Player& player, int slot, bool) {
@@ -112,10 +112,10 @@ void registerMisc() {
         },
     });
     gf::item::addTooltip(kPocketWatch, [](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
-        lines.push_back("§7" + text(viewer, "item.twilightforest.pocket_watch.desc", "It seems to always be running late"));
+        lines.push_back("§7" + text(viewer, "item.gloamingforest.pocket_watch.desc", "It seems to always be running late"));
     });
     // the cloth tooltip on everything it can go on
-    auto applicable = gf::tags::members(gf::tags::Registry::Item, "twilightforest:emperors_cloth_applicable");
+    auto applicable = gf::tags::members(gf::tags::Registry::Item, "gloamingforest:emperors_cloth_applicable");
     for (char const* v : {"minecraft:leather_helmet", "minecraft:leather_chestplate", "minecraft:leather_leggings", "minecraft:leather_boots", "minecraft:chainmail_helmet",
                           "minecraft:chainmail_chestplate", "minecraft:chainmail_leggings", "minecraft:chainmail_boots", "minecraft:iron_helmet", "minecraft:iron_chestplate",
                           "minecraft:iron_leggings", "minecraft:iron_boots", "minecraft:golden_helmet", "minecraft:golden_chestplate", "minecraft:golden_leggings",

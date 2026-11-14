@@ -2,16 +2,16 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mangrove_door",
+      "identifier": "gloamingforest:mangrove_door",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:half": ["lower", "upper"],
-        "twilightforest:hinge": ["left", "right"],
-        "twilightforest:open": [false, true],
-        "twilightforest:powered": [false, true]
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:half": ["lower", "upper"],
+        "gloamingforest:hinge": ["left", "right"],
+        "gloamingforest:open": [false, true],
+        "gloamingforest:powered": [false, true]
       }
     },
     "components": {
@@ -49,7 +49,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
           "minecraft:material_instances": {
@@ -76,7 +76,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
           "minecraft:material_instances": {
@@ -103,7 +103,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
           "minecraft:material_instances": {
@@ -130,7 +130,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
           "minecraft:material_instances": {
@@ -157,7 +157,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
           "minecraft:material_instances": {
@@ -184,7 +184,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
           "minecraft:material_instances": {
@@ -211,7 +211,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
           "minecraft:material_instances": {
@@ -238,7 +238,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
           "minecraft:material_instances": {
@@ -265,7 +265,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
           "minecraft:material_instances": {
@@ -292,7 +292,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
           "minecraft:material_instances": {
@@ -319,7 +319,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
           "minecraft:material_instances": {
@@ -346,7 +346,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
           "minecraft:material_instances": {
@@ -373,7 +373,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
           "minecraft:material_instances": {
@@ -400,7 +400,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
           "minecraft:material_instances": {
@@ -427,7 +427,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
           "minecraft:material_instances": {
@@ -454,7 +454,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
           "minecraft:material_instances": {
@@ -481,7 +481,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
           "minecraft:material_instances": {
@@ -508,7 +508,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
           "minecraft:material_instances": {
@@ -535,7 +535,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
           "minecraft:material_instances": {
@@ -562,7 +562,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
           "minecraft:material_instances": {
@@ -589,7 +589,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
           "minecraft:material_instances": {
@@ -616,7 +616,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
           "minecraft:material_instances": {
@@ -643,7 +643,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
           "minecraft:material_instances": {
@@ -670,7 +670,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
           "minecraft:material_instances": {
@@ -697,7 +697,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
           "minecraft:material_instances": {
@@ -724,7 +724,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
           "minecraft:material_instances": {
@@ -751,7 +751,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
           "minecraft:material_instances": {
@@ -778,7 +778,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
           "minecraft:material_instances": {
@@ -805,7 +805,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
           "minecraft:material_instances": {
@@ -832,7 +832,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
           "minecraft:material_instances": {
@@ -859,7 +859,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
           "minecraft:material_instances": {
@@ -886,7 +886,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
           "minecraft:material_instances": {

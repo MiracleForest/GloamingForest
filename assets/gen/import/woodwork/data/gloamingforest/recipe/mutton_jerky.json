@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:drying",
+  "filter_time": 6000,
+  "input": {
+    "item": "minecraft:mutton"
+  },
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:mutton_jerky"
+  }
+}

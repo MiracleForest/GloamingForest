@@ -1,4 +1,4 @@
-// U5 (building): selftests of TF's banner patterns (dx 570..579, rule R12).
+// U5 (building): selftests of upstream's banner patterns (dx 570..579, rule R12).
 
 #include <algorithm>
 #include <string>
@@ -69,7 +69,7 @@ using Facing = ScriptModuleMinecraft::ScriptFacing;
 // The client scenario's markers are tags on its real player (tools/e2e/client/scenarios/building.ps1:
 // /tag @s add ...), never blocks at fixed positions that another unit's test could touch (R12):
 // gf_building_banners keeps building.banner_loom's banners up for the camera (else it cleans up at
-// once); gf_building_shield makes building.shield_pattern give the player a shield with TF's naga
+// once); gf_building_shield makes building.shield_pattern give the player a shield with upstream's naga
 // pattern. The real loom craft is building.loom_request (LoomRequestTest.cpp).
 constexpr char const* kShowBanners = "gf_building_banners";
 constexpr char const* kShield      = "gf_building_shield";
@@ -93,17 +93,17 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
         auto const* p = b::findBannerPattern(s.nameId);
         ctx.check(p != nullptr, "pattern " + s.tfId + " registered as " + s.nameId);
         if (!p) continue;
-        auto own = gf::game::items::make("twilightforest:" + s.boss + "_banner_pattern");
+        auto own = gf::game::items::make("gloamingforest:" + s.boss + "_banner_pattern");
         ctx.require(own.has_value(), "the " + s.boss + " pattern item");
         ctx.check(p->matchesPatternItem(*own), s.boss + " banner pattern unlocks " + s.nameId);
         for (auto const& o : b::bannerPatterns())
             if (o.boss != s.boss)
-                if (auto other = gf::game::items::make("twilightforest:" + o.boss + "_banner_pattern"))
+                if (auto other = gf::game::items::make("gloamingforest:" + o.boss + "_banner_pattern"))
                     if (p->matchesPatternItem(*other)) ctx.check(false, o.boss + " banner pattern must not unlock " + s.nameId);
         ctx.check(own->getMaxStackSize() == 1, s.boss + " banner pattern stacks to 1");
     }
     if (auto const* creeper = b::findBannerPattern("cre"))
-        if (auto naga = gf::game::items::make("twilightforest:naga_banner_pattern")) ctx.check(!creeper->matchesPatternItem(*naga), "a vanilla pattern ignores TF's items");
+        if (auto naga = gf::game::items::make("gloamingforest:naga_banner_pattern")) ctx.check(!creeper->matchesPatternItem(*naga), "a vanilla pattern ignores upstream's items");
 
     // the loom's result: a white banner + the naga pattern + red dye (1)
     auto banner = gf::game::items::make("minecraft:banner", 1, 15);
@@ -112,7 +112,7 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(result.has_value(), "the loom makes a banner");
     auto layers = BannerItem::getPatternAndColorPairsFromItemStack(*result);
     bool found  = std::any_of(layers.begin(), layers.end(), [](auto const& l) { return *l.first->mNameID == "tf_naga"; });
-    ctx.check(found, "the result's layer is TF's naga pattern (" + std::to_string(layers.size()) + " layer(s))");
+    ctx.check(found, "the result's layer is upstream's naga pattern (" + std::to_string(layers.size()) + " layer(s))");
     // a seventh layer is refused
     auto full = *result;
     for (int i = 0; i < 5; ++i) full = *b::loomResult(full, "tf_lich", 4);
@@ -159,15 +159,15 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
         ctx.check(want && std::find(patterns.begin(), patterns.end(), want->mID) != patterns.end(), "the placed banner shows " + s.nameId);
     }
     if (show) {
-        gf::log().info("building: TF banners shown at {} {} {}", p.x, p.y + 1, p.z + 2);
+        gf::log().info("building: upstream banners shown at {} {} {}", p.x, p.y + 1, p.z + 2);
         co_await ctx.ticks(20 * 20);
     }
     for (auto it = placed.rbegin(); it != placed.rend(); ++it) ctx.cleanupBlock(*it);
 });
 
-// The client scenario's shield: with the gf_building_shield tag, every real player holds a shield with TF's
+// The client scenario's shield: with the gf_building_shield tag, every real player holds a shield with upstream's
 // naga pattern in the off-hand (Bedrock's shield draws banner patterns from the banner textures, so a
-// TF pattern on a shield needs no shield atlas: Java's textures/entity/shield/<boss>.png has no
+// upstream pattern on a shield needs no shield atlas: Java's textures/entity/shield/<boss>.png has no
 // Bedrock counterpart).
 GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
     auto shield = gf::game::items::make("minecraft:shield");
@@ -176,7 +176,7 @@ GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
     ctx.require(tag.has_value(), "the shield's pattern data");
     shield->setUserData(std::make_unique<CompoundTag>(std::move(*tag)));
     auto layers = BannerItem::getPatternAndColorPairsFromItemStack(*shield);
-    ctx.check(std::any_of(layers.begin(), layers.end(), [](auto const& l) { return l.first && *l.first->mNameID == "tf_naga"; }), "the shield carries TF's naga pattern");
+    ctx.check(std::any_of(layers.begin(), layers.end(), [](auto const& l) { return l.first && *l.first->mNameID == "tf_naga"; }), "the shield carries upstream's naga pattern");
     if (!realPlayerTagged(kShield)) return;
     auto* level = ll::service::getLevel().as_ptr();
     ctx.require(level != nullptr, "level");
@@ -184,19 +184,19 @@ GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
         if (player.isSimulatedPlayer()) return true;
         player.setOffhandSlot(*shield);
         player.refreshInventory();
-        gf::log().info("building: {} holds a shield with TF's naga pattern", player.getRealName());
+        gf::log().info("building: {} holds a shield with upstream's naga pattern", player.getRealName());
         return true;
     });
 });
 // The client scenario's loom screen: with the gf_building_loom tag, a real player who has a loom
 // open gets a white banner, red dye and the naga banner pattern in the loom's slots (as if moved
 // there), so the client's loom screen lists the patterns it offers for them (the client mod's
-// registry: TF's naga pattern; a vanilla client: none) for the screenshot.
+// registry: upstream's naga pattern; a vanilla client: none) for the screenshot.
 GF_REGISTER_SELFTEST("building.loom_fill", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (!realPlayerTagged(kLoomFill)) co_return;
     auto banner  = gf::game::items::make("minecraft:banner", 1, 15);
     auto dye     = gf::game::items::make("minecraft:red_dye", 1);
-    auto pattern = gf::game::items::make("twilightforest:naga_banner_pattern", 1);
+    auto pattern = gf::game::items::make("gloamingforest:naga_banner_pattern", 1);
     ctx.require(banner && dye && pattern, "the loom's items");
     // the scenario opens the loom after starting this test: wait up to 40 s for its screen
     int filled = 0;

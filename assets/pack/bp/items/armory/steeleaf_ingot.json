@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:steeleaf_ingot",
+      "identifier": "gloamingforest:steeleaf_ingot",
       "menu_category": {
         "category": "items"
       }
@@ -14,14 +14,14 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:steeleaf_ingot.name"
+        "value": "item.gloamingforest:steeleaf_ingot.name"
       },
       "minecraft:tags": {
         "tags": [
           "alexscaves:ferromagnetic_items",
           "c:ingots",
           "c:ingots/steeleaf",
-          "twilightforest:repairs_steeleaf_tools"
+          "gloamingforest:repairs_steeleaf_tools"
         ]
       }
     }

@@ -2,17 +2,17 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:pink_force_field",
+      "identifier": "gloamingforest:pink_force_field",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:down": [false, true],
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:up": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:down": [false, true],
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:up": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {
@@ -20,7 +20,7 @@
       "minecraft:destructible_by_explosion": false,
       "minecraft:light_emission": 2,
       "minecraft:map_color": "#b24cd8",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.pink_force_field",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.pink_force_field",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_pink_force_field",

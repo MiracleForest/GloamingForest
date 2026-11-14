@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:aurora_pillar",
+    "id": "gloamingforest:aurora_pillar",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
@@ -9,7 +9,7 @@
     }
   },
   {
-    "id": "twilightforest:aurora_slab",
+    "id": "gloamingforest:aurora_slab",
     "family": "slab",
     "params": {
       "class": "SlabBlock",
@@ -19,7 +19,7 @@
     }
   },
   {
-    "id": "twilightforest:auroralized_glass",
+    "id": "gloamingforest:auroralized_glass",
     "family": "connected_texture",
     "params": {
       "class": "AuroralizedGlassBlock",

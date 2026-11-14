@@ -1,5 +1,5 @@
 {
-  "about": "U20 naga: refinements of the baseline (tools/sounds/baseline/naga.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The Naga is a giant serpent: its hiss is long, breathy and dark with the low rumble of its huge body under it; its hurt cry is a rasping hiss forced through a throat; its rattle is a slow, heavy rattle doubled an octave down for weight.",
+  "about": "U20 naga: refinements of the baseline (tools/sounds/baseline/naga.json). Original sound designs; upstream's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay upstream's. The Naga is a giant serpent: its hiss is long, breathy and dark with the low rumble of its huge body under it; its hurt cry is a rasping hiss forced through a throat; its rattle is a slow, heavy rattle doubled an octave down for weight.",
   "patches": {
     "naga/hiss": {
       "about": "Naga hiss: a long dark hiss over a low body rumble.",

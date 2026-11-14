@@ -4,10 +4,10 @@
 # the death chest filled from the loot buffer (on the floor block under the home point) and the
 # conquest of its home (entity.boss_conquest: a real landmark start conquered by the boss's death,
 # structure_cleared within 32 blocks, hurt_boss first, the forced start dropped afterwards); the
-# portal refusal through F4's Twilight portal (entity.boss_portal), TF's chests and the fallback
+# portal refusal through F4's Gloaming portal (entity.boss_portal), upstream's chests and the fallback
 # of a death container that is no container (entity.boss_tf_chest, entity.boss_chest_fallback),
 # hurt_boss for a non-boss of the inclusive tag (entity.boss_inclusive); plus behaviour dispatch (die once, only for a real death), entity
-# properties read back through Molang, the goal selector and TF's goals at work (charge, breath),
+# properties read back through Molang, the goal selector and upstream's goals at work (charge, breath),
 # the pathfinding block rules, the hostile mount (no dismount, no teleport), the projectile and
 # arrow simulation, peaceful turning the boss back into its spawner, the spawner variants and the
 # sinister spawner, the BaseTFBoss lifecycle overrides (clone, long death animation, shared knight

@@ -1,4 +1,4 @@
-entity.twilightforest.hydra=Λερναία Ύδρα
-entity.twilightforest:hydra.name=Λερναία Ύδρα
-item.spawn_egg.entity.twilightforest:hydra.name=Αβγό Γέννησης Λερναίας Ύδρας
-item.twilightforest.hydra_spawn_egg=Αβγό Γέννησης Λερναίας Ύδρας
+entity.gloamingforest.hydra=Λερναία Ύδρα
+entity.gloamingforest:hydra.name=Λερναία Ύδρα
+item.gloamingforest.hydra_spawn_egg=Αβγό Γέννησης Λερναίας Ύδρας
+item.spawn_egg.entity.gloamingforest:hydra.name=Αβγό Γέννησης Λερναίας Ύδρας

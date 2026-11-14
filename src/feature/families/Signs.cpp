@@ -1,4 +1,4 @@
-// Contract "families+blockevents", sign text (F11; spike S3 backend: block data). TF's 32 signs
+// Contract "families+blockevents", sign text (F11; spike S3 backend: block data). upstream's 32 signs
 // (standing, wall, hanging and wall hanging signs of the eight woods) are custom blocks, which have
 // no block entities: their text lives in block data (gf::blockdata key "sign"):
 //
@@ -773,7 +773,7 @@ GlobalPos posOf(Json const& ctx) {
     return GlobalPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
 }
 
-/// The wood of a sign (TFWoodTypes: twilight_oak, canopy, ...): params.wood, F1's woodType
+/// The wood of a sign (TFWoodTypes: gloaming_oak, canopy, ...): params.wood, F1's woodType
 /// ("canopy_wood_type"), or the id (as tools/families' wood_of).
 std::string woodOf(Entry const& e) {
     if (auto w = e.str("wood"); !w.empty()) return w;
@@ -798,7 +798,7 @@ std::string woodOf(Entry const& e) {
 std::string editorTexture(Entry const& e) {
     if (auto t = e.str("gui_texture"); !t.empty()) return t;
     auto wood = woodOf(e);
-    return hanging(&e) ? "textures/twilightforest/gui/hanging_signs/" + wood : "textures/twilightforest/entity/signs/" + wood;
+    return hanging(&e) ? "textures/gloamingforest/gui/hanging_signs/" + wood : "textures/gloamingforest/entity/signs/" + wood;
 }
 
 std::optional<Json> editorData(Player& player, Json const& ctx) {
@@ -954,7 +954,7 @@ bool applyItem(Player& player, GlobalPos const& pos, std::string const& itemId, 
     return true;
 }
 
-/// A HangingSignItem: TF's hanging signs (the standing entries of the family) and vanilla's.
+/// A HangingSignItem: upstream's hanging signs (the standing entries of the family) and vanilla's.
 bool isHangingSignItem(std::string const& id) {
     if (auto const* e = entryOf(id); e && e->family == Family::HangingSign) return true;
     return id.starts_with("minecraft:") && id.ends_with("_hanging_sign");

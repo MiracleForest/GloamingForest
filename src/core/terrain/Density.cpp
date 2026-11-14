@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainDensityRouter.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/NoiseDensityRouter.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/SqrtDensityFunction.java
-//   src/main/java/twilightforest/init/TFDensityFunctions.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainDensityRouter.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/NoiseDensityRouter.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/SqrtDensityFunction.java
+//   src/main/java/gloamingforest/init/TFDensityFunctions.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -424,13 +424,13 @@ public:
             n.lo = node(a).lo, n.hi = node(a).hi;
             return add(n);
         }
-        if (type == "twilightforest:biome_driven_terrain" || type == "twilightforest:biome_driven_noise") {
+        if (type == "gloamingforest:biome_driven_terrain" || type == "gloamingforest:biome_driven_noise") {
             Node n;
-            n.kind = type == "twilightforest:biome_driven_terrain" ? Kind::BiomeTerrain : Kind::BiomeNoise;
+            n.kind = type == "gloamingforest:biome_driven_terrain" ? Kind::BiomeTerrain : Kind::BiomeNoise;
             n.lo   = num("lower_density_bound", -kInf);
             n.hi   = num("upper_density_bound", kInf);
             if (n.kind == Kind::BiomeTerrain) {
-                // base_factor / base_offset are density functions in TF's codec; TF's data uses constants
+                // base_factor / base_offset are density functions in upstream's codec; upstream's data uses constants
                 auto constOf = [&](char const* key, double& out) {
                     if (!j.contains(key)) return false;
                     int i = build(j[key]);
@@ -447,7 +447,7 @@ public:
             mG.usesTerrain = true;
             return add(n);
         }
-        if (type == "twilightforest:sqrt") {
+        if (type == "gloamingforest:sqrt") {
             int a = arg("input");
             if (a < 0) return -1;
             Node n;
@@ -456,7 +456,7 @@ public:
             n.lo = node(a).lo, n.hi = node(a).hi;
             return add(n);
         }
-        if (type == "twilightforest:focused") {
+        if (type == "gloamingforest:focused") {
             Node n;
             n.kind    = Kind::Focused;
             n.focused = terrain::Focused{static_cast<float>(num("x_center", 0)), static_cast<float>(num("y_bottom", 0)), static_cast<float>(num("z_center", 0)),
@@ -465,7 +465,7 @@ public:
             n.hi = static_cast<double>(n.focused.radius);
             return add(n);
         }
-        if (type == "twilightforest:hollow_hill") {
+        if (type == "gloamingforest:hollow_hill") {
             Node n;
             n.kind   = Kind::HollowHill;
             n.hollow = terrain::HollowHill{static_cast<float>(num("x_center", 0)), static_cast<float>(num("y_bottom", 0)), static_cast<float>(num("z_center", 0)),
@@ -473,9 +473,9 @@ public:
             n.lo = -1.0, n.hi = 1.0;
             return add(n);
         }
-        if (type == "twilightforest:coord_min" || type == "twilightforest:coord_max") {
+        if (type == "gloamingforest:coord_min" || type == "gloamingforest:coord_max") {
             Node n;
-            n.kind = type == "twilightforest:coord_max" ? Kind::CoordMax : Kind::CoordMin;
+            n.kind = type == "gloamingforest:coord_max" ? Kind::CoordMax : Kind::CoordMin;
             n.v0   = num("max", 0);
             n.v1   = num("x_center", 0);
             n.v2   = num("z_center", 0);

@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:fiery_ingot",
+      "identifier": "gloamingforest:fiery_ingot",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:fiery_ingot.name"
+        "value": "item.gloamingforest:fiery_ingot.name"
       },
       "minecraft:rarity": {
         "value": "uncommon"
@@ -27,7 +27,7 @@
           "alexscaves:ferromagnetic_items",
           "c:ingots",
           "c:ingots/fiery",
-          "twilightforest:repairs_fiery_tools"
+          "gloamingforest:repairs_fiery_tools"
         ]
       }
     }

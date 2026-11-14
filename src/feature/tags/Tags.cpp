@@ -1,4 +1,4 @@
-// The tag part of contract "data" (F9): TF's tags and the vanilla / c: tags they add to, loaded from
+// The tag part of contract "data" (F9): upstream's tags and the vanilla / c: tags they add to, loaded from
 // the mod's data tree (data/<ns>/tags/<registry>/<path>.json, imported by F1 and unioned with the
 // units' fragments by assemble, rule R6), nested tags resolved, the vanilla members of vanilla tags
 // answered by the bridge (VanillaTags.h). The data's vanilla ids are Java's: they become the game's
@@ -6,14 +6,14 @@
 //
 // A tag's members are Java's TagLoader result: its own entries, plus every member of every tag it
 // includes, whether the include is a "#tag" of the data or one of the bridge's (Java's own nesting:
-// #minecraft:overworld_carver_replaceables holds #minecraft:dirt, so TF's uberous_soil, which TF's
+// #minecraft:overworld_carver_replaceables holds #minecraft:dirt, so upstream's uberous_soil, which upstream's
 // data adds to minecraft:dirt, is an overworld carver replaceable), minus NeoForge's "remove"
 // entries. Tags that include each other (Java rejects the cycle) share their members; a removed
 // #tag is never merged into the remover (a removal whose tag includes the remover back is dropped).
 //
 // Every tag is resolved once per load into an immutable snapshot; queries read the snapshot
 // without a lock (a thread keeps the snapshot it last read until a reload publishes a new one), so
-// world generation can ask per block while /twilightforest reload swaps the data. Bedrock's native
+// world generation can ask per block while /gloamingforest reload swaps the data. Bedrock's native
 // block / item tags are read into the snapshot on the server thread (at the data load and at every
 // world load): no query, from any thread, touches the game's registries.
 #include "feature/tags/Tags.h"
@@ -200,7 +200,7 @@ void readEntries(nlohmann::json const& doc, char const* key, std::vector<std::st
 }
 
 /// True the first time `key` is warned about in this process: the tag warnings repeat neither per
-/// registry variant nor per /twilightforest reload.
+/// registry variant nor per /gloamingforest reload.
 bool warnOnce(std::string key) {
     static std::mutex            m;
     static std::set<std::string> warned;
@@ -481,7 +481,7 @@ std::shared_ptr<Snapshot const> build(bool withData, std::shared_ptr<vanilla::Na
         for (auto const& tag : vanilla::knownTags(registry)) (void)b.get(tag);
         s->bridged[indexOf(registry)] = b.take();
     }
-    // TF's own registries ("twilight", ...): data members only
+    // upstream's own registries ("gloaming", ...): data members only
     for (auto const& [dir, tags] : s->raw) {
         if (registryOf(dir)) continue;
         Builder b(std::nullopt, dir, &tags, quiet, s->native.get());
@@ -542,7 +542,7 @@ std::shared_ptr<Snapshot const> const& current() {
 }
 
 /// Serialises loads. Timed: a load that never returns (a hung thread) must not block the server
-/// thread's next /twilightforest reload forever.
+/// thread's next /gloamingforest reload forever.
 std::timed_mutex& loadMutex() {
     static std::timed_mutex m;
     return m;
@@ -699,7 +699,7 @@ std::vector<std::string> tagsOf(std::string const& dir) {
 std::optional<Registry> registryOfDir(std::string const& dir) { return registryOf(normalizeDir(dir)); }
 
 // A directory of a `tags::Registry` goes through has / members (the vanilla bridge included, the
-// same snapshot entries); TF's own registries ("twilight", ...) have data members only.
+// same snapshot entries); upstream's own registries ("gloaming", ...) have data members only.
 bool hasIn(std::string const& dir, std::string const& tag, std::string const& id) {
     if (auto r = registryOfDir(dir)) return has(*r, tag, id);
     if (tag.empty() || id.empty()) return false;

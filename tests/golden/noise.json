@@ -1,7 +1,7 @@
 {
   "format": 1,
   "kind": "noise",
-  "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
+  "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
   "points3": [
     [0.0, 0.0, 0.0],
     [1.0, 2.0, 3.0],

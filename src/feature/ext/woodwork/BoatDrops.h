@@ -7,8 +7,8 @@
 // minecraft:chest_boat) registers the item its boat drops instead:
 //
 //     gf::woodwork_ext::boatdrops::setReplacement([](Actor& boat) -> std::optional<std::string> {
-//         if (boat.getTypeName() != "twilightforest:boat") return std::nullopt;   // other boats: vanilla
-//         return "twilightforest:canopy_boat";
+//         if (boat.getTypeName() != "gloamingforest:boat") return std::nullopt;   // other boats: vanilla
+//         return "gloamingforest:canopy_boat";
 //     });
 //
 // Only the boat's own drop is replaced: an item actor that appeared while the game ran that boat's

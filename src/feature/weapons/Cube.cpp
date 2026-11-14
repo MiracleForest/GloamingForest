@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/CubeOfAnnihilationItem.java
-//   src/main/java/twilightforest/entity/projectile/CubeOfAnnihilation.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/CubeOfAnnihilationItem.java
+//   src/main/java/gloamingforest/entity/projectile/CubeOfAnnihilation.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:cube_of_annihilation (the item and its ThrowableProjectile, no gravity). Every
+// gloamingforest:cube_of_annihilation (the item and its ThrowableProjectile, no gravity). Every
 // server tick the cube heads for the point 16 blocks along its thrower's look (or the thrower's
 // eye once it returns) at up to 0.5 blocks a tick and annihilates the blocks its box (inflated by
-// 0.2) touches: #twilightforest:annihilation_inclusions, or Java explosion resistance < 8 and
+// 0.2) touches: #gloamingforest:annihilation_inclusions, or Java explosion resistance < 8 and
 // breakable. A block it may not annihilate (or a protected one) makes it return; it returns too
 // when its owner stops using the item. Living things it touches take 10 (player / mob attack).
 
@@ -76,7 +76,7 @@ void removeCube(Actor& cube) {
 
 /// CubeOfAnnihilation#canAnnihilate.
 bool canAnnihilate(Block const& block) {
-    if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:annihilation_inclusions", game::blockId(block))) return true;
+    if (gf::tags::has(gf::tags::Registry::Block, "gloamingforest:annihilation_inclusions", game::blockId(block))) return true;
     return javaExplosionResistance(block) < 8.0F && block.getBlockType().getDestroySpeed() >= 0.0F;
 }
 
@@ -88,7 +88,7 @@ void particles(Actor& cube, BlockPos const& pos) {
             for (int dz = 0; dz < 3; ++dz) {
                 Vec3 at{pos.x + (dx + 0.5F) / 4.0F, pos.y + (dy + 0.5F) / 4.0F, pos.z + (dz + 0.5F) / 4.0F};
                 Vec3 v{static_cast<float>(r.nextGaussian() * 0.2), static_cast<float>(r.nextGaussian() * 0.2), static_cast<float>(r.nextGaussian() * 0.2)};
-                gf::fx::particle(cube.getDimension(), "twilightforest:annihilate", at, v);
+                gf::fx::particle(cube.getDimension(), "gloamingforest:annihilate", at, v);
             }
 }
 
@@ -106,7 +106,7 @@ void affectBlocks(Actor& cube) {
         if (mayBreak(player, pos) && canAnnihilate(block)) {
             region.removeBlock(pos, BlockChangeContext{});
             ++gAnnihilated;
-            gf::fx::sound(cube.getDimension(), "block.twilightforest.generic.annihilation", cube.getPosition(), 0.125F, world::random().nextFloat() * 0.25F + 0.75F);
+            gf::fx::sound(cube.getDimension(), "block.gloamingforest.generic.annihilation", cube.getPosition(), 0.125F, world::random().nextFloat() * 0.25F + 0.75F);
             particles(cube, pos);
         } else {
             stateOf(cube)["obstacle"] = true;

@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/renderer/map/ConqueredMapIconRenderer.java
-//   src/main/java/twilightforest/client/renderer/map/MagicMapPlayerIconRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/renderer/map/ConqueredMapIconRenderer.java
+//   src/main/java/gloamingforest/client/renderer/map/MagicMapPlayerIconRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -19,9 +19,9 @@
 //   BlockActorRenderDispatcher::render of item frames (Fixed, in the item space of Java's
 //   ItemFrameRenderer), the humanoid head gear (DataDrivenRenderer_tempComponent_HumanoidAdditional
 //   Rendering::_renderHeadGear: Head, in the head pose the game leaves for its head gear);
-// - maps: the TF decorations of gf::client::maps on held maps (ItemInHandRenderer::renderFirstPerson)
+// - maps: the upstream decorations of gf::client::maps on held maps (ItemInHandRenderer::renderFirstPerson)
 //   and framed maps (the item frame dispatch), in the space MapRenderer::_getMapInstance sees;
-// - tint: ClientBlockPipeline::PositionDependentTintResolver::_get (TF's leaf / grass colours; the
+// - tint: ClientBlockPipeline::PositionDependentTintResolver::_get (upstream's leaf / grass colours; the
 //   game's own colours at the position come from the same resolver, the original function asked for
 //   a vanilla block of that tint method, when a tint function asks for them);
 // - name tags: ActorRenderDispatcher::extractRenderTextObjects (hideNameTag).
@@ -384,7 +384,7 @@ RenderContext contextOf(BaseActorRenderContext& rc) {
 std::atomic<std::uint64_t> gLightSetups{0};
 
 /// Vanilla blocks whose own tint is the game's colour of a tint method (oak leaves: foliage, the grass
-/// block: grass, water: water), asked in place of the TF block when a tint function wants the game's
+/// block: grass, water: water), asked in place of the upstream block when a tint function wants the game's
 /// colour (as F11's LeafTint asks for the foliage). Resolved on the client thread when a world is
 /// joined, cleared when it is left (the chunk builders of the next world never see an old Block).
 std::atomic<Block const*> gProbes[3]{};
@@ -1064,7 +1064,7 @@ void captureMap(MapItemSavedData const& data) {
     auto&        scope = scopes.back();
     std::int64_t id    = data.mMapId->rawID;
     if (!maps::hasDecorations(id)) return; // every map the game draws, every frame: no copy here
-    infoOnce("map_capture", "map " + std::to_string(id) + " with TF decorations rendered (" + std::to_string(scopes.size()) + " capture scopes)");
+    infoOnce("map_capture", "map " + std::to_string(id) + " with upstream decorations rendered (" + std::to_string(scopes.size()) + " capture scopes)");
     glm::mat4 space = scope.rc->mScreenContext.camera.worldMatrixStack.get().top()._m.get();
     for (auto& [mid, s] : scope.maps) {
         if (mid == id) {
@@ -1088,9 +1088,9 @@ void drawMapQuad(ScreenContext& screen, mce::MaterialPtr const& material, mce::T
     MeshHelpers::renderMeshImmediately(screen, tess, material, variant, OffscreenCaptureDescription{});
 }
 
-/// TF's decorations over a map, as Java's MapRenderer draws a decoration: at (x / 2 + 64, z / 2 + 64)
+/// upstream's decorations over a map, as Java's MapRenderer draws a decoration: at (x / 2 + 64, z / 2 + 64)
 /// of the 128 x 128 map, turned by rotation * 22.5 degrees, an 8 x 8 quad of the icon at depth
-/// index * -0.001. TF's IMapDecorationRenderers: MagicMapPlayerIconRenderer draws its icon at depth
+/// index * -0.001. upstream's IMapDecorationRenderers: MagicMapPlayerIconRenderer draws its icon at depth
 /// -0.3 (topmost), ConqueredMapIconRenderer adds the red X (scale 2, translated (-1, -1, -0.005),
 /// depth -0.095) and lets the icon be drawn as well. On a framed map (`inFrame`, Java's `active`) a
 /// decoration whose type does not show on item frames is skipped before any renderer runs and takes
@@ -1273,7 +1273,7 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(font, tessellator, actor, str, camTargetPos, a, color);
 }
 
-// Armour hiding (hideArmor; TF's ArmorHooks#cancelArmorRendering): the game asks whether a worn
+// Armour hiding (hideArmor; upstream's ArmorHooks#cancelArmorRendering): the game asks whether a worn
 // stack's attachable is drawn on its wearer.
 LL_TYPE_STATIC_HOOK(
     RenderArmorHook,
@@ -1451,7 +1451,7 @@ LL_TYPE_INSTANCE_HOOK(
 // not the inventory's isometric cube (a flatter top, spike S5 round 5). The inventory draws block
 // items through renderGuiItemInChunk inside a UI mesh batch of the terrain atlas ("BlockType" chunk:
 // the GUI block transform, as Java's "gui" display of block/block.json); the same call is made here,
-// and the geometry a data-driven (TF) block leaves in the screen's tessellator for that batch is
+// and the geometry a data-driven (upstream) block leaves in the screen's tessellator for that batch is
 // drawn right away with the UI item material and the terrain atlas, as the batch would. Flat block
 // items (saplings, ...) and other items keep the game's own path.
 LL_TYPE_INSTANCE_HOOK(
@@ -1667,7 +1667,7 @@ LL_TYPE_INSTANCE_HOOK(
     r::endMapCapture();
 }
 
-// Position-dependent tints of registered blocks (TF's leaves, grass, ...): builder threads.
+// Position-dependent tints of registered blocks (upstream's leaves, grass, ...): builder threads.
 LL_TYPE_INSTANCE_HOOK(
     RenderTintHook,
     ll::memory::HookPriority::Normal,
@@ -1686,10 +1686,10 @@ LL_TYPE_INSTANCE_HOOK(
             BlockPos const& min = mMinPos;
             // the game's own colours at this position: the resolver's original function for the tint
             // method asked, for a vanilla block of that method (the biomes' colours blended as for
-            // the game's own blocks, whatever the TF block's own material says; computed only when
+            // the game's own blocks, whatever the upstream block's own material says; computed only when
             // the tint function asks). No probe block yet (no world joined, or the block registry was
             // not there when it was looked up): no game colour (nullopt), so the tint function uses
-            // its no-world default rather than what the TF block's own material would give.
+            // its no-world default rather than what the upstream block's own material would give.
             auto ask = [&](TintMethod method) -> std::optional<mce::Color> {
                 Block const* probe = r::probeBlock(method);
                 if (!probe) {

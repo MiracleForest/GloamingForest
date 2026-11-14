@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/WeightedListFeature.java
-//   src/main/java/twilightforest/world/components/feature/config/WeightedListFeatureConfig.java
-//   src/main/java/twilightforest/world/components/placements/AvoidLandmarkModifier.java
-//   src/main/java/twilightforest/world/components/placements/ChunkCenterModifier.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/WeightedListFeature.java
+//   src/main/java/gloamingforest/world/components/feature/config/WeightedListFeatureConfig.java
+//   src/main/java/gloamingforest/world/components/placements/AvoidLandmarkModifier.java
+//   src/main/java/gloamingforest/world/components/placements/ChunkCenterModifier.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -175,7 +175,7 @@ bool randomSelector(FeatureContext const& c) {
 
 bool simpleRandomSelector(FeatureContext const& c) {
     auto const& fs = fieldArr(c.config, "features");
-    if (fs.is_string()) return placePlaced(fs, c.region, c.origin, c.random); // a tag of placed features is not used by TF
+    if (fs.is_string()) return placePlaced(fs, c.region, c.origin, c.random); // a tag of placed features is not used by upstream
     if (!fs.is_array() || fs.empty()) return false;
     int i = c.random.nextInt(static_cast<int>(fs.size()));
     return placePlaced(fs[static_cast<std::size_t>(i)], c.region, c.origin, c.random);
@@ -186,7 +186,7 @@ bool randomBooleanSelector(FeatureContext const& c) {
     return placePlaced(c.config.value(flag ? "feature_true" : "feature_false", Json()), c.region, c.origin, c.random);
 }
 
-/// TF's WeightedListFeature: one weighted pick of a placed feature, placed at the origin.
+/// upstream's WeightedListFeature: one weighted pick of a placed feature, placed at the origin.
 bool weightedList(FeatureContext const& c) {
     // the config is the SimpleWeightedRandomList itself: [{data: placed feature, weight}]
     auto const* f = weightedPick(c.config.is_array() ? c.config : fieldArr(c.config, "features"), c.random);
@@ -560,7 +560,7 @@ void registerVanillaFeatures() {
     registerType("minecraft:vines", vines);
     registerType("minecraft:seagrass", seagrass);
     registerType("minecraft:forest_rock", forestRock);
-    registerType("twilightforest:weighted_list", weightedList);
+    registerType("gloamingforest:weighted_list", weightedList);
 }
 
 void registerVanillaPlacements() {
@@ -671,10 +671,10 @@ void registerVanillaPlacements() {
             mask->forEach([&](int lx, int y, int lz) { out.push_back({cx * 16 + lx, y, cz * 16 + lz}); });
         return out;
     });
-    registerPlacement("twilightforest:chunk_centerer", [](PlacementContext const&, BlockPos const& pos) {
+    registerPlacement("gloamingforest:chunk_centerer", [](PlacementContext const&, BlockPos const& pos) {
         return Positions{{(pos.x & static_cast<int>(0xfffffff0)) + 8, pos.y, (pos.z & static_cast<int>(0xfffffff0)) + 8}};
     });
-    registerPlacement("twilightforest:no_structure", noStructure);
+    registerPlacement("gloamingforest:no_structure", noStructure);
 }
 
 } // namespace gf::features::detail

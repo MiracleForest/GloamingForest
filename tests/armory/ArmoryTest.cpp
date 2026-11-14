@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of src/core/armory/Armory.h (translated from TF 4.8's TFArmorMaterials, TFToolMaterials,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of src/core/armory/Armory.h (translated from upstream 4.8's TFArmorMaterials, TFToolMaterials,
 // TFItems, ToolEvents, EntityEvents, ApplyFrostedEffect, FieryToolSmeltingModifier and
 // CraftingGenerator; LGPL-2.1-or-later code, see the header of Armory.h).
 #include <cmath>
@@ -33,41 +33,41 @@ TEST(ArmoryArmor, MaterialsAndDurability) {
     EXPECT_EQ(armorDurability(ArmorType::Leggings, 25), 375);
     EXPECT_EQ(armorDurability(ArmorType::Chestplate, 30), 480);
     EXPECT_EQ(armorDurability(ArmorType::Helmet, 10), 110);
-    auto const* naga = armorPiece("twilightforest:naga_chestplate");
+    auto const* naga = armorPiece("gloamingforest:naga_chestplate");
     ASSERT_NE(naga, nullptr);
     EXPECT_EQ(defenseOf(*naga), 7);
     EXPECT_FLOAT_EQ(toughnessOf(*naga), 0.5f);
-    auto const* yetiHelm = armorPiece("twilightforest:yeti_helmet");
+    auto const* yetiHelm = armorPiece("gloamingforest:yeti_helmet");
     ASSERT_NE(yetiHelm, nullptr);
     EXPECT_EQ(defenseOf(*yetiHelm), 4);
-    EXPECT_EQ(armorMaterial("phantom")->repairItem, "twilightforest:knightmetal_ingot");
-    EXPECT_EQ(armorMaterial("knightmetal")->equipSound, "item.twilightforest.knightmetal_armor.equip");
-    EXPECT_EQ(armorPiece("twilightforest:naga_helmet"), nullptr) << "naga scale has a chestplate and leggings only";
-    EXPECT_EQ(armorPiece("twilightforest:phantom_boots"), nullptr) << "phantom has a helmet and a chestplate only";
+    EXPECT_EQ(armorMaterial("phantom")->repairItem, "gloamingforest:knightmetal_ingot");
+    EXPECT_EQ(armorMaterial("knightmetal")->equipSound, "item.gloamingforest.knightmetal_armor.equip");
+    EXPECT_EQ(armorPiece("gloamingforest:naga_helmet"), nullptr) << "naga scale has a chestplate and leggings only";
+    EXPECT_EQ(armorPiece("gloamingforest:phantom_boots"), nullptr) << "phantom has a helmet and a chestplate only";
 }
 
 TEST(ArmoryTools, AttackDamageAndSpeed) {
     auto dmg = [](char const* id) { return attackDamage(*tool(id)); };
-    EXPECT_FLOAT_EQ(dmg("twilightforest:ironwood_sword"), 6.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:fiery_sword"), 8.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:steeleaf_sword"), 7.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:knightmetal_axe"), 10.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:ironwood_shovel"), 4.5f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:ironwood_hoe"), 1.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:steeleaf_hoe"), 1.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:gold_minotaur_axe"), 7.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:diamond_minotaur_axe"), 10.f);
-    EXPECT_FLOAT_EQ(dmg("twilightforest:mazebreaker_pickaxe"), 5.f);
-    EXPECT_NEAR(attackSpeed(*tool("twilightforest:knightmetal_axe")), 1.0f, 1e-5);
-    EXPECT_NEAR(attackSpeed(*tool("twilightforest:steeleaf_hoe")), 3.5f, 1e-5);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:ironwood_sword"), 6.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:fiery_sword"), 8.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:steeleaf_sword"), 7.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:knightmetal_axe"), 10.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:ironwood_shovel"), 4.5f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:ironwood_hoe"), 1.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:steeleaf_hoe"), 1.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:gold_minotaur_axe"), 7.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:diamond_minotaur_axe"), 10.f);
+    EXPECT_FLOAT_EQ(dmg("gloamingforest:mazebreaker_pickaxe"), 5.f);
+    EXPECT_NEAR(attackSpeed(*tool("gloamingforest:knightmetal_axe")), 1.0f, 1e-5);
+    EXPECT_NEAR(attackSpeed(*tool("gloamingforest:steeleaf_hoe")), 3.5f, 1e-5);
     // Bedrock's integer damage plus the fraction U7 adds
-    auto const& shovel = *tool("twilightforest:steeleaf_shovel");
+    auto const& shovel = *tool("gloamingforest:steeleaf_shovel");
     EXPECT_EQ(bedrockDamage(shovel), 4);
     EXPECT_FLOAT_EQ(fractionalDamage(shovel), 0.5f);
-    EXPECT_EQ(bedrockDamage(*tool("twilightforest:ironwood_hoe")), 0);
-    EXPECT_EQ(enchantability(*tool("twilightforest:diamond_minotaur_axe")), 22);
-    EXPECT_EQ(enchantability(*tool("twilightforest:ironwood_axe")), 25);
-    EXPECT_TRUE(tool("twilightforest:mazebreaker_pickaxe")->noRepair);
+    EXPECT_EQ(bedrockDamage(*tool("gloamingforest:ironwood_hoe")), 0);
+    EXPECT_EQ(enchantability(*tool("gloamingforest:diamond_minotaur_axe")), 22);
+    EXPECT_EQ(enchantability(*tool("gloamingforest:ironwood_axe")), 25);
+    EXPECT_TRUE(tool("gloamingforest:mazebreaker_pickaxe")->noRepair);
 }
 
 TEST(ArmoryKnightmetal, SwordVersusArmour) {
@@ -152,7 +152,7 @@ TEST(ArmoryCrafting, DefaultEnchantments) {
     }
     EXPECT_EQ(recipes.size(), 24u);
     for (auto const& d : v)
-        if (d.item == "twilightforest:yeti_boots") {
+        if (d.item == "gloamingforest:yeti_boots") {
             ASSERT_EQ(d.enchantments.size(), 2u);
             EXPECT_EQ(d.enchantments[0].first, "minecraft:feather_falling");
             EXPECT_EQ(d.enchantments[0].second, 4);

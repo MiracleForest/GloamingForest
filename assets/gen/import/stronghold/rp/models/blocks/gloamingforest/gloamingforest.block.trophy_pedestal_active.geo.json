@@ -1,0 +1,417 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.trophy_pedestal_active",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-6, 3, -6],
+              "size": [12, 10, 12],
+              "uv": {
+                "north": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "west"
+                }
+              }
+            },
+            {
+              "origin": [-7, 0, -7],
+              "size": [14, 3, 14],
+              "uv": {
+                "north": {
+                  "uv": [1, 13],
+                  "uv_size": [14, 3],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [1, 13],
+                  "uv_size": [14, 3],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [1, 13],
+                  "uv_size": [14, 3],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [1, 13],
+                  "uv_size": [14, 3],
+                  "material_instance": "west"
+                },
+                "up": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "end"
+                },
+                "down": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [-7, 13, -7],
+              "size": [14, 3, 14],
+              "uv": {
+                "north": {
+                  "uv": [1, 0],
+                  "uv_size": [14, 3],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [1, 0],
+                  "uv_size": [14, 3],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [1, 0],
+                  "uv_size": [14, 3],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [1, 0],
+                  "uv_size": [14, 3],
+                  "material_instance": "west"
+                },
+                "up": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "end"
+                },
+                "down": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [4, 12, -7],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west"
+                },
+                "down": {
+                  "uv": [4, 15],
+                  "uv_size": [-3, -3],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [-7, 12, -7],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west"
+                },
+                "down": {
+                  "uv": [15, 15],
+                  "uv_size": [-3, -3],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [4, 12, 4],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west"
+                },
+                "down": {
+                  "uv": [4, 4],
+                  "uv_size": [-3, -3],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [-7, 12, 4],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north"
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east"
+                },
+                "south": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south"
+                },
+                "west": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west"
+                },
+                "down": {
+                  "uv": [15, 4],
+                  "uv_size": [-3, -3],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [-6, 3, -6],
+              "size": [12, 10, 12],
+              "uv": {
+                "north": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "north2"
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "east2"
+                },
+                "south": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "south2"
+                },
+                "west": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "west2"
+                }
+              }
+            },
+            {
+              "origin": [-7, 0, -7],
+              "size": [14, 16, 14],
+              "uv": {
+                "up": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "end2"
+                },
+                "down": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "end2"
+                }
+              }
+            },
+            {
+              "origin": [4, 12, -7],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north2"
+                },
+                "east": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east2"
+                },
+                "south": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south2"
+                },
+                "west": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west2"
+                }
+              }
+            },
+            {
+              "origin": [-7, 12, -7],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north2"
+                },
+                "east": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east2"
+                },
+                "south": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south2"
+                },
+                "west": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west2"
+                }
+              }
+            },
+            {
+              "origin": [4, 12, 4],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north2"
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east2"
+                },
+                "south": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south2"
+                },
+                "west": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west2"
+                }
+              }
+            },
+            {
+              "origin": [-7, 12, 4],
+              "size": [3, 1, 3],
+              "uv": {
+                "north": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "north2"
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "east2"
+                },
+                "south": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "south2"
+                },
+                "west": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 1],
+                  "material_instance": "west2"
+                }
+              }
+            },
+            {
+              "origin": [-6, 3, -6],
+              "size": [12, 10, 12],
+              "uv": {
+                "north": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "north3"
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "east3"
+                },
+                "south": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "south3"
+                },
+                "west": {
+                  "uv": [2, 3],
+                  "uv_size": [12, 10],
+                  "material_instance": "west3"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

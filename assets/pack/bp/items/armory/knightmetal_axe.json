@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:knightmetal_axe",
+      "identifier": "gloamingforest:knightmetal_axe",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:knightmetal_axe.name"
+        "value": "item.gloamingforest:knightmetal_axe.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -43,13 +43,13 @@
         "repair_items": [
           {
             "items": [
-              "twilightforest:knightmetal_ingot"
+              "gloamingforest:knightmetal_ingot"
             ],
             "repair_amount": "query.max_durability * 0.25"
           },
           {
             "items": [
-              "twilightforest:knightmetal_axe"
+              "gloamingforest:knightmetal_axe"
             ],
             "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
           }

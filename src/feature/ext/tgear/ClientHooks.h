@@ -4,7 +4,7 @@
 // Client build only.
 //
 // - Turning: LocalPlayer::localPlayerTurn (the mouse / stick turn of the local player) scaled by the
-//   factor set here (TF's slowZoomSensitivity, CalculatePlayerTurnEvent). This is an R8 exception
+//   factor set here (upstream's slowZoomSensitivity, CalculatePlayerTurnEvent). This is an R8 exception
 //   (LocalPlayer movement is F12's): F12's movement contract (client/input/Input.h onLocalTick) has no
 //   turn scale. A8 folds it into F12's movement / camera contract.
 // - The zoom FOV needs no client hook: the server narrows the zooming player's camera with a camera
@@ -13,7 +13,7 @@
 //   all tried in rounds 1-2 and none reaches the 1.26.51 world projection (the vanilla camera's FOV
 //   component), so no FOV hook is installed.
 // - Secondary clicks in container screens (Java's Item#overrideStackedOnOther / overrideOtherStackedOnMe,
-//   the bundle-style clicks of TF's goggles): ContainerScreenController::_handlePlaceOne (a secondary
+//   the bundle-style clicks of upstream's goggles): ContainerScreenController::_handlePlaceOne (a secondary
 //   click with an item on the cursor) and _handleTakeHalf (with an empty cursor) ask the handler first;
 //   true takes the click (the game's own split / place-one does not run).
 //

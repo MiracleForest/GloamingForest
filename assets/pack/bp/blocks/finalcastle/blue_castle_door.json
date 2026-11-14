@@ -2,16 +2,16 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:blue_castle_door",
+      "identifier": "gloamingforest:blue_castle_door",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:active": [
+        "gloamingforest:active": [
           false,
           true
         ],
-        "twilightforest:vanish": [
+        "gloamingforest:vanish": [
           false,
           true
         ],
@@ -779,7 +779,7 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:vanish')",
+        "condition": "!q.block_state('gloamingforest:vanish')",
         "components": {
           "minecraft:material_instances": {
             "*": {
@@ -800,7 +800,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:vanish')",
+        "condition": "q.block_state('gloamingforest:vanish')",
         "components": {
           "minecraft:material_instances": {
             "*": {

@@ -1,0 +1,12 @@
+{
+  "placement": {
+    "type": "gloamingforest:landmark_grid",
+    "structure_grid_lock": "gloamingforest:lich_tower"
+  },
+  "structures": [
+    {
+      "structure": "gloamingforest:lich_tower",
+      "weight": 1
+    }
+  ]
+}

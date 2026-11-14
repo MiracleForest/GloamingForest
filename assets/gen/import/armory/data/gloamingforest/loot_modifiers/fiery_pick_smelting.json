@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:fiery_pick_smelting",
+  "conditions": [
+    {
+      "condition": "minecraft:match_tool",
+      "predicate": {
+        "items": "gloamingforest:fiery_pickaxe"
+      }
+    }
+  ]
+}

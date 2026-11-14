@@ -1,0 +1,44 @@
+{
+  "fallback_layer": "gloamingforest:random_forest_biomes",
+  "filtered_layer": {
+    "parent": {
+      "parent": "gloamingforest:random_forest_biomes",
+      "dividing_biome": "gloamingforest:stream",
+      "excluded_biome_intersections": [
+        [
+          "gloamingforest:snowy_forest",
+          "gloamingforest:glacier"
+        ],
+        [
+          "gloamingforest:mushroom_forest",
+          "gloamingforest:dense_mushroom_forest"
+        ],
+        [
+          "gloamingforest:swamp",
+          "gloamingforest:fire_swamp"
+        ],
+        [
+          "gloamingforest:dark_forest",
+          "gloamingforest:dark_forest_center"
+        ],
+        [
+          "gloamingforest:highlands",
+          "gloamingforest:final_plateau"
+        ]
+      ],
+      "excluded_neighbor_biomes": [
+        "gloamingforest:lake",
+        "gloamingforest:thornlands",
+        "gloamingforest:clearing",
+        "gloamingforest:oak_savannah"
+      ],
+      "layer_type": "gloamingforest:seam",
+      "salt": 1
+    },
+    "layer_type": "gloamingforest:smooth",
+    "salt": 7000
+  },
+  "keep_biome": "gloamingforest:stream",
+  "layer_type": "gloamingforest:filtered",
+  "salt": 100
+}

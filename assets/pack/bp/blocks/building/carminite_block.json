@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:carminite_block",
+      "identifier": "gloamingforest:carminite_block",
       "menu_category": {
         "category": "construction"
       }
@@ -18,7 +18,7 @@
         "minecraft:is_pickaxe_item_destructible"
       ],
       "minecraft:map_color": "#993333",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_block",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_building_var_carminite_block_north",

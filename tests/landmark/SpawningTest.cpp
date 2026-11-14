@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of the landmarks' controlled spawn areas (F6): HollowHillStructure#canSpawnMob, the half dome
-// of a hollow hill's start box (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// of a hollow hill's start box (upstream commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include "core/landmark/Spawning.h"

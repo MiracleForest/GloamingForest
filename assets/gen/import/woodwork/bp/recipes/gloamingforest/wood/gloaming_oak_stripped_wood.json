@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/gloaming_oak_stripped_wood"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", "##"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:stripped_gloaming_oak_log"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:stripped_gloaming_oak_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:stripped_gloaming_oak_wood",
+      "count": 3
+    }
+  }
+}

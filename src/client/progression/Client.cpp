@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/LockedBiomeToastHandler.java
-//   src/main/java/twilightforest/client/LockedBiomeToast.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/LockedBiomeToastHandler.java
+//   src/main/java/gloamingforest/client/LockedBiomeToast.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U14, client mod:
 // - LockedBiomeToastHandler: on every client tick where the local player's tickCount % 5 == 0,
 //   progression is enforced, the player is neither creative nor spectator and the toasts are not
-//   disabled, the countdown (core::progression::LockedToastCountdown, static as in TF: shared by
+//   disabled, the countdown (core::progression::LockedToastCountdown, static as in upstream: shared by
 //   every world of the process) steps; when it shows, LockedBiomeToast (the restriction's icon,
-//   misc.twilightforest.biome_locked in yellow over misc.twilightforest.biome_locked_2, 10 s).
+//   misc.gloamingforest.biome_locked in yellow over misc.gloamingforest.biome_locked_2, 10 s).
 // - The advancement toast of Java's AdvancementToast (progression.toast): "Advancement Made!" /
 //   "Goal Reached!" / "Challenge Complete!" in -256 (yellow), -30465 (pink) for challenges, over
 //   the advancement's title in white, with its icon (and its variant), for 5 s.
@@ -68,15 +68,15 @@ void showLockedToast(std::string const& icon) {
     ToastInfo info;
     info.what       = "locked_biome";
     info.kind       = "locked_biome";
-    info.title      = ctr("misc.twilightforest.biome_locked", "Biome Locked!");
-    info.body       = ctr("misc.twilightforest.biome_locked_2", "Check your advancements");
+    info.title      = ctr("misc.gloamingforest.biome_locked", "Biome Locked!");
+    info.body       = ctr("misc.gloamingforest.biome_locked_2", "Check your advancements");
     info.icon       = icon;
     info.titleColor = 0xFFFFFF00; // LockedBiomeToast: -256
     info.ms         = 10000;
     queueToast(info);
     {
         std::lock_guard lock(gMutex);
-        gLastToast = ShownToast{"locked_biome", "misc.twilightforest.biome_locked", "misc.twilightforest.biome_locked_2", icon, info.ms};
+        gLastToast = ShownToast{"locked_biome", "misc.gloamingforest.biome_locked", "misc.gloamingforest.biome_locked_2", icon, info.ms};
         ++gLockedToasts;
     }
     log().info("client toast: locked biome ({})", icon);

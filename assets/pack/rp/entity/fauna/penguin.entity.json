@@ -2,18 +2,18 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:penguin",
+      "identifier": "gloamingforest:penguin",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/penguin"
+        "default": "textures/gloamingforest/entity/penguin"
       },
       "geometry": {
-        "default": "geometry.twilightforest.penguin"
+        "default": "geometry.gloamingforest.penguin"
       },
       "animations": {
-        "setup": "animation.twilightforest.penguin.setup"
+        "setup": "animation.gloamingforest.penguin.setup"
       },
       "scripts": {
         "animate": [

@@ -1,6 +1,6 @@
 #pragma once
 
-// U21 (lich): org.joml.SimplexNoise#noise(float, float, float), the static 3D simplex noise TF's
+// U21 (lich): org.joml.SimplexNoise#noise(float, float, float), the static 3D simplex noise upstream's
 // LichYardBox shapes the yard paths, dirt and fence with. The algorithm is Stefan Gustavson's
 // public-domain "simplex noise demystified" code (Ken Perlin's permutation, radius 0.6, scale 32)
 // in float arithmetic as JOML runs it; written here from the algorithm. gtested in tests/lich.

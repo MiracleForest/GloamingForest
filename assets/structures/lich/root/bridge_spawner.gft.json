@@ -1,12 +1,12 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/bridge_spawner",
+  "id": "gloamingforest:lich_tower/bridge_spawner",
   "size": [10, 3, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},
-    {"Name":"twilightforest:twilight_oak_planks"},
-    {"Name":"twilightforest:canopy_fence"},
+    {"Name":"gloamingforest:gloaming_oak_planks"},
+    {"Name":"gloamingforest:canopy_fence"},
     {"Name":"minecraft:spawner"}
   ],
   "blocks": [

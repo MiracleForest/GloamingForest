@@ -1,0 +1,21 @@
+{
+  "type": "gloamingforest:travellers_gear_modifier_shapeless_recipe",
+  "ingredients": [
+    {
+      "item": "gloamingforest:exanimate_essence"
+    },
+    {
+      "item": "gloamingforest:ore_magnet"
+    },
+    {
+      "item": "gloamingforest:liveroot"
+    },
+    {
+      "item": "minecraft:chicken"
+    },
+    {
+      "item": "gloamingforest:travellers_vest"
+    }
+  ],
+  "modifier_key": "gloamingforest:arrow_magnetism"
+}

@@ -1,7 +1,7 @@
 # hydra (U24): Hydra lair, Hydra and fire swamp
 
-Behaviour spec of unit **U24** (`hydra`), written by F15 from The Twilight Forest 4.8 (`9e40a757`). Java paths are
-relative to `src/main/java/twilightforest/`; data paths to `src/generated/resources/`.
+Behaviour spec of unit **U24** (`hydra`), written by F15 from the upstream 4.8 (`9e40a757`). Java paths are
+relative to `src/main/java/gloamingforest/`; data paths to `src/generated/resources/`.
 
 | Unit fact | Value |
 |---|---|
@@ -11,39 +11,39 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, boss, entity, projectile, features, families+blockevents, fx |
 | Config | none of its own (boss drop chests and multiplayer adjuster are F8's `bosses` section) |
 
-**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
-owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
-1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
-`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#gloamingforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are upstream data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (upstream adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). Upstream's damage-type and tool-tier
 tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
 `#neoforge:needs_wood_tool`), never `#c:`.
 
-NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by TF, so owners.tsv has
-no row for them; F1 imports their members with the vanilla tags TF references):
+NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by upstream, so owners.tsv has
+no row for them; F1 imports their members with the vanilla tags upstream references):
 
 | Tag | NeoForge 21.1 members | Bedrock equivalent | Used by |
 |---|---|---|---|
 | `item/#c:dusts/redstone` | `minecraft:redstone` | `minecraft:redstone`; expanded to the item in the Bedrock recipe | encased fire jet and encased smoker recipes |
 
-## 1. Structure `twilightforest:hydra_lair`
+## 1. Structure `gloamingforest:hydra_lair`
 
 Sources: `world/components/structures/type/HydraLairStructure.java`, `world/components/structures/HydraLairComponent.java`,
 `world/components/structures/HollowHillComponent.java` (F7 base `bases/HollowHill.h`), `init/custom/StructureSpeleothemConfigs.java`.
 
 | Field | Value |
 |---|---|
-| Structure type | `twilightforest:hydra_lair` (codec: progression fields + `speleothem_config`) |
-| Structure set | `twilightforest:hydra_lair`, placement `twilightforest:landmark_grid` (F6), weight 1 |
-| Biomes | `#twilightforest:valid_hydra_lair_biomes` (fire swamp) |
+| Structure type | `gloamingforest:hydra_lair` (codec: progression fields + `speleothem_config`) |
+| Structure set | `gloamingforest:hydra_lair`, placement `gloamingforest:landmark_grid` (F6), weight 1 |
+| Biomes | `#gloamingforest:valid_hydra_lair_biomes` (fire swamp) |
 | Step | `surface_structures`, terrain adaptation none, centred in chunk |
-| Progression lock | `advancements_required: [twilightforest:progress_labyrinth]` (F6 enforces protection, hints, the block-breaking ban) |
-| Hint | kobold carrying the book `twilightforest.book.hydralair` (4 pages, title "Notes on the Fire Swamp") |
+| Progression lock | `advancements_required: [gloamingforest:progress_labyrinth]` (F6 enforces protection, hints, the block-breaking ban) |
+| Hint | kobold carrying the book `gloamingforest.book.hydralair` (4 pages, title "Notes on the Fire Swamp") |
 | Decoration clearance | chunk clearance radius 2, adjust elevation false, surface decorations false, underground decorations false, vegetation true |
 | Spawn overrides | every mob category overridden with an empty list over the structure box (no natural spawns inside) |
-| Map icon | `twilightforest:hydra_lair` (map decoration, below) |
-| Speleothems | `speleothem_config: twilightforest:hydra_lair` (F7 data: triangular lattice spacing 4.5, x_offset 3.897186, x_spacing 7.794372, z_offset 2.2498753, z_spacing 4.5; stalactites: ore list iron, coal, copper, glowstone, gold, redstone with ore_chance 1.0, stalactite_chance 1.0, stalagmite_chance 0.0625 using `hill_stone_stalactite`) |
+| Map icon | `gloamingforest:hydra_lair` (map decoration, below) |
+| Speleothems | `speleothem_config: gloamingforest:hydra_lair` (F7 data: triangular lattice spacing 4.5, x_offset 3.897186, x_spacing 7.794372, z_offset 2.2498753, z_spacing 4.5; stalactites: ore list iron, coal, copper, glowstone, gold, redstone with ore_chance 1.0, stalactite_chance 1.0, stalagmite_chance 0.0625 using `hill_stone_stalactite`) |
 
-Pieces: one piece of type `twilightforest:TFHydra` (`HydraLairComponent extends HollowHillComponent`), created by
+Pieces: one piece of type `gloamingforest:TFHydra` (`HydraLairComponent extends HollowHillComponent`), created by
 `getFirstPiece` at (x - 7, y, z - 7) with hill size 2 and y + 2:
 
 - `radius = (2 x 2 + 1) x 8 - 6 = 34`, `hdiam = (2 x 2 + 1) x 16 = 80`; bounding box from (-34, -(3 + 2), -34)
@@ -56,7 +56,7 @@ Pieces: one piece of type `twilightforest:TFHydra` (`HydraLairComponent extends 
      skip when `distSq > rand x 0.9 x radiusSq` (radiusSq = 0.9 x 34^2); ceiling y =
      `floor(cos(sqrt(distSq) / 80 x PI) x 20)`; stalactite when the config rolls one; stalagmite (at y 1) when rolled
      and `(rand x 0.667 + 0.333) x distSq / radiusSq >= 0.333`.
-  4. Place `twilightforest:hydra_boss_spawner` (U5's block) at local (27, 3, 27).
+  4. Place `gloamingforest:hydra_boss_spawner` (U5's block) at local (27, 3, 27).
 - The piece is a translated procedural piece (R19): exact translation, golden volume hash selftest.
 
 Terraformer (`getStructureTerraformer`, F6 `addTerraformer`, density before noise): hill size 2, `radius = (2 x 4 +
@@ -69,13 +69,13 @@ sphere x hollowHill + clamp(max(cutout, innerFloor), -2, 0); result = 8 x lair. 
 x/z spans.) U24 registers this through F6 and needs F5's density helpers (`HollowHillFunction`,
 `FocusedDensityFunction`; ask F5/A8 if missing, else `src/feature/ext/hydra/`).
 
-Map decoration `twilightforest:hydra_lair`: `MapDecorationType(asset twilightforest:hydra_lair, showOnItemFrame
+Map decoration `gloamingforest:hydra_lair`: `MapDecorationType(asset gloamingforest:hydra_lair, showOnItemFrame
 true, mapColor -1, explorationMapElement false, trackCount true)`, sprite `textures/map/decorations/hydra_lair.png`
 (client mod); vanilla clients get the nearest vanilla decoration from F6/U13's mapping.
 
-Strings: `structure.twilightforest.hydra_lair` "Hydra's Lair" (lang owned by U24 per R9).
+Strings: `structure.gloamingforest.hydra_lair` "Hydra's Lair" (lang owned by U24 per R9).
 
-## 2. Boss `twilightforest:hydra` (Hydra extends BaseTFBoss)
+## 2. Boss `gloamingforest:hydra` (Hydra extends BaseTFBoss)
 
 Sources: `entity/boss/Hydra.java`, `HydraHeadContainer.java`, `HydraHead.java`, `HydraNeck.java`, `HydraPart.java`,
 `HydraSmallPart.java`, `entity/TFPart.java`, `entity/boss/BaseTFBoss.java` (F8 boss kit),
@@ -87,22 +87,22 @@ Sources: `entity/boss/Hydra.java`, `HydraHeadContainer.java`, `HydraHead.java`, 
 | Attributes | max_health 360, movement_speed 0.28 |
 | XP | 511 |
 | Boss bar | colour 0x05EBB9, overlay PROGRESS, progress = health / max (F8 `boss::bar`) |
-| Home | restriction point = the spawner position, radius 20; home structure `twilightforest:hydra_lair` |
-| Death chest | `twilightforest:mangrove_chest` (random horizontal facing) when boss drop chests are on |
-| Boss spawner block | `twilightforest:hydra_boss_spawner` (peaceful: the boss turns back into its spawner) |
-| Spawn egg | `twilightforest:hydra_spawn_egg`, 0x142940 / 0x29806b |
+| Home | restriction point = the spawner position, radius 20; home structure `gloamingforest:hydra_lair` |
+| Death chest | `gloamingforest:mangrove_chest` (random horizontal facing) when boss drop chests are on |
+| Boss spawner block | `gloamingforest:hydra_boss_spawner` (peaceful: the boss turns back into its spawner) |
+| Spawn egg | `gloamingforest:hydra_spawn_egg`, 0x142940 / 0x29806b |
 | Spawn placement | ON_GROUND, `Mob::checkMobSpawnRules` (eggs/commands only; no natural spawn) |
 | Synced | `HEAD_NAMES` (string list of 7, F8/U24 serializer), per-part data below |
 | Saved | `NumHeads` (byte bitmask of active heads), `HeadNames` (list of 7 strings), BaseTFBoss home and buffered drops |
 
-BossSpec for F8: `{entityId: twilightforest:hydra, homeStructure: twilightforest:hydra_lair, lootTable:
-twilightforest:entities/hydra, deathChestBlock: twilightforest:mangrove_chest, bar: {rgb: 0x05EBB9}, deathTicks:
+BossSpec for F8: `{entityId: gloamingforest:hydra, homeStructure: gloamingforest:hydra_lair, lootTable:
+gloamingforest:entities/hydra, deathChestBlock: gloamingforest:mangrove_chest, bar: {rgb: 0x05EBB9}, deathTicks:
 200}`.
 
 ### 2.1 Parts
 
 7 head containers (`hc[0..6]`), each with a `HydraHead` (4 x 4) and five `HydraNeck` parts (2 x 2) a..e; plus body
-(`HydraSmallPart` 6 x 6), left leg and right leg (2 x 3 each, registered but never positioned by TF) and tail (6 x 2).
+(`HydraSmallPart` 6 x 6), left leg and right leg (2 x 3 each, registered but never positioned by upstream) and tail (6 x 2).
 Part order: body, leftLeg, rightLeg, tail, then per head: head, necka..necke (39 parts). Part ids are the parent id +
 1 + index (`TFPart.setId(id + 1)`, `assignPartIDs`).
 
@@ -114,7 +114,7 @@ Part order: body, leftLeg, rightLeg, tail, then per head: head, necka..necke (39
   ordinal). Using a named `minecraft:name_tag` on a head (or its neck) names that head, consumes the tag and stores
   the name in `HEAD_NAMES[i]`; a dying head clears its name.
 - Damage to a part goes to `Hydra.attackEntityFromPart`; the hydra itself only accepts damage that bypasses
-  invulnerability (`/kill`), and `isInvulnerableTo` is false for `twilightforest:hydra_mortar` damage.
+  invulnerability (`/kill`), and `isInvulnerableTo` is false for `gloamingforest:hydra_mortar` damage.
 - Not pickable / pushable as a whole; parts are pickable; no knockback; `isOnFire` false; sound volume 2.0.
 
 Body placement (`aiStep`): body at `pos - sin(a) x 3, y + 0.1, + cos(a) x 3` with `a = (yBodyRot + 180) deg`; tail at
@@ -159,7 +159,7 @@ A requested next state replaces the automatic one at the end of the current stat
 A head returning from a secondary attack skips ATTACK_COOLDOWN (goes to IDLE). The state ordinal is synced to the
 head entity for the client.
 
-Poses per head `(xRotation, yRotation, neckLength, mouthOpen)` (TF `setupStateRotations`, heads 0..6):
+Poses per head `(xRotation, yRotation, neckLength, mouthOpen)` (upstream `setupStateRotations`, heads 0..6):
 
 | State | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
 |---|---|---|---|---|---|---|---|
@@ -177,7 +177,7 @@ Poses per head `(xRotation, yRotation, neckLength, mouthOpen)` (TF `setupStateRo
 | ROAR_RAWR | 60,0,9,1 | 10,60,11,1 | 10,-60,11,1 | 50,90,10,1 | 50,-90,10,1 | -10,90,11,1 | -10,-90,11,1 |
 
 Head facing per tick (server): BITE_READY: face the target (5 degrees/tick yaw), clamp yaw offset to [-90, -60] for
-heads 0 and 1 and [60, 90] for head 2 (TF's min/max as written), and set the target point 16 blocks ahead (+1.5 y);
+heads 0 and 1 and [60, 90] for head 2 (upstream's min/max as written), and set the target point 16 blocks ahead (+1.5 y);
 BITING/BITE_ENDING: face the target and add PI/4 to pitch; ROAR_RAWR: face the stored target point (10/tick);
 FLAME_BEGINNING/FLAMING: move the target point toward the target entity by the tracking speed (0.04 per tick, 0.1 on
 Hard) and face it (5/tick); otherwise face the target entity or, idle, a point 30 blocks ahead of the body at y + 3
@@ -185,7 +185,7 @@ Hard) and face it (5/tick); otherwise face the target entity or, idle, a point 3
 
 Per-tick head work (server): activate/deactivate parts by state; respawn counter; state advance; position; facing;
 attacks; sounds. Client: mouth particles 3.5 blocks ahead (+1 y): FLAME_BEGINNING 1 `flame` + 1 `smoke` (always
-visible, jitter +-0.5); FLAMING 5 `twilightforest:large_flame` with spread `0.0075 x (5 + r x 2.5)` and speed
+visible, jitter +-0.5); FLAMING 5 `gloamingforest:large_flame` with spread `0.0075 x (5 + r x 2.5)` and speed
 `1 + r`; BITE_BEGINNING/BITE_READY 1 `splash`; MORTAR_BEGINNING 1 `large_smoke`.
 
 Dying head: deathTime 1 marks the head dead and clears its name; 10/20/30/40/50 mark necks a..e dead; head and necks
@@ -195,14 +195,14 @@ keep hurtTime 20 (red) while DYING.
 
 | Attack | Damage / effect |
 |---|---|
-| Bite (BITING state, every tick) | every living entity (not the hydra) in the head box inflated (0, 1, 0) takes 48 `twilightforest:hydra_bite` damage (attacker = hydra); players get a motion packet `(-step.x x 0.5, 0.1, -step.z x 0.5)` of the head's facing, others `living.knockback(strength = -facing.stepX, xRatio = 0.1, zRatio = -facing.stepZ)` (TF passes the step as the strength and 0.1 as the x ratio: a TF quirk, keep it; do not write `knockback(0.1, -dx, -dz)`. With vanilla `knockback` semantics only a WEST-facing head pushes: strength 1 x (1 - knockback resistance) along -x, y `min(0.4, vy / 2 + strength)` on ground; NORTH / SOUTH give strength 0 and EAST -1, which do nothing). A player blocking with a shield not on cooldown: shatter sound (`item.twilightforest.shield.shatter` for `minecraft:shield`, else `item.twilightforest.knightmetal_shield.shatter`; other units' events, vol 1.0, player voice pitch) and 112 durability damage; then always shield cooldown 200 ticks, stop using, motion (-0.5 step, 0.15) |
-| Flame (FLAMING, every tick) | the entity the head looks at (ray 30 from head y + 1, block clip OUTLINE/ANY, entities in the head box moved along the look by the clipped distances inflated 3, excluding necks a-c and parts of the same hydra): if not fire immune and it takes 19 `twilightforest:hydra_fire` damage, ignite 3 s. Sound `entity.twilightforest.hydra.shoot_fire` every 5 head ticks (vol 0.5 + r, pitch 0.3 + r x 0.7), game event PROJECTILE_SHOOT |
-| Mortar (MORTAR_SHOOTING, every 10 ticks of progress) | spawn a `twilightforest:hydra_mortar`; blasting mode when the head cannot see its target; sound `entity.twilightforest.hydra.shoot` vol 10.0, pitch 1 +- 0.2 |
+| Bite (BITING state, every tick) | every living entity (not the hydra) in the head box inflated (0, 1, 0) takes 48 `gloamingforest:hydra_bite` damage (attacker = hydra); players get a motion packet `(-step.x x 0.5, 0.1, -step.z x 0.5)` of the head's facing, others `living.knockback(strength = -facing.stepX, xRatio = 0.1, zRatio = -facing.stepZ)` (upstream passes the step as the strength and 0.1 as the x ratio: an upstream quirk, keep it; do not write `knockback(0.1, -dx, -dz)`. With vanilla `knockback` semantics only a WEST-facing head pushes: strength 1 x (1 - knockback resistance) along -x, y `min(0.4, vy / 2 + strength)` on ground; NORTH / SOUTH give strength 0 and EAST -1, which do nothing). A player blocking with a shield not on cooldown: shatter sound (`item.gloamingforest.shield.shatter` for `minecraft:shield`, else `item.gloamingforest.knightmetal_shield.shatter`; other units' events, vol 1.0, player voice pitch) and 112 durability damage; then always shield cooldown 200 ticks, stop using, motion (-0.5 step, 0.15) |
+| Flame (FLAMING, every tick) | the entity the head looks at (ray 30 from head y + 1, block clip OUTLINE/ANY, entities in the head box moved along the look by the clipped distances inflated 3, excluding necks a-c and parts of the same hydra): if not fire immune and it takes 19 `gloamingforest:hydra_fire` damage, ignite 3 s. Sound `entity.gloamingforest.hydra.shoot_fire` every 5 head ticks (vol 0.5 + r, pitch 0.3 + r x 0.7), game event PROJECTILE_SHOOT |
+| Mortar (MORTAR_SHOOTING, every 10 ticks of progress) | spawn a `gloamingforest:hydra_mortar`; blasting mode when the head cannot see its target; sound `entity.gloamingforest.hydra.shoot` vol 10.0, pitch 1 +- 0.2 |
 
-Other sounds: `entity.twilightforest.hydra.roar` during ROAR_RAWR every tick (vol 1.25, pitch 0.7 + r x 0.3, game
-event ENTITY_ACTION); `entity.twilightforest.hydra.warn` once at BITE_READY progress 60 (vol 2.0, pitch 0.7 + r x 0.3);
-ambient `entity.twilightforest.hydra.growl`, hurt `entity.twilightforest.hydra.hurt`, death
-`entity.twilightforest.hydra.death` (volume 2.0).
+Other sounds: `entity.gloamingforest.hydra.roar` during ROAR_RAWR every tick (vol 1.25, pitch 0.7 + r x 0.3, game
+event ENTITY_ACTION); `entity.gloamingforest.hydra.warn` once at BITE_READY progress 60 (vol 2.0, pitch 0.7 + r x 0.3);
+ambient `entity.gloamingforest.hydra.growl`, hurt `entity.gloamingforest.hydra.hurt`, death
+`entity.gloamingforest.hydra.death` (volume 2.0).
 
 ### 2.4 Brain (`customServerAiStep`, server, every tick)
 
@@ -237,7 +237,7 @@ head's counter, else `round(damage / 8)` (armour) to both; any damage resets the
 
 `tickDeath`: deathTime + 1; at 1: cancel respawns, alive heads IDLE + hurtTime 200; every 20 ticks up to 140 the head
 `deathTime / 20 - 1` goes DYING; at 200 the hydra is removed (KILLED). Client: 10 particles per tick (`explosion` or
-`poof`) around the body. On death (F8): conquer `twilightforest:hydra_lair`, buffer loot, place the death chest at
+`poof`) around the body. On death (F8): conquer `gloamingforest:hydra_lair`, buffer loot, place the death chest at
 the boss chest location. Peaceful: heads discarded, boss replaced by its spawner at the home point.
 
 ### 2.6 Rendering
@@ -248,20 +248,20 @@ swing `cos(limbSwing x 0.6662) x 1.4 x amount`. Heads and necks render only whil
 name. Bedrock: one actor per part (F8 `addPart`) or a single geometry with bones driven by synced head state/pose
 properties; spike S4 decides (record which in the PR).
 
-### 2.7 Loot `twilightforest:entities/hydra`
+### 2.7 Loot `gloamingforest:entities/hydra`
 
-Pool 1: `twilightforest:hydra_chop` 5..35 + looting 0..1 + `twilightforest:multiplayer_addition` 5..10 per extra
-player; pool 2: `twilightforest:fiery_blood` 7..10 + looting 0..2 + multiplayer 1..3; pool 3:
-`twilightforest:hydra_trophy`. (Items owned by U10 / U8 / U5; the loot function is F10's.)
+Pool 1: `gloamingforest:hydra_chop` 5..35 + looting 0..1 + `gloamingforest:multiplayer_addition` 5..10 per extra
+player; pool 2: `gloamingforest:fiery_blood` 7..10 + looting 0..2 + multiplayer 1..3; pool 3:
+`gloamingforest:hydra_trophy`. (Items owned by U10 / U8 / U5; the loot function is F10's.)
 
-## 3. Hydra mortar `twilightforest:hydra_mortar` (HydraMortar)
+## 3. Hydra mortar `gloamingforest:hydra_mortar` (HydraMortar)
 
 Source: `entity/boss/HydraMortar.java`, `client/renderer/entity/HydraMortarRenderer.java`, `client/model/entity/HydraMortarModel.java`.
 
 - `makeCastedBuilder`: MISC, 0.75 x 0.75, tracking 150, interval 3, **fire immune**, no egg.
 - Spawned 3.5 blocks along the head's look (+1 y), owner = the hydra, `shootFromRotation(head pitch, yaw, -20, 0.5,
   1.0)`; gravity 0.05; `isOnFire` true; pickable with pick radius 1.5.
-- Fuse 80: counts down only while on ground; at 0 detonate. (TF multiplies a copy of the motion by 0.9 on ground and
+- Fuse 80: counts down only while on ground; at 0 detonate. (upstream multiplies a copy of the motion by 0.9 on ground and
   discards it: no friction effect.)
 - Hit block: normal mortar detonates on a side/bottom face, else lands (y motion 0, on ground); a blasting mortar
   detonates on any block.
@@ -270,8 +270,8 @@ Source: `entity/boss/HydraMortar.java`, `client/renderer/entity/HydraMortarRende
 - Detonate: `level.explode(mortar, x, y, z, power, fire, MOB)` with explosion power 4.0 (blasting) or 0.1, **fire =
   mob griefing allowed** (`EventHooks.canEntityGrief`: every mortar explosion starts fires while mob griefing is on),
   interaction MOB (block damage only with the `mobGriefing` rule, drops decayed per `mobExplosionDropDecay`); blasting
-  explosions cap block resistance at 0.8 except blocks in `#twilightforest:common_protections`; then every entity
-  within 1 block that is not fire immune (or is the hydra / a hydra part) takes 18 `twilightforest:hydra_mortar`
+  explosions cap block resistance at 0.8 except blocks in `#gloamingforest:common_protections`; then every entity
+  within 1 block that is not fire immune (or is the hydra / a hydra part) takes 18 `gloamingforest:hydra_mortar`
   damage (indirect, direct = mortar, attacker = owner) and burns 5 s; discard.
 - Being hit (server, attacker present): re-shoot along the attacker's look at speed 1.5, inaccuracy 0.1, airborne,
   fuse + 20; a living attacker becomes the owner (reflected mortars can damage the hydra).
@@ -281,7 +281,7 @@ Source: `entity/boss/HydraMortar.java`, `client/renderer/entity/HydraMortarRende
 ## 4. Boss spawner logic (R20)
 
 `block/entity/spawner/HydraSpawnerBlockEntity.java` + `BossSpawnerBlockEntity.java`: U24 registers
-`boss::registerSpawner({blockId: twilightforest:hydra_boss_spawner, entityId: twilightforest:hydra, range: 50,
+`boss::registerSpawner({blockId: gloamingforest:hydra_boss_spawner, entityId: gloamingforest:hydra, range: 50,
 particle: minecraft:flame})`. Base rules (F8): every tick while a living player is within range and the boss was not
 spawned: client particle at a random point in the block; server (not Peaceful): create the boss, spawn at the block
 below when it has no collision else at the spawner, random yaw, `finalizeSpawn(SPAWNER)`, home = spawner position;
@@ -295,37 +295,37 @@ Sources: `block/FireJetBlock.java`, `block/EncasedFireJetBlock.java`, `block/TFS
 
 | Block | Properties | States | Tool | Light |
 |---|---|---|---|---|
-| `twilightforest:fire_jet` | map colour GRASS, sound GRASS, strength 1.5 / 6.0, random ticks | `state` = idle, popping, flame, timeout (default idle) | shovel (`#minecraft:mineable/shovel`) | 15 while `flame`, else 0 |
-| `twilightforest:encased_fire_jet` | map colour SAND, sound WOOD, strength 1.5 / 6.0, requires correct tool, ignited by lava | same `state` | axe | 15 while `flame` |
-| `twilightforest:smoker` | map colour GRASS, sound GRASS, strength 1.5 / 6.0 | none | shovel | 0 |
-| `twilightforest:encased_smoker` | map colour SAND, sound WOOD, strength 1.5 / 6.0, requires correct tool, ignited by lava | `active` boolean (default false) | axe | 0 |
+| `gloamingforest:fire_jet` | map colour GRASS, sound GRASS, strength 1.5 / 6.0, random ticks | `state` = idle, popping, flame, timeout (default idle) | shovel (`#minecraft:mineable/shovel`) | 15 while `flame`, else 0 |
+| `gloamingforest:encased_fire_jet` | map colour SAND, sound WOOD, strength 1.5 / 6.0, requires correct tool, ignited by lava | same `state` | axe | 15 while `flame` |
+| `gloamingforest:smoker` | map colour GRASS, sound GRASS, strength 1.5 / 6.0 | none | shovel | 0 |
+| `gloamingforest:encased_smoker` | map colour SAND, sound WOOD, strength 1.5 / 6.0, requires correct tool, ignited by lava | `active` boolean (default false) | axe | 0 |
 
-Block entities: `twilightforest:flame_jet` (fire jet + encased fire jet), `twilightforest:smoker` (smoker + encased
+Block entities: `gloamingforest:flame_jet` (fire jet + encased fire jet), `gloamingforest:smoker` (smoker + encased
 smoker). Both keep only an in-memory tick counter (not saved). Path type DAMAGE_FIRE for a fire jet that is not idle.
 
-- **Fire jet random tick** (server, state idle): look for fuel at the block below (`#twilightforest:fire_jet_fuel`
-  block tag = `minecraft:lava`, or a fluid in fluid tag `#twilightforest:fire_jet_fuel` = `#minecraft:lava`), else 3
+- **Fire jet random tick** (server, state idle): look for fuel at the block below (`#gloamingforest:fire_jet_fuel`
+  block tag = `minecraft:lava`, or a fluid in fluid tag `#gloamingforest:fire_jet_fuel` = `#minecraft:lava`), else 3
   tries at random offsets (rand3 - 1, 0, rand3 - 1) on that layer; if found, set the lava to air and the jet to
   `popping`.
-- **Encased fire jet neighbour change**: idle and powered -> `popping` and `block.twilightforest.jet.start` (vol 0.3,
+- **Encased fire jet neighbour change**: idle and powered -> `popping` and `block.gloamingforest.jet.start` (vol 0.3,
   pitch 0.6); `timeout` and not powered -> idle. (Encased jets do not random-tick for lava: only redstone.)
 - **Block entity tick (both jets)**: `popping`: counter + 1; at 80 -> `flame` (server), counter 0; every 20 ticks 8
-  `minecraft:lava` particles at (0.5, 1.5, 0.5) and `block.twilightforest.jet.pop` (vol 0.2 + r x 0.2, pitch 0.9 +
+  `minecraft:lava` particles at (0.5, 1.5, 0.5) and `block.gloamingforest.jet.pop` (vol 0.2 + r x 0.2, pitch 0.9 +
   r x 0.15). `flame`: counter + 1; above 60 -> `idle` (fire jet) or `timeout` (encased), counter 0; client every 2
-  ticks one `large_smoke` and five `twilightforest:large_flame` (centre (0.5, +1, 0.5) speed (0, 0.5, 0) and four at
-  +-1 offsets drifting 0.05 inward); client sounds every 4 ticks `block.twilightforest.jet.active` (vol 1 + r,
-  pitch 0.3 + r x 0.7) and at counter 1 `block.twilightforest.jet.start`; server every 5 ticks every entity in the AABB
+  ticks one `large_smoke` and five `gloamingforest:large_flame` (centre (0.5, +1, 0.5) speed (0, 0.5, 0) and four at
+  +-1 offsets drifting 0.05 inward); client sounds every 4 ticks `block.gloamingforest.jet.active` (vol 1 + r,
+  pitch 0.3 + r x 0.7) and at counter 1 `block.gloamingforest.jet.start`; server every 5 ticks every entity in the AABB
   between the centres of (pos - 2, y, - 2) and (pos + 2, y + 4, + 2) that is not fire immune takes 2
-  `twilightforest:fire_jet` damage (no attacker) and gets 300 fire ticks.
+  `gloamingforest:fire_jet` damage (no attacker) and gets 300 fire ticks.
 - **Encased smoker neighbour change** (server): not active and powered -> active; active and unpowered -> inactive;
-  both play `block.twilightforest.smoker.start` (vol 0.3, pitch 0.6).
+  both play `block.gloamingforest.smoker.start` (vol 0.3, pitch 0.6).
 - **Smoker block entity** (client): every 4 ticks (smoker always, encased smoker while active) one
-  `twilightforest:huge_smoke` at (0.5, 0.95, 0.5) with velocity `(cos(counter / 10) x 0.05, 0.25, sin(counter / 10) x 0.05)`.
+  `gloamingforest:huge_smoke` at (0.5, 0.95, 0.5) with velocity `(cos(counter / 10) x 0.05, 0.25, sin(counter / 10) x 0.05)`.
 
-Block loot (each 1 pool, survives explosion, drops itself): `twilightforest:blocks/fire_jet`,
-`twilightforest:blocks/encased_fire_jet`, `twilightforest:blocks/smoker`, `twilightforest:blocks/encased_smoker`.
-Block items: `twilightforest:fire_jet`, `twilightforest:encased_fire_jet`, `twilightforest:smoker`,
-`twilightforest:encased_smoker` (plain block items).
+Block loot (each 1 pool, survives explosion, drops itself): `gloamingforest:blocks/fire_jet`,
+`gloamingforest:blocks/encased_fire_jet`, `gloamingforest:blocks/smoker`, `gloamingforest:blocks/encased_smoker`.
+Block items: `gloamingforest:fire_jet`, `gloamingforest:encased_fire_jet`, `gloamingforest:smoker`,
+`gloamingforest:encased_smoker` (plain block items).
 
 Models (F1 imports): fire jet / smoker single model; encased fire jet `encased_fire_jet` (idle, timeout) /
 `encased_fire_jet_on` (popping, flame); encased smoker `encased_smoker` / `encased_smoker_on`.
@@ -338,23 +338,23 @@ permutation.
 
 ## 6. Recipes and recipe advancements
 
-- `twilightforest:encased_fire_jet` (shaped, category redstone): `#∴#` / `∴^∴` / `uuu` with `#` =
-  `twilightforest:encased_towerwood`, `∴` = `#c:dusts/redstone`, `^` = `twilightforest:fire_jet`, `u` =
+- `gloamingforest:encased_fire_jet` (shaped, category redstone): `#∴#` / `∴^∴` / `uuu` with `#` =
+  `gloamingforest:encased_towerwood`, `∴` = `#c:dusts/redstone`, `^` = `gloamingforest:fire_jet`, `u` =
   `minecraft:lava_bucket` -> 1 encased fire jet (buckets return empty, vanilla crafting remainder).
-- `twilightforest:encased_smoker` (shaped, redstone): `#∴#` / `∴^∴` / `#∴#` with `^` = `twilightforest:smoker` -> 1.
-- Unlock advancements (F1-generated, R21): `twilightforest:recipes/redstone/encased_fire_jet` (has
-  `twilightforest:fire_jet` or has the recipe) and `twilightforest:recipes/redstone/encased_smoker` (has
-  `twilightforest:smoker`), both rewarding their recipe.
+- `gloamingforest:encased_smoker` (shaped, redstone): `#∴#` / `∴^∴` / `#∴#` with `^` = `gloamingforest:smoker` -> 1.
+- Unlock advancements (F1-generated, R21): `gloamingforest:recipes/redstone/encased_fire_jet` (has
+  `gloamingforest:fire_jet` or has the recipe) and `gloamingforest:recipes/redstone/encased_smoker` (has
+  `gloamingforest:smoker`), both rewarding their recipe.
 
 ## 7. Features
 
 | Id | Kind | Definition |
 |---|---|---|
-| `twilightforest:fire_jet` | feature type | `FireJetFeature` (`world/components/feature/FireJetFeature.java`), config `BlockStateConfiguration` |
-| `twilightforest:fire_jet` | configured feature | type `twilightforest:fire_jet`, state `twilightforest:fire_jet[state=idle]` |
-| `twilightforest:smoker` | configured feature | type `twilightforest:fire_jet`, state `twilightforest:smoker` |
-| `twilightforest:fire_jet` | placed feature | heightmap `WORLD_SURFACE_WG`, in_square, biome |
-| `twilightforest:smoker` | placed feature | heightmap `WORLD_SURFACE_WG`, in_square, biome |
+| `gloamingforest:fire_jet` | feature type | `FireJetFeature` (`world/components/feature/FireJetFeature.java`), config `BlockStateConfiguration` |
+| `gloamingforest:fire_jet` | configured feature | type `gloamingforest:fire_jet`, state `gloamingforest:fire_jet[state=idle]` |
+| `gloamingforest:smoker` | configured feature | type `gloamingforest:fire_jet`, state `gloamingforest:smoker` |
+| `gloamingforest:fire_jet` | placed feature | heightmap `WORLD_SURFACE_WG`, in_square, biome |
+| `gloamingforest:smoker` | placed feature | heightmap `WORLD_SURFACE_WG`, in_square, biome |
 
 Both placed features are in the fire swamp biome's VEGETAL_DECORATION step (U1's biome JSON, by string).
 
@@ -368,10 +368,10 @@ is no lava, and stone under the whole 5 x 5 at y - 3. Returns true.
 
 | Id | message_id (en_us) | Effects | Exhaustion | Tags |
 |---|---|---|---|---|
-| `twilightforest:fire_jet` | `twilightforest.fireJet` ("%1$s accidentally walked into a Fire Jet") | burning | 0.1 | `#minecraft:is_fire`, `#neoforge:is_environment`, `#neoforge:is_physical`, `#minecraft:ignites_armor_stands`, `#minecraft:no_knockback` |
-| `twilightforest:hydra_bite` | `twilightforest.hydraBite` ("%1$s's skin was ripped off by the Hydra") | hurt | 0.0 | `#neoforge:is_physical` |
-| `twilightforest:hydra_fire` | `twilightforest.hydraFire` ("%1$s was roasted alive by the Hydra") | hurt | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
-| `twilightforest:hydra_mortar` | `onFire` (vanilla "%1$s burned to death") | burning | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
+| `gloamingforest:fire_jet` | `gloamingforest.fireJet` ("%1$s accidentally walked into a Fire Jet") | burning | 0.1 | `#minecraft:is_fire`, `#neoforge:is_environment`, `#neoforge:is_physical`, `#minecraft:ignites_armor_stands`, `#minecraft:no_knockback` |
+| `gloamingforest:hydra_bite` | `gloamingforest.hydraBite` ("%1$s's skin was ripped off by the Hydra") | hurt | 0.0 | `#neoforge:is_physical` |
+| `gloamingforest:hydra_fire` | `gloamingforest.hydraFire` ("%1$s was roasted alive by the Hydra") | hurt | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
+| `gloamingforest:hydra_mortar` | `onFire` (vanilla "%1$s burned to death") | burning | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
 
 All scale `when_caused_by_living_non_player`. Hydra bite/fire sources name the hydra entity type as attacker even
 without an attacker entity (`getEntityDamageSource(..., TFEntities.HYDRA)`), so death messages say "the Hydra".
@@ -380,8 +380,8 @@ without an attacker entity (`getEntityDamageSource(..., TFEntities.HYDRA)`), so 
 
 | Id | Client behaviour (`client/particle/`) |
 |---|---|
-| `twilightforest:large_flame` | `LargeFlameParticle`: sprite `minecraft:flame`; velocity = 0.01 x random + given; size x 5; lifetime `int(8 / (rand x 0.8 + 0.2)) + 4`; no physics; opaque sheet; size shrinks by `1 - age_frac^2 x 0.5`; brightness rises to full with age; each tick `yd += 0.004`, velocity x 0.96 (x 0.7 horizontally on ground) |
-| `twilightforest:huge_smoke` | `SmokeScaleParticle`: vanilla smoke particle at scale 4.0, sprites `minecraft:generic_7..0` |
+| `gloamingforest:large_flame` | `LargeFlameParticle`: sprite `minecraft:flame`; velocity = 0.01 x random + given; size x 5; lifetime `int(8 / (rand x 0.8 + 0.2)) + 4`; no physics; opaque sheet; size shrinks by `1 - age_frac^2 x 0.5`; brightness rises to full with age; each tick `yd += 0.004`, velocity x 0.96 (x 0.7 horizontally on ground) |
+| `gloamingforest:huge_smoke` | `SmokeScaleParticle`: vanilla smoke particle at scale 4.0, sprites `minecraft:generic_7..0` |
 
 Both are emitted by id through `gf::fx::particle` (R10); F12 pre-declares the native factories.
 
@@ -389,25 +389,25 @@ Both are emitted by id through `gf::fx::particle` (R10); F12 pre-declares the na
 
 | Tag | Values | Used by |
 |---|---|---|
-| `block/#twilightforest:fire_jet_fuel` | `minecraft:lava` | fire jet random tick |
-| `fluid/#twilightforest:fire_jet_fuel` | `#minecraft:lava` | fire jet random tick |
-| `banner_pattern/#twilightforest:pattern_item/hydra` | `twilightforest:hydra` (U5's banner pattern) | the hydra banner pattern item (U5) |
+| `block/#gloamingforest:fire_jet_fuel` | `minecraft:lava` | fire jet random tick |
+| `fluid/#gloamingforest:fire_jet_fuel` | `#minecraft:lava` | fire jet random tick |
+| `banner_pattern/#gloamingforest:pattern_item/hydra` | `gloamingforest:hydra` (U5's banner pattern) | the hydra banner pattern item (U5) |
 
 ## 11. Sound events (owned by U24)
 
-| Event | Subtitle | TF source |
+| Event | Subtitle | upstream source |
 |---|---|---|
-| `entity.twilightforest.hydra.growl` | Hydra growls | ambient (3 variants) |
-| `entity.twilightforest.hydra.hurt` | Hydra hurts | hurt (4) |
-| `entity.twilightforest.hydra.death` | Hydra roars in defeat | death |
-| `entity.twilightforest.hydra.roar` | Hydra roars | ROAR_RAWR (2) |
-| `entity.twilightforest.hydra.warn` | Hydra prepares to bite | BITE_READY tick 60 |
-| `entity.twilightforest.hydra.shoot` | Hydra shoots mortar | mortar launch (vanilla ghast shoot in TF) |
-| `entity.twilightforest.hydra.shoot_fire` | Hydra spews fire | flame breath (ghast shoot) |
-| `block.twilightforest.jet.start` | Fire Jet activates | jet start (comparator click in TF) |
-| `block.twilightforest.jet.pop` | Fire Jet pops | popping (lava pop) |
-| `block.twilightforest.jet.active` | Fire Jet flares | flame (ghast shoot) |
-| `block.twilightforest.smoker.start` | Smoker activates | encased smoker toggle (comparator click) |
+| `entity.gloamingforest.hydra.growl` | Hydra growls | ambient (3 variants) |
+| `entity.gloamingforest.hydra.hurt` | Hydra hurts | hurt (4) |
+| `entity.gloamingforest.hydra.death` | Hydra roars in defeat | death |
+| `entity.gloamingforest.hydra.roar` | Hydra roars | ROAR_RAWR (2) |
+| `entity.gloamingforest.hydra.warn` | Hydra prepares to bite | BITE_READY tick 60 |
+| `entity.gloamingforest.hydra.shoot` | Hydra shoots mortar | mortar launch (vanilla ghast shoot in upstream) |
+| `entity.gloamingforest.hydra.shoot_fire` | Hydra spews fire | flame breath (ghast shoot) |
+| `block.gloamingforest.jet.start` | Fire Jet activates | jet start (comparator click in upstream) |
+| `block.gloamingforest.jet.pop` | Fire Jet pops | popping (lava pop) |
+| `block.gloamingforest.jet.active` | Fire Jet flares | flame (ghast shoot) |
+| `block.gloamingforest.smoker.start` | Smoker activates | encased smoker toggle (comparator click) |
 
 ## 12. Acceptance (selftests `hydra.*`, dx 2400-2499)
 

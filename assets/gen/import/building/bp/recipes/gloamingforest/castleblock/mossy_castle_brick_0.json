@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:castleblock/mossy_castle_brick_0"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:vine"
+      },
+      {
+        "item": "gloamingforest:castle_brick"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:castle_brick"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mossy_castle_brick"
+    }
+  }
+}

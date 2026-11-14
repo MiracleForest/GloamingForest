@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   -Check assembles the packs, lang, data and structures into a scratch directory and runs every
-  check of the build (integer block states, permutation budget, dangling twilightforest:
+  check of the build (integer block states, permutation budget, dangling gloamingforest:
   references, owners of every asset file, the pack path probes, the ARR hash guard), then holds the
   pack path probes to tools/ci/ownership.ps1's owner rule as well (-PackProbes). CI runs it on every push; the build
   (tools/build.ps1) runs the same assembly after linking.

@@ -8,7 +8,7 @@ modId = "gf_oracle"
 version = "1.0.0"
 displayName = "GloamingForest oracle dumper"
 description = '''
-Server-side /gforacle dump command: writes derived Twilight Forest facts (biome, height and landmark grids, mob attributes, loot statistics, recipes, uncrafting outputs, RNG and noise reference values) as JSON for GloamingForest's golden tests.
+Server-side /gforacle dump command: writes derived Gloaming Forest facts (biome, height and landmark grids, mob attributes, loot statistics, recipes, uncrafting outputs, RNG and noise reference values) as JSON for GloamingForest's golden tests.
 '''
 
 [[dependencies.gf_oracle]]
@@ -19,7 +19,7 @@ ordering = "NONE"
 side = "SERVER"
 
 [[dependencies.gf_oracle]]
-modId = "twilightforest"
+modId = "gloamingforest"
 type = "required"
 versionRange = "[4.8,)"
 ordering = "AFTER"

@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/RegistrationEvents.java (registerSpawnPlacements)
-//   src/main/java/twilightforest/events/MiscEvents.java (addPrey)
-//   src/main/java/twilightforest/data/DataMapGenerator.java (the parrot imitations)
-//   src/main/java/twilightforest/entity/passive/{FlyingBird,Squirrel,DwarfRabbit,Bighorn}.java (getWalkTargetValue)
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/RegistrationEvents.java (registerSpawnPlacements)
+//   src/main/java/gloamingforest/events/MiscEvents.java (addPrey)
+//   src/main/java/gloamingforest/data/DataMapGenerator.java (the parrot imitations)
+//   src/main/java/gloamingforest/entity/passive/{FlyingBird,Squirrel,DwarfRabbit,Bighorn}.java (getWalkTargetValue)
 //   net/minecraft/world/entity/animal/Parrot.java (vanilla, imitateNearbyMobs)
 //   net/minecraft/world/entity/ai/goal/target/NearestAttackableTargetGoal.java, NonTameRandomTargetGoal.java (vanilla)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U16 in the world: the spawn placements and spawn rules of the ten mobs (U1's biome tables name
 // them by string), the prey goals vanilla cats, ocelots, foxes and wolves get (addPrey), and the
-// parrots' imitations of TF's mobs (the neoforge:parrot_imitations data map: Bedrock's parrots
+// parrots' imitations of upstream's mobs (the neoforge:parrot_imitations data map: Bedrock's parrots
 // imitate only vanilla mobs, so a server tick over loaded parrots does Parrot#imitateNearbyMobs).
 #include <algorithm>
 #include <cmath>
@@ -90,7 +90,7 @@ int rawBrightness(BlockSource& region, BlockPos const& pos, SpawnReason reason) 
     return std::max(sky, 0);
 }
 
-/// DimensionType#brightness of the Twilight Forest (ambient light 0): light / (4 - 3 light / 15).
+/// DimensionType#brightness of the Gloaming Forest (ambient light 0): light / (4 - 3 light / 15).
 float brightness(int light) {
     float f = static_cast<float>(light) / 15.0f;
     return f / (4.0f - 3.0f * f);
@@ -106,10 +106,10 @@ bool checkAnimalSpawnRules(BlockSource& region, std::string const&, BlockPos con
     return rawBrightness(region, pos, reason) > 8;
 }
 
-/// Penguin#canSpawn: #twilightforest:penguins_spawnable_on (#minecraft:ice) below.
+/// Penguin#canSpawn: #gloamingforest:penguins_spawnable_on (#minecraft:ice) below.
 bool checkPenguinSpawn(BlockSource& region, std::string const&, BlockPos const& pos, SpawnReason, gf::spawn::RandomSource&) {
     auto const& below = region.getBlock(BlockPos{pos.x, pos.y - 1, pos.z});
-    if (kit::hasTag(below, "twilightforest:penguins_spawnable_on") || kit::hasTag(below, "minecraft:ice")) return true;
+    if (kit::hasTag(below, "gloamingforest:penguins_spawnable_on") || kit::hasTag(below, "minecraft:ice")) return true;
     auto id = kit::javaId(below);
     return id == "minecraft:ice" || id == "minecraft:packed_ice" || id == "minecraft:blue_ice" || id == "minecraft:frosted_ice";
 }
@@ -264,15 +264,15 @@ void parrotTick(Actor& parrot) {
     auto* mob = list[static_cast<std::size_t>(r.nextInt(static_cast<int>(list.size())))];
     if (mob->isSilent()) return;
     auto sound = parrotImitation(mob->getTypeName());
-    if (sound.starts_with("twilightforest:")) sound = sound.substr(15);
+    if (sound.starts_with("gloamingforest:")) sound = sound.substr(15);
     gf::fx::sound(parrot.getDimension(), sound, parrot.getFeetPos(), 0.7f, core::fauna::parrotPitch(r));
 }
 
 } // namespace
 
 std::string parrotImitation(std::string const& entityId) {
-    // only TF's entries: Bedrock's parrots imitate the vanilla mobs themselves
-    if (!entityId.starts_with("twilightforest:")) return {};
+    // only upstream's entries: Bedrock's parrots imitate the vanilla mobs themselves
+    if (!entityId.starts_with("gloamingforest:")) return {};
     auto const* v = gf::datamaps::get("neoforge:parrot_imitations", entityId);
     if (!v || !v->is_object()) return {};
     return v->value("sound", std::string{});

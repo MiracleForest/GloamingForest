@@ -1,7 +1,7 @@
 // U6 flora: selftests (flora.*, dx 600..699; rows 5 blocks apart, dz 0..4).
 //
 // The interactions are the real handlers (gf::interactions::dispatchUseOn with the test player's
-// held stack); growth runs TF's random tick with a scripted random source; the features place on a
+// held stack); growth runs upstream's random tick with a scripted random source; the features place on a
 // flat area through a world generation region over the live world.
 
 #include <algorithm>
@@ -180,7 +180,7 @@ GF_REGISTER_SELFTEST("flora.bush_growth", [](Context& ctx) -> ll::coro::CoroTask
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
     // a raspberry bush on grass survives and grows with daylight (1/20 per random tick)
-    ctx.require(ctx.setBlock(p, "twilightforest:raspberry_bush", {{st::Age, 0}}), "raspberry bush placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:raspberry_bush", {{st::Age, 0}}), "raspberry bush placed");
     auto const* bush = at(ctx, p);
     ctx.check(bushes::canSurvive(*region, bp(p), *bush), "the bush survives on grass");
     ctx.check(bushes::canGrowAt(*region, bp(p), *bush), "the bush can grow in daylight");
@@ -191,25 +191,25 @@ GF_REGISTER_SELFTEST("flora.bush_growth", [](Context& ctx) -> ll::coro::CoroTask
     bushes::randomTick(*region, bp(p), noGrow);
     ctx.check(stateAt(ctx, p, st::Age) == 1, "a failed roll (nextInt(20) != 0) leaves it");
     // grown bushes grow upwards (1/20, then 1/3) while the column below is short
-    ctx.setBlock(p, "twilightforest:raspberry_bush", {{st::Age, 2}});
+    ctx.setBlock(p, "gloamingforest:raspberry_bush", {{st::Age, 2}});
     ScriptedRandom up{{0, 0, 0}};
     bushes::randomTick(*region, bp(p), up);
-    ctx.check(ctx.blockAt(p.offset(0, 1, 0)) == "twilightforest:raspberry_bush", "a grown bush puts a new bush above it");
+    ctx.check(ctx.blockAt(p.offset(0, 1, 0)) == "gloamingforest:raspberry_bush", "a grown bush puts a new bush above it");
     ctx.check(stateAt(ctx, p.offset(0, 1, 0), st::Age) == 0, "the new bush is young");
     ctx.cleanupBlock(p.offset(0, 1, 0));
     // a bush on a mature bush survives (TFBushBlock#canSurvive), not on stone
-    ctx.check(bushes::canSurvive(*region, bp(p.offset(0, 1, 0)), *game::blockWith("twilightforest:raspberry_bush")), "a bush stacks on a grown bush");
+    ctx.check(bushes::canSurvive(*region, bp(p.offset(0, 1, 0)), *game::blockWith("gloamingforest:raspberry_bush")), "a bush stacks on a grown bush");
     ctx.setBlock(p.offset(1, -1, 0), "minecraft:stone");
-    ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("twilightforest:raspberry_bush")), "a berry bush does not survive on stone");
+    ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("gloamingforest:raspberry_bush")), "a berry bush does not survive on stone");
     // dark tower bushes need netherrack, oreberries stone and the dark (< 13 light)
     ctx.setBlock(p.offset(2, -1, 0), "minecraft:netherrack");
-    ctx.check(bushes::canSurvive(*region, bp(p.offset(2, 0, 0)), *game::blockWith("twilightforest:skyberry_bush")), "a skyberry bush survives on netherrack");
-    ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("twilightforest:skyberry_bush")), "a skyberry bush does not survive on stone");
-    ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("twilightforest:iron_oreberry")), "an iron oreberry does not survive in daylight");
-    ctx.check(bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("twilightforest:essence_oreberry")), "an essence oreberry ignores the light");
-    ctx.check(bushes::berryTable("twilightforest:iron_oreberry") == "twilightforest:blocks/iron_oreberry_bush_berries"
-                  && bushes::berryTable("twilightforest:essence_oreberry") == "twilightforest:blocks/essence_berry_bush_berries"
-                  && bushes::berryTable("twilightforest:raspberry_bush") == "twilightforest:blocks/raspberry_bush_berries",
+    ctx.check(bushes::canSurvive(*region, bp(p.offset(2, 0, 0)), *game::blockWith("gloamingforest:skyberry_bush")), "a skyberry bush survives on netherrack");
+    ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("gloamingforest:skyberry_bush")), "a skyberry bush does not survive on stone");
+    ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("gloamingforest:iron_oreberry")), "an iron oreberry does not survive in daylight");
+    ctx.check(bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("gloamingforest:essence_oreberry")), "an essence oreberry ignores the light");
+    ctx.check(bushes::berryTable("gloamingforest:iron_oreberry") == "gloamingforest:blocks/iron_oreberry_bush_berries"
+                  && bushes::berryTable("gloamingforest:essence_oreberry") == "gloamingforest:blocks/essence_berry_bush_berries"
+                  && bushes::berryTable("gloamingforest:raspberry_bush") == "gloamingforest:blocks/raspberry_bush_berries",
               "berry loot tables");
     co_return;
 });
@@ -217,21 +217,21 @@ GF_REGISTER_SELFTEST("flora.bush_growth", [](Context& ctx) -> ll::coro::CoroTask
 GF_REGISTER_SELFTEST("flora.bush_harvest", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)co_await ctx.flatArea(610, 5);
     auto p = ctx.testPos(610, 2);
-    ctx.require(ctx.setBlock(p, "twilightforest:raspberry_bush", {{st::Age, 3}}), "ripe raspberry bush placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:raspberry_bush", {{st::Age, 3}}), "ripe raspberry bush placed");
     auto& player = ctx.player();
     player.getInventory().removeAllItems();
     ctx.check(click(ctx, p) == ia::Result::Consume, "an empty hand picks a ripe bush");
     ctx.check(stateAt(ctx, p, st::Age) == 2, "the picked bush is age 2");
-    ctx.check(inventoryCount(ctx.player(), "twilightforest:raspberry") >= 1, "the raspberries went into the inventory");
+    ctx.check(inventoryCount(ctx.player(), "gloamingforest:raspberry") >= 1, "the raspberries went into the inventory");
     // bone meal: a young bush grows to age 1..2 and the meal is used
-    ctx.setBlock(p.offset(1, 0, 0), "twilightforest:blueberry_bush", {{st::Age, 0}});
+    ctx.setBlock(p.offset(1, 0, 0), "gloamingforest:blueberry_bush", {{st::Age, 0}});
     click(ctx, p.offset(1, 0, 0), "minecraft:bone_meal", 2);
     int age = stateAt(ctx, p.offset(1, 0, 0), st::Age);
     ctx.check(age >= 1 && age <= 2, "bone meal grows a young bush to age 1..2 (age " + std::to_string(age) + ")");
     ctx.check(game::items::countOf(ctx.player().getSelectedItem()) == 1, "one bone meal used");
     // oreberries take no bone meal
     ctx.setBlock(p.offset(2, -1, 0), "minecraft:stone");
-    ctx.setBlock(p.offset(2, 0, 0), "twilightforest:iron_oreberry", {{st::Age, 0}});
+    ctx.setBlock(p.offset(2, 0, 0), "gloamingforest:iron_oreberry", {{st::Age, 0}});
     click(ctx, p.offset(2, 0, 0), "minecraft:bone_meal", 2);
     ctx.check(stateAt(ctx, p.offset(2, 0, 0), st::Age) == 0, "an oreberry bush ignores bone meal");
     co_return;
@@ -242,14 +242,14 @@ GF_REGISTER_SELFTEST("flora.bush_special", [](Context& ctx) -> ll::coro::CoroTas
     auto p = ctx.testPos(620, 2);
     // a dark tower bush dies (with its drops) when nylium comes below it
     ctx.setBlock(p.offset(0, -1, 0), "minecraft:netherrack");
-    ctx.require(ctx.setBlock(p, "twilightforest:stingberry_bush", {{st::Age, 2}}), "stingberry bush placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:stingberry_bush", {{st::Age, 2}}), "stingberry bush placed");
     ctx.setBlock(p.offset(0, -1, 0), "minecraft:crimson_nylium");
     co_await ctx.ticks(4);
-    ctx.check(ctx.blockAt(p) != "twilightforest:stingberry_bush", "the stingberry bush died on nylium");
-    // an oreberry bush hurts what stands in it (1 damage of twilightforest:oreberry)
+    ctx.check(ctx.blockAt(p) != "gloamingforest:stingberry_bush", "the stingberry bush died on nylium");
+    // an oreberry bush hurts what stands in it (1 damage of gloamingforest:oreberry)
     auto q = p.offset(2, 0, 0);
     ctx.setBlock(q.offset(0, -1, 0), "minecraft:stone");
-    ctx.setBlock(q, "twilightforest:essence_oreberry", {{st::Age, 0}});
+    ctx.setBlock(q, "gloamingforest:essence_oreberry", {{st::Age, 0}});
     auto& player = ctx.player();
     player.setPlayerGameType(GameType::Survival);
     float before = static_cast<float>(player.getHealth());
@@ -266,21 +266,21 @@ GF_REGISTER_SELFTEST("flora.torchberries", [](Context& ctx) -> ll::coro::CoroTas
     (void)co_await ctx.flatArea(630, 5);
     auto p   = ctx.testPos(630, 2).offset(0, 2, 0);
     ctx.setBlock(p.offset(0, 1, 0), "minecraft:dirt");
-    ctx.require(ctx.setBlock(p, "twilightforest:torchberry_plant", {{st::Berries, true}}), "torchberry plant placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:torchberry_plant", {{st::Berries, true}}), "torchberry plant placed");
     clearItemsNear(ctx, p);
-    auto before = stats::value(ctx.player(), "twilightforest:torchberries_harvested");
+    auto before = stats::value(ctx.player(), "gloamingforest:torchberries_harvested");
     ctx.check(click(ctx, p) == ia::Result::Consume, "a plant with berries is harvested");
     ctx.check(stateAt(ctx, p, st::Berries) == 0, "the plant has no berries left");
-    ctx.check(stats::value(ctx.player(), "twilightforest:torchberries_harvested") == before + 1, "stat torchberries_harvested + 1");
+    ctx.check(stats::value(ctx.player(), "gloamingforest:torchberries_harvested") == before + 1, "stat torchberries_harvested + 1");
     co_await ctx.ticks(1);
-    ctx.check(itemsNear(ctx, p, "twilightforest:torchberries") == 1, "one torchberries item dropped");
+    ctx.check(itemsNear(ctx, p, "gloamingforest:torchberries") == 1, "one torchberries item dropped");
     // bone meal brings the berries back
     click(ctx, p, "minecraft:bone_meal", 1);
     ctx.check(stateAt(ctx, p, st::Berries) == 1, "bone meal grows torchberries");
     // the plant hangs: without the dirt it pops
     ctx.setBlock(p.offset(0, 1, 0), "minecraft:air");
     co_await ctx.ticks(3);
-    ctx.check(ctx.blockAt(p) != "twilightforest:torchberry_plant", "a torchberry plant without support pops");
+    ctx.check(ctx.blockAt(p) != "gloamingforest:torchberry_plant", "a torchberry plant without support pops");
     clearItemsNear(ctx, p);
     co_return;
 });
@@ -288,19 +288,19 @@ GF_REGISTER_SELFTEST("flora.torchberries", [](Context& ctx) -> ll::coro::CoroTas
 GF_REGISTER_SELFTEST("flora.roots", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)co_await ctx.flatArea(640, 5);
     auto p = ctx.testPos(640, 2).offset(0, 3, 0);
-    ctx.setBlock(p.offset(0, 1, 0), "twilightforest:root");
-    ctx.require(ctx.setBlock(p, "twilightforest:root_strand"), "root strand placed");
+    ctx.setBlock(p.offset(0, 1, 0), "gloamingforest:root");
+    ctx.require(ctx.setBlock(p, "gloamingforest:root_strand"), "root strand placed");
     click(ctx, p, "minecraft:bone_meal", 1);
-    ctx.check(ctx.blockAt(p.offset(0, -1, 0)) == "twilightforest:root_strand", "bone meal grows the strand down");
+    ctx.check(ctx.blockAt(p.offset(0, -1, 0)) == "gloamingforest:root_strand", "bone meal grows the strand down");
     ctx.cleanupBlock(p.offset(0, -1, 0));
     // the liveroot block strips into roots with an axe and drops a liveroot
     auto q = ctx.testPos(640, 2).offset(2, 0, 0);
-    ctx.setBlock(q, "twilightforest:liveroot_block");
+    ctx.setBlock(q, "gloamingforest:liveroot_block");
     clearItemsNear(ctx, q);
     ctx.check(click(ctx, q, "minecraft:iron_axe", 1) == ia::Result::Consume, "an axe strips the liveroot block");
-    ctx.check(ctx.blockAt(q) == "twilightforest:root", "the liveroot block became roots");
+    ctx.check(ctx.blockAt(q) == "gloamingforest:root", "the liveroot block became roots");
     co_await ctx.ticks(1);
-    ctx.check(itemsNear(ctx, q, "twilightforest:liveroot") == 1, "one liveroot dropped");
+    ctx.check(itemsNear(ctx, q, "gloamingforest:liveroot") == 1, "one liveroot dropped");
     clearItemsNear(ctx, q);
     co_return;
 });
@@ -308,7 +308,7 @@ GF_REGISTER_SELFTEST("flora.roots", [](Context& ctx) -> ll::coro::CoroTask<> {
 GF_REGISTER_SELFTEST("flora.fallen_leaves", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)co_await ctx.flatArea(650, 5);
     auto p = ctx.testPos(650, 2);
-    ctx.require(ctx.setBlock(p, "twilightforest:fallen_leaves", {{st::Layers, 1}}), "fallen leaves placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:fallen_leaves", {{st::Layers, 1}}), "fallen leaves placed");
     {
         auto& player = ctx.player();
         player.setPlayerGameType(GameType::Survival);
@@ -326,15 +326,15 @@ GF_REGISTER_SELFTEST("flora.fallen_leaves", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(game::items::countOf(ctx.player().getSelectedItem()) == 3, "one fallen leaves item used");
     // unsupported plants pop
     auto q = p.offset(2, 0, 0);
-    ctx.setBlock(q, "twilightforest:mayapple");
+    ctx.setBlock(q, "gloamingforest:mayapple");
 
     ctx.setBlock(q.offset(0, -1, 0), "minecraft:air");
     co_await ctx.ticks(3);
-    ctx.check(ctx.blockAt(q) != "twilightforest:mayapple", "a mayapple without ground pops");
+    ctx.check(ctx.blockAt(q) != "gloamingforest:mayapple", "a mayapple without ground pops");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    ctx.check(!survives(*region, bp(q), *game::blockWith("twilightforest:mushgloom")).value_or(true), "a mushgloom needs a sturdy block");
-    ctx.check(survives(*region, bp(p.offset(1, 0, 0)), *game::blockWith("twilightforest:moss_patch")).value_or(false), "a moss patch stays on grass");
+    ctx.check(!survives(*region, bp(q), *game::blockWith("gloamingforest:mushgloom")).value_or(true), "a mushgloom needs a sturdy block");
+    ctx.check(survives(*region, bp(p.offset(1, 0, 0)), *game::blockWith("gloamingforest:moss_patch")).value_or(false), "a moss patch stays on grass");
     clearItemsNear(ctx, q);
     co_return;
 });
@@ -347,16 +347,16 @@ GF_REGISTER_SELFTEST("flora.huge_lily_pad", [](Context& ctx) -> ll::coro::CoroTa
     char const* pieces[4] = {"nw", "ne", "sw", "se"};
     int         i         = 0;
     for (int dz = 0; dz < 2; ++dz)
-        for (int dx = 0; dx < 2; ++dx) ctx.setBlock(p.offset(dx, 0, dz), "twilightforest:huge_lily_pad", {{st::Facing, "north"}, {st::Piece, pieces[i++]}});
+        for (int dx = 0; dx < 2; ++dx) ctx.setBlock(p.offset(dx, 0, dz), "gloamingforest:huge_lily_pad", {{st::Facing, "north"}, {st::Piece, pieces[i++]}});
     co_await ctx.ticks(2);
-    ctx.check(ctx.blockAt(p.offset(1, 0, 1)) == "twilightforest:huge_lily_pad", "the pad stays on water");
+    ctx.check(ctx.blockAt(p.offset(1, 0, 1)) == "gloamingforest:huge_lily_pad", "the pad stays on water");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
     destroyBlock(*region, bp(p.offset(1, 0, 1)), false);
     co_await ctx.ticks(3);
     int left = 0;
     for (int dz = 0; dz < 2; ++dz)
-        for (int dx = 0; dx < 2; ++dx) left += ctx.blockAt(p.offset(dx, 0, dz)) == "twilightforest:huge_lily_pad";
+        for (int dx = 0; dx < 2; ++dx) left += ctx.blockAt(p.offset(dx, 0, dz)) == "gloamingforest:huge_lily_pad";
     ctx.check(left == 0, "breaking one piece breaks the whole pad (" + std::to_string(left) + " left)");
     co_return;
 });
@@ -366,34 +366,34 @@ GF_REGISTER_SELFTEST("flora.huge_lily_pad", [](Context& ctx) -> ll::coro::CoroTa
 GF_REGISTER_SELFTEST("flora.squish_bug", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)co_await ctx.flatArea(670, 5);
     auto p = ctx.testPos(670, 2);
-    ctx.require(ctx.setBlock(p, "twilightforest:firefly", {{st::Facing, "up"}}), "firefly placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:firefly", {{st::Facing, "up"}}), "firefly placed");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
     static int triggers = 0;
     static bool listening = false;
     if (!listening) {
         listening = true;
-        progression::onTrigger("twilightforest:kill_bug", [](Player&, Json const& data) {
-            if (data.value("block", std::string{}) == "twilightforest:firefly") ++triggers;
+        progression::onTrigger("gloamingforest:kill_bug", [](Player&, Json const& data) {
+            if (data.value("block", std::string{}) == "gloamingforest:firefly") ++triggers;
         });
     }
     int  before = triggers;
-    auto stat   = stats::value(ctx.player(), "twilightforest:bugs_squished");
+    auto stat   = stats::value(ctx.player(), "gloamingforest:bugs_squished");
     clearItemsNear(ctx, p);
     ctx.check(critters::squish(*region, bp(p), nullptr, &ctx.player()), "a projectile squishes the firefly");
-    ctx.check(ctx.blockAt(p) != "twilightforest:firefly", "the firefly is gone");
-    ctx.check(stats::value(ctx.player(), "twilightforest:bugs_squished") == stat + 1, "stat bugs_squished + 1");
+    ctx.check(ctx.blockAt(p) != "gloamingforest:firefly", "the firefly is gone");
+    ctx.check(stats::value(ctx.player(), "gloamingforest:bugs_squished") == stat + 1, "stat bugs_squished + 1");
     ctx.check(triggers == before + 1, "trigger kill_bug fired with the firefly");
     co_await ctx.ticks(1);
     ctx.check(itemsNear(ctx, p, "minecraft:glowstone_dust") == 1, "the squish loot (glowstone dust) dropped");
     clearItemsNear(ctx, p);
     // a real arrow falling into a cicada squishes it
     auto q = p.offset(2, 0, 0);
-    ctx.setBlock(q, "twilightforest:cicada", {{st::Facing, "up"}});
+    ctx.setBlock(q, "gloamingforest:cicada", {{st::Facing, "up"}});
     auto r = selftest::runServerCommand("summon arrow " + std::to_string(q.x + 0.5) + " " + std::to_string(q.y + 1.5) + " " + std::to_string(q.z + 0.5), ctx.dimension());
     ctx.check(r.ok, "an arrow summoned: " + r.messages);
-    for (int i = 0; i < 40 && ctx.blockAt(q) == "twilightforest:cicada"; ++i) co_await ctx.ticks(1);
-    ctx.check(ctx.blockAt(q) != "twilightforest:cicada", "the falling arrow squished the cicada");
+    for (int i = 0; i < 40 && ctx.blockAt(q) == "gloamingforest:cicada"; ++i) co_await ctx.ticks(1);
+    ctx.check(ctx.blockAt(q) != "gloamingforest:cicada", "the falling arrow squished the cicada");
     clearItemsNear(ctx, q);
     (void)selftest::runServerCommand("kill @e[type=arrow,x=" + std::to_string(q.x) + ",y=" + std::to_string(q.y) + ",z=" + std::to_string(q.z) + ",r=4]", ctx.dimension());
     co_return;
@@ -411,10 +411,10 @@ GF_REGISTER_SELFTEST("flora.critter_support", [](Context& ctx) -> ll::coro::Coro
     ctx.check(!critters::placementFacing(*region, bp(p.offset(0, 2, 2)), Up, nullptr).has_value(), "no support, no placement");
     // a moonworm on dirt pops when the dirt goes
     ctx.setBlock(p.offset(2, 0, 0), "minecraft:dirt");
-    ctx.setBlock(p.offset(2, 1, 0), "twilightforest:moonworm", {{st::Facing, "up"}});
+    ctx.setBlock(p.offset(2, 1, 0), "gloamingforest:moonworm", {{st::Facing, "up"}});
     ctx.setBlock(p.offset(2, 0, 0), "minecraft:air");
     co_await ctx.ticks(3);
-    ctx.check(ctx.blockAt(p.offset(2, 1, 0)) != "twilightforest:moonworm", "a moonworm without support pops");
+    ctx.check(ctx.blockAt(p.offset(2, 1, 0)) != "gloamingforest:moonworm", "a moonworm without support pops");
     clearItemsNear(ctx, p.offset(2, 1, 0));
     co_return;
 });
@@ -425,23 +425,23 @@ GF_REGISTER_SELFTEST("flora.jars", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)co_await ctx.flatArea(690, 5);
     auto p = ctx.testPos(690, 2);
     // an empty mason jar catches a firefly
-    ctx.require(ctx.setBlock(p, "twilightforest:firefly", {{st::Facing, "up"}}), "firefly placed");
+    ctx.require(ctx.setBlock(p, "gloamingforest:firefly", {{st::Facing, "up"}}), "firefly placed");
     ctx.player().getInventory().removeAllItems();
-    ctx.check(click(ctx, p, "twilightforest:mason_jar", 2) == ia::Result::Consume, "a mason jar catches the firefly");
-    ctx.check(ctx.blockAt(p) != "twilightforest:firefly", "the firefly went into the jar");
-    ctx.check(inventoryCount(ctx.player(), "twilightforest:firefly_jar") == 1, "the player got a firefly jar");
+    ctx.check(click(ctx, p, "gloamingforest:mason_jar", 2) == ia::Result::Consume, "a mason jar catches the firefly");
+    ctx.check(ctx.blockAt(p) != "gloamingforest:firefly", "the firefly went into the jar");
+    ctx.check(inventoryCount(ctx.player(), "gloamingforest:firefly_jar") == 1, "the player got a firefly jar");
     // sneaking with empty hands releases a jarred firefly (the firefly and an empty jar drop)
     auto q = p.offset(1, 0, 0);
-    ctx.setBlock(q, "twilightforest:firefly_jar");
+    ctx.setBlock(q, "gloamingforest:firefly_jar");
     clearItemsNear(ctx, q);
     ctx.check(click(ctx, q, {}, 1, true) == ia::Result::Consume, "sneaking releases the firefly");
     co_await ctx.ticks(1);
-    ctx.check(ctx.blockAt(q) != "twilightforest:firefly_jar", "the jar is gone");
-    ctx.check(itemsNear(ctx, q, "twilightforest:firefly") >= 1 && itemsNear(ctx, q, "twilightforest:mason_jar") >= 1, "a firefly and a mason jar dropped");
+    ctx.check(ctx.blockAt(q) != "gloamingforest:firefly_jar", "the jar is gone");
+    ctx.check(itemsNear(ctx, q, "gloamingforest:firefly") >= 1 && itemsNear(ctx, q, "gloamingforest:mason_jar") >= 1, "a firefly and a mason jar dropped");
     clearItemsNear(ctx, q);
     // the mason jar keeps a stack: insert, comparator, take out; a log on the top swaps the lid
     auto m = p.offset(2, 0, 0);
-    ctx.setBlock(m, "twilightforest:mason_jar");
+    ctx.setBlock(m, "gloamingforest:mason_jar");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
     click(ctx, m, "minecraft:dirt", 10);
@@ -453,20 +453,20 @@ GF_REGISTER_SELFTEST("flora.jars", [](Context& ctx) -> ll::coro::CoroTask<> {
     click(ctx, m);
     ctx.check(game::items::countOf(ctx.player().getSelectedItem()) == 10, "an empty hand takes the stack back");
     ctx.check(game::items::isEmpty(jars::contents(*region, bp(m))), "the jar is empty again");
-    ctx.check(jars::lidAt(*region, bp(m)) == "twilightforest:twilight_oak_log", "the default lid is twilight oak");
+    ctx.check(jars::lidAt(*region, bp(m)) == "gloamingforest:gloaming_oak_log", "the default lid is gloaming oak");
     click(ctx, m, "minecraft:oak_log", 1, false, 0.95);
     ctx.check(jars::lidAt(*region, bp(m)) == "minecraft:oak_log", "an oak log on the top swaps the lid");
     ctx.check(jars::isLid("minecraft:stripped_bamboo_block") && !jars::isLid("minecraft:stone"), "the registered lids");
     // the jar emits the light of a stored block item (the jar_light state) and keeps its lid and contents
     click(ctx, m, "minecraft:glowstone", 2);
-    ctx.check(stateAt(ctx, m, "twilightforest:jar_light") == 15, "a jar of glowstone emits light 15 (" + std::to_string(stateAt(ctx, m, "twilightforest:jar_light")) + ")");
+    ctx.check(stateAt(ctx, m, "gloamingforest:jar_light") == 15, "a jar of glowstone emits light 15 (" + std::to_string(stateAt(ctx, m, "gloamingforest:jar_light")) + ")");
     ctx.check(jars::lidAt(*region, bp(m)) == "minecraft:oak_log" && game::items::countOf(jars::contents(*region, bp(m))) == 2, "the light state keeps the lid and the stack");
     click(ctx, m);
-    ctx.check(stateAt(ctx, m, "twilightforest:jar_light") == 0, "the emptied jar is dark again");
+    ctx.check(stateAt(ctx, m, "gloamingforest:jar_light") == 0, "the emptied jar is dark again");
     // the firefly particle spawner takes fireflies (radius + 1)
     auto s = p.offset(3, 0, 0);
-    ctx.setBlock(s, "twilightforest:firefly_particle_spawner", {{st::Radius, 1}});
-    click(ctx, s, "twilightforest:firefly", 1);
+    ctx.setBlock(s, "gloamingforest:firefly_particle_spawner", {{st::Radius, 1}});
+    click(ctx, s, "gloamingforest:firefly", 1);
     ctx.check(stateAt(ctx, s, st::Radius) == 2, "a firefly widens the spawner's radius");
     click(ctx, s, {}, 1, true);
     ctx.check(stateAt(ctx, s, st::Radius) == 1, "sneaking narrows it again");
@@ -484,21 +484,21 @@ GF_REGISTER_SELFTEST("flora.features", [](Context& ctx) -> ll::coro::CoroTask<> 
     auto  o = ctx.testPos(692, 6);
     // a berry bush feature on grass places bushes (seeded, Java's draw order)
     {
-        LiveRegion               live(*region, bp(o), "twilightforest:twilight_forest");
+        LiveRegion               live(*region, bp(o), "gloamingforest:gloaming_forest");
         core::jrand::LegacyRandom random(12345);
-        Json feature{{"type", "twilightforest:berry_bush"},
-                     {"config", {{"bush", {{"Name", "twilightforest:blueberry_bush"}, {"Properties", {{"age", "0"}, {"layers", "0"}}}}},
-                                 {"can_generate_snowy", true}, {"generates_on", "twilightforest:tf_berry_bushes_survive"}}}};
+        Json feature{{"type", "gloamingforest:berry_bush"},
+                     {"config", {{"bush", {{"Name", "gloamingforest:blueberry_bush"}, {"Properties", {{"age", "0"}, {"layers", "0"}}}}},
+                                 {"can_generate_snowy", true}, {"generates_on", "gloamingforest:tf_berry_bushes_survive"}}}};
         bool placed = features::placeJson(feature, live, bp(o), random);
-        int  bushes = countBlocks(*region, bp(o.offset(-2, -2, -2)), bp(o.offset(2, 2, 2)), "twilightforest:blueberry_bush");
+        int  bushes = countBlocks(*region, bp(o.offset(-2, -2, -2)), bp(o.offset(2, 2, 2)), "gloamingforest:blueberry_bush");
         ctx.check(placed && bushes > 0, "berry_bush placed " + std::to_string(bushes) + " blueberry bushes");
         ctx.info("berry_bush: " + std::to_string(bushes) + " bushes, " + std::to_string(live.placed) + " writes");
     }
     // fallen leaves pile up on grass
     {
-        LiveRegion               live(*region, bp(o), "twilightforest:twilight_forest");
+        LiveRegion               live(*region, bp(o), "gloamingforest:gloaming_forest");
         core::jrand::LegacyRandom random(7);
-        bool placed = features::placeJson(Json{{"type", "twilightforest:fallen_leaves"}, {"config", Json::object()}}, live, bp(o.offset(-3, 0, 0)), random);
+        bool placed = features::placeJson(Json{{"type", "gloamingforest:fallen_leaves"}, {"config", Json::object()}}, live, bp(o.offset(-3, 0, 0)), random);
         int  leaves = countBlocks(*region, bp(o.offset(-6, -2, -5)), bp(o.offset(5, 3, 5)), ids::FallenLeaves);
         ctx.check(placed && leaves > 0, "fallen_leaves piled leaves on grass");
         ctx.info("fallen_leaves: " + std::to_string(leaves) + " piles");
@@ -507,11 +507,11 @@ GF_REGISTER_SELFTEST("flora.features", [](Context& ctx) -> ll::coro::CoroTask<> 
     {
         auto c = o.offset(1, 4, 1);
         ctx.setBlock(c, "minecraft:dirt");
-        LiveRegion               live(*region, bp(o), "twilightforest:twilight_forest");
+        LiveRegion               live(*region, bp(o), "gloamingforest:gloaming_forest");
         ScriptedRandom           random{{1, 1, 1}};
-        Json                     feature{{"type", "twilightforest:underground_plants"}, {"config", {{"state", {{"Name", "twilightforest:root_strand"}}}}}};
+        Json                     feature{{"type", "gloamingforest:underground_plants"}, {"config", {{"state", {{"Name", "gloamingforest:root_strand"}}}}}};
         bool                     placed = features::placeJson(feature, live, bp(c.offset(0, -1, 0)), random);
-        ctx.check(placed && ctx.blockAt(c.offset(0, -1, 0)) == "twilightforest:root_strand", "underground_plants hangs a root strand under dirt");
+        ctx.check(placed && ctx.blockAt(c.offset(0, -1, 0)) == "gloamingforest:root_strand", "underground_plants hangs a root strand under dirt");
         ctx.cleanupBlock(c.offset(0, -1, 0));
     }
     (void)box;

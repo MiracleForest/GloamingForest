@@ -1,0 +1,28 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:moss_soup"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:moss_patch"
+      },
+      {
+        "item": "minecraft:bowl"
+      },
+      {
+        "item": "minecraft:potion"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:moss_patch"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:moss_soup"
+    }
+  }
+}

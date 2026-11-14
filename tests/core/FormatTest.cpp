@@ -16,8 +16,8 @@ TEST(Format, SequentialAndPositional) {
 }
 
 TEST(Format, JavaPlaceholders) {
-    // TF's lang files use Java's String.format placeholders
-    EXPECT_EQ(formatMessageArgs("/%s <info | conquer>", "tf"), "/tf <info | conquer>");
+    // upstream's lang files use Java's String.format placeholders
+    EXPECT_EQ(formatMessageArgs("/%s <info | conquer>", "gloamingforest"), "/gloamingforest <info | conquer>");
     EXPECT_EQ(formatMessageArgs("%2$s then %1$s", "a", "b"), "b then a");
     EXPECT_EQ(formatMessageArgs("%d%% done", 50), "50% done");
     EXPECT_EQ(formatMessageArgs("%s and %s", "x"), "x and %s");

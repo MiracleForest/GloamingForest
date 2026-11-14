@@ -1,9 +1,9 @@
 {
-  "gui.twilightforest.crumble_horn_jei": "Осыпающейся рог",
-  "gui.twilightforest.optifine.message": "Прежде чем продолжить, обратите внимание, что OptiFine может вызывать сбои, визуальные ошибки и множество других проблем.\n\nПрежде чем сообщить об ошибке, сначала удалите OptiFine и проверьте, осталась ли проблема.\n\nПроблемы, связанные с OptiFine, не могут быть решены со стороны разработчиков The Twilight Forest!\n\nЭтот экран можно отключить в настройках клиента.",
-  "gui.twilightforest.optifine.suggestions": "Вот подборка модов, которые мы рекомендуем использовать вместо этого.",
-  "gui.twilightforest.optifine.title": "ВНИМАНИЕ: ОБНАРУЖЕН OPTIFINE",
-  "gui.twilightforest.progression_end.discord": "Discord сервер",
-  "gui.twilightforest.progression_end.message": "На данный момент это конец прогресса. Последний замок, ожидающий на плато, все еще не завершен и работа еще продолжается. Если вы хотите следить за развитием мода, вы можете присоединиться к нашему %s.",
-  "gui.twilightforest.transformation_jei": "Мутагенный порошок"
+  "gui.gloamingforest.crumble_horn_jei": "Осыпающейся рог",
+  "gui.gloamingforest.optifine.message": "Прежде чем продолжить, обратите внимание, что OptiFine может вызывать сбои, визуальные ошибки и множество других проблем.\n\nПрежде чем сообщить об ошибке, сначала удалите OptiFine и проверьте, осталась ли проблема.\n\nПроблемы, связанные с OptiFine, не могут быть решены со стороны разработчиков The Gloaming Forest!\n\nЭтот экран можно отключить в настройках клиента.",
+  "gui.gloamingforest.optifine.suggestions": "Вот подборка модов, которые мы рекомендуем использовать вместо этого.",
+  "gui.gloamingforest.optifine.title": "ВНИМАНИЕ: ОБНАРУЖЕН OPTIFINE",
+  "gui.gloamingforest.progression_end.discord": "Discord сервер",
+  "gui.gloamingforest.progression_end.message": "На данный момент это конец прогресса. Последний замок, ожидающий на плато, все еще не завершен и работа еще продолжается. Если вы хотите следить за развитием мода, вы можете присоединиться к нашему %s.",
+  "gui.gloamingforest.transformation_jei": "Мутагенный порошок"
 }

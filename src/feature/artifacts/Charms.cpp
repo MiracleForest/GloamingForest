@@ -1,27 +1,27 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/CharmEvents.java
-//   src/main/java/twilightforest/util/TFItemStackUtils.java
-//   src/main/java/twilightforest/entity/CharmEffect.java
-//   src/main/java/twilightforest/network/SpawnCharmPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/CharmEvents.java
+//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+//   src/main/java/gloamingforest/entity/CharmEffect.java
+//   src/main/java/gloamingforest/network/SpawnCharmPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's death keeping on F10's pipeline (feature/death/Death.h):
-//   - the charm of life is a lethal handler (TF's LivingDeathEvent at HIGHEST);
+// upstream's death keeping on F10's pipeline (feature/death/Death.h):
+//   - the charm of life is a lethal handler (upstream's LivingDeathEvent at HIGHEST);
 //   - the charms of keeping are the first keeper: the first stack a dying player's keepers see
 //     runs CharmEvents#handleCharmOfKeeping for the whole inventory (core/artifacts applyKeeping:
 //     the tiers, scopes and casket rules), takes the kept stacks out of their slots and stores them
-//     in "gf:artifacts:kept:<uuid>" (TF's TFCharmInventory) with the consumed charm (CharmStack);
-//     F10's lowest keeper then keeps #twilightforest:kept_on_death as TF does after the charm;
+//     in "gf:artifacts:kept:<uuid>" (upstream's TFCharmInventory) with the consumed charm (CharmStack);
+//     F10's lowest keeper then keeps #gloamingforest:kept_on_death as upstream does after the charm;
 //   - the remaining drops place the keepsake casket (stockKeepsakeCasket);
 //   - on respawn the stored stacks come back (loadNoClear: their slot when empty, else anywhere,
 //     else at the feet) and the charm animation plays.
-// The charm animation (SpawnCharmPacket): a twilightforest:charm_effect entity circling the
+// The charm animation (SpawnCharmPacket): a gloamingforest:charm_effect entity circling the
 // player's eyes (radius 0.75, angle tick / 10 + pi) with item particles for 200 ticks, the charm
 // sound at the player (1.5, 1.0); with the "artifacts" key totemCharmAnimation the totem item
-// activation instead (the server's copy of TF's client key decides).
+// activation instead (the server's copy of upstream's client key decides).
 #include <cmath>
 #include <cstdlib>
 #include <unordered_map>
@@ -136,7 +136,7 @@ ca::Slot const& coreSlot(ca::Inventory const& inv, ca::SlotRef const& r) {
     return inv.offhand;
 }
 
-/// The kept record (TF's TFCharmInventory + CharmStack).
+/// The kept record (upstream's TFCharmInventory + CharmStack).
 Json loadRecord(Player& p) {
     auto doc = game::db::get(keptKey(p));
     if (doc && doc->is_object()) return *doc;
@@ -234,7 +234,7 @@ void stockCasket(Player& player, std::vector<ItemStack>& drops) {
             if (src < 0 || !bySlot[static_cast<std::size_t>(src)]) contents.push_back(items::empty());
             else contents.push_back(*bySlot[static_cast<std::size_t>(src)]);
         }
-        if (!placeCasket(player, contents, damage)) return; // the casket is lost, the rest drops (TF)
+        if (!placeCasket(player, contents, damage)) return; // the casket is lost, the rest drops (upstream)
         for (auto& d : drops) d = items::empty();
         return;
     }
@@ -273,8 +273,8 @@ void returnStored(Player& player) {
     player.sendInventory(false);
     if (n > 0) log().info("artifacts: {} got {} kept stack(s) back", player.getRealName(), n);
     if (auto charm = doc->value("charm", std::string{}); !charm.empty()) {
-        spawnCharm(player, charm, "item.twilightforest.charm.keep");
-        gf::stats::award(player, "twilightforest:keeping_charms_activated");
+        spawnCharm(player, charm, "item.gloamingforest.charm.keep");
+        gf::stats::award(player, "gloamingforest:keeping_charms_activated");
     }
 }
 
@@ -335,8 +335,8 @@ bool handleCharmOfLife(Player& player) {
         addEffect(player, "fire_resistance", 600, 0);
     }
     player.sendInventory(false);
-    spawnCharm(player, one ? kLife1 : kLife2, "item.twilightforest.charm.life");
-    gf::stats::award(player, "twilightforest:life_charms_activated");
+    spawnCharm(player, one ? kLife1 : kLife2, "item.gloamingforest.charm.life");
+    gf::stats::award(player, "gloamingforest:life_charms_activated");
     log().info("artifacts: {} was saved by a {}", player.getRealName(), one ? kLife1 : kLife2);
     return true;
 }
@@ -365,7 +365,7 @@ void spawnCharm(Player& player, std::string const& charmId, std::string const& s
     auto* e = level->addEntity(player.getDimensionBlockSource(), std::move(owned));
     if (!e) return;
     gf::entity::data(*e, kKeptDataKey) = Json{{"orbiter", uidOf(player)}, {"item", charmId}, {"offset", 3.14159265F}, {"age", 0}};
-    gf::entity::setProperty(*e, "twilightforest:charm", charmIndex(charmId));
+    gf::entity::setProperty(*e, "gloamingforest:charm", charmIndex(charmId));
 }
 
 /// A kept record whose stacks all still sit in their slots is a stale copy (the server stopped after

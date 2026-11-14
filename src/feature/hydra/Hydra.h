@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U24 (hydra) internals shared by the files of src/feature/hydra (not a contract: other units
 // reference the Hydra, its mortar, the fire jets and smokers by their string ids only, rule R2).
 //
 //   Hydra.cpp     the boss (Hydra, HydraHeadContainer, HydraHead / HydraNeck / HydraSmallPart parts)
-//   Mortar.cpp    twilightforest:hydra_mortar (HydraMortar)
+//   Mortar.cpp    gloamingforest:hydra_mortar (HydraMortar)
 //   Jets.cpp      fire_jet, encased_fire_jet, smoker, encased_smoker and their block entities
 //   Lair.cpp      the hydra lair landmark (HydraLairStructure, HydraLairComponent) and the
-//                 twilightforest:fire_jet feature type (FireJetFeature)
+//                 gloamingforest:fire_jet feature type (FireJetFeature)
 //   Module.cpp    registration
 //   Tests.cpp     the hydra.* selftests (dx 2400..2499)
 
@@ -30,15 +30,15 @@ class Mob;
 
 namespace gf::feature::hydra {
 
-inline constexpr char kHydra[]       = "twilightforest:hydra";
-inline constexpr char kHydraPart[]   = "twilightforest:hydra_part";
-inline constexpr char kMortar[]      = "twilightforest:hydra_mortar";
-inline constexpr char kSpawner[]     = "twilightforest:hydra_boss_spawner";
-inline constexpr char kLair[]        = "twilightforest:hydra_lair";
-inline constexpr char kFireJet[]     = "twilightforest:fire_jet";
-inline constexpr char kEncasedJet[]  = "twilightforest:encased_fire_jet";
-inline constexpr char kSmoker[]      = "twilightforest:smoker";
-inline constexpr char kEncasedSmoker[] = "twilightforest:encased_smoker";
+inline constexpr char kHydra[]       = "gloamingforest:hydra";
+inline constexpr char kHydraPart[]   = "gloamingforest:hydra_part";
+inline constexpr char kMortar[]      = "gloamingforest:hydra_mortar";
+inline constexpr char kSpawner[]     = "gloamingforest:hydra_boss_spawner";
+inline constexpr char kLair[]        = "gloamingforest:hydra_lair";
+inline constexpr char kFireJet[]     = "gloamingforest:fire_jet";
+inline constexpr char kEncasedJet[]  = "gloamingforest:encased_fire_jet";
+inline constexpr char kSmoker[]      = "gloamingforest:smoker";
+inline constexpr char kEncasedSmoker[] = "gloamingforest:encased_smoker";
 
 // ---- the boss (Hydra.cpp) --------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ void neighborChanged(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] bool encasedWatched(core::GlobalPos const& pos);
 /// Whether the smoker at `pos` ticks (its TFSmokerBlockEntity; selftests).
 [[nodiscard]] bool smokerTracked(core::GlobalPos const& pos);
-/// The twilightforest:fire_jet feature (world generation) placed a jet or smoker at block (x, y, z):
+/// The gloamingforest:fire_jet feature (world generation) placed a jet or smoker at block (x, y, z):
 /// its placement is not remembered (the palette scan around the players finds it). Any thread.
 void noteGeneratedJet(int x, int y, int z);
 /// Whether the jet / smoker at `pos` is remembered with the world (gf:hydra:jets; selftests).

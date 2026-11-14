@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/generated/resources/data/twilightforest/dimension_type/twilight_forest_type.json
-//   src/main/java/twilightforest/init/TFDimensionData.java (twilightDimType)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/generated/resources/data/gloamingforest/dimension_type/gloaming_forest_type.json
+//   src/main/java/gloamingforest/init/TFDimensionData.java (gloamingDimType)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract extension of "world" (rule R18: F4, new files only; folded into the contract by A8 in
-// W2b). TF's dimension_type values the Bedrock dimension definition can't hold, for the units
+// W2b). upstream's dimension_type values the Bedrock dimension definition can't hold, for the units
 // whose code reads them on Java through DimensionType:
 //   - ambient_light 0.01: DimensionType#brightness (Level#getLightLevelDependentMagicValue: mob AI,
 //     the light texture). F4 also writes it into the dimension's brightness ramp (server, and the
@@ -32,7 +32,7 @@ class Dimension;
 
 namespace gf::world::ext {
 
-/// A dimension_type (Java's built-in overworld / the_nether / the_end and TF's twilight_forest_type).
+/// A dimension_type (Java's built-in overworld / the_nether / the_end and upstream's gloaming_forest_type).
 struct DimensionTypeValues {
     std::string              id;
     std::optional<long long> fixedTime;
@@ -56,10 +56,10 @@ struct DimensionTypeValues {
     int                      monsterSpawnBlockLightLimit = 0;
 };
 
-/// TF's twilight_forest_type.
-[[nodiscard]] DimensionTypeValues const& twilightType();
-/// The dimension_type of an engine dimension id: 0 overworld, 1 the_nether, 2 the_end, the Twilight
-/// Forest's id twilight_forest_type; any other custom dimension reads as the overworld.
+/// upstream's gloaming_forest_type.
+[[nodiscard]] DimensionTypeValues const& gloamingType();
+/// The dimension_type of an engine dimension id: 0 overworld, 1 the_nether, 2 the_end, the Gloaming
+/// Forest's id gloaming_forest_type; any other custom dimension reads as the overworld.
 [[nodiscard]] DimensionTypeValues const& dimensionType(int dim);
 [[nodiscard]] DimensionTypeValues const& dimensionType(Dimension const& dimension);
 

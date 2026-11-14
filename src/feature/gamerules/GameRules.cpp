@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFGameRules.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFGameRules.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The gamerule store of "rules+fx" (F10). Bedrock's /gamerule only knows vanilla rules, so TF's
+// The gamerule store of "rules+fx" (F10). Bedrock's /gamerule only knows vanilla rules, so upstream's
 // rules are per-world values in the world DB ("gf:gamerules:values") with
-// `/twilightforest gamerule [<rule> [<value>]]`. TF's three rules are known from the start with
-// TF's defaults (tfEnforcedProgression true, playersTfPortalDefaultDelay 60,
+// `/gloamingforest gamerule [<rule> [<value>]]`. upstream's three rules are known from the start with
+// upstream's defaults (tfEnforcedProgression true, playersTfPortalDefaultDelay 60,
 // playersTfPortalCreativeDelay 1); their owners (U14, F4) register them again at install.
-// Companions get every value over "gamerules.sync" on join and on each change (TF sends
+// Companions get every value over "gamerules.sync" on join and on each change (upstream sends
 // EnforceProgressionStatusPacket to every player when tfEnforcedProgression changes).
 
 #include "feature/gamerules/GameRules.h"
@@ -60,7 +60,7 @@ Store& store() {
     return s;
 }
 
-/// TF's rules (TFGameRules) with TF's defaults, known before their owners register them.
+/// upstream's rules (TFGameRules) with upstream's defaults, known before their owners register them.
 struct Defaults {
     Defaults() {
         auto& s                                  = store();
@@ -170,7 +170,7 @@ bool set(std::string const& id, Value value) {
             log().error("gamerules: change listener failed: {}", ex.what());
         }
     }
-    // every companion gets the new values (TF: EnforceProgressionStatusPacket to all players)
+    // every companion gets the new values (upstream: EnforceProgressionStatusPacket to all players)
     if (auto level = ll::service::getLevel()) {
         auto doc = snapshot();
         level->forEachPlayer([&doc](Player& p) {
@@ -247,7 +247,7 @@ void reset() {
 } // namespace client
 #endif
 
-// ---- /twilightforest gamerule --------------------------------------------------------------------
+// ---- /gloamingforest gamerule --------------------------------------------------------------------
 
 struct GameruleShowParams {
     std::string rule;
@@ -266,7 +266,7 @@ namespace {
 void list(CommandOutput& output) {
     std::string text;
     for (auto const& id : ids()) text += (text.empty() ? "" : ", ") + id + " = " + toText(get(id));
-    output.success("TF gamerules: " + text);
+    output.success("upstream gamerules: " + text);
 }
 
 class GameRulesModule {
@@ -301,14 +301,14 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     cmd.overload<GameruleShowParams>().text("gamerule").required("rule").execute(
         [](CommandOrigin const&, CommandOutput& output, GameruleShowParams const& p) {
             auto all = ids();
-            if (std::find(all.begin(), all.end(), p.rule) == all.end()) return output.error("Unknown TF gamerule: " + p.rule);
+            if (std::find(all.begin(), all.end(), p.rule) == all.end()) return output.error("Unknown upstream gamerule: " + p.rule);
             output.success(p.rule + " = " + toText(get(p.rule)));
         }
     );
     // Bedrock's parser tells booleans from integers, so one overload each (as /gamerule)
     auto apply = [](CommandOrigin const& origin, CommandOutput& output, std::string const& rule, Value v) {
         if (!gf::commands::isAdmin(origin)) return output.error("You need operator permission.");
-        if (!set(rule, v)) return output.error("Unknown TF gamerule or a value of the wrong type: " + rule + " " + toText(v));
+        if (!set(rule, v)) return output.error("Unknown upstream gamerule or a value of the wrong type: " + rule + " " + toText(v));
         output.success("Gamerule " + rule + " is now set to: " + toText(v));
     };
     cmd.overload<GameruleSetBoolParams>().text("gamerule").required("rule").required("value").execute(

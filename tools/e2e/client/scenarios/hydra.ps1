@@ -1,9 +1,9 @@
 # U24 (hydra): the Hydra, its mortar, the fire jets and smokers on a real client. The selftest
 # hydra.client_showcase spawns a hydra 22 blocks in front of the player (its 44 part actors draw
-# the heads and necks with TF's hydra4 texture), makes head 0 breathe fire (large_flame), places a
+# the heads and necks with upstream's hydra4 texture), makes head 0 breathe fire (large_flame), places a
 # head pitched up, a bite pose and a dying head (flipped, red), a fire jet (flaming), an encased
 # fire jet and an encased smoker on redstone (grass-tinted jet and smoker beside them) and fires a
-# mortar (burning, TF's faint white render). Every client draws the same: the parts are ordinary actors whose
+# mortar (burning, upstream's faint white render). Every client draws the same: the parts are ordinary actors whose
 # properties (part index, active, mouth, red) drive the geometry and animations, so the vanilla
 # client in remote-vanilla sees the host's resource pack do it.
 # Screenshots: out/hydra*/hydra-<mode>.png (idle heads), hydra-flame-<mode>.png (fire breath),

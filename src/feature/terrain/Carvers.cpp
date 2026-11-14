@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/TFCavesCarver.java
-//   src/main/java/twilightforest/init/TFCaveCarvers.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/TFCavesCarver.java
+//   src/main/java/gloamingforest/init/TFCaveCarvers.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TFCavesCarver (twilightforest:tf_caves and twilightforest:highland_caves) with the parts of
+// TFCavesCarver (gloamingforest:tf_caves and gloamingforest:highland_caves) with the parts of
 // Minecraft 1.21.1's WorldCarver it inherits (carveEllipsoid, canReach) and CarvingContext#
 // topMaterial (the surface rules at the block below a carved surface). F5 calls a carver once per
 // source chunk within 8 chunks with setLargeFeatureSeed(seed + index, source); the context carries
@@ -45,7 +45,7 @@ enum Flags : std::uint16_t {
     kAir        = 1 << 0,
     kWater      = 1 << 1, ///< FluidTags.WATER
     kFluid      = 1 << 2, ///< any fluid state
-    kReplace    = 1 << 3, ///< #twilightforest:carver_replaceables
+    kReplace    = 1 << 3, ///< #gloamingforest:carver_replaceables
     kIce        = 1 << 4, ///< #minecraft:ice
     kSurface    = 1 << 5, ///< grass block, mycelium, podzol, dirt path
     kDirt       = 1 << 6, ///< Blocks.DIRT
@@ -72,7 +72,7 @@ std::uint16_t flagsOf(State const& s, Block const& b) {
         id == "minecraft:tall_seagrass")
         f |= kWater | kFluid;
     if (kit::isLava(b)) f |= kFluid;
-    if (kit::hasTag(b, "twilightforest:carver_replaceables")) f |= kReplace;
+    if (kit::hasTag(b, "gloamingforest:carver_replaceables")) f |= kReplace;
     if (id == "minecraft:ice" || id == "minecraft:packed_ice" || id == "minecraft:blue_ice" || id == "minecraft:frosted_ice" || kit::hasTag(b, "minecraft:ice")) f |= kIce;
     if (id == "minecraft:grass_block" || id == "minecraft:mycelium" || id == "minecraft:podzol" || id == "minecraft:dirt_path") f |= kSurface;
     if (id == "minecraft:dirt") f |= kDirt;
@@ -95,7 +95,7 @@ Json const& wallProvider(bool highlands) {
                     {"states", {dirt, dirt, rooted, dirt, dirt, coarse, dirt, dirt}}};
     }();
     static Json const highland = Json{{"type", "minecraft:weighted_state_provider"},
-                                      {"entries", {{{"data", {{"Name", "twilightforest:trollsteinn"}}}, {"weight", 1}}, {{"data", {{"Name", "minecraft:stone"}}}, {"weight", 3}}}}};
+                                      {"entries", {{{"data", {{"Name", "gloamingforest:trollsteinn"}}}, {"weight", 1}}, {{"data", {{"Name", "minecraft:stone"}}}, {"weight", 3}}}}};
     return highlands ? highland : forest;
 }
 
@@ -388,7 +388,7 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
     auto* s   = &st;
     static Json const empty = Json::object();
     Json const&       cfg   = ctx->config ? *ctx->config : empty;
-    // WorldCarver#isStartChunk (TF: the highland caves always start)
+    // WorldCarver#isStartChunk (upstream: the highland caves always start)
     float probability = cfg.contains("probability") ? cfg["probability"].get<float>() : 0.1F;
     if (!highlands && !(random.nextFloat() <= probability)) return;
     double start = threadCpuMs();

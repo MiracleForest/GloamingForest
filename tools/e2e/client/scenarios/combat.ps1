@@ -10,7 +10,7 @@
 #   chest-screen.png       a container opened as a player opens it: the client mod's chest screen
 #                          (local, remote-mod: Java's generic_54 layout) or, on a vanilla client,
 #                          the game's chest screen through the proxy (remote-vanilla)
-#   tf-double-chest.png    TF's twilight oak double chest (F11's families declare TF's chests as this
+#   tf-double-chest.png    upstream's gloaming oak double chest (F11's families declare upstream's chests as this
 #                          contract's containers), right-clicked: the client mod's 54-slot "Large
 #                          Chest", the right half's slots first (local, remote-mod); on a vanilla
 #                          client the game's large chest screen with the same slots (remote-vanilla:
@@ -18,12 +18,12 @@
 #   tf-double-chest-taken.png  remote-vanilla: the large chest screen after two clicks moved the
 #                          naga scales from screen slot 0 to the first hotbar slot (the host's
 #                          combat.ui_tf_double_chest_taken checks the right half and the inventory)
-#   tf-trapped-chest.png   TF's canopy trapped chest, right-clicked: the client mod's chest screen, the
+#   tf-trapped-chest.png   upstream's canopy trapped chest, right-clicked: the client mod's chest screen, the
 #                          game's chest screen through the proxy on a vanilla client
-#   fx-particles.png       TF's large_flame through gf::fx in front of the player: the client mod gets
+#   fx-particles.png       upstream's large_flame through gf::fx in front of the player: the client mod gets
 #                          fx.particle (F12's native sink first, else the resource pack effect), a
 #                          vanilla client the game's particle packets
-#   fx-portal.png          TF's portal particles (TFPortalBlock#animateTick, minecraft:portal) over a
+#   fx-portal.png          upstream's portal particles (TFPortalBlock#animateTick, minecraft:portal) over a
 #                          3-block row ahead: specks rising above it and falling back onto it
 #                          (Java's PortalParticle: F10's own effect gf:portal with variable.direction,
 #                          Java's blue-violet (0.9f, 0.3f, 1) * f, f = 0.4..1, not Bedrock's pink
@@ -32,13 +32,13 @@
 #                          hold no particle error (variables the effects read are all set)
 #   fx-legacy.png          left to right: red dust (DustParticleOptions.REDSTONE) and purple dust
 #                          (TrollsteinnBlock's colour), both F10's gf:dust (Java's DustParticle: hovering,
-#                          drifting up, 0.4..2 s), twilight oak log item particles (a block item's IconCrack),
+#                          drifting up, 0.4..2 s), gloaming oak log item particles (a block item's IconCrack),
 #                          still crits scattering, poofs rising (explosion_particle's -velocity * 10)
-#   missing-advancement-toast.png  TF's MissingAdvancementToast for progress_lich: the client mod's
+#   missing-advancement-toast.png  upstream's MissingAdvancementToast for progress_lich: the client mod's
 #                          toast through F12 (UPPER_TEXT and the title in white, the lich tower
 #                          miniature), the game's toast on a vanilla client
 # combat.ui_cleanup then removes the blocks the UI tests placed beside the player.
-# Open every screenshot and compare it with TF's chest GUI (vanilla's generic_54 layout) and TF's
+# Open every screenshot and compare it with upstream's chest GUI (vanilla's generic_54 layout) and upstream's
 # MissingAdvancementToast (the advancement toast frame, item at 6,8, text at 25,7 and 25,18).
 $ready = if ($script:Mode -eq 'local') { 'GloamingForest world ready' } else { '\[host\].*GloamingForest world ready' }
 Wait-LogLine $ready 120 | Out-Null
@@ -115,7 +115,7 @@ if ($script:Mode -eq 'remote-vanilla') {
 } else {
     Show-ContainerTest 'combat.ui_chest_screen' 'chest-screen' 'combat ui: chest screen opened' 'inventory\.chest'
 }
-# TF's chests (F11's declared containers) opened by a right click
+# upstream's chests (F11's declared containers) opened by a right click
 if ($script:Mode -eq 'remote-vanilla') {
     # the game's large chest screen: the minecart proxy behind a chest pair of the client. Its item
     # requests reach the halves: a click takes the right half's first stack (screen slot 0, the
@@ -130,7 +130,7 @@ if ($script:Mode -eq 'remote-vanilla') {
         }
         Save-Screenshot 'tf-double-chest-taken' | Out-Null
         $m = Get-LogMark
-        Send-HostConsole 'twilightforest selftest "combat.ui_tf_double_chest_taken"'
+        Send-HostConsole 'gloamingforest selftest "combat.ui_tf_double_chest_taken"'
         $line = Wait-LogLine 'SELFTEST (PASS|FAIL) combat\.ui_tf_double_chest_taken.*' 30 -Since $m
         Write-Step "large chest item request: $line"
         if ($line -match 'SELFTEST FAIL') { throw $line }
@@ -150,13 +150,13 @@ if (Test-ClientTrace) {
     # the client mod's fx.particle handler: F12's native factory or the resource pack effect (one
     # line per particle id, route and probe: this test's particles carry the probe
     # combat.ui_fx_particles, so the line is this test's own)
-    try { Write-Step "fx: $(Wait-LogLine 'fx: client particle twilightforest:large_flame .*\(probe combat\.ui_fx_particles\)' 20 -Since $mark)" }
-    catch { $screenFailures.Add('the client mod did not handle fx.particle for twilightforest:large_flame of combat.ui_fx_particles') }
+    try { Write-Step "fx: $(Wait-LogLine 'fx: client particle gloamingforest:large_flame .*\(probe combat\.ui_fx_particles\)' 20 -Since $mark)" }
+    catch { $screenFailures.Add('the client mod did not handle fx.particle for gloamingforest:large_flame of combat.ui_fx_particles') }
 }
 Start-Sleep -Seconds 2 # the emitter runs from the next tick for 5 s; the chat that ran the test closes
 Save-Screenshot 'fx-particles' | Out-Null
 
-# TF's portal particles (5 s) and every mapped vanilla particle type (2 s). The game writes its
+# upstream's portal particles (5 s) and every mapped vanilla particle type (2 s). The game writes its
 # content log only as it closes, so a missing molang variable ("unable to find member variable",
 # "unhandled request for unknown variable": one error per particle frame) cannot be seen here; the
 # run checks the log after the game closed (Get-ContentLogProblems: any error fails the run), and
@@ -183,7 +183,7 @@ $r = Invoke-SelfTest 'combat.ui_missing_toast'
 if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_missing_toast failed') }
 if (Test-ClientTrace) {
     try {
-        Write-Step "toast: $(Wait-LogLine 'client toast: missing advancement twilightforest:progress_lich' 20 -Since $mark)"
+        Write-Step "toast: $(Wait-LogLine 'client toast: missing advancement gloamingforest:progress_lich' 20 -Since $mark)"
         Wait-LogLine 'ui: toast drawn: ' 20 -Since $mark | Out-Null
     } catch { $screenFailures.Add('the client mod did not show the missing advancement toast') }
 } else {

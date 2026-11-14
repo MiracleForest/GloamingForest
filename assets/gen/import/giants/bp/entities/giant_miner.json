@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:giant_miner",
+      "identifier": "gloamingforest:giant_miner",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "giant_miner", "monster", "mob"]
+        "family": ["gloamingforest", "giant_miner", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 2.4,

@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/TFTeleporter.java
-//   src/main/java/twilightforest/world/NoReturnTeleporter.java
-//   src/main/java/twilightforest/world/TeleporterCache.java
-//   src/main/java/twilightforest/block/TFPortalBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/TFTeleporter.java
+//   src/main/java/gloamingforest/world/NoReturnTeleporter.java
+//   src/main/java/gloamingforest/world/TeleporterCache.java
+//   src/main/java/gloamingforest/block/TFPortalBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// Internal to unit F4. TF's teleporter on Bedrock: Java computes a DimensionTransition with the
+// Internal to unit F4. upstream's teleporter on Bedrock: Java computes a DimensionTransition with the
 // destination loaded synchronously; Bedrock loads chunks around players, so a trip is split in a
 // departure step (source-side data, the cache and the destination's already loaded chunks, as
 // Java's getChunkNow sees them) and an arrival step that runs once the travelling player has
@@ -107,7 +107,7 @@ void setSiteObserver(SiteObserver fn);
 /// scaled position, without building a portal.
 [[nodiscard]] Vec3 noReturnPlacePosition(BlockSource& dest, Traveller const& t, Vec3 const& pos);
 /// isSafeAround: `pos` and the four points 16 blocks away are not in a locked biome / landmark
-/// chunk / outside the border (only checked in the Twilight Forest).
+/// chunk / outside the border (only checked in the Gloaming Forest).
 [[nodiscard]] bool isSafeAround(BlockSource& region, BlockPos const& pos, Player* entity, bool checkProgression);
 /// The y the Java heightmap MOTION_BLOCKING_NO_LEAVES reports at (x, z).
 [[nodiscard]] int heightmap(BlockSource& region, int x, int z);

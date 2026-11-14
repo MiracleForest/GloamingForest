@@ -1,12 +1,12 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:final_castle/temp/gazebo",
+  "id": "gloamingforest:final_castle/temp/gazebo",
   "size": [21, 12, 21],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:violet_force_field"}
+    {"Name":"gloamingforest:violet_force_field"}
   ],
   "blocks": [
     [2, 22], [1, 19], [2, 2], [1, 19], [2, 2], [1, 19], [2, 2], [1, 19], [2, 2], [1, 19], [2, 2], [1, 19], [2, 2], [1, 19], [2, 2], [1, 19],

@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:knight_phantom_wall_trophy",
+      "identifier": "gloamingforest:knight_phantom_wall_trophy",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:powered": [true, false]
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:powered": [true, false]
       }
     },
     "components": {

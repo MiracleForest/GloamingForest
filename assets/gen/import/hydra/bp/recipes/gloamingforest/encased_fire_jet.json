@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:encased_fire_jet"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#A#", "A^A", "uuu"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:encased_towerwood"
+      },
+      "^": {
+        "item": "gloamingforest:fire_jet"
+      },
+      "u": {
+        "item": "minecraft:lava_bucket"
+      },
+      "A": {
+        "item": "minecraft:redstone"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:fire_jet"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:encased_fire_jet"
+    }
+  }
+}

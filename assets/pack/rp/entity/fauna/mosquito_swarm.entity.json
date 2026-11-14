@@ -2,18 +2,18 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:mosquito_swarm",
+      "identifier": "gloamingforest:mosquito_swarm",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/mosquitoswarm"
+        "default": "textures/gloamingforest/entity/mosquitoswarm"
       },
       "geometry": {
-        "default": "geometry.twilightforest.mosquito_swarm"
+        "default": "geometry.gloamingforest.mosquito_swarm"
       },
       "animations": {
-        "setup": "animation.twilightforest.mosquito_swarm.base"
+        "setup": "animation.gloamingforest.mosquito_swarm.base"
       },
       "scripts": {
         "animate": [

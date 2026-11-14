@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.weapons.cube_spin": {
+    "animation.gloamingforest.weapons.cube_spin": {
       "loop": true,
       "bones": {
         "box": {

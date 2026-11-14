@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:shika_senbei",
+      "identifier": "gloamingforest:shika_senbei",
       "menu_category": {
         "category": "items"
       }
@@ -14,11 +14,11 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:shika_senbei.name"
+        "value": "item.gloamingforest:shika_senbei.name"
       },
       "minecraft:tags": {
         "tags": [
-          "twilightforest:deer_tempt_items"
+          "gloamingforest:deer_tempt_items"
         ]
       },
       "minecraft:food": {

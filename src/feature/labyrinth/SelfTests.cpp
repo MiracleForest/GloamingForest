@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U23 (labyrinth) selftests (rule R12: "labyrinth.*", testPos dx 2300..2399; rule R19 golden hash).
 // The structure: the labyrinth is laid out at a fixed seed and start chunk and generated on an
@@ -159,7 +159,7 @@ std::map<std::string, int> typesOf(maze::PieceList const& pieces) {
 
 std::string describe(std::map<std::string, int> const& types, maze::PieceList const& pieces) {
     std::string s;
-    for (auto const& [t, n] : types) s += t.substr(std::string("twilightforest:").size()) + "=" + std::to_string(n) + " ";
+    for (auto const& [t, n] : types) s += t.substr(std::string("gloamingforest:").size()) + "=" + std::to_string(n) + " ";
     BlockBox all = pieces.front()->bbox;
     for (auto const& p : pieces)
         all = BlockBox::of(std::min(all.minX, p->bbox.minX), std::min(all.minY, p->bbox.minY), std::min(all.minZ, p->bbox.minZ), std::max(all.maxX, p->bbox.maxX),
@@ -246,7 +246,7 @@ GF_REGISTER_SELFTEST("labyrinth.maze_layout", [](Context& ctx) {
     ctx.check(types[maze::kEntranceShaft] == 1 && types[maze::kMound] == 1 && types[maze::kUpperEntrance] == 1, "the shaft, the mound and the ruin");
     int deadEnds = 0;
     for (auto const& [t, n] : types)
-        if (t.rfind("twilightforest:TFMMDE", 0) == 0) deadEnds += n;
+        if (t.rfind("gloamingforest:TFMMDE", 0) == 0) deadEnds += n;
     ctx.check(deadEnds > 10, "dead ends decorated: " + std::to_string(deadEnds));
     // the maze levels: 22 x 22 cells, level 2 ten blocks below level 1's floor, under its center,
     // its entrance at level 1's second room
@@ -301,9 +301,9 @@ GF_REGISTER_SELFTEST("labyrinth.golden_hash", [](Context& ctx) {
     ctx.check(bosses == 1, "one boss room");
     ctx.check(mem.count(maze::kBossSpawner) == 1, "one minoshroom spawner");
     ctx.check(mem.count("minecraft:mob_spawner") == 4, "a minotaur spawner in each of the four spawner rooms: " + std::to_string(mem.count("minecraft:mob_spawner")));
-    ctx.check(mem.count("twilightforest:mazestone_brick") + mem.count("twilightforest:mossy_mazestone") + mem.count("twilightforest:cracked_mazestone") > 5000,
+    ctx.check(mem.count("gloamingforest:mazestone_brick") + mem.count("gloamingforest:mossy_mazestone") + mem.count("gloamingforest:cracked_mazestone") > 5000,
               "mazestone walls");
-    ctx.check(mem.count("twilightforest:mazestone_mosaic") > 20000, "mosaic floors");
+    ctx.check(mem.count("gloamingforest:mazestone_mosaic") > 20000, "mosaic floors");
     ctx.check(mem.count("minecraft:bedrock") > 1000, "level 2 is encased in bedrock");
     ctx.check(mem.count("minecraft:chest") + mem.count("minecraft:trapped_chest") > 8, "chests");
     ctx.check(mem.count("minecraft:mycelium") > 0 && mem.count("minecraft:red_mushroom_block") > 0, "the mushroom rooms");
@@ -312,7 +312,7 @@ GF_REGISTER_SELFTEST("labyrinth.golden_hash", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("labyrinth.structure_start", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     // a start forced far from the test rows (removed afterwards)
     auto pos = ctx.testPos(2390);
     pos.x += 8192;
@@ -324,7 +324,7 @@ GF_REGISTER_SELFTEST("labyrinth.structure_start", [](Context& ctx) -> ll::coro::
         auto at = gf::landmark::startAt(pos.dim, BlockPos{pos.x + 5, pos.y - 12, pos.z + 5});
         ctx.check(at && at->key == maze::kLabyrinth, "startAt finds the labyrinth in its maze");
         auto const* d = gf::landmark::descriptor(maze::kLabyrinth);
-        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "twilightforest:progress_lich", "locked behind the lich");
+        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "gloamingforest:progress_lich", "locked behind the lich");
         // the terraformer: the mound over the maze
         auto   c     = gf::core::labyrinth::boxCenter(forced->box);
         double mound = gf::core::labyrinth::terraformer(forced->box, c.x + 1, std::max(c.y + 8, 6), c.z + 2);
@@ -347,7 +347,7 @@ GF_REGISTER_SELFTEST("labyrinth.minoshroom_stats", [](Context& ctx) -> ll::coro:
     ctx.require(m != nullptr, "still there");
     ctx.check(std::abs(m->getMaxHealth() - 120.0f) < 0.01f, "120 max health: " + std::to_string(m->getMaxHealth()));
     auto axe = game::items::idOf(m->getCarriedItem());
-    ctx.check(axe == "twilightforest:diamond_minotaur_axe", "holds a diamond minotaur axe: " + axe);
+    ctx.check(axe == "gloamingforest:diamond_minotaur_axe", "holds a diamond minotaur axe: " + axe);
     ctx.check(std::abs(mobs::attackDamage(*m) - 11.0f) < 0.01f, "attack damage 2 + 9");
     ctx.check(std::abs(attr(*m, SharedAttributes::KNOCKBACK_RESISTANCE()) - 0.5f) < 0.01f, "knockback resistance 0.5");
     auto b = m->getAABB();
@@ -397,12 +397,12 @@ GF_REGISTER_SELFTEST("labyrinth.minotaur_axe_roll", [](Context& ctx) -> ll::coro
         auto* m = mobById(id);
         if (!m) continue;
         auto axe = game::items::idOf(m->getCarriedItem());
-        ctx.check(axe == "twilightforest:gold_minotaur_axe" || axe == "minecraft:golden_axe", "a gold minotaur axe or a golden axe: " + axe);
+        ctx.check(axe == "gloamingforest:gold_minotaur_axe" || axe == "minecraft:golden_axe", "a gold minotaur axe or a golden axe: " + axe);
         ctx.check(std::abs(mobs::attackDamage(*m) - 8.0f) < 0.01f, "attack 2 + 6");
         ctx.check(std::abs(m->getMaxHealth() - 30.0f) < 0.01f, "30 health");
         m->remove();
     }
-    ctx.check(std::string(mobs::minotaurAxe(0, 2.0f)) == "twilightforest:gold_minotaur_axe" && std::string(mobs::minotaurAxe(5, 2.0f)) == "minecraft:golden_axe",
+    ctx.check(std::string(mobs::minotaurAxe(0, 2.0f)) == "gloamingforest:gold_minotaur_axe" && std::string(mobs::minotaurAxe(5, 2.0f)) == "minecraft:golden_axe",
               "the roll: (int)(nextInt(10) / (difficulty + 1)) == 0");
     discardAround(pos, 12);
 });
@@ -462,7 +462,7 @@ GF_REGISTER_SELFTEST("labyrinth.spawner_height_rule", [](Context& ctx) -> ll::co
 GF_REGISTER_SELFTEST("labyrinth.tool_penalty", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto box = co_await ctx.flatArea(2350, 8);
     auto pos = core::GlobalPos{ctx.dimension(), box.minX + 3, box.minY + 1, box.minZ + 3};
-    ctx.require(ctx.setBlock(pos, "twilightforest:mazestone"), "mazestone placed");
+    ctx.require(ctx.setBlock(pos, "gloamingforest:mazestone"), "mazestone placed");
     ctx.require(ctx.setBlock(at(pos, 1, 0, 0), "minecraft:stone"), "stone placed");
     auto& p = ctx.player();
     p.setPlayerGameType(GameType::Survival);
@@ -480,7 +480,7 @@ GF_REGISTER_SELFTEST("labyrinth.tool_penalty", [](Context& ctx) -> ll::coro::Cor
         return held.getDamageValue();
     };
     ctx.check(destroyWith("minecraft:iron_pickaxe", pos) == blocks::kMazestonePenalty, "an iron pickaxe loses 16 on mazestone");
-    ctx.check(destroyWith("twilightforest:mazebreaker_pickaxe", pos) == 0, "the mazebreaker loses nothing extra");
+    ctx.check(destroyWith("gloamingforest:mazebreaker_pickaxe", pos) == 0, "the mazebreaker loses nothing extra");
     ctx.check(destroyWith("minecraft:iron_pickaxe", at(pos, 1, 0, 0)) == 0, "stone is not mazestone");
     ctx.check(destroyWith("minecraft:stick", pos) == 0, "a stick is not damageable");
 });
@@ -535,11 +535,11 @@ GF_REGISTER_SELFTEST("labyrinth.slime_block", [](Context& ctx) -> ll::coro::Coro
         ctx.check(off > 0.0f && std::abs(onBlock - off * factor) < 0.002f, "a vanilla player walks slowed on a maze slime block (stepOn)");
     }
     // the sticky piston and the other maze slime recipes are loaded
-    ctx.check(gf::recipes::byId("twilightforest:compressed_blocks/maze_slime") != nullptr, "maze slime block recipe");
-    ctx.check(gf::recipes::byId("twilightforest:sticky_piston_maze_ver") != nullptr, "sticky piston recipe");
-    ctx.check(gf::recipes::byId("twilightforest:lead_maze_ver") != nullptr, "lead recipe");
-    ctx.check(gf::recipes::byId("twilightforest:magma_cream_maze_ver") != nullptr, "magma cream recipe");
-    ctx.check(gf::recipes::byId("twilightforest:compressed_blocks/reversed/maze_slime_block") != nullptr, "maze slime balls recipe");
+    ctx.check(gf::recipes::byId("gloamingforest:compressed_blocks/maze_slime") != nullptr, "maze slime block recipe");
+    ctx.check(gf::recipes::byId("gloamingforest:sticky_piston_maze_ver") != nullptr, "sticky piston recipe");
+    ctx.check(gf::recipes::byId("gloamingforest:lead_maze_ver") != nullptr, "lead recipe");
+    ctx.check(gf::recipes::byId("gloamingforest:magma_cream_maze_ver") != nullptr, "magma cream recipe");
+    ctx.check(gf::recipes::byId("gloamingforest:compressed_blocks/reversed/maze_slime_block") != nullptr, "maze slime balls recipe");
 });
 
 // ---- client acceptance (tools/e2e/client/scenarios/labyrinth.ps1) ---------------------------------------------------
@@ -632,15 +632,15 @@ GF_REGISTER_SELFTEST("labyrinth.client_showcase", [](Context& ctx) -> ll::coro::
     co_await ctx.ticks(40);
     // the Minoshroom's ground slam pose (fully charged)
     if (auto* m = mobById(shown.empty() ? 0 : shown.front())) {
-        gf::entity::setProperty(*m, "twilightforest:ground_charge", 10);
-        gf::entity::setProperty(*m, "twilightforest:ground_attack", true);
+        gf::entity::setProperty(*m, "gloamingforest:ground_charge", 10);
+        gf::entity::setProperty(*m, "gloamingforest:ground_attack", true);
     }
     co_await ctx.ticks(40);
     ctx.info("slam ready");
     co_await ctx.ticks(40);
     // the items and spawn eggs in the hotbar
-    char const* items[] = {"twilightforest:maze_slime_ball", blocks::kMazeSlimeBlock, "twilightforest:minotaur_spawn_egg", "twilightforest:minoshroom_spawn_egg",
-                           "twilightforest:maze_slime_spawn_egg"};
+    char const* items[] = {"gloamingforest:maze_slime_ball", blocks::kMazeSlimeBlock, "gloamingforest:minotaur_spawn_egg", "gloamingforest:minoshroom_spawn_egg",
+                           "gloamingforest:maze_slime_spawn_egg"};
     run("gamemode creative " + name);
     for (auto const* id : items) run("give " + name + " " + std::string(id) + " 1");
     co_await ctx.ticks(60);
@@ -667,7 +667,7 @@ struct WalkEnforcedScope {
     ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
 };
 
-/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,
 /// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
 /// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
 /// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
@@ -678,7 +678,7 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
     ctx.check(d->conquerable, key + " is conquerable");
     if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
     else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
-    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "gloamingforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
     WalkEnforcedScope enforced;
     core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
     gf::landmark::ext::ScopedStart forced(key, site);
@@ -718,9 +718,9 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 
 } // namespace
 
-// The labyrinth against TF's LabyrinthStructure record: locked by progress_lich, the labyrinth hint
+// The labyrinth against upstream's LabyrinthStructure record: locked by progress_lich, the labyrinth hint
 // book, conquerable; its protected pieces refuse a player without progress_lich.
-GF_REGISTER_SELFTEST("labyrinth.landmark_walk", [](Context& ctx) { walkLandmark(ctx, maze::kLabyrinth, "twilightforest:progress_lich", "labyrinth", 150307); });
+GF_REGISTER_SELFTEST("labyrinth.landmark_walk", [](Context& ctx) { walkLandmark(ctx, maze::kLabyrinth, "gloamingforest:progress_lich", "labyrinth", 150307); });
 
 // The boss gauntlet (audit A3): a player in range wakes the Minoshroom at its spawner (home = the
 // spawner), hits it and kills it; the mangrove death chest at the home point holds the trophy and
@@ -732,7 +732,7 @@ GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTas
     static std::string                killedEntity;
     static bool                       listening = false;
     if (!std::exchange(listening, true))
-        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss"})
+        for (char const* id : {"minecraft:player_killed_entity", "gloamingforest:hurt_boss"})
             gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const& data) {
                 if (player.getNameTag() != "gf_minoshroom_gauntlet") return;
                 triggers[id]++;
@@ -743,7 +743,7 @@ GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTas
     gf::feature::boss::resetTestRecords();
     auto box     = co_await ctx.flatArea(2320, 16);
     auto spawner = ctx.testPos(2328, 2).offset(0, 1, 0);
-    ctx.require(ctx.setBlock(spawner, "twilightforest:minoshroom_boss_spawner"), "the minoshroom boss spawner is placed");
+    ctx.require(ctx.setBlock(spawner, "gloamingforest:minoshroom_boss_spawner"), "the minoshroom boss spawner is placed");
     auto& sp  = ctx.spawnPlayer("gf_minoshroom_gauntlet");
     auto  pid = sp.getOrCreateUniqueID().rawID;
     sp.teleport(Vec3{spawner.x + 0.5f, float(spawner.y), spawner.z + 4.5f}, DimensionType(spawner.dim));
@@ -755,7 +755,7 @@ GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTas
         if (!found.empty()) uid = found.front()->getOrCreateUniqueID().rawID;
     }
     ctx.require(uid != 0, "the spawner woke the Minoshroom");
-    ctx.check(ctx.blockAt(spawner) != "twilightforest:minoshroom_boss_spawner", "the spawner is gone");
+    ctx.check(ctx.blockAt(spawner) != "gloamingforest:minoshroom_boss_spawner", "the spawner is gone");
     auto* m = mobById(uid);
     ctx.require(m != nullptr, "the Minoshroom is there");
     auto home = gf::entity::home(*m);
@@ -775,14 +775,14 @@ GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTas
     }
     ctx.require(chest.has_value(), "the death chest was placed");
     co_await ctx.ticks(3);
-    ctx.check(ctx.blockAt(*chest) == "twilightforest:mangrove_chest", "a mangrove death chest (" + ctx.blockAt(*chest) + ")");
+    ctx.check(ctx.blockAt(*chest) == "gloamingforest:mangrove_chest", "a mangrove death chest (" + ctx.blockAt(*chest) + ")");
     bool trophy = false, stroganoff = false;
     if (auto* region = game::regionOf(chest->dim))
         if (auto inv = gf::inventory::find(*region, game::blockPos(*chest)); inv && inv->get) {
             for (int i = 0; i < inv->slots; ++i) {
                 auto id = game::items::idOf(inv->get(*chest, i));
-                trophy |= id == "twilightforest:minoshroom_trophy";
-                stroganoff |= id == "twilightforest:meef_stroganoff";
+                trophy |= id == "gloamingforest:minoshroom_trophy";
+                stroganoff |= id == "gloamingforest:meef_stroganoff";
             }
             if (inv->set)
                 for (int i = 0; i < inv->slots; ++i) inv->set(*chest, i, game::items::empty());
@@ -792,7 +792,7 @@ GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTas
     auto conquest = gf::feature::boss::lastConquest();
     ctx.check(conquest && conquest->second == maze::kLabyrinth, "the Minoshroom's postmortem conquers its home structure key, the labyrinth, at its home (no start stands in the test area) (" + (conquest ? conquest->second : std::string("none")) + ")");
     ctx.check(triggers["minecraft:player_killed_entity"] >= 1 && killedEntity == mobs::kMinoshroom, "player_killed_entity fired for " + killedEntity);
-    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired");
+    ctx.check(triggers["gloamingforest:hurt_boss"] >= 1, "hurt_boss fired");
     ctx.cleanupBlock(*chest);
     discardAround(spawner, 16.0f);
     (void)box;

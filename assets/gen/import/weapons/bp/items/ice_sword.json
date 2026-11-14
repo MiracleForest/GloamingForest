@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:ice_sword",
+      "identifier": "gloamingforest:ice_sword",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:ice_sword.name"
+        "value": "item.gloamingforest:ice_sword.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

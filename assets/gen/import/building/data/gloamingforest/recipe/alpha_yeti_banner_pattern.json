@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "c:paper"
+    },
+    {
+      "item": "gloamingforest:alpha_yeti_trophy"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:alpha_yeti_banner_pattern"
+  }
+}

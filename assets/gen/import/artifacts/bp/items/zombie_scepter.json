@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:zombie_scepter",
+      "identifier": "gloamingforest:zombie_scepter",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:zombie_scepter.name"
+        "value": "item.gloamingforest:zombie_scepter.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -22,7 +22,7 @@
       },
       "minecraft:hand_equipped": true,
       "minecraft:tags": {
-        "tags": ["twilightforest:scepters"]
+        "tags": ["gloamingforest:scepters"]
       }
     }
   }

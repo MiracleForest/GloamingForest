@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U2 (terrain) selftests (terrain.*, testPos dx 200-299). Most run the providers on chunks held in
 // memory (MemWorld below), so they do not depend on the e2e world's biomes; terrain.golden_* run the
 // generator on the F13 goldens' biomes and compare with their heights / surface (fingerprint below).
@@ -83,7 +83,7 @@ private:
     std::size_t idx(int lx, int y, int lz) const { return static_cast<std::size_t>(((y - mMinY) * 16 + lz) * 16 + lx); }
     int                       mX, mZ, mMinY, mMaxY;
     std::vector<Block const*> mBlocks;
-    std::string               mBiome = "twilightforest:forest";
+    std::string               mBiome = "gloamingforest:forest";
 };
 
 class MemWorld final : public worldgen::Region {
@@ -120,7 +120,7 @@ public:
     std::string biome(BlockPos const&) const override { return mBiome; }
     std::int64_t seed() const override { return mSeed; }
     int          dimension() const override { return -1; }
-    std::string  mBiome = "twilightforest:forest";
+    std::string  mBiome = "gloamingforest:forest";
     int count(std::string const& javaId) const {
         int n = 0;
         for (auto const& [k, c] : mChunks)
@@ -143,7 +143,7 @@ std::string idOf(State const& s, std::uint16_t c) {
     return b ? kit::javaId(*b) : std::string("<none>");
 }
 
-/// The current world's state, or one for seed 0 (selftests outside a generated Twilight Forest).
+/// The current world's state, or one for seed 0 (selftests outside a generated Gloaming Forest).
 std::shared_ptr<State const> anyState() {
     if (auto s = state()) return s;
     auto s = makeState(0, false);
@@ -184,12 +184,12 @@ GF_REGISTER_SELFTEST("terrain.density_types", [](Context& ctx) {
     ctx.check(h.compute(0, 0, 0) == 1.0 && h.compute(30, 0, 0) == 0.0, "hollow_hill: inside 1, outside 0");
     AbsoluteDifference mx{true, 5.0, 10.0, 20.0};
     ctx.check(mx.compute(12, 23) == 3.0, "coord_max");
-    // the F5 Density sees TF's types (registered by the module)
-    auto d = gf::core::noise::Density::fromJson(Json{{"type", "twilightforest:sqrt"}, {"input", 16.0}}, 0, {});
-    ctx.check(d && d->compute({0, 0, 0}) == 4.0, "twilightforest:sqrt through core/noise Density");
+    // the F5 Density sees upstream's types (registered by the module)
+    auto d = gf::core::noise::Density::fromJson(Json{{"type", "gloamingforest:sqrt"}, {"input", 16.0}}, 0, {});
+    ctx.check(d && d->compute({0, 0, 0}) == 4.0, "gloamingforest:sqrt through core/noise Density");
     auto s = anyState();
     ctx.require(s != nullptr, "the terrain generator builds from the mod's data");
-    ctx.check(s->grid.size() == 20, "the biome grid has TF's 20 key biomes");
+    ctx.check(s->grid.size() == 20, "the biome grid has upstream's 20 key biomes");
 });
 
 GF_REGISTER_SELFTEST("terrain.height_golden", [](Context& ctx) {
@@ -269,22 +269,22 @@ GF_REGISTER_SELFTEST("terrain.surface_rules", [](Context& ctx) {
         return std::make_pair(idOf(*s, g.get(x & 15, 20, z & 15)), idOf(*s, g.get(x & 15, 19, z & 15)));
     };
     std::set<std::string> highland;
-    for (int i = 0; i < 64; ++i) highland.insert(topFor("twilightforest:highlands", i * 37, i * 11).first);
+    for (int i = 0; i < 64; ++i) highland.insert(topFor("gloamingforest:highlands", i * 37, i * 11).first);
     ctx.check(highland.contains("minecraft:podzol") && highland.contains("minecraft:coarse_dirt"), "highlands: podzol and coarse dirt by the surface noise");
-    auto [thornTop, thornBelow] = topFor("twilightforest:thornlands", 3, 3);
-    ctx.check(thornTop == "twilightforest:weathered_deadrock", "thornlands: weathered deadrock on the floor (" + thornTop + ")");
-    ctx.check(thornBelow == "twilightforest:cracked_deadrock" || thornBelow == "twilightforest:deadrock", "thornlands: deadrock below (" + thornBelow + ")");
-    ctx.check(topFor("twilightforest:final_plateau", 3, 3).first == "twilightforest:weathered_deadrock", "final plateau: weathered deadrock");
-    ctx.check(topFor("twilightforest:snowy_forest", 3, 3).first == "minecraft:snow_block", "snowy forest: snow block");
-    ctx.check(topFor("twilightforest:glacier", 3, 3).first == "minecraft:gravel", "glacier: gravel");
-    ctx.check(topFor("twilightforest:forest", 3, 3).first == "minecraft:grass_block", "forest: grass");
-    ctx.check(topFor("twilightforest:forest", 3, 3).second == "minecraft:dirt", "forest: dirt under the grass");
-    ctx.check(topFor("twilightforest:lake", 3, 3).first == "minecraft:grass_block", "lake shore above water: grass");
+    auto [thornTop, thornBelow] = topFor("gloamingforest:thornlands", 3, 3);
+    ctx.check(thornTop == "gloamingforest:weathered_deadrock", "thornlands: weathered deadrock on the floor (" + thornTop + ")");
+    ctx.check(thornBelow == "gloamingforest:cracked_deadrock" || thornBelow == "gloamingforest:deadrock", "thornlands: deadrock below (" + thornBelow + ")");
+    ctx.check(topFor("gloamingforest:final_plateau", 3, 3).first == "gloamingforest:weathered_deadrock", "final plateau: weathered deadrock");
+    ctx.check(topFor("gloamingforest:snowy_forest", 3, 3).first == "minecraft:snow_block", "snowy forest: snow block");
+    ctx.check(topFor("gloamingforest:glacier", 3, 3).first == "minecraft:gravel", "glacier: gravel");
+    ctx.check(topFor("gloamingforest:forest", 3, 3).first == "minecraft:grass_block", "forest: grass");
+    ctx.check(topFor("gloamingforest:forest", 3, 3).second == "minecraft:dirt", "forest: dirt under the grass");
+    ctx.check(topFor("gloamingforest:lake", 3, 3).first == "minecraft:grass_block", "lake shore above water: grass");
     // the bedrock floor
     Grid g(-32, 288);
     for (int y = -32; y <= 0; ++y) g.set(0, y, 0, code::DefaultBlock);
     s->gen->surface().buildSurface(0, 0, g, s->table, [](int, int, int) -> std::string const& {
-        static std::string const f = "twilightforest:forest";
+        static std::string const f = "gloamingforest:forest";
         return f;
     });
     ctx.check(idOf(*s, g.get(0, -32, 0)) == "minecraft:bedrock", "bedrock at the bottom");
@@ -297,12 +297,12 @@ GF_REGISTER_SELFTEST("terrain.canopy_blanket", [](Context& ctx) {
     for (int x = 0; x < 16; ++x)
         for (int z = 0; z < 16; ++z)
             for (int y = -32; y <= 4; ++y) g.set(x, y, z, code::DefaultBlock);
-    static std::string const dark = "twilightforest:dark_forest";
+    static std::string const dark = "gloamingforest:dark_forest";
     s->blankets.apply(0, 0, g, s->table, {dark}, [](int, int, int) -> std::string const& { return dark; }, [](auto const&) { return false; });
     // 9 cells of dark forest everywhere: thickness 5, from surface + 14 - 2 for 5 blocks
     int found = 0;
     for (int y = 4 + 14 - 2; y < 4 + 14 - 2 + 5; ++y)
-        if (idOf(*s, g.get(7, y, 7)) == "twilightforest:hardened_dark_leaves") ++found;
+        if (idOf(*s, g.get(7, y, 7)) == "gloamingforest:hardened_dark_leaves") ++found;
     ctx.check(found == 5, "five hardened dark leaves at surface + 12 .. 16 (" + std::to_string(found) + ")");
     ctx.check(g.get(7, 4 + 14 - 3, 7) == code::Air && g.get(7, 4 + 14 + 3, 7) == code::Air, "air below and above the canopy");
     // a dark tower nearby clears it
@@ -321,7 +321,7 @@ GF_REGISTER_SELFTEST("terrain.glacier_blanket", [](Context& ctx) {
     for (int x = 0; x < 16; ++x)
         for (int z = 0; z < 16; ++z)
             for (int y = -32; y <= 2; ++y) g.set(x, y, z, code::DefaultBlock);
-    static std::string const glacier = "twilightforest:glacier";
+    static std::string const glacier = "gloamingforest:glacier";
     s->blankets.apply(0, 0, g, s->table, {glacier}, [](int, int, int) -> std::string const& { return glacier; }, [](auto const&) { return false; });
     int packed = 0;
     for (int y = 3; y < 35; ++y)
@@ -408,7 +408,7 @@ GF_REGISTER_SELFTEST("terrain.carvers", [](Context& ctx) {
     auto s = anyState();
     ctx.require(s != nullptr, "generator");
     auto const* cfgJson = [] {
-        // the configured carvers live in F5's data (configured_carver); TF's values as a fallback
+        // the configured carvers live in F5's data (configured_carver); upstream's values as a fallback
         static Json const tf = Json::parse(R"({"floor_level": -0.7, "horizontal_radius_multiplier": 1.05, "probability": 0.1, "vertical_radius_multiplier": 1.05,
             "y": {"type": "minecraft:uniform", "max_inclusive": {"absolute": -8}, "min_inclusive": {"above_bottom": 16}}, "yScale": 0.6})");
         return &tf;
@@ -420,7 +420,7 @@ GF_REGISTER_SELFTEST("terrain.carvers", [](Context& ctx) {
         terrainProvider(*c);
         surfaceProvider(*c, w);
         worldgen::ext::CarvingMask   mask(-32, 256);
-        worldgen::ext::CarverContext cc{attempt, 7, 0, "twilightforest:tf_caves", cfgJson, &mask};
+        worldgen::ext::CarverContext cc{attempt, 7, 0, "gloamingforest:tf_caves", cfgJson, &mask};
         for (int k = 0; k < 40; ++k) {
             jr::WorldgenRandom r(std::make_unique<jr::LegacyRandom>(0));
             r.setLargeFeatureSeed(s->seed + k, attempt, 7);
@@ -439,7 +439,7 @@ GF_REGISTER_SELFTEST("terrain.carvers", [](Context& ctx) {
         });
     }
     ctx.info("tf_caves carved " + std::to_string(carvedTotal) + " blocks, dirt roof blocks " + std::to_string(roofs));
-    ctx.check(carvedTotal > 0, "TF caves carve");
+    ctx.check(carvedTotal > 0, "upstream caves carve");
     ctx.check(exposed == 0, "carved air never touches water inside the chunk");
     ctx.check(roofs > 0, "dirt roofs over the caves");
 });
@@ -451,23 +451,23 @@ GF_REGISTER_SELFTEST("terrain.chunk_blanketing_placement", [](Context& ctx) {
     for (int x = 0; x < 16; ++x)
         for (int z = 0; z < 16; ++z) w.chunk(0, 0)->setBlock(x, 3, z, *stone);
     Json placed = {{"feature", {{"type", "minecraft:simple_block"}, {"config", {{"to_place", {{"type", "minecraft:simple_state_provider"}, {"state", {{"Name", "minecraft:glass"}}}}}}}}},
-                   {"placement", Json::array({{{"type", "twilightforest:chunk_blanketing"}, {"integrity", 1.0}, {"heightmap", "OCEAN_FLOOR_WG"}}})}};
+                   {"placement", Json::array({{{"type", "gloamingforest:chunk_blanketing"}, {"integrity", 1.0}, {"heightmap", "OCEAN_FLOOR_WG"}}})}};
     jr::Xoroshiro128pp r(5);
     gf::features::placeJson(placed, w, {0, 0, 0}, r);
     ctx.check(w.count("minecraft:glass") == 256, "one block per column at the heightmap (" + std::to_string(w.count("minecraft:glass")) + ")");
     MemWorld w2(0, 0, 1, 1);
     Json     locked = placed;
     locked["placement"][0]["integrity"]  = 0.7;
-    locked["placement"][0]["biome_lock"] = Json::array({"twilightforest:thornlands"});
+    locked["placement"][0]["biome_lock"] = Json::array({"gloamingforest:thornlands"});
     gf::features::placeJson(locked, w2, {0, 0, 0}, r);
     ctx.check(w2.count("minecraft:glass") == 0, "biome_lock keeps other biomes out");
 });
 
 GF_REGISTER_SELFTEST("terrain.ores", [](Context& ctx) {
-    char const* ores[][2] = {{"twilightforest:legacy_coal_ore", "minecraft:coal_ore"},       {"twilightforest:legacy_iron_ore", "minecraft:iron_ore"},
-                             {"twilightforest:legacy_gold_ore", "minecraft:gold_ore"},       {"twilightforest:legacy_redstone_ore", "minecraft:redstone_ore"},
-                             {"twilightforest:legacy_diamond_ore", "minecraft:diamond_ore"}, {"twilightforest:legacy_lapis_ore", "minecraft:lapis_ore"},
-                             {"twilightforest:legacy_copper_ore", "minecraft:copper_ore"}};
+    char const* ores[][2] = {{"gloamingforest:legacy_coal_ore", "minecraft:coal_ore"},       {"gloamingforest:legacy_iron_ore", "minecraft:iron_ore"},
+                             {"gloamingforest:legacy_gold_ore", "minecraft:gold_ore"},       {"gloamingforest:legacy_redstone_ore", "minecraft:redstone_ore"},
+                             {"gloamingforest:legacy_diamond_ore", "minecraft:diamond_ore"}, {"gloamingforest:legacy_lapis_ore", "minecraft:lapis_ore"},
+                             {"gloamingforest:legacy_copper_ore", "minecraft:copper_ore"}};
     auto const* stone = kit::javaBlock("minecraft:stone");
     ctx.require(stone != nullptr, "stone");
     for (auto const& [id, ore] : ores) {
@@ -481,10 +481,10 @@ GF_REGISTER_SELFTEST("terrain.ores", [](Context& ctx) {
         for (int i = 0; i < 6 && !any; ++i) any = gf::features::place(id, w, {8, -10 + i, 8}, r);
         ctx.check(w.count(ore) > 0, std::string(id) + " places " + ore);
     }
-    for (char const* id : {"twilightforest:iron_oreberries", "twilightforest:gold_oreberries", "twilightforest:copper_oreberries", "twilightforest:iron_oreberries_enchanted_forest",
-                           "twilightforest:gold_oreberries_enchanted_forest", "twilightforest:copper_oreberries_enchanted_forest", "twilightforest:essence_oreberries_enchanted_forest"})
+    for (char const* id : {"gloamingforest:iron_oreberries", "gloamingforest:gold_oreberries", "gloamingforest:copper_oreberries", "gloamingforest:iron_oreberries_enchanted_forest",
+                           "gloamingforest:gold_oreberries_enchanted_forest", "gloamingforest:copper_oreberries_enchanted_forest", "gloamingforest:essence_oreberries_enchanted_forest"})
         ctx.check(kit::placedJson(id) != nullptr, std::string(id) + " (placed) is loaded");
-    ctx.check(kit::configuredJson("twilightforest:ore/wood_roots_spread") != nullptr, "twilightforest:ore/wood_roots_spread is loaded");
+    ctx.check(kit::configuredJson("gloamingforest:ore/wood_roots_spread") != nullptr, "gloamingforest:ore/wood_roots_spread is loaded");
 });
 
 GF_REGISTER_SELFTEST("terrain.timing", [](Context& ctx) {
@@ -525,7 +525,7 @@ GF_REGISTER_SELFTEST("terrain.showcase", [](Context& ctx) -> ll::coro::CoroTask<
     auto box = co_await ctx.flatArea(200, 48, 100);
     int  hold = config::get<TerrainConfig>().showcaseHoldTicks;
     for (char const* name : {"highlands", "dark_forest", "glacier"}) {
-        std::string biome = std::string("twilightforest:") + name;
+        std::string biome = std::string("gloamingforest:") + name;
         auto const* column = s->grid.column(biome);
         ctx.require(column != nullptr, biome + " column");
         TerrainSampler sampler = [&](int x, int z) { return sampleTerrain(x, z, [&](int, int) { return column; }); };
@@ -610,7 +610,7 @@ gf::landmark::ext::StartPiece testPiece(std::string const& type, BlockBox const&
 
 // NeoForge's Beardifier#forStructuresInChunk per piece: a fake start whose pieces are a
 // TFStructureComponentOld (NONE), a CourtyardTerrace (BEARD_BOX, ground delta 3), a protected
-// stronghold piece (BURY), a plain template piece (the structure's beard_thin), a TwilightJigsawPiece
+// stronghold piece (BURY), a plain template piece (the structure's beard_thin), a GloamingJigsawPiece
 // (its tag's ENCAPSULATE, delta 2) and a type registered through ext::registerPieceBeard; the
 // densities against Beardifier's arithmetic; the labyrinth (bury, every maze piece NONE) and the
 // dark tower (beard_thin, only its entrance BEARD_BOX).
@@ -625,11 +625,11 @@ GF_REGISTER_SELFTEST("terrain.beardifier", [](Context& ctx) {
         Unregister& operator=(Unregister const&) = delete;
         ~Unregister() { te::registerPieceBeard("gf_test:beard_piece", {}); }
     } unregister;
-    std::vector<gf::landmark::ext::StartPiece> pieces{testPiece("twilightforest:TFMMC", a),
-                                                  testPiece("twilightforest:TFNCTe", b),
-                                                  testPiece("twilightforest:TFSSH", c),
-                                                  testPiece("twilightforest:TFQuest1", d),
-                                                  testPiece("twilightforest:TFJigsawTemplate", e, {{"terrain_adaptation", "ENCAPSULATE"}, {"ground_offset", 2}}),
+    std::vector<gf::landmark::ext::StartPiece> pieces{testPiece("gloamingforest:TFMMC", a),
+                                                  testPiece("gloamingforest:TFNCTe", b),
+                                                  testPiece("gloamingforest:TFSSH", c),
+                                                  testPiece("gloamingforest:TFQuest1", d),
+                                                  testPiece("gloamingforest:TFJigsawTemplate", e, {{"terrain_adaptation", "ENCAPSULATE"}, {"ground_offset", 2}}),
                                                   testPiece("gf_test:beard_piece", f)};
     auto rigids = rigidsOfPieces(pieces, A::BeardThin);
     ctx.require(rigids.size() == 5, "five Rigids: the NONE piece adds none (" + std::to_string(rigids.size()) + ")");
@@ -658,9 +658,9 @@ GF_REGISTER_SELFTEST("terrain.beardifier", [](Context& ctx) {
     ctx.check(bad == 0, "the beardifier density equals Beardifier#compute at " + std::to_string(points) + " points (" + std::to_string(bad) + " differ)");
     // a piece 12 blocks from a chunk still counts (StructurePiece#isCloseToChunk), 13 does not
     ctx.check(beard::isCloseToChunk({-12, 0, 0, -12, 4, 4}, 0, 0) && !beard::isCloseToChunk({-13, 0, 0, -13, 4, 4}, 0, 0), "isCloseToChunk(12)");
-    auto maze = rigidsOfPieces({testPiece("twilightforest:TFMMaze", a), testPiece("twilightforest:TFMMC", b), testPiece("twilightforest:TFMMRB", c)}, A::Bury);
+    auto maze = rigidsOfPieces({testPiece("gloamingforest:TFMMaze", a), testPiece("gloamingforest:TFMMC", b), testPiece("gloamingforest:TFMMRB", c)}, A::Bury);
     ctx.check(maze.empty(), "the labyrinth (structure bury): its TFStructureComponentOld pieces add no beard");
-    auto tower = rigidsOfPieces({testPiece("twilightforest:TFDTMai", a), testPiece("twilightforest:TFDTEnt", b), testPiece("twilightforest:TFDTWin", c)}, A::BeardThin);
+    auto tower = rigidsOfPieces({testPiece("gloamingforest:TFDTMai", a), testPiece("gloamingforest:TFDTEnt", b), testPiece("gloamingforest:TFDTWin", c)}, A::BeardThin);
     ctx.check(tower.size() == 1 && tower[0].rigid.adjustment == A::BeardBox && tower[0].rigid.groundLevelDelta == 1 && tower[0].rigid.box == b,
               "the dark tower (structure beard_thin): one BEARD_BOX at its entrance, ground delta 1");
     // a piece of no known type (a start the store does not hold): the structure's adaptation
@@ -677,7 +677,7 @@ GF_REGISTER_SELFTEST("terrain.canopy_avoid", [](Context& ctx) {
     // far from every test row and from F5's forced starts: no chunk there is loaded, nothing is placed
     core::GlobalPos center{row.dim, ((row.x + 300000) & ~15) + 8, 64, (row.z & ~15) + 6};
     constexpr char  kOpen[]  = "gf_test:landmark_fixture_open";
-    constexpr char  kTower[] = "twilightforest:dark_tower";
+    constexpr char  kTower[] = "gloamingforest:dark_tower";
     {
         gf::landmark::ext::ScopedStart open(kOpen, center);
         ctx.require(open && open->generated, "F6 forced its open fixture landmark");
@@ -698,7 +698,7 @@ GF_REGISTER_SELFTEST("terrain.canopy_avoid", [](Context& ctx) {
     bool refs  = chunkReferences(towerAt.dim, tcx, tcz, {kTower});
     ctx.check(refs == valid, valid ? "the dark tower (with pieces) is a reference of its chunk" : "the reserved dark tower site (no pieces before U26) is no reference");
     // the canopy blanket over that chunk, with the provider's avoid test
-    static std::string const dark = "twilightforest:dark_forest";
+    static std::string const dark = "gloamingforest:dark_forest";
     Grid g(-32, 288);
     for (int x = 0; x < 16; ++x)
         for (int z = 0; z < 16; ++z)
@@ -707,32 +707,32 @@ GF_REGISTER_SELFTEST("terrain.canopy_avoid", [](Context& ctx) {
                       [&](std::vector<std::string> const& avoid) { return chunkReferences(towerAt.dim, tcx, tcz, avoid); });
     int leaves = 0;
     for (int y = 4 + 14 - 2; y < 4 + 14 - 2 + 5; ++y)
-        if (idOf(*s, g.get(towerAt.x & 15, y, towerAt.z & 15)) == "twilightforest:hardened_dark_leaves") ++leaves;
+        if (idOf(*s, g.get(towerAt.x & 15, y, towerAt.z & 15)) == "gloamingforest:hardened_dark_leaves") ++leaves;
     ctx.check(valid ? leaves == 0 : leaves == 5, valid ? "no canopy over the dark tower's chunk" : "the canopy stays over a reserved site (" + std::to_string(leaves) + " leaves)");
 });
 
 // ---- real generation ----------------------------------------------------------------------------------------
 
-// The per-chunk budget on chunks the game generates in the Twilight Forest (noise, surface, blankets,
+// The per-chunk budget on chunks the game generates in the Gloaming Forest (noise, surface, blankets,
 // carvers through F5's pipeline into Bedrock chunks, with F6's starts and terraformers): the test
 // moves into the dimension, loads chunks no run generated before and checks the p95 of their times.
 GF_REGISTER_SELFTEST("terrain.timing_world", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!gf::world::twilight()) {
-        ctx.info("the Twilight Forest dimension is not registered (F4)");
+    if (!gf::world::gloaming()) {
+        ctx.info("the Gloaming Forest dimension is not registered (F4)");
         co_return;
     }
-    ctx.require(co_await ctx.inTwilight(), "the test moves into the Twilight Forest");
+    ctx.require(co_await ctx.inGloaming(), "the test moves into the Gloaming Forest");
     std::uint64_t before  = chunkTimesRecorded();
     auto          handoff = handoffCounts();
     // fresh chunks: a place picked by the clock, far from every other test and trip
     auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     int  x     = 2000000 + static_cast<int>(stamp % 40000) * 96;
     int  z     = -2000000 - static_cast<int>((stamp / 40000) % 1000) * 96;
-    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{ctx.dimension(), x, 64, z}), "fresh Twilight Forest chunks load");
+    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{ctx.dimension(), x, 64, z}), "fresh Gloaming Forest chunks load");
     for (int i = 0; i < 40 && chunkTimesRecorded() - before < 25; ++i) co_await ctx.ticks(5);
     std::uint64_t n   = chunkTimesRecorded() - before;
     auto          all = chunkTimes();
-    ctx.require(n > 0, "the game generated Twilight Forest chunks through the terrain providers");
+    ctx.require(n > 0, "the game generated Gloaming Forest chunks through the terrain providers");
     std::vector<double> ms(all.end() - static_cast<std::ptrdiff_t>(std::min<std::uint64_t>(n, all.size())), all.end());
     std::sort(ms.begin(), ms.end());
     double p95    = ms[std::min(ms.size() - 1, ms.size() * 95 / 100)];
@@ -772,11 +772,11 @@ Player* taggedPlayer(char const* tag) {
 /// the player of another world (the client loads several in one process) anywhere.
 constexpr char kLiveViewKey[] = "gf:terrain:liveview";
 
-/// The landscapes the client e2e looks at, in order (TF 4.8's Twilight Forest biomes with a terrain
+/// The landscapes the client e2e looks at, in order (upstream 4.8's Gloaming Forest biomes with a terrain
 /// or a blanket of their own first).
-constexpr std::array<char const*, 9> kLiveBiomes{"twilightforest:dark_forest", "twilightforest:highlands",       "twilightforest:glacier",
-                                                 "twilightforest:snowy_forest", "twilightforest:enchanted_forest", "twilightforest:swamp",
-                                                 "twilightforest:fire_swamp",   "twilightforest:thornlands",       "twilightforest:forest"};
+constexpr std::array<char const*, 9> kLiveBiomes{"gloamingforest:dark_forest", "gloamingforest:highlands",       "gloamingforest:glacier",
+                                                 "gloamingforest:snowy_forest", "gloamingforest:enchanted_forest", "gloamingforest:swamp",
+                                                 "gloamingforest:fire_swamp",   "gloamingforest:thornlands",       "gloamingforest:forest"};
 
 /// A spot well inside each biome of kLiveBiomes (its main biome on a 48-block square around it),
 /// searched in one pass over 32-block rings around (x0, z0), nearest first.
@@ -799,15 +799,15 @@ std::map<std::string, std::pair<int, int>> findBiomes(int x0, int z0, int radius
         }
     return found;
 }
-// The client e2e's look at real Twilight Forest terrain: finds, around chunks no one generated
+// The client e2e's look at real Gloaming Forest terrain: finds, around chunks no one generated
 // before, a spot in each landscape of kLiveBiomes the biome source (U1) gives (without one: the
 // forest column everywhere, one spot), logs each one ("terrain live view target ...") and sends the
 // player tagged gf_terrain_live high above the first; the scenario flies to the others.
 // terrain.live_view_restore brings the player back.
 GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
-    auto twilight = gf::world::twilight();
-    if (!twilight) {
-        ctx.info("the Twilight Forest dimension is not registered (F4)");
+    auto gloaming = gf::world::gloaming();
+    if (!gloaming) {
+        ctx.info("the Gloaming Forest dimension is not registered (F4)");
         return;
     }
     Player* shown = taggedPlayer("gf_terrain_live");
@@ -816,9 +816,9 @@ GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
         return;
     }
     // a return point kept by an aborted run is replaced unless the player still stands in the
-    // live view's area (x >= 60000 in the Twilight Forest), where that point is the one to go back to
+    // live view's area (x >= 60000 in the Gloaming Forest), where that point is the one to go back to
     auto here   = shown->getFeetPos();
-    bool inView = static_cast<int>(shown->getDimensionId()) == static_cast<int>(*twilight) && here.x >= 60000.0F;
+    bool inView = static_cast<int>(shown->getDimensionId()) == static_cast<int>(*gloaming) && here.x >= 60000.0F;
     if (!inView || !game::db::get(kLiveViewKey)) {
         auto back = here;
         game::db::put(kLiveViewKey, Json{{"dim", static_cast<int>(shown->getDimensionId())}, {"x", back.x}, {"y", back.y}, {"z", back.z}});
@@ -826,7 +826,7 @@ GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
     auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     int  x0    = 60000 + static_cast<int>(stamp % 400) * 4096 + 8;
     int  z0    = 60000 + 8;
-    int  dim   = static_cast<int>(*twilight);
+    int  dim   = static_cast<int>(*gloaming);
     struct Target {
         std::string biome;
         int         x, z, h;
@@ -849,8 +849,8 @@ GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
     }
     ctx.info(std::to_string(targets.size()) + " landscape(s) found around " + std::to_string(x0) + ", " + std::to_string(z0));
     auto const& first = targets.front();
-    ctx.check(gf::world::teleport(*shown, *twilight, Vec3{static_cast<float>(first.x) + 0.5F, static_cast<float>(first.h + 40), static_cast<float>(first.z) + 0.5F}, 0.0F),
-              "the player is sent into new Twilight Forest chunks");
+    ctx.check(gf::world::teleport(*shown, *gloaming, Vec3{static_cast<float>(first.x) + 0.5F, static_cast<float>(first.h + 40), static_cast<float>(first.z) + 0.5F}, 0.0F),
+              "the player is sent into new Gloaming Forest chunks");
     gf::log().info("terrain live view at {} {} {} (terrain height {}, biome {})", first.x, first.h + 40, first.z, first.h, first.biome);
 });
 
@@ -898,7 +898,7 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
     auto surfaceSteps   = gf::terrain::ext::stageStepIds(worldgen::Stage::Surface);
     auto blankets       = gf::terrain::ext::blanketIds();
     bool surfaceWriters = !surfaceSteps.empty() || std::any_of(blankets.begin(), blankets.end(), [](std::string const& id) {
-                              return id < std::string("twilightforest:chunk_blanketing");
+                              return id < std::string("gloamingforest:chunk_blanketing");
                           });
     if (!otherWriters) ctx.check(after.taken > before.taken, "a pass on F5's global providers hands its grids on");
     if (!otherWriters && !surfaceWriters)
@@ -957,14 +957,14 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
 
 // TFCavesCarver asks BlockState#getFluidState: a waterlogged neighbour (Bedrock: water in the liquid
 // layer of a real game chunk) stops a carve, and a waterlogged block is no replaceable block. Runs
-// the carver's carveBlock on a loaded Twilight Forest chunk; the water goes in with the game's own
+// the carver's carveBlock on a loaded Gloaming Forest chunk; the water goes in with the game's own
 // BlockSource::setExtraBlock and the layer read (LiquidLayer::at) must agree with getExtraBlock.
 GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!gf::world::twilight()) {
-        ctx.info("the Twilight Forest dimension is not registered (F4)");
+    if (!gf::world::gloaming()) {
+        ctx.info("the Gloaming Forest dimension is not registered (F4)");
         co_return;
     }
-    ctx.require(co_await ctx.inTwilight(), "the test moves into the Twilight Forest");
+    ctx.require(co_await ctx.inGloaming(), "the test moves into the Gloaming Forest");
     auto s = anyState();
     ctx.require(s != nullptr, "generator");
     auto base = ctx.testPos(270, 2);
@@ -997,7 +997,7 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     };
     auto                       stoneAt = [&](int x) { return ctx.blockAt({P.dim, x, P.y, P.z}) == "minecraft:stone"; };
     worldgen::ext::CarvingMask mask(chunk->minY(), chunk->maxY());
-    worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "twilightforest:tf_caves", nullptr, &mask};
+    worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "gloamingforest:tf_caves", nullptr, &mask};
     ctx.check(agrees(P.x) && agrees(P.x + 1), "an empty layer reads empty");
     // 1. a waterlogged neighbour stops the carve
     region->setExtraBlock(BlockPos{P.x + 1, P.y, P.z}, *water, 3);
@@ -1035,7 +1035,7 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
 
 // ---- the world preset's saved-chunk check ------------------------------------------------------------------
 
-// onWorldReady looks for the Twilight Forest's saved chunks (their version records in the world DB)
+// onWorldReady looks for the Gloaming Forest's saved chunks (their version records in the world DB)
 // when a world has no kept preset and the answer matters. The probe looks up positions near the
 // dimension's entrances, each once, and never iterates the chunk table here. The test writes no chunk
 // record: the game's version-record lookup runs read-only on a dimension id no world uses, and the
@@ -1070,9 +1070,9 @@ GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroT
         hit && !hit->scanned && hit->probed <= static_cast<std::size_t>(kBound),
         "found by lookup, without a scan (" + std::to_string(hit ? hit->probed : 0) + " positions)"
     );
-    if (int dim = gf::world::twilight() ? static_cast<int>(*gf::world::twilight()) : -1; dim >= 0) {
+    if (int dim = gf::world::gloaming() ? static_cast<int>(*gf::world::gloaming()) : -1; dim >= 0) {
         auto tf = findSavedChunks(dim, false);
-        ctx.info(std::string("Twilight Forest chunks saved near its entrances: ") + (tf && tf->found ? "yes" : "no"));
+        ctx.info(std::string("Gloaming Forest chunks saved near its entrances: ") + (tf && tf->found ? "yes" : "no"));
     }
     auto stored = game::db::get("gf:terrain:skylight");
     ctx.check(stored && stored->is_boolean(), "the world keeps its preset");

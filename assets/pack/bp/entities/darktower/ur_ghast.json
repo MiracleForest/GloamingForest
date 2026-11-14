@@ -2,22 +2,22 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:ur_ghast",
+      "identifier": "gloamingforest:ur_ghast",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:tantrum": {
+        "gloamingforest:tantrum": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:charging": {
+        "gloamingforest:charging": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:attack_status": {
+        "gloamingforest:attack_status": {
           "type": "int",
           "range": [
             0,
@@ -26,7 +26,7 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:attack_timer": {
+        "gloamingforest:attack_timer": {
           "type": "int",
           "range": [
             -40,
@@ -35,7 +35,7 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:death_time": {
+        "gloamingforest:death_time": {
           "type": "int",
           "range": [
             0,
@@ -49,7 +49,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "ur_ghast",
           "monster",
           "mob"

@@ -1,22 +1,22 @@
 # U19 (questcamps): the camp's 35 templates (CampStructure / CampPieces jigsaw, docs/spec/questcamps.md
-# 3.1). Original GloamingForest designs (rule R19) keeping TF's pools, weights, placements and marker
-# names (twilightforest:camp_marker_handlers: birch_drying_rack, camp_armor_rack, painting, tent_pot,
-# twilight_oak_slab, each with "@<facing>"). The jigsaw convention is in QuestcampsLib.ps1.
+# 3.1). Original GloamingForest designs (rule R19) keeping upstream's pools, weights, placements and marker
+# names (gloamingforest:camp_marker_handlers: birch_drying_rack, camp_armor_rack, painting, tent_pot,
+# gloaming_oak_slab, each with "@<facing>"). The jigsaw convention is in QuestcampsLib.ps1.
 . (Join-Path $PSScriptRoot 'QuestcampsLib.ps1')
 
-$log   = 'twilightforest:twilight_oak_log'
+$log   = 'gloamingforest:gloaming_oak_log'
 $logX  = Get-QcState $log @{ axis = 'x' }
 $logZ  = Get-QcState $log @{ axis = 'z' }
 $logY  = Get-QcState $log @{ axis = 'y' }
-$fence = 'twilightforest:twilight_oak_fence'
-$planks = 'twilightforest:twilight_oak_planks'
+$fence = 'gloamingforest:gloaming_oak_fence'
+$planks = 'gloamingforest:gloaming_oak_planks'
 $wool  = 'minecraft:light_gray_wool'
 $fire  = Get-QcState 'minecraft:campfire' @{ lit = 'true'; signal_fire = 'false'; facing = 'north'; waterlogged = 'false' }
 
 # ---- starts: a campfire ring 9 x 3 x 9 ----------------------------------------------------------------------
 # exits: north, south, west, east (front out); the main path leaves on the side the name gives
 function New-CampStart([string]$name, [hashtable]$exits) {
-    $t = New-Gft -Id "twilightforest:camp/$name" -Size 9, 3, 9
+    $t = New-Gft -Id "gloamingforest:camp/$name" -Size 9, 3, 9
     Clear-QcBox $t 0 0 0 8 2 8
     Set-QcRows $t 0 @{ 'c' = $fire; 'x' = $logX; 'z' = $logZ; 'g' = 'minecraft:coarse_dirt'; 's' = 'minecraft:cobblestone_slab' } @(
         '.........',
@@ -37,8 +37,8 @@ function New-CampStart([string]$name, [hashtable]$exits) {
         Set-GftBlock $t $p[0] $p[1] $p[2] 'minecraft:cobblestone_slab' @{ type = 'bottom'; waterlogged = 'false' }
     }
     # stools around the fire (25 % slabs) and a drying rack by the seats
-    Add-QcData $t 3 0 2 'twilight_oak_slab@south'
-    Add-QcData $t 5 0 6 'twilight_oak_slab@north'
+    Add-QcData $t 3 0 2 'gloaming_oak_slab@south'
+    Add-QcData $t 5 0 6 'gloaming_oak_slab@north'
     Add-QcData $t 1 0 1 'birch_drying_rack@south'
     Add-QcData $t 7 0 7 'birch_drying_rack@north'
     Add-QcSeed $t 4 0 4 'down' $script:QcName.start
@@ -75,11 +75,11 @@ function Set-Bed($t, [int]$x, [int]$z, [string]$facing) {
 }
 function Set-TentChest($t, [int]$x, [int]$z, [string]$facing) {
     Set-GftBlock $t $x 0 $z 'minecraft:chest' @{ facing = $facing; type = 'single'; waterlogged = 'false' }
-    Add-GftMarker $t $x 0 $z 'loot' @{ table = 'twilightforest:camp_tent' }
+    Add-GftMarker $t $x 0 $z 'loot' @{ table = 'gloamingforest:camp_tent' }
 }
 
 # solo tent 5 x 4 x 6
-$t = New-Gft -Id 'twilightforest:camp/tent/solo_tent' -Size 5, 4, 6
+$t = New-Gft -Id 'gloamingforest:camp/tent/solo_tent' -Size 5, 4, 6
 Clear-QcBox $t 0 0 0 4 3 5
 Set-TentFrame $t 5 3 6
 Set-GftBlock $t 0 3 0 $fence; Set-GftBlock $t 4 3 0 $fence
@@ -87,12 +87,12 @@ Set-GftBlock $t 2 3 0 $fence; Set-GftBlock $t 2 3 5 $fence
 Set-Bed $t 2 3 'south'
 Set-TentChest $t 1 4 'east'
 Add-QcData $t 3 0 4 'tent_pot@west'
-Add-QcData $t 1 0 1 'twilight_oak_slab@south'
+Add-QcData $t 1 0 1 'gloaming_oak_slab@south'
 Add-QcSeed $t 2 0 0 'north' $script:QcName.tent
 Save-Gft $t
 
 # duo tent 7 x 5 x 7
-$t = New-Gft -Id 'twilightforest:camp/tent/duo_tent' -Size 7, 5, 7
+$t = New-Gft -Id 'gloamingforest:camp/tent/duo_tent' -Size 7, 5, 7
 Clear-QcBox $t 0 0 0 6 4 6
 Set-TentFrame $t 7 4 7
 Set-Bed $t 1 3 'south'
@@ -105,7 +105,7 @@ Add-QcSeed $t 3 0 0 'north' $script:QcName.tent
 Save-Gft $t
 
 # open tent 5 x 4 x 5: a wool canopy on four posts
-$t = New-Gft -Id 'twilightforest:camp/tent/open_tent' -Size 5, 4, 5
+$t = New-Gft -Id 'gloamingforest:camp/tent/open_tent' -Size 5, 4, 5
 Clear-QcBox $t 0 0 0 4 3 4
 foreach ($p in @(@(0, 0), @(4, 0), @(0, 4), @(4, 4))) { Set-GftBox $t $p[0] 0 $p[1] $p[0] 1 $p[1] $fence }
 Set-GftBox $t 0 2 0 4 2 4 $wool
@@ -118,7 +118,7 @@ Add-QcSeed $t 2 0 0 'north' $script:QcName.tent
 Save-Gft $t
 
 # luxury tent 9 x 5 x 8: a wide wool hall with a carpet, two beds, a chest, a pot, an armour rack and a painting
-$t = New-Gft -Id 'twilightforest:camp/tent/luxury_tent' -Size 9, 5, 8
+$t = New-Gft -Id 'gloamingforest:camp/tent/luxury_tent' -Size 9, 5, 8
 Clear-QcBox $t 0 0 0 8 4 7
 Set-TentFrame $t 9 5 8
 # raise the side walls one more block for headroom
@@ -132,7 +132,7 @@ Set-TentChest $t 4 6 'north'
 Add-QcData $t 3 0 6 'tent_pot@north'
 Add-QcData $t 5 0 6 'camp_armor_rack@north'
 Add-QcData $t 4 1 6 'painting@north'
-Add-QcData $t 1 0 1 'twilight_oak_slab@east'
+Add-QcData $t 1 0 1 'gloaming_oak_slab@east'
 Set-GftBlock $t 0 4 0 $fence; Set-GftBlock $t 8 4 0 $fence
 Add-QcSeed $t 4 0 0 'north' $script:QcName.tent
 Save-Gft $t
@@ -151,7 +151,7 @@ function Set-PathCells($t, [string[]]$rows) {
     }
 }
 function New-Path([string]$name, [int]$w, [int]$len) {
-    $t = New-Gft -Id "twilightforest:camp/path/$name" -Size $w, 3, $len
+    $t = New-Gft -Id "gloamingforest:camp/path/$name" -Size $w, 3, $len
     $rows = @(1..$len | ForEach-Object { '#' * $w })
     Set-PathCells $t $rows
     Add-QcSeed $t 0 2 0 'north' $script:QcName.path
@@ -167,7 +167,7 @@ New-Path 'path_2x6' 2 6
 New-Path 'path_2x7' 2 7
 
 # intersection_left 5 x 3 x 7: a lane at x 3..4 with a branch west at z 2..3
-$t = New-Gft -Id 'twilightforest:camp/path/intersection_left' -Size 5, 3, 7
+$t = New-Gft -Id 'gloamingforest:camp/path/intersection_left' -Size 5, 3, 7
 Set-PathCells $t @('   ##', '   ##', '#####', '#####', '   ##', '   ##', '   ##')
 Add-QcSeed $t 3 2 0 'north' $script:QcName.path
 Add-QcExit $t 3 2 6 'south' 'path'
@@ -175,7 +175,7 @@ Add-QcExit $t 0 2 2 'west' 'path'
 Add-QcExit $t 4 2 4 'east' 'deco'
 Save-Gft $t
 # intersection_right 5 x 3 x 7: the mirror image
-$t = New-Gft -Id 'twilightforest:camp/path/intersection_right' -Size 5, 3, 7
+$t = New-Gft -Id 'gloamingforest:camp/path/intersection_right' -Size 5, 3, 7
 Set-PathCells $t @('##   ', '##   ', '#####', '#####', '##   ', '##   ', '##   ')
 Add-QcSeed $t 0 2 0 'north' $script:QcName.path
 Add-QcExit $t 0 2 6 'south' 'path'
@@ -183,7 +183,7 @@ Add-QcExit $t 4 2 2 'east' 'path'
 Add-QcExit $t 0 2 4 'west' 'deco'
 Save-Gft $t
 # intersection_short 6 x 3 x 4: a T
-$t = New-Gft -Id 'twilightforest:camp/path/intersection_short' -Size 6, 3, 4
+$t = New-Gft -Id 'gloamingforest:camp/path/intersection_short' -Size 6, 3, 4
 Set-PathCells $t @('  ##  ', '  ##  ', '######', '######')
 Add-QcSeed $t 2 2 0 'north' $script:QcName.path
 Add-QcExit $t 0 2 2 'west' 'path'
@@ -191,7 +191,7 @@ Add-QcExit $t 5 2 3 'east' 'path'
 Add-QcExit $t 3 2 3 'south' 'tent'
 Save-Gft $t
 # j_path 5 x 3 x 6: south, then east
-$t = New-Gft -Id 'twilightforest:camp/path/j_path' -Size 5, 3, 6
+$t = New-Gft -Id 'gloamingforest:camp/path/j_path' -Size 5, 3, 6
 Set-PathCells $t @('##   ', '##   ', '##   ', '##   ', '#####', '#####')
 Add-QcSeed $t 0 2 0 'north' $script:QcName.path
 Add-QcExit $t 4 2 4 'east' 'path'
@@ -199,7 +199,7 @@ Add-QcExit $t 0 2 2 'west' 'deco'
 Add-QcExit $t 1 2 5 'south' 'deco'
 Save-Gft $t
 # l_path 5 x 3 x 6: south, then west
-$t = New-Gft -Id 'twilightforest:camp/path/l_path' -Size 5, 3, 6
+$t = New-Gft -Id 'gloamingforest:camp/path/l_path' -Size 5, 3, 6
 Set-PathCells $t @('   ##', '   ##', '   ##', '   ##', '#####', '#####')
 Add-QcSeed $t 3 2 0 'north' $script:QcName.path
 Add-QcExit $t 0 2 4 'west' 'path'
@@ -209,7 +209,7 @@ Save-Gft $t
 
 # ---- decorations: the front row (z 0) stays open, the seed connector in its middle ------------------------
 function New-Deco([string]$name, [int]$w, [int]$h, [int]$d) {
-    $t = New-Gft -Id "twilightforest:camp/deco/$name" -Size $w, $h, $d
+    $t = New-Gft -Id "gloamingforest:camp/deco/$name" -Size $w, $h, $d
     Clear-QcBox $t 0 0 0 ($w - 1) ($h - 1) ($d - 1)
     Add-QcSeed $t ([int][Math]::Floor(($w - 1) / 2)) 0 0 'north' $script:QcName.deco
     return $t
@@ -284,7 +284,7 @@ Set-QcRows $t 0 @{
 Add-QcData $t 3 0 2 'camp_armor_rack@north'
 Save-Gft $t
 
-function Get-Bush([string]$kind) { return Get-QcState "twilightforest:${kind}_bush" @{ age = '3'; layers = '0' } }
+function Get-Bush([string]$kind) { return Get-QcState "gloamingforest:${kind}_bush" @{ age = '3'; layers = '0' } }
 $t = New-Deco 'berries_staked' 3 3 3
 Set-QcRows $t 0 @{ 'b' = (Get-Bush 'raspberry'); 'f' = $fence } @('...', 'bfb', 'bfb')
 Set-GftBlock $t 1 1 1 $fence; Set-GftBlock $t 1 1 2 $fence
@@ -318,7 +318,7 @@ Add-QcData $t 2 0 1 'birch_drying_rack@north'
 Add-QcData $t 3 0 1 'birch_drying_rack@north'
 Save-Gft $t
 
-# lumber: chopped logs (the pool's processor turns every twilight oak log upright and into one wood)
+# lumber: chopped logs (the pool's processor turns every gloaming oak log upright and into one wood)
 $t = New-Deco 'lumber1' 3 3 3
 Set-QcRows $t 0 @{ 'l' = $logZ } @('...', 'l.l', 'lll')
 Set-GftBlock $t 1 1 2 $logZ.Name $logZ.Properties

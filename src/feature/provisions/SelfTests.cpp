@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U10 (provisions.*, dx 1000..1099): the foods (nutrition, saturation, effects, bowls,
 // the hydra chop trigger), stale bread's damage type, Experiment 115 (place, add, take, eat,
 // regenerate, comparator, support), frosted (slowness, freezing, fire, freeze damage, immunity), the
 // four enchantments (fire react / chill aura reactions, destruction damage and smashing, renewal) and
-// the music discs (record component, jukebox song). Behaviour from TF 4.8 (see the headers of the
+// the music discs (record component, jukebox song). Behaviour from upstream 4.8 (see the headers of the
 // files under test).
 #include <cmath>
 #include <cstdint>
@@ -184,7 +184,7 @@ GF_REGISTER_SELFTEST("provisions.stale_bread", [](Context& ctx) -> ll::coro::Cor
     player.setSelectedItem(make(fp::ids::kStaleBread));
     int before = fp::counters().staleSandwich;
     gf::combat::hurt(*victim, 1.0f, "minecraft:player_attack", &player, &player);
-    ctx.check(fp::counters().staleSandwich == before + 1, "a melee hit with stale bread is a twilightforest:stale_sandwich hit");
+    ctx.check(fp::counters().staleSandwich == before + 1, "a melee hit with stale bread is a gloamingforest:stale_sandwich hit");
     player.setSelectedItem(held);
     discard(victim);
     // Tiers.WOOD: enchantability 15 as a sword
@@ -451,9 +451,9 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
     discard(target);
 
     // renewal: an empty scepter refills from its repair ingredients in the inventory
-    auto scepter = make("twilightforest:lifedrain_scepter");
+    auto scepter = make("gloamingforest:lifedrain_scepter");
     if (items::isEmpty(scepter)) {
-        ctx.info("no twilightforest:lifedrain_scepter item: renewal not probed");
+        ctx.info("no gloamingforest:lifedrain_scepter item: renewal not probed");
         co_return;
     }
     int max = scepter.mItem->getMaxDamage();
@@ -465,7 +465,7 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
     co_await ctx.ticks(3);
     auto& p2 = static_cast<Player&>(ctx.player());
     auto  sc = p2.getSelectedItem();
-    ctx.check(items::idOf(sc) == "twilightforest:lifedrain_scepter" && sc.getDamageValue() == max - 9,
+    ctx.check(items::idOf(sc) == "gloamingforest:lifedrain_scepter" && sc.getDamageValue() == max - 9,
               "renewal recharges the empty lifedrain scepter by 9 (damage " + std::to_string(sc.getDamageValue()) + ")");
     int eyes = 0;
     for (int i = 0; i < p2.getInventory().getContainerSize(); ++i)
@@ -476,7 +476,7 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
 
     // the zombie scepter's ingredients: rotten flesh and a potion of Strength (any of the three);
     // another potion is no ingredient (NeoForge's components ingredient)
-    auto zombie = make("twilightforest:zombie_scepter");
+    auto zombie = make("gloamingforest:zombie_scepter");
     if (items::isEmpty(zombie)) co_return;
     int zmax = zombie.mItem->getMaxDamage();
     zombie.setDamageValue(static_cast<short>(zmax));
@@ -491,7 +491,7 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
         co_await ctx.ticks(3);
         auto& p4 = static_cast<Player&>(ctx.player());
         auto  zs = p4.getSelectedItem();
-        bool  refilled = items::idOf(zs) == "twilightforest:zombie_scepter" && zs.getDamageValue() == zmax - 9;
+        bool  refilled = items::idOf(zs) == "gloamingforest:zombie_scepter" && zs.getDamageValue() == zmax - 9;
         ctx.check(refilled == refills, std::string("a potion with aux ") + std::to_string(aux) + (refills ? " (long Strength) refills" : " (Healing) does not refill") +
                                            " the zombie scepter (damage " + std::to_string(zs.getDamageValue()) + ")");
     }
@@ -504,8 +504,8 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
 
 GF_REGISTER_SELFTEST("provisions.discs", [](Context& ctx) -> ll::coro::CoroTask<> {
     for (auto const& s : cp::songs()) {
-        auto id    = "twilightforest:music_disc_" + std::string(s.track);
-        auto event = "music_disc.twilightforest." + std::string(s.track);
+        auto id    = "gloamingforest:music_disc_" + std::string(s.track);
+        auto event = "music_disc.gloamingforest." + std::string(s.track);
         auto disc  = make(id);
         ctx.require(!items::isEmpty(disc), id + " exists");
         auto const* component = disc.mItem->getComponent(RecordItemComponent::getIdentifier());
@@ -525,13 +525,13 @@ GF_REGISTER_SELFTEST("provisions.discs", [](Context& ctx) -> ll::coro::CoroTask<
     auto* actor  = region ? region->getBlockEntity(b) : nullptr;
     ctx.require(actor && actor->getType() == BlockActorType::Jukebox, "the jukebox's block actor");
     auto before = gf::item::internal::recordCounts();
-    static_cast<JukeboxBlockActor&>(*actor).setRecord(make("twilightforest:music_disc_radiance"), true);
+    static_cast<JukeboxBlockActor&>(*actor).setRecord(make("gloamingforest:music_disc_radiance"), true);
     co_await ctx.ticks(2);
     region = ctx.region();
     actor  = region ? region->getBlockEntity(b) : nullptr;
     ctx.require(actor && actor->getType() == BlockActorType::Jukebox, "the jukebox is still there");
     auto now = gf::item::internal::recordCounts();
-    ctx.check(now.started > before.started && now.lastSound == "music_disc.twilightforest.radiance", "the jukebox plays music_disc.twilightforest.radiance (" + now.lastSound + ")");
+    ctx.check(now.started > before.started && now.lastSound == "music_disc.gloamingforest.radiance", "the jukebox plays music_disc.gloamingforest.radiance (" + now.lastSound + ")");
     auto& playing = static_cast<JukeboxBlockActor&>(*actor);
     playing.stopPlayingRecord(*region);
     ctx.check(gf::item::internal::recordCounts().stopped > before.stopped, "stopping the record stops the song");

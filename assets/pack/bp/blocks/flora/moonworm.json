@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:moonworm",
+      "identifier": "gloamingforest:moonworm",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
@@ -38,7 +38,7 @@
         ]
       },
       "minecraft:light_dampening": 0,
-      "minecraft:geometry": "geometry.twilightforest.flora.moonworm",
+      "minecraft:geometry": "geometry.gloamingforest.flora.moonworm",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_flora_moonworm_model",
@@ -49,7 +49,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'down'",
+        "condition": "q.block_state('gloamingforest:facing') == 'down'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -61,7 +61,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -73,7 +73,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -85,7 +85,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -97,7 +97,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:transformation": {
             "rotation": [

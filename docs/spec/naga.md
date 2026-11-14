@@ -1,7 +1,7 @@
 # U20 `naga`: Naga courtyard and Naga
 
-Behaviour spec translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ `9e40a757`). It is the
-checklist the U20 worker implements and the W2 audit (A3) compares against. Numbers are TF's; where a value is
+Behaviour spec translated from the upstream 4.8 source (commit `9e40a757`). It is the
+checklist the U20 worker implements and the W2 audit (A3) compares against. Numbers are upstream's; where a value is
 derived, the formula is given. "Bedrock:" paragraphs mark adaptation notes.
 
 | | |
@@ -10,32 +10,32 @@ derived, the formula is given. "Bedrock:" paragraphs mark adaptation notes.
 | Selftests | `naga.*`, testPos dx `2000-2099` (owners rows `selftest naga.*`, `selftest_dx 2000-2099`) |
 | World DB | `gf:naga:*` |
 | Net channels | `naga.*` |
-| Config | none (TF has no Naga config key; boss drop chests and the multiplayer adjuster are F8's `bosses` section) |
+| Config | none (upstream has no Naga config key; boss drop chests and the multiplayer adjuster are F8's `bosses` section) |
 | Contracts | landmark (F6), structure + template (F7), boss + entity (F8), loot (F10), fx (F10) |
 | Java sources | `entity/boss/Naga.java`, `entity/boss/NagaSegment.java`, `entity/ai/goal/NagaMovementPattern.java`, `entity/ai/goal/NagaSmashGoal.java`, `entity/ai/control/NagaMoveControl.java`, `block/entity/spawner/NagaSpawnerBlockEntity.java`, `world/components/structures/type/NagaCourtyardStructure.java`, `world/components/structures/courtyard/*.java` (18 files), `client/renderer/entity/Naga{,Segment}Renderer.java`, `client/model/entity/NagaModel.java`, `init/TFEntities.java`, `events/RegistrationEvents.java` |
-| Data | `data/twilightforest/loot_table/entities/naga.json`, `worldgen/structure/naga_courtyard.json`, `worldgen/structure_set/naga_courtyard.json`, `twilight/template_definition/courtyard/spawner.json`, `tags/banner_pattern/pattern_item/naga.json` |
+| Data | `data/gloamingforest/loot_table/entities/naga.json`, `worldgen/structure/naga_courtyard.json`, `worldgen/structure_set/naga_courtyard.json`, `gloaming/template_definition/courtyard/spawner.json`, `tags/banner_pattern/pattern_item/naga.json` |
 
-Not owned here (referenced by string only, R2): `twilightforest:naga_boss_spawner`, `twilightforest:naga_trophy`,
-`twilightforest:naga_scale`, the naga stone / courtyard building blocks and the `naga` banner pattern (U5 building),
-`twilightforest:progress_naga` and the other advancements (U14), the hedge block `twilightforest:hedge` (U18),
+Not owned here (referenced by string only, R2): `gloamingforest:naga_boss_spawner`, `gloamingforest:naga_trophy`,
+`gloamingforest:naga_scale`, the naga stone / courtyard building blocks and the `naga` banner pattern (U5 building),
+`gloamingforest:progress_naga` and the other advancements (U14), the hedge block `gloamingforest:hedge` (U18),
 the structure processors `NagastoneVariants`, `SmoothStoneVariants`, `StoneBricksVariants`, `CobbleVariants` (F7),
 the landmark grid, conquest, protection and hints (F6).
 
-## 1. Entity `twilightforest:naga`
+## 1. Entity `gloamingforest:naga`
 
 Registered in `TFEntities.NAGA`: category MONSTER, size 2.0 x 3.0, eye height 2.0, **fire immune**, tracking range
-80, update interval 3, receives velocity updates. Spawn egg `twilightforest:naga_spawn_egg` (primary `0xa4d316`,
+80, update interval 3, receives velocity updates. Spawn egg `gloamingforest:naga_spawn_egg` (primary `0xa4d316`,
 secondary `0x1b380b`, name "Naga Spawn Egg"). Spawn placement ON_GROUND / MOTION_BLOCKING_NO_LEAVES /
 `Monster::checkMonsterSpawnRules` (only matters for the egg and commands; the boss comes from its spawner).
-Display name `entity.twilightforest.naga` = "Naga". Tags: `#twilightforest:bosses` (itself a member of `#c:bosses`),
+Display name `entity.gloamingforest.naga` = "Naga". Tags: `#gloamingforest:bosses` (itself a member of `#c:bosses`),
 `minecraft:fall_damage_immune`, `minecraft:freeze_immune_entity_types` (through bosses).
 
 ### 1.1 Attributes and constants
 
 | Attribute / constant | Value |
 |---|---|
-| max health | 120. In `finalizeSpawn`, when the level difficulty is **not EASY**, a permanent modifier `twilightforest:difficulty_health_boost` (ADD_VALUE) adds +130 on HARD and +80 otherwise. PEACEFUL and NORMAL therefore both get +80 (200 total), HARD gets 250, and EASY stays 120. The modifier is added only if missing, and the Naga then heals to full. |
-| movement speed | 0.5 (DEFAULT_SPEED) + transient modifier `twilightforest:segment_speed_boost` = `MAX_SEGMENTS / segments * 0.02` (ADD_VALUE), recomputed whenever the segment count changes |
+| max health | 120. In `finalizeSpawn`, when the level difficulty is **not EASY**, a permanent modifier `gloamingforest:difficulty_health_boost` (ADD_VALUE) adds +130 on HARD and +80 otherwise. PEACEFUL and NORMAL therefore both get +80 (200 total), HARD gets 250, and EASY stays 120. The modifier is added only if missing, and the Naga then heals to full. |
+| movement speed | 0.5 (DEFAULT_SPEED) + transient modifier `gloamingforest:segment_speed_boost` = `MAX_SEGMENTS / segments * 0.02` (ADD_VALUE), recomputed whenever the segment count changes |
 | attack damage | 5.0 |
 | follow range | 80.0 |
 | knockback resistance | 0.25 |
@@ -48,9 +48,9 @@ Display name `entity.twilightforest.naga` = "Naga". Tags: `#twilightforest:bosse
 | home bounds | XZ 46, Y 7 (box around the restriction point); `getHomeRadius()` 40 |
 | death animation | 24 ticks + 100 ticks of particles (124 total; `BossSpec.deathTicks = 124`) |
 | boss bar | colour `0x5E9916`, overlay NOTCHED_10 (the example colour in `Boss.h` is illustrative only) |
-| death container | 50/50 `twilightforest:twilight_oak_chest` or `twilightforest:canopy_chest` |
-| boss spawner | `twilightforest:naga_boss_spawner` |
-| home structure | `twilightforest:naga_courtyard` |
+| death container | 50/50 `gloamingforest:gloaming_oak_chest` or `gloamingforest:canopy_chest` |
+| boss spawner | `gloamingforest:naga_boss_spawner` |
+| home structure | `gloamingforest:naga_courtyard` |
 
 ### 1.2 Synced data
 
@@ -91,7 +91,7 @@ decrement the counter; at `counter-- <= 0` transition, else run the state:
 Transitions: `doDaze()` = DAZE, stop navigation, counter `60 + nextInt(40)`. `doCircle()` = CIRCLE, counter
 **+=** `10 + nextInt(10)`, reset stun flag. `forceCircle()` = CIRCLE, counter **=** `10 + nextInt(10)`.
 `doCrumblePlayer()` = CRUMBLE, stop navigation, counter `20 + nextInt(20)`. `doCharge(stunless)` = counter 2.
-`doIntimidate()` = INTIMIDATE, play `entity.twilightforest.naga.rattle` (volume 4.0, voice pitch), game event
+`doIntimidate()` = INTIMIDATE, play `entity.gloamingforest.naga.rattle` (volume 4.0, voice pitch), game event
 ENTITY_ACTION, counter **+=** `15 + nextInt(10)`.
 
 `findCirclePoint(clockwise, radius, rotation)`: angle = `atan2(naga.z - target.z, naga.x - target.x) +/- rotation`
@@ -141,11 +141,11 @@ Before the vanilla move control tick: DAZE -> `xxa = 0`; not CHARGE and not INTI
 
 ### 1.8 Body segments (`NagaSegment`, multipart)
 
-- 12 `TFPart` segments, renderer id `twilightforest:naga_segment`, inactive = size 0 x 0 and invisible, active =
+- 12 `TFPart` segments, renderer id `gloamingforest:naga_segment`, inactive = size 0 x 0 and invisible, active =
   2.0 x 2.0 visible.
 - Segment count: `clamp((int)(health / healthPerSegment) + (health > 0 ? 2 : 0), 0, 12)`. When it decreases,
   segment `i` (new..old-1) self-destructs after `(old - i) * 12` ticks: on expiry the naga makes 20 EXPLOSION
-  particles at the segment, plays `entity.twilightforest.naga.hurt` (0.25, `voicePitch * 0.75 + 0.5 * rand`), sets
+  particles at the segment, plays `entity.gloamingforest.naga.hurt` (0.25, `voicePitch * 0.75 + 0.5 * rand`), sets
   the naga's `deathTime` to 0 and deactivates the segment. When it increases, all segments up to the count are
   activated at `(x + 0.1 i, y + 0.5, z + 0.1 i)` with a random yaw, each with 20 EXPLOSION particles.
 - `moveSegments()`: for segment `i`, leader = head (i = 0) or segment `i-1`; `straighten = 0.05 + 0.5 / (i + 1)` (0 while
@@ -163,9 +163,9 @@ covers linked actors. Part damage must route through `combat` to the head with t
 
 | Event | Owner | Use |
 |---|---|---|
-| `entity.twilightforest.naga.hiss` | U20 | ambient sound; subtitle `subtitles.twilightforest.entity.naga.hiss` "Naga hisses" (3 variants in TF) |
-| `entity.twilightforest.naga.hurt` | U20 | hurt **and** death sound; segment pop (0.25 volume); poof on death (`volume * 1.25`, `pitch * 0.25`); subtitle "Naga hurts" (3 variants) |
-| `entity.twilightforest.naga.rattle` | U20 | entering INTIMIDATE (volume 4.0); subtitle "Naga rattles" (2 variants) |
+| `entity.gloamingforest.naga.hiss` | U20 | ambient sound; subtitle `subtitles.gloamingforest.entity.naga.hiss` "Naga hisses" (3 variants in upstream) |
+| `entity.gloamingforest.naga.hurt` | U20 | hurt **and** death sound; segment pop (0.25 volume); poof on death (`volume * 1.25`, `pitch * 0.25`); subtitle "Naga hurts" (3 variants) |
+| `entity.gloamingforest.naga.rattle` | U20 | entering INTIMIDATE (volume 4.0); subtitle "Naga rattles" (2 variants) |
 | `minecraft:item.shield.block`, `minecraft:entity.fox.bite` | vanilla | shield interactions (1.7) |
 
 Particles (client): dazed and `deathTime < 10`: 5 CRIT per tick on a 1.5-radius ring at y + 2.15. Stunless charging and
@@ -191,31 +191,31 @@ Textures `textures/entity/nagahead.png`, `nagahead_charging.png` (charging or dy
 translated y -1.25, lit with the head's light. Geometry from F2 (`NagaModel`). Vanilla clients: the same geometry
 via the RP; the red stunless tint is a client-mod effect (vanilla: the angry particles only).
 
-### 1.12 Loot `twilightforest:entities/naga`
+### 1.12 Loot `gloamingforest:entities/naga`
 
-- pool 1: rolls 1: `twilightforest:naga_scale` x6-11, +0-1 per looting level, `twilightforest:multiplayer_addition`
+- pool 1: rolls 1: `gloamingforest:naga_scale` x6-11, +0-1 per looting level, `gloamingforest:multiplayer_addition`
   (extra 2-4 per additional player, F10 loot function)
-- pool 2: rolls 1: `twilightforest:naga_trophy`
+- pool 2: rolls 1: `gloamingforest:naga_trophy`
 
 ## 2. Boss spawner wiring
 
-`NagaSpawnerBlockEntity`: `boss::registerSpawner({.blockId = "twilightforest:naga_boss_spawner", .entityId =
-"twilightforest:naga", .range = 50, .particle = "minecraft:crit"})` (LONG_RANGE 50; the default range is 9). The
+`NagaSpawnerBlockEntity`: `boss::registerSpawner({.blockId = "gloamingforest:naga_boss_spawner", .entityId =
+"gloamingforest:naga", .range = 50, .particle = "minecraft:crit"})` (LONG_RANGE 50; the default range is 9). The
 generic spawner (F8) spawns the boss at the block, sets its restriction point to the block and destroys the block.
 In peaceful the boss turns back into its spawner at the restriction point (`checkDespawn`).
 
-## 3. Structure `twilightforest:naga_courtyard`
+## 3. Structure `gloamingforest:naga_courtyard`
 
 | Field | Value |
 |---|---|
-| structure type | `twilightforest:naga_courtyard` (`NagaCourtyardStructure`, a `ConquerableStructure`) |
-| structure set | `twilightforest:naga_courtyard`: placement `twilightforest:landmark_grid` with `structure_grid_lock = twilightforest:naga_courtyard`, one structure weight 1 (F6 places it on the landmark grid) |
-| biomes | `#twilightforest:valid_naga_courtyard_biomes` (U1 tag) |
+| structure type | `gloamingforest:naga_courtyard` (`NagaCourtyardStructure`, a `ConquerableStructure`) |
+| structure set | `gloamingforest:naga_courtyard`: placement `gloamingforest:landmark_grid` with `structure_grid_lock = gloamingforest:naga_courtyard`, one structure weight 1 (F6 places it on the landmark grid) |
+| biomes | `#gloamingforest:valid_naga_courtyard_biomes` (U1 tag) |
 | step | `surface_structures`; terrain adaptation `beard_thin` |
 | decoration clearance | `chunk_clearance_radius` 3, `allow_biome_surface_decorations` false, `allow_biome_underground_decorations` true, `allow_biome_vegetation` true, `adjust_structure_elevation` true |
 | spawn overrides | every category: bounding box `full`, no spawns (landmark-controlled spawning) |
 | progression lock | none (first landmark); no hint creature |
-| map icon | map decoration `twilightforest:naga_courtyard` (vanilla fallback: nearest of the vanilla decorations, F6/F12 mapping) |
+| map icon | map decoration `gloamingforest:naga_courtyard` (vanilla fallback: nearest of the vanilla decorations, F6/F12 mapping) |
 | centre in chunk | true |
 | start | `CourtyardMain(random, 0, x + 1, y, z + 1)` |
 | height | `WorldUtil.adjustForTerrain(context, x, z, 40, 4) + 2` |
@@ -238,30 +238,30 @@ In peaceful the boss turns back into its spawner at the restriction point (`chec
 
 | Connection bits | Piece (piece type) | Templates (+ "big" overlay at integrity 0.5, air ignored) |
 |---|---|---|
-| one direction | 50/50 `NagaCourtyardHedgeCapComponent` (`twilightforest:TFNCCp`) or `...CapPillarComponent` (`twilightforest:TFNCCpP`), rotated per direction | `courtyard/hedge_end` + `hedge_end_big`; `courtyard/hedge_end_pillar` + `hedge_end_pillar_big` |
-| two adjacent (corner) | `NagaCourtyardHedgeCornerComponent` (`twilightforest:TFNCCr`) | `courtyard/hedge_corner` + `_big` |
-| three (T) | `NagaCourtyardHedgeTJunctionComponent` (`twilightforest:TFNCT`) | `courtyard/hedge_t` + `_big` |
-| two opposite (line) | `NagaCourtyardHedgeLineComponent` (`twilightforest:TFNCLn`) | `courtyard/hedge_line` + `_big` |
-| four | `NagaCourtyardHedgeIntersectionComponent` (`twilightforest:TFNCIs`) | `courtyard/hedge_intersection` + `_big` |
-| none | terrace at `(-6, -3, -6)`: 1/150 `terrace_statue`; else `nextInt(5)`: 1 `terrace_duct`, 2 `terrace_channel`, 3 `terrace_reservoir`, 4 `CourtyardTerraceHedge` (`twilightforest:TFNCHe`: `terrace_hedge` + `terrace_hedge_big` at 0.5), 0 `terrace_fire`; all `CourtyardTerrace` (`twilightforest:TFNCTe`) | as named |
+| one direction | 50/50 `NagaCourtyardHedgeCapComponent` (`gloamingforest:TFNCCp`) or `...CapPillarComponent` (`gloamingforest:TFNCCpP`), rotated per direction | `courtyard/hedge_end` + `hedge_end_big`; `courtyard/hedge_end_pillar` + `hedge_end_pillar_big` |
+| two adjacent (corner) | `NagaCourtyardHedgeCornerComponent` (`gloamingforest:TFNCCr`) | `courtyard/hedge_corner` + `_big` |
+| three (T) | `NagaCourtyardHedgeTJunctionComponent` (`gloamingforest:TFNCT`) | `courtyard/hedge_t` + `_big` |
+| two opposite (line) | `NagaCourtyardHedgeLineComponent` (`gloamingforest:TFNCLn`) | `courtyard/hedge_line` + `_big` |
+| four | `NagaCourtyardHedgeIntersectionComponent` (`gloamingforest:TFNCIs`) | `courtyard/hedge_intersection` + `_big` |
+| none | terrace at `(-6, -3, -6)`: 1/150 `terrace_statue`; else `nextInt(5)`: 1 `terrace_duct`, 2 `terrace_channel`, 3 `terrace_reservoir`, 4 `CourtyardTerraceHedge` (`gloamingforest:TFNCHe`: `terrace_hedge` + `terrace_hedge_big` at 0.5), 0 `terrace_fire`; all `CourtyardTerrace` (`gloamingforest:TFNCTe`) | as named |
 
   Rotation order for caps: case WEST 0, NORTH 1, EAST 2, SOUTH 3 (fall-through `rotation++`); corners: SOUTH_EAST 0,
   SOUTH_WEST 1, NORTH_WEST 2, NORTH_EAST 3; T: NOT_WEST 0, NOT_NORTH 1, NOT_EAST 2, NOT_SOUTH 3; lines: EAST_WEST 0,
   NORTH_SOUTH 1 (indices into `Rotation.values()`).
 - Hedge connectors: for each connection west/north (and east/south only at the grid edge or next to an excluded
-  cell) a `NagaCourtyardHedgePadderComponent` (`twilightforest:TFNCPd`, `courtyard/hedge_between` + `_big`) at
+  cell) a `NagaCourtyardHedgePadderComponent` (`gloamingforest:TFNCPd`, `courtyard/hedge_between` + `_big`) at
   -1 / +4 / +5 offsets (a second padder 6 further when the neighbour is not excluded) and a line piece 6 blocks away
   (coordinates exactly as `processInnerWallsAndFloor`).
-- Paths: `CourtyardPathPiece` (`twilightforest:TFNCPa`, template `courtyard/pathway`, NagastoneVariants, placed one
+- Paths: `CourtyardPathPiece` (`gloamingforest:TFNCPa`, template `courtyard/pathway`, NagastoneVariants, placed one
   block lower via `placePieceAdjusted(..., -1)`) at the centre and on the four cardinal and four diagonal sides of
   every hedge cell when the neighbouring cells have no terrace (the eight `...HasNoTerraceOrIsSafe` predicates).
 - Outer walls (`processOuterWalls`): for each of the four diagonals, padders and walls along the clipped notches,
-  two `CourtyardWallCornerOuter` (`twilightforest:TFNCWC`, `courtyard/courtyard_wall_corner` +
-  `_decayed`) and one `CourtyardWallCornerInner` (`twilightforest:TFNCWA`, `courtyard/courtyard_wall_corner_inner` +
-  `_decayed`); then the straight north/south/west/east runs of `CourtyardWall` (`twilightforest:TFNCWl`,
-  `courtyard/courtyard_wall` + `_decayed`) every 12 blocks with a `CourtyardWallPadder` (`twilightforest:TFNCWP`,
+  two `CourtyardWallCornerOuter` (`gloamingforest:TFNCWC`, `courtyard/courtyard_wall_corner` +
+  `_decayed`) and one `CourtyardWallCornerInner` (`gloamingforest:TFNCWA`, `courtyard/courtyard_wall_corner_inner` +
+  `_decayed`); then the straight north/south/west/east runs of `CourtyardWall` (`gloamingforest:TFNCWl`,
+  `courtyard/courtyard_wall` + `_decayed`) every 12 blocks with a `CourtyardWallPadder` (`gloamingforest:TFNCWP`,
   `courtyard/courtyard_wall_padding` + `_decayed`) between them, coordinates as in the Java.
-- Wall pieces are `TwilightDoubleTemplateStructurePiece`s: the intact template with BlockRot 0.95 + SmoothStone +
+- Wall pieces are `GloamingDoubleTemplateStructurePiece`s: the intact template with BlockRot 0.95 + SmoothStone +
   Nagastone + StoneBricks + Cobble variant processors, then the decayed template with BlockRot 0.1 + Cobble variants.
 - Terraces: processors `CourtyardTerraceTemplateProcessor` + Nagastone + StoneBricks variants; beardifier box =
   piece box, terrain adjustment BEARD_BOX, ground level delta 3. The terrace processor turns a template's
@@ -270,53 +270,53 @@ In peaceful the boss turns back into its spawner at the restriction point (`chec
   stone bricks; (single slab) nothing over air, otherwise a stone brick slab.
 - Hedge pieces (`TFStructureComponentTemplate`): template with NagastoneVariants, then the big template with
   BlockIgnore AIR + BlockRot 0.5, both with flags 18.
-- Boss spawner: `CourtyardMain.addChildren` picks from template pool `twilightforest:courtyard/center` at
+- Boss spawner: `CourtyardMain.addChildren` picks from template pool `gloamingforest:courtyard/center` at
   `getWorldPos(22, 1, 22)` facing a random rotation of SOUTH (`FrontAndTop(UP, dir)`), junction name
-  `"twilightforest:center"`, as a `TwilightJigsawPiece` (piece type `twilightforest:TFJigsawTemplate`; owner F7 is
+  `"gloamingforest:center"`, as a `GloamingJigsawPiece` (piece type `gloamingforest:TFJigsawTemplate`; owner F7 is
   proposed, pending an owners.tsv fix by F0/A8,
   [issue #4](https://github.com/MiracleForest/GloamingForest/issues/4)). Legacy saves without
-  `placeSpawner = false` place `twilightforest:naga_boss_spawner` at `(22, 3, 22)` in `postProcess` (keep for
+  `placeSpawner = false` place `gloamingforest:naga_boss_spawner` at `(22, 3, 22)` in `postProcess` (keep for
   old-save parity only).
 
-Piece type ids owned here (all `structure_piece_type`): `twilightforest:TFNCMn` (CourtyardMain),
-`twilightforest:TFNCCp`, `twilightforest:TFNCCpP`, `twilightforest:TFNCCr`, `twilightforest:TFNCLn`,
-`twilightforest:TFNCT`, `twilightforest:TFNCIs`, `twilightforest:TFNCPd`, `twilightforest:TFNCTe`,
-`twilightforest:TFNCHe`, `twilightforest:TFNCPa`, `twilightforest:TFNCWl`, `twilightforest:TFNCWP`,
-`twilightforest:TFNCWC`, `twilightforest:TFNCWA`. The structure type id `twilightforest:naga_courtyard` is owned
+Piece type ids owned here (all `structure_piece_type`): `gloamingforest:TFNCMn` (CourtyardMain),
+`gloamingforest:TFNCCp`, `gloamingforest:TFNCCpP`, `gloamingforest:TFNCCr`, `gloamingforest:TFNCLn`,
+`gloamingforest:TFNCT`, `gloamingforest:TFNCIs`, `gloamingforest:TFNCPd`, `gloamingforest:TFNCTe`,
+`gloamingforest:TFNCHe`, `gloamingforest:TFNCPa`, `gloamingforest:TFNCWl`, `gloamingforest:TFNCWP`,
+`gloamingforest:TFNCWC`, `gloamingforest:TFNCWA`. The structure type id `gloamingforest:naga_courtyard` is owned
 here too.
 
 ### 3.2 Template slot list (re-design brief, R11/R19)
 
 The 32 courtyard `.nbt` templates are All Rights Reserved and are re-designed as `.gft.json` under
-`assets/structures/naga/courtyard/` (template ids unchanged, `twilightforest:courtyard/<name>`). The Java fixes
+`assets/structures/naga/courtyard/` (template ids unchanged, `gloamingforest:courtyard/<name>`). The Java fixes
 their grid; keep these constraints:
 
 | Template | Slot / constraints |
 |---|---|
-| `courtyard/hedge_end`, `hedge_end_pillar`, `hedge_corner`, `hedge_t`, `hedge_line`, `hedge_intersection` | one 12-block cell, origin at the cell origin, hedge (`twilightforest:hedge`) walls of the connection shape; base orientation per the rotation table above; naga stone accents where TF uses them (NagastoneVariants turns half of the `twilightforest:etched_nagastone`, `nagastone_pillar`, `nagastone_stairs_left` and `nagastone_stairs_right` into their `mossy_` / `cracked_` variants, half each) |
+| `courtyard/hedge_end`, `hedge_end_pillar`, `hedge_corner`, `hedge_t`, `hedge_line`, `hedge_intersection` | one 12-block cell, origin at the cell origin, hedge (`gloamingforest:hedge`) walls of the connection shape; base orientation per the rotation table above; naga stone accents where upstream uses them (NagastoneVariants turns half of the `gloamingforest:etched_nagastone`, `nagastone_pillar`, `nagastone_stairs_left` and `nagastone_stairs_right` into their `mossy_` / `cracked_` variants, half each) |
 | `..._big` variants of the six above + `hedge_between_big` | overlay leaves/hedge "floof" placed at 50 % integrity, air ignored, same footprint |
 | `courtyard/hedge_between` (+ `_big`) | 1-block padder between hedge pieces (placed at -1 / +5 / -7 offsets; NONE or CLOCKWISE_90) |
 | `courtyard/pathway` | path tile 1 block below the hedge base, ~7 x 7 (placed at -1/-7/+5 offsets around a cell; naga stone / stone brick path) |
 | `courtyard/terrace_fire`, `terrace_duct`, `terrace_channel`, `terrace_reservoir`, `terrace_statue`, `terrace_hedge` (+ `terrace_hedge_big`) | 12 x 12 sunken terrace placed 3 blocks lower at `(-6, -3, -6)`; uses sandstone slabs as "terrain-fitting" markers for the terrace processor; statue is the rare (1/150) variant |
 | `courtyard/courtyard_wall`, `_padding`, `_corner`, `_corner_inner` (+ each `_decayed`) | perimeter wall segments of 12 / padding / corners; decayed overlays at 10 % integrity with cobble variants |
-| `courtyard/spawner` | the centre piece, pool `twilightforest:courtyard/center` (template definition `template_definition/twilightforest:courtyard/spawner`, weight 100); must contain a jigsaw connector named `twilightforest:center` (pointing down/UP-front so `FrontAndTop(UP, dir)` fits) and the block `twilightforest:naga_boss_spawner` |
+| `courtyard/spawner` | the centre piece, pool `gloamingforest:courtyard/center` (template definition `template_definition/gloamingforest:courtyard/spawner`, weight 100); must contain a jigsaw connector named `gloamingforest:center` (pointing down/UP-front so `FrontAndTop(UP, dir)` fits) and the block `gloamingforest:naga_boss_spawner` |
 
-The only template definition owned here is `template_definition/twilightforest:courtyard/spawner`
-(`{"twilightforest:courtyard/center": 100}`).
+The only template definition owned here is `template_definition/gloamingforest:courtyard/spawner`
+(`{"gloamingforest:courtyard/center": 100}`).
 
 ## 4. Tag, map decoration and strings
 
-- `banner_pattern/#twilightforest:pattern_item/naga` = `[twilightforest:naga]` (the banner pattern itself is U5's;
+- `banner_pattern/#gloamingforest:pattern_item/naga` = `[gloamingforest:naga]` (the banner pattern itself is U5's;
   the tag lives here, R6).
-- Map decoration `twilightforest:naga_courtyard` (the landmark icon on magic maps; U13 renders magic maps).
-- Lang keys owned: `entity.twilightforest.naga` "Naga", `item.twilightforest.naga_spawn_egg` "Naga Spawn Egg",
-  `subtitles.twilightforest.entity.naga.hiss` "Naga hisses", `subtitles.twilightforest.entity.naga.hurt`
-  "Naga hurts", `subtitles.twilightforest.entity.naga.rattle` "Naga rattles".
+- Map decoration `gloamingforest:naga_courtyard` (the landmark icon on magic maps; U13 renders magic maps).
+- Lang keys owned: `entity.gloamingforest.naga` "Naga", `item.gloamingforest.naga_spawn_egg` "Naga Spawn Egg",
+  `subtitles.gloamingforest.entity.naga.hiss` "Naga hisses", `subtitles.gloamingforest.entity.naga.hurt`
+  "Naga hurts", `subtitles.gloamingforest.entity.naga.rattle` "Naga rattles".
 
 ## 5. Bedrock adaptation notes
 
-- Boss: `boss::registerBoss({entityId "twilightforest:naga", homeStructure "twilightforest:naga_courtyard",
-  lootTable "twilightforest:entities/naga", deathChestBlock random twilight oak / canopy chest, bar {0x5E9916},
+- Boss: `boss::registerBoss({entityId "gloamingforest:naga", homeStructure "gloamingforest:naga_courtyard",
+  lootTable "gloamingforest:entities/naga", deathChestBlock random gloaming oak / canopy chest, bar {0x5E9916},
   deathTicks 124})`. The NOTCHED_10 overlay maps to Bedrock's 10-notch boss bar overlay.
 - Shield logic: Bedrock players block with `Player::isBlocking`; the knockback packet `MovePlayerPacket` becomes
   `movement::applyMotion` (companion) or SetActorMotion for vanilla clients.

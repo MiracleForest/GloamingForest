@@ -3,10 +3,10 @@
   U19 (questcamps): builds the Questing Ram's client assets from F1's / F2's generated files.
 
 .DESCRIPTION
-  TF's QuestRamModel renders each of the 16 wool segments tinted with Sheep#getColor of its dye and
+  upstream's QuestRamModel renders each of the 16 wool segments tinted with Sheep#getColor of its dye and
   shows only the colours the ram collected, then a glowing-lines layer scaled 1.025. Bedrock has no
   per-bone tint, so this script writes:
-    - assets/pack/rp/textures/entity/questcamps/tf-derived/questram_tinted.png: TF's questram.png
+    - assets/pack/rp/textures/entity/questcamps/tf-derived/questram_tinted.png: upstream's questram.png
       (CC BY-NC-SA 4.0, R3) with 16 tinted copies of the wool segment's UV box appended below it
       (128 x 256), and its SOURCES.json entry;
     - assets/pack/rp/models/entity/questcamps/quest_ram_tinted.geo.json: F2's geometry with each
@@ -15,7 +15,7 @@
       about the model origin (24 px above the feet), for the lines layer;
     - assets/pack/rp/animations/questcamps/quest_ram.pose.animation.json: QuestRamModel
       #prepareMobModel (the body stretched by the number of colours, the segments lined up in
-      colorOrder) from the packed entity property twilightforest:color_flags.
+      colorOrder) from the packed entity property gloamingforest:color_flags.
   Run it again when F1 / F2 regenerate their files.
 #>
 $ErrorActionPreference = 'Stop'
@@ -32,7 +32,7 @@ function Get-SheepColor([int]$i) {
 }
 
 # ---- the tinted texture -------------------------------------------------------------------------------------
-$srcRel = 'assets/gen/import/questcamps/rp/textures/twilightforest/entity/questram.png'
+$srcRel = 'assets/gen/import/questcamps/rp/textures/gloamingforest/entity/questram.png'
 $src = [System.Drawing.Bitmap]::new((Join-Path $root $srcRel))
 $out = [System.Drawing.Bitmap]::new(128, 256, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 for ($x = 0; $x -lt 128; $x++) { for ($y = 0; $y -lt 128; $y++) { $out.SetPixel($x, $y, $src.GetPixel($x, $y)) } }
@@ -55,7 +55,7 @@ $texDir = Join-Path $root 'assets/pack/rp/textures/entity/questcamps/tf-derived'
 New-Item -ItemType Directory -Force $texDir | Out-Null
 $out.Save((Join-Path $texDir 'questram_tinted.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 $src.Dispose(); $out.Dispose()
-$sources = [ordered]@{ 'questram_tinted.png' = 'src/main/resources/assets/twilightforest/textures/entity/questram.png' }
+$sources = [ordered]@{ 'questram_tinted.png' = 'src/main/resources/assets/gloamingforest/textures/entity/questram.png' }
 [IO.File]::WriteAllText((Join-Path $texDir 'SOURCES.json'), (($sources | ConvertTo-Json) + "`n"), [Text.UTF8Encoding]::new($false))
 
 # ---- the geometries -------------------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ function Save-Json($obj, [string]$path) { [IO.File]::WriteAllText($path, (($obj 
 
 $tinted = $geoSrc | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable
 $g = $tinted['minecraft:geometry'][0]
-$g.description.identifier = 'geometry.twilightforest.quest_ram_tinted'
+$g.description.identifier = 'geometry.gloamingforest.quest_ram_tinted'
 $g.description.texture_height = 256
 foreach ($b in $g.bones) {
     if ($b.name -match '^segment(\d+)$') { foreach ($c in $b.cubes) { $c.uv = @($uv[[int]$Matches[1]][0], $uv[[int]$Matches[1]][1]) } }
@@ -75,7 +75,7 @@ Save-Json $tinted (Join-Path $modelDir 'quest_ram_tinted.geo.json')
 
 $lines = $geoSrc | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable
 $l = $lines['minecraft:geometry'][0]
-$l.description.identifier = 'geometry.twilightforest.quest_ram_lines'
+$l.description.identifier = 'geometry.gloamingforest.quest_ram_lines'
 $k = 1.025
 function Scale-Point($p) { return @([Math]::Round($p[0] * $k, 4), [Math]::Round(24 + ($p[1] - 24) * $k, 4), [Math]::Round($p[2] * $k, 4)) }
 foreach ($b in $l.bones) {
@@ -110,14 +110,14 @@ for ($k2 = 0; $k2 -lt 16; $k2++) {
 $anim = [ordered]@{
     format_version = '1.8.0'
     animations     = [ordered]@{
-        'animation.twilightforest.quest_ram.pose' = [ordered]@{ loop = $true; bones = $bones }
+        'animation.gloamingforest.quest_ram.pose' = [ordered]@{ loop = $true; bones = $bones }
     }
 }
 Save-Json $anim (Join-Path $animDir 'quest_ram.pose.animation.json')
 
 # the pre-animation script of the client entity: the flag bits and their count
 $script = [System.Collections.Generic.List[string]]::new()
-$script.Add("v.qr_flags = query.property('twilightforest:color_flags');")
+$script.Add("v.qr_flags = query.property('gloamingforest:color_flags');")
 for ($i = 0; $i -lt 16; $i++) { $script.Add("v.qr_b$i = math.mod(math.floor(v.qr_flags / $([Math]::Pow(2, $i))), 2);") }
 $script.Add('v.qr_count = ' + ((0..15 | ForEach-Object { "v.qr_b$_" }) -join ' + ') + ';')
 $visibility = [ordered]@{ '*' = $true }
@@ -126,12 +126,12 @@ $entity = [ordered]@{
     format_version            = '1.10.0'
     'minecraft:client_entity' = [ordered]@{
         description = [ordered]@{
-            identifier         = 'twilightforest:quest_ram'
+            identifier         = 'gloamingforest:quest_ram'
             materials          = [ordered]@{ default = 'entity_alphatest'; lines = 'entity_alphablend' }
-            textures           = [ordered]@{ default = 'textures/entity/questcamps/tf-derived/questram_tinted'; lines = 'textures/twilightforest/entity/questram_lines' }
-            geometry           = [ordered]@{ default = 'geometry.twilightforest.quest_ram_tinted'; lines = 'geometry.twilightforest.quest_ram_lines' }
-            render_controllers = @('controller.render.twilightforest.quest_ram', 'controller.render.twilightforest.quest_ram_lines')
-            animations         = [ordered]@{ base = 'animation.twilightforest.quest_ram.base'; pose = 'animation.twilightforest.quest_ram.pose' }
+            textures           = [ordered]@{ default = 'textures/entity/questcamps/tf-derived/questram_tinted'; lines = 'textures/gloamingforest/entity/questram_lines' }
+            geometry           = [ordered]@{ default = 'geometry.gloamingforest.quest_ram_tinted'; lines = 'geometry.gloamingforest.quest_ram_lines' }
+            render_controllers = @('controller.render.gloamingforest.quest_ram', 'controller.render.gloamingforest.quest_ram_lines')
+            animations         = [ordered]@{ base = 'animation.gloamingforest.quest_ram.base'; pose = 'animation.gloamingforest.quest_ram.pose' }
             scripts            = [ordered]@{ pre_animation = $script.ToArray(); animate = @('base', 'pose') }
             spawn_egg          = [ordered]@{ base_color = '#fefeee'; overlay_color = '#33aadd' }
         }
@@ -145,13 +145,13 @@ $parts = @(@{ '*' = $true }) + @(0..15 | ForEach-Object { @{ "segment$_" = "v.qr
 $controllers = [ordered]@{
     format_version     = '1.8.0'
     render_controllers = [ordered]@{
-        'controller.render.twilightforest.quest_ram'       = [ordered]@{
+        'controller.render.gloamingforest.quest_ram'       = [ordered]@{
             geometry        = 'Geometry.default'
             materials       = @(@{ '*' = 'Material.default' })
             textures        = @('Texture.default')
             part_visibility = $parts
         }
-        'controller.render.twilightforest.quest_ram_lines' = [ordered]@{
+        'controller.render.gloamingforest.quest_ram_lines' = [ordered]@{
             geometry        = 'Geometry.lines'
             materials       = @(@{ '*' = 'Material.lines' })
             textures        = @('Texture.lines')

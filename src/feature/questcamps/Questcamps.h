@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U19 (questcamps): the Questing Ram and its quest (QuestRam.cpp, Quest.cpp), the quest grove
-// (Grove.cpp), the camps (Camp.cpp) and TF's template features (TemplateFeatures.cpp). Internal to
+// (Grove.cpp), the camps (Camp.cpp) and upstream's template features (TemplateFeatures.cpp). Internal to
 // the unit (rule R2: no other unit includes it).
 
 #include <array>
@@ -27,16 +27,16 @@ namespace gf::feature::questcamps {
 
 using Json = nlohmann::json;
 
-inline constexpr char kRam[]        = "twilightforest:quest_ram";
-inline constexpr char kGrove[]      = "twilightforest:quest_grove";
-inline constexpr char kCamp[]       = "twilightforest:camp";
-inline constexpr char kGrovePiece[] = "twilightforest:TFQuest1";
+inline constexpr char kRam[]        = "gloamingforest:quest_ram";
+inline constexpr char kGrove[]      = "gloamingforest:quest_grove";
+inline constexpr char kCamp[]       = "gloamingforest:camp";
+inline constexpr char kGrovePiece[] = "gloamingforest:TFQuest1";
 /// gf::entity::data key of a ram ({"ColorFlags", "Rewarded"}), synced to companions.
 inline constexpr char kRamData[] = "questcamps";
 /// The ram's entity property (the 16 wool segments of the model, every client).
-inline constexpr char kColorProperty[] = "twilightforest:color_flags";
+inline constexpr char kColorProperty[] = "gloamingforest:color_flags";
 /// The trigger the completed quest fires (QuestRamCompletionTrigger).
-inline constexpr char kTrigger[] = "twilightforest:complete_quest_ram";
+inline constexpr char kTrigger[] = "gloamingforest:complete_quest_ram";
 /// The net channel of the quest context (SyncQuestsPacket).
 inline constexpr char kSyncChannel[] = "questcamps.sync_quests";
 
@@ -47,10 +47,10 @@ struct QuestcampsConfig {
     bool questRamWoolIndicator = true;
 };
 
-// ---- Quest.cpp: twilight/quests/questing_ram (QuestReloadListener, QuestingRamContext) --------------------
+// ---- Quest.cpp: gloaming/quests/questing_ram (QuestReloadListener, QuestingRamContext) --------------------
 struct Quest {
     std::array<Json, 16> items;  ///< Ingredient by dye id (null: none)
-    std::string          reward = "twilightforest:entities/questing_ram_rewards";
+    std::string          reward = "gloamingforest:entities/questing_ram_rewards";
     bool                 fromData = false; ///< false: QuestingRamContext.FALLBACK
 };
 /// The current quest (a copy: reloads replace it).

@@ -1,6 +1,6 @@
-# Scepters, charms, artifacts and death keeping (U9): the scepter durabilities, the twilight bolt,
+# Scepters, charms, artifacts and death keeping (U9): the scepter durabilities, the gloaming bolt,
 # the lifedrain beam, the loyal zombie, the fortification shields (absorption, expiry, the
-# /twilightforest shield subcommand and the give_3_shields function), the charms of life and
+# /gloamingforest shield subcommand and the give_3_shields function), the charms of life and
 # keeping (the casket placement and the return on respawn), the keepsake casket block (locking,
 # repair), the potion flasks, the pocket watch and moon dial, the four custom recipes and the ore
 # meter.
@@ -9,7 +9,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'artifacts.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) artifacts selftest(s) failed" }
-$tests = 'artifacts.scepter_durability', 'artifacts.twilight_bolt', 'artifacts.lifedrain', 'artifacts.loyal_zombie', 'artifacts.shields',
+$tests = 'artifacts.scepter_durability', 'artifacts.gloaming_bolt', 'artifacts.lifedrain', 'artifacts.loyal_zombie', 'artifacts.shields',
          'artifacts.charm_of_life', 'artifacts.keeping', 'artifacts.casket', 'artifacts.flask', 'artifacts.pocket_watch', 'artifacts.recipes',
          'artifacts.ore_meter'
 if ($r.Pass -lt $tests.Count) { throw "expected $($tests.Count) artifacts selftests to pass, got $($r.Pass)" }

@@ -1,13 +1,13 @@
 {
-  "entity.twilightforest.fire_beetle": "Coléoptère de feu",
-  "entity.twilightforest.hedge_spider": "Araignée des haies",
-  "entity.twilightforest.hostile_wolf": "Loup hostile",
-  "entity.twilightforest.king_spider": "Reine des araignées",
-  "entity.twilightforest.mist_wolf": "Loup de la brume",
-  "entity.twilightforest.pinch_beetle": "Coléoptère",
-  "entity.twilightforest.redcap_sapper": "Sapeur à casquette rouge",
-  "entity.twilightforest.skeleton_druid": "Squelette de druide",
-  "entity.twilightforest.slime_beetle": "Coléoptère visqueux",
-  "entity.twilightforest.swarm_spider": "Essaim d'araignées",
-  "entity.twilightforest.winter_wolf": "Loup d'hiver"
+  "entity.gloamingforest.fire_beetle": "Coléoptère de feu",
+  "entity.gloamingforest.hedge_spider": "Araignée des haies",
+  "entity.gloamingforest.hostile_wolf": "Loup hostile",
+  "entity.gloamingforest.king_spider": "Reine des araignées",
+  "entity.gloamingforest.mist_wolf": "Loup de la brume",
+  "entity.gloamingforest.pinch_beetle": "Coléoptère",
+  "entity.gloamingforest.redcap_sapper": "Sapeur à casquette rouge",
+  "entity.gloamingforest.skeleton_druid": "Squelette de druide",
+  "entity.gloamingforest.slime_beetle": "Coléoptère visqueux",
+  "entity.gloamingforest.swarm_spider": "Essaim d'araignées",
+  "entity.gloamingforest.winter_wolf": "Loup d'hiver"
 }

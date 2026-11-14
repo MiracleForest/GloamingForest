@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.pinch_beetle.base": {
+    "animation.gloamingforest.pinch_beetle.base": {
       "loop": true,
       "bones": {
         "head": {

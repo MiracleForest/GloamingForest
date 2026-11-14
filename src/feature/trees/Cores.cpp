@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/SpecialMagicLogBlock.java
-//   src/main/java/twilightforest/block/TimeLogCoreBlock.java
-//   src/main/java/twilightforest/block/TransLogCoreBlock.java
-//   src/main/java/twilightforest/block/MineLogCoreBlock.java
-//   src/main/java/twilightforest/block/SortLogCoreBlock.java
-//   src/main/java/twilightforest/item/OreMagnetItem.java (doMagnet, findVein)
-//   src/main/java/twilightforest/events/ToolEvents.java (refreshOreMagnetCache)
-//   src/main/java/twilightforest/util/WorldUtil.java (randomOffset)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/SpecialMagicLogBlock.java
+//   src/main/java/gloamingforest/block/TimeLogCoreBlock.java
+//   src/main/java/gloamingforest/block/TransLogCoreBlock.java
+//   src/main/java/gloamingforest/block/MineLogCoreBlock.java
+//   src/main/java/gloamingforest/block/SortLogCoreBlock.java
+//   src/main/java/gloamingforest/item/OreMagnetItem.java (doMagnet, findVein)
+//   src/main/java/gloamingforest/events/ToolEvents.java (refreshOreMagnetCache)
+//   src/main/java/gloamingforest/util/WorldUtil.java (randomOffset)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U3 trees: the magic log cores. Using a core toggles `active` (useWithoutItem, with any held item
 // unless sneaking with one); an active core runs its effect every 20 ticks (SpecialMagicLogBlock's
 // scheduled tick, here a module timer per core kept in the world DB as gf:trees:cores). The mining
-// core runs OreMagnetItem.doMagnet as TF does (translated here: U8 owns the magnet item, rule R2).
+// core runs OreMagnetItem.doMagnet as upstream does (translated here: U8 owns the magnet item, rule R2).
 #include "feature/trees/Trees.h"
 
 #include <algorithm>
@@ -97,7 +97,7 @@ namespace {
 constexpr char kDbKey[]     = "gf:trees:cores";
 constexpr int  kTickRate    = 20; ///< SpecialMagicLogBlock#tickRate
 constexpr int  kMaxRange    = 128; ///< TFConfig's defineInRange(.., 0, 128) of every core range
-constexpr char kEnchanted[] = "twilightforest:enchanted_forest";
+constexpr char kEnchanted[] = "gloamingforest:enchanted_forest";
 
 struct CoreInfo {
     Core        core;
@@ -106,10 +106,10 @@ struct CoreInfo {
     char const* fallback;
 };
 constexpr CoreInfo kCores[] = {
-    {Core::Time, "twilightforest:time_log_core", "block.twilightforest.time_log_core", "Timewood Clock"},
-    {Core::Transformation, "twilightforest:transformation_log_core", "block.twilightforest.transformation_log_core", "Heart of Transformation"},
-    {Core::Mining, "twilightforest:mining_log_core", "block.twilightforest.mining_log_core", "Minewood Core"},
-    {Core::Sorting, "twilightforest:sorting_log_core", "block.twilightforest.sorting_log_core", "Sortingwood Engine"},
+    {Core::Time, "gloamingforest:time_log_core", "block.gloamingforest.time_log_core", "Timewood Clock"},
+    {Core::Transformation, "gloamingforest:transformation_log_core", "block.gloamingforest.transformation_log_core", "Heart of Transformation"},
+    {Core::Mining, "gloamingforest:mining_log_core", "block.gloamingforest.mining_log_core", "Minewood Core"},
+    {Core::Sorting, "gloamingforest:sorting_log_core", "block.gloamingforest.sorting_log_core", "Sortingwood Engine"},
 };
 
 CoreInfo const& info(Core c) { return kCores[static_cast<int>(c)]; }
@@ -151,7 +151,7 @@ void load() {
 
 bool isActive(Block const& b) {
     auto states = game::statesOf(b);
-    auto it     = states.find("twilightforest:active");
+    auto it     = states.find("gloamingforest:active");
     return it != states.end() && (it->second == "true" || it->second == "1");
 }
 
@@ -228,7 +228,7 @@ int stateInt(std::map<std::string, std::string> const& states, char const* name,
 
 /// LeavesBlock#updateDistance's value for a Bedrock vanilla leaf (which keeps no distance state):
 /// the shortest way through leaves to a log (#minecraft:logs: 0), a leaf with a stored distance
-/// (TF's: its value) counting as that value, capped at 7 (LeavesBlock.DECAY_DISTANCE).
+/// (upstream's: its value) counting as that value, capped at 7 (LeavesBlock.DECAY_DISTANCE).
 int vanillaLeafDistance(BlockSource& region, BlockPos const& start) {
     // tag membership per block id, cached (the walk asks it for every neighbour)
     static std::unordered_map<std::string, std::uint8_t> kinds; // 1 leaf, 2 log, 0 neither
@@ -252,9 +252,9 @@ int vanillaLeafDistance(BlockSource& region, BlockPos const& start) {
                 auto const&  id = b.getTypeName();
                 if (kindOf(id) == 2) {
                     best = std::min(best, depth + 1);
-                } else if (id.starts_with("twilightforest:")) {
+                } else if (id.starts_with("gloamingforest:")) {
                     auto st = game::statesOf(b);
-                    if (st.contains("twilightforest:distance")) best = std::min(best, depth + 1 + stateInt(st, "twilightforest:distance", 7));
+                    if (st.contains("gloamingforest:distance")) best = std::min(best, depth + 1 + stateInt(st, "gloamingforest:distance", 7));
                 } else if (isVanillaLeaf(b) && seen.insert(core::mth::blockPosAsLong(n.x, n.y, n.z)).second) {
                     next.push_back(n);
                 }
@@ -284,9 +284,9 @@ bool growingHead(BlockSource& region, BlockPos const& pos, std::string const& id
 bool stateTicksRandomly(BlockSource& region, BlockPos const& pos, Block const& state) {
     auto const& id     = state.getTypeName();
     auto        states = game::statesOf(state);
-    // TF's leaves (every LeavesBlock of TF keeps Java's distance and persistent states)
-    if (states.contains("twilightforest:distance") && states.contains("twilightforest:persistent"))
-        return stateInt(states, "twilightforest:distance", 7) == 7 && stateInt(states, "twilightforest:persistent", 0) == 0;
+    // upstream's leaves (every LeavesBlock of upstream keeps Java's distance and persistent states)
+    if (states.contains("gloamingforest:distance") && states.contains("gloamingforest:persistent"))
+        return stateInt(states, "gloamingforest:distance", 7) == 7 && stateInt(states, "gloamingforest:persistent", 0) == 0;
     if (!id.starts_with("minecraft:")) return true;
     if (gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id)) {
         if (stateInt(states, "persistent_bit", 0) != 0) return false;
@@ -339,7 +339,7 @@ bool vanillaTickerState(std::string const& id, BlockActor& actor) {
     return c && !game::items::isEmpty(c->getItem(0));
 }
 
-/// The ticker the time core runs at `dPos` (simulate: only whether there is one): a TF block's
+/// The ticker the time core runs at `dPos` (simulate: only whether there is one): an upstream block's
 /// registered ticker (gf::trees_ext::registerTimeCoreTicker), else a vanilla block entity's.
 bool runTicker(BlockSource& region, BlockPos const& dPos, Block const& state, bool simulate) {
     auto const& id = state.getTypeName();
@@ -377,7 +377,7 @@ int timeEffect(BlockSource& region, BlockPos const& pos) {
         BlockPos dPos = randomOffset(random, pos, range, range, range);
         if (dPos.y < region.getMinHeight() || dPos.y >= region.getMaxHeight() || !region.hasChunksAt(dPos, 0, false)) continue;
         Block const& state = region.getBlock(dPos);
-        if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "twilightforest:time_core_excluded", state.getTypeName())) continue;
+        if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "gloamingforest:time_core_excluded", state.getTypeName())) continue;
         bool ok = false;
         if (gf::feature::families::detail::randomTicked(state.getBlockType())) {
             if (stateTicksRandomly(region, dPos, state)) {
@@ -393,14 +393,14 @@ int timeEffect(BlockSource& region, BlockPos const& pos) {
         ++worked;
         // the particle at the top of the state's occlusion shape (an empty shape: -infinity, unseen)
         if (auto top = occlusionTop(region, dPos, state))
-            fx::particle(dim, "twilightforest:log_core_particle", Vec3{dPos.x + 0.5f, static_cast<float>(dPos.y + *top), dPos.z + 0.5f}, Vec3{0.953f, 0.698f, 0.0f});
+            fx::particle(dim, "gloamingforest:log_core_particle", Vec3{dPos.x + 0.5f, static_cast<float>(dPos.y + *top), dPos.z + 0.5f}, Vec3{0.953f, 0.698f, 0.0f});
     }
     return worked;
 }
 
 // ---- transformation ----------------------------------------------------------------------------------
 
-/// The enchanted forest (U1's behaviour pack biome "twilightforest:enchanted_forest"; a selftest may
+/// The enchanted forest (U1's behaviour pack biome "gloamingforest:enchanted_forest"; a selftest may
 /// put a stand-in in its place); null when the world has none.
 Biome const* transformationTarget(BlockSource& region) {
     auto&       registry = region.getLevel().getBiomeRegistry();
@@ -467,9 +467,9 @@ int transformationEffect(BlockSource& region, BlockPos const& pos) {
         Vec3  xyz = center(dPos);
         auto& dim = region.getDimension();
         for (int j = 0; j < 9; ++j) {
-            float angle = random.nextFloat() * 360.0F; // TF passes degrees to Math.cos (radians)
+            float angle = random.nextFloat() * 360.0F; // upstream passes degrees to Math.cos (radians)
             Vec3  offset{static_cast<float>(std::cos(static_cast<double>(angle)) * 2.0), 0.0f, static_cast<float>(std::sin(static_cast<double>(angle)) * 2.0)};
-            fx::particle(dim, "twilightforest:transformation_particle", Vec3{xyz.x + offset.x, xyz.y, xyz.z + offset.z}, Vec3{-offset.x, -0.0f, -offset.z});
+            fx::particle(dim, "gloamingforest:transformation_particle", Vec3{xyz.x + offset.x, xyz.y, xyz.z + offset.z}, Vec3{-offset.x, -0.0f, -offset.z});
         }
         gf::log().info("trees: the transformation core at {} {} {} turned the column at {} {} into {} (chunk resent to {} players)", pos.x, pos.y, pos.z, dPos.x, dPos.z,
                        biomeName(*target), sent);
@@ -501,7 +501,7 @@ std::set<std::string> commonBlockTags() {
 /// OreMagnetItem.TREE_ORE_TO_BLOCK_REPLACEMENTS as ToolEvents#refreshOreMagnetCache builds it: for
 /// every c:ores_in_ground/<g> tag with a matching c:ore_bearing_ground/<g> tag, each ore of the first
 /// maps to each ground of the second (the last ground wins), unless the ore is in
-/// #twilightforest:mining_tree_excluded; then ancient debris -> netherrack unless excluded or mapped.
+/// #gloamingforest:mining_tree_excluded; then ancient debris -> netherrack unless excluded or mapped.
 /// Rebuilt when the data reloads.
 struct OreCache {
     std::mutex                         mutex;
@@ -515,7 +515,7 @@ OreCache& oreCache() {
 
 std::map<std::string, std::string> buildTreeOres() {
     std::map<std::string, std::string> m;
-    constexpr char kExcluded[] = "twilightforest:mining_tree_excluded";
+    constexpr char kExcluded[] = "gloamingforest:mining_tree_excluded";
     auto const     tags        = commonBlockTags();
     for (auto const& tag : tags) {
         auto slash = tag.find("ores_in_ground/");
@@ -549,7 +549,7 @@ std::map<std::string, std::string> treeOres() {
     return c.map;
 }
 
-bool safeReplace(Block const& b) { return gf::tags::has(gf::tags::Registry::Block, "twilightforest:ore_magnet/ore_safe_replace_block", b.getTypeName()); }
+bool safeReplace(Block const& b) { return gf::tags::has(gf::tags::Registry::Block, "gloamingforest:ore_magnet/ore_safe_replace_block", b.getTypeName()); }
 
 /// OreMagnetItem#findVein into a java.util.HashSet<BlockPos> (its iteration order is the order the
 /// vein moves in: with overlapping offsets a block may land where another vein block still is).
@@ -607,7 +607,7 @@ int doMagnet(BlockSource& region, BlockPos const& usePos, BlockPos const& destPo
             for (int i = 0; i < 16; ++i) {
                 auto& r  = coreRandom();
                 float ox = static_cast<float>((r.nextDouble() - 0.5) * 1.25), oy = static_cast<float>((r.nextDouble() - 0.5) * 1.25), oz = static_cast<float>((r.nextDouble() - 0.5) * 1.25);
-                fx::ext::particleTo(player, "twilightforest:log_core_particle", Vec3{xyz.x + ox, xyz.y + oy, xyz.z + oz}, Vec3{0.8f, 0.9f, 0.2f});
+                fx::ext::particleTo(player, "gloamingforest:log_core_particle", Vec3{xyz.x + ox, xyz.y + oy, xyz.z + oz}, Vec3{0.8f, 0.9f, 0.2f});
             }
             return true;
         });
@@ -622,7 +622,7 @@ int miningEffect(BlockSource& region, BlockPos const& pos) {
     BlockPos dPos  = randomOffset(coreRandom(), pos, range, range, range);
     int      moved = doMagnet(region, pos, dPos);
     if (moved > 0) {
-        fx::sound(region.getDimension(), "item.twilightforest.magnet.grab", center(pos), 0.1f, 1.0f);
+        fx::sound(region.getDimension(), "item.gloamingforest.magnet.grab", center(pos), 0.1f, 1.0f);
         gf::log().info("trees: the mining core at {} {} {} moved {} ore blocks", pos.x, pos.y, pos.z, moved);
     }
     return moved;
@@ -639,7 +639,7 @@ struct Slots {
     std::function<bool(int, ItemStack const&)> canInsert;  ///< isItemValid (+ canPlaceItemThroughFace)
     std::function<bool(int, ItemStack const&)> canExtract; ///< canTakeItemThroughFace
     int                                        limit = 64; ///< getSlotLimit
-    /// The inventory contract's own insert / extract (TF containers): used instead of set.
+    /// The inventory contract's own insert / extract (upstream containers): used instead of set.
     std::function<ItemStack(ItemStack const&, bool)> insert;
     std::function<ItemStack(int, bool)>              extractOne;
 };
@@ -765,7 +765,7 @@ std::optional<Source> entitySource(Actor& e) {
     return Source{{std::move(s)}, Vec3{pos.x, e.getAABB().min.y + h + 0.9f, pos.z}};
 }
 
-bool sortable(Actor& e) { return e.isAlive() && gf::tags::has(gf::tags::Registry::EntityType, "twilightforest:sortable_entities", e.getTypeName()); }
+bool sortable(Actor& e) { return e.isAlive() && gf::tags::has(gf::tags::Registry::EntityType, "gloamingforest:sortable_entities", e.getTypeName()); }
 
 /// IItemHandler#extractItem(slot, 1, simulate).
 ItemStack extractOne(Slots& h, int slot, bool simulate) {
@@ -780,7 +780,7 @@ ItemStack extractOne(Slots& h, int slot, bool simulate) {
 }
 
 /// IItemHandler#insertItem(slot, one, true).isEmpty(). The inventory contract's insert takes no slot
-/// (gf::inventory::Handler::insert(pos, stack, simulate)): a TF container decides the slot itself.
+/// (gf::inventory::Handler::insert(pos, stack, simulate)): an upstream container decides the slot itself.
 bool insertFits(Slots& h, int slot, ItemStack const& one) {
     if (h.insert) return game::items::isEmpty(h.insert(one, true));
     if (!h.canInsert(slot, one)) return false;
@@ -869,7 +869,7 @@ int sortingEffect(BlockSource& region, BlockPos const& pos) {
                     if (first == -1) continue;
                     ItemStack one = extractOne(face, i, false);
                     // insertItem(firstProperStack, newStack, true) after the extraction: an item that
-                    // no longer fits there is gone, as in TF (the next output is tried with another)
+                    // no longer fits there is gone, as in upstream (the next output is tried with another)
                     if (game::items::isEmpty(one) || !insertFits(out, first, one)) continue;
                     insertOne(out, first, one);
                     transferred = true;
@@ -881,7 +881,7 @@ int sortingEffect(BlockSource& region, BlockPos const& pos) {
                     double y   = diff.y - 1.75 + random.nextDouble() * 0.5;
                     double z   = diff.z - 0.25 + random.nextDouble() * 0.5;
                     double s   = len > 0 ? 1.0 / len : 0.0;
-                    fx::particle(region.getDimension(), "twilightforest:sorting_particle", xyz, Vec3{static_cast<float>(x * s), static_cast<float>(y * s), static_cast<float>(z * s)});
+                    fx::particle(region.getDimension(), "gloamingforest:sorting_particle", xyz, Vec3{static_cast<float>(x * s), static_cast<float>(y * s), static_cast<float>(z * s)});
                     break;
                 }
             }
@@ -896,8 +896,8 @@ int sortingEffect(BlockSource& region, BlockPos const& pos) {
 
 void playCoreSound(Core core, BlockSource& region, BlockPos const& pos) {
     auto& dim = region.getDimension();
-    if (core == Core::Time) fx::sound(dim, "block.twilightforest.core.time", center(pos), 0.35f, 0.5f);
-    else if (core == Core::Transformation) fx::sound(dim, "block.twilightforest.core.transformation", center(pos), 0.1f, coreRandom().nextFloat() * 2.0f);
+    if (core == Core::Time) fx::sound(dim, "block.gloamingforest.core.time", center(pos), 0.35f, 0.5f);
+    else if (core == Core::Transformation) fx::sound(dim, "block.gloamingforest.core.transformation", center(pos), 0.1f, coreRandom().nextFloat() * 2.0f);
 }
 
 void activate(GlobalPos const& gp) {
@@ -990,7 +990,7 @@ int performCoreEffect(Core core, BlockSource& region, BlockPos const& pos) {
 
 bool timeCoreWorks(BlockSource& region, BlockPos const& pos) {
     Block const& state = region.getBlock(pos);
-    if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "twilightforest:time_core_excluded", state.getTypeName())) return false;
+    if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "gloamingforest:time_core_excluded", state.getTypeName())) return false;
     bool const typeTicks = gf::feature::families::detail::randomTicked(state.getBlockType()) || vanillaRandomTicking(state.getTypeName());
     if (typeTicks && stateTicksRandomly(region, pos, state)) return true;
     return runTicker(region, pos, state, true);
@@ -1015,7 +1015,7 @@ std::map<std::string, std::string> miningCoreOres() { return treeOres(); }
 
 std::string coreDisabledMessage(Player const& player, Core core) {
     auto const& ci = info(core);
-    return trFor(player, "misc.twilightforest.core_disabled", "%s is disabled via config", trFor(player, ci.nameKey, ci.fallback));
+    return trFor(player, "misc.gloamingforest.core_disabled", "%s is disabled via config", trFor(player, ci.nameKey, ci.fallback));
 }
 
 void tickCores() {

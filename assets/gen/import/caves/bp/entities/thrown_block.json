@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:thrown_block",
+      "identifier": "gloamingforest:thrown_block",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "thrown_block"]
+        "family": ["gloamingforest", "thrown_block"]
       },
       "minecraft:collision_box": {
         "width": 1,

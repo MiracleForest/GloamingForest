@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:hardened_dark_leaves",
+      "identifier": "gloamingforest:hardened_dark_leaves",
       "menu_category": {
         "category": "none"
       }

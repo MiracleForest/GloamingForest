@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/command/TFCommand.java (structure_util branch)
-//   src/main/java/twilightforest/command/DisplayPiecesCommand.java
-//   src/main/java/twilightforest/command/ClearDisplayCommand.java
-//   src/main/java/twilightforest/command/CountLootCommand.java
-//   src/main/java/twilightforest/command/CountTemplateCommand.java
-//   src/main/java/twilightforest/command/StructureDistanceCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/command/TFCommand.java (structure_util branch)
+//   src/main/java/gloamingforest/command/DisplayPiecesCommand.java
+//   src/main/java/gloamingforest/command/ClearDisplayCommand.java
+//   src/main/java/gloamingforest/command/CountLootCommand.java
+//   src/main/java/gloamingforest/command/CountTemplateCommand.java
+//   src/main/java/gloamingforest/command/StructureDistanceCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest structure_util (operators):
-//   display_pieces <structure>       outlines the start and its pieces around you (TF: block
+// /gloamingforest structure_util (operators):
+//   display_pieces <structure>       outlines the start and its pieces around you (upstream: block
 //                                    displays; Bedrock has no display entities: particle outlines
 //                                    for a minute, piece list in chat)
 //   clear_display                    stops the outlines
@@ -124,7 +124,7 @@ struct StructureUtilOutlineParams {
 
 namespace {
 
-/// Outlines drawn with particles until cleared or expired (TF's block displays).
+/// Outlines drawn with particles until cleared or expired (upstream's block displays).
 struct Outline {
     int         dim;
     BlockBox    box;
@@ -133,7 +133,7 @@ struct Outline {
     float       spacing   = 2.0f;  ///< blocks between two particles of an edge
     bool        floorOnly = false; ///< only the four bottom edges
 };
-/// generator_radius's chunk labels (TF's text displays): shown on the action bar of the
+/// generator_radius's chunk labels (upstream's text displays): shown on the action bar of the
 /// operator while they stand in a labelled chunk.
 struct ChunkLabels {
     int                         dim = 0;
@@ -213,7 +213,7 @@ void drawOutlines() {
     if (gOutlines.empty() && !gLabels) log().info("structure_util outlines expired");
 }
 
-/// TF's block and text displays (DisplayUtil) stay until clear_display; particles must be sent
+/// upstream's block and text displays (DisplayUtil) stay until clear_display; particles must be sent
 /// again and again, so an outline is drawn for a minute unless `ticks` says otherwise.
 void addOutline(int dim, BlockBox const& box, std::string particle, float spacing = 2.0f, bool floorOnly = false, int ticks = 60 * 20) {
     gOutlines.push_back(Outline{dim, box, std::move(particle), ticks, spacing, floorOnly});
@@ -296,14 +296,14 @@ void outlineBox(CommandOrigin const& origin, CommandOutput& output, StructureUti
 }
 
 /// Item#getRarity for the items whose rarity F9's rarity table does not carry: 0 common, 1
-/// uncommon, 2 rare, 3 epic. F9's table (gf::item::ext::rarityOf) knows TF's TWILIGHT items (the
+/// uncommon, 2 rare, 3 epic. F9's table (gf::item::ext::rarityOf) knows upstream's GLOAMING items (the
 /// trophies and banner patterns) and what units register; this one stays until every item's
 /// rarity is registered there.
 ///   - Minecraft 1.21.1: every Item.Properties#rarity of net.minecraft.world.item.Items (read from
 ///     the server-1.21.1 jar's Items.<clinit>: the Rarity before each item's registration; no other
 ///     class sets one), by Bedrock id where it differs (Java's light is Bedrock's light_block).
 ///     Every other vanilla item is common (trial keys, the ominous bottle, smithing templates).
-///   - TF 4.8: the UNCOMMON / RARE / EPIC rarities of TFItems and TFBlocks (and fiery_block, whose
+///   - upstream 4.8: the UNCOMMON / RARE / EPIC rarities of TFItems and TFBlocks (and fiery_block, whose
 ///     registerFireResistantItem sets UNCOMMON).
 int baseRarity(std::string const& id) {
     static std::unordered_map<std::string, int> const table = [] {
@@ -333,31 +333,31 @@ int baseRarity(std::string const& id) {
             t[s] = 3;
         // Bedrock's light blocks, one item per light level
         for (int level = 0; level <= 15; level++) t["minecraft:light_block_" + std::to_string(level)] = 3;
-        // TF 4.8 UNCOMMON
-        for (auto const* s : {"twilightforest:naga_scale", "twilightforest:naga_chestplate", "twilightforest:naga_leggings", "twilightforest:twilight_scepter",
-                              "twilightforest:lifedrain_scepter", "twilightforest:zombie_scepter", "twilightforest:fortification_scepter",
-                              "twilightforest:exanimate_essence", "twilightforest:ore_meter", "twilightforest:hydra_chop", "twilightforest:fiery_blood",
-                              "twilightforest:fiery_tears", "twilightforest:fiery_ingot", "twilightforest:fiery_helmet", "twilightforest:fiery_chestplate",
-                              "twilightforest:fiery_leggings", "twilightforest:fiery_boots", "twilightforest:fiery_sword", "twilightforest:fiery_pickaxe",
-                              "twilightforest:diamond_minotaur_axe", "twilightforest:meef_stroganoff", "twilightforest:greater_potion_flask",
-                              "twilightforest:charm_of_life_1", "twilightforest:charm_of_life_2", "twilightforest:charm_of_keeping_1",
-                              "twilightforest:charm_of_keeping_2", "twilightforest:charm_of_keeping_3", "twilightforest:tower_key",
-                              "twilightforest:phantom_helmet", "twilightforest:phantom_chestplate", "twilightforest:alpha_yeti_fur",
-                              "twilightforest:yeti_helmet", "twilightforest:yeti_chestplate", "twilightforest:yeti_leggings", "twilightforest:yeti_boots",
-                              "twilightforest:triple_bow", "twilightforest:seeker_bow", "twilightforest:ice_bow", "twilightforest:ender_bow",
-                              "twilightforest:glass_sword", "twilightforest:lamp_of_cinders", "twilightforest:cube_talisman",
-                              "twilightforest:cube_of_annihilation", "twilightforest:moon_dial", "twilightforest:pocket_watch",
-                              "twilightforest:emperors_cloth", "twilightforest:crown_splinter", "twilightforest:mystic_crown",
-                              "twilightforest:keepsake_casket", "twilightforest:zombie_skull_candle", "twilightforest:skeleton_skull_candle",
-                              "twilightforest:wither_skeleton_skull_candle", "twilightforest:creeper_skull_candle", "twilightforest:player_skull_candle",
-                              "twilightforest:piglin_skull_candle", "twilightforest:fiery_block"})
+        // upstream 4.8 UNCOMMON
+        for (auto const* s : {"gloamingforest:naga_scale", "gloamingforest:naga_chestplate", "gloamingforest:naga_leggings", "gloamingforest:gloaming_scepter",
+                              "gloamingforest:lifedrain_scepter", "gloamingforest:zombie_scepter", "gloamingforest:fortification_scepter",
+                              "gloamingforest:exanimate_essence", "gloamingforest:ore_meter", "gloamingforest:hydra_chop", "gloamingforest:fiery_blood",
+                              "gloamingforest:fiery_tears", "gloamingforest:fiery_ingot", "gloamingforest:fiery_helmet", "gloamingforest:fiery_chestplate",
+                              "gloamingforest:fiery_leggings", "gloamingforest:fiery_boots", "gloamingforest:fiery_sword", "gloamingforest:fiery_pickaxe",
+                              "gloamingforest:diamond_minotaur_axe", "gloamingforest:meef_stroganoff", "gloamingforest:greater_potion_flask",
+                              "gloamingforest:charm_of_life_1", "gloamingforest:charm_of_life_2", "gloamingforest:charm_of_keeping_1",
+                              "gloamingforest:charm_of_keeping_2", "gloamingforest:charm_of_keeping_3", "gloamingforest:tower_key",
+                              "gloamingforest:phantom_helmet", "gloamingforest:phantom_chestplate", "gloamingforest:alpha_yeti_fur",
+                              "gloamingforest:yeti_helmet", "gloamingforest:yeti_chestplate", "gloamingforest:yeti_leggings", "gloamingforest:yeti_boots",
+                              "gloamingforest:triple_bow", "gloamingforest:seeker_bow", "gloamingforest:ice_bow", "gloamingforest:ender_bow",
+                              "gloamingforest:glass_sword", "gloamingforest:lamp_of_cinders", "gloamingforest:cube_talisman",
+                              "gloamingforest:cube_of_annihilation", "gloamingforest:moon_dial", "gloamingforest:pocket_watch",
+                              "gloamingforest:emperors_cloth", "gloamingforest:crown_splinter", "gloamingforest:mystic_crown",
+                              "gloamingforest:keepsake_casket", "gloamingforest:zombie_skull_candle", "gloamingforest:skeleton_skull_candle",
+                              "gloamingforest:wither_skeleton_skull_candle", "gloamingforest:creeper_skull_candle", "gloamingforest:player_skull_candle",
+                              "gloamingforest:piglin_skull_candle", "gloamingforest:fiery_block"})
             t[s] = 1;
-        // TF 4.8 RARE
-        for (auto const* s : {"twilightforest:mazebreaker_pickaxe", "twilightforest:crumble_horn",
-                              "twilightforest:peacock_feather_fan", "twilightforest:moonworm_queen", "twilightforest:music_disc_radiance",
-                              "twilightforest:music_disc_steps", "twilightforest:music_disc_superstitious", "twilightforest:music_disc_home",
-                              "twilightforest:music_disc_wayfarer", "twilightforest:music_disc_findings", "twilightforest:music_disc_maker",
-                              "twilightforest:music_disc_thread", "twilightforest:music_disc_motion"})
+        // upstream 4.8 RARE
+        for (auto const* s : {"gloamingforest:mazebreaker_pickaxe", "gloamingforest:crumble_horn",
+                              "gloamingforest:peacock_feather_fan", "gloamingforest:moonworm_queen", "gloamingforest:music_disc_radiance",
+                              "gloamingforest:music_disc_steps", "gloamingforest:music_disc_superstitious", "gloamingforest:music_disc_home",
+                              "gloamingforest:music_disc_wayfarer", "gloamingforest:music_disc_findings", "gloamingforest:music_disc_maker",
+                              "gloamingforest:music_disc_thread", "gloamingforest:music_disc_motion"})
             t[s] = 2;
         return t;
     }();
@@ -411,7 +411,7 @@ std::optional<VanillaContainer> vanillaContainer(BlockActor& actor) {
 } // namespace
 
 bool notCommon(ItemStack const& stack) {
-    // ItemStack#getRarity through F9 (TWILIGHT, units' registrations and the enchantment bump: an
+    // ItemStack#getRarity through F9 (GLOAMING, units' registrations and the enchantment bump: an
     // enchanted stack is never common); a stack F9 calls common is an unenchanted item without a
     // registered rarity, whose base rarity is the table's above
     return item::ext::rarityOf(stack) != item::ext::Rarity::Common || baseRarity(stack.getTypeName()) != 0;
@@ -531,8 +531,8 @@ void generatorRadius(CommandOrigin const& origin, CommandOutput& output, std::st
     auto start = startAt(*w, key, output);
     if (!start) return;
     // StructureDistanceCommand: every chunk of ChunkPos.rangeClosed(center, 8) outlined in its
-    // radius's colour (TF: stained glass block displays, glass for the center; here one particle
-    // kind per radius) and labelled "dx, dz" plus its radius (TF: two text displays; here the
+    // radius's colour (upstream: stained glass block displays, glass for the center; here one particle
+    // kind per radius) and labelled "dx, dz" plus its radius (upstream: two text displays; here the
     // label of the chunk the operator stands in, on the action bar)
     int sectionY = core::chunkOf(w->pos.y - 16) << 4;
     int cx = core::chunkOf(start->center.x), cz = core::chunkOf(start->center.z);
@@ -623,7 +623,7 @@ void pieceCmd(CommandOrigin const& origin, CommandOutput& output, StructureUtilP
         pieces.push_back(std::move(main));
         raw->addChildren(*raw, pieces, random);
     } else if (p.kind == "hill") {
-        auto hill = std::make_unique<bases::HollowHill>("twilightforest:TFHill", 0, 1, w->pos.x, w->pos.y, w->pos.z, "twilightforest:small_hollow_hill");
+        auto hill = std::make_unique<bases::HollowHill>("gloamingforest:TFHill", 0, 1, w->pos.x, w->pos.y, w->pos.z, "gloamingforest:small_hollow_hill");
         // the hollow the terrain (U2) digs for the hill: a stone shell around the cave between the
         // component's floor and ceiling heights (HollowHillComponent's floorY / ceilingY curves)
         BlockBox const& b      = hill->bbox;

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:music_disc_maker",
+      "identifier": "gloamingforest:music_disc_maker",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:music_disc_maker.name"
+        "value": "item.gloamingforest:music_disc_maker.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:tags": {

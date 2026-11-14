@@ -1,21 +1,21 @@
 [
   {
-    "flipbook_texture": "textures/twilightforest/block/mining_leaves",
+    "flipbook_texture": "textures/gloamingforest/block/mining_leaves",
     "atlas_tile": "tf_block_mining_leaves",
     "ticks_per_frame": 2
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/sorting_leaves",
+    "flipbook_texture": "textures/gloamingforest/block/sorting_leaves",
     "atlas_tile": "tf_block_sorting_leaves",
     "ticks_per_frame": 2
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/time_leaves",
+    "flipbook_texture": "textures/gloamingforest/block/time_leaves",
     "atlas_tile": "tf_block_time_leaves",
     "ticks_per_frame": 2
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/transformation_leaves",
+    "flipbook_texture": "textures/gloamingforest/block/transformation_leaves",
     "atlas_tile": "tf_block_transformation_leaves",
     "ticks_per_frame": 2
   }

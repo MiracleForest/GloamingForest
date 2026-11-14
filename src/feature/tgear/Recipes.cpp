@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/recipe/travellers/TravellersGearModifierRecipe.java
-//   src/main/java/twilightforest/item/recipe/travellers/TravellersGearModifierShapedRecipe.java
-//   src/main/java/twilightforest/item/recipe/travellers/TravellersGearModifierShapelessRecipe.java
-//   src/main/java/twilightforest/item/recipe/travellers/TravellersVestGlovesMergeRecipe.java
-//   src/main/java/twilightforest/events/TravellersGearEvents.java (fireCraftingModifierTrigger)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/recipe/travellers/TravellersGearModifierRecipe.java
+//   src/main/java/gloamingforest/item/recipe/travellers/TravellersGearModifierShapedRecipe.java
+//   src/main/java/gloamingforest/item/recipe/travellers/TravellersGearModifierShapelessRecipe.java
+//   src/main/java/gloamingforest/item/recipe/travellers/TravellersVestGlovesMergeRecipe.java
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java (fireCraftingModifierTrigger)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's three recipe serializers as special crafting (feature/recipes/Recipes.h, ext/item/Recipes.h):
+// upstream's three recipe serializers as special crafting (feature/recipes/Recipes.h, ext/item/Recipes.h):
 // every data recipe of the travellers modifier types (24, in the imported data) is a special recipe
 // of the same id whose shape is the BP recipe of that id (assets/pack/bp/recipes/tgear, one more
 // BP recipe "<id>_<n>" per potion of a potion ingredient: Bedrock recipes take one item + data value
@@ -92,7 +92,7 @@ ItemStack const* modifiableArmor(recipes::CraftingGrid const& grid) {
 /// component (a container); 0 for other modifiers.
 int dataComponentProviders(recipes::CraftingGrid const& grid, std::string const& modifierId) {
     auto m = modifier(modifierId);
-    if (!m || m->type != "twilightforest:transferable_component") return 0;
+    if (!m || m->type != "gloamingforest:transferable_component") return 0;
     int n = 0;
     for (auto const* s : grid.slots)
         if (s && !items::isEmpty(*s) && hasContainer(*s)) ++n;
@@ -122,7 +122,7 @@ std::optional<ItemStack> modifierRecipeAssemble(std::string const& modifierId, r
     auto      m   = modifier(modifierId);
     if (!m) return std::nullopt;
     bool ok = false;
-    if (m->type == "twilightforest:transferable_component") {
+    if (m->type == "gloamingforest:transferable_component") {
         // TransferableComponentModifier#transfer: the marker and the provider's container
         if (auto const* provider = containerProvider(grid)) {
             auto content = container(*provider);
@@ -173,7 +173,7 @@ std::optional<ItemStack> mergeRecipeAssemble(recipes::CraftingGrid const& grid) 
 
 void registerRecipes() {
     int n = 0;
-    for (auto const* type : {"twilightforest:travellers_gear_modifier_shaped_recipe", "twilightforest:travellers_gear_modifier_shapeless_recipe"}) {
+    for (auto const* type : {"gloamingforest:travellers_gear_modifier_shaped_recipe", "gloamingforest:travellers_gear_modifier_shapeless_recipe"}) {
         for (auto const* r : recipes::ofType(type)) {
             auto modifierId = r->data.value("modifier_key", std::string());
             if (modifierId.empty()) continue;
@@ -187,11 +187,11 @@ void registerRecipes() {
             );
             // a potion ingredient: one BP recipe per potion (assets/pack/bp/recipes/tgear)
             for (int v = 1; v <= 3; ++v) recipes::ext::addSpecialLayout(r->id, r->id + "_" + std::to_string(v));
-            if (r->id.starts_with("twilightforest:")) ++n;
+            if (r->id.starts_with("gloamingforest:")) ++n;
         }
     }
     recipes::registerSpecialCrafting(
-        "twilightforest:travellers_vest_gloves_merge_recipe",
+        "gloamingforest:travellers_vest_gloves_merge_recipe",
         [](recipes::CraftingGrid const& g) { return mergeRecipeMatches(g); },
         [](recipes::CraftingGrid const& g) {
             auto out = mergeRecipeAssemble(g);
@@ -215,7 +215,7 @@ void fireCraftedTriggers(Player& player) {
         // only the crafter is credited (another player who picks the stack up just clears the mark)
         if (mark.contains("by") && mark["by"].is_number_integer() && mark["by"].get<std::int64_t>() != player.getOrCreateUniqueID().rawID) return;
         for (auto const& id : mark.value("modifiers", Json::array()))
-            if (id.is_string()) progression::trigger(player, "twilightforest:add_modifier", {{"modifier", id.get<std::string>()}});
+            if (id.is_string()) progression::trigger(player, "gloamingforest:add_modifier", {{"modifier", id.get<std::string>()}});
     };
     // the inventory, the armour, the off-hand and the cursor (a crafted piece placed from the cursor
     // straight into an armour slot or the off-hand)

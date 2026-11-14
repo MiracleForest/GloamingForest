@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/renderer/block/DryingRackRenderer.java
-//   src/main/java/twilightforest/block/ClimbableHollowLogBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/renderer/block/DryingRackRenderer.java
+//   src/main/java/gloamingforest/block/ClimbableHollowLogBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -10,12 +10,12 @@
 // - DryingRackRenderer: the item on a drying rack, drawn by the block renderer of the 19 racks
 //   (contract client.render) from what the server sends ("woodwork.rack", feature/woodwork/
 //   DryingRack.h): at 0.5 + 0.4 x the facing's step on x / z, 0.5 high for an item drawn as a 3D
-//   block, 0.325 for #twilightforest:lower_on_drying_rack, else 0.45 (banners 0.4 lower, shields 0.1
+//   block, 0.325 for #gloamingforest:lower_on_drying_rack, else 0.45 (banners 0.4 lower, shields 0.1
 //   lower), scaled 0.99, turned by -facing.toYRot about y, in the FIXED display context (an item:
 //   turned 180 degrees about y, scale 0.5; a block: scale 0.5) and drawn with the game's item
 //   renderer (ItemInHandRenderer::renderItem with the matrix as it is). The server's display entity
 //   (gloamingforest:drying_rack_item, the vanilla clients' fallback) is not drawn here.
-// - The TF boats are drawn with their client entities (TF geometry, textures, paddles) instead of
+// - The upstream boats are drawn with their client entities (upstream geometry, textures, paddles) instead of
 //   the game's boat renderer (feature/ext/woodwork/EntityRenderers.h).
 // - Climbing a climbable hollow log (BlockProperty::Climbable, F11) is the game's ladder movement;
 //   one trace line when the local player first climbs one (e2e).
@@ -360,11 +360,11 @@ public:
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) { clearRacks(); });
         mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) { clearRacks(); });
         for (auto const& id : ww::dryingRackIds()) render::registerBlockRenderer(id, drawRack);
-        for (auto const* type : {"twilightforest:boat", "twilightforest:chest_boat"}) wr::useDataDriven(type);
+        for (auto const* type : {"gloamingforest:boat", "gloamingforest:chest_boat"}) wr::useDataDriven(type);
         mHide = wr::hideWhen(isRackDisplay);
         wr::install();
         movement::onLocalTick(0, watchClimb);
-        log().info("woodwork: client mod parts installed (drying rack renderer on {} racks, TF boat client entities)", ww::dryingRackIds().size());
+        log().info("woodwork: client mod parts installed (drying rack renderer on {} racks, upstream boat client entities)", ww::dryingRackIds().size());
     }
     void uninstall() {
         wr::uninstall();

@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:mossy_underbrick_0"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:vine"
+      },
+      {
+        "item": "gloamingforest:underbrick"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:underbrick"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mossy_underbrick"
+    }
+  }
+}

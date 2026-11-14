@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerOutbuildingComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerBeardComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerBeardAttachedComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofAttachedSlabComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofFenceComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofGableForwardsComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofPointyComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofPointyOverhangComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofSlabComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofSlabForwardsComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/lichtower/TowerRoofStairsOverhangComponent.java
-//   src/main/java/twilightforest/util/TFStructureHelper.java
-//   src/main/java/twilightforest/util/entities/EntityUtil.java (getPaintingOfSize)
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerOutbuildingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerBeardComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerBeardAttachedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofAttachedSlabComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofFenceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofGableForwardsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofPointyComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofPointyOverhangComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofSlabComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofSlabForwardsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofStairsOverhangComponent.java
+//   src/main/java/gloamingforest/util/TFStructureHelper.java
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java (getPaintingOfSize)
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/structure/bases/Tower.h"
@@ -36,7 +36,7 @@ namespace gf::structure::bases {
 
 namespace {
 
-/// A null Java Rotation (the ladder directions TF passes as null).
+/// A null Java Rotation (the ladder directions upstream passes as null).
 constexpr auto kNoRotation = static_cast<Rotation>(-1);
 bool           isNull(Rotation r) { return static_cast<int>(r) < 0; }
 Rotation       orNull(std::optional<Rotation> r) { return r.value_or(kNoRotation); }
@@ -87,7 +87,7 @@ BlockBox componentBox(int x, int y, int z, int minX, int minY, int minZ, int spa
     }
 }
 
-/// Turns a ComponentOld's orientation for the scope (TF's setOrientation(rotation.rotate(temp)) ...
+/// Turns a ComponentOld's orientation for the scope (upstream's setOrientation(rotation.rotate(temp)) ...
 /// setOrientation(temp)).
 class FakeOrientation {
 public:
@@ -180,7 +180,7 @@ bool TowerWing::makeTowerWing(PieceList& list, RandomSource& rand, int index, in
     Orientation direction = getStructureRelativeRotation(rotation);
     auto        dx        = offsetTowerCoords(x, y, z, wingSize, direction);
     if (rand.nextInt(6) == 0) return makeBridge(list, rand, index, x, y, z, wingSize, wingHeight, rotation);
-    auto   wing      = std::make_unique<TowerWing>("twilightforest:TFLTWin", index, dx[0], dx[1], dx[2], wingSize, wingHeight, direction);
+    auto   wing      = std::make_unique<TowerWing>("gloamingforest:TFLTWin", index, dx[0], dx[1], dx[2], wingSize, wingHeight, direction);
     Piece* intersect = findCollisionPiece(list, wing->bbox);
     if (!intersect || intersect == this) {
         auto* raw = wing.get();
@@ -227,7 +227,7 @@ void TowerWing::makeABeard(Piece& parent, PieceList& list, RandomSource& rand) {
     BlockPos                     loc      = getLocatorPosition();
     std::unique_ptr<TowerBeard> beard;
     if (attached) beard = std::make_unique<TowerBeardAttached>(index + 1, *this, loc.x, loc.y, loc.z);
-    else beard = std::make_unique<TowerBeard>("twilightforest:TFLTBea", index + 1, *this, loc.x, loc.y, loc.z);
+    else beard = std::make_unique<TowerBeard>("gloamingforest:TFLTBea", index + 1, *this, loc.x, loc.y, loc.z);
     auto* raw = beard.get();
     list.push_back(std::move(beard));
     raw->addChildren(*this, list, rand);
@@ -263,7 +263,7 @@ void TowerWing::makeFreestandingRoof(PieceList& list, RandomSource& rand) {
     if (!roofType) tryToFitRoof(list, rand, std::make_unique<TowerRoofStairsOverhang>(index + 1, *this, loc.x, loc.y, loc.z));
     if (!roofType) tryToFitRoof(list, rand, std::make_unique<TowerRoofStairs>(index + 1, *this, loc.x, loc.y, loc.z));
     if (!roofType && rand.nextInt(53) != 0)
-        tryToFitRoof(list, rand, std::make_unique<TowerRoofSlab>("twilightforest:TFLTRS", index + 1, *this, loc.x, loc.y, loc.z));
+        tryToFitRoof(list, rand, std::make_unique<TowerRoofSlab>("gloamingforest:TFLTRS", index + 1, *this, loc.x, loc.y, loc.z));
     if (!roofType) tryToFitRoof(list, rand, std::make_unique<TowerRoofFence>(index + 1, *this, loc.x, loc.y, loc.z));
 }
 
@@ -445,7 +445,7 @@ void TowerWing::decorateTreasureChest(Region& region, int bottom, int top, Block
         surroundBlockCardinalRotated(region, topStairs, cx, top - 1, cx, sbb);
         surroundBlockCorners(region, stoneBrick, cx, top - 1, cx, sbb);
     }
-    placeTreasureAtCurrentPosition(region, cx, bottom + 1, cx, "twilightforest:chests/tower_room", sbb);
+    placeTreasureAtCurrentPosition(region, cx, bottom + 1, cx, "gloamingforest:chests/tower_room", sbb);
 }
 
 void TowerWing::decorateSpiderWebs(Region& region, RandomSource& rand, int bottom, int top, Rotation ladderUpDir, Rotation ladderDownDir, BlockBox const& sbb) {
@@ -462,10 +462,10 @@ void TowerWing::decorateSpiderWebs(Region& region, RandomSource& rand, int botto
             spider = "minecraft:cave_spider";
             break;
         case 2:
-            spider = "twilightforest:swarm_spider";
+            spider = "gloamingforest:swarm_spider";
             break;
         case 1:
-            spider = "twilightforest:hedge_spider";
+            spider = "gloamingforest:hedge_spider";
             break;
         default:
             break;
@@ -506,8 +506,8 @@ void TowerWing::decorateLibrary(Region& region, RandomSource& rand, int bottom, 
 }
 
 void TowerWing::decorateLibraryTreasure(Region& region, RandomSource& rand, int top, Rotation ladderUpDir, Rotation ladderDownDir, BlockBox const& sbb) {
-    constexpr char const* kTable = "twilightforest:chests/tower_library";
-    // TF's switch falls through to the next case when the spot holds a ladder
+    constexpr char const* kTable = "gloamingforest:chests/tower_library";
+    // upstream's switch falls through to the next case when the spot holds a ladder
     switch (rand.nextInt(4)) {
     case 0:
     default:
@@ -829,8 +829,8 @@ void TowerWing::decoratePlanter(Region& region, RandomSource& rand, BlockBox con
     int         i     = rand.nextInt(6);
     char const* plant = randomPlant(i);
     BlockPos    pos   = getBlockPosWithOffset(cx, 2, cx);
-    // TF tries a vanilla tree for the brown mushroom pick, grown with world.getRandom() (the
-    // region's random, not the piece's); either way the plant is placed, as written in TF
+    // upstream tries a vanilla tree for the brown mushroom pick, grown with world.getRandom() (the
+    // region's random, not the piece's); either way the plant is placed, as written in upstream
     if (i > 4) (void)features::place(randomTree(rand.nextInt(4)), region, pos, regionRandom(region));
     placeBlock(region, plant, Json::object(), cx, 2, cx, sbb);
 }
@@ -1183,8 +1183,8 @@ void TowerWing::makeGlyphBranches(Region& region, RandomSource& rand, Block cons
         for (int dy = worldY(startHeight); dy > 0; dy--) {
             BlockPos     pos{dx, dy, dz};
             Block const& at = region.getBlock(pos);
-            // #twilightforest:castle_blocks that conduct redstone (full blocks)
-            if (blocks::inTag(at, "twilightforest:castle_blocks") && !blocks::isPartial(at)) region.setBlock(pos, colour, 2);
+            // #gloamingforest:castle_blocks that conduct redstone (full blocks)
+            if (blocks::inTag(at, "gloamingforest:castle_blocks") && !blocks::isPartial(at)) region.setBlock(pos, colour, 2);
             else break;
         }
     }
@@ -1207,7 +1207,7 @@ int TowerWing::getGroundLevelDelta() const { return 1; }
 // ==== TowerMainComponent ===================================================================================
 
 TowerMain::TowerMain(RandomSource& rand, int depth, int x, int y, int z)
-: TowerWing("twilightforest:TFLTMai", depth, x, y + 1, z, 15, 55 + rand.nextInt(32), Orientation::South) {}
+: TowerWing("gloamingforest:TFLTMai", depth, x, y + 1, z, 15, 55 + rand.nextInt(32), Orientation::South) {}
 
 void TowerMain::addChildren(Piece& parent, PieceList& list, RandomSource& rand) {
     makeARoof(parent, list, rand);
@@ -1326,7 +1326,7 @@ void TowerMain::makeStairCrossing(Region& region, RandomSource& rand, int flight
         mobID = "minecraft:zombie";
         break;
     case 3:
-        mobID = "twilightforest:swarm_spider";
+        mobID = "gloamingforest:swarm_spider";
         break;
     default:
         break;
@@ -1345,7 +1345,7 @@ void TowerMain::makeLichRoom(Region& region, RandomSource& rand, BlockBox const&
     decorateLichChandelier(region, floorLevel, sbb);
     decoratePaintings(region, rand, floorLevel, sbb);
     decorateTorches(region, rand, floorLevel, sbb);
-    placeBlock(region, B("twilightforest:lich_boss_spawner"), size / 2, floorLevel + 2, size / 2, sbb);
+    placeBlock(region, B("gloamingforest:lich_boss_spawner"), size / 2, floorLevel + 2, size / 2, sbb);
 }
 
 void TowerMain::makeTowerPaintings(Region& region, RandomSource& rand, BlockBox const& sbb) {
@@ -1454,7 +1454,7 @@ TerrainAdjustment TowerMain::getTerrainAdjustment() const { return TerrainAdjust
 // ==== TowerBridgeComponent =================================================================================
 
 TowerBridge::TowerBridge(int depth, int x, int y, int z, int pSize, int pHeight, Orientation direction)
-: TowerWing("twilightforest:TFLTBri", depth, x, y, z, 3, 3, direction),
+: TowerWing("gloamingforest:TFLTBri", depth, x, y, z, 3, 3, direction),
   dSize(pSize),
   dHeight(pHeight) {}
 
@@ -1489,7 +1489,7 @@ void TowerBridge::postProcess(Region& region, RandomSource&, BlockBox const& sbb
 // ==== TowerOutbuildingComponent ===========================================================================
 
 TowerOutbuilding::TowerOutbuilding(int depth, int x, int y, int z, int pSize, int pHeight, Orientation direction)
-: TowerWing("twilightforest:TFLTOut", depth, x, y, z, pSize, pHeight, direction) {}
+: TowerWing("gloamingforest:TFLTOut", depth, x, y, z, pSize, pHeight, direction) {}
 
 void TowerOutbuilding::makeABeard(Piece&, PieceList&, RandomSource&) {}
 
@@ -1537,7 +1537,7 @@ void TowerBeard::makePyramidBeard(Region& region, RandomSource& rand, BlockBox c
     }
 }
 
-TowerBeardAttached::TowerBeardAttached(int depth, TowerWing const& wing, int x, int y, int z) : TowerBeard("twilightforest:TFLTBA", depth, wing, x, y, z) {
+TowerBeardAttached::TowerBeardAttached(int depth, TowerWing const& wing, int x, int y, int z) : TowerBeard("gloamingforest:TFLTBA", depth, wing, x, y, z) {
     bbox = BlockBox::of(wing.bbox.minX, wing.bbox.minY - height - 1, wing.bbox.minZ, wing.bbox.maxX, wing.bbox.maxY - 1, wing.bbox.maxZ);
 }
 
@@ -1602,7 +1602,7 @@ void TowerRoof::makeOverhangBB(TowerWing const& wing) {
     bbox          = BlockBox::of(w.minX - 1, w.maxY, w.minZ - 1, w.maxX + 1, w.maxY + height - 1, w.maxZ + 1);
 }
 
-TowerRoofFence::TowerRoofFence(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("twilightforest:TFLTRF", depth, x, y, z) {
+TowerRoofFence::TowerRoofFence(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRF", depth, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size;
     height = 0;
@@ -1616,7 +1616,7 @@ void TowerRoofFence::postProcess(Region& region, RandomSource&, BlockBox const& 
             if (x == 0 || x == size - 1 || z == 0 || z == size - 1) placeBlock(region, B("minecraft:oak_fence"), x, y, z, sbb);
 }
 
-TowerRoofGableForwards::TowerRoofGableForwards(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("twilightforest:TFLTRGF", depth, x, y, z) {
+TowerRoofGableForwards::TowerRoofGableForwards(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRGF", depth, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size + 2;
     height = size;
@@ -1688,7 +1688,7 @@ void TowerRoofPointy::postProcess(Region& region, RandomSource&, BlockBox const&
 int TowerRoofPointy::slopeChangeForSize() const { return size > 10 ? 3 : size > 6 ? 2 : 1; }
 
 TowerRoofPointyOverhang::TowerRoofPointyOverhang(int depth, TowerWing const& wing, int x, int y, int z)
-: TowerRoofPointy("twilightforest:TFLTRPO", depth, wing, x, y, z) {
+: TowerRoofPointy("gloamingforest:TFLTRPO", depth, wing, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size + 2;
     height = size;
@@ -1731,14 +1731,14 @@ void TowerRoofSlab::makeConnectedCap(Region& region, Block const& slabType, Bloc
 }
 
 TowerRoofAttachedSlab::TowerRoofAttachedSlab(int depth, TowerWing const& wing, int x, int y, int z)
-: TowerRoofSlab("twilightforest:TFLTRAS", depth, wing, x, y, z) {}
+: TowerRoofSlab("gloamingforest:TFLTRAS", depth, wing, x, y, z) {}
 
 void TowerRoofAttachedSlab::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
     makeConnectedCap(region, B("minecraft:birch_slab"), birchPlanks(), sbb);
 }
 
 TowerRoofSlabForwards::TowerRoofSlabForwards(int depth, TowerWing const& wing, int x, int y, int z)
-: TowerRoofSlab("twilightforest:TFLTRSF", depth, wing, x, y, z) {
+: TowerRoofSlab("gloamingforest:TFLTRSF", depth, wing, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size + 2;
     height = size / 2;
@@ -1782,7 +1782,7 @@ void stairsRoof(ComponentOld& piece, Region& region, BlockBox const& sbb, int si
 }
 } // namespace
 
-TowerRoofStairs::TowerRoofStairs(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("twilightforest:TFLTRSt", depth, x, y, z) {
+TowerRoofStairs::TowerRoofStairs(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRSt", depth, x, y, z) {
     setOrientation(Orientation::South);
     size   = wing.size;
     height = size / 2;
@@ -1791,7 +1791,7 @@ TowerRoofStairs::TowerRoofStairs(int depth, TowerWing const& wing, int x, int y,
 
 void TowerRoofStairs::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) { stairsRoof(*this, region, sbb, size, height); }
 
-TowerRoofStairsOverhang::TowerRoofStairsOverhang(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("twilightforest:TFLTRStO", depth, x, y, z) {
+TowerRoofStairsOverhang::TowerRoofStairsOverhang(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRStO", depth, x, y, z) {
     setOrientation(Orientation::South);
     size        = wing.size + 2;
     height      = size / 2;

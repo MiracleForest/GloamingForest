@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
-// The structure kit's module: registers TF's processors, template marker handlers and the shared
-// piece types, loads the twilight/* data and the templates when a world is ready, and runs the
+// The structure kit's module: registers upstream's processors, template marker handlers and the shared
+// piece types, loads the gloaming/* data and the templates when a world is ready, and runs the
 // block entity work queued by world generation (loot, spawners, signs, entities) on the server
 // thread once its chunks are loaded.
 #include <memory>

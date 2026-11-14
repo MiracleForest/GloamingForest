@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/projectile/FallingIce.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/projectile/FallingIce.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The falling ice the Alpha Yeti shakes loose: a falling block that hangs for `hangTime` ticks,
 // then falls (-0.04 a tick, x 0.98 drag), hurts what it lands on by its fall distance and the
 // difficulty (never an alpha yeti), shatters, and becomes its block again where it can. Its motion
-// is native (the BP gives it no physics); the RP draws the block (property twilightforest:block)
+// is native (the BP gives it no physics); the RP draws the block (property gloamingforest:block)
 // and the warning trail.
 #include "feature/caves/Caves.h"
 
@@ -48,7 +48,7 @@ namespace {
 constexpr char kBlockKey[] = "caves:block"; ///< FallingIce BlockState
 constexpr char kTimeKey[]  = "caves:time";  ///< FallingIce Time
 
-/// The ice blocks the RP draws (#minecraft:ice), as twilightforest:block values.
+/// The ice blocks the RP draws (#minecraft:ice), as gloamingforest:block values.
 constexpr char const* kIceBlocks[] = {"minecraft:packed_ice", "minecraft:ice", "minecraft:blue_ice", "minecraft:frosted_ice"};
 
 int iceIndex(std::string const& id) {
@@ -58,7 +58,7 @@ int iceIndex(std::string const& id) {
 }
 
 struct IceState {
-    int   hangTime     = 100; ///< not saved in TF (a reloaded ice hangs 100 ticks)
+    int   hangTime     = 100; ///< not saved in upstream (a reloaded ice hangs 100 ticks)
     float vy           = 0.0F;
     float fallDistance = 0.0F;
 };
@@ -86,7 +86,7 @@ void causeFallDamage(Actor& ice, float dist) {
         for (auto* e : fe::actorsIn(ice.getDimensionBlockSource(), static_cast<int>(ice.getDimensionId()), area)) {
             if (e == &ice || e->getTypeName() == kAlphaYeti) continue;
             if (e->isPlayer() && static_cast<Player*>(e)->isSpectator()) continue;
-            gf::combat::hurt(*e, dmg, "twilightforest:falling_ice");
+            gf::combat::hurt(*e, dmg, "gloamingforest:falling_ice");
         }
     }
     // shattering particles and sound
@@ -162,7 +162,7 @@ Actor* spawnFallingIce(BlockSource& region, BlockPos const& pos, std::string con
     if (!ice) return nullptr;
     gf::entity::data(*ice, kBlockKey) = blockId.empty() ? std::string("minecraft:packed_ice") : blockId;
     gf::entity::data(*ice, kTimeKey)  = 0;
-    gf::entity::setProperty(*ice, "twilightforest:block", iceIndex(blockId));
+    gf::entity::setProperty(*ice, "gloamingforest:block", iceIndex(blockId));
     ices()[fe::uidOf(*ice)] = IceState{hangTime, 0.0F, 0.0F};
     return ice;
 }
@@ -175,7 +175,7 @@ int fallingIceTime(Actor& ice) {
 void installFallingIce() {
     gf::entity::ext::setCanUsePortal(kFallingIce, true);
     gf::entity::Behaviour b;
-    b.onSpawn = [](Actor& self) { gf::entity::setProperty(self, "twilightforest:block", iceIndex(blockOf(self))); };
+    b.onSpawn = [](Actor& self) { gf::entity::setProperty(self, "gloamingforest:block", iceIndex(blockOf(self))); };
     b.tick    = [](Actor& self) {
         if (!self.isAlive()) return;
         tickIce(self);

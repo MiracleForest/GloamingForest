@@ -145,7 +145,7 @@ std::shared_ptr<Data const> loadData() {
             }
         }
     }
-    // the Java class chains of TF's blocks (the survival rules of kit::canSurvive)
+    // the Java class chains of upstream's blocks (the survival rules of kit::canSurvive)
     try {
         std::ifstream in(root / "gf" / "import" / "skeleton.json");
         if (in) {

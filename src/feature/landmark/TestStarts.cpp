@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // The selftests' start removal (F6's contract extension feature/ext/landmark/LandmarkTest.h): the
 // starts landmark::forceStart stored, taken out of the start store and the world DB again.
 #include "feature/ext/landmark/LandmarkTest.h"

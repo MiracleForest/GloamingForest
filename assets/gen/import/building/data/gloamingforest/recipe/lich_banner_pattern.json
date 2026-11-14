@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "c:paper"
+    },
+    {
+      "item": "gloamingforest:lich_trophy"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:lich_banner_pattern"
+  }
+}

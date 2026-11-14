@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U27 (caves): troll caves and the yeti cave. The unit's ids and the entry points its files share
@@ -19,19 +19,19 @@ class Player;
 
 namespace gf::feature::caves {
 
-inline constexpr char kTrollsteinn[]    = "twilightforest:trollsteinn";
-inline constexpr char kTrollvidr[]      = "twilightforest:trollvidr";
-inline constexpr char kTrollber[]       = "twilightforest:trollber";
-inline constexpr char kUnripeTrollber[] = "twilightforest:unripe_trollber";
-inline constexpr char kHugeMushgloom[]  = "twilightforest:huge_mushgloom";
-inline constexpr char kMushgloomStem[]  = "twilightforest:huge_mushgloom_stem";
+inline constexpr char kTrollsteinn[]    = "gloamingforest:trollsteinn";
+inline constexpr char kTrollvidr[]      = "gloamingforest:trollvidr";
+inline constexpr char kTrollber[]       = "gloamingforest:trollber";
+inline constexpr char kUnripeTrollber[] = "gloamingforest:unripe_trollber";
+inline constexpr char kHugeMushgloom[]  = "gloamingforest:huge_mushgloom";
+inline constexpr char kMushgloomStem[]  = "gloamingforest:huge_mushgloom_stem";
 
-inline constexpr char kTroll[]       = "twilightforest:troll";
-inline constexpr char kThrownBlock[] = "twilightforest:thrown_block";
-inline constexpr char kYeti[]        = "twilightforest:yeti";
-inline constexpr char kAlphaYeti[]   = "twilightforest:alpha_yeti";
-inline constexpr char kFallingIce[]  = "twilightforest:falling_ice";
-inline constexpr char kThrownIce[]   = "twilightforest:thrown_ice"; ///< U8's ice bomb
+inline constexpr char kTroll[]       = "gloamingforest:troll";
+inline constexpr char kThrownBlock[] = "gloamingforest:thrown_block";
+inline constexpr char kYeti[]        = "gloamingforest:yeti";
+inline constexpr char kAlphaYeti[]   = "gloamingforest:alpha_yeti";
+inline constexpr char kFallingIce[]  = "gloamingforest:falling_ice";
+inline constexpr char kThrownIce[]   = "gloamingforest:thrown_ice"; ///< U8's ice bomb
 
 // ---- blocks (Blocks.cpp) ----------------------------------------------------------------------------
 /// Level#getMaxLocalRawBrightness(pos): max(block light, sky light - the sky darkening).

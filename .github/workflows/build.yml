@@ -88,19 +88,20 @@ jobs:
         shell: pwsh
         run: pwsh tools/assemble.ps1 -Check
 
-      # The shared TF checkout the tool checks read (tools/tf/fetch.ps1: git with a blob-less
-      # partial clone of the pinned commit, never the GitHub API; no .ogg / .nbt), cached per commit.
+      # The shared upstream reference the tool checks read (tools/upstream/fetch.ps1: git with a
+      # blob-less partial clone of the commit pinned in NOTICE, never the GitHub API; no .ogg / .nbt,
+      # plus its view under this project's names), cached per commit and rules.
       - uses: actions/cache@v6
         if: matrix.checks
         with:
-          path: ~/AppData/Local/gf-tf
-          key: gf-tf-9e40a75721c716b2fdf80c16d1058fe718825e9f-${{ hashFiles('tools/tf/fetch.ps1') }}
+          path: ~/AppData/Local/gf-upstream
+          key: gf-upstream-9e40a75721c716b2fdf80c16d1058fe718825e9f-${{ hashFiles('tools/upstream/*') }}
 
-      - name: TF checkout
+      - name: Upstream reference
         if: matrix.checks
         shell: pwsh
         run: |
-          pwsh -NoProfile -File tools/tf/fetch.ps1
+          pwsh -NoProfile -File tools/upstream/fetch.ps1
           if ($LASTEXITCODE) { exit 1 }
 
       - name: Tool checks (owners, import, synth, models, template)
@@ -109,12 +110,12 @@ jobs:
         run: |
           # every check runs; the step fails at the end when any of them failed
           $checks = @(
-            @('tools/spec/owners.ps1', '-Check'),       # docs/spec/owners.tsv is generated from TF and the rules
+            @('tools/spec/owners.ps1', '-Check'),       # docs/spec/owners.tsv is generated from upstream and the rules
             @('tools/import/run.ps1', '-Check'),        # F1: the committed import reproduces byte for byte
             @('tools/sounds/synth.ps1', '-Check'),      # F3: the committed audio renders from its recipes
             @('tools/models/test.ps1', '-SkipTree'),    # F2: the converter's PowerShell / C# tests
             @('tools/models/convert.ps1', '-Check'),    # F2: the committed geometry reproduces
-            @('tools/structures/build.ps1', '-Check'))  # F7: templates against TF's template definitions
+            @('tools/structures/build.ps1', '-Check'))  # F7: templates against upstream's template definitions
           # F11's family generator and its checks (integer states, permutation budget, geometry) run
           # inside the 'Assemble checks' step above: assemble -Check runs tools/families/run.lua on the
           # assembled packs (a second run on the same directory would be a no-op).
@@ -167,7 +168,7 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           BEFORE_SHA: ${{ github.event.before }}
         run: |
-          # Every blob of every commit since the base, not only the head tree: a TF .ogg/.nbt added
+          # Every blob of every commit since the base, not only the head tree: an upstream .ogg/.nbt added
           # in one commit and deleted in a later one would otherwise reach the public history (R10/R11).
           if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $range = "origin/$env:BASE_REF" }
           elseif ($env:GITHUB_EVENT_NAME -eq 'push') { $range = $env:BEFORE_SHA } # the previous main

@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:protection_box",
+      "identifier": "gloamingforest:protection_box",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "protection_box"]
+        "family": ["gloamingforest", "protection_box"]
       },
       "minecraft:collision_box": {
         "width": 0.1,

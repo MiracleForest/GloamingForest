@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of U16 (rule R12: "fauna.*", testPos dx 1600..1699): each mob spawned with F13's
 // attributes, the bighorn's shearing, dyeing, lamb colour and loot tables, the variants and their
@@ -191,7 +191,7 @@ GF_REGISTER_SELFTEST("fauna.bighorn_shear", [](Context& ctx) -> ll::coro::CoroTa
     co_await ctx.ticks(1);
     sheep = mobById(uid);
     ctx.require(sheep && colorOf(*sheep) == 14, "the fleece is red");
-    ctx.check(bighornTable(*sheep) == "twilightforest:entities/bighorn_sheep/red", "the red table while it has its fleece: " + bighornTable(*sheep));
+    ctx.check(bighornTable(*sheep) == "gloamingforest:entities/bighorn_sheep/red", "the red table while it has its fleece: " + bighornTable(*sheep));
     // shears through the interaction (Sheep#mobInteract): 1..3 red wool, sheared, the shears worn
     auto& player = ctx.player();
     player.setPlayerGameType(GameType::Survival);
@@ -210,7 +210,7 @@ GF_REGISTER_SELFTEST("fauna.bighorn_shear", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(wool >= 1 && wool <= 3, "1..3 red wool dropped: " + std::to_string(wool));
     ctx.check(ctx.player().getSelectedItem().getDamageValue() == 1, "the shears lost 1 durability");
     ctx.check(!shearBighorn(*sheep, nullptr), "a sheared bighorn can't be sheared again");
-    ctx.check(bighornTable(*sheep) == "twilightforest:entities/bighorn_sheep", "the sheared table");
+    ctx.check(bighornTable(*sheep) == "gloamingforest:entities/bighorn_sheep", "the sheared table");
     ctx.check(!dyeBighorn(*sheep, 11), "a sheared bighorn can't be dyed");
     // eating grass regrows the fleece (EatBlockGoal -> Sheep#ate)
     fireEvent(*sheep, "regrow_wool");
@@ -257,17 +257,17 @@ GF_REGISTER_SELFTEST("fauna.loot_tables", [](Context& ctx) {
     auto has  = [](std::vector<ItemStack> const& items, std::string const& id) {
         return std::any_of(items.begin(), items.end(), [&](ItemStack const& s) { return game::items::idOf(s) == id; });
     };
-    auto red = gf::loot::roll("twilightforest:entities/bighorn_sheep/red", lc);
+    auto red = gf::loot::roll("gloamingforest:entities/bighorn_sheep/red", lc);
     ctx.check(has(red, "minecraft:red_wool") && has(red, "minecraft:mutton"), "the red table: red wool and mutton");
-    auto sheared = gf::loot::roll("twilightforest:entities/bighorn_sheep", lc);
+    auto sheared = gf::loot::roll("gloamingforest:entities/bighorn_sheep", lc);
     ctx.check(has(sheared, "minecraft:mutton") && !has(sheared, "minecraft:red_wool"), "the sheared table: mutton only");
-    auto boar = gf::loot::roll("twilightforest:entities/boar", lc);
+    auto boar = gf::loot::roll("gloamingforest:entities/boar", lc);
     ctx.check(has(boar, "minecraft:porkchop"), "the boar drops porkchops");
-    auto raven = gf::loot::roll("twilightforest:entities/raven", lc);
-    for (auto const& s : raven) ctx.check(game::items::idOf(s) == "twilightforest:raven_feather", "the raven drops raven feathers");
-    ctx.check(gf::loot::roll("twilightforest:entities/squirrel", lc).empty(), "the squirrel drops nothing");
+    auto raven = gf::loot::roll("gloamingforest:entities/raven", lc);
+    for (auto const& s : raven) ctx.check(game::items::idOf(s) == "gloamingforest:raven_feather", "the raven drops raven feathers");
+    ctx.check(gf::loot::roll("gloamingforest:entities/squirrel", lc).empty(), "the squirrel drops nothing");
     for (int i = 0; i < 20; ++i)
-        for (auto const& s : gf::loot::roll("twilightforest:entities/dwarf_rabbit", lc)) {
+        for (auto const& s : gf::loot::roll("gloamingforest:entities/dwarf_rabbit", lc)) {
             auto id = game::items::idOf(s);
             ctx.check(id == "minecraft:rabbit_hide" || id == "minecraft:rabbit", "the dwarf rabbit's vanilla rabbit loot: " + id);
         }
@@ -281,16 +281,16 @@ GF_REGISTER_SELFTEST("fauna.variants_persist", [](Context& ctx) -> ll::coro::Cor
     ctx.require(bird && rabbit, "a tiny bird and a dwarf rabbit");
     auto bu = uidOf(*bird), ru = uidOf(*rabbit);
     co_await ctx.ticks(2);
-    ctx.check(variantsOf(kTinyBird).size() == 4 && variantsOf(kTinyBird)[3].id == "twilightforest:red", "the tiny bird variants (blue, brown, gold, red)");
-    ctx.check(variantsOf(kDwarfRabbit).size() == 3 && variantsOf(kDwarfRabbit)[0].id == "twilightforest:brown", "the dwarf rabbit variants");
+    ctx.check(variantsOf(kTinyBird).size() == 4 && variantsOf(kTinyBird)[3].id == "gloamingforest:red", "the tiny bird variants (blue, brown, gold, red)");
+    ctx.check(variantsOf(kDwarfRabbit).size() == 3 && variantsOf(kDwarfRabbit)[0].id == "gloamingforest:brown", "the dwarf rabbit variants");
     ctx.check(defaultVariant(kTinyBird) == 3 && defaultVariant(kDwarfRabbit) == 0, "the defaults: red, brown");
     // readAdditionalSaveData: the saved string wins, an unknown id keeps the current variant
     if (auto* b = mobById(bu)) {
-        gf::entity::data(*b, "fauna:variant") = "twilightforest:gold";
+        gf::entity::data(*b, "fauna:variant") = "gloamingforest:gold";
         restoreVariant(*b);
     }
     if (auto* r = mobById(ru)) {
-        gf::entity::data(*r, "fauna:variant") = "twilightforest:dutch";
+        gf::entity::data(*r, "fauna:variant") = "gloamingforest:dutch";
         restoreVariant(*r);
     }
     co_await ctx.ticks(2);
@@ -299,7 +299,7 @@ GF_REGISTER_SELFTEST("fauna.variants_persist", [](Context& ctx) -> ll::coro::Cor
     ctx.require(b && r, "both still there");
     ctx.check(variantOf(*b) == 2, "the tiny bird is gold: " + std::to_string(variantOf(*b)));
     ctx.check(variantOf(*r) == 1, "the dwarf rabbit is dutch: " + std::to_string(variantOf(*r)));
-    gf::entity::data(*b, "fauna:variant") = "twilightforest:nope";
+    gf::entity::data(*b, "fauna:variant") = "gloamingforest:nope";
     restoreVariant(*b);
     co_await ctx.ticks(1);
     b = mobById(bu);
@@ -454,11 +454,11 @@ GF_REGISTER_SELFTEST("fauna.flying_bird", [](Context& ctx) -> ll::coro::CoroTask
 });
 
 GF_REGISTER_SELFTEST("fauna.parrot_imitations", [](Context& ctx) {
-    ctx.check(parrotImitation("twilightforest:kobold") == "twilightforest:entity.twilightforest.parrot.imitate.kobold", "kobold: " + parrotImitation("twilightforest:kobold"));
-    ctx.check(parrotImitation("twilightforest:lich") == "minecraft:entity.parrot.imitate.blaze", "lich: blaze");
-    ctx.check(parrotImitation("twilightforest:mosquito_swarm") == "twilightforest:entity.twilightforest.parrot.imitate.mosquito", "mosquito swarm");
-    ctx.check(parrotImitation("twilightforest:hedge_spider") == "minecraft:entity.parrot.imitate.spider", "hedge spider: spider");
-    ctx.check(parrotImitation("twilightforest:boar").empty(), "the boar is not imitated");
+    ctx.check(parrotImitation("gloamingforest:kobold") == "gloamingforest:entity.gloamingforest.parrot.imitate.kobold", "kobold: " + parrotImitation("gloamingforest:kobold"));
+    ctx.check(parrotImitation("gloamingforest:lich") == "minecraft:entity.parrot.imitate.blaze", "lich: blaze");
+    ctx.check(parrotImitation("gloamingforest:mosquito_swarm") == "gloamingforest:entity.gloamingforest.parrot.imitate.mosquito", "mosquito swarm");
+    ctx.check(parrotImitation("gloamingforest:hedge_spider") == "minecraft:entity.parrot.imitate.spider", "hedge spider: spider");
+    ctx.check(parrotImitation("gloamingforest:boar").empty(), "the boar is not imitated");
     ctx.check(parrotImitation("minecraft:zombie").empty(), "vanilla mobs are Bedrock's parrots' own");
 });
 

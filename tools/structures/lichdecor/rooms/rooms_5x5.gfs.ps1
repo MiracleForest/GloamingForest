@@ -5,7 +5,7 @@
 $N = 5
 $rooms = [ordered]@{
     altar             = @{ e = @('east'); l = @(0, 2); f = {
-            Add-RoomCarpet $t 'twilightforest:coronation_carpet' 1
+            Add-RoomCarpet $t 'gloamingforest:coronation_carpet' 1
             Add-RoomAltar $t 3 4 'candle:3-4'
             Add-RoomMarker $t 2 1 4 'skeleton_candle:1-3:0+4'
             Add-RoomMarker $t 4 1 4 'zombie_candle:1-3:0+4'
@@ -13,7 +13,7 @@ $rooms = [ordered]@{
         }
     }
     desk              = @{ e = @('west'); l = @(0, 2); f = {
-            foreach ($z in 2, 3, 4) { Set-RoomBlock $t 5 1 $z 'twilightforest:canopy_slab' $script:TopSlab }
+            foreach ($z in 2, 3, 4) { Set-RoomBlock $t 5 1 $z 'gloamingforest:canopy_slab' $script:TopSlab }
             Add-RoomMarker $t 5 2 3 'candle:1-2'
             Add-RoomMarker $t 4 1 3 'canopy_stairs'
             Add-RoomMarker $t 5 1 1 'chest:library@west'
@@ -41,7 +41,7 @@ $rooms = [ordered]@{
         }
     }
     full_junction_3   = @{ e = @('east', 'south', 'west'); f = {
-            for ($x = 2; $x -le 4; $x++) { for ($z = 2; $z -le 4; $z++) { Set-GftBlock $t $x 0 $z 'twilightforest:terrorcotta_curves' @{ facing = @('north', 'east', 'south', 'west')[($x + $z) % 4] } } }
+            for ($x = 2; $x -le 4; $x++) { for ($z = 2; $z -le 4; $z++) { Set-GftBlock $t $x 0 $z 'gloamingforest:terrorcotta_curves' @{ facing = @('north', 'east', 'south', 'west')[($x + $z) % 4] } } }
             Add-RoomMarker $t 1 1 1 'creeper_head|zombie_head|skeleton_skull'
             Add-RoomMarker $t 5 1 1 'creeper_head|zombie_head|skeleton_skull'
             Add-RoomMarker $t 3 1 3 'candle:2-4'
@@ -49,7 +49,7 @@ $rooms = [ordered]@{
     }
     ladder            = @{ e = @('west'); f = {
             foreach ($z in 2, 3, 4) { for ($y = 1; $y -le 5; $y++) { Set-RoomBlock $t 5 $y $z 'minecraft:ladder' @{ facing = 'west' } } }
-            Set-RoomBlock $t 5 4 1 'twilightforest:canopy_slab' $script:TopSlab
+            Set-RoomBlock $t 5 4 1 'gloamingforest:canopy_slab' $script:TopSlab
             Add-RoomMarker $t 5 5 1 'candle:1-2'
             Add-RoomMarker $t 3 5 3 'rope50%2-3>air'
         }

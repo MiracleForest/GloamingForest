@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/entities/EntityUtil.java
-//   src/main/java/twilightforest/entity/ai/goal/ChargeAttackGoal.java
-//   src/main/java/twilightforest/init/TFBlockEntities.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java
+//   src/main/java/gloamingforest/entity/ai/goal/ChargeAttackGoal.java
+//   src/main/java/gloamingforest/init/TFBlockEntities.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Contract "entity" (F8): the block breaking of mobs (EntityUtil#canDestroyBlock and the
-// ChargeAttackGoal's stricter "no block entity" rule) and the Peaceful despawn of TF's monsters
+// ChargeAttackGoal's stricter "no block entity" rule) and the Peaceful despawn of upstream's monsters
 // (Monster#shouldDespawnInPeaceful).
 
 #include "feature/ext/entity/World.h"
@@ -78,8 +78,8 @@ bool javaHasBlockEntity(BlockActor const& be) {
 
 namespace {
 
-/// The TF blocks of TFBlockEntities' valid block lists (custom blocks have no block actor on
-/// Bedrock). TF's chests, trapped chests and signs (vanilla block entity types) are matched by
+/// The upstream blocks of TFBlockEntities' valid block lists (custom blocks have no block actor on
+/// Bedrock). upstream's chests, trapped chests and signs (vanilla block entity types) are matched by
 /// their suffix.
 std::unordered_set<std::string_view> const& javaBlockEntityBlocks() {
     static std::unordered_set<std::string_view> const set{
@@ -104,7 +104,7 @@ std::unordered_set<std::string_view> const& javaBlockEntityBlocks() {
         "ominous_black_candle", "oak_drying_rack", "spruce_drying_rack", "birch_drying_rack",
         "jungle_drying_rack", "acacia_drying_rack", "dark_oak_drying_rack", "mangrove_drying_rack",
         "cherry_drying_rack", "bamboo_drying_rack", "crimson_drying_rack", "warped_drying_rack",
-        "twilight_oak_drying_rack", "canopy_drying_rack", "dark_drying_rack",
+        "gloaming_oak_drying_rack", "canopy_drying_rack", "dark_drying_rack",
         "time_drying_rack", "transformation_drying_rack", "mining_drying_rack", "sorting_drying_rack",
         "vangrove_drying_rack",
     };
@@ -118,7 +118,7 @@ bool endsWith(std::string_view s, std::string_view suffix) {
 } // namespace
 
 bool hasJavaBlockEntity(std::string_view blockId) {
-    constexpr std::string_view ns = "twilightforest:";
+    constexpr std::string_view ns = "gloamingforest:";
     if (!blockId.starts_with(ns)) return false;
     auto path = blockId.substr(ns.size());
     return javaBlockEntityBlocks().contains(path) || endsWith(path, "_chest") || endsWith(path, "_sign");
@@ -139,7 +139,7 @@ bool canDestroyBlock(BlockSource& region, BlockPos const& pos, BreakRule rule) {
         if (rule == BreakRule::SpareBlockEntities && fe::javaHasBlockEntity(*be)) return false;
     }
     if (block.getBlockType().mNameInfo->mNamespaceName.get() == "minecraft") return true;
-    // custom blocks have no block actor: TF's own block entities, and gf::inventory's containers
+    // custom blocks have no block actor: upstream's own block entities, and gf::inventory's containers
     if (rule == BreakRule::SpareBlockEntities && fe::hasJavaBlockEntity(game::blockId(block))) return false;
     return !gf::inventory::find(region, pos).has_value();
 }

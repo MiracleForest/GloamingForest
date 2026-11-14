@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/time_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "gloamingforest:time_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:time_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:time_drying_rack"
+    }
+  }
+}

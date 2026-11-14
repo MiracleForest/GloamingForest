@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:time_boat"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["P P", "PPP"],
+    "key": {
+      "P": {
+        "item": "gloamingforest:time_planks"
+      }
+    },
+    "unlock": {
+      "context": "PlayerInWater"
+    },
+    "result": {
+      "item": "gloamingforest:time_boat"
+    }
+  }
+}

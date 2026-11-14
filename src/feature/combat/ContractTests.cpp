@@ -1,6 +1,6 @@
 // Selftests of F10 against the other W0 units' real implementations (prefix "combat.", testPos dx
 // 6029..6066):
-//   - TF's chests as tools/families declares them (F11, data/gf/containers/families.json) on the
+//   - upstream's chests as tools/families declares them (F11, data/gf/containers/families.json) on the
 //     inventory contract: the declarations, storage, a double chest's halves (one 54-slot screen,
 //     the right half first, also as the game's large chest screen of a vanilla client; the
 //     comparator output of both halves, read by a vanilla comparator behind the empty half; a
@@ -11,7 +11,7 @@
 //     the opener's luck, and the slots of a double chest over a world reload
 //     (combat.tf_chest_persist_save / _verify around a restart);
 //   - tag matchers through F9's gf::tags: damage type tags, loot entries and conditions;
-//   - TF's MissingAdvancementToast (what showMissing sends) and, in the client build, the toast
+//   - upstream's MissingAdvancementToast (what showMissing sends) and, in the client build, the toast
 //     F12 queues for it (its lines, icon, colours) and the fx.particle route of companions through
 //     F12's native sink or the resource pack effect with the call's velocity.
 // Every test empties the containers it filled before its blocks go (nothing drops in the test row).
@@ -96,11 +96,11 @@ namespace db    = gf::game::db;
 namespace items = gf::game::items;
 namespace inv   = gf::inventory;
 
-constexpr char kOakChest[]    = "twilightforest:twilight_oak_chest";
-constexpr char kOakTrapped[]  = "twilightforest:twilight_oak_trapped_chest";
-constexpr char kCanopyChest[] = "twilightforest:canopy_chest";
-constexpr char kType[]        = "twilightforest:type";
-constexpr char kFacing[]      = "twilightforest:facing";
+constexpr char kOakChest[]    = "gloamingforest:gloaming_oak_chest";
+constexpr char kOakTrapped[]  = "gloamingforest:gloaming_oak_trapped_chest";
+constexpr char kCanopyChest[] = "gloamingforest:canopy_chest";
+constexpr char kType[]        = "gloamingforest:type";
+constexpr char kFacing[]      = "gloamingforest:facing";
 constexpr char kLid[]         = "gloamingforest:lid";        // F11's lid (ChestLidController)
 constexpr char kOpenCount[]   = "gloamingforest:open_count"; // F11's trapped chest signal
 constexpr char kOpenStat[]    = "minecraft:open_chest";
@@ -148,7 +148,7 @@ struct CompanionScope {
     CompanionScope& operator=(CompanionScope const&) = delete;
 };
 
-/// Empties the native container of `pos` (TF's chests with a block actor): nothing drops when the
+/// Empties the native container of `pos` (upstream's chests with a block actor): nothing drops when the
 /// block goes.
 void emptyNative(GlobalPos const& pos) {
     auto* region = gf::game::regionOf(pos.dim);
@@ -226,14 +226,14 @@ std::optional<float> setLuck(Player& p, float value) {
 
 } // namespace
 
-// ---- TF's chests: the declarations tools/families writes ---------------------------------------------
+// ---- upstream's chests: the declarations tools/families writes ---------------------------------------------
 
 GF_REGISTER_SELFTEST("combat.tf_chests_declared", [](Context& ctx) {
-    static constexpr char const* kWoods[] = {"twilight_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
+    static constexpr char const* kWoods[] = {"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
     int                          good     = 0;
     for (auto const* wood : kWoods) {
         for (bool trapped : {false, true}) {
-            auto id = std::string("twilightforest:") + wood + (trapped ? "_trapped_chest" : "_chest");
+            auto id = std::string("gloamingforest:") + wood + (trapped ? "_trapped_chest" : "_chest");
             auto d  = inv::declared(id);
             ctx.check(d.has_value(), id + " is a declared container (data/gf/containers/families.json)");
             if (!d) continue;
@@ -248,12 +248,12 @@ GF_REGISTER_SELFTEST("combat.tf_chests_declared", [](Context& ctx) {
             if (rules && titles && stat && sounds) ++good;
         }
     }
-    ctx.check(good == 16, "TF's 16 chests and trapped chests follow ChestBlock (" + std::to_string(good) + ")");
+    ctx.check(good == 16, "upstream's 16 chests and trapped chests follow ChestBlock (" + std::to_string(good) + ")");
     ctx.check(gf::fx::resolveSound("minecraft:block.chest.open") == "random.chestopen" && gf::fx::resolveSound("minecraft:block.chest.close") == "random.chestclosed",
               "the chest sounds play as Bedrock's");
 });
 
-// ---- TF's double chest: storage, one screen, stats, sounds, comparators, a broken half -------------------
+// ---- upstream's double chest: storage, one screen, stats, sounds, comparators, a broken half -------------------
 
 GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace rs = gf::redstone;
@@ -276,7 +276,7 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     hr->set(right, 0, *items::make("minecraft:redstone", 2));
     hl->set(left, 0, *items::make("minecraft:lapis_lazuli", 3));
     hl->set(left, 26, *items::make("minecraft:stick", 5));
-    // the backend TF's chests use: the native one when the half has a block actor with the
+    // the backend upstream's chests use: the native one when the half has a block actor with the
     // contract's game container (F11's chests with minecraft:block_entity), BlockData otherwise;
     // the slots are in exactly one of them
     region = ctx.region();
@@ -289,7 +289,7 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     } else {
         ctx.check(inBlockData && items::countOf(hl->get(left, 26)) == 5, "the slots live in the half's block data (BlockData backend)");
     }
-    ctx.info(native ? "TF's chests use the native backend" : "TF's chests use the BlockData backend");
+    ctx.info(native ? "upstream's chests use the native backend" : "upstream's chests use the BlockData backend");
 
     // a click of a client mod user on the left half: the 54-slot screen, the stat, the sound
     auto&    p = ctx.player();
@@ -380,8 +380,8 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
 
     // halves of different chests never pair (ChestBlock#combine: the same block)
     ctx.require(ctx.setBlock(lone, kOakChest, {{kType, "left"}, {kFacing, "north"}}) && ctx.setBlock(other, kCanopyChest, {{kType, "right"}, {kFacing, "north"}}),
-                "a twilight oak half beside a canopy half");
-    ctx.check(inv::partsOf(lone).size() == 1 && inv::partsOf(other).size() == 1, "a twilight oak and a canopy chest stay two chests");
+                "a gloaming oak half beside a canopy half");
+    ctx.check(inv::partsOf(lone).size() == 1 && inv::partsOf(other).size() == 1, "a gloaming oak and a canopy chest stay two chests");
 
     // a broken half drops its own slots; the other half keeps its slots and stands alone
     hr->set(right, 4, *items::make("minecraft:diamond", 4));
@@ -398,7 +398,7 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     (void)takeItemEntitiesNear(left, 6);
 });
 
-// ---- TF's double chest on a vanilla client: the game's large chest screen ---------------------------------
+// ---- upstream's double chest on a vanilla client: the game's large chest screen ---------------------------------
 
 GF_REGISTER_SELFTEST("combat.tf_double_chest_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto left  = ctx.testPos(6065);
@@ -466,14 +466,14 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest_vanilla", [](Context& ctx) -> ll::c
     (void)takeItemEntitiesNear(right, 4);
 });
 
-// ---- TF's trapped chest: the vanilla screen, the stat, the signal -------------------------------------------
+// ---- upstream's trapped chest: the vanilla screen, the stat, the signal -------------------------------------------
 
 GF_REGISTER_SELFTEST("combat.tf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto pos = ctx.testPos(6036);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto pid = ctx.player().getOrCreateUniqueID().rawID;
     ChestsScope chests{{pos}, pid};
-    ctx.require(ctx.setBlock(pos, kOakTrapped, {{kFacing, "north"}}), "a twilight oak trapped chest");
+    ctx.require(ctx.setBlock(pos, kOakTrapped, {{kFacing, "north"}}), "a gloaming oak trapped chest");
     auto h = inv::find(*ctx.region(), gf::game::blockPos(pos));
     ctx.require(h.has_value(), "the trapped chest is a container");
     h->set(pos, 13, *items::make("minecraft:gold_ingot", 9));
@@ -513,7 +513,7 @@ GF_REGISTER_SELFTEST("combat.tf_trapped_chest", [](Context& ctx) -> ll::coro::Co
     h->set(pos, 13, ItemStack{});
 });
 
-// ---- TF's chest angers the piglins around (ChestBlock#useWithoutItem: PiglinAi.angerNearbyPiglins) ----
+// ---- upstream's chest angers the piglins around (ChestBlock#useWithoutItem: PiglinAi.angerNearbyPiglins) ----
 
 namespace {
 /// Piglins of one test: removed (and the difficulty put back) when it ends, whatever happens.
@@ -587,7 +587,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_piglins", [](Context& ctx) -> ll::coro::Co
     ctx.require(co_await ctx.ensureLoaded(far), "the far end loaded");
     auto pid = ctx.player().getOrCreateUniqueID().rawID;
     ChestsScope chests{{chest}, pid};
-    ctx.require(ctx.setBlock(chest, kOakChest, {{kFacing, "north"}}), "a twilight oak chest");
+    ctx.require(ctx.setBlock(chest, kOakChest, {{kFacing, "north"}}), "a gloaming oak chest");
     for (int dz = 0; dz <= 4; ++dz)
         for (int dy = 0; dy < 3; ++dy) {
             auto w = ctx.testPos(6050, dz);
@@ -659,7 +659,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_piglins", [](Context& ctx) -> ll::coro::Co
     gf::net::injectFromClient(*pp, "screen.closed", {{"type", "inventory.chest"}});
 });
 
-// ---- TF's chest with a loot table: LootTable#fill with the opener and its luck -----------------------------
+// ---- upstream's chest with a loot table: LootTable#fill with the opener and its luck -----------------------------
 
 GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace loot = gf::loot;
@@ -681,8 +681,8 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
     ctx.cleanupBlock(pos);
     ctx.cleanupBlock(real);
     auto* region = ctx.region();
-    ctx.require(loot::placeContainer(*region, gf::game::blockPos(pos), kOakChest, 2, "gf_test:combat/tf_chest", 4242), "a twilight oak chest placed with a loot table");
-    ctx.check(ctx.blockAt(pos) == kOakChest && strStateAt(pos, kFacing) == "north", "placeContainer turned the TF chest north");
+    ctx.require(loot::placeContainer(*region, gf::game::blockPos(pos), kOakChest, 2, "gf_test:combat/tf_chest", 4242), "a gloaming oak chest placed with a loot table");
+    ctx.check(ctx.blockAt(pos) == kOakChest && strStateAt(pos, kFacing) == "north", "placeContainer turned the upstream chest north");
     auto pending = inv::pendingLoot(pos);
     ctx.check(pending && pending->first == "gf_test:combat/tf_chest" && pending->second == 4242, "the table waits in the chest's block data");
     CompanionScope companion(ctx.player());
@@ -713,24 +713,24 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(h.has_value(), "the chest's handler");
     for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
 
-    // one of TF's own tables (a quest camp hut's junk: ten rolls)
+    // one of upstream's own tables (a quest camp hut's junk: ten rolls)
     region = ctx.region();
-    ctx.require(loot::placeContainer(*region, gf::game::blockPos(real), kOakChest, 3, "twilightforest:chests/hut_junk", 77), "a chest with twilightforest:chests/hut_junk");
+    ctx.require(loot::placeContainer(*region, gf::game::blockPos(real), kOakChest, 3, "gloamingforest:chests/hut_junk", 77), "a chest with gloamingforest:chests/hut_junk");
     co_await rightClick(ctx, real);
     p = playerById(pid);
     ctx.require(p != nullptr, "the player is still there");
     (void)openedChestScreen(*p);
     auto junk  = inv::contents(real);
     int  stacks = static_cast<int>(std::count_if(junk.begin(), junk.end(), [](ItemStack const& s) { return !items::isEmpty(s); }));
-    ctx.check(!inv::pendingLoot(real) && stacks >= 10, "TF's table filled the chest (" + std::to_string(stacks) + " stacks)");
+    ctx.check(!inv::pendingLoot(real) && stacks >= 10, "upstream's table filled the chest (" + std::to_string(stacks) + " stacks)");
     gf::net::injectFromClient(*p, "screen.closed", {{"type", "inventory.chest"}});
     auto hj = inv::find(*ctx.region(), gf::game::blockPos(real));
     if (hj)
         for (int i = 0; i < hj->slots; ++i) hj->set(real, i, ItemStack{});
 });
 
-// ---- TF's double chest keeps its slots over a world reload ---------------------------------------------
-// combat.tf_chest_persist_save puts a twilight oak double chest 3 blocks under testPos 6039 / 6040 and
+// ---- upstream's double chest keeps its slots over a world reload ---------------------------------------------
+// combat.tf_chest_persist_save puts a gloaming oak double chest 3 blocks under testPos 6039 / 6040 and
 // writes a marker (gf:combat:tf_chest_probe); combat.tf_chest_persist_verify checks both halves,
 // erases the marker and puts the blocks that were there back. The server scenario runs them around a
 // restart; a glob run sorts save before verify, so nothing stays in the world after it.
@@ -763,7 +763,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_persist_save", [](Context& ctx) -> ll::cor
     }
     auto const* l = gf::game::blockWithStates(kOakChest, {{kType, "left"}, {kFacing, "north"}});
     auto const* r = gf::game::blockWithStates(kOakChest, {{kType, "right"}, {kFacing, "north"}});
-    ctx.require(l && r, "the twilight oak chest halves exist");
+    ctx.require(l && r, "the gloaming oak chest halves exist");
     auto place = [&](GlobalPos const& at, Block const& b) {
         auto bp = gf::game::blockPos(at);
         return &region->getBlock(bp) == &b || gf::game::setBlock(*region, bp, b); // an earlier write's chest stays
@@ -820,41 +820,41 @@ GF_REGISTER_SELFTEST("combat.damage_type_tags", [](Context& ctx) {
     namespace tags = gf::tags;
     namespace c    = gf::combat;
     using R        = tags::Registry;
-    // TF's generated damage type tags (DamageTypeTagGenerator): the data F9 loads
+    // upstream's generated damage type tags (DamageTypeTagGenerator): the data F9 loads
     struct Row {
         char const* tag;
         char const* member;
     };
     static constexpr Row rows[] = {
-        {"minecraft:is_fire", "twilightforest:hydra_fire"},          {"minecraft:is_fire", "twilightforest:scorched"},
-        {"minecraft:bypasses_armor", "twilightforest:lich_bolt"},     {"minecraft:bypasses_invulnerability", "twilightforest:expired"},
-        {"minecraft:is_projectile", "twilightforest:thrown_axe"},     {"minecraft:is_explosion", "twilightforest:lich_bomb"},
-        {"minecraft:is_fall", "twilightforest:yeeted"},               {"minecraft:no_knockback", "twilightforest:clamped"},
-        {"neoforge:is_magic", "twilightforest:chilling_breath"},      {"neoforge:is_physical", "twilightforest:hydra_bite"},
-        {"twilightforest:breaks_lich_shields", "twilightforest:twilight_scepter"}, {"twilightforest:breaks_lich_shields", "minecraft:magic"},
+        {"minecraft:is_fire", "gloamingforest:hydra_fire"},          {"minecraft:is_fire", "gloamingforest:scorched"},
+        {"minecraft:bypasses_armor", "gloamingforest:lich_bolt"},     {"minecraft:bypasses_invulnerability", "gloamingforest:expired"},
+        {"minecraft:is_projectile", "gloamingforest:thrown_axe"},     {"minecraft:is_explosion", "gloamingforest:lich_bomb"},
+        {"minecraft:is_fall", "gloamingforest:yeeted"},               {"minecraft:no_knockback", "gloamingforest:clamped"},
+        {"neoforge:is_magic", "gloamingforest:chilling_breath"},      {"neoforge:is_physical", "gloamingforest:hydra_bite"},
+        {"gloamingforest:breaks_lich_shields", "gloamingforest:gloaming_scepter"}, {"gloamingforest:breaks_lich_shields", "minecraft:magic"},
     };
     for (auto const& r : rows) {
         ctx.check(tags::has(R::DamageType, r.tag, r.member), std::string("gf::tags: ") + r.tag + " holds " + r.member);
         ctx.check(c::damageTypeHasTag(r.member, r.tag), std::string("the combat contract reads it: ") + r.member + " in " + r.tag);
     }
     auto fire = tags::members(R::DamageType, "minecraft:is_fire");
-    ctx.check(std::find(fire.begin(), fire.end(), "twilightforest:hydra_mortar") != fire.end(), "members() lists TF's fire types (" + std::to_string(fire.size()) + ")");
-    ctx.check(!c::damageTypeHasTag("twilightforest:hydra_bite", "minecraft:is_fire") && !c::damageTypeHasTag("twilightforest:lich_bolt", "minecraft:is_fall"), "non-members are not");
+    ctx.check(std::find(fire.begin(), fire.end(), "gloamingforest:hydra_mortar") != fire.end(), "members() lists upstream's fire types (" + std::to_string(fire.size()) + ")");
+    ctx.check(!c::damageTypeHasTag("gloamingforest:hydra_bite", "minecraft:is_fire") && !c::damageTypeHasTag("gloamingforest:lich_bolt", "minecraft:is_fall"), "non-members are not");
     // vanilla's own members (Mojang's data, no Bedrock data) stay answered
     ctx.check(c::damageTypeHasTag("minecraft:in_fire", "minecraft:is_fire") && c::damageTypeHasTag("minecraft:arrow", "minecraft:is_projectile"), "vanilla's own members");
     // what the tags decide (gf::combat::hurt's cause)
     using Cause = SharedTypes::Legacy::ActorDamageCause;
-    ctx.check(c::causeFor("twilightforest:fire_jet", true) == Cause::Fire && c::causeFor("twilightforest:lich_bomb", true) == Cause::Magic, "the causes follow the data");
+    ctx.check(c::causeFor("gloamingforest:fire_jet", true) == Cause::Fire && c::causeFor("gloamingforest:lich_bomb", true) == Cause::Magic, "the causes follow the data");
 });
 
 GF_REGISTER_SELFTEST("combat.loot_tags", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace loot = gf::loot;
     namespace tags = gf::tags;
-    // a tag entry: every member of TF's item tag (twilightforest:portal/activator = #c:gems/diamond)
-    auto activators = tags::members(tags::Registry::Item, "twilightforest:portal/activator");
+    // a tag entry: every member of upstream's item tag (gloamingforest:portal/activator = #c:gems/diamond)
+    auto activators = tags::members(tags::Registry::Item, "gloamingforest:portal/activator");
     ctx.require(std::find(activators.begin(), activators.end(), "minecraft:diamond") != activators.end(),
-                "F9 resolves twilightforest:portal/activator through #c:gems/diamond (" + std::to_string(activators.size()) + " members)");
-    loot::registerTable("gf_test:combat/tag_entry", JsonT::parse(R"({"pools":[{"rolls":1,"entries":[{"type":"minecraft:tag","name":"twilightforest:portal/activator","expand":false}]}]})"));
+                "F9 resolves gloamingforest:portal/activator through #c:gems/diamond (" + std::to_string(activators.size()) + " members)");
+    loot::registerTable("gf_test:combat/tag_entry", JsonT::parse(R"({"pools":[{"rolls":1,"entries":[{"type":"minecraft:tag","name":"gloamingforest:portal/activator","expand":false}]}]})"));
     loot::LootContext lc;
     lc.seed  = 3;
     auto got = loot::roll("gf_test:combat/tag_entry", lc);
@@ -875,8 +875,8 @@ GF_REGISTER_SELFTEST("combat.loot_tags", [](Context& ctx) -> ll::coro::CoroTask<
     loot::registerTable("gf_test:combat/axe_only", nullptr);
     ctx.check(countIn(withAxe, "minecraft:oak_log") == 1 && withStick.empty(), "match_tool #minecraft:axes takes the axe, not the stick");
     // entity type tags, nested vanilla tags too
-    ctx.check(tags::has(tags::Registry::EntityType, "twilightforest:lifedrain_drops_no_flesh", "minecraft:snow_golem"), "lifedrain_drops_no_flesh holds the snow golem");
-    ctx.check(tags::has(tags::Registry::EntityType, "twilightforest:lifedrain_drops_no_flesh", "minecraft:skeleton"), "and the skeleton through #minecraft:skeletons");
+    ctx.check(tags::has(tags::Registry::EntityType, "gloamingforest:lifedrain_drops_no_flesh", "minecraft:snow_golem"), "lifedrain_drops_no_flesh holds the snow golem");
+    ctx.check(tags::has(tags::Registry::EntityType, "gloamingforest:lifedrain_drops_no_flesh", "minecraft:skeleton"), "and the skeleton through #minecraft:skeletons");
     auto pos = ctx.testPos(6042);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto* region = ctx.region();
@@ -891,8 +891,8 @@ GF_REGISTER_SELFTEST("combat.loot_tags", [](Context& ctx) -> ll::coro::CoroTask<
         }
     } remove{{golem, cow}};
     ctx.require(golem && cow, "a snow golem and a cow");
-    auto noFlesh = JsonT::parse(R"({"type": "#twilightforest:lifedrain_drops_no_flesh"})");
-    ctx.check(loot::entityMatches(golem, noFlesh) && !loot::entityMatches(cow, noFlesh), "an entity predicate with TF's entity type tag");
+    auto noFlesh = JsonT::parse(R"({"type": "#gloamingforest:lifedrain_drops_no_flesh"})");
+    ctx.check(loot::entityMatches(golem, noFlesh) && !loot::entityMatches(cow, noFlesh), "an entity predicate with upstream's entity type tag");
     co_return;
 });
 
@@ -900,35 +900,35 @@ GF_REGISTER_SELFTEST("combat.loot_tags", [](Context& ctx) -> ll::coro::CoroTask<
 
 GF_REGISTER_SELFTEST("combat.missing_advancement", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace pr = gf::progression;
-    // TF: the advancement's display title and icon (DisplayInfo), else no_title and the portal miniature
-    auto lich = pr::missingToastFor("twilightforest:progress_lich");
-    ctx.check(lich.titleIsKey && lich.title == "advancement.twilightforest.kill_lich", "progress_lich's title (" + lich.title + ")");
-    ctx.check(lich.icon == "twilightforest:lich_tower_miniature_structure", "progress_lich's icon (" + lich.icon + ")");
+    // upstream: the advancement's display title and icon (DisplayInfo), else no_title and the portal miniature
+    auto lich = pr::missingToastFor("gloamingforest:progress_lich");
+    ctx.check(lich.titleIsKey && lich.title == "advancement.gloamingforest.kill_lich", "progress_lich's title (" + lich.title + ")");
+    ctx.check(lich.icon == "gloamingforest:lich_tower_miniature_structure", "progress_lich's icon (" + lich.icon + ")");
     auto none = pr::missingToastFor("gf_test:no_such_advancement");
-    ctx.check(none.title == pr::kMissingNoTitle && none.titleIsKey && none.icon == pr::kMissingIcon, "no display: twilightforest.ui.advancement.no_title with the portal miniature");
+    ctx.check(none.title == pr::kMissingNoTitle && none.titleIsKey && none.icon == pr::kMissingIcon, "no display: gloamingforest.ui.advancement.no_title with the portal miniature");
     ctx.check(items::make(lich.icon).has_value() && items::make(pr::kMissingIcon).has_value(), "both icons are items the client can draw");
     auto pos = ctx.testPos(6041);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto& p = ctx.player();
-    ctx.check(gf::trFor(p, pr::kMissingUpperText, "?") == "Advancement Required:", "UPPER_TEXT reads TF's text (" + gf::trFor(p, pr::kMissingUpperText, "?") + ")");
+    ctx.check(gf::trFor(p, pr::kMissingUpperText, "?") == "Advancement Required:", "UPPER_TEXT reads upstream's text (" + gf::trFor(p, pr::kMissingUpperText, "?") + ")");
     {
         CompanionScope companion(p);
         (void)gf::net::takeTestMessages(p);
-        pr::showMissing(p, "twilightforest:progress_lich");
+        pr::showMissing(p, "gloamingforest:progress_lich");
         JsonT sent;
         for (auto const& m : gf::net::takeTestMessages(p))
             if (m.channel == "combat.missing_advancement") sent = m.payload;
-        ctx.check(sent.value("advancement", std::string{}) == "twilightforest:progress_lich" && sent.value("title", std::string{}) == lich.title
+        ctx.check(sent.value("advancement", std::string{}) == "gloamingforest:progress_lich" && sent.value("title", std::string{}) == lich.title
                       && sent.value("titleIsKey", false) && sent.value("icon", std::string{}) == lich.icon,
                   "a client mod user gets the toast's title and icon (" + sent.dump() + ")");
     }
     // a vanilla player gets the game's toast (ToastRequestPacket): nothing on the companion channel
-    pr::showMissing(ctx.player(), "twilightforest:progress_lich");
+    pr::showMissing(ctx.player(), "gloamingforest:progress_lich");
     ctx.check(gf::net::takeTestMessages(ctx.player()).empty(), "a vanilla player gets no companion message");
 });
 
 // A hurt started inside an onIncoming handler runs the handlers again (Java's nested damage events:
-// EntityUtil#properlyApplyCustomDamageSource cancels a mob's hit and deals it again with a TF type);
+// EntityUtil#properlyApplyCustomDamageSource cancels a mob's hit and deals it again with an upstream type);
 // only the same attack on top of itself passes through. The handler comes off by its handle.
 GF_REGISTER_SELFTEST("combat.nested_hurt", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace cb = gf::combat;
@@ -946,12 +946,12 @@ GF_REGISTER_SELFTEST("combat.nested_hurt", [](Context& ctx) -> ll::coro::CoroTas
         seen.types.push_back(d.type);
         if (d.type == "minecraft:generic") {
             // the conversion: cancel, deal it again with another type (its handlers run)
-            (void)cb::hurt(d.victim, d.amount, "twilightforest:ant", d.attacker, d.direct);
+            (void)cb::hurt(d.victim, d.amount, "gloamingforest:ant", d.attacker, d.direct);
             return cb::Verdict::Cancel;
         }
-        if (d.type == "twilightforest:ant" && seen.sameAgain++ == 0) {
+        if (d.type == "gloamingforest:ant" && seen.sameAgain++ == 0) {
             // the same attack again from its own handlers: applied as is, no third round
-            (void)cb::hurt(d.victim, d.amount, "twilightforest:ant", d.attacker, d.direct);
+            (void)cb::hurt(d.victim, d.amount, "gloamingforest:ant", d.attacker, d.direct);
         }
         return cb::Verdict::Cancel;
     });
@@ -959,7 +959,7 @@ GF_REGISTER_SELFTEST("combat.nested_hurt", [](Context& ctx) -> ll::coro::CoroTas
     (void)cb::hurt(ctx.player(), 1.0f, "minecraft:generic");
     std::string list;
     for (auto const& t : seen.types) list += t + " ";
-    ctx.check(seen.types == std::vector<std::string>({"minecraft:generic", "twilightforest:ant"}),
+    ctx.check(seen.types == std::vector<std::string>({"minecraft:generic", "gloamingforest:ant"}),
               "the nested hurt of another type ran the handlers, the same attack again did not (" + list + ")");
     ctx.check(cb::ext::remove(handle), "ext::remove finds the handler");
     ctx.check(!cb::ext::remove(handle), "a second removal finds nothing");
@@ -1004,10 +1004,10 @@ GF_REGISTER_SELFTEST("combat.type_change", [](Context& ctx) -> ll::coro::CoroTas
         seen.converter.push_back(d.type);
         if (d.type != "minecraft:generic") return cb::Verdict::Pass;
         if (!seen.explicitConversion) {
-            d.type = "twilightforest:ant";
+            d.type = "gloamingforest:ant";
             return cb::Verdict::Pass;
         }
-        (void)cb::hurt(d.victim, d.amount, "twilightforest:ant", d.attacker, d.direct);
+        (void)cb::hurt(d.victim, d.amount, "gloamingforest:ant", d.attacker, d.direct);
         return cb::Verdict::Cancel;
     });
     auto h3 = cb::ext::addIncoming(cb::priority::Normal, [mine](cb::DamageInfo& d) {
@@ -1043,11 +1043,11 @@ GF_REGISTER_SELFTEST("combat.type_change", [](Context& ctx) -> ll::coro::CoroTas
         // the explicit converter cancels the outer hit (its hurt reports false); the nested one landed
         if (!explicitConversion) ctx.check(landed, how + "the converted hit lands");
         ctx.check(seen.modifier == 1, how + "the modifier before the converter ran once (" + std::to_string(seen.modifier) + ")");
-        auto wantConverter = explicitConversion ? std::vector<std::string>{"minecraft:generic", "twilightforest:ant"}
+        auto wantConverter = explicitConversion ? std::vector<std::string>{"minecraft:generic", "gloamingforest:ant"}
                                                 : std::vector<std::string>{"minecraft:generic"};
         ctx.check(seen.converter == wantConverter, how + "the converter ran " + join(seen.converter));
-        ctx.check(seen.after == std::vector<std::string>{"twilightforest:ant"}, how + "the handler after it ran once with the new type: " + join(seen.after));
-        ctx.check(seen.dealtTypes == std::vector<std::string>{"twilightforest:ant"}, how + "onDealt heard the new type once: " + join(seen.dealtTypes));
+        ctx.check(seen.after == std::vector<std::string>{"gloamingforest:ant"}, how + "the handler after it ran once with the new type: " + join(seen.after));
+        ctx.check(seen.dealtTypes == std::vector<std::string>{"gloamingforest:ant"}, how + "onDealt heard the new type once: " + join(seen.dealtTypes));
         ctx.check(std::abs(seen.dealtAmount - 3.0f) < 0.01f, how + "3 damage dealt (2 + the modifier once): " + std::to_string(seen.dealtAmount));
     }
 });
@@ -1090,7 +1090,7 @@ std::int64_t localCompanion() {
 }
 } // namespace
 
-// The server's showMissing reaches the client mod (combat.missing_advancement) and F12 queues TF's
+// The server's showMissing reaches the client mod (combat.missing_advancement) and F12 queues upstream's
 // MissingAdvancementToast: white UPPER_TEXT, white title (cancelled again: nothing stays on screen).
 GF_REGISTER_SELFTEST("combat.client_missing_toast", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace pr = gf::progression;
@@ -1103,7 +1103,7 @@ GF_REGISTER_SELFTEST("combat.client_missing_toast", [](Context& ctx) -> ll::coro
     {
         auto* p = playerById(who);
         ctx.require(p != nullptr, "the companion player");
-        pr::showMissing(*p, "twilightforest:progress_lich");
+        pr::showMissing(*p, "gloamingforest:progress_lich");
     }
     std::optional<cl::toast::Style> style;
     for (int i = 0; i < 60 && !style; ++i) {
@@ -1117,16 +1117,16 @@ GF_REGISTER_SELFTEST("combat.client_missing_toast", [](Context& ctx) -> ll::coro
     // what the client handler made of the server's message: the advancement's title and icon
     auto shown = pr::client::lastMissingToast();
     ctx.require(shown.has_value(), "the client mod recorded the toast it queued");
-    ctx.check(shown->advancement == "twilightforest:progress_lich", "the toast is progress_lich's (" + shown->advancement + ")");
+    ctx.check(shown->advancement == "gloamingforest:progress_lich", "the toast is progress_lich's (" + shown->advancement + ")");
     ctx.check(shown->titleKey == pr::kMissingUpperText, "first line: UPPER_TEXT (" + shown->titleKey + ")");
-    ctx.check(shown->bodyKey == "advancement.twilightforest.kill_lich", "second line: the advancement's title (" + shown->bodyKey + ")");
-    ctx.check(shown->iconItem == "twilightforest:lich_tower_miniature_structure", "the advancement's icon (" + shown->iconItem + ")");
+    ctx.check(shown->bodyKey == "advancement.gloamingforest.kill_lich", "second line: the advancement's title (" + shown->bodyKey + ")");
+    ctx.check(shown->iconItem == "gloamingforest:lich_tower_miniature_structure", "the advancement's icon (" + shown->iconItem + ")");
     ctx.check(shown->ms == pr::kMissingToastMs && pr::kMissingToastMs == 10000, "shown for 10 s");
     ctx.check(cl::toast::cancel(pr::kMissingUpperText) >= 1, "the toast is taken off again");
 });
 
 // gf::fx::particle for a companion: a particle with a native factory goes to F12's sink (spawnFromFx),
-// a TF particle without one spawns its resource pack effect, a vanilla particle type goes as the
+// an upstream particle without one spawns its resource pack effect, a vanilla particle type goes as the
 // game's SpawnParticleEffectPacket (not over fx.particle).
 GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace fxc = gf::fx::client;
@@ -1159,16 +1159,16 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
     for (int i = 0; i < 60 && sRuns.load() < 2; ++i) co_await ctx.ticks(1);
     ctx.check(fxc::clientCounters().native > before.native, "fx.particle went to the native sink");
     ctx.check(sRuns.load() == 2, "F12's factory ran for both particles with the call's velocity and params (" + std::to_string(sRuns.load()) + ")");
-    // a TF particle id without a factory: its resource pack effect (vanilla clients see the same)
+    // an upstream particle id without a factory: its resource pack effect (vanilla clients see the same)
     std::string tfId;
     bool        hasFactory = false;
     for (auto const& [id, factory] : cl::particles::declared()) {
-        if (id == "twilightforest:large_flame") {
+        if (id == "gloamingforest:large_flame") {
             tfId       = id;
             hasFactory = factory;
         }
     }
-    ctx.require(!tfId.empty(), "twilightforest:large_flame is one of TF's declared particles");
+    ctx.require(!tfId.empty(), "gloamingforest:large_flame is one of upstream's declared particles");
     ctx.require(!gf::fx::resolveParticle(tfId).effect.empty(), "the resource pack has its effect");
     before = fxc::clientCounters();
     {
@@ -1178,9 +1178,9 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
     }
     for (int i = 0; i < 60 && fxc::clientCounters().native == before.native && fxc::clientCounters().effects == before.effects; ++i) co_await ctx.ticks(1);
     auto after = fxc::clientCounters();
-    if (hasFactory) ctx.check(after.native > before.native, "a TF particle with a native factory is drawn natively");
+    if (hasFactory) ctx.check(after.native > before.native, "an upstream particle with a native factory is drawn natively");
     else {
-        ctx.check(after.effects > before.effects, "a TF particle without a factory spawned its resource pack effect");
+        ctx.check(after.effects > before.effects, "an upstream particle without a factory spawned its resource pack effect");
         // the call's velocity goes with the effect (variable.velocity), as vanilla clients get it
         auto vel = fxc::lastEffectVelocity();
         ctx.check(vel && std::abs(vel->y - 0.05f) < 1e-4f && std::abs(vel->z - 0.02f) < 1e-4f && vel->x == 0.f,

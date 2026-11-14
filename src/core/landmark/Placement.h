@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/placements/LandmarkGridPlacement.java
-//   src/main/java/twilightforest/world/components/structures/placements/AvoidLandmarkGridPlacement.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/placements/LandmarkGridPlacement.java
+//   src/main/java/gloamingforest/world/components/structures/placements/AvoidLandmarkGridPlacement.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// Structure set placements of TF's structure sets (F6, pure, gtested): the two TF placement types
-// twilightforest:landmark_grid and twilightforest:avoid_landmark_grid, and the vanilla parts they
+// Structure set placements of upstream's structure sets (F6, pure, gtested): the two upstream placement types
+// gloamingforest:landmark_grid and gloamingforest:avoid_landmark_grid, and the vanilla parts they
 // build on (StructurePlacement frequency reduction and exclusion zone, RandomSpreadStructurePlacement
 // potential chunks). Read from the "placement" object of a structure set JSON.
 

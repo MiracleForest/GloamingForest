@@ -1,0 +1,20 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:sidestep_cooldown": 40
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.side_step.description",
+      "with": [
+        {
+          "keybind": "key.left"
+        },
+        {
+          "keybind": "key.right"
+        }
+      ]
+    }
+  ],
+  "equipment_slots": "legs"
+}

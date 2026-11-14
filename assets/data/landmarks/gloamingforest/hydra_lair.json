@@ -1,0 +1,99 @@
+{
+  "key": "gloamingforest:hydra_lair",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/hydra_lair.json",
+  "structure": {
+    "advancements_required": [
+      "gloamingforest:progress_labyrinth"
+    ],
+    "biomes": "#gloamingforest:valid_hydra_lair_biomes",
+    "decoration_clearance": {
+      "adjust_structure_elevation": false,
+      "allow_biome_surface_decorations": false,
+      "allow_biome_underground_decorations": false,
+      "allow_biome_vegetation": true,
+      "chunk_clearance_radius": 2
+    },
+    "hint_creature": {
+      "hint_item": {
+        "components": {
+          "minecraft:written_book_content": {
+            "author": "gloamingforest.book.author",
+            "generation": 3,
+            "pages": [
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.hydralair.1\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.hydralair.2\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.hydralair.3\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.hydralair.4\"}"
+              }
+            ],
+            "resolved": true,
+            "title": {
+              "raw": "gloamingforest.book.hydralair"
+            }
+          },
+          "gloamingforest:translatable_book": {}
+        },
+        "count": 1,
+        "id": "minecraft:written_book"
+      },
+      "hint_mob": "gloamingforest:kobold"
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "speleothem_config": "gloamingforest:hydra_lair",
+    "step": "surface_structures",
+    "structure_icon": "gloamingforest:hydra_lair",
+    "type": "gloamingforest:hydra_lair"
+  },
+  "structure_set": {
+    "id": "gloamingforest:hydra_lair",
+    "placement": {
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:hydra_lair",
+        "weight": 1
+      }
+    ]
+  }
+}

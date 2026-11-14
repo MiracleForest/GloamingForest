@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U28's mobs: shared helpers of Mobs.cpp (the ice mobs) and SnowQueen.cpp.
@@ -16,18 +16,18 @@ class Vec3;
 
 namespace gf::feature::aurora {
 
-inline constexpr char kSnowQueen[]       = "twilightforest:snow_queen";
-inline constexpr char kSnowGuardian[]    = "twilightforest:snow_guardian";
-inline constexpr char kStableIceCore[]   = "twilightforest:stable_ice_core";
-inline constexpr char kUnstableIceCore[] = "twilightforest:unstable_ice_core";
-inline constexpr char kIceCrystal[]      = "twilightforest:ice_crystal";
+inline constexpr char kSnowQueen[]       = "gloamingforest:snow_queen";
+inline constexpr char kSnowGuardian[]    = "gloamingforest:snow_guardian";
+inline constexpr char kStableIceCore[]   = "gloamingforest:stable_ice_core";
+inline constexpr char kUnstableIceCore[] = "gloamingforest:unstable_ice_core";
+inline constexpr char kIceCrystal[]      = "gloamingforest:ice_crystal";
 
-/// The unit's random source for TF's gameplay draws (server thread).
+/// The unit's random source for upstream's gameplay draws (server thread).
 [[nodiscard]] core::jrand::RandomSource& rng();
 /// (random.nextFloat() - random.nextFloat()).
 [[nodiscard]] float rr();
 [[nodiscard]] Vec3  feet(Actor const& actor);
-/// BaseIceMob: the #minecraft:snow_golem_melts biomes and TF's oak savannah and fire swamp.
+/// BaseIceMob: the #minecraft:snow_golem_melts biomes and upstream's oak savannah and fire swamp.
 [[nodiscard]] bool meltsSnowIn(std::string const& biomeId);
 /// The mobGriefing gamerule (EventHooks#canEntityGrief).
 [[nodiscard]] bool mobGriefing();
@@ -42,7 +42,7 @@ void setCrystalAgeForTest(Actor& crystal, int age);
 /// Test hook: the crystal's maxCrystalAge (0: not summoned, it stays).
 int crystalMaxAgeForTest(Actor& crystal);
 
-/// Entity#getEyeHeight of TF's dimensions (1.53 / 1.35 / 2.125): Bedrock puts a mob's eyes at 0.9 x its
+/// Entity#getEyeHeight of upstream's dimensions (1.53 / 1.35 / 2.125): Bedrock puts a mob's eyes at 0.9 x its
 /// height; the offsets component's eye offset is set to Java's value (every tick: the engine may
 /// recompute it with the box).
 void applyJavaEyeHeight(Actor& actor);

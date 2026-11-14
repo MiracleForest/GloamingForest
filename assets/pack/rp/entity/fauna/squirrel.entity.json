@@ -2,18 +2,18 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:squirrel",
+      "identifier": "gloamingforest:squirrel",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/squirrel2"
+        "default": "textures/gloamingforest/entity/squirrel2"
       },
       "geometry": {
-        "default": "geometry.twilightforest.squirrel"
+        "default": "geometry.gloamingforest.squirrel"
       },
       "animations": {
-        "setup": "animation.twilightforest.squirrel.base"
+        "setup": "animation.gloamingforest.squirrel.base"
       },
       "scripts": {
         "animate": [

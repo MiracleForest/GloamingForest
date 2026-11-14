@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of TF's biome restrictions, enforcement timing, the locked biome toast countdown and the
-// advancement tree layout (U14; TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of upstream's biome restrictions, enforcement timing, the locked biome toast countdown and the
+// advancement tree layout (U14; upstream commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -14,20 +14,20 @@ using namespace gf::core::progression;
 using nlohmann::json;
 
 TEST(ProgressionRules, RestrictionJson) {
-    auto j = json::parse(R"({"advancements":["twilightforest:progress_lich"],"enforcement":"twilightforest:darkness","locked_biome_toast":{"count":1,"id":"twilightforest:lich_tower_miniature_structure"},"multiplier":0.0,"structure_key":"twilightforest:knight_stronghold"})");
-    auto r = Restriction::fromJson("twilightforest:dark_forest", j);
+    auto j = json::parse(R"({"advancements":["gloamingforest:progress_lich"],"enforcement":"gloamingforest:darkness","locked_biome_toast":{"count":1,"id":"gloamingforest:lich_tower_miniature_structure"},"multiplier":0.0,"structure_key":"gloamingforest:knight_stronghold"})");
+    auto r = Restriction::fromJson("gloamingforest:dark_forest", j);
     ASSERT_TRUE(r);
     EXPECT_EQ(r->enforcement, Enforcement::Darkness);
-    EXPECT_EQ(r->structureKey, "twilightforest:knight_stronghold");
-    EXPECT_EQ(r->toastIcon, "twilightforest:lich_tower_miniature_structure");
+    EXPECT_EQ(r->structureKey, "gloamingforest:knight_stronghold");
+    EXPECT_EQ(r->toastIcon, "gloamingforest:lich_tower_miniature_structure");
     EXPECT_FLOAT_EQ(r->multiplier, 0.0f);
     std::set<std::string> done;
     auto has = [&](std::string const& a) { return done.contains(a); };
     EXPECT_FALSE(r->liftedFor(has));
-    done.insert("twilightforest:progress_lich");
+    done.insert("gloamingforest:progress_lich");
     EXPECT_TRUE(r->liftedFor(has));
-    EXPECT_FALSE(Restriction::fromJson("x", json::parse(R"({"enforcement":"twilightforest:fire","multiplier":1,"advancements":[]})")));
-    EXPECT_FALSE(Restriction::fromJson("x", json::parse(R"({"enforcement":"twilightforest:fire","advancements":["a"]})")));
+    EXPECT_FALSE(Restriction::fromJson("x", json::parse(R"({"enforcement":"gloamingforest:fire","multiplier":1,"advancements":[]})")));
+    EXPECT_FALSE(Restriction::fromJson("x", json::parse(R"({"enforcement":"gloamingforest:fire","advancements":["a"]})")));
 }
 
 TEST(ProgressionRules, NestedGates) {
@@ -112,13 +112,13 @@ TEST(ProgressionRules, TreeLayoutMatchesJava) {
 
 TEST(ProgressionRules, TreeLayoutTfTree) {
     auto const& tf = kGolden.front();
-    ASSERT_STREQ(tf.name, "twilightforest");
+    ASSERT_STREQ(tf.name, "gloamingforest");
     EXPECT_EQ(tf.nodes.size(), 45u);
     std::vector<TreeNode> nodes;
     for (auto const& n : tf.nodes) nodes.push_back({n.id, n.parent, n.display});
     layoutTree(nodes);
     auto at = [&](char const* id) {
-        return *std::find_if(nodes.begin(), nodes.end(), [&](TreeNode const& n) { return n.id == std::string("twilightforest:") + id; });
+        return *std::find_if(nodes.begin(), nodes.end(), [&](TreeNode const& n) { return n.id == std::string("gloamingforest:") + id; });
     };
     EXPECT_EQ(at("root").x, 0);
     EXPECT_EQ(at("progression_end").x, 7) << "root > progress_naga > progress_lich > progress_merge > beanstalk > giants > progress_troll > end";
@@ -147,21 +147,21 @@ TEST(ProgressionRules, TreeLayoutSkipsNodesWithoutDisplay) {
 
 TEST(ProgressionRules, RenderComponent) {
     std::map<std::string, std::string> lang{
-        {"advancement.twilightforest.hill1.desc", "Defeat a %s in a Small Hollow Hill"},
-        {"entity.twilightforest.redcap", "Redcap"},
-        {"advancement.twilightforest.progress_merge.desc", "Defeat the %s, the %s and the %s"},
-        {"entity.twilightforest.hydra", "Hydra"},
-        {"entity.twilightforest.ur_ghast", "Ur-Ghast"},
+        {"advancement.gloamingforest.hill1.desc", "Defeat a %s in a Small Hollow Hill"},
+        {"entity.gloamingforest.redcap", "Redcap"},
+        {"advancement.gloamingforest.progress_merge.desc", "Defeat the %s, the %s and the %s"},
+        {"entity.gloamingforest.hydra", "Hydra"},
+        {"entity.gloamingforest.ur_ghast", "Ur-Ghast"},
         {"pos", "%2$s before %1$s"},
     };
     TranslateFn tr = [&](std::string const& key, std::string const& fallback, std::vector<std::string> const& args) {
         auto it = lang.find(key);
         return gf::core::formatMessage(it == lang.end() ? fallback : it->second, args);
     };
-    auto hill1 = json::parse(R"({"translate":"advancement.twilightforest.hill1.desc","with":[{"translate":"entity.twilightforest.redcap"}]})");
+    auto hill1 = json::parse(R"({"translate":"advancement.gloamingforest.hill1.desc","with":[{"translate":"entity.gloamingforest.redcap"}]})");
     EXPECT_EQ(renderComponent(hill1, tr), "Defeat a Redcap in a Small Hollow Hill");
     auto merge = json::parse(
-        R"({"translate":"advancement.twilightforest.progress_merge.desc","with":[{"translate":"entity.twilightforest.hydra"},{"translate":"entity.twilightforest.ur_ghast"},{"translate":"entity.twilightforest.snow_queen","fallback":"Snow Queen"}]})");
+        R"({"translate":"advancement.gloamingforest.progress_merge.desc","with":[{"translate":"entity.gloamingforest.hydra"},{"translate":"entity.gloamingforest.ur_ghast"},{"translate":"entity.gloamingforest.snow_queen","fallback":"Snow Queen"}]})");
     EXPECT_EQ(renderComponent(merge, tr), "Defeat the Hydra, the Ur-Ghast and the Snow Queen");
     EXPECT_EQ(renderComponent(json::parse(R"({"translate":"pos","with":["a",{"text":"b"}]})"), tr), "b before a");
     EXPECT_EQ(renderComponent(json(""), tr), "");

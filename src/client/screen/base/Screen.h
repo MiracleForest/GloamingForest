@@ -1,8 +1,8 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/client/screen/Screen.h), LGPL-3.0-or-later.
 #pragma once
 
-// Native screen framework of the client mod (W0a). Client build only. TF's own GUIs (container
-// screens with TF's textures, HUD layers, toasts) are built on it by F12 (client/ui/Ui.h).
+// Native screen framework of the client mod (W0a). Client build only. upstream's own GUIs (container
+// screens with upstream's textures, HUD layers, toasts) are built on it by F12 (client/ui/Ui.h).
 //
 // A Screen is a tree-less list of widgets laid out in GUI pixels around a centred panel. The
 // framework pushes a vanilla host scene so the game releases the mouse, draws the screen on top
@@ -41,7 +41,7 @@ namespace gf::client::screen {
 using core::Rect;
 using Json = nlohmann::json;
 
-/// Vanilla-like GUI palette (ARGB), the look of TF's screens.
+/// Vanilla-like GUI palette (ARGB), the look of upstream's screens.
 namespace color {
 inline constexpr unsigned kPanel       = 0xFFC6C6C6;
 inline constexpr unsigned kPanelDark   = 0xFF555555;

@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // Extension added by U2 (terrain), rule R18 (folded by A8 in W2b): NeoForge's
 // PieceBeardifierModifier for structure pieces, which the beardifier of the terrain generator asks
-// per piece (core/terrain/Beard.h has TF 4.8's answers for its own piece types).
+// per piece (core/terrain/Beard.h has upstream 4.8's answers for its own piece types).
 //
 // The beardifier resolves a piece of a start (landmark::ext::StartPiece) in this order:
 //   1. a function registered here for the piece's type id (a structure unit's piece whose beard
 //      depends on something the generic rules cannot see; tests);
-//   2. TF 4.8's table (core::terrain::beard::tfPieceBeard: TFStructureComponentOld's NONE, the
+//   2. upstream 4.8's table (core::terrain::beard::tfPieceBeard: TFStructureComponentOld's NONE, the
 //      overrides of the hedge maze, lich tower, dark tower entrance, stronghold, troll cave, final
-//      castle dungeon, courtyard terrace and the new lich tower, and TwilightJigsawPiece's
+//      castle dungeon, courtyard terrace and the new lich tower, and GloamingJigsawPiece's
 //      "terrain_adaptation" / "ground_offset" tag);
 //   3. the loaded piece (structure::loadPiece) when it derives from F7's bases::ComponentOld or
 //      bases::JigsawPiece: their getBeardifierBox / getTerrainAdjustment / getGroundLevelDelta;
@@ -41,7 +41,7 @@ struct PieceBeard {
 using PieceBeardFn = std::function<PieceBeard(landmark::ext::StartPiece const& piece)>;
 
 /// Registers (or with an empty function removes) the answer for pieces of `typeId`
-/// ("twilightforest:TFHedge"; matched without case).
+/// ("gloamingforest:TFHedge"; matched without case).
 void registerPieceBeard(std::string const& typeId, PieceBeardFn fn);
 
 /// The beardifier's answer for one piece, resolved as described above.

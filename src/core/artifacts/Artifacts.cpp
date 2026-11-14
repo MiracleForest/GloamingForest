@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/CharmEvents.java
-//   src/main/java/twilightforest/util/TFItemStackUtils.java
-//   src/main/java/twilightforest/components/entity/FortificationShieldAttachment.java
-//   src/main/java/twilightforest/components/item/PotionFlaskComponent.java
-//   src/main/java/twilightforest/components/entity/PotionFlaskTrackingAttachment.java
-//   src/main/java/twilightforest/item/BrittleFlaskItem.java
-//   src/main/java/twilightforest/components/item/OreScannerComponent.java
-//   src/main/java/twilightforest/components/item/OreScannerData.java
-//   src/main/java/twilightforest/item/recipe/ScepterRepairRecipe.java
-//   src/main/java/twilightforest/item/MoonDialItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/CharmEvents.java
+//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+//   src/main/java/gloamingforest/components/entity/FortificationShieldAttachment.java
+//   src/main/java/gloamingforest/components/item/PotionFlaskComponent.java
+//   src/main/java/gloamingforest/components/entity/PotionFlaskTrackingAttachment.java
+//   src/main/java/gloamingforest/item/BrittleFlaskItem.java
+//   src/main/java/gloamingforest/components/item/OreScannerComponent.java
+//   src/main/java/gloamingforest/components/item/OreScannerData.java
+//   src/main/java/gloamingforest/item/recipe/ScepterRepairRecipe.java
+//   src/main/java/gloamingforest/item/MoonDialItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/artifacts/Artifacts.h"

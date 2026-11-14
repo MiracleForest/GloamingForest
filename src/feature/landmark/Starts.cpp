@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/util/LandmarkStructure.java
-//   src/main/java/twilightforest/world/components/structures/util/ConquerableStructure.java
-//   src/main/java/twilightforest/world/components/structures/util/CustomStructureData.java
-//   src/main/java/twilightforest/world/components/structures/util/DecorationClearance.java
-//   src/main/java/twilightforest/world/components/structures/start/TFStructureStart.java
-//   src/main/java/twilightforest/world/components/placements/AvoidLandmarkModifier.java
-//   src/main/java/twilightforest/asmhooks/WorldgenHooks.java
-//   src/main/java/twilightforest/util/landmarks/LandmarkUtil.java
-//   src/main/java/twilightforest/util/WorldUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/util/LandmarkStructure.java
+//   src/main/java/gloamingforest/world/components/structures/util/ConquerableStructure.java
+//   src/main/java/gloamingforest/world/components/structures/util/CustomStructureData.java
+//   src/main/java/gloamingforest/world/components/structures/util/DecorationClearance.java
+//   src/main/java/gloamingforest/world/components/structures/start/TFStructureStart.java
+//   src/main/java/gloamingforest/world/components/placements/AvoidLandmarkModifier.java
+//   src/main/java/gloamingforest/asmhooks/WorldgenHooks.java
+//   src/main/java/gloamingforest/util/landmarks/LandmarkUtil.java
+//   src/main/java/gloamingforest/util/WorldUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -21,7 +21,7 @@
 // chunk places its pieces, StructureStart#placeInChunk, with Java's per-structure decoration
 // random, ChunkGenerator#applyBiomeDecoration), by forceStart /
 // generateAt (commands, saplings, selftests) and on demand by lookups (protection, clearance,
-// terraforming; /twilightforest locate only probes and stores nothing), so a site is reserved even
+// terraforming; /gloamingforest locate only probes and stores nothing), so a site is reserved even
 // before its generator exists (rule: placement is exact before W1 lands). Generation may run on
 // worker threads: the cache is locked, the server thread never waits for a worker (a piece being
 // post-processed on a worker is saved from its last snapshot, see PieceGuard), and the DB is written
@@ -228,7 +228,7 @@ BlockBox boxOf(Json const& j) {
 /// The guard of a live piece's fields, one per piece (no stripes: unrelated pieces never share it).
 /// A postProcess call holds `fields` (recursive: a postProcess that places or saves its own piece
 /// again on the same thread goes on), so two generation threads never run one piece's postProcess at
-/// once and nobody saves the piece while its fields change (TF's chest and spawner flags). A save
+/// once and nobody saves the piece while its fields change (upstream's chest and spawner flags). A save
 /// never waits for it: savePiece only try-locks, and while a postProcess runs it takes `snapshot`,
 /// the piece's own tag as it was before that postProcess began (placeInChunk takes one before the
 /// first postProcess and after every one; a save that finds none yet writes the base fields and marks
@@ -562,19 +562,19 @@ std::atomic<int> gStructureDimOverride{std::numeric_limits<int>::min()};
 
 void setStructureDimOverride(std::optional<int> dim) { gStructureDimOverride.store(dim.value_or(std::numeric_limits<int>::min())); }
 
-std::optional<int> twilightDim() {
+std::optional<int> gloamingDim() {
     if (int o = gStructureDimOverride.load(); o != std::numeric_limits<int>::min()) return o;
-    if (auto t = gf::world::twilight()) return static_cast<int>(*t);
+    if (auto t = gf::world::gloaming()) return static_cast<int>(*t);
     return std::nullopt;
 }
 
 int seaLevelOf(int dim) {
-    auto tf = twilightDim();
-    return tf && *tf == dim ? kTwilightSeaLevel : kDefaultSeaLevel;
+    auto tf = gloamingDim();
+    return tf && *tf == dim ? kGloamingSeaLevel : kDefaultSeaLevel;
 }
 
 std::string biomeAt(int dim, int x, int y, int z) {
-    auto tf = twilightDim();
+    auto tf = gloamingDim();
     if (tf && *tf == dim) {
         auto b = worldgen::biomeAt(BlockPos{x, y, z});
         if (!b.empty()) return b;
@@ -999,7 +999,7 @@ RecordPtr makeNewStart(Info const& info, int dim, int chunkX, int chunkZ) {
 }
 
 /// The stored start of `info` in start chunk (cx, cz) that the chunk's evaluation keeps (a
-/// /twilightforest place record of the key is no start: the chunk's own start replaces it).
+/// /gloamingforest place record of the key is no start: the chunk's own start replaces it).
 RecordPtr existingStart(Info const& info, int dim, int chunkX, int chunkZ) {
     auto existing = findRecord(dim, chunkX, chunkZ, info.d.key);
     return existing && !existing->placed ? existing : nullptr;
@@ -1111,8 +1111,8 @@ void forgetEvaluation(int dim, int chunkX, int chunkZ) {
 }
 
 bool ensureStartsIn(int dim, int chunkX, int chunkZ) {
-    auto tf = twilightDim();
-    if (!tf || *tf != dim) return true; // TF's structure sets only place in the Twilight Forest
+    auto tf = gloamingDim();
+    if (!tf || *tf != dim) return true; // upstream's structure sets only place in the Gloaming Forest
     auto&          r = records();
     ChunkKey const key{dim, chunkX, chunkZ};
     {
@@ -1174,7 +1174,7 @@ bool startsEvaluated(int dim, int chunkX, int chunkZ) {
 }
 
 void ensureStartsAround(int dim, int chunkX, int chunkZ) {
-    auto tf = twilightDim();
+    auto tf = gloamingDim();
     if (!tf || *tf != dim) return;
     auto& r = records();
     {
@@ -1251,8 +1251,8 @@ RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalP
         }
     }
     if (pos) {
-        // TF reads the grid center chunk only. forceStart's starts (the selftests' stand-in for a
-        // grid start, at test positions off the grid) count too; /twilightforest place's never do
+        // upstream reads the grid center chunk only. forceStart's starts (the selftests' stand-in for a
+        // grid start, at test positions off the grid) count too; /gloamingforest place's never do
         for (auto const& rec : recordsIntersecting(dim, pos->x >> 4, pos->z >> 4)) {
             auto const* inf = info(rec->start.key);
             if (rec->forced && !rec->placed && !rec->pieces.empty() && inf && inf->traits.landmarkTag && rec->start.box.contains(pos->x, pos->y, pos->z))
@@ -1271,7 +1271,7 @@ RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blo
     // #isValid: a reserved site has no pieces). There is no ready check on the center chunk itself
     for (auto const& rec : recordsIntersecting(dim, ccx, ccz))
         if (rec->start.key == key && !rec->placed && !rec->pieces.empty() && chunkLoaded(dim, rec->chunkX, rec->chunkZ)) return rec;
-    // TF reads the grid center chunk only; forceStart's starts (the selftests' stand-in for a grid
+    // upstream reads the grid center chunk only; forceStart's starts (the selftests' stand-in for a grid
     // start, off the grid) count where their box covers the column. Natural and placed ones never do
     for (auto const& rec : recordsIntersecting(dim, blockX >> 4, blockZ >> 4))
         if (rec->forced && !rec->placed && !rec->pieces.empty() && rec->start.key == key && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX
@@ -1441,7 +1441,7 @@ void setConquered(int dimension, BlockPos const& pos, std::string const& key, bo
         return true;
     });
     for (auto id : near)
-        if (auto* p = level->getPlayer(id)) gf::progression::trigger(*p, "twilightforest:structure_cleared", Json{{"structure", k}});
+        if (auto* p = level->getPlayer(id)) gf::progression::trigger(*p, "gloamingforest:structure_cleared", Json{{"structure", k}});
 }
 
 bool generateAt(std::string const& key, BlockSource& region, BlockPos const& pos) {
@@ -1488,7 +1488,7 @@ void addTerraformer(std::string const& key, std::function<double(Start const& st
 }
 
 bool decorationAllowed(ChunkPos chunk, DecoKind kind) {
-    auto tf = fl::twilightDim();
+    auto tf = fl::gloamingDim();
     if (!tf) return true;
     fl::ensureStartsAround(*tf, chunk.x, chunk.z);
     core::landmark::FeatureOccupancy occ;

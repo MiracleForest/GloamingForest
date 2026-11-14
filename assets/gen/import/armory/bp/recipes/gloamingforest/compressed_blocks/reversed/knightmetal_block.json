@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/reversed/knightmetal_block"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:knightmetal_block"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:knightmetal_block"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:knightmetal_ingot",
+      "count": 9
+    }
+  }
+}

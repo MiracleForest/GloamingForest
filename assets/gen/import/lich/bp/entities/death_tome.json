@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:death_tome",
+      "identifier": "gloamingforest:death_tome",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "death_tome", "monster", "mob"]
+        "family": ["gloamingforest", "death_tome", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.75,

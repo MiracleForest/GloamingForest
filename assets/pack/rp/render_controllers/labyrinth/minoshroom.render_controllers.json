@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.minoshroom_mushrooms": {
+    "controller.render.gloamingforest.minoshroom_mushrooms": {
       "geometry": "Geometry.mushrooms",
       "materials": [{ "*": "Material.default" }],
       "textures": ["Texture.mushroom"]

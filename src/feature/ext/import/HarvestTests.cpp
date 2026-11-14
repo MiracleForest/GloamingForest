@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of the imported harvest rules (unit F1 "import", prefix "import.", testPos dx 5100..5199):
-// TF's tool tags (#minecraft:mineable/*, #minecraft:needs_*_tool, ...) as Bedrock block tags, the
-// requires-correct-tool flag (Harvest.cpp), the digger of TF's tiered tools, and the mining speed and
+// upstream's tool tags (#minecraft:mineable/*, #minecraft:needs_*_tool, ...) as Bedrock block tags, the
+// requires-correct-tool flag (Harvest.cpp), the digger of upstream's tiered tools, and the mining speed and
 // drops they give in game, measured against vanilla blocks and tools of the same Java values (the
-// tool and tier rules are Bedrock's own for vanilla blocks: a TF block must behave as the vanilla
-// block TF's values describe).
+// tool and tier rules are Bedrock's own for vanilla blocks: an upstream block must behave as the vanilla
+// block upstream's values describe).
 //
 // F1 owns no source directory, so these tests live in src/feature/ext/import/ (new files only,
 // rule R18); A8 may fold them into a unit directory.
@@ -136,7 +136,7 @@ std::string tagsOf(Block const& block) {
 
 } // namespace
 
-// Every TF block carries the Bedrock tool and tier tags of TF's tool tags, and the blocks TF registers with
+// Every upstream block carries the Bedrock tool and tier tags of upstream's tool tags, and the blocks upstream registers with
 // requiresCorrectToolForDrops() have the engine's flag (the vanilla blocks with it, such as stone and obsidian,
 // show the flag is the game's own).
 GF_REGISTER_SELFTEST("import.harvest_tags", [](Context& ctx) {
@@ -149,9 +149,9 @@ GF_REGISTER_SELFTEST("import.harvest_tags", [](Context& ctx) {
         ctx.require(b != nullptr, std::string(id) + " is registered");
         ctx.check(b->getBlockType().mRequiresCorrectToolForDrops == want, std::string(id) + ": requires a correct tool " + (want ? "true" : "false") + " (the game's vanilla data)");
     }
-    // the tags the game gives vanilla blocks (the vanilla tools read them; the TF blocks get the same names)
+    // the tags the game gives vanilla blocks (the vanilla tools read them; the upstream blocks get the same names)
     for (auto const* id : {"minecraft:stone", "minecraft:obsidian", "minecraft:oak_planks", "minecraft:oak_leaves", "minecraft:web", "minecraft:white_wool",
-                           "minecraft:iron_ore", "minecraft:diamond_block", "minecraft:dirt", "twilightforest:twilight_oak_leaves", "twilightforest:castle_brick"})
+                           "minecraft:iron_ore", "minecraft:diamond_block", "minecraft:dirt", "gloamingforest:gloaming_oak_leaves", "gloamingforest:castle_brick"})
         if (auto const* b = blockOf(id)) ctx.info(std::string(id) + " tags " + tagsOf(*b));
     int checked = 0, needTool = 0, bad = 0;
     for (auto const& [id, e] : idx["blocks"].items()) {
@@ -172,18 +172,18 @@ GF_REGISTER_SELFTEST("import.harvest_tags", [](Context& ctx) {
         bool rt = e.value("requiresTool", false);
         if (rt) ++needTool;
         if (b->getBlockType().mRequiresCorrectToolForDrops != rt && ++bad <= 8)
-            ctx.check(false, id + ": requires a correct tool " + (rt ? "true" : "false") + " in TF, the game's flag is the opposite");
+            ctx.check(false, id + ": requires a correct tool " + (rt ? "true" : "false") + " in upstream, the game's flag is the opposite");
         ++checked;
     }
     if (bad > 8) ctx.check(false, std::to_string(bad) + " harvest mismatches in total");
     ctx.check(needTool == gf::feature::ext::harvest::requiresToolCount(), "harvest.json lists " + std::to_string(needTool) + " blocks that need a correct tool");
-    ctx.check(checked > 300, std::to_string(checked) + " TF blocks with a tool, tier or drop rule checked");
+    ctx.check(checked > 300, std::to_string(checked) + " upstream blocks with a tool, tier or drop rule checked");
     ctx.info(std::to_string(checked) + " blocks checked, " + std::to_string(needTool) + " drop only for a correct tool");
 });
 
-// Mining speed and harvest, measured with a survival player in game: a TF block mines as the vanilla block of the
+// Mining speed and harvest, measured with a survival player in game: an upstream block mines as the vanilla block of the
 // same Java tool tag, tier and drop rule (the progress per tick normalised by the game's stored hardness of each,
-// as Bedrock's own vanilla hardness can differ from Java's: obsidian 35), and TF's tools as the vanilla tools of the
+// as Bedrock's own vanilla hardness can differ from Java's: obsidian 35), and upstream's tools as the vanilla tools of the
 // same speed and tier (Java's TFToolMaterials: knightmetal / steeleaf 8 diamond, fiery 9 netherite).
 GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
     gf::feature::ext::harvest::applyNow();
@@ -193,14 +193,14 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
         char const*              vanilla;
         std::vector<char const*> tools; // "" = empty hand
     };
-    // TF's tags (TFBlocks.java, the tag JSONs) against the vanilla block with the same ones (Minecraft 1.21.1)
+    // upstream's tags (TFBlocks.java, the tag JSONs) against the vanilla block with the same ones (Minecraft 1.21.1)
     std::vector<Pair> const pairs{
-        {"twilightforest:twilight_oak_planks", "minecraft:oak_planks", {"", "minecraft:iron_axe", "minecraft:iron_pickaxe"}},                            // axe, no tool needed
-        {"twilightforest:underbrick", "minecraft:iron_ore", {"", "minecraft:wooden_pickaxe", "minecraft:stone_pickaxe", "minecraft:iron_pickaxe"}},     // pickaxe, needs stone
-        {"twilightforest:knightmetal_block", "minecraft:diamond_block", {"", "minecraft:stone_pickaxe", "minecraft:iron_pickaxe"}},                      // pickaxe, needs iron
-        {"twilightforest:castle_brick", "minecraft:obsidian", {"", "minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"}},                             // pickaxe, needs diamond
-        {"twilightforest:twilight_oak_leaves", "minecraft:oak_leaves", {"", "minecraft:iron_hoe"}},                                                    // hoe
-        {"twilightforest:uberous_soil", "minecraft:dirt", {"", "minecraft:iron_shovel"}},                                                              // shovel
+        {"gloamingforest:gloaming_oak_planks", "minecraft:oak_planks", {"", "minecraft:iron_axe", "minecraft:iron_pickaxe"}},                            // axe, no tool needed
+        {"gloamingforest:underbrick", "minecraft:iron_ore", {"", "minecraft:wooden_pickaxe", "minecraft:stone_pickaxe", "minecraft:iron_pickaxe"}},     // pickaxe, needs stone
+        {"gloamingforest:knightmetal_block", "minecraft:diamond_block", {"", "minecraft:stone_pickaxe", "minecraft:iron_pickaxe"}},                      // pickaxe, needs iron
+        {"gloamingforest:castle_brick", "minecraft:obsidian", {"", "minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"}},                             // pickaxe, needs diamond
+        {"gloamingforest:gloaming_oak_leaves", "minecraft:oak_leaves", {"", "minecraft:iron_hoe"}},                                                    // hoe
+        {"gloamingforest:uberous_soil", "minecraft:dirt", {"", "minecraft:iron_shovel"}},                                                              // shovel
     };
     for (auto const& p : pairs) {
         auto const* tf = blockOf(p.tf);
@@ -215,20 +215,20 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
             ctx.info(std::string(p.tf) + " with " + with + ": progress x hardness " + num(a) + ", " + p.vanilla + " " + num(b));
             ctx.check(near(a, b), std::string(p.tf) + " mines with " + with + " as " + p.vanilla + " (progress x hardness " + num(a) + ", vanilla " + num(b) + ")");
         }
-    }    // TF's tools against vanilla tools of the same speed and tier
+    }    // upstream's tools against vanilla tools of the same speed and tier
     struct Same {
         char const*              tf;
         char const*              vanilla;
         std::vector<char const*> blocks;
     };
     std::vector<Same> const same{
-        {"twilightforest:knightmetal_pickaxe", "minecraft:diamond_pickaxe", {"minecraft:stone", "minecraft:obsidian", "twilightforest:castle_brick"}},
-        {"twilightforest:steeleaf_pickaxe", "minecraft:diamond_pickaxe", {"minecraft:stone", "twilightforest:mazestone"}},
-        {"twilightforest:fiery_pickaxe", "minecraft:netherite_pickaxe", {"minecraft:obsidian", "twilightforest:deadrock"}},
-        {"twilightforest:steeleaf_axe", "minecraft:diamond_axe", {"minecraft:oak_planks", "twilightforest:twilight_oak_planks"}},
-        {"twilightforest:steeleaf_shovel", "minecraft:diamond_shovel", {"minecraft:dirt", "twilightforest:uberous_soil"}},
-        {"twilightforest:steeleaf_hoe", "minecraft:diamond_hoe", {"minecraft:oak_leaves", "twilightforest:twilight_oak_leaves"}},
-        {"twilightforest:ironwood_sword", "minecraft:iron_sword", {"minecraft:web"}},
+        {"gloamingforest:knightmetal_pickaxe", "minecraft:diamond_pickaxe", {"minecraft:stone", "minecraft:obsidian", "gloamingforest:castle_brick"}},
+        {"gloamingforest:steeleaf_pickaxe", "minecraft:diamond_pickaxe", {"minecraft:stone", "gloamingforest:mazestone"}},
+        {"gloamingforest:fiery_pickaxe", "minecraft:netherite_pickaxe", {"minecraft:obsidian", "gloamingforest:deadrock"}},
+        {"gloamingforest:steeleaf_axe", "minecraft:diamond_axe", {"minecraft:oak_planks", "gloamingforest:gloaming_oak_planks"}},
+        {"gloamingforest:steeleaf_shovel", "minecraft:diamond_shovel", {"minecraft:dirt", "gloamingforest:uberous_soil"}},
+        {"gloamingforest:steeleaf_hoe", "minecraft:diamond_hoe", {"minecraft:oak_leaves", "gloamingforest:gloaming_oak_leaves"}},
+        {"gloamingforest:ironwood_sword", "minecraft:iron_sword", {"minecraft:web"}},
     };
     for (auto const& s : same)
         for (auto const* id : s.blocks) {
@@ -242,22 +242,22 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
                      + s.vanilla + " " + num(v) + " (speed " + num(Miner::speed(s.vanilla, *b)) + ", harvests " + (Miner::harvests(s.vanilla, *b) ? "yes" : "no") + ")");
             ctx.check(near(a, v), std::string(s.tf) + " mines " + id + " as " + s.vanilla + " (progress " + num(a) + ", vanilla " + num(v) + ")");
         }
-    // the vanilla shears on TF's leaves: Java's ShearsItem overrides the speed to 15 on #minecraft:leaves (TF's leaves are
+    // the vanilla shears on upstream's leaves: Java's ShearsItem overrides the speed to 15 on #minecraft:leaves (upstream's leaves are
     // members). Bedrock's shears read minecraft:is_shears_item_destructible on a JSON block at 5, so the leaves' own
     // destructible_by_mining item_specific_speeds (U3, tools/import/overrides/trees.json) give the shears Java's 15
-    if (auto const* leaves = blockOf("twilightforest:twilight_oak_leaves")) {
+    if (auto const* leaves = blockOf("gloamingforest:gloaming_oak_leaves")) {
         double hand = m.progress("", *leaves), shears = m.progress("minecraft:shears", *leaves);
-        ctx.check(near(shears / hand, 15.0, 0.02), "vanilla shears on twilight_oak_leaves: " + num(shears / hand) + " x an empty hand (Java: 15 on #minecraft:leaves)");
+        ctx.check(near(shears / hand, 15.0, 0.02), "vanilla shears on gloaming_oak_leaves: " + num(shears / hand) + " x an empty hand (Java: 15 on #minecraft:leaves)");
     }
     // a sword's #minecraft:sword_efficient speed (Java 1.5; Bedrock's digger speed is an integer, the import writes 2) on
-    // TF's and vanilla leaves
-    for (auto const* id : {"minecraft:oak_leaves", "twilightforest:twilight_oak_leaves"})
+    // upstream's and vanilla leaves
+    for (auto const* id : {"minecraft:oak_leaves", "gloamingforest:gloaming_oak_leaves"})
         if (auto const* b = blockOf(id))
-            ctx.check(near(Miner::speed("twilightforest:ironwood_sword", *b), 2.0), std::string("ironwood sword on ") + id + ": speed " + num(Miner::speed("twilightforest:ironwood_sword", *b)) + " (Java 1.5, written 2)");
+            ctx.check(near(Miner::speed("gloamingforest:ironwood_sword", *b), 2.0), std::string("ironwood sword on ") + id + ": speed " + num(Miner::speed("gloamingforest:ironwood_sword", *b)) + " (Java 1.5, written 2)");
     // a tool without a vanilla twin: ironwood (Java 6.5; Bedrock's digger speed is an integer, the import writes 7)
     // against iron (6) where both harvest
     if (auto const* stone = blockOf("minecraft:stone")) {
-        double a = m.progress("twilightforest:ironwood_pickaxe", *stone), v = m.progress("minecraft:iron_pickaxe", *stone);
+        double a = m.progress("gloamingforest:ironwood_pickaxe", *stone), v = m.progress("minecraft:iron_pickaxe", *stone);
         ctx.check(near(a / v, 7.0 / 6.0), "ironwood pickaxe on stone: progress " + num(a) + " = 7 / 6 of the iron pickaxe's " + num(v));
     }
     // which tool harvests which block (Java's isCorrectToolForDrops: the mineable tag and the tier's incorrect blocks)
@@ -267,22 +267,22 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
         bool        harvests;
     };
     std::vector<HarvestCase> const harvest{
-        {"twilightforest:ironwood_pickaxe", "minecraft:iron_ore", true},           // iron tier
-        {"twilightforest:ironwood_pickaxe", "minecraft:obsidian", false},
-        {"twilightforest:ironwood_pickaxe", "twilightforest:knightmetal_block", true},
-        {"twilightforest:ironwood_pickaxe", "twilightforest:castle_brick", false},
-        {"twilightforest:giant_pickaxe", "twilightforest:underbrick", true},       // stone tier
-        {"twilightforest:giant_pickaxe", "twilightforest:knightmetal_block", false},
-        {"twilightforest:giant_pickaxe", "minecraft:diamond_block", false},
-        {"twilightforest:knightmetal_pickaxe", "minecraft:obsidian", true},        // diamond tier
-        {"twilightforest:knightmetal_pickaxe", "twilightforest:castle_brick", true},
-        {"twilightforest:fiery_pickaxe", "twilightforest:deadrock", true},          // netherite tier
-        {"minecraft:wooden_pickaxe", "twilightforest:underbrick", false},          // vanilla tools on TF blocks
-        {"minecraft:stone_pickaxe", "twilightforest:underbrick", true},
-        {"minecraft:stone_pickaxe", "twilightforest:knightmetal_block", false},
-        {"minecraft:iron_pickaxe", "twilightforest:knightmetal_block", true},
-        {"minecraft:iron_pickaxe", "twilightforest:castle_brick", false},
-        {"minecraft:diamond_pickaxe", "twilightforest:castle_brick", true},
+        {"gloamingforest:ironwood_pickaxe", "minecraft:iron_ore", true},           // iron tier
+        {"gloamingforest:ironwood_pickaxe", "minecraft:obsidian", false},
+        {"gloamingforest:ironwood_pickaxe", "gloamingforest:knightmetal_block", true},
+        {"gloamingforest:ironwood_pickaxe", "gloamingforest:castle_brick", false},
+        {"gloamingforest:giant_pickaxe", "gloamingforest:underbrick", true},       // stone tier
+        {"gloamingforest:giant_pickaxe", "gloamingforest:knightmetal_block", false},
+        {"gloamingforest:giant_pickaxe", "minecraft:diamond_block", false},
+        {"gloamingforest:knightmetal_pickaxe", "minecraft:obsidian", true},        // diamond tier
+        {"gloamingforest:knightmetal_pickaxe", "gloamingforest:castle_brick", true},
+        {"gloamingforest:fiery_pickaxe", "gloamingforest:deadrock", true},          // netherite tier
+        {"minecraft:wooden_pickaxe", "gloamingforest:underbrick", false},          // vanilla tools on upstream blocks
+        {"minecraft:stone_pickaxe", "gloamingforest:underbrick", true},
+        {"minecraft:stone_pickaxe", "gloamingforest:knightmetal_block", false},
+        {"minecraft:iron_pickaxe", "gloamingforest:knightmetal_block", true},
+        {"minecraft:iron_pickaxe", "gloamingforest:castle_brick", false},
+        {"minecraft:diamond_pickaxe", "gloamingforest:castle_brick", true},
         {"minecraft:iron_pickaxe", "minecraft:obsidian", false},                   // the game's own rule, for reference
         {"minecraft:diamond_pickaxe", "minecraft:obsidian", true},
     };
@@ -293,13 +293,13 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
             continue;
         }
         bool got = Miner::harvests(h.tool, *b);
-        ctx.check(got == h.harvests, std::string(h.tool) + (h.harvests ? " harvests " : " does not harvest ") + h.block + " in TF (game: " + (got ? "harvests" : "does not") + ")");
+        ctx.check(got == h.harvests, std::string(h.tool) + (h.harvests ? " harvests " : " does not harvest ") + h.block + " in upstream (game: " + (got ? "harvests" : "does not") + ")");
     }
     m.hold("");
 });
 
 // Drops, measured by breaking the blocks as a survival player: a block that requires a correct tool drops only for
-// one (TF's underbrick and knightmetal block, as vanilla iron ore and diamond block), any other block for any tool (TF's planks).
+// one (upstream's underbrick and knightmetal block, as vanilla iron ore and diamond block), any other block for any tool (upstream's planks).
 GF_REGISTER_SELFTEST("import.harvest_drops", [](Context& ctx) -> ll::coro::CoroTask<> {
     gf::feature::ext::harvest::applyNow();
     struct Case {
@@ -307,19 +307,19 @@ GF_REGISTER_SELFTEST("import.harvest_drops", [](Context& ctx) -> ll::coro::CoroT
         char const* tool;
         bool        drops;
     };
-    // blocks soft enough to break by mining in a few seconds (castle brick and obsidian would take minutes): each TF case
+    // blocks soft enough to break by mining in a few seconds (castle brick and obsidian would take minutes): each upstream case
     // has a vanilla control of the same rule (iron ore needs a stone pickaxe, diamond block an iron one)
     std::vector<Case> const cases{
         {"minecraft:iron_ore", "minecraft:wooden_pickaxe", false}, // the game's own rule: the harness works
         {"minecraft:iron_ore", "minecraft:stone_pickaxe", true},
-        {"twilightforest:underbrick", "minecraft:wooden_pickaxe", false}, // needs a stone pickaxe
-        {"twilightforest:underbrick", "minecraft:stone_pickaxe", true},
-        {"twilightforest:underbrick", "twilightforest:giant_pickaxe", true}, // stone tier
+        {"gloamingforest:underbrick", "minecraft:wooden_pickaxe", false}, // needs a stone pickaxe
+        {"gloamingforest:underbrick", "minecraft:stone_pickaxe", true},
+        {"gloamingforest:underbrick", "gloamingforest:giant_pickaxe", true}, // stone tier
         {"minecraft:diamond_block", "minecraft:stone_pickaxe", false},
-        {"twilightforest:knightmetal_block", "minecraft:stone_pickaxe", false}, // needs an iron pickaxe
-        {"twilightforest:knightmetal_block", "minecraft:iron_pickaxe", true},
-        {"twilightforest:knightmetal_block", "twilightforest:ironwood_pickaxe", true}, // iron tier
-        {"twilightforest:twilight_oak_planks", "", true},                        // no correct tool needed
+        {"gloamingforest:knightmetal_block", "minecraft:stone_pickaxe", false}, // needs an iron pickaxe
+        {"gloamingforest:knightmetal_block", "minecraft:iron_pickaxe", true},
+        {"gloamingforest:knightmetal_block", "gloamingforest:ironwood_pickaxe", true}, // iron tier
+        {"gloamingforest:gloaming_oak_planks", "", true},                        // no correct tool needed
     };    for (size_t i = 0; i < cases.size(); ++i) {
         auto const& c   = cases[i];
         auto        pos = ctx.testPos(5190 + static_cast<int>(i % 6), 1 + 2 * static_cast<int>(i / 6));

@@ -1,4 +1,4 @@
-// U7 extension (ext/armory/ArmorHooks.h): armour toughness of TF's armour.
+// U7 extension (ext/armory/ArmorHooks.h): armour toughness of upstream's armour.
 #include "feature/ext/armory/ArmorHooks.h"
 
 #include <cmath>

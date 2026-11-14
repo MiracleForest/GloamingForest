@@ -1,0 +1,26 @@
+{
+  "type": "gloamingforest:travellers_gear_modifier_shaped_recipe",
+  "is_rotated": false,
+  "modifier_key": "gloamingforest:side_step",
+  "pattern": {
+    "key": {
+      "B": {
+        "tag": "c:bones"
+      },
+      "P": {
+        "item": "minecraft:piston"
+      },
+      "S": {
+        "tag": "c:strings"
+      },
+      "W": {
+        "item": "gloamingforest:travellers_wings"
+      }
+    },
+    "pattern": [
+      "SBS",
+      "PWP",
+      "SBS"
+    ]
+  }
+}

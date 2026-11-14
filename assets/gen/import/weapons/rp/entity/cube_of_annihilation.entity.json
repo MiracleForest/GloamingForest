@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:cube_of_annihilation",
+      "identifier": "gloamingforest:cube_of_annihilation",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/cubeofannihilation"
+        "default": "textures/gloamingforest/entity/cubeofannihilation"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.cube_of_annihilation"

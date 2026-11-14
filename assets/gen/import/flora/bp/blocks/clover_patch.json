@@ -2,15 +2,15 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:clover_patch",
+      "identifier": "gloamingforest:clover_patch",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {
@@ -26,7 +26,7 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.twilightforest.block.clover_patch",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.clover_patch",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_cloverpatch",

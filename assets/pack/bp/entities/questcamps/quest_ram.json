@@ -2,16 +2,16 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:quest_ram",
+      "identifier": "gloamingforest:quest_ram",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:color_flags": { "type": "int", "range": [0, 65535], "default": 0, "client_sync": true }
+        "gloamingforest:color_flags": { "type": "int", "range": [0, 65535], "default": 0, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "quest_ram", "animal", "creature", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "quest_ram", "animal", "creature", "mob"] },
       "minecraft:collision_box": { "width": 1.25, "height": 2.9 },
       "minecraft:health": { "value": 70, "max": 70 },
       "minecraft:movement": { "value": 0.23 },

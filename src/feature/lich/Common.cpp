@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U21 (lich): helpers of the Lich unit (see Common.h).
 
 #include "feature/lich/Common.h"

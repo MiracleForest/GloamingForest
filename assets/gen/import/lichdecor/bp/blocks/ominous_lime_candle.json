@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:ominous_lime_candle",
+      "identifier": "gloamingforest:ominous_lime_candle",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:candles": [0, 1, 2, 3, 4]
+        "gloamingforest:candles": [0, 1, 2, 3, 4]
       }
     },
     "components": {
@@ -29,25 +29,25 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:candles') == 1",
+        "condition": "q.block_state('gloamingforest:candles') == 1",
         "components": {
           "minecraft:light_emission": 2
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 2",
+        "condition": "q.block_state('gloamingforest:candles') == 2",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 3",
+        "condition": "q.block_state('gloamingforest:candles') == 3",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:light_emission": 8
         }

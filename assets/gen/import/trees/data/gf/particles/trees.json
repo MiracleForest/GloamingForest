@@ -1,5 +1,5 @@
 {
-  "twilightforest:leaf_rune": {
+  "gloamingforest:leaf_rune": {
     "textures": [
       "minecraft:particle/sga_a",
       "minecraft:particle/sga_b",
@@ -29,13 +29,13 @@
       "minecraft:particle/sga_z"
     ]
   },
-  "twilightforest:log_core_particle": {
-    "textures": ["textures/twilightforest/particle/log_core"]
+  "gloamingforest:log_core_particle": {
+    "textures": ["textures/gloamingforest/particle/log_core"]
   },
-  "twilightforest:sorting_particle": {
-    "textures": ["textures/twilightforest/particle/log_core"]
+  "gloamingforest:sorting_particle": {
+    "textures": ["textures/gloamingforest/particle/log_core"]
   },
-  "twilightforest:transformation_particle": {
-    "textures": ["textures/twilightforest/particle/log_core"]
+  "gloamingforest:transformation_particle": {
+    "textures": ["textures/gloamingforest/particle/log_core"]
   }
 }

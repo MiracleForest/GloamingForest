@@ -1,74 +1,74 @@
 {
   "tf_block_fiddlehead": {
-    "textures": "textures/twilightforest/block/fiddlehead"
+    "textures": "textures/gloamingforest/block/fiddlehead"
   },
   "tf_block_huge_lily_pad": {
-    "textures": "textures/twilightforest/block/huge_lily_pad"
+    "textures": "textures/gloamingforest/block/huge_lily_pad"
   },
   "tf_block_huge_water_lily": {
-    "textures": "textures/twilightforest/block/huge_water_lily"
+    "textures": "textures/gloamingforest/block/huge_water_lily"
   },
   "tf_block_mayapple": {
-    "textures": "textures/twilightforest/block/mayapple"
+    "textures": "textures/gloamingforest/block/mayapple"
   },
   "tf_block_mushgloom": {
-    "textures": "textures/twilightforest/block/mushgloom"
+    "textures": "textures/gloamingforest/block/mushgloom"
   },
   "tf_block_patch_clover": {
-    "textures": "textures/twilightforest/block/patch/clover"
+    "textures": "textures/gloamingforest/block/patch/clover"
   },
   "tf_block_patch_moss": {
-    "textures": "textures/twilightforest/block/patch/moss"
+    "textures": "textures/gloamingforest/block/patch/moss"
   },
   "tf_block_root_strand": {
-    "textures": "textures/twilightforest/block/root_strand"
+    "textures": "textures/gloamingforest/block/root_strand"
   },
   "tf_block_torchberry_plant": {
-    "textures": "textures/twilightforest/block/torchberry_plant"
+    "textures": "textures/gloamingforest/block/torchberry_plant"
   },
   "tf_item_blackberry": {
-    "textures": "textures/twilightforest/item/blackberry"
+    "textures": "textures/gloamingforest/item/blackberry"
   },
   "tf_item_blightberry": {
-    "textures": "textures/twilightforest/item/blightberry"
+    "textures": "textures/gloamingforest/item/blightberry"
   },
   "tf_item_blueberry": {
-    "textures": "textures/twilightforest/item/blueberry"
+    "textures": "textures/gloamingforest/item/blueberry"
   },
   "tf_item_copper_berry": {
-    "textures": "textures/twilightforest/item/copper_berry"
+    "textures": "textures/gloamingforest/item/copper_berry"
   },
   "tf_item_copper_nugget": {
-    "textures": "textures/twilightforest/item/copper_nugget"
+    "textures": "textures/gloamingforest/item/copper_nugget"
   },
   "tf_item_duskberry": {
-    "textures": "textures/twilightforest/item/duskberry"
+    "textures": "textures/gloamingforest/item/duskberry"
   },
   "tf_item_essence_berry": {
-    "textures": "textures/twilightforest/item/essence_berry"
+    "textures": "textures/gloamingforest/item/essence_berry"
   },
   "tf_item_gold_berry": {
-    "textures": "textures/twilightforest/item/gold_berry"
+    "textures": "textures/gloamingforest/item/gold_berry"
   },
   "tf_item_iron_berry": {
-    "textures": "textures/twilightforest/item/iron_berry"
+    "textures": "textures/gloamingforest/item/iron_berry"
   },
   "tf_item_liveroot": {
-    "textures": "textures/twilightforest/item/liveroot"
+    "textures": "textures/gloamingforest/item/liveroot"
   },
   "tf_item_maloberry": {
-    "textures": "textures/twilightforest/item/maloberry"
+    "textures": "textures/gloamingforest/item/maloberry"
   },
   "tf_item_raspberry": {
-    "textures": "textures/twilightforest/item/raspberry"
+    "textures": "textures/gloamingforest/item/raspberry"
   },
   "tf_item_skyberry": {
-    "textures": "textures/twilightforest/item/skyberry"
+    "textures": "textures/gloamingforest/item/skyberry"
   },
   "tf_item_stingberry": {
-    "textures": "textures/twilightforest/item/stingberry"
+    "textures": "textures/gloamingforest/item/stingberry"
   },
   "tf_item_torchberries": {
-    "textures": "textures/twilightforest/item/torchberries"
+    "textures": "textures/gloamingforest/item/torchberries"
   }
 }

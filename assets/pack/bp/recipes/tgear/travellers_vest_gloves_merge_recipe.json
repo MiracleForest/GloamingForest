@@ -2,26 +2,26 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:travellers_vest_gloves_merge_recipe"
+      "identifier": "gloamingforest:travellers_vest_gloves_merge_recipe"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:travellers_vest"
+        "item": "gloamingforest:travellers_vest"
       },
       {
-        "item": "twilightforest:travellers_gloves"
+        "item": "gloamingforest:travellers_gloves"
       }
     ],
     "unlock": [
       {
-        "item": "twilightforest:travellers_gloves"
+        "item": "gloamingforest:travellers_gloves"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_vest"
+      "item": "gloamingforest:travellers_vest"
     }
   }
 }

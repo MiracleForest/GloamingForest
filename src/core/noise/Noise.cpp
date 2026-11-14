@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java-parity noise and density functions: bit-exact equivalents of Minecraft 1.21.1's
 // ImprovedNoise, SimplexNoise, PerlinNoise, NormalNoise, the vanilla DensityFunctions, CubicSpline
-// and NoiseChunk's interpolation, which The Twilight Forest 4.8 builds its terrain on. Written
+// and NoiseChunk's interpolation, which the upstream 4.8 builds its terrain on. Written
 // from the published algorithms; checked against Java values in tests/worldgen.
 #include "core/noise/Noise.h"
 

@@ -4,7 +4,7 @@
 //   - native: a block with the `minecraft:block_entity` component gets a data-driven block actor
 //     (format_version 1.26.50, spikes S3 and S7); for a registered container block, this module
 //     gives that actor a game Container (one ContainerBlockActorComponent::tryCreateFor hook), saved
-//     with the block actor (its own NBT, "GfItems"). TF's chests use it (tools/families writes them
+//     with the block actor (its own NBT, "GfItems"). upstream's chests use it (tools/families writes them
 //     with minecraft:block_entity); stacks stored in block data before the block had its block actor
 //     are read where a move would put them until the first write through the contract moves them
 //     (feature/ext/combat/InventoryMigrate.h);
@@ -31,7 +31,7 @@
 // then the hotbar (0..8).
 //
 // Chest-like containers can be declared as data, <mod>/data/gf/containers/<u>.json:
-//     [{"block": "twilightforest:twilight_oak_chest", "rows": 3, "title": "container.chest", "skin": "",
+//     [{"block": "gloamingforest:gloaming_oak_chest", "rows": 3, "title": "container.chest", "skin": "",
 //       "chest": true, "pairs": true, "double_title": "container.chestDouble",
 //       "sounds": {"open": "minecraft:block.chest.open", "close": "minecraft:block.chest.close"},
 //       "stat": "minecraft:open_chest", "comparator": true}]
@@ -565,7 +565,7 @@ struct Half {
     int       facing = 2; ///< FacingID: 2 north, 3 south, 4 west, 5 east
 };
 
-/// The chest type / facing states of a block (TF's ChestBlock TYPE and FACING, as the families kit
+/// The chest type / facing states of a block (upstream's ChestBlock TYPE and FACING, as the families kit
 /// or the import name them).
 Half halfOf(Block const& block) {
     Half h;

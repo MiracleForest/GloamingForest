@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:thrown_wep",
+      "identifier": "gloamingforest:thrown_wep",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "thrown_wep"]
+        "family": ["gloamingforest", "thrown_wep"]
       },
       "minecraft:collision_box": {
         "width": 0.5,

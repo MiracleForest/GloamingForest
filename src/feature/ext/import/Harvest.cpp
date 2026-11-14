@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Runtime part of the imported block behaviour (unit F1 "import"): Java's
 // BlockBehaviour.Properties.requiresCorrectToolForDrops(). A Bedrock JSON block cannot declare it
 // (vanilla blocks carry it in their vanilla block data), so the import lists those blocks in
 // data/gf/import/harvest.json and this module sets the engine's flag on their block types, as
 // vanilla stone and obsidian have it: the block then drops only for a tool that can harvest it
-// (the tool and tier tags the import gives the block, the digger of TF's tools) and mines at
+// (the tool and tier tags the import gives the block, the digger of upstream's tools) and mines at
 // Bedrock's slower no-harvest speed otherwise. Applied when a world is ready (BDS, local worlds:
 // the integrated server and the client share the block registry) and, on the client, when a
 // GloamingForest server accepts the companion handshake (its blocks are registered by then).
@@ -83,7 +83,7 @@ struct HarvestModule {
     void install() {
         auto now = [] {
             int n = apply();
-            gf::log().info("harvest: {} TF block types drop only for a correct tool", n);
+            gf::log().info("harvest: {} upstream block types drop only for a correct tool", n);
         };
         // BDS enables mods after the world exists (the world-ready listeners have already run): apply now; every
         // later world (the client's local worlds) through the listener

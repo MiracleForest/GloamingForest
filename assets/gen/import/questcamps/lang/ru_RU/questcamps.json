@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.quest_ram": "Квестовый баран",
-  "item.twilightforest.quest_ram_spawn_egg": "Яйцо призыва квестового барана",
-  "subtitles.twilightforest.entity.quest_ram.ambient": "Квестовый Баран блеет",
-  "subtitles.twilightforest.entity.quest_ram.death": "Квестовый Баран погибает",
-  "subtitles.twilightforest.entity.quest_ram.hurt": "Квестовый Баран ранен"
+  "entity.gloamingforest.quest_ram": "Квестовый баран",
+  "item.gloamingforest.quest_ram_spawn_egg": "Яйцо призыва квестового барана",
+  "subtitles.gloamingforest.entity.quest_ram.ambient": "Квестовый Баран блеет",
+  "subtitles.gloamingforest.entity.quest_ram.death": "Квестовый Баран погибает",
+  "subtitles.gloamingforest.entity.quest_ram.hurt": "Квестовый Баран ранен"
 }

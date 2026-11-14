@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of the Naga courtyard's maze and layout (U20, src/core/naga/Courtyard.h), translated from
-// StructureMazeGenerator (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// StructureMazeGenerator (upstream commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include <map>
@@ -36,8 +36,8 @@ TEST(NagaCourtyard, Constants) {
     EXPECT_EQ(box, (BlockBox{78, 63, 178, 122, 73, 222}));
     auto sc = sizeConstraints(100, 64, 200);
     EXPECT_EQ(sc, (BlockBox{56, 63, 156, 144, 73, 244}));
-    EXPECT_STREQ(pieceTypeId(PieceKind::HedgeCap), "twilightforest:TFNCCp");
-    EXPECT_STREQ(pieceTypeId(PieceKind::WallCornerInner), "twilightforest:TFNCWA");
+    EXPECT_STREQ(pieceTypeId(PieceKind::HedgeCap), "gloamingforest:TFNCCp");
+    EXPECT_STREQ(pieceTypeId(PieceKind::WallCornerInner), "gloamingforest:TFNCWA");
 }
 
 TEST(NagaCourtyard, MazeInvariants) {

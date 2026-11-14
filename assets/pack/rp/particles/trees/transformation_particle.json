@@ -2,10 +2,10 @@
   "format_version": "1.10.0",
   "particle_effect": {
     "description": {
-      "identifier": "twilightforest:transformation_particle",
+      "identifier": "gloamingforest:transformation_particle",
       "basic_render_parameters": {
         "material": "particles_blend",
-        "texture": "textures/twilightforest/particle/log_core"
+        "texture": "textures/gloamingforest/particle/log_core"
       }
     },
     "components": {

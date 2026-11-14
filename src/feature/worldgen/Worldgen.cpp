@@ -1,4 +1,4 @@
-// Contract "worldgen" (F5): the provider slots of the Twilight Forest generator (biome source,
+// Contract "worldgen" (F5): the provider slots of the Gloaming Forest generator (biome source,
 // terrain, surface, carvers, blankets, stage steps), the world seed and the biome lookups.
 #include "feature/worldgen/Worldgen.h"
 
@@ -82,15 +82,15 @@ std::string zoomedBiome(std::int64_t seed, BlockPos const& pos, NoiseBiomeFn con
 }
 
 namespace {
-std::atomic<int> gTwilightMinY{-32}, gTwilightMaxY{256}; // TF's dimension type: min_y -32, height 288
+std::atomic<int> gGloamingMinY{-32}, gGloamingMaxY{256}; // upstream's dimension type: min_y -32, height 288
 } // namespace
 
-void setTwilightHeight(int minY, int maxY) {
-    gTwilightMinY.store(minY);
-    gTwilightMaxY.store(maxY);
+void setGloamingHeight(int minY, int maxY) {
+    gGloamingMinY.store(minY);
+    gGloamingMaxY.store(maxY);
 }
-int twilightMinY() { return gTwilightMinY.load(); }
-int twilightMaxY() { return gTwilightMaxY.load(); }
+int gloamingMinY() { return gGloamingMinY.load(); }
+int gloamingMaxY() { return gGloamingMaxY.load(); }
 
 std::unique_ptr<RandomSource> worldGenRegionRandom(std::int64_t seed, int cx, int cz) {
     core::jrand::Xoroshiro128pp base(seed);
@@ -192,14 +192,14 @@ std::string biomeAt(BlockPos const& pos) {
     // quart y clamped to the dimension's range as ChunkAccess#getNoiseBiome does
     auto p = detail::providers();
     if (!p->biomeSource) return {};
-    int lo = core::mth::fromBlock(detail::twilightMinY()), hi = core::mth::fromBlock(detail::twilightMaxY() - 1);
+    int lo = core::mth::fromBlock(detail::gloamingMinY()), hi = core::mth::fromBlock(detail::gloamingMaxY() - 1);
     return detail::zoomedBiome(detail::currentSeed(), pos, [&](int qx, int qy, int qz) { return p->biomeSource(qx, std::clamp(qy, lo, hi), qz); });
 }
 
 std::string ext::noiseBiomeAt(int quartX, int quartY, int quartZ) {
     auto p = detail::providers();
     if (!p->biomeSource) return {};
-    int lo = core::mth::fromBlock(detail::twilightMinY()), hi = core::mth::fromBlock(detail::twilightMaxY() - 1);
+    int lo = core::mth::fromBlock(detail::gloamingMinY()), hi = core::mth::fromBlock(detail::gloamingMaxY() - 1);
     return p->biomeSource(quartX, std::clamp(quartY, lo, hi), quartZ);
 }
 

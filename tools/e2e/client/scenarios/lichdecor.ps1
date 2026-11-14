@@ -20,7 +20,7 @@
 #                                              candles, candelabra, brazier, skull chest, fence
 #   out/lichdecor/lichdecor-tower-*.png        a generated lich tower with U22's rooms (wings, roofs,
 #                                              beards, interiors)
-# Compare them with TF's textures, models and renderers (CandelabraRenderer, SkullCandleRenderer,
+# Compare them with upstream's textures, models and renderers (CandelabraRenderer, SkullCandleRenderer,
 # OminousCandleRenderer, BrazierRenderer, SkullChestRenderer, SinisterSpawnerRenderer,
 # MagicPaintingRenderer). Local mode also runs the lichdecor selftests on the integrated server;
 # remote modes build through the host console.
@@ -43,7 +43,7 @@ Invoke-Build 'time set 18000' # night: the lights show
 
 $y = -60 # the flat world's first air layer
 $z = 46
-$tf = 'twilightforest'
+$tf = 'gloamingforest'
 
 Invoke-Chat '/clear @s'
 foreach ($it in 'wrought_iron_bar', 'magic_painting', 'zombie_skull_candle', 'skeleton_skull_candle', 'wither_skeleton_skull_candle', 'creeper_skull_candle', 'player_skull_candle', 'piglin_skull_candle', 'candelabra') {
@@ -185,7 +185,7 @@ for ($i = 0; $i -lt $variants.Count; $i++) {
 }
 
 # a generated lich tower with U22's rooms
-Invoke-Chat '/tf place twilightforest:lich_tower 800 -60 900'
+Invoke-Chat '/gloamingforest place gloamingforest:lich_tower 800 -60 900'
 Start-Sleep -Seconds 20
 Invoke-Teleport '/tp @s 800 -20 860 0 20'
 Start-Sleep -Seconds 8

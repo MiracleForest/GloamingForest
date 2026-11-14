@@ -1,0 +1,49 @@
+{
+  "parent": "gloamingforest:progress_lich",
+  "criteria": {
+    "kill_lich": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type_specific": {
+                "type": "minecraft:player",
+                "advancements": {
+                  "gloamingforest:progress_lich": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:tick"
+    },
+    "trophy_pedestal": {
+      "trigger": "gloamingforest:placed_on_trophy_pedestal"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.progress_trophy_pedestal.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:trophy_pedestal"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.progress_trophy_pedestal"
+    }
+  },
+  "requirements": [
+    [
+      "trophy_pedestal"
+    ],
+    [
+      "kill_lich"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

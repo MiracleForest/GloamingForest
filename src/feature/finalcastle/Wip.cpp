@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponent.java (setInvisibleTextEntity)
-//   src/main/java/twilightforest/events/EntityEvents.java (removeCastleTextIfAttacked)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java (setInvisibleTextEntity)
+//   src/main/java/gloamingforest/events/EntityEvents.java (removeCastleTextIfAttacked)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The gazebo's "Final Castle WIP." texts (docs/spec/finalcastle.md, 1.2 "Gazebo WIP texts"). The
 // original gazebo template holds the marker "final_castle_wip" at its centre block (gazebo-local
-// (10, 0, 10), where TF anchors its displays); its handler does what willBeAddingFinalBossSoon does:
-// four text carriers (TF: minecraft:text_display, VERTICAL billboard) at the block centre, 2.3 / 1.3
-// / 1.0 / 0.7 above the block, and one punch carrier (TF: minecraft:interaction tagged
+// (10, 0, 10), where upstream anchors its displays); its handler does what willBeAddingFinalBossSoon does:
+// four text carriers (upstream: minecraft:text_display, VERTICAL billboard) at the block centre, 2.3 / 1.3
+// / 1.0 / 0.7 above the block, and one punch carrier (upstream: minecraft:interaction tagged
 // final_castle_wip) over their box grown by 1 (2.0 wide, 3.6 high, from by - 0.3). Attacking the
 // punch carrier removes the text carriers inside its box, then itself (removeCastleTextIfAttacked);
 // nothing else removes them.
@@ -24,7 +24,7 @@
 // punch carrier's 2.0 x 3.6 collision box is the hit box.
 //
 // Threads: template placement runs the handler on a world generation thread (the generator's
-// window, no BlockSource) or on the server thread (/tf structure_util place, selftests). The handler
+// window, no BlockSource) or on the server thread (/gloamingforest structure_util place, selftests). The handler
 // only queues the block; the server thread spawns the carriers every few ticks once the chunk is
 // loaded. The queue is persisted (gf:finalcastle:wip_pending) so a save between generation and the
 // chunk's load keeps it.

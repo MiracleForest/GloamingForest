@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/entity/GrowingBeanstalkBlockEntity.java
-//   src/main/java/twilightforest/block/GiantBlock.java (getVolume)
-//   src/main/java/twilightforest/client/model/block/giantblock/GiantBlockModel.java
-//   src/main/java/twilightforest/block/CloudBlock.java (randomTick scan)
-//   src/main/java/twilightforest/asmhooks/BlockHooks.java (isRainingAt)
-//   src/main/java/twilightforest/client/event/CloudEvents.java (precipitation stop height)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/entity/GrowingBeanstalkBlockEntity.java
+//   src/main/java/gloamingforest/block/GiantBlock.java (getVolume)
+//   src/main/java/gloamingforest/client/model/block/giantblock/GiantBlockModel.java
+//   src/main/java/gloamingforest/block/CloudBlock.java (randomTick scan)
+//   src/main/java/gloamingforest/asmhooks/BlockHooks.java (isRainingAt)
+//   src/main/java/gloamingforest/client/event/CloudEvents.java (precipitation stop height)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -34,11 +34,11 @@ namespace gf::core::giants {
 enum class Cell {
     Air,         ///< BlockState#isAir
     Replaceable, ///< canBeReplaced (not the grower, not a wispy cloud)
-    WispyCloud,  ///< twilightforest:wispy_cloud (replaceable)
-    FluffyCloud, ///< twilightforest:fluffy_cloud
+    WispyCloud,  ///< gloamingforest:wispy_cloud (replaceable)
+    FluffyCloud, ///< gloamingforest:fluffy_cloud
     Leaves,      ///< #minecraft:leaves
-    Grower,      ///< twilightforest:beanstalk_grower
-    Stalk,       ///< twilightforest:huge_stalk
+    Grower,      ///< gloamingforest:beanstalk_grower
+    Stalk,       ///< gloamingforest:huge_stalk
     Solid,       ///< anything else
 };
 

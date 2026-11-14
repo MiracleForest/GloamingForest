@@ -2,10 +2,10 @@
 // bring their data members as well as the bridge's rules, recursively, cycles and NeoForge's
 // "remove" included), the vanilla tags of Java 1.21.1 the W0 runtimes read (fences, doors,
 // trapdoors, overworld_natural_logs, the river biome tags, replaceable, the structure tags and
-// /twilightforest locate with one, the mineable/* includes), the bridge's Java 1.21.1 policy (armour
+// /gloamingforest locate with one, the mineable/* includes), the bridge's Java 1.21.1 policy (armour
 // tags hold armour only; newer Bedrock content is in no bridged tag but through Bedrock's native
 // tags), the lock-free snapshot across reloads (synthetic trees private to the test's thread), and
-// the custom statistics (TF's and Minecraft's).
+// the custom statistics (upstream's and Minecraft's).
 
 #include <algorithm>
 #include <atomic>
@@ -91,31 +91,31 @@ std::string unknownItem(std::string const& id) {
 
 // A tag that includes a bridged vanilla tag holds that tag's data members too, at any depth (the
 // W0c bug: #minecraft:overworld_carver_replaceables reached #minecraft:dirt's rule but not the
-// uberous soil TF's data adds to minecraft:dirt).
+// uberous soil upstream's data adds to minecraft:dirt).
 GF_REGISTER_SELFTEST("item.tags_nested_data", [](Context& ctx) {
-    // TF's own data, when F1's import is in this build
-    if (contains(gf::tags::internal::tagsOf("block"), "twilightforest:worldgen_replaceables")) {
-        ctx.check(gf::tags::has(Registry::Block, "twilightforest:carver_replaceables", "twilightforest:uberous_soil"),
-                  "twilightforest:carver_replaceables holds uberous_soil (#overworld_carver_replaceables > #dirt)");
-        for (auto const* id : {"twilightforest:root", "twilightforest:liveroot_block", "twilightforest:trollsteinn", "twilightforest:uberous_soil"})
-            ctx.check(gf::tags::has(Registry::Block, "twilightforest:worldgen_replaceables", id),
-                      std::string("twilightforest:worldgen_replaceables holds ") + id + " (#lush_ground_replaceable > #moss_replaceable)");
-        for (auto const* id : {"twilightforest:canopy_leaves", "twilightforest:twilight_oak_leaves", "twilightforest:twilight_oak_log", "twilightforest:stripped_canopy_log"})
+    // upstream's own data, when F1's import is in this build
+    if (contains(gf::tags::internal::tagsOf("block"), "gloamingforest:worldgen_replaceables")) {
+        ctx.check(gf::tags::has(Registry::Block, "gloamingforest:carver_replaceables", "gloamingforest:uberous_soil"),
+                  "gloamingforest:carver_replaceables holds uberous_soil (#overworld_carver_replaceables > #dirt)");
+        for (auto const* id : {"gloamingforest:root", "gloamingforest:liveroot_block", "gloamingforest:trollsteinn", "gloamingforest:uberous_soil"})
+            ctx.check(gf::tags::has(Registry::Block, "gloamingforest:worldgen_replaceables", id),
+                      std::string("gloamingforest:worldgen_replaceables holds ") + id + " (#lush_ground_replaceable > #moss_replaceable)");
+        for (auto const* id : {"gloamingforest:canopy_leaves", "gloamingforest:gloaming_oak_leaves", "gloamingforest:gloaming_oak_log", "gloamingforest:stripped_canopy_log"})
             ctx.check(gf::tags::has(Registry::Block, "minecraft:lava_pool_stone_cannot_replace", id),
-                      std::string("minecraft:lava_pool_stone_cannot_replace holds ") + id + " (#leaves, #logs > #twilightforest:logs)");
-        ctx.check(gf::tags::has(Registry::Block, "minecraft:lava_pool_stone_cannot_replace", "twilightforest:liveroot_block"),
-                  "and TF's additions to #features_cannot_replace");
-        // NeoForge's "remove" of TF's data: the fiery and ice swords take no fire aspect
-        ctx.check(gf::tags::has(Registry::Item, "minecraft:enchantable/sword", "twilightforest:fiery_sword"), "the fiery sword is an enchantable sword");
-        ctx.check(!gf::tags::has(Registry::Item, "minecraft:enchantable/fire_aspect", "twilightforest:fiery_sword")
-                      && !gf::tags::has(Registry::Item, "minecraft:enchantable/fire_aspect", "twilightforest:ice_sword"),
-                  "TF's remove: no fire aspect for the fiery and ice swords");
-        ctx.check(gf::tags::has(Registry::Item, "minecraft:enchantable/fire_aspect", "twilightforest:knightmetal_sword"), "but for the knightmetal sword");
-        ctx.check(!gf::tags::has(Registry::Item, "minecraft:enchantable/vanishing", "twilightforest:phantom_helmet")
-                      && gf::tags::has(Registry::Item, "minecraft:enchantable/vanishing", "twilightforest:ironwood_helmet"),
-                  "TF's remove: no curse of vanishing for the phantom armour");
+                      std::string("minecraft:lava_pool_stone_cannot_replace holds ") + id + " (#leaves, #logs > #gloamingforest:logs)");
+        ctx.check(gf::tags::has(Registry::Block, "minecraft:lava_pool_stone_cannot_replace", "gloamingforest:liveroot_block"),
+                  "and upstream's additions to #features_cannot_replace");
+        // NeoForge's "remove" of upstream's data: the fiery and ice swords take no fire aspect
+        ctx.check(gf::tags::has(Registry::Item, "minecraft:enchantable/sword", "gloamingforest:fiery_sword"), "the fiery sword is an enchantable sword");
+        ctx.check(!gf::tags::has(Registry::Item, "minecraft:enchantable/fire_aspect", "gloamingforest:fiery_sword")
+                      && !gf::tags::has(Registry::Item, "minecraft:enchantable/fire_aspect", "gloamingforest:ice_sword"),
+                  "upstream's remove: no fire aspect for the fiery and ice swords");
+        ctx.check(gf::tags::has(Registry::Item, "minecraft:enchantable/fire_aspect", "gloamingforest:knightmetal_sword"), "but for the knightmetal sword");
+        ctx.check(!gf::tags::has(Registry::Item, "minecraft:enchantable/vanishing", "gloamingforest:phantom_helmet")
+                      && gf::tags::has(Registry::Item, "minecraft:enchantable/vanishing", "gloamingforest:ironwood_helmet"),
+                  "upstream's remove: no curse of vanishing for the phantom armour");
     } else {
-        ctx.info("TF's tag data is not in this build (F1's import): the synthetic tree stands in");
+        ctx.info("upstream's tag data is not in this build (F1's import): the synthetic tree stands in");
     }
     Tree tree({
         {"minecraft/tags/block/dirt.json", {{"values", {"gf_test:soil"}}}},
@@ -187,7 +187,7 @@ GF_REGISTER_SELFTEST("item.tags_cycles", [](Context& ctx) {
     ctx.check(!gf::tags::has(Registry::Block, "gf_test:cycle_a", "gf_test:s"), "and nothing else");
 });
 
-// NeoForge's "remove" entries (TF's data uses them on minecraft:enchantable/*): an id or a #tag taken
+// NeoForge's "remove" entries (upstream's data uses them on minecraft:enchantable/*): an id or a #tag taken
 // out of the tag, bridge members included, and out of every tag that includes it.
 GF_REGISTER_SELFTEST("item.tags_remove", [](Context& ctx) {
     Tree tree({
@@ -251,7 +251,7 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_java", [](Context& ctx) {
     // overworld_natural_logs (block): the plain logs of the overworld trees
     for (auto const* id : {"minecraft:oak_log", "minecraft:birch_log", "minecraft:cherry_log", "minecraft:mangrove_log"})
         ctx.check(block("minecraft:overworld_natural_logs", id), std::string("#minecraft:overworld_natural_logs holds ") + id);
-    for (auto const* id : {"minecraft:stripped_oak_log", "minecraft:oak_wood", "minecraft:crimson_stem", "minecraft:pale_oak_log", "twilightforest:twilight_oak_log"})
+    for (auto const* id : {"minecraft:stripped_oak_log", "minecraft:oak_wood", "minecraft:crimson_stem", "minecraft:pale_oak_log", "gloamingforest:gloaming_oak_log"})
         ctx.check(!block("minecraft:overworld_natural_logs", id), std::string("but not ") + id);
     // replaceable: bubble columns and the light blocks (Java's light)
     for (auto const* id : {"minecraft:bubble_column", "minecraft:light_block_0", "minecraft:light_block_15", "minecraft:short_grass", "minecraft:snow_layer"})
@@ -261,7 +261,7 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_java", [](Context& ctx) {
     auto biome = [](char const* tag, char const* id) { return gf::tags::has(Registry::Biome, tag, id); };
     for (auto const* tag : {"minecraft:is_river", "minecraft:reduce_water_ambient_spawns"}) {
         ctx.check(biome(tag, "minecraft:river") && biome(tag, "frozen_river"), std::string(tag) + " holds the river and the frozen river");
-        ctx.check(!biome(tag, "minecraft:ocean") && !biome(tag, "twilightforest:stream"), std::string(tag) + ": no ocean, no TF biome");
+        ctx.check(!biome(tag, "minecraft:ocean") && !biome(tag, "gloamingforest:stream"), std::string(tag) + ": no ocean, no upstream biome");
     }
     // the bridge lists ids of the game: the new rules' every listed id resolves
     std::vector<std::string> unknown;
@@ -298,8 +298,8 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_java", [](Context& ctx) {
     ctx.info("the bridge lists " + std::to_string(listed) + " block / item ids, " + std::to_string(missing) + " of them not ids of this game (legacy or newer names)");
 });
 
-// Minecraft 1.21.1's structure tags (data/minecraft/tags/worldgen/structure, all 20): /tf locate
-// #minecraft:village finds the tag (and no village in the Twilight Forest).
+// Minecraft 1.21.1's structure tags (data/minecraft/tags/worldgen/structure, all 20): /gloamingforest locate
+// #minecraft:village finds the tag (and no village in the Gloaming Forest).
 GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
     struct Expect {
         char const*              tag;
@@ -339,11 +339,11 @@ GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
         ctx.check(got == want, std::string("#") + e.tag + " has Java's members (got " + std::to_string(got.size()) + ")");
         ctx.check(gf::tags::has(Registry::Structure, std::string("#") + e.tag, want.front()), std::string("has(#") + e.tag + ", " + want.front() + ")");
     }
-    ctx.check(!gf::tags::has(Registry::Structure, "minecraft:village", "twilightforest:lich_tower"), "no TF structure is a village");
+    ctx.check(!gf::tags::has(Registry::Structure, "minecraft:village", "gloamingforest:lich_tower"), "no upstream structure is a village");
     ctx.check(gf::tags::members(Registry::Structure, "minecraft:not_a_structure_tag").empty(), "an unknown structure tag has no members (locate: invalid)");
-    // TF's own structure tag is still data
-    auto landmark = gf::tags::members(Registry::Structure, "twilightforest:landmark");
-    if (!landmark.empty()) ctx.check(!contains(landmark, "minecraft:village_plains"), "#twilightforest:landmark holds TF's structures only");
+    // upstream's own structure tag is still data
+    auto landmark = gf::tags::members(Registry::Structure, "gloamingforest:landmark");
+    if (!landmark.empty()) ctx.check(!contains(landmark, "minecraft:village_plains"), "#gloamingforest:landmark holds upstream's structures only");
 });
 
 // ---- the snapshot ------------------------------------------------------------------------------------
@@ -422,12 +422,12 @@ GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro
 
 // ---- statistics ----------------------------------------------------------------------------------------
 
-// Stats.CUSTOM: Minecraft's custom statistics count silently (TF's chests award minecraft:open_chest
-// and minecraft:trigger_trapped_chest), as TF's do; an id of neither is counted with one warning.
+// Stats.CUSTOM: Minecraft's custom statistics count silently (upstream's chests award minecraft:open_chest
+// and minecraft:trigger_trapped_chest), as upstream's do; an id of neither is counted with one warning.
 GF_REGISTER_SELFTEST("item.stats_vanilla", [](Context& ctx) {
     namespace st = gf::stats;
-    ctx.check(st::internal::registeredCount() == 85, "TF's 10 and Minecraft 1.21.1's 75 custom statistics (got " + std::to_string(st::internal::registeredCount()) + ")");
-    for (auto const* id : {"minecraft:open_chest", "minecraft:trigger_trapped_chest", "open_chest", "minecraft:interact_with_smithing_table", "twilightforest:bugs_squished"})
+    ctx.check(st::internal::registeredCount() == 85, "upstream's 10 and Minecraft 1.21.1's 75 custom statistics (got " + std::to_string(st::internal::registeredCount()) + ")");
+    for (auto const* id : {"minecraft:open_chest", "minecraft:trigger_trapped_chest", "open_chest", "minecraft:interact_with_smithing_table", "gloamingforest:bugs_squished"})
         ctx.check(st::internal::isRegistered(id), std::string(id) + " is a custom statistic");
     ctx.check(!st::internal::isRegistered("minecraft:mined") && !st::internal::isRegistered("gf_test:not_a_statistic"), "stat types and unknown ids are not");
     auto& player = ctx.player();
@@ -480,12 +480,12 @@ GF_REGISTER_SELFTEST("item.tags_armor_only", [](Context& ctx) {
     ctx.check(!item("minecraft:head_armor", "minecraft:iron_chestplate") && !item("minecraft:foot_armor", "minecraft:iron_leggings"), "one slot each");
     ctx.check(!item("minecraft:enchantable/durability", "minecraft:carrot") && item("minecraft:enchantable/durability", "minecraft:flint_and_steel"),
               "durability: Java's list, no predicate");
-    // TF's armour comes from TF's data (its head_armor ... tags), with its trimmable_armor removals
+    // upstream's armour comes from upstream's data (its head_armor ... tags), with its trimmable_armor removals
     if (contains(gf::tags::internal::tagsOf("item"), "minecraft:head_armor")) {
-        ctx.check(item("minecraft:head_armor", "twilightforest:ironwood_helmet") && item("minecraft:trimmable_armor", "twilightforest:ironwood_helmet"),
-                  "TF's ironwood helmet is trimmable head armour");
-        ctx.check(item("minecraft:head_armor", "twilightforest:yeti_helmet") && !item("minecraft:trimmable_armor", "twilightforest:yeti_helmet"),
-                  "TF's data removes the yeti helmet from #trimmable_armor");
+        ctx.check(item("minecraft:head_armor", "gloamingforest:ironwood_helmet") && item("minecraft:trimmable_armor", "gloamingforest:ironwood_helmet"),
+                  "upstream's ironwood helmet is trimmable head armour");
+        ctx.check(item("minecraft:head_armor", "gloamingforest:yeti_helmet") && !item("minecraft:trimmable_armor", "gloamingforest:yeti_helmet"),
+                  "upstream's data removes the yeti helmet from #trimmable_armor");
     }
 });
 
@@ -527,7 +527,7 @@ GF_REGISTER_SELFTEST("item.tags_java_1211_only", [](Context& ctx) {
                            "minecraft:exposed_lightning_rod", "minecraft:waxed_lightning_rod", "minecraft:pale_oak_log", "minecraft:resin_bricks"})
         ctx.check(gf::tags::vanilla::newerThanJava1211(id), std::string(id) + " is newer than Java 1.21.1");
     for (auto const* id : {"minecraft:lightning_rod", "minecraft:copper_door", "minecraft:waxed_oxidized_copper_door", "minecraft:waxed_cut_copper_stairs",
-                           "minecraft:exposed_copper_bulb", "minecraft:oxidized_copper", "minecraft:oak_log", "twilightforest:pale_oak_log"})
+                           "minecraft:exposed_copper_bulb", "minecraft:oxidized_copper", "minecraft:oak_log", "gloamingforest:pale_oak_log"})
         ctx.check(!gf::tags::vanilla::newerThanJava1211(id), std::string(id) + " is not");
     // Bedrock's native tags keep the newer content: a pale oak log is a log, an axe mines pale oak
     // planks faster, the copper sword is a sword (VanillaTags.h, the trade-off)
@@ -585,10 +585,10 @@ GF_REGISTER_SELFTEST("item.tags_bridge_includes", [](Context& ctx) {
               "mineable/* reach them");
 });
 
-// Task item 3 end to end: in the Twilight Forest `/twilightforest locate #minecraft:village` knows
+// Task item 3 end to end: in the Gloaming Forest `/gloamingforest locate #minecraft:village` knows
 // the tag (Minecraft's structure tags) and finds none there, as Java does: not_found, not invalid.
 GF_REGISTER_SELFTEST("item.tags_locate_village", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     auto level = ll::service::getLevel();
     ctx.require(static_cast<bool>(level), "a level");
     auto run = [&](std::string const& command) {
@@ -603,12 +603,12 @@ GF_REGISTER_SELFTEST("item.tags_locate_village", [](Context& ctx) -> ll::coro::C
         return std::pair{out.mSuccessCount > 0, messages};
     };
     for (auto const* tag : {"#minecraft:village", "#minecraft:on_treasure_maps", "#minecraft:ruined_portal"}) {
-        auto [ok, messages] = run(std::string("twilightforest locate ") + tag);
+        auto [ok, messages] = run(std::string("gloamingforest locate ") + tag);
         ctx.check(!ok && messages.find(std::string("Could not find a structure of type \"") + tag + "\" nearby") != std::string::npos,
-                  std::string("/twilightforest locate ") + tag + " in the Twilight Forest: not_found (got " + (ok ? "success" : "failure") + ": " + messages + ")");
+                  std::string("/gloamingforest locate ") + tag + " in the Gloaming Forest: not_found (got " + (ok ? "success" : "failure") + ": " + messages + ")");
         ctx.check(messages.find("There is no structure with type") == std::string::npos, std::string(tag) + " is a known tag (not invalid)");
     }
-    auto [ok, messages] = run("twilightforest locate #minecraft:not_a_structure_tag");
+    auto [ok, messages] = run("gloamingforest locate #minecraft:not_a_structure_tag");
     ctx.check(!ok && messages.find("There is no structure with type \"#minecraft:not_a_structure_tag\"") != std::string::npos,
               "an unknown tag is still invalid (got " + messages + ")");
 });

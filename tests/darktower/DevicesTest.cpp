@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of U26's pure dark tower rules (src/core/darktower), translated from The Twilight Forest
-// 4.8 (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of U26's pure dark tower rules (src/core/darktower), translated from The Gloaming Forest
+// 4.8 (upstream commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include <map>

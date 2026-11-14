@@ -1,6 +1,6 @@
 // Unit U4 (woodwork) selftests, part 3 (woodwork.*, dx 400..499, rule R12): the drying rack's loot
 // fill and particle rate, a chest boat's contents next to its own drop, the dried slime drops as
-// food, tannin's craft remainder, a real furnace burning TF planks, and the enchanting power of 15
+// food, tannin's craft remainder, a real furnace burning upstream planks, and the enchanting power of 15
 // canopy bookshelves.
 
 #include <algorithm>
@@ -126,7 +126,7 @@ GF_REGISTER_SELFTEST("woodwork.rack_loot", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto*    region = ctx.region();
     BlockPos bp     = gf::game::blockPos(p);
-    constexpr char kRack[]    = "twilightforest:spruce_drying_rack";
+    constexpr char kRack[]    = "gloamingforest:spruce_drying_rack";
     constexpr char kFixture[] = "gf_test:chests/fixture_chest";
     constexpr std::int64_t kSeed = 4242;
     gf::loot::LootContext lc;
@@ -152,10 +152,10 @@ GF_REGISTER_SELFTEST("woodwork.rack_loot", [](Context& ctx) -> ll::coro::CoroTas
     co_await ctx.ticks(3);
     ctx.check(dropsNear(ctx, p)[items::idOf(r->item)] >= 1, "a broken loot rack drops its item");
     clearItems(ctx, p);
-    // TF's camp racks (U19's table): the empty entry leaves the rack empty, any item stays
+    // upstream's camp racks (U19's table): the empty entry leaves the rack empty, any item stays
     int filled = 0, empty = 0;
     for (std::int64_t seed = 1; seed <= 24; ++seed) {
-        ctx.require(gf::loot::placeContainer(*region, bp, kRack, 2, "twilightforest:camp_drying_rack", seed), "a camp drying rack");
+        ctx.require(gf::loot::placeContainer(*region, bp, kRack, 2, "gloamingforest:camp_drying_rack", seed), "a camp drying rack");
         auto c = rack::at(p);
         if (c && !items::isEmpty(c->item)) ++filled;
         else ++empty;
@@ -177,11 +177,11 @@ GF_REGISTER_SELFTEST("woodwork.rack_particle_rate", [](Context& ctx) -> ll::coro
     ctx.check(pt::animateTickChance(32, 0, 0) == 0.0 && pt::animateTickChance(0, 40, 0) == 0.0, "32 or more blocks away: never");
     ctx.check(pt::animateTickChance(16, 0, 0) < pt::animateTickChance(15, 0, 0), "the chance falls off with the distance");
     // a drying rack next to the test player for 200 ticks: about 200 * 0.16 / 5 = 6.5 particles
-    // (TF: about 0.7 a second); the old every-tick 1/5 roll gave 40
+    // (upstream: about 0.7 a second); the old every-tick 1/5 roll gave 40
     (void)co_await ctx.flatArea(475, 5);
     auto p = ctx.testPos(475, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    ctx.require(ctx.setBlock(p, "twilightforest:oak_drying_rack", {{"twilightforest:facing", "north"}}), "a drying rack");
+    ctx.require(ctx.setBlock(p, "gloamingforest:oak_drying_rack", {{"gloamingforest:facing", "north"}}), "a drying rack");
     auto h = gf::inventory::find(*ctx.region(), gf::game::blockPos(p));
     ctx.require(h.has_value(), "the rack is an inventory");
     h->set(p, 0, *items::make("minecraft:kelp"));
@@ -192,7 +192,7 @@ GF_REGISTER_SELFTEST("woodwork.rack_particle_rate", [](Context& ctx) -> ll::coro
     co_await ctx.ticks(200);
     auto sent = pt::sentCount() - before;
     ctx.info("drying particles in 200 ticks next to the rack: " + std::to_string(sent));
-    ctx.check(sent <= 24, "TF's sampled rate, not a particle every 5 ticks (" + std::to_string(sent) + " in 200 ticks)");
+    ctx.check(sent <= 24, "upstream's sampled rate, not a particle every 5 ticks (" + std::to_string(sent) + " in 200 ticks)");
     h->set(p, 0, ItemStack{});
     ctx.cleanupBlock(p);
 });
@@ -205,16 +205,16 @@ GF_REGISTER_SELFTEST("woodwork.boat_chest_contents", [](Context& ctx) -> ll::cor
     auto c = ctx.testPos(455, 2);
     ctx.require(co_await ctx.ensureLoaded(c), "test area loaded");
     clearItems(ctx, c);
-    auto r = gf::selftest::runServerCommand("summon twilightforest:chest_boat " + std::to_string(c.x) + " " + std::to_string(c.y) + " " + std::to_string(c.z) + " 0 0 twilightforest:dark", ctx.dimension());
+    auto r = gf::selftest::runServerCommand("summon gloamingforest:chest_boat " + std::to_string(c.x) + " " + std::to_string(c.y) + " " + std::to_string(c.z) + " 0 0 gloamingforest:dark", ctx.dimension());
     ctx.require(r.ok, "a dark chest boat: " + r.messages);
     co_await ctx.ticks(2);
-    auto boats = actorsNear(ctx, c, "twilightforest:chest_boat");
+    auto boats = actorsNear(ctx, c, "gloamingforest:chest_boat");
     ctx.require(boats.size() == 1, "one chest boat (" + std::to_string(boats.size()) + ")");
     std::string own = gf::woodwork_ext::boatdrops::vanillaDropOf(*boats[0]);
-    ctx.info("the game's own drop of the TF chest boat: " + own);
+    ctx.info("the game's own drop of the upstream chest boat: " + own);
     ctx.require(!own.empty(), "the boat's wood is known");
     // the chest: a vanilla oak boat, and the very item the game drops for this boat
-    std::string sel = "@e[type=twilightforest:chest_boat,x=" + std::to_string(c.x) + ",y=" + std::to_string(c.y) + ",z=" + std::to_string(c.z) + ",r=4,c=1]";
+    std::string sel = "@e[type=gloamingforest:chest_boat,x=" + std::to_string(c.x) + ",y=" + std::to_string(c.y) + ",z=" + std::to_string(c.z) + ",r=4,c=1]";
     auto put = [&](int slot, std::string const& item) {
         auto res = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.container " + std::to_string(slot) + " " + item + " 1", ctx.dimension());
         if (!res.ok || res.successCount == 0) res = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory " + std::to_string(slot) + " " + item + " 1", ctx.dimension());
@@ -228,23 +228,23 @@ GF_REGISTER_SELFTEST("woodwork.boat_chest_contents", [](Context& ctx) -> ll::cor
     auto& sp = simPlayer(ctx);
     sp.teleport(Vec3{c.x + 0.5f, float(c.y), c.z + 3.5f}, sp.getDimensionId());
     co_await ctx.ticks(4);
-    for (int i = 0; i < 10 && !actorsNear(ctx, c, "twilightforest:chest_boat").empty(); ++i) {
-        auto bs = actorsNear(ctx, c, "twilightforest:chest_boat");
+    for (int i = 0; i < 10 && !actorsNear(ctx, c, "gloamingforest:chest_boat").empty(); ++i) {
+        auto bs = actorsNear(ctx, c, "gloamingforest:chest_boat");
         ctx.player().mGameMode->attack(*bs[0], bs[0]->getPosition());
         co_await ctx.ticks(3);
     }
-    ctx.require(actorsNear(ctx, c, "twilightforest:chest_boat").empty(), "the chest boat broke");
+    ctx.require(actorsNear(ctx, c, "gloamingforest:chest_boat").empty(), "the chest boat broke");
     simPlayer(ctx).teleport(Vec3{c.x + 0.5f, float(c.y), c.z + 40.5f}, ctx.player().getDimensionId());
     co_await ctx.ticks(2);
     auto drops = dropsNear(ctx, c);
     auto& pl   = ctx.player();
-    int   tf   = drops["twilightforest:dark_chest_boat"] + carried(pl, "twilightforest:dark_chest_boat");
+    int   tf   = drops["gloamingforest:dark_chest_boat"] + carried(pl, "gloamingforest:dark_chest_boat");
     int   oak  = drops["minecraft:oak_boat"] + carried(pl, "minecraft:oak_boat");
     int   same = drops[own] + carried(pl, own);
     std::string seen;
     for (auto const& [id, n] : drops) seen += id + " x" + std::to_string(n) + " ";
     ctx.info("drops: " + seen);
-    ctx.check(tf == 1, "exactly one TF dark chest boat item (" + std::to_string(tf) + ")");
+    ctx.check(tf == 1, "exactly one upstream dark chest boat item (" + std::to_string(tf) + ")");
     ctx.check(oak == 1, "the oak boat from the chest stays (" + std::to_string(oak) + ")");
     ctx.check(same == 1, "the " + own + " from the chest stays and the boat's own one is gone (" + std::to_string(same) + ")");
     clearItems(ctx, c);
@@ -262,7 +262,7 @@ GF_REGISTER_SELFTEST("woodwork.slime_food", [](Context& ctx) {
         unsigned    effectId; ///< the game's effect id (speed 1, resistance 11)
     };
     auto& player = ctx.player();
-    for (auto const& f : {Food{"twilightforest:gelatinous_slime_drop", 1, "minecraft:speed", 1}, Food{"twilightforest:gelatinous_maze_slime_drop", 2, "minecraft:resistance", 11}}) {
+    for (auto const& f : {Food{"gloamingforest:gelatinous_slime_drop", 1, "minecraft:speed", 1}, Food{"gloamingforest:gelatinous_maze_slime_drop", 2, "minecraft:resistance", 11}}) {
         auto stack = items::make(f.item);
         ctx.require(stack.has_value(), std::string(f.item) + " exists");
         Item const* item = stack->mItem.get();
@@ -294,25 +294,25 @@ GF_REGISTER_SELFTEST("woodwork.tannin_remainder", [](Context& ctx) {
     auto& ui     = player.mPlayerUIContainer.get();
     int   first  = static_cast<int>(PlayerUISlot::Crafting2x2Input1);
     for (int i = 0; i < 4; ++i) ui.setItem(first + i, ItemStack::EMPTY_ITEM());
-    ui.setItem(first, *items::make("twilightforest:tannin"));
+    ui.setItem(first, *items::make("gloamingforest:tannin"));
     ui.setItem(first + 3, *items::make("minecraft:leather"));
     auto grid = rc::internal::gridOf(player, false);
-    ctx.check(rc::internal::isSpecial("twilightforest:treated_leather"), "treated_leather has a crafting remainder");
-    auto candidates = rc::internal::specialCandidates("twilightforest:treated_leather", grid.grid);
-    ctx.check(std::find(candidates.begin(), candidates.end(), "twilightforest:treated_leather") != candidates.end(), "the crafting hook finds the BP recipe for the grid");
-    auto out = rc::internal::assembleSpecial("twilightforest:treated_leather", grid.grid);
-    ctx.check(out && items::idOf(*out) == "twilightforest:treated_leather" && items::countOf(*out) == 1, "the craft makes one treated leather");
-    auto bySlot = rc::internal::remaindersBySlot("twilightforest:treated_leather", grid.grid);
+    ctx.check(rc::internal::isSpecial("gloamingforest:treated_leather"), "treated_leather has a crafting remainder");
+    auto candidates = rc::internal::specialCandidates("gloamingforest:treated_leather", grid.grid);
+    ctx.check(std::find(candidates.begin(), candidates.end(), "gloamingforest:treated_leather") != candidates.end(), "the crafting hook finds the BP recipe for the grid");
+    auto out = rc::internal::assembleSpecial("gloamingforest:treated_leather", grid.grid);
+    ctx.check(out && items::idOf(*out) == "gloamingforest:treated_leather" && items::countOf(*out) == 1, "the craft makes one treated leather");
+    auto bySlot = rc::internal::remaindersBySlot("gloamingforest:treated_leather", grid.grid);
     ctx.check(bySlot.size() == 4 && items::idOf(bySlot[0]) == "minecraft:glass_bottle" && items::isEmpty(bySlot[3]), "a glass bottle goes back into the tannin's slot, nothing into the leather's");
     // ResultSlot#onTake after the craft emptied the grid
     for (int i = 0; i < 4; ++i) ui.setItem(first + i, ItemStack::EMPTY_ITEM());
     rc::internal::placeRemainders(player, grid.firstSlot, bySlot);
     ctx.check(items::idOf(ui.getItem(first)) == "minecraft:glass_bottle", "the bottle is in the grid");
     // another grid (two tannins) is no treated_leather craft
-    ui.setItem(first, *items::make("twilightforest:tannin"));
-    ui.setItem(first + 1, *items::make("twilightforest:tannin"));
+    ui.setItem(first, *items::make("gloamingforest:tannin"));
+    ui.setItem(first + 1, *items::make("gloamingforest:tannin"));
     ui.setItem(first + 3, *items::make("minecraft:leather"));
-    ctx.check(!rc::internal::assembleSpecial("twilightforest:treated_leather", rc::internal::gridOf(player, false).grid), "the matcher refuses other grids");
+    ctx.check(!rc::internal::assembleSpecial("gloamingforest:treated_leather", rc::internal::gridOf(player, false).grid), "the matcher refuses other grids");
     for (int i = 0; i < 4; ++i) ui.setItem(first + i, ItemStack::EMPTY_ITEM());
 });
 
@@ -330,7 +330,7 @@ GF_REGISTER_SELFTEST("woodwork.furnace_and_enchanting", [](Context& ctx) -> ll::
     ctx.require(actor != nullptr, "the furnace's block actor");
     auto& furnace = static_cast<FurnaceBlockActor&>(*actor);
     furnace.setItem(0, *items::make("minecraft:cobblestone", 8));
-    furnace.setItem(1, *items::make("twilightforest:canopy_planks", 1));
+    furnace.setItem(1, *items::make("gloamingforest:canopy_planks", 1));
     int litDuration = 0;
     for (int i = 0; i < 20 && litDuration == 0; ++i) {
         co_await ctx.ticks(1);
@@ -352,7 +352,7 @@ GF_REGISTER_SELFTEST("woodwork.furnace_and_enchanting", [](Context& ctx) -> ll::
         for (int dz = -2; dz <= 2 && shelves.size() < 15; ++dz)
             if (std::abs(dx) == 2 || std::abs(dz) == 2) shelves.push_back(at(t, dx, 0, dz));
     for (int dx = -2; dx <= 2 && shelves.size() < 15; ++dx) shelves.push_back(at(t, dx, 1, -2));
-    for (auto const& s : shelves) ctx.require(ctx.setBlock(s, "twilightforest:canopy_bookshelf"), "a canopy bookshelf");
+    for (auto const& s : shelves) ctx.require(ctx.setBlock(s, "gloamingforest:canopy_bookshelf"), "a canopy bookshelf");
     co_await ctx.ticks(2);
     // the player opens the table (the game's own EnchantingContainerManagerModel), puts a sword and
     // lapis in, and the model recalculates its three options as the screen does

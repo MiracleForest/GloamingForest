@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
   Contract "template" (owner F7): builds GloamingForest templates from the DSL scripts and checks
-  every template against TF's template definitions.
+  every template against upstream's template definitions.
 
 .DESCRIPTION
-  Templates are original designs (rule R19): TF's .nbt files are never read (they are All Rights
-  Reserved and not in the TF checkout). A unit writes tools/structures/<unit>/**/*.gfs.ps1 scripts
+  Templates are original designs (rule R19): upstream's .nbt files are never read (they are All Rights
+  Reserved and not in the upstream checkout). A unit writes tools/structures/<unit>/**/*.gfs.ps1 scripts
   with the DSL of tools/structures/lib/Gft.psm1 (the format is documented there); this script runs
   them and writes assets/structures/<unit>/<path>.gft.json (or the path a template names with -Out).
 
@@ -14,14 +14,14 @@
     - a .gft.json under assets/structures or assets/test/structures is malformed (format, size,
       palette, run-length blocks, markers, connectors, entities inside the template);
     - two templates share an id;
-    - a template references a twilightforest: block, entity or loot table that docs/spec/owners.tsv
+    - a template references a gloamingforest: block, entity or loot table that docs/spec/owners.tsv
       does not know;
-    - a template standing in for a TF template (its id has a twilight/template_definition) has
+    - a template standing in for an upstream template (its id has a gloaming/template_definition) has
       jigsaw connectors to pools no definition fills, connector targets no template of the pool
       names, or data markers its definition's template_marker_handler_list does not handle.
-  The template definitions (205 in TF 4.8) come from the imported data
-  (assets/gen/import/*/data/*/twilight/template_definition) or, before the import ran, from the
-  shared TF checkout (tools/tf/fetch.ps1). The definitions without a template yet are listed;
+  The template definitions (205 in upstream 4.8) come from the imported data
+  (assets/gen/import/*/data/*/gloaming/template_definition) or, before the import ran, from the
+  shared upstream checkout (tools/upstream/fetch.ps1). The definitions without a template yet are listed;
   -Strict turns them into failures (W2).
 
 .EXAMPLE
@@ -53,7 +53,7 @@ if ($SelfTest) {
         '#...#',
         '#####')
     Set-GftBox $t 0 2 0 4 2 3 'minecraft:oak_planks' -Hollow
-    Add-GftMarker $t 2 1 2 'loot' @{ table = 'twilightforest:hill_1' }
+    Add-GftMarker $t 2 1 2 'loot' @{ table = 'gloamingforest:hill_1' }
     Add-GftDataMarker $t 1 1 1 'seat@north'
     Add-GftJigsaw $t 2 0 0 -Front north -Pool 'minecraft:empty' -Name 'gf_test:door'
     Add-GftEntity $t 2.5 1 2.5 'minecraft:armor_stand'
@@ -155,8 +155,8 @@ foreach ($e in (Test-GftAgainstDefinitions $templates $definitions $handlers)) {
 
 $covered = @($definitions.Keys | Where-Object { $templates.ContainsKey($_) })
 $missing = @($definitions.Keys | Where-Object { -not $templates.ContainsKey($_) } | Sort-Object)
-$notes.Add("$($templateFiles.Count) template file(s), $($definitions.Count) TF template definitions ($($definitionsRead.Source)), $($covered.Count) designed, $($missing.Count) still to design")
-if ($Strict) { foreach ($m in $missing) { $failures.Add("no template for TF template definition $m") } }
+$notes.Add("$($templateFiles.Count) template file(s), $($definitions.Count) upstream template definitions ($($definitionsRead.Source)), $($covered.Count) designed, $($missing.Count) still to design")
+if ($Strict) { foreach ($m in $missing) { $failures.Add("no template for upstream template definition $m") } }
 
 foreach ($n in $notes) { Write-Host "[template] $n" }
 if ($failures.Count) {

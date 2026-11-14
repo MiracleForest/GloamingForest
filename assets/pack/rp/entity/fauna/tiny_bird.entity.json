@@ -2,21 +2,21 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:tiny_bird",
+      "identifier": "gloamingforest:tiny_bird",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "blue": "textures/twilightforest/entity/tinybirdblue",
-        "brown": "textures/twilightforest/entity/tinybirdbrown",
-        "gold": "textures/twilightforest/entity/tinybirdgold",
-        "red": "textures/twilightforest/entity/tinybirdred"
+        "blue": "textures/gloamingforest/entity/tinybirdblue",
+        "brown": "textures/gloamingforest/entity/tinybirdbrown",
+        "gold": "textures/gloamingforest/entity/tinybirdgold",
+        "red": "textures/gloamingforest/entity/tinybirdred"
       },
       "geometry": {
-        "default": "geometry.twilightforest.tiny_bird"
+        "default": "geometry.gloamingforest.tiny_bird"
       },
       "animations": {
-        "setup": "animation.twilightforest.tiny_bird.setup"
+        "setup": "animation.gloamingforest.tiny_bird.setup"
       },
       "scripts": {
         "animate": [
@@ -32,7 +32,7 @@
         ]
       },
       "render_controllers": [
-        "controller.render.twilightforest.tiny_bird"
+        "controller.render.gloamingforest.tiny_bird"
       ],
       "spawn_egg": {
         "base_color": "#33aadd",

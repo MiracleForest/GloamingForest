@@ -75,14 +75,14 @@ void uninstallRope();
 
 // ---- banner patterns (Banners.cpp) ----
 struct BannerSpec {
-    std::string boss;   ///< the item is twilightforest:<boss>_banner_pattern, the texture TF's <boss>.png
-    std::string tfId;   ///< TF's banner_pattern registry id
+    std::string boss;   ///< the item is gloamingforest:<boss>_banner_pattern, the texture upstream's <boss>.png
+    std::string tfId;   ///< upstream's banner_pattern registry id
     std::string nameId; ///< Bedrock's pattern id (name and nameID; banners store it)
 };
 [[nodiscard]] std::vector<BannerSpec> const&   bannerPatterns();
 [[nodiscard]] std::optional<BannerSpec>         bannerOfPatternId(std::string_view nameId);
 [[nodiscard]] std::optional<BannerSpec>         bannerOfItem(std::string_view itemId);
-/// Appends TF's patterns that are missing to Bedrock's registry; returns how many (-1: the vanilla
+/// Appends upstream's patterns that are missing to Bedrock's registry; returns how many (-1: the vanilla
 /// registry is not built yet).
 int                                             registerBannerPatterns();
 [[nodiscard]] bool                              bannerPatternsRegistered();

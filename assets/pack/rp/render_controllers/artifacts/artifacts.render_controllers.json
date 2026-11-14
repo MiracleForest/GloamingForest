@@ -1,13 +1,13 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.loyal_zombie": {
+    "controller.render.gloamingforest.loyal_zombie": {
       "geometry": "Geometry.default",
       "materials": [ { "*": "Material.default" } ],
       "textures": [ "Texture.default" ],
       "overlay_color": { "r": 0.0, "g": 0.55, "b": 0.0, "a": 0.45 }
     },
-    "controller.render.twilightforest.charm_effect": {
+    "controller.render.gloamingforest.charm_effect": {
       "arrays": {
         "textures": {
           "Array.charms": [ "Texture.life_1", "Texture.life_2", "Texture.keeping_1", "Texture.keeping_2", "Texture.keeping_3" ]
@@ -15,7 +15,7 @@
       },
       "geometry": "Geometry.default",
       "materials": [ { "*": "Material.default" } ],
-      "textures": [ "Array.charms[q.property('twilightforest:charm')]" ]
+      "textures": [ "Array.charms[q.property('gloamingforest:charm')]" ]
     }
   }
 }

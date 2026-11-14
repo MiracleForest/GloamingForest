@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:bold_castle_brick_pillar",
+      "identifier": "gloamingforest:bold_castle_brick_pillar",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"]
+        "gloamingforest:axis": ["y", "x", "z"]
       }
     },
     "components": {
@@ -53,9 +53,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.cube_column_rotationally_correct_x",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.cube_column_rotationally_correct_x",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_bold_castle_brick_pillar_side",
@@ -78,7 +78,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y'",
+        "condition": "q.block_state('gloamingforest:axis') == 'y'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -119,9 +119,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.util.cube_column_rotationally_correct_z",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.cube_column_rotationally_correct_z",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_bold_castle_brick_pillar_side",

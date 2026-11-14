@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:stonecutting/sorting_log/hollow_sorting_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:sorting_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_log"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:hollow_sorting_log"
+    }
+  }
+}

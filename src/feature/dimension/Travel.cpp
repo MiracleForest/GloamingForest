@@ -1,26 +1,26 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TFPortalBlock.java (entityInside, getPortalTransitionTime,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TFPortalBlock.java (entityInside, getPortalTransitionTime,
 //     getPortalDestination, animateTick)
-//   src/main/java/twilightforest/components/entity/TFPortalAttachment.java
-//   src/main/java/twilightforest/world/TFTeleporter.java (createTransition, createPosition)
-//   src/main/java/twilightforest/world/NoReturnTeleporter.java
-//   src/main/java/twilightforest/events/CapabilityEvents.java (spawnInTFIfNecessary, playerLogsIn)
-//   src/main/java/twilightforest/events/ProgressionEvents.java (performProtectionAndPortalChecks)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+//   src/main/java/gloamingforest/components/entity/TFPortalAttachment.java
+//   src/main/java/gloamingforest/world/TFTeleporter.java (createTransition, createPosition)
+//   src/main/java/gloamingforest/world/NoReturnTeleporter.java
+//   src/main/java/gloamingforest/events/CapabilityEvents.java (spawnInTFIfNecessary, playerLogsIn)
+//   src/main/java/gloamingforest/events/ProgressionEvents.java (performProtectionAndPortalChecks)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Portal travel: the portal timer of players (TFPortalAttachment), vanilla's portal process
-// (Entity#setAsInsidePortal / handlePortal / PortalProcessor with TF's transition time: the
+// (Entity#setAsInsidePortal / handlePortal / PortalProcessor with upstream's transition time: the
 // gamerule delay for players, 0 for every other entity) for players and for every other entity
 // that can use portals (items, mobs, vehicles with their riders), and the trip itself, plus the
-// new-player spawn in the Twilight Forest. Java loads the destination synchronously; here the
+// new-player spawn in the Gloaming Forest. Java loads the destination synchronously; here the
 // traveller stays where it is while a transient ticking area loads the destination (AreaLoader.h;
 // for a player it starts loading 2 s before the trip, while it waits in the portal), then the
 // teleporter runs and the traveller moves straight to its arrival spot. gf::world::teleport uses
 // the same machinery (destination first, riders along). Vanilla clients
-// see the portal overlay as a camera fade; the client mod draws TF's PortalOverlay
+// see the portal overlay as a camera fade; the client mod draws upstream's PortalOverlay
 // (src/client/dimension) and tells the server so on "dimension.client".
 
 #include <algorithm>
@@ -115,7 +115,7 @@ struct State {
     int  fadeTick      = 0;     ///< tickCount when the fade is to be renewed
     int  fadeStart     = 0;     ///< tickCount when the fade started to grow
     int  fadeInTicks   = 1;     ///< how long it grows
-    bool nativeOverlay = false; ///< the client mod draws TF's PortalOverlay
+    bool nativeOverlay = false; ///< the client mod draws upstream's PortalOverlay
     int  tickCount     = 0;
 };
 
@@ -139,7 +139,7 @@ Actor* actorById(std::int64_t id) {
     return level->fetchEntity(ActorUniqueID{id}, false);
 }
 
-// ---- banished (TFDataAttachments.BANISHED_TO_TWILIGHT_FOREST, copyOnDeath) ---------------------------
+// ---- banished (TFDataAttachments.BANISHED_TO_GLOAMING_FOREST, copyOnDeath) ---------------------------
 
 std::unordered_set<std::string>& banished() {
     static std::unordered_set<std::string> s;
@@ -248,7 +248,7 @@ void sendFade(Player& player, bool clearFirst, float in, float hold, float out) 
     time.mHoldTime    = hold;
     time.mFadeOutTime = out;
     CameraInstructionOptions::FadeInstruction::ColorOption color;
-    // the nether portal sprite TF draws, averaged
+    // the nether portal sprite upstream draws, averaged
     color.mRed   = 0.33f;
     color.mGreen = 0.04f;
     color.mBlue  = 0.73f;
@@ -259,10 +259,10 @@ void sendFade(Player& player, bool clearFirst, float in, float hold, float out) 
     packet->sendTo(player);
 }
 
-/// TF's overlay is the portal sprite drawn with alpha timer / 60: the sprite's own alpha (about
+/// upstream's overlay is the portal sprite drawn with alpha timer / 60: the sprite's own alpha (about
 /// 3/4) times a ramp over the 60 ticks before the trip; after the trip it runs out over 30 ticks.
-/// Bedrock's fade has no partial alpha to hold, it only grows to opaque: it grows at TF's rate
-/// (0.75 x timer / 60) so that it reaches TF's 0.75 at the trip, and becomes opaque only after it,
+/// Bedrock's fade has no partial alpha to hold, it only grows to opaque: it grows at upstream's rate
+/// (0.75 x timer / 60) so that it reaches upstream's 0.75 at the trip, and becomes opaque only after it,
 /// while the client shows the dimension change. A short hold covers that (the client drops camera
 /// instructions while it loads a dimension, so the fade times itself), then it runs out over 1.5 s.
 /// It is renewed while the player stays inside (a portal on cooldown, a longer gamerule delay) or
@@ -276,7 +276,7 @@ float fadeAlpha(State const& st) {
     return std::clamp(static_cast<float>(st.tickCount - st.fadeStart) / static_cast<float>(std::max(st.fadeInTicks, 1)), 0.0f, 1.0f);
 }
 
-/// Takes a camera fade down when the player steps out: TF's overlay runs out over the timer's
+/// Takes a camera fade down when the player steps out: upstream's overlay runs out over the timer's
 /// remaining ticks (2 a tick). A fade that is (nearly) opaque runs out that long; one that is still
 /// translucent goes at once (a new fade would start from opaque).
 void endFade(Player& player, State& st) {
@@ -293,7 +293,7 @@ void endFade(Player& player, State& st) {
 /// client mod's overlay.
 void updateFade(Player& player, State& st, bool wasInside) {
     if (st.nativeOverlay) return;
-    // with a short transition time (creative) TF's overlay hardly shows before the trip: no fade
+    // with a short transition time (creative) upstream's overlay hardly shows before the trip: no fade
     if (st.attachInside && !st.fading && !st.travelling && portalDelay(player) >= 20) {
         float in = std::max(static_cast<float>(kMaxTicks - st.portalTimer) / 20.0f / kSpriteAlpha, 0.05f);
         sendFade(player, false, in, kFadeHold, kFadeOut);
@@ -358,11 +358,11 @@ bool isInWall(Actor& actor, BlockSource& region) {
 /// goes through portals: Java entities that never move (lightning, effect clouds, hanging entities,
 /// eyes of ender, end crystals, evoker fangs) never touch blocks, fishing hooks, the dragon and the
 /// wither refuse portals, and then the actor's own answer, whether or not something rides it:
-/// Actor::canChangeDimensionsUsingPortal, where F8's hooks answer for BaseTFBoss, TF's parts and
+/// Actor::canChangeDimensionsUsingPortal, where F8's hooks answer for BaseTFBoss, upstream's parts and
 /// the types marked with gf::entity::ext::setCanUsePortal (false) before the engine's own rules.
 /// Like Java's canUsePortal(false), the engine's answer has no rule against riders (a boat with a
 /// pig in it may go: dimension.portal_ridden), so a vehicle travels and takes its riders along
-/// (Entity#changeDimension), while a TF boss stays even with a rider on it.
+/// (Entity#changeDimension), while an upstream boss stays even with a rider on it.
 bool canUsePortal(Actor& actor) {
     if (!actor.isAlive() || actor.getVehicle()) return false;
     if (actor.isPlayer()) return true;
@@ -596,7 +596,7 @@ void finishTrip(tp::Traveller const& t, int to, Vec3 const& at, char const* verb
     keepRidersOn(t.id, t.passengers, t.name, to);
     auto& st      = states()[t.id];
     st.travelling = false;
-    st.fading     = false; // the fade runs out by itself after the trip, as TF's overlay does
+    st.fading     = false; // the fade runs out by itself after the trip, as upstream's overlay does
     log().info(
         "dimension: {} {} from {} to {} at {:.1f} {:.1f} {:.1f}",
         t.name,
@@ -692,7 +692,7 @@ struct Destination {
 };
 std::optional<Destination> portalDestination(int src, BlockPos const& entry, bool quiet = false) {
     auto const& cfg = gf::config::get<DimensionConfig>();
-    int         tf  = twilightId();
+    int         tf  = gloamingId();
     if (tf < 0) return std::nullopt;
     std::optional<int> dest = src != tf ? std::optional<int>(tf) : dimensionByName(cfg.originDimension);
     if (!dest) {
@@ -754,35 +754,35 @@ void preloadDestination(Player& player, State& st) {
 
 } // namespace
 
-// ---- CapabilityEvents#newSpawnInTwilightForest ----------------------------------------------------------------------------
+// ---- CapabilityEvents#newSpawnInGloamingForest ----------------------------------------------------------------------------
 
-void newSpawnInTwilightForest(Player& player) {
+void newSpawnInGloamingForest(Player& player) {
     auto const& cfg = gf::config::get<DimensionConfig>();
     if (!cfg.newPlayersSpawnInTF) return;
-    int tf = twilightId();
+    int tf = gloamingId();
     if (tf < 0) return;
     auto t = tp::capture(player);
     if (states()[t.id].travelling) return; // already on its way
     states()[t.id].travelling = true;
     ll::coro::keepThis([t = std::move(t), tf, portal = cfg.portalForNewPlayer]() -> ll::coro::CoroTask<> {
         TripGuard guard{t.id};
-        // level.getHeightmapPos(MOTION_BLOCKING_NO_LEAVES, player.blockPosition()) in the Twilight
+        // level.getHeightmapPos(MOTION_BLOCKING_NO_LEAVES, player.blockPosition()) in the Gloaming
         // Forest: its column is loaded first (the player stays where it is meanwhile)
         BlockPos column{t.srcPos.x, 0, t.srcPos.z};
         auto     hold = co_await loadArea(tf, column, kLoadRadius);
         auto*    region = game::regionOf(tf);
         if (!hold || !region || !playerById(t.id)) {
-            log().warn("dimension: the new spawn of {} in the Twilight Forest was called off (it did not load)", t.name);
+            log().warn("dimension: the new spawn of {} in the Gloaming Forest was called off (it did not load)", t.name);
             co_return;
         }
         BlockPos newDefaultSpawn{column.x, tp::heightmap(*region, column.x, column.z), column.z};
-        // TF sets the respawn point and the banished mark right after changeDimension, whatever
+        // upstream sets the respawn point and the banished mark right after changeDimension, whatever
         // became of the trip: here as soon as the trip starts (a player who leaves or a trip that
-        // fails later stays banished, with the Twilight Forest as its spawn)
+        // fails later stays banished, with the Gloaming Forest as its spawn)
         if (auto* p = playerById(t.id)) {
             p->setRespawnPosition(newDefaultSpawn, DimensionType(tf));
             setBanished(*p);
-            log().info("dimension: {} now lives in the Twilight Forest (spawn {} {} {})", t.name, newDefaultSpawn.x, newDefaultSpawn.y, newDefaultSpawn.z);
+            log().info("dimension: {} now lives in the Gloaming Forest (spawn {} {} {})", t.name, newDefaultSpawn.x, newDefaultSpawn.y, newDefaultSpawn.z);
         }
         bool arrived = false;
         if (portal) {
@@ -804,7 +804,7 @@ void newSpawnInTwilightForest(Player& player) {
             holdFor(std::move(second), 20);
         }
         holdFor(std::move(hold), 20);
-        if (!arrived) log().warn("dimension: the new spawn trip of {} did not complete; its spawn stays in the Twilight Forest", t.name);
+        if (!arrived) log().warn("dimension: the new spawn trip of {} did not complete; its spawn stays in the Gloaming Forest", t.name);
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
@@ -1161,7 +1161,7 @@ public:
             auto  id = idOf(p);
             if (!isBanished(p)) {
                 interactions::nextTick([id] {
-                    if (auto* pl = playerById(id)) newSpawnInTwilightForest(*pl);
+                    if (auto* pl = playerById(id)) newSpawnInGloamingForest(*pl);
                 });
             }
         }));
@@ -1171,7 +1171,7 @@ public:
             if (p.isClientSide() || hasRespawnPosition(p)) return;
             auto id = idOf(p);
             interactions::nextTick([id] {
-                if (auto* pl = playerById(id)) newSpawnInTwilightForest(*pl);
+                if (auto* pl = playerById(id)) newSpawnInGloamingForest(*pl);
             });
         }));
         mListeners.push_back(bus.emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
@@ -1201,7 +1201,7 @@ std::optional<core::GlobalPos> destinationFor(Player const& player) {
     namespace dim = feature::dimension;
     auto const& cfg = gf::config::get<dim::DimensionConfig>();
     int         src = static_cast<int>(player.getDimensionId());
-    int         tf  = dim::twilightId();
+    int         tf  = dim::gloamingId();
     if (tf < 0) return std::nullopt;
     std::optional<int> dest = src != tf ? std::optional<int>(tf) : dim::dimensionByName(cfg.originDimension);
     if (!dest) return std::nullopt;

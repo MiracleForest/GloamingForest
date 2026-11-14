@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/knightmetal_shield_2"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["-#", "-o", "-#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:cracked_towerwood"
+      },
+      "-": {
+        "item": "gloamingforest:knightmetal_ingot"
+      },
+      "o": {
+        "item": "gloamingforest:knightmetal_ring"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:knightmetal_ingot"
+      },
+      {
+        "item": "gloamingforest:knightmetal_ring"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:knightmetal_shield"
+    }
+  }
+}

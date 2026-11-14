@@ -1,6 +1,6 @@
 // The effect part of "rules+fx" (F10): particles and sounds by id (rule R10).
 //
-// Particles: TF's ids ("twilightforest:firefly") and the vanilla particle types TF spawns
+// Particles: upstream's ids ("gloamingforest:firefly") and the vanilla particle types upstream spawns
 // ("minecraft:flame", Java ParticleTypes) are played for the players near the position (Java's
 // ServerLevel#sendParticles range, 32 blocks):
 //   - companions (client mod) get "fx.particle" {id, pos, vel, count, params}: the client mod
@@ -15,8 +15,8 @@
 //     `variable.dust_size`, `variable.dust_ticks`; see vanillaParticles). Java's portal and dust particles are F10's own
 //     effects gf:portal and gf:dust (assets/pack/rp/particles/fx), which every client gets with the
 //     resource pack. Java's item and block particles go as Bedrock's legacy particles.
-// Sounds: TF's sound events ("entity.twilightforest.naga.hiss", the sound_definitions names F3
-// generates) and the vanilla events TF plays ("minecraft:entity.ghast.shoot", mapped to Bedrock's
+// Sounds: upstream's sound events ("entity.gloamingforest.naga.hiss", the sound_definitions names F3
+// generates) and the vanilla events upstream plays ("minecraft:entity.ghast.shoot", mapped to Bedrock's
 // names) go out as PlaySoundPacket to the players in range (16 blocks, more for volume > 1, as
 // Java's Level#playSound).
 // An id the resource pack does not define is silent, with one warning per id.
@@ -73,7 +73,7 @@ namespace gf::fx {
 
 namespace {
 
-// Java vanilla particle types TF spawns -> Bedrock particle effects (best match; gf: effects are
+// Java vanilla particle types upstream spawns -> Bedrock particle effects (best match; gf: effects are
 // F10's own, in the mod's resource pack), with the molang
 // variables the effect reads (Bedrock's vanilla effects of 1.26.51; an effect that reads a variable
 // nobody set logs a content-log error per particle) and where Bedrock draws a Java type through a
@@ -168,10 +168,10 @@ std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
     };
     return m;
 }
-// Java vanilla sound events TF plays -> Bedrock sound names (best match; every name is one of the
-// game's sound_definitions of 1.26.51): the SoundEvents TF's code names, and the ones Java's own
-// classes play for TF's subclasses and damage, which the W0 kits play through gf::fx
-// (AbstractArrow's hits and pickup for TF's arrows, the DamageEffects sounds of a hurt player).
+// Java vanilla sound events upstream plays -> Bedrock sound names (best match; every name is one of the
+// game's sound_definitions of 1.26.51): the SoundEvents upstream's code names, and the ones Java's own
+// classes play for upstream's subclasses and damage, which the W0 kits play through gf::fx
+// (AbstractArrow's hits and pickup for upstream's arrows, the DamageEffects sounds of a hurt player).
 std::unordered_map<std::string, std::string> const& vanillaSounds() {
     static std::unordered_map<std::string, std::string> const m{
         {"block.anvil.land", "random.anvil_land"},
@@ -428,7 +428,7 @@ std::string resolveSound(std::string const& event) {
     if (event.rfind("minecraft:", 0) == 0 || event.find(':') == std::string::npos) {
         auto it = vanillaSounds().find(bare);
         if (it != vanillaSounds().end()) return it->second;
-        if (event.rfind("minecraft:", 0) != 0 && bare.find("twilightforest") == std::string::npos) return bare; // a Bedrock name
+        if (event.rfind("minecraft:", 0) != 0 && bare.find("gloamingforest") == std::string::npos) return bare; // a Bedrock name
     }
     warnOnce(k, "unknown sound event '" + event + "'");
     return {};

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:fiery_boots",
+      "identifier": "gloamingforest:fiery_boots",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:fiery_boots.name"
+        "value": "item.gloamingforest:fiery_boots.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

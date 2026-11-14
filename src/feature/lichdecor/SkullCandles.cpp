@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/AbstractSkullCandleBlock.java
-//   src/main/java/twilightforest/block/SkullCandleBlock.java
-//   src/main/java/twilightforest/block/WallSkullCandleBlock.java
-//   src/main/java/twilightforest/block/entity/SkullCandleBlockEntity.java
-//   src/main/java/twilightforest/components/item/SkullCandles.java
-//   src/main/java/twilightforest/item/SkullCandleItem.java
-//   src/main/java/twilightforest/events/EntityEvents.java (createSkullCandle, makeSkullCandle)
-//   src/main/java/twilightforest/block/LightableBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/AbstractSkullCandleBlock.java
+//   src/main/java/gloamingforest/block/SkullCandleBlock.java
+//   src/main/java/gloamingforest/block/WallSkullCandleBlock.java
+//   src/main/java/gloamingforest/block/entity/SkullCandleBlockEntity.java
+//   src/main/java/gloamingforest/components/item/SkullCandles.java
+//   src/main/java/gloamingforest/item/SkullCandleItem.java
+//   src/main/java/gloamingforest/events/EntityEvents.java (createSkullCandle, makeSkullCandle)
+//   src/main/java/gloamingforest/block/LightableBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U22 (lichdecor): the 12 skull candles. The block entity's candle colour (TF's CandleColors value)
+// U22 (lichdecor): the 12 skull candles. The block entity's candle colour (upstream's CandleColors value)
 // lives in BlockData ({"color": n}); rotation / facing, candle count and lighting are block states.
-// The items keep item data twilightforest:skull_candles ({"color": n, "count": n}, default {0, 1}).
+// The items keep item data gloamingforest:skull_candles ({"color": n, "count": n}, default {0, 1}).
 //
 // Bedrock notes: vanilla heads are the flattened head blocks (minecraft:zombie_head, ...) with
 // facing_direction (1 floor, 2..5 wall) and the floor rotation in the skull block actor (degrees,
@@ -48,8 +48,8 @@ namespace gf::feature::lichdecor::light {
 
 namespace {
 
-constexpr char kDataComponent[] = "twilightforest:skull_candles";
-constexpr char kStat[]          = "twilightforest:skull_candles_made";
+constexpr char kDataComponent[] = "gloamingforest:skull_candles";
+constexpr char kStat[]          = "gloamingforest:skull_candles_made";
 
 /// The six skull kinds and their vanilla head blocks (Bedrock ids; the same names as Java's).
 struct Kind {
@@ -61,7 +61,7 @@ constexpr Kind kKinds[] = {
     {"creeper", "minecraft:creeper_head"},   {"player", "minecraft:player_head"},      {"piglin", "minecraft:piglin_head"},
 };
 
-std::string candleBlock(std::string const& type, bool wall) { return "twilightforest:" + type + (wall ? "_wall_skull_candle" : "_skull_candle"); }
+std::string candleBlock(std::string const& type, bool wall) { return "gloamingforest:" + type + (wall ? "_wall_skull_candle" : "_skull_candle"); }
 
 char const* headOf(std::string const& type) {
     for (auto const& k : kKinds)
@@ -141,9 +141,9 @@ ia::Result createSkullCandle(ia::UseOnContext const& c) {
     int      rot    = 0;
     if (!wall)
         if (auto* sk = skullActor(*region, pos)) rot = rotation16Of(sk->mRotation);
-    Json states{{"twilightforest:lighting", "none"}, {"twilightforest:candles", 1}};
-    if (wall) states["twilightforest:facing"] = faceName(facing);
-    else states["twilightforest:rotation"] = rot;
+    Json states{{"gloamingforest:lighting", "none"}, {"gloamingforest:candles", 1}};
+    if (wall) states["gloamingforest:facing"] = faceName(facing);
+    else states["gloamingforest:rotation"] = rot;
     auto const* nb = game::blockWithStates(candleBlock(type, wall), states);
     if (!nb) return ia::Result::Pass; // the skull candle blocks are not in this build
     playSound(*region, centre(pos), "minecraft:block.candle.place", 1.0F, 1.0F);
@@ -211,14 +211,14 @@ ia::Result placeSkullCandleItem(ia::UseOnContext const& c, std::string const& ty
     auto data    = gf::item::getData(c.item, kDataComponent);
     int  color   = data.is_object() ? data.value("color", 0) : 0;
     int  count   = data.is_object() ? std::clamp(data.value("count", 1), 1, 4) : 1;
-    Json states{{"twilightforest:lighting", "none"}, {"twilightforest:candles", count}};
+    Json states{{"gloamingforest:lighting", "none"}, {"gloamingforest:candles", count}};
     std::string id;
     for (int dir : nearestLookingDirections(c.player)) {
         if (dir == 1) continue;
         if (dir == 0) {
             // SkullCandleBlock#getStateForPlacement: the rotation from the player's yaw
             float yaw = c.player.getRotation().y;
-            states["twilightforest:rotation"] = static_cast<int>(std::floor(yaw * 16.0F / 360.0F + 0.5F)) & 15;
+            states["gloamingforest:rotation"] = static_cast<int>(std::floor(yaw * 16.0F / 360.0F + 0.5F)) & 15;
             id = candleBlock(type, false);
             break;
         }
@@ -228,7 +228,7 @@ ia::Result placeSkullCandleItem(ia::UseOnContext const& c, std::string const& ty
         for (int d : nearestLookingDirections(c.player)) {
             if (d < 2) continue;
             if (!game::replaceable(*region, relative(*at, d))) {
-                states["twilightforest:facing"] = faceName(oppositeFace(d));
+                states["gloamingforest:facing"] = faceName(oppositeFace(d));
                 found                           = true;
                 break;
             }
@@ -287,8 +287,8 @@ void registerSkullCandles() {
     // AbstractSkullCandleBlock#getDrops: the vanilla head plus the candles, or under silk touch
     // the skull candle item with its candles
     gf::loot::addGlobalModifier("gf:lichdecor/skull_candle_drops", [](std::vector<ItemStack>& loot, gf::loot::LootContext const& ctx, std::string const& tableId) {
-        if (!ctx.region || !ctx.block || tableId.rfind("twilightforest:blocks/", 0) != 0) return;
-        auto kind = skullCandleKind("twilightforest:" + tableId.substr(22));
+        if (!ctx.region || !ctx.block || tableId.rfind("gloamingforest:blocks/", 0) != 0) return;
+        auto kind = skullCandleKind("gloamingforest:" + tableId.substr(22));
         if (!kind) return;
         auto const* head = headOf(kind->type);
         auto        skull = std::find_if(loot.begin(), loot.end(), [&](ItemStack const& s) { return game::items::idOf(s) == head; });

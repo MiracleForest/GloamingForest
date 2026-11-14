@@ -1,30 +1,30 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/BaseTFBoss.java
-//   src/main/java/twilightforest/entity/boss/IBossLootBuffer.java
-//   src/main/java/twilightforest/entity/boss/bar/ServerTFBossBar.java
-//   src/main/java/twilightforest/network/TFBossBarPacket.java
-//   src/main/java/twilightforest/network/UpdateDeathTimePacket.java
-//   src/main/java/twilightforest/block/entity/spawner/BossSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/NagaSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/LichSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/HydraSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/UrGhastSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/KnightPhantomSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/SnowQueenSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/MinoshroomSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/AlphaYetiSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/FinalBossSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerBlockEntity.java
-//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerLogic.java
-//   src/main/java/twilightforest/block/AbstractTrophyBlock.java
-//   src/main/java/twilightforest/enums/BossVariant.java
-//   src/main/java/twilightforest/components/entity/MultiplayerInclusivityAttachment.java
-//   src/main/java/twilightforest/events/EntityEvents.java
-//   src/main/java/twilightforest/util/entities/EntityUtil.java
-//   src/main/java/twilightforest/util/landmarks/LandmarkUtil.java
-//   src/main/java/twilightforest/config/TFConfig.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/BaseTFBoss.java
+//   src/main/java/gloamingforest/entity/boss/IBossLootBuffer.java
+//   src/main/java/gloamingforest/entity/boss/bar/ServerTFBossBar.java
+//   src/main/java/gloamingforest/network/TFBossBarPacket.java
+//   src/main/java/gloamingforest/network/UpdateDeathTimePacket.java
+//   src/main/java/gloamingforest/block/entity/spawner/BossSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/NagaSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/LichSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/HydraSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/UrGhastSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/KnightPhantomSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/SnowQueenSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/MinoshroomSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/AlphaYetiSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/FinalBossSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/SinisterSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/spawner/SinisterSpawnerLogic.java
+//   src/main/java/gloamingforest/block/AbstractTrophyBlock.java
+//   src/main/java/gloamingforest/enums/BossVariant.java
+//   src/main/java/gloamingforest/components/entity/MultiplayerInclusivityAttachment.java
+//   src/main/java/gloamingforest/events/EntityEvents.java
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java
+//   src/main/java/gloamingforest/util/landmarks/LandmarkUtil.java
+//   src/main/java/gloamingforest/config/TFConfig.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -42,7 +42,7 @@
 //     which removes a dead mob after 20 ticks, is held back for it); then the buffer goes into
 //     the death chest at EntityUtil#bossChestLocation (home.below(), replacing the floor block
 //     when a piston could move it) through gf::inventory or a vanilla container, with the chest
-//     sound and poof, and the engine removes the body. Every step a TF boss overrides
+//     sound and poof, and the engine removes the body. Every step an upstream boss overrides
 //     (shouldSpawnLoot, shouldCreateSpawner, postmortem, tickDeath, isDeathAnimationFinished,
 //     postRemoval, getDeathContainer, placeSpawner) is a gf::boss::ext::Lifecycle member.
 //   - Peaceful: the boss turns back into its spawner at home and disappears.
@@ -51,7 +51,7 @@
 //     (BlockSource::fetchBlocksInBox, one slice of the box per tick, a margin beyond the longest
 //     range so a spawner is known before a player gets in range) and ticked every level tick.
 //   - Multiplayer: health adjuster on spawn, qualified players (participants), config "bosses";
-//     for every type of twilightforest:multiplayer_inclusive_entities (EntityEvents).
+//     for every type of gloamingforest:multiplayer_inclusive_entities (EntityEvents).
 
 #include "feature/boss/Boss.h"
 #include "feature/boss/BossInternal.h"
@@ -171,10 +171,10 @@ constexpr int    kShortRange    = 9;    ///< BossSpawnerBlockEntity.SHORT_RANGE
 constexpr int    kLongRange     = 50;   ///< BossSpawnerBlockEntity.LONG_RANGE
 constexpr int    kScanMargin    = 16;   ///< spawners are found this far beyond their range
 constexpr int    kScanSlices    = 20;   ///< the scan box is covered in 20 slices, one per tick
-constexpr char const* kInclusiveTag = "twilightforest:multiplayer_inclusive_entities";
-constexpr char const* kSinisterBlock = "twilightforest:sinister_spawner";
+constexpr char const* kInclusiveTag = "gloamingforest:multiplayer_inclusive_entities";
+constexpr char const* kSinisterBlock = "gloamingforest:sinister_spawner";
 constexpr char const* kSinisterKey   = "sinister_spawner"; ///< the block data key (the block's path)
-constexpr char const* kCoronationCarpet = "twilightforest:coronation_carpet";
+constexpr char const* kCoronationCarpet = "gloamingforest:coronation_carpet";
 
 BossesConfig const& config() { return gf::config::get<BossesConfig>(); }
 
@@ -196,7 +196,7 @@ struct Bar {
 constexpr int kAudiencePeriod = 5; ///< ticks between two looks for a bar's viewers (startSeenByPlayer)
 
 /// A dying boss (BaseTFBoss#tickDeath). Its dead body stays in the level while the animation runs
-/// (deathHold keeps Bedrock's own 20-tick removal back). TF saves the dying boss with its chunk
+/// (deathHold keeps Bedrock's own 20-tick removal back). upstream saves the dying boss with its chunk
 /// (dyingInventory, deathTime) and finishes the death when the chunk loads again: while the body's
 /// chunk is not loaded the record waits; once the chunk is loaded and the body did not come back
 /// with it (kBodyGrace ticks), the death goes on without the body. The records are saved in the
@@ -374,7 +374,7 @@ void grantGroupAdvancement(Mob& mob) {
     if (q == S().qualified.end()) return;
     auto const& type = mob.getTypeName();
     for (auto pid : q->second)
-        if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", type}});
+        if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "gloamingforest:hurt_boss", {{"entity", type}});
 }
 
 /// EntityEvents#adjustEntityHealthInMultiplayerFights (FinalizeSpawnEvent).
@@ -405,8 +405,8 @@ void adjustHealth(Mob& mob) {
     auto* inst = attr.mInstance->mPtr;
     if (!inst) return;
     AttributeModifier mod(
-        mce::UUID::fromStringHash("twilightforest:group_health_boost"),
-        "twilightforest:group_health_boost",
+        mce::UUID::fromStringHash("gloamingforest:group_health_boost"),
+        "gloamingforest:group_health_boost",
         static_cast<float>(perPlayer * (n - 1)),
         AttributeModifierOperation::OperationAddition,
         AttributeOperands::OperandMax,
@@ -444,7 +444,7 @@ std::string const& barTitle(Mob& boss, Player const& viewer) {
     if (!fresh) return it->second;
     if (bar.name) return it->second = *bar.name;
     if (!boss.getNameTag().empty()) return it->second = boss.getNameTag();
-    // the type name ("entity.twilightforest.naga")
+    // the type name ("entity.gloamingforest.naga")
     std::string const& type = boss.getTypeName();
     auto               colon = type.find(':');
     std::string        ns    = colon == std::string::npos ? "minecraft" : type.substr(0, colon);
@@ -685,7 +685,7 @@ void celebrateAt(int dim, Vec3 const& at, fe::JavaRandom& random) {
     if (!region) return;
     auto& dimension = region->getDimension();
     float pitch     = (random.nextFloat() - random.nextFloat()) * 0.175F + 0.5F;
-    gf::fx::sound(dimension, "block.twilightforest.boss_chest.appear", at, 128.0F, pitch);
+    gf::fx::sound(dimension, "block.gloamingforest.boss_chest.appear", at, 128.0F, pitch);
     for (int i = 0; i < 40; ++i) {
         double x = (random.nextDouble() - 0.5) * 0.075 * i;
         double y = (random.nextDouble() - 0.5) * 0.075 * i;
@@ -703,12 +703,12 @@ Container* vanillaContainer(BlockSource& region, BlockPos const& pos) {
 
 /// getDeathContainer(random).defaultBlockState().setValue(ChestBlock.FACING,
 /// Direction.Plane.HORIZONTAL.getRandomDirection(random)): one draw over north, east, south, west.
-/// The facing state is the vanilla chest's minecraft:cardinal_direction or, on TF's chests (the
-/// block families' chest blocks: canopy, twilight oak, mangrove, dark), twilightforest:facing.
+/// The facing state is the vanilla chest's minecraft:cardinal_direction or, on upstream's chests (the
+/// block families' chest blocks: canopy, gloaming oak, mangrove, dark), gloamingforest:facing.
 Block const* chestState(std::string const& id, fe::JavaRandom& random) {
     static char const* const dirs[] = {"north", "east", "south", "west"};
     auto const*              dir    = dirs[random.nextInt(4)];
-    for (auto const* state : {"minecraft:cardinal_direction", "twilightforest:facing"})
+    for (auto const* state : {"minecraft:cardinal_direction", "gloamingforest:facing"})
         if (auto const* b = game::blockWithStates(id, {{state, dir}})) return b;
     return game::blockWith(id);
 }
@@ -734,7 +734,7 @@ bool fillContainer(core::GlobalPos const& gpos, std::vector<ItemStack> const& it
 /// BlockBehaviour#getPistonPushReaction() != PushReaction.BLOCK: a piston may push or break the
 /// block. Bedrock has no push reaction to read (its movable component's type ids are the game's),
 /// so the BLOCK blocks are: unbreakable ones (destroy speed < 0: bedrock, barrier, portals,
-/// end portal frame, force fields, ...), vanilla's BLOCK list and TF's (TFBlocks).
+/// end portal frame, force fields, ...), vanilla's BLOCK list and upstream's (TFBlocks).
 bool pistonMovable(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir()) return true;
@@ -745,22 +745,22 @@ bool pistonMovable(BlockSource& region, BlockPos const& pos) {
         "minecraft:portal", "minecraft:end_portal", "minecraft:end_gateway", "minecraft:end_portal_frame",
         "minecraft:moving_block", "minecraft:piston_arm_collision", "minecraft:sticky_piston_arm_collision",
         "minecraft:barrier", "minecraft:bedrock", "minecraft:border_block", "minecraft:allow", "minecraft:deny",
-        // TF (TFBlocks: .pushReaction(PushReaction.BLOCK))
-        "twilightforest:twilight_portal", "twilightforest:skull_chest", "twilightforest:keepsake_casket",
-        "twilightforest:stronghold_shield", "twilightforest:reappearing_block", "twilightforest:vanishing_block",
-        "twilightforest:locked_vanishing_block", "twilightforest:carminite_builder", "twilightforest:built_block",
-        "twilightforest:antibuilder", "twilightforest:antibuilt_block", "twilightforest:ghast_trap",
-        "twilightforest:carminite_reactor", "twilightforest:reactor_debris", "twilightforest:fake_gold",
-        "twilightforest:fake_diamond", "twilightforest:brown_thorns", "twilightforest:green_thorns",
-        "twilightforest:giant_cobblestone", "twilightforest:giant_log", "twilightforest:giant_leaves",
-        "twilightforest:giant_obsidian", "twilightforest:violet_force_field", "twilightforest:pink_force_field",
-        "twilightforest:orange_force_field", "twilightforest:green_force_field", "twilightforest:blue_force_field",
-        "twilightforest:yellow_castle_door", "twilightforest:violet_castle_door", "twilightforest:pink_castle_door",
-        "twilightforest:blue_castle_door",
+        // upstream (TFBlocks: .pushReaction(PushReaction.BLOCK))
+        "gloamingforest:gloaming_portal", "gloamingforest:skull_chest", "gloamingforest:keepsake_casket",
+        "gloamingforest:stronghold_shield", "gloamingforest:reappearing_block", "gloamingforest:vanishing_block",
+        "gloamingforest:locked_vanishing_block", "gloamingforest:carminite_builder", "gloamingforest:built_block",
+        "gloamingforest:antibuilder", "gloamingforest:antibuilt_block", "gloamingforest:ghast_trap",
+        "gloamingforest:carminite_reactor", "gloamingforest:reactor_debris", "gloamingforest:fake_gold",
+        "gloamingforest:fake_diamond", "gloamingforest:brown_thorns", "gloamingforest:green_thorns",
+        "gloamingforest:giant_cobblestone", "gloamingforest:giant_log", "gloamingforest:giant_leaves",
+        "gloamingforest:giant_obsidian", "gloamingforest:violet_force_field", "gloamingforest:pink_force_field",
+        "gloamingforest:orange_force_field", "gloamingforest:green_force_field", "gloamingforest:blue_force_field",
+        "gloamingforest:yellow_castle_door", "gloamingforest:violet_castle_door", "gloamingforest:pink_castle_door",
+        "gloamingforest:blue_castle_door",
     };
     auto id = game::blockId(block);
     if (blocked.contains(id)) return false;
-    if (id == "twilightforest:trophy_pedestal") {
+    if (id == "gloamingforest:trophy_pedestal") {
         // TrophyPedestalBlock: NORMAL once active, BLOCK before
         for (auto const& [name, value] : game::statesOf(block))
             if (name.ends_with("active")) return value == "true" || value == "1";
@@ -891,7 +891,7 @@ void tickFills() {
     if (changed) saveDeaths();
 }
 
-// ---- dying bosses in the world DB (TF saves them with their chunk) -------------------------------
+// ---- dying bosses in the world DB (upstream saves them with their chunk) -------------------------------
 
 Json toJson(Dying const& d) {
     Json home = d.home ? Json{d.home->dim, d.home->x, d.home->y, d.home->z} : Json();
@@ -1352,15 +1352,15 @@ struct SpawnerDefault {
 std::unordered_map<std::string, SpawnerDefault> const& spawnerDefaults() {
     static Json const redstone{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}};
     static std::unordered_map<std::string, SpawnerDefault> const m{
-        {"twilightforest:naga_boss_spawner",           {"twilightforest:naga", kLongRange, "minecraft:crit", SpawnerKind::Default, {}}                          },
-        {"twilightforest:lich_boss_spawner",           {"twilightforest:lich", kShortRange, "twilightforest:ominous_flame", SpawnerKind::Lich, {}}             },
-        {"twilightforest:hydra_boss_spawner",          {"twilightforest:hydra", kLongRange, "minecraft:flame", SpawnerKind::Default, {}}                        },
-        {"twilightforest:ur_ghast_boss_spawner",       {"twilightforest:ur_ghast", kShortRange, "minecraft:dust", SpawnerKind::AboveMinus4, redstone}          },
-        {"twilightforest:knight_phantom_boss_spawner", {"twilightforest:knight_phantom", kShortRange, "twilightforest:ominous_flame", SpawnerKind::KnightPhantoms, {}}},
-        {"twilightforest:snow_queen_boss_spawner",     {"twilightforest:snow_queen", kShortRange, "twilightforest:snow", SpawnerKind::AboveMinus4, {}}         },
-        {"twilightforest:minoshroom_boss_spawner",     {"twilightforest:minoshroom", kShortRange, "minecraft:crimson_spore", SpawnerKind::BelowPlus4, {}}       },
-        {"twilightforest:alpha_yeti_boss_spawner",     {"twilightforest:alpha_yeti", kShortRange, "minecraft:falling_water", SpawnerKind::AboveMinus4, {}}      },
-        {"twilightforest:final_boss_boss_spawner",     {"twilightforest:plateau_boss", kShortRange, "twilightforest:annihilate", SpawnerKind::Never, {}}        },
+        {"gloamingforest:naga_boss_spawner",           {"gloamingforest:naga", kLongRange, "minecraft:crit", SpawnerKind::Default, {}}                          },
+        {"gloamingforest:lich_boss_spawner",           {"gloamingforest:lich", kShortRange, "gloamingforest:ominous_flame", SpawnerKind::Lich, {}}             },
+        {"gloamingforest:hydra_boss_spawner",          {"gloamingforest:hydra", kLongRange, "minecraft:flame", SpawnerKind::Default, {}}                        },
+        {"gloamingforest:ur_ghast_boss_spawner",       {"gloamingforest:ur_ghast", kShortRange, "minecraft:dust", SpawnerKind::AboveMinus4, redstone}          },
+        {"gloamingforest:knight_phantom_boss_spawner", {"gloamingforest:knight_phantom", kShortRange, "gloamingforest:ominous_flame", SpawnerKind::KnightPhantoms, {}}},
+        {"gloamingforest:snow_queen_boss_spawner",     {"gloamingforest:snow_queen", kShortRange, "gloamingforest:snow", SpawnerKind::AboveMinus4, {}}         },
+        {"gloamingforest:minoshroom_boss_spawner",     {"gloamingforest:minoshroom", kShortRange, "minecraft:crimson_spore", SpawnerKind::BelowPlus4, {}}       },
+        {"gloamingforest:alpha_yeti_boss_spawner",     {"gloamingforest:alpha_yeti", kShortRange, "minecraft:falling_water", SpawnerKind::AboveMinus4, {}}      },
+        {"gloamingforest:final_boss_boss_spawner",     {"gloamingforest:plateau_boss", kShortRange, "gloamingforest:annihilate", SpawnerKind::Never, {}}        },
     };
     return m;
 }
@@ -1444,7 +1444,7 @@ bool spawnMyBoss(BlockSource& region, int dim, BlockPos const& pos, SpawnerSpec 
             Mob*   knight   = spawnBoss(region, spec.entityId, Vec3{float(rx), float(ry), float(rz)}, random.nextFloat() * 360.0F);
             if (!knight) continue;
             if (i == 5 && level() && level()->getDifficulty() == SharedTypes::Legacy::Difficulty::Hard)
-                if (auto shield = game::items::make("twilightforest:knightmetal_shield")) knight->setOffhandSlot(*shield);
+                if (auto shield = game::items::make("gloamingforest:knightmetal_shield")) knight->setOffhandSlot(*shield);
             setHome(*knight, pos);
             gf::entity::data(*knight, "knight_phantom:number") = i; // KnightPhantom#setNumber
             rt.spawned++;
@@ -1595,7 +1595,7 @@ bool noCollision(BlockSource& region, Vec3 const& at) {
 
 /// SpawnPlacements#checkSpawnRules for MobSpawnType.SPAWNER. A monster (Monster#
 /// checkMonsterSpawnRules) needs a difficulty and a dark spot (Monster#isDarkEnoughToSpawn with the
-/// dimension type's monster_spawn_block_light_limit / monster_spawn_light_level: the Twilight
+/// dimension type's monster_spawn_block_light_limit / monster_spawn_light_level: the Gloaming
 /// Forest 7 / uniform 0..7, the overworld and the End 0 / uniform 0..7, the Nether 15 / 7); a mob
 /// without placement rules spawns anywhere.
 bool spawnRulesAllow(BlockSource& region, BlockPos const& pos, bool monster, RandomSource& random) {
@@ -1608,7 +1608,7 @@ bool spawnRulesAllow(BlockSource& region, BlockPos const& pos, bool monster, Ran
     auto& dimension = region.getDimension();
     int   id        = static_cast<int>(dimension.getDimensionId());
     bool  nether    = id == 1;
-    int   limit     = nether ? 15 : gf::world::isTwilight(dimension) ? 7 : 0;
+    int   limit     = nether ? 15 : gf::world::isGloaming(dimension) ? 7 : 0;
     if (limit < 15 && block > limit) return false;
     // Level#getMaxLocalRawBrightness: the block light or the sky light darkened by the time of day
     int darken = dimension.mSkyDarken->mValue;
@@ -1832,9 +1832,9 @@ void writeBackSinister(core::GlobalPos const* only) {
 
 // ---- trophies (BossVariant) ------------------------------------------------------------------------
 
-/// The BossVariant name of a trophy block id ("twilightforest:naga_wall_trophy" -> "naga", wall).
+/// The BossVariant name of a trophy block id ("gloamingforest:naga_wall_trophy" -> "naga", wall).
 std::string trophyKey(std::string const& blockId, bool& wall) {
-    std::string key = blockId.starts_with("twilightforest:") ? blockId.substr(15) : blockId;
+    std::string key = blockId.starts_with("gloamingforest:") ? blockId.substr(15) : blockId;
     wall            = false;
     if (key.ends_with("_wall_trophy")) key = key.substr(0, key.size() - 12), wall = true;
     else if (key.ends_with("_trophy")) key = key.substr(0, key.size() - 7);
@@ -1847,17 +1847,17 @@ struct VariantRow {
 };
 std::vector<VariantRow> const& variants() {
     // AbstractTrophyBlock#playSound / #createParticle and TFBlocks' pedestal comparator strengths;
-    // the pitch is the base (TF adds nextFloat() * 0.1), wall trophies give no comparator signal
+    // the pitch is the base (upstream adds nextFloat() * 0.1), wall trophies give no comparator signal
     static std::vector<VariantRow> const rows{
-        {"naga",           {"entity.twilightforest.naga.rattle", 1.25F, 1.2F, "minecraft:crit", 5}                       },
-        {"lich",           {"entity.twilightforest.lich.ambient", 0.35F, 1.1F, "twilightforest:angry_lich", 6}           },
-        {"hydra",          {"entity.twilightforest.hydra.growl", 1.0F, 1.2F, "", 12}                                     },
-        {"ur_ghast",       {"entity.twilightforest.ur_ghast.ambient", 1.0F, 0.6F, "minecraft:dust", 13}                  },
-        {"knight_phantom", {"entity.twilightforest.knight_phantom.ambient", 1.0F, 1.1F, "minecraft:item", 8}             },
-        {"snow_queen",     {"entity.twilightforest.snow_queen.ambient", 1.0F, 0.9F, "twilightforest:snow_warning", 14}   },
-        {"minoshroom",     {"entity.twilightforest.minoshroom.ambient", 0.75F, 0.7F, "minecraft:block", 7}               },
-        {"alpha_yeti",     {"entity.twilightforest.alpha_yeti.growl", 0.75F, 0.75F, "minecraft:splash", 9}               },
-        {"quest_ram",      {"entity.twilightforest.quest_ram.ambient", 1.0F, 0.7F, "twilightforest:magic_effect", 1}     },
+        {"naga",           {"entity.gloamingforest.naga.rattle", 1.25F, 1.2F, "minecraft:crit", 5}                       },
+        {"lich",           {"entity.gloamingforest.lich.ambient", 0.35F, 1.1F, "gloamingforest:angry_lich", 6}           },
+        {"hydra",          {"entity.gloamingforest.hydra.growl", 1.0F, 1.2F, "", 12}                                     },
+        {"ur_ghast",       {"entity.gloamingforest.ur_ghast.ambient", 1.0F, 0.6F, "minecraft:dust", 13}                  },
+        {"knight_phantom", {"entity.gloamingforest.knight_phantom.ambient", 1.0F, 1.1F, "minecraft:item", 8}             },
+        {"snow_queen",     {"entity.gloamingforest.snow_queen.ambient", 1.0F, 0.9F, "gloamingforest:snow_warning", 14}   },
+        {"minoshroom",     {"entity.gloamingforest.minoshroom.ambient", 0.75F, 0.7F, "minecraft:block", 7}               },
+        {"alpha_yeti",     {"entity.gloamingforest.alpha_yeti.growl", 0.75F, 0.75F, "minecraft:splash", 9}               },
+        {"quest_ram",      {"entity.gloamingforest.quest_ram.ambient", 1.0F, 0.7F, "gloamingforest:magic_effect", 1}     },
         {"final_boss",     {"", 1.0F, 0.9F, "", 0}                                                                       },
     };
     return rows;
@@ -1867,7 +1867,7 @@ std::vector<VariantRow> const& variants() {
 } // namespace gf::feature::boss
 
 // BaseTFBoss#tickDeath / #isDeathAnimationFinished: Bedrock removes a dead mob after 20 ticks of its
-// death ticking system (ServerMobTickDeathSystemImpl, which also drops the XP); a dying TF boss
+// death ticking system (ServerMobTickDeathSystemImpl, which also drops the XP); a dying upstream boss
 // keeps its body until its own animation finished, then the engine's tick runs from 19 and removes
 // it (with the XP and the death particles).
 LL_STATIC_HOOK(
@@ -2009,7 +2009,7 @@ public:
                 if (auto const& s = dead.getEquippedSlot(slot); !game::items::isEmpty(s)) worn.insert(game::items::idOf(s));
             std::erase_if(drops, [&](ItemStack const& s) { return !worn.contains(game::items::idOf(s)); });
         });
-        // the default spawner logic of TF's ten BossSpawnerBlockEntity types (units may replace
+        // the default spawner logic of upstream's ten BossSpawnerBlockEntity types (units may replace
         // a spec with registerSpawner; the height conditions stay with the block id)
         for (auto const& [block, def] : spawnerDefaults()) {
             if (S().spawners.contains(block)) continue;
@@ -2082,7 +2082,7 @@ std::pair<std::string, std::string> deathChestFacingForTest(std::string const& b
     auto const*    chest = chestState(blockId, random);
     if (!chest) return {};
     for (auto const& [name, value] : game::statesOf(*chest))
-        if (name == "minecraft:cardinal_direction" || name == "twilightforest:facing") return {name, value};
+        if (name == "minecraft:cardinal_direction" || name == "gloamingforest:facing") return {name, value};
     return {};
 }
 void resetTestRecords() {
@@ -2349,8 +2349,8 @@ bool adjustsHealth() {
 }
 
 std::optional<RareSound> trophyRareSound(std::string const& blockId) {
-    if (blockId == "twilightforest:alpha_yeti_trophy" || blockId == "twilightforest:alpha_yeti_wall_trophy" || blockId == "alpha_yeti")
-        return RareSound{"entity.twilightforest.alpha_yeti.roar", 50};
+    if (blockId == "gloamingforest:alpha_yeti_trophy" || blockId == "gloamingforest:alpha_yeti_wall_trophy" || blockId == "alpha_yeti")
+        return RareSound{"entity.gloamingforest.alpha_yeti.roar", 50};
     return std::nullopt;
 }
 
@@ -2366,7 +2366,7 @@ std::optional<TrophyParticle> trophyParticle(std::string const& blockId, BlockSo
     if (key == "lich") out.count = 5;
     else if (key == "snow_queen") out.count = 20;
     if (key == "ur_ghast") out.params = {{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}}; // DustParticleOptions.REDSTONE
-    else if (key == "knight_phantom") out.params = {{"item", "twilightforest:knightmetal_sword"}};
+    else if (key == "knight_phantom") out.params = {{"item", "gloamingforest:knightmetal_sword"}};
     else if (key == "quest_ram") out.params = {{"color", "random"}};
     else if (key == "minoshroom") {
         // BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(pos.below()))

@@ -9,26 +9,26 @@
 //   light a renderer gets (what a renderer finds at entry, lightAt, setupLight); name tags
 //   (hideNameTag by type or predicate, showNameTag, nameTagHidden).
 // - tint: tints built on the game's own colours at the position (GameColors, GameTintFn).
-// - ui: textures in GUI pixels (TF's GUI skins), the item stacks of a ContainerScreen's slots, the
-//   hit tests of its slots and of the player inventory drawn inside a TF skin, an item's hover text.
+// - ui: textures in GUI pixels (upstream's GUI skins), the item stacks of a ContainerScreen's slots, the
+//   hit tests of its slots and of the player inventory drawn inside an upstream skin, an item's hover text.
 // - toast: literal lines (LiteralToastSpec: Java's Component.literal, e.g. F10's
-//   MissingAdvancementToast showing an advancement's title); TF's two toast styles
+//   MissingAdvancementToast showing an advancement's title); upstream's two toast styles
 //   (LockedBiomeToast, MissingAdvancementToast) and their colours;
 //   toasts are not drawn while the GUI is hidden (F1), as Java's ToastComponent; the frame texture;
 //   lookups by key or literal title (tests).
-// - hud::guiHidden: Java's options.hideGui for HUD layers (TF's overlays check it themselves).
+// - hud::guiHidden: Java's options.hideGui for HUD layers (upstream's overlays check it themselves).
 // - particles::spawn: runs a native particle factory; F12 connects the registry to F10's client
 //   handler of fx.particle (gf::fx::particle) through gf::fx::client::setNativeSink
 //   (feature/ext/combat/FxNative.h); what a factory gets from fx.particle and when the engine spawns
 //   the particle (molang variables).
-// - maps::setDecorations: TF map decorations drawn over a map (MagicMapPacket / MazeMapPacket data),
-//   with TF's two IMapDecorationRenderers (the conquered red X, the player icon on top) and the
+// - maps::setDecorations: upstream map decorations drawn over a map (MagicMapPacket / MazeMapPacket data),
+//   with upstream's two IMapDecorationRenderers (the conquered red X, the player icon on top) and the
 //   vanilla map icons.
-// - camera: what camera::shake does (TF's degrees) and its state (tests).
+// - camera: what camera::shake does (upstream's degrees) and its state (tests).
 // - keys: when registerKey must run (mod load) and what happens to a key registered later; the
 //   current binding of a key (the player's remapping in the controls).
 // - hud: hiding effect icons of the game's HUD effect list (Java's MobEffectInstance#showIcon false:
-//   TF's hidden effects and the carriers of custom effects).
+//   upstream's hidden effects and the carriers of custom effects).
 // - render: world text (Java's TextDisplay: billboarded text with a background, in the world).
 // - textures: every texture name these APIs take is a resource pack path without extension, or an
 //   absolute file path (with its extension), which is read from the disk (development fixtures).
@@ -62,7 +62,7 @@ namespace gf::client::tint {
 /// blended around the position as the game blends them for its own blocks (Java's
 /// BiomeColors.getAverageFoliageColor / getAverageGrassColor / getAverageWaterColor). Each is
 /// computed when asked. nullopt without a world (a tint asked outside a chunk mesh, e.g. selftests):
-/// TF then uses its colours without a world (FoliageColor.getDefaultColor, GrassColor.getDefaultColor).
+/// upstream then uses its colours without a world (FoliageColor.getDefaultColor, GrassColor.getDefaultColor).
 class GameColors {
 public:
     [[nodiscard]] virtual std::optional<unsigned> foliage() const = 0; ///< tint method "default_foliage"
@@ -72,7 +72,7 @@ public:
 protected:
     ~GameColors() = default;
 };
-/// A tint that builds on the game's colours at the position (TF's ColorHandler: CANOPY_COLORIZER of
+/// A tint that builds on the game's colours at the position (upstream's ColorHandler: CANOPY_COLORIZER of
 /// the biome foliage colour, the fiddlehead's grass colour, ...). Same threads and rules as TintFn;
 /// a later registration for the block (either kind) replaces the earlier one.
 using GameTintFn = std::function<unsigned(BlockPos const& pos, GameColors const& game)>;
@@ -122,7 +122,7 @@ void hideNameTag(std::string const& entityId, NameTagFn when = {});
 /// handle for showNameTag (0: `when` was empty, nothing registered).
 std::size_t hideNameTag(NameTagFn when);
 
-/// Armour hiding (TF's ArmorHooks#cancelArmorRendering / CancelElytraRenderingTransformer: the
+/// Armour hiding (upstream's ArmorHooks#cancelArmorRendering / CancelElytraRenderingTransformer: the
 /// emperor's cloth): whether the game draws `stack` worn in an armour slot (head, chest, legs, feet
 /// and the body slot of horses / wolves; the elytra is a chest item). Bedrock draws worn armour as
 /// attachables; the check is DataDrivenModel::shouldRenderAttachableOnActor, asked per worn stack and
@@ -150,7 +150,7 @@ struct ArmorChecks {
 };
 [[nodiscard]] ArmorChecks armorChecks();
 
-/// World text (Java's Display.TextDisplay as TF uses it: the final castle gazebo's "WIP" lines): text
+/// World text (Java's Display.TextDisplay as upstream uses it: the final castle gazebo's "WIP" lines): text
 /// with an optional background, billboarded or fixed, drawn with the game's font in the world.
 struct WorldText {
     enum class Billboard { Fixed, Vertical, Horizontal, Center };
@@ -283,7 +283,7 @@ namespace gf::client::ui {
 bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW = 256, float texH = 256);
 /// How a blit mixes with what is under it: Normal is alpha blending; Invert is Java's
 /// RenderSystem.blendFuncSeparate(ONE_MINUS_DST_COLOR, ONE_MINUS_SRC_COLOR, ONE, ZERO) of the
-/// crosshair (TF's QuestingRamIndicatorOverlay), Bedrock's own crosshair material "ui_crosshair"
+/// crosshair (upstream's QuestingRamIndicatorOverlay), Bedrock's own crosshair material "ui_crosshair"
 /// (OneMinusDestColor / OneMinusSrcColor): white texels invert the screen, black ones leave it.
 enum class Blend { Normal, Invert };
 /// blit with a blend mode (Invert always draws a textured mesh, whatever blitMethod says).
@@ -307,7 +307,7 @@ void setContainerItems(screen::ContainerScreen& screen, nlohmann::json const& it
 /// The container slot index (SlotPos::index) at panel pixels (mx, my), -1 for none.
 [[nodiscard]] int containerSlotAt(screen::ContainerScreen const& screen, float mx, float my);
 /// The player inventory slot (0..8 hotbar, 9..35 main) drawn inside the skin at panel pixels
-/// (mx, my), -1 for none. TF skins put the inventory at Java's (8, height - 82).
+/// (mx, my), -1 for none. upstream skins put the inventory at Java's (8, height - 82).
 [[nodiscard]] int skinInventorySlotAt(screen::ContainerScreen const& screen, float mx, float my);
 /// An item's full hover text as lines, as Java's getTooltipFromItem (name, then the game's lines:
 /// enchantments, lore, the lines of tooltip::add and of gf::item::addTooltip); empty for an empty
@@ -336,7 +336,7 @@ bool removeTooltips(std::string const& itemId);
 
 namespace gf::client::hud {
 /// Whether the player hid the GUI (F1; Java's options.hideGui). HUD layers are drawn either way, as
-/// in Java where each TF overlay checks hideGui itself (all but the portal overlay do).
+/// in Java where each upstream overlay checks hideGui itself (all but the portal overlay do).
 [[nodiscard]] bool guiHidden();
 
 /// One effect of the local player as the game's HUD effect list shows it (Bedrock's
@@ -366,7 +366,7 @@ namespace gf::client::toast {
 /// A toast with literal lines (Java's Component.literal; e.g. a name the server sent): each line is
 /// the literal text when it is set, else the spec's translation key translated on this client (the
 /// mod's strings, then the game's; an unknown key is shown as it is). Drawn as Java's ToastComponent
-/// draws TF's toasts (160 x 32, the icon at (6, 8), the title at (25, 7), the body at (25, 18)).
+/// draws upstream's toasts (160 x 32, the icon at (6, 8), the title at (25, 7), the body at (25, 18)).
 struct LiteralToastSpec {
     ToastSpec   spec;  ///< icon, keys (used for a line without literal text) and display time
     std::string title; ///< literal title, wins over spec.titleKey
@@ -377,7 +377,7 @@ struct Style {
     unsigned titleColor = 0xFFFFFF00; ///< LockedBiomeToast's title: -256
     unsigned bodyColor  = 0xFFFFFFFF;
 };
-/// TF's toasts: LockedBiomeToast (title -256, body white; the contract's show() draws this style)
+/// upstream's toasts: LockedBiomeToast (title -256, body white; the contract's show() draws this style)
 /// and MissingAdvancementToast (UPPER_TEXT 0xffffffff, the advancement title 0xffffff: white).
 /// Both are shown for 10 s (ToastSpec::ms = 10000).
 enum class Kind { LockedBiome, MissingAdvancement };
@@ -432,7 +432,7 @@ bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity,
 /// gaussian times the distance per axis, ServerLevel#sendParticles); false when no factory is
 /// registered (then F10 spawns the resource pack effect).
 bool spawnFromFx(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params);
-/// TF's 29 particle ids (declared at load) and whether each has a factory.
+/// upstream's 29 particle ids (declared at load) and whether each has a factory.
 [[nodiscard]] std::vector<std::pair<std::string, bool>> declared();
 /// Removes the factory of `particleId` (fixtures and selftests); false when there was none.
 bool unregisterNative(std::string const& particleId);
@@ -449,22 +449,22 @@ bool unregisterNative(std::string const& particleId);
 } // namespace gf::client::particles
 
 namespace gf::client::maps {
-/// Extra (TF) decorations drawn over map `mapId` with the icons of `setIcon`; replaces the
+/// Extra (upstream) decorations drawn over map `mapId` with the icons of `setIcon`; replaces the
 /// previous list (an empty list removes it). Map pixels -128..127 as MapItemSavedData. Drawn on top
 /// of held maps (first person) and maps in item frames (there only the decorations that show on item
 /// frames, DecorationStyle::onFrame), as Java's MapRenderer: an 8 x 8 map pixel
 /// quad at (x / 2 + 64, z / 2 + 64) turned by rotation * 22.5 degrees, in the map space the game
 /// uses when it looks the map up (MapRenderer::_getMapInstance inside the first-person pass, an
 /// item in hand or an item frame; MapRenderer::render itself cannot be hooked, spike S5).
-/// `Decoration::name` is kept (view()) but not drawn on the map: TF's map decorations
+/// `Decoration::name` is kept (view()) but not drawn on the map: upstream's map decorations
 /// (TFMagicMapData, TFMazeMapData) carry no names.
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations);
-/// The TF decorations of `mapId` (empty: none).
+/// The upstream decorations of `mapId` (empty: none).
 [[nodiscard]] std::vector<Decoration> decorationsOf(std::int64_t mapId);
 /// The texture registered for a decoration type ("" for none).
 [[nodiscard]] std::string iconOf(std::string const& decorationType);
 
-/// TF's IMapDecorationRenderers for one decoration (Java draws them only on TFMagicMapData; the caller
+/// upstream's IMapDecorationRenderers for one decoration (Java draws them only on TFMagicMapData; the caller
 /// sets them for magic maps).
 struct DecorationStyle {
     /// ConqueredMapIconRenderer (structure icons of conquered landmarks): the icon is drawn and the
@@ -481,10 +481,10 @@ struct DecorationStyle {
 };
 /// Java's showOnItemFrame of a decoration type: false for the vanilla player markers
 /// (MapDecorationTypes PLAYER, RED_MARKER, BLUE_MARKER, PLAYER_OFF_MAP, PLAYER_OFF_LIMITS: by Java
-/// name or as "minecraft:<index>" 0, 2, 3, 6, 13), true for every other type (TF's 15 TFMapDecorations
+/// name or as "minecraft:<index>" 0, 2, 3, 6, 13), true for every other type (upstream's 15 TFMapDecorations
 /// register true).
 [[nodiscard]] bool showOnItemFrame(std::string const& decorationType);
-/// Whether map `mapId` has TF decorations (one lock, no copy: the render thread asks for every map it
+/// Whether map `mapId` has upstream decorations (one lock, no copy: the render thread asks for every map it
 /// draws).
 [[nodiscard]] bool hasDecorations(std::int64_t mapId);
 /// The decorations of `mapId` with their styles (one entry per decoration), as one immutable snapshot
@@ -516,10 +516,10 @@ bool removeIcon(std::string const& decorationType);
 } // namespace gf::client::maps
 
 namespace gf::client::camera {
-// camera::shake(intensity, ticks) is TF's visible screen shake (ClientGameEvents, beanstalk
+// camera::shake(intensity, ticks) is upstream's visible screen shake (ClientGameEvents, beanstalk
 // rumbling): for `ticks` client ticks the local player's yaw moves by (r - 0.5) * intensity and
 // its pitch by (r * 2.5 - 1.25) * intensity degrees (r uniform 0..1, a new r each), so intensity is
-// in TF's units (the beanstalk passes 1 - distance^2 / 256). TF's ComputeCameraAngles jitter never
+// in upstream's units (the beanstalk passes 1 - distance^2 / 256). upstream's ComputeCameraAngles jitter never
 // runs: its tick handler zeroes shakeIntensity right after moving the player. A call while a shake
 // runs keeps it going for max(remaining, ticks) ticks at the latest intensity. Off with the client
 // config's screenShakingEffect.

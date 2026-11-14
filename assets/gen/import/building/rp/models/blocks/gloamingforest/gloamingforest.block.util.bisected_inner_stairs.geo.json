@@ -1,0 +1,116 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.util.bisected_inner_stairs",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 8, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "side"
+                },
+                "east": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "side"
+                },
+                "south": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "side"
+                },
+                "west": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "side"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "middle"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [-8, 8, -8],
+              "size": [8, 8, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [8, 8],
+                  "material_instance": "side"
+                },
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 8],
+                  "material_instance": "side"
+                },
+                "south": {
+                  "uv": [8, 0],
+                  "uv_size": [8, 8],
+                  "material_instance": "side"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 8],
+                  "material_instance": "side"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-8, -16],
+                  "material_instance": "end"
+                }
+              }
+            },
+            {
+              "origin": [0, 8, 0],
+              "size": [8, 8, 8],
+              "uv": {
+                "north": {
+                  "uv": [8, 0],
+                  "uv_size": [8, 8],
+                  "material_instance": "side"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [8, 8],
+                  "material_instance": "side"
+                },
+                "west": {
+                  "uv": [8, 0],
+                  "uv_size": [8, 8],
+                  "material_instance": "side"
+                },
+                "up": {
+                  "uv": [8, 16],
+                  "uv_size": [-8, -8],
+                  "material_instance": "end"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 # bricks' placement, the rope (support, the one-tick decay dropping one rope per strand, the rope
 # item extending a chain), the iron ladder (placement, left / right, breaking without support), the
 # knightmetal / fiery / arctic fur blocks, the banner pattern recipes, every stonecutting recipe of
-# the unit, every block's hardness / explosion resistance / tool / tier (Appendix A), and TF's banner
+# the unit, every block's hardness / explosion resistance / tool / tier (Appendix A), and upstream's banner
 # patterns (registered, unlocked by their items, the loom's result banner, placed banners, and a real
 # loom craft: the bytes of a client's CraftLoom request read and validated by the server).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
@@ -17,11 +17,11 @@ $mark = Get-LogMark
 $r = Invoke-SelfTest 'building.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) building selftest(s) failed" }
 if ($r.Pass -lt 14) { throw "expected at least 14 building selftests to pass, got $($r.Pass)" }
-if (-not (Get-ServerLog -Since 0 | Select-String -Pattern 'building: 9 banner patterns registered' -Quiet)) { throw 'TF banner patterns were not registered at load' }
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: trophy twilightforest:hydra_trophy sounds entity\.twilightforest\.hydra\.growl' -Quiet)) {
+if (-not (Get-ServerLog -Since 0 | Select-String -Pattern 'building: 9 banner patterns registered' -Quiet)) { throw 'upstream banner patterns were not registered at load' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: trophy gloamingforest:hydra_trophy sounds entity\.gloamingforest\.hydra\.growl' -Quiet)) {
     throw 'the powered / clicked hydra trophy played no sound'
 }
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: dispenser put twilightforest:minoshroom_trophy on' -Quiet)) { throw 'the dispenser did not equip the trophy' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: dispenser put gloamingforest:minoshroom_trophy on' -Quiet)) { throw 'the dispenser did not equip the trophy' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: rope at .* broke' -Quiet)) { throw 'no rope broke without support' }
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: the server''s loom crafted a banner with tf_naga' -Quiet)) { throw 'the server did not craft a TF banner from a loom request' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: the server''s loom crafted a banner with tf_naga' -Quiet)) { throw 'the server did not craft an upstream banner from a loom request' }
 Write-Step "building selftests: pass=$($r.Pass)"

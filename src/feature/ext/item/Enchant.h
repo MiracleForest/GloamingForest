@@ -6,11 +6,11 @@
 // - Flags: Java 1.21 has no treasure / tradeable / discoverable fields on an enchantment; they are
 //   the vanilla enchantment tags #minecraft:treasure, #minecraft:tradeable and
 //   #minecraft:in_enchanting_table. So Spec's `treasure`, `tradeable` and `discoverable` are read
-//   from those tags for every spec, the data's and an owner's registerType alike (TF 4.8 puts none
+//   from those tags for every spec, the data's and an owner's registerType alike (upstream 4.8 puts none
 //   of its four enchantments in any of them: the enchanting table never offers them). An owner that
 //   wants other flags than its tags give sets them here; they win over the tags and the Spec.
 // - Vanilla clients and the anvil: a vanilla client previews the anvil itself and offers no result
-//   for a merge whose second item brings custom enchantments only (an enchanted book of TF's from
+//   for a merge whose second item brings custom enchantments only (an enchanted book of upstream's from
 //   loot): the server's anvil merge never runs. Their fallback is the anvil form: a vanilla player
 //   who uses an anvil holding an enchanted book whose enchantments are all custom gets a form of the
 //   items in their inventory the book can go on (it shows when the client's own anvil screen, which

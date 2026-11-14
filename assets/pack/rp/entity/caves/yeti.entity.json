@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:yeti",
+      "identifier": "gloamingforest:yeti",
       "materials": { "default": "entity_alphatest" },
-      "textures": { "default": "textures/twilightforest/entity/yeti2" },
-      "geometry": { "default": "geometry.twilightforest.yeti" },
+      "textures": { "default": "textures/gloamingforest/entity/yeti2" },
+      "geometry": { "default": "geometry.gloamingforest.yeti" },
       "render_controllers": ["controller.render.default"],
-      "animations": { "setup": "animation.twilightforest.yeti.setup" },
+      "animations": { "setup": "animation.gloamingforest.yeti.setup" },
       "scripts": { "animate": ["setup"] },
       "spawn_egg": { "base_color": "#dedede", "overlay_color": "#4675bb" }
     }

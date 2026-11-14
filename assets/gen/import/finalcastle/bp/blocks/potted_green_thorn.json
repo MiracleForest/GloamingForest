@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:potted_green_thorn",
+      "identifier": "gloamingforest:potted_green_thorn",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.potted_thorn_template",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.potted_thorn_template",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_flower_pot",

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "gloamingforest:giant_cobblestone"
+    },
+    "X": {
+      "item": "gloamingforest:giant_log"
+    }
+  },
+  "pattern": [
+    "###",
+    " X ",
+    " X "
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:giant_pickaxe"
+  }
+}

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:alpha_yeti_fur",
+      "identifier": "gloamingforest:alpha_yeti_fur",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:alpha_yeti_fur.name"
+        "value": "item.gloamingforest:alpha_yeti_fur.name"
       }
     }
   }

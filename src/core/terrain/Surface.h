@@ -1,23 +1,23 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/registration/surface_rules/TFSurfaceRules.java
-//   src/main/java/twilightforest/world/components/chunkblanketing/CanopyBlanketProcessor.java
-//   src/main/java/twilightforest/world/components/chunkblanketing/GlacierBlanketProcessor.java
-//   src/main/java/twilightforest/world/components/chunkblanketing/ChunkBlanketProcessor.java
-//   src/main/java/twilightforest/init/custom/ChunkBlanketProcessors.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/registration/surface_rules/TFSurfaceRules.java
+//   src/main/java/gloamingforest/world/components/chunkblanketing/CanopyBlanketProcessor.java
+//   src/main/java/gloamingforest/world/components/chunkblanketing/GlacierBlanketProcessor.java
+//   src/main/java/gloamingforest/world/components/chunkblanketing/ChunkBlanketProcessor.java
+//   src/main/java/gloamingforest/init/custom/ChunkBlanketProcessors.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U2 (terrain): the generator of the Twilight Forest without the game (pure C++, gf-core), so the
+// U2 (terrain): the generator of the Gloaming Forest without the game (pure C++, gf-core), so the
 // gtests run exactly what the game runs:
 //   - Grid: one chunk's blocks as codes (air, the default block, the default fluid, another
 //     solid, another fluid, then named blocks of a BlockTable);
 //   - SurfaceRules: Minecraft 1.21.1's SurfaceSystem#buildSurface / #topMaterial with the
-//     SurfaceRules sources TF's noise settings use (sequence, condition, block; conditions
+//     SurfaceRules sources upstream's noise settings use (sequence, condition, block; conditions
 //     biome, stone_depth, water, y_above, noise_threshold, vertical_gradient, not, hole);
-//   - Blankets: TF's chunk blanket processors (canopy, glacier) from their registry JSON;
+//   - Blankets: upstream's chunk blanket processors (canopy, glacier) from their registry JSON;
 //   - Generator: the noise settings (NoiseBasedChunkGenerator#doFill, #getBaseHeight) tying the
 //     density graph, the surface and the blankets together.
 
@@ -38,7 +38,7 @@ namespace gf::core::terrain {
 namespace code {
 inline constexpr std::uint16_t Air          = 0;
 inline constexpr std::uint16_t DefaultBlock = 1; ///< the settings' default block (stone)
-inline constexpr std::uint16_t Water        = 2; ///< water (the default fluid of twilight_noise_gen)
+inline constexpr std::uint16_t Water        = 2; ///< water (the default fluid of gloaming_noise_gen)
 inline constexpr std::uint16_t OtherSolid   = 3; ///< any other non-air, non-fluid block
 inline constexpr std::uint16_t Lava         = 4; ///< any other fluid
 inline constexpr std::uint16_t FirstNamed   = 16;
@@ -122,8 +122,8 @@ private:
 class Blankets {
 public:
     struct Processor {
-        std::string              id;   ///< registry entry ("twilightforest:dark_forest_canopy")
-        std::string              type; ///< "twilightforest:canopy" / "twilightforest:glacier"
+        std::string              id;   ///< registry entry ("gloamingforest:dark_forest_canopy")
+        std::string              type; ///< "gloamingforest:canopy" / "gloamingforest:glacier"
         std::vector<std::string> biomes;
         std::vector<std::string> avoidStructures; ///< canopy
         std::uint16_t            block = code::Air, top = code::Air; ///< canopy block / glacier body, glacier top

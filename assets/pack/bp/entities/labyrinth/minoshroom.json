@@ -2,18 +2,18 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:minoshroom",
+      "identifier": "gloamingforest:minoshroom",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:charging": { "type": "bool", "default": false, "client_sync": true },
-        "twilightforest:ground_attack": { "type": "bool", "default": false, "client_sync": true },
-        "twilightforest:ground_charge": { "type": "int", "range": [0, 64], "default": 0, "client_sync": true }
+        "gloamingforest:charging": { "type": "bool", "default": false, "client_sync": true },
+        "gloamingforest:ground_attack": { "type": "bool", "default": false, "client_sync": true },
+        "gloamingforest:ground_charge": { "type": "int", "range": [0, 64], "default": 0, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "minoshroom", "boss", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "minoshroom", "boss", "monster", "mob"] },
       "minecraft:collision_box": { "width": 1.49, "height": 2.5 },
       "minecraft:health": { "value": 120, "max": 120 },
       "minecraft:attack": { "damage": 2 },

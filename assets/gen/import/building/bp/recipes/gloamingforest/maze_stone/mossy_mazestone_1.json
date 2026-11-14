@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:maze_stone/mossy_mazestone_1"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:moss_block"
+      },
+      {
+        "item": "gloamingforest:mazestone_brick"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:mazestone_brick"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mossy_mazestone"
+    }
+  }
+}

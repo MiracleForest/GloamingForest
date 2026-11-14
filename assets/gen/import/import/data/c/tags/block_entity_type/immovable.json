@@ -1,15 +1,15 @@
 {
   "values": [
-    "twilightforest:antibuilder",
-    "twilightforest:beanstalk_grower",
-    "twilightforest:naga_spawner",
-    "twilightforest:lich_spawner",
-    "twilightforest:minoshroom_spawner",
-    "twilightforest:hydra_boss_spawner",
-    "twilightforest:knight_phantom_spawner",
-    "twilightforest:tower_boss_spawner",
-    "twilightforest:alpha_yeti_spawner",
-    "twilightforest:snow_queen_spawner",
-    "twilightforest:final_boss_spawner"
+    "gloamingforest:antibuilder",
+    "gloamingforest:beanstalk_grower",
+    "gloamingforest:naga_spawner",
+    "gloamingforest:lich_spawner",
+    "gloamingforest:minoshroom_spawner",
+    "gloamingforest:hydra_boss_spawner",
+    "gloamingforest:knight_phantom_spawner",
+    "gloamingforest:tower_boss_spawner",
+    "gloamingforest:alpha_yeti_spawner",
+    "gloamingforest:snow_queen_spawner",
+    "gloamingforest:final_boss_spawner"
   ]
 }

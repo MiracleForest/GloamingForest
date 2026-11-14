@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/overlay/PortalOverlay.java
-//   src/main/java/twilightforest/client/event/OverlayHandler.java (portal_overlay layer)
-//   src/main/java/twilightforest/components/entity/TFPortalAttachment.java (client side)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/overlay/PortalOverlay.java
+//   src/main/java/gloamingforest/client/event/OverlayHandler.java (portal_overlay layer)
+//   src/main/java/gloamingforest/components/entity/TFPortalAttachment.java (client side)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Client build only. The local player's portal timer (TFPortalAttachment on the client: up 1 a
-// tick inside a Twilight portal, down 2 outside, at most 60), the full-screen portal overlay drawn
+// tick inside a Gloaming portal, down 2 outside, at most 60), the full-screen portal overlay drawn
 // above everything with alpha timer / 60 (a HUD layer of gf::client::hud; the sprite is drawn by
 // the contract extension feature/ext/dimension/HudSprite.h), and the screen closing while inside a
 // portal. The client tells the server that it draws the overlay itself ("dimension.client"), so the
@@ -44,8 +44,8 @@ namespace gf::client::dimension {
 namespace {
 
 constexpr int  kMaxTicks      = 60; // TFPortalAttachment.MAX_TICKS
-constexpr char kPortalBlock[] = "twilightforest:twilight_portal";
-/// The twilight_portal block's particle texture (minecraft:block/nether_portal), as the resource
+constexpr char kPortalBlock[] = "gloamingforest:gloaming_portal";
+/// The gloaming_portal block's particle texture (minecraft:block/nether_portal), as the resource
 /// pack has it: the portal block's own texture (atlas tile "portal").
 constexpr char kPortalSprite[] = "textures/blocks/portal";
 
@@ -67,7 +67,7 @@ bool portalAt(BlockSource& region, BlockPos const& p) {
 }
 
 bool openPortalAt(BlockSource& region, BlockPos const& p) {
-    return portalAt(region, p) && game::intState(region.getBlock(p), "twilightforest:is_one_way").value_or(0) == 0;
+    return portalAt(region, p) && game::intState(region.getBlock(p), "gloamingforest:is_one_way").value_or(0) == 0;
 }
 
 /// TFPortalAttachment#tick on the client (entityInside sets "inside" for the tick).

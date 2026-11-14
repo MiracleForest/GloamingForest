@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #include "core/terrain/WorldPreset.h"
 
 #include <cstdint>
@@ -82,9 +82,9 @@ RingProbe probeRings(std::span<std::array<int, 2> const> centres, int radius, st
     return r;
 }
 
-PresetChoice choosePreset(std::optional<bool> stored, bool savedTwilightChunks, int provisional, bool configured) {
+PresetChoice choosePreset(std::optional<bool> stored, bool savedGloamingChunks, int provisional, bool configured) {
     if (stored) return {*stored, PresetSource::Stored};
-    if (savedTwilightChunks) return {false, PresetSource::SavedChunks};
+    if (savedGloamingChunks) return {false, PresetSource::SavedChunks};
     if (provisional >= 0) return {provisional == 1, PresetSource::Provisional};
     return {configured, PresetSource::Config};
 }

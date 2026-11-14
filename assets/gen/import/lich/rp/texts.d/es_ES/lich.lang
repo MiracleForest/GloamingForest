@@ -1,6 +1,6 @@
-entity.twilightforest.lich=Liche
-entity.twilightforest.lich_minion=Liche Minion
-entity.twilightforest.rising_zombie=Zombi
-entity.twilightforest:lich.name=Liche
-entity.twilightforest:lich_minion.name=Liche Minion
-entity.twilightforest:rising_zombie.name=Zombi
+entity.gloamingforest.lich=Liche
+entity.gloamingforest.lich_minion=Liche Minion
+entity.gloamingforest.rising_zombie=Zombi
+entity.gloamingforest:lich.name=Liche
+entity.gloamingforest:lich_minion.name=Liche Minion
+entity.gloamingforest:rising_zombie.name=Zombi

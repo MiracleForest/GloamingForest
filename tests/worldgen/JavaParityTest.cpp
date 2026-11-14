@@ -111,7 +111,7 @@ std::map<std::string, std::string> cppLines() {
         add(s.str());
         std::ostringstream h;
         h << "hash";
-        for (char const* t : {"", "octave_-3", "minecraft:offset", "twilightforest:dark_forest", "\xe6\x97\xa5\xe6\x9c\xac"})
+        for (char const* t : {"", "octave_-3", "minecraft:offset", "example:dark_forest", "\xe6\x97\xa5\xe6\x9c\xac"})
             h << " " << jrand::javaStringHash(t);
         add(h.str());
         std::ostringstream lg;

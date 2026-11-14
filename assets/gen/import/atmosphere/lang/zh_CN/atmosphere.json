@@ -1,6 +1,6 @@
 {
-  "config.twilightforest.aurora_biomes": "极光着色生物群系",
-  "config.twilightforest.aurora_biomes.button": "编辑生物群系",
-  "config.twilightforest.aurora_biomes.tooltip": "定义哪些生物群系会出现极光的着色效果。留空此列表来禁用此效果。",
-  "subtitles.twilightforest.environment.acid_rain": "酸雨：腐蚀"
+  "config.gloamingforest.aurora_biomes": "极光着色生物群系",
+  "config.gloamingforest.aurora_biomes.button": "编辑生物群系",
+  "config.gloamingforest.aurora_biomes.tooltip": "定义哪些生物群系会出现极光的着色效果。留空此列表来禁用此效果。",
+  "subtitles.gloamingforest.environment.acid_rain": "酸雨：腐蚀"
 }

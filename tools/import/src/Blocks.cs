@@ -1,4 +1,4 @@
-// GloamingForest import tool (contract "import", unit F1): the 523 TF blocks as Bedrock behaviour-pack
+// GloamingForest import tool (contract "import", unit F1): the 523 upstream blocks as Bedrock behaviour-pack
 // blocks (frozen states, permutations from the Java blockstates, geometry and material instances from
 // the Java models, hardness / light / map colour from TFBlocks), RP block sounds, the block geometry
 // files and docs/spec/blockstates.md.
@@ -14,7 +14,7 @@ namespace GfImport
     public sealed class BState
     {
         public string Java;          // "facing"
-        public string Bedrock;       // "twilightforest:facing"
+        public string Bedrock;       // "gloamingforest:facing"
         public string Type;          // bool | int | enum
         public List<string> Values = new List<string>();
         public string Source;        // blockstate | class
@@ -72,12 +72,12 @@ namespace GfImport
             JBlocks = Java.Blocks(this);
             JItems = Java.Items(this);
             JEntities = Java.Entities(this);
-            Tabs = Java.CreativeTabs(this, JBlocks, JItems, Ids("spawn_egg").Select(x => x.Substring("twilightforest:".Length)));
+            Tabs = Java.CreativeTabs(this, JBlocks, JItems, Ids("spawn_egg").Select(x => x.Substring("gloamingforest:".Length)));
             var inTabs = new HashSet<string>(Tabs.SelectMany(t => t.Items), StringComparer.Ordinal);
-            string bsDir = Path.Combine(GenRes, "assets", "twilightforest", "blockstates");
+            string bsDir = Path.Combine(GenRes, "assets", "gloamingforest", "blockstates");
             foreach (var full in Ids("block"))
             {
-                string id = full.Substring("twilightforest:".Length);
+                string id = full.Substring("gloamingforest:".Length);
                 var bi = new BlockInfo { Id = id, Owner = OwnerOf("block", full) };
                 JBlock jb;
                 if (!JBlocks.TryGetValue(id, out jb)) { Warn("block " + id + " not found in TFBlocks.java"); jb = new JBlock { Id = id, Cls = "Block" }; }
@@ -92,7 +92,7 @@ namespace GfImport
 
         void CollectStates(BlockInfo bi, J bs)
         {
-            // the values TF's blockstate file uses (a second, independent source: TF's datagen output)
+            // the values upstream's blockstate file uses (a second, independent source: upstream's datagen output)
             var used = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             Action<string, string> use = (p, v) =>
             {
@@ -136,8 +136,8 @@ namespace GfImport
             foreach (var jp in props)
             {
                 if (DroppedStates.Contains(jp.Name)) continue;
-                var st = new BState { Java = jp.Name, Bedrock = "twilightforest:" + jp.Name, Type = jp.Type, Source = used.ContainsKey(jp.Name) ? "blockstate" : "class" };
-                // a boolean lists TF's default first: Bedrock's default is the first listed value (checked in game by
+                var st = new BState { Java = jp.Name, Bedrock = "gloamingforest:" + jp.Name, Type = jp.Type, Source = used.ContainsKey(jp.Name) ? "blockstate" : "class" };
+                // a boolean lists upstream's default first: Bedrock's default is the first listed value (checked in game by
                 // import.bool_defaults)
                 if (jp.Type == "bool") st.Values = jp.Default == "true" ? new List<string> { "true", "false" } : new List<string> { "false", "true" };
                 else if (jp.Type == "int")
@@ -148,7 +148,7 @@ namespace GfImport
                 }
                 else
                 {
-                    // the first value is the Bedrock default: TF's registerDefaultState value, else the conventional
+                    // the first value is the Bedrock default: upstream's registerDefaultState value, else the conventional
                     // order of the shared vanilla names (facing north, axis y, ...), else Java's declaration order
                     string[] pref;
                     if (!PreferredOrder.TryGetValue(jp.Name, out pref)) pref = new string[0];
@@ -334,10 +334,10 @@ namespace GfImport
 
         public void ImportBlocks()
         {
-            string bsDir = Path.Combine(GenRes, "assets", "twilightforest", "blockstates");
+            string bsDir = Path.Combine(GenRes, "assets", "gloamingforest", "blockstates");
             foreach (var bi in BlockInfos.Values)
             {
-                string full = "twilightforest:" + bi.Id;
+                string full = "gloamingforest:" + bi.Id;
                 var bs = File.Exists(Path.Combine(bsDir, bi.Id + ".json")) ? ReadJson(Path.Combine(bsDir, bi.Id + ".json")) : null;
                 var desc = J.Obj().Set("identifier", full);
                 desc.Set("menu_category", J.Obj().Set("category", bi.InCatalog ? CatalogCategory(full) : "none"));
@@ -395,7 +395,7 @@ namespace GfImport
                 var mapColor = MapColorOf(bi);
                 string hex = mapColor == null && jb.MapColor != null ? MapColorHex(bi, jb.MapColor) : null;
                 if (hex != null) comps.Set("minecraft:map_color", hex);
-                // flammability: only the blocks TF registers with FireBlock.setFlammable (encouragement = Bedrock's
+                // flammability: only the blocks upstream registers with FireBlock.setFlammable (encouragement = Bedrock's
                 // catch chance, flammability = its destroy chance)
                 if (jb.FireEncouragement >= 0)
                     comps.Set("minecraft:flammable", J.Obj().Set("catch_chance_modifier", jb.FireEncouragement).Set("destroy_chance_modifier", jb.FireFlammability));
@@ -485,7 +485,7 @@ namespace GfImport
                         i++;
                     }
                     bi.Particle = particle;
-                    string geoId = "geometry.tf.twilightforest.block." + bi.Id + ".multipart";
+                    string geoId = "geometry.tf.gloamingforest.block." + bi.Id + ".multipart";
                     geometries[geoId] = Models.GeometryFile(geoId, bones);
                     geometryUsers[geoId] = new SortedSet<string>(StringComparer.Ordinal) { bi.Owner };
                     string rm = firstModel != null ? RenderMethod(firstModel, allTex.Distinct()) : "opaque";
@@ -536,7 +536,7 @@ namespace GfImport
             {
                 string owner = SharedOwner(geometryUsers[kv.Key]);
                 string file = kv.Key.Substring("geometry.tf.".Length);
-                EmitJson("models", owner, "rp/models/blocks/twilightforest/" + file + ".geo.json", kv.Value);
+                EmitJson("models", owner, "rp/models/blocks/gloamingforest/" + file + ".geo.json", kv.Value);
             }
             ImportSoundTypes();
             if (RuntimeBehaviour.Count > 0)
@@ -599,13 +599,13 @@ namespace GfImport
 
         /// <summary>Bedrock stores a fifth of a JSON block's explosion_resistance (measured on 1.26.51: 3 -> 0.6, 50 -> 10,
         /// 6000 -> 1200), and its vanilla blocks at Java's values (stone 6, oak planks 3, obsidian 1200): the JSON value
-        /// is Java's resistance x 5, so a TF block resists as the vanilla block of the same Java resistance.</summary>
+        /// is Java's resistance x 5, so an upstream block resists as the vanilla block of the same Java resistance.</summary>
         public const double ExplosionJsonPerJava = 5;
 
         /// <summary>Java's explosion resistance as minecraft:destructible_by_explosion: false from 3600000 (Java's
         /// "indestructible" value, Float.MAX_VALUE included), else the resistance x ExplosionJsonPerJava (0 explodes at
         /// once). Java's explosions do not look at the hardness, so an unbreakable block with a low resistance
-        /// (twilight_portal) still explodes.</summary>
+        /// (gloaming_portal) still explodes.</summary>
         public static J ExplosionComponent(double resistance)
         {
             if (resistance >= 3600000) return J.Bool(false);
@@ -653,7 +653,7 @@ namespace GfImport
         {
             var c = new Element { From = e.From, To = e.To, RotOrigin = e.RotOrigin, RotAxis = e.RotAxis, RotAngle = e.RotAngle, Rescale = e.Rescale };
             foreach (var f in e.Faces)
-                c.Faces.Add(new Face { Dir = f.Dir, Uv = f.Uv, Rotation = f.Rotation, TintIndex = f.TintIndex, Tex = m.Resolve(f.Tex) ?? "twilightforest:missing" });
+                c.Faces.Add(new Face { Dir = f.Dir, Uv = f.Uv, Rotation = f.Rotation, TintIndex = f.TintIndex, Tex = m.Resolve(f.Tex) ?? "gloamingforest:missing" });
             return c;
         }
 
@@ -663,29 +663,29 @@ namespace GfImport
         {
             var sb = new StringBuilder();
             sb.Append("# Block states (frozen)\n\n");
-            sb.Append("Generated by `tools/import/run.ps1` (F1) from TF 4.8 (`9e40a757`): the Bedrock block states of every TF block. Rule R1: these\n");
+            sb.Append("Generated by `tools/import/run.ps1` (F1) from upstream 4.8 (`9e40a757`): the Bedrock block states of every upstream block. Rule R1: these\n");
             sb.Append("names and values are frozen; later units may only **add** states (or values), never rename or remove one.\n\n");
             sb.Append("Mapping rules (see [import.md](import.md)):\n\n");
-            sb.Append("- The properties are TF's own: every property the block's Java class chain declares in `createBlockStateDefinition`\n");
-            sb.Append("  (`builder.add(...)` of each TF class, following `super` calls, then the full property set of the vanilla class it\n");
-            sb.Append("  extends) becomes the Bedrock state `twilightforest:p` with the Java property's values (`IntegerProperty` ranges,\n");
+            sb.Append("- The properties are upstream's own: every property the block's Java class chain declares in `createBlockStateDefinition`\n");
+            sb.Append("  (`builder.add(...)` of each upstream class, following `super` calls, then the full property set of the vanilla class it\n");
+            sb.Append("  extends) becomes the Bedrock state `gloamingforest:p` with the Java property's values (`IntegerProperty` ranges,\n");
             sb.Append("  every constant of an `EnumProperty`'s enum). The import checks them against a hand-written golden\n");
-            sb.Append("  (`tools/import/expected-states.json`) and against the values TF's blockstate file uses.\n");
-            sb.Append("- The first listed value of a state is its Bedrock default. Booleans list TF's default first: `[false, true]`, or\n");
-            sb.Append("  `[true, false]` where TF's default is `true` (`registerDefaultState`, else Java's `StateDefinition.any()`, which\n");
+            sb.Append("  (`tools/import/expected-states.json`) and against the values upstream's blockstate file uses.\n");
+            sb.Append("- The first listed value of a state is its Bedrock default. Booleans list upstream's default first: `[false, true]`, or\n");
+            sb.Append("  `[true, false]` where upstream's default is `true` (`registerDefaultState`, else Java's `StateDefinition.any()`, which\n");
             sb.Append("  makes an unset boolean `true`: trophies `powered`, `HugeMushroomBlock` faces, rope `y`, ...); the selftest\n");
             sb.Append("  `import.bool_defaults` checks in game that Bedrock 1.26.51 defaults such a state to `true`.\n");
             sb.Append("- Integer properties are listed as `[0, 1, ..., max]` (Bedrock reads an integer state by its position, so the list\n");
             sb.Append("  always starts at 0); the Java value equals the Bedrock value, and values below the Java minimum (for example\n");
-            sb.Append("  `distance` 0, `candles` 0) are unused. An integer's Bedrock default is therefore `0`: where TF's default differs,\n");
-            sb.Append("  the column *Java default* lists TF's value, and the owner sets it wherever TF uses `defaultBlockState()`\n");
+            sb.Append("  `distance` 0, `candles` 0) are unused. An integer's Bedrock default is therefore `0`: where upstream's default differs,\n");
+            sb.Append("  the column *Java default* lists upstream's value, and the owner sets it wherever upstream uses `defaultBlockState()`\n");
             sb.Append("  (placement, world generation, structures).\n");
-            sb.Append("- Enum values keep Java's names. The first value is the default state: TF's default (`registerDefaultState`), else\n");
+            sb.Append("- Enum values keep Java's names. The first value is the default state: upstream's default (`registerDefaultState`), else\n");
             sb.Append("  the conventional order of the shared vanilla names (`facing` north, `axis` y, ...), else Java's declaration order.\n");
             sb.Append("- `waterlogged` is not a block state on Bedrock (water is a separate liquid layer): it is dropped.\n");
             sb.Append("- No placement traits (`minecraft:placement_direction` / `placement_position`) are used: the families kit (F11)\n");
-            sb.Append("  and the owning units set the states on placement, exactly as TF's `getStateForPlacement`.\n");
-            sb.Append("- Source `blockstate`: the property appears in TF's blockstate file; `class`: only the Java class declares it\n");
+            sb.Append("  and the owning units set the states on placement, exactly as upstream's `getStateForPlacement`.\n");
+            sb.Append("- Source `blockstate`: the property appears in upstream's blockstate file; `class`: only the Java class declares it\n");
             sb.Append("  (block entity renderers, vanilla bases such as `LeavesBlock`: `distance`, `persistent`).\n\n");
             long total = BlockInfos.Values.Sum(b => b.Permutations);
             sb.AppendFormat(CultureInfo.InvariantCulture, "{0} blocks, {1} with states, {2} permutations in total.\n\n", BlockInfos.Count, BlockInfos.Values.Count(b => b.States.Count > 0), total);
@@ -694,12 +694,12 @@ namespace GfImport
             {
                 string states = bi.States.Count == 0 ? "-" : string.Join("<br>", bi.States.Select(s =>
                     "`" + s.Bedrock + "`: " + string.Join(", ", s.Values) + (s.Source == "class" ? " (class)" : "")));
-                // TF's default where it is not the Bedrock default (the first value)
+                // upstream's default where it is not the Bedrock default (the first value)
                 var differs = bi.States.Select(s => new { s, j = bi.JavaProps.FirstOrDefault(p => p.Name == s.Java) })
                     .Where(x => x.j != null && x.j.Default != null && x.j.Default != x.s.Values[0])
                     .Select(x => "`" + x.s.Java + "=" + x.j.Default + "`").ToList();
                 string cls = bi.Chain.Count > 1 ? bi.Chain[0] + " < " + bi.Chain.Last() : bi.Chain.FirstOrDefault() ?? "?";
-                sb.AppendFormat(CultureInfo.InvariantCulture, "| `twilightforest:{0}` | {1} | {2} | {3} | {4} | {5} |\n", bi.Id, bi.Owner, cls, states,
+                sb.AppendFormat(CultureInfo.InvariantCulture, "| `gloamingforest:{0}` | {1} | {2} | {3} | {4} | {5} |\n", bi.Id, bi.Owner, cls, states,
                     differs.Count == 0 ? "-" : string.Join("<br>", differs), bi.Permutations);
             }
             return sb.ToString();
@@ -708,12 +708,12 @@ namespace GfImport
         // ---- tables -------------------------------------------------------------------------------------
 
         /// <summary>The Bedrock block sound of a Java sound type: a vanilla SoundType's closest engine type (SoundMap), or
-        /// for one of TF's own ("TFSoundTypes.JAR") the pack's sound type twilightforest.jar (ImportSoundTypes).</summary>
+        /// for one of upstream's own ("TFSoundTypes.JAR") the pack's sound type gloamingforest.jar (ImportSoundTypes).</summary>
         string BedrockSound(string javaSound)
         {
             string s;
             Java.SoundTypeInfo tf;
-            if (TfSoundType(javaSound, out tf)) return "twilightforest." + tf.Name.ToLowerInvariant();
+            if (TfSoundType(javaSound, out tf)) return "gloamingforest." + tf.Name.ToLowerInvariant();
             if (javaSound != null && javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
                 Warn("Java sound type " + javaSound + " is not a sound type of TFSoundTypes.java: stone used");
             else if (SoundMap.TryGetValue(javaSound ?? "STONE", out s)) return s;
@@ -732,14 +732,14 @@ namespace GfImport
             return tfSoundTypes.TryGetValue(javaSound.Substring("TFSoundTypes.".Length), out type);
         }
 
-        /// <summary>TF's own sound types (TFSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
+        /// <summary>upstream's own sound types (TFSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
         /// (rp/sounds.json.d/import-<unit>.json, merged by assemble per id): block_sounds (break, place, hit) and
         /// interactive_sounds (step, fall), each with F3's sound event and the volume and pitch Java plays it at for a
         /// SoundType of volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place;
         /// hit: (v + 1) / 8 at p * 0.5, MultiPlayerGameMode; step: v * 0.15 at p, Entity.playStepSound; fall: v * 0.5 at
         /// p * 0.75, LivingEntity.playBlockFallSound, only with fall damage). Bedrock's jump and land events have no Java
         /// counterpart (Java plays no block sound for a jump, nor for a landing without fall damage): both are written
-        /// silent ("", as the "default" event), so no fallback of the engine plays a sound TF does not. One file per
+        /// silent ("", as the "default" event), so no fallback of the engine plays a sound upstream does not. One file per
         /// owner of the blocks using the type (F1 when several units do). Checked against the hand-written soundTypes of
         /// tools/import/expected-behaviour.json (Checks.CheckSoundTypes).</summary>
         void ImportSoundTypes()
@@ -748,7 +748,7 @@ namespace GfImport
             foreach (var kv in soundTypeUsers)
             {
                 var t = tfSoundTypes[kv.Key];
-                string id = "twilightforest." + t.Name.ToLowerInvariant();
+                string id = "gloamingforest." + t.Name.ToLowerInvariant();
                 string owner = SharedOwner(kv.Value);
                 J doc;
                 if (!perOwner.TryGetValue(owner, out doc))
@@ -766,7 +766,7 @@ namespace GfImport
                     .Set("fall", ev(t.Fall, v * 0.5, p * 0.75))
                     .Set("jump", "")
                     .Set("land", "")));
-                Log.Add("TF sound type TFSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
+                Log.Add("upstream sound type TFSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
             }
             foreach (var kv in perOwner)
                 EmitJson("blockstates", kv.Key, "rp/sounds.json.d/import-" + NameOf(kv.Key) + ".json", kv.Value);

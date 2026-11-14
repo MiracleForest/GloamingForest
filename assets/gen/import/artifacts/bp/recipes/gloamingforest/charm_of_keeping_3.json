@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:charm_of_keeping_3"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:charm_of_keeping_2"
+      },
+      {
+        "item": "gloamingforest:charm_of_keeping_2"
+      },
+      {
+        "item": "gloamingforest:charm_of_keeping_2"
+      },
+      {
+        "item": "gloamingforest:charm_of_keeping_2"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:charm_of_keeping_2"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:charm_of_keeping_3"
+    }
+  }
+}

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:carminite",
+      "identifier": "gloamingforest:carminite",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:carminite.name"
+        "value": "item.gloamingforest:carminite.name"
       },
       "minecraft:tags": {
         "tags": ["c:gems", "c:gems/carminite"]

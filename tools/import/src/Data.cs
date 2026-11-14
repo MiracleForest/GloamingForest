@@ -1,6 +1,6 @@
-// GloamingForest import tool (contract "import", unit F1): TF's data (LGPL datagen output and
+// GloamingForest import tool (contract "import", unit F1): upstream's data (LGPL datagen output and
 // hand-written data): tags, loot tables and modifiers, recipes, advancements, worldgen, dimension,
-// twilight/* registries, data maps, banner patterns, damage types, jukebox songs, trim materials,
+// gloaming/* registries, data maps, banner patterns, damage types, jukebox songs, trim materials,
 // enchantments and functions, copied into data/<namespace>/** of the owning unit (Java format, kept by
 // id for the runtime contracts: loot, recipes, tags, data maps, landmarks, ...).
 using System;
@@ -42,7 +42,7 @@ namespace GfImport
                     }
                 case "dimension": return Tuple.Create("worldgen", OwnerOf("dimension", id));
                 case "dimension_type": return Tuple.Create("worldgen", OwnerOf("dimension_type", id));
-                case "twilight":
+                case "gloaming":
                     {
                         string treg = p[1];
                         string eid = ns + ":" + StripExt(string.Join("/", p.Skip(2)));
@@ -56,7 +56,7 @@ namespace GfImport
             }
         }
 
-        // TF data the port does not carry: compat-only content (deviations in docs/spec/units.json)
+        // upstream data the port does not carry: compat-only content (deviations in docs/spec/units.json)
         static readonly string[] SkippedData = { "curios/", "museumexhibits/" };
 
         public void ImportData(HashSet<string> kinds)
@@ -109,7 +109,7 @@ namespace GfImport
         static readonly string[] VanillaWoods = { "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "crimson", "warped", "mangrove", "bamboo", "cherry" };
         static readonly string[] DyeColors = { "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black" };
 
-        // NeoForge / vanilla tags TF's recipes rely on, which TF's data only extends (members as on Java 1.21.1)
+        // NeoForge / vanilla tags upstream's recipes rely on, which upstream's data only extends (members as on Java 1.21.1)
         public static readonly Dictionary<string, string[]> BaseItemTags = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             { "c:rods/wooden", new[] { "minecraft:stick" } },
@@ -132,7 +132,7 @@ namespace GfImport
             { "c:storage_blocks/iron", new[] { "minecraft:iron_block" } },
             { "c:chests/wooden", new[] { "minecraft:chest", "minecraft:trapped_chest" } },
             { "c:chests/trapped", new[] { "minecraft:trapped_chest" } },
-            // vanilla item tags TF's recipe advancements unlock by (same item names on Bedrock); "#x" includes tag x
+            // vanilla item tags upstream's recipe advancements unlock by (same item names on Bedrock); "#x" includes tag x
             { "minecraft:boats", new[] { "minecraft:oak_boat", "minecraft:spruce_boat", "minecraft:birch_boat", "minecraft:jungle_boat", "minecraft:acacia_boat",
                 "minecraft:dark_oak_boat", "minecraft:mangrove_boat", "minecraft:bamboo_raft", "minecraft:cherry_boat", "#minecraft:chest_boats" } },
             { "minecraft:chest_boats", new[] { "minecraft:oak_chest_boat", "minecraft:spruce_chest_boat", "minecraft:birch_chest_boat", "minecraft:jungle_chest_boat",
@@ -151,9 +151,9 @@ namespace GfImport
         };
 
         // The vanilla block tags (Minecraft 1.21.1, data/minecraft/tags/block) the tool tags reach through other tags,
-        // with only their tag references: TF's blocks join them through TF's own files for the referenced tags
-        // (TF adds its planks to #minecraft:planks, which #minecraft:mineable/axe includes, ...). Vanilla blocks are
-        // not listed (the import only places TF blocks).
+        // with only their tag references: upstream's blocks join them through upstream's own files for the referenced tags
+        // (upstream adds its planks to #minecraft:planks, which #minecraft:mineable/axe includes, ...). Vanilla blocks are
+        // not listed (the import only places upstream blocks).
         public static readonly Dictionary<string, string[]> BaseBlockTagRefs = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             { "minecraft:mineable/axe", new[] { "minecraft:banners", "minecraft:fence_gates", "minecraft:logs", "minecraft:planks", "minecraft:saplings",
@@ -202,7 +202,7 @@ namespace GfImport
             return res.Distinct().ToList();
         }
 
-        /// <summary>The TF items each item tag (of every namespace) contains: item id -> tags.</summary>
+        /// <summary>The upstream items each item tag (of every namespace) contains: item id -> tags.</summary>
         public void ComputeItemTags()
         {
             foreach (var res in new[] { GenRes, MainRes })
@@ -217,8 +217,8 @@ namespace GfImport
                         string tag = ns + ":" + StripExt(rel);
                         foreach (var m in TagMembers(tag))
                         {
-                            if (!m.StartsWith("twilightforest:", StringComparison.Ordinal)) continue;
-                            string id = m.Substring("twilightforest:".Length);
+                            if (!m.StartsWith("gloamingforest:", StringComparison.Ordinal)) continue;
+                            string id = m.Substring("gloamingforest:".Length);
                             SortedSet<string> s;
                             if (!ItemTags.TryGetValue(id, out s)) ItemTags[id] = s = new SortedSet<string>(StringComparer.Ordinal);
                             s.Add(tag);

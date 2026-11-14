@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:fiery_block",
+      "identifier": "gloamingforest:fiery_block",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -16,7 +16,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:iron_tier_destructible"],
       "minecraft:map_color": "#251610",
-      "minecraft:geometry": "geometry.twilightforest.building.fiery_block",
+      "minecraft:geometry": "geometry.gloamingforest.building.fiery_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_fiery_block",

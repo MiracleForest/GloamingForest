@@ -3,12 +3,12 @@
 // Contract "client.input+movement", client side (header owned by F0, implemented by F12).
 // Client build only; the server half is feature/movement/Movement.h.
 //
-// Key bindings (TF's 4 keybinds: red_thread_vision, item_display_map_cycle, zoom, swap_hotbar;
+// Key bindings (upstream's 4 keybinds: red_thread_vision, item_display_map_cycle, zoom, swap_hotbar;
 // keyboard defaults only, touch and controller players use item-use fallbacks) and the local
 // player's movement hook (client-authoritative movement: double jump, glide, step up, water
 // walk...). Units never hook LocalPlayer movement (rule R8).
 //
-//     gf::client::keys::registerKey("tgear.zoom", 'Z', "key.categories.twilightforest.travellers_gear", onZoom, onZoomEnd);
+//     gf::client::keys::registerKey("tgear.zoom", 'Z', "key.categories.gloamingforest.travellers_gear", onZoom, onZoomEnd);
 //     gf::client::movement::onLocalTick(0, [](gf::client::movement::MoveState& s) { ... });
 
 #ifdef GF_CLIENT

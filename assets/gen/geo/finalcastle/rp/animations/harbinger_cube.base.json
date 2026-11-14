@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.harbinger_cube.base": {
+    "animation.gloamingforest.harbinger_cube.base": {
       "loop": true,
       "bones": {
         "head": {

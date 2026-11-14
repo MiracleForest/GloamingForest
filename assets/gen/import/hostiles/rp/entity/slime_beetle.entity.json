@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:slime_beetle",
+      "identifier": "gloamingforest:slime_beetle",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/slimebeetle"
+        "default": "textures/gloamingforest/entity/slimebeetle"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.slime_beetle"

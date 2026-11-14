@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U9 (artifacts): selftests (artifacts.*, testPos dx 900-999, rule R12). docs/spec/artifacts.md 5.
 #include <cmath>
 #include <string>
@@ -91,9 +91,9 @@ struct ConfigScope {
 
 } // namespace
 
-// Scepter durabilities (TF: 99, 99, 9, 9), the charge tooltip and hurtButDontBreak.
+// Scepter durabilities (upstream: 99, 99, 9, 9), the charge tooltip and hurtButDontBreak.
 GF_REGISTER_SELFTEST("artifacts.scepter_durability", [](Context& ctx) {
-    std::pair<char const*, int> const want[] = {{kTwilightScepter, 99}, {kLifedrainScepter, 99}, {kZombieScepter, 9}, {kFortificationScepter, 9}};
+    std::pair<char const*, int> const want[] = {{kGloamingScepter, 99}, {kLifedrainScepter, 99}, {kZombieScepter, 9}, {kFortificationScepter, 9}};
     for (auto [id, n] : want) {
         auto s = make(id);
         ctx.require(!items::isEmpty(s), std::string("the item exists: ") + id);
@@ -103,8 +103,8 @@ GF_REGISTER_SELFTEST("artifacts.scepter_durability", [](Context& ctx) {
     }
 });
 
-// TwilightWandBolt: a bolt shot at a mob deals 6 twilight_scepter damage.
-GF_REGISTER_SELFTEST("artifacts.twilight_bolt", [](Context& ctx) -> ll::coro::CoroTask<> {
+// GloamingWandBolt: a bolt shot at a mob deals 6 gloaming_scepter damage.
+GF_REGISTER_SELFTEST("artifacts.gloaming_bolt", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy;
     co_await ctx.flatArea(900, 16);
     auto  c      = ctx.testPos(906, 2);
@@ -211,19 +211,19 @@ GF_REGISTER_SELFTEST("artifacts.loyal_zombie", [](Context& ctx) -> ll::coro::Cor
 });
 
 // FortificationShieldAttachment: 5 temporary shields absorb hits (one per invulnerability window),
-// expire after 240 ticks, count tf_shields_broken; /twilightforest shield; give_3_shields.
+// expire after 240 ticks, count tf_shields_broken; /gloamingforest shield; give_3_shields.
 GF_REGISTER_SELFTEST("artifacts.shields", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto& p = ctx.player();
     setShields(p, 0, true);
     setShields(p, 0, false);
     setShields(p, 5, true);
     ctx.check(shieldsOf(p).left() == 5, "5 temporary shields");
-    long long stat = gf::stats::value(p, "twilightforest:tf_shields_broken");
+    long long stat = gf::stats::value(p, "gloamingforest:tf_shields_broken");
     int       hp   = p.getHealth();
     bool      ok   = gf::combat::hurt(p, 4.0f, "minecraft:generic");
     ctx.check(!ok && p.getHealth() == hp, "the hit was absorbed");
     ctx.check(shieldsOf(p).left() == 4, "one shield broke (" + std::to_string(shieldsOf(p).left()) + ")");
-    ctx.check(gf::stats::value(p, "twilightforest:tf_shields_broken") == stat + 1, "tf_shields_broken counted");
+    ctx.check(gf::stats::value(p, "gloamingforest:tf_shields_broken") == stat + 1, "tf_shields_broken counted");
     (void)gf::combat::hurt(p, 4.0f, "minecraft:generic");
     ctx.check(shieldsOf(ctx.player()).left() == 4, "a hit inside the invulnerability window breaks none");
     co_await ctx.ticks(245);
@@ -231,11 +231,11 @@ GF_REGISTER_SELFTEST("artifacts.shields", [](Context& ctx) -> ll::coro::CoroTask
     setShields(ctx.player(), 0, true);
     // the subcommand (by name) and the function
     auto name = ctx.player().getRealName();
-    auto r    = gf::selftest::runServerCommand("twilightforest shield \"" + name + "\" add 2 false");
-    ctx.check(static_cast<bool>(r), "/twilightforest shield runs");
+    auto r    = gf::selftest::runServerCommand("gloamingforest shield \"" + name + "\" add 2 false");
+    ctx.check(static_cast<bool>(r), "/gloamingforest shield runs");
     ctx.check(shieldsOf(ctx.player()).permanent == 2, "2 permanent shields added (" + std::to_string(shieldsOf(ctx.player()).permanent) + ")");
     int runs = ext::give3ShieldsRuns();
-    auto f   = gf::selftest::runServerCommand("execute as \"" + name + "\" at @s run function twilightforest/give_3_shields");
+    auto f   = gf::selftest::runServerCommand("execute as \"" + name + "\" at @s run function gloamingforest/give_3_shields");
     ctx.check(static_cast<bool>(f), "the function runs");
     ctx.check(ext::give3ShieldsRuns() == runs + 1 && shieldsOf(ctx.player()).permanent == 5, "give_3_shields added 3 permanent shields");
     setShields(ctx.player(), 0, false);
@@ -345,7 +345,7 @@ GF_REGISTER_SELFTEST("artifacts.casket", [](Context& ctx) -> ll::coro::CoroTask<
     // a charm of keeping III repairs a damaged casket one level
     auto gpos = game::globalPos(*region, *casket);
     auto states = game::statesOf(region->getBlock(*casket));
-    Json j{{"twilightforest:facing", states["twilightforest:facing"]}, {"twilightforest:multilogged", "air"}, {"twilightforest:damage", 2}};
+    Json j{{"gloamingforest:facing", states["gloamingforest:facing"]}, {"gloamingforest:multilogged", "air"}, {"gloamingforest:damage", 2}};
     game::setBlock(*region, *casket, *game::blockWithStates(kCasket, j));
     auto& player = ctx.player();
     player.setSelectedItem(make(kKeeping3));
@@ -353,7 +353,7 @@ GF_REGISTER_SELFTEST("artifacts.casket", [](Context& ctx) -> ll::coro::CoroTask<
     std::string itemId = kKeeping3, blockId = kCasket;
     ia::UseOnContext uc{player, held, itemId, region->getBlock(*casket), blockId, gpos, 1, {0.5, 1.0, 0.5}, false, true};
     (void)ia::dispatchUseOn(uc);
-    ctx.check(game::intState(region->getBlock(*casket), "twilightforest:damage").value_or(-1) == 1, "repaired to damage 1");
+    ctx.check(game::intState(region->getBlock(*casket), "gloamingforest:damage").value_or(-1) == 1, "repaired to damage 1");
     player.setSelectedItem(items::empty());
     ctx.cleanupBlock(gpos);
 });
@@ -416,13 +416,13 @@ GF_REGISTER_SELFTEST("artifacts.pocket_watch", [](Context& ctx) -> ll::coro::Cor
 // The four custom recipes and the cloth washing.
 GF_REGISTER_SELFTEST("artifacts.recipes", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(scepterRepairs().size() == 4, "4 scepter repair recipes loaded (" + std::to_string(scepterRepairs().size()) + ")");
-    ItemStack scepter = make(kTwilightScepter);
+    ItemStack scepter = make(kGloamingScepter);
     for (int i = 0; i < 20; ++i) hurtButDontBreak(scepter, 1);
     ItemStack pearl = make("minecraft:ender_pearl");
-    auto      out   = test::craft("scepter", {&scepter, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter");
+    auto      out   = test::craft("scepter", {&scepter, &pearl, &pearl}, "gloamingforest:equipment/gloaming_scepter");
     ctx.check(out && out->getDamageValue() == 2, "two pearls restore 18 charges");
-    ctx.check(test::craft("scepter", {&scepter, &pearl, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter").has_value(), "a third pearl tops it up");
-    ctx.check(!test::craft("scepter", {&scepter, &pearl, &pearl, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter"), "a fourth pearl would overshoot by a whole pearl");
+    ctx.check(test::craft("scepter", {&scepter, &pearl, &pearl, &pearl}, "gloamingforest:equipment/gloaming_scepter").has_value(), "a third pearl tops it up");
+    ctx.check(!test::craft("scepter", {&scepter, &pearl, &pearl, &pearl, &pearl}, "gloamingforest:equipment/gloaming_scepter"), "a fourth pearl would overshoot by a whole pearl");
     ItemStack essence = make(kEssence);
     auto      full    = test::craft("essence", {&essence, &scepter});
     ctx.check(full && full->getDamageValue() == 0, "an essence repairs fully");
@@ -435,7 +435,7 @@ GF_REGISTER_SELFTEST("artifacts.recipes", [](Context& ctx) -> ll::coro::CoroTask
     ItemStack cloth  = make(kEmperorsCloth);
     auto      clothed = test::craft("cloth", {&cloth, &helmet});
     ctx.require(clothed && hasCloth(*clothed), "the cloth goes on a helmet");
-    ctx.check(items::getData(*clothed, "twilightforest:emperors_cloth").is_object(), "as TF's twilightforest:emperors_cloth component (the key U7's no-template smithing writes)");
+    ctx.check(items::getData(*clothed, "gloamingforest:emperors_cloth").is_object(), "as upstream's gloamingforest:emperors_cloth component (the key U7's no-template smithing writes)");
     ItemStack legacy = make("minecraft:iron_boots");
     items::setData(legacy, "emperors_cloth", true);
     ctx.check(hasCloth(legacy), "a stack clothed before audit round 2 still counts");

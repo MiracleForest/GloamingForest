@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:tome_bolt",
+      "identifier": "gloamingforest:tome_bolt",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "tome_bolt"]
+        "family": ["gloamingforest", "tome_bolt"]
       },
       "minecraft:collision_box": {
         "width": 0.25,

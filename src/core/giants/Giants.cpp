@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/entity/GrowingBeanstalkBlockEntity.java
-//   src/main/java/twilightforest/client/model/block/giantblock/GiantBlockModel.java
-//   src/main/java/twilightforest/block/CloudBlock.java
-//   src/main/java/twilightforest/asmhooks/BlockHooks.java
-//   src/main/java/twilightforest/loot/modifiers/GiantToolGroupingModifier.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/entity/GrowingBeanstalkBlockEntity.java
+//   src/main/java/gloamingforest/client/model/block/giantblock/GiantBlockModel.java
+//   src/main/java/gloamingforest/block/CloudBlock.java
+//   src/main/java/gloamingforest/asmhooks/BlockHooks.java
+//   src/main/java/gloamingforest/loot/modifiers/GiantToolGroupingModifier.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/giants/Giants.h"
@@ -257,10 +257,10 @@ bool takeGiantConversion(GiantPickMining& state) {
 }
 
 std::string giantConversionOf(std::string const& itemId) {
-    if (itemId == "minecraft:cobblestone") return "twilightforest:giant_cobblestone";
-    if (itemId == "minecraft:oak_log") return "twilightforest:giant_log";
-    if (itemId == "minecraft:oak_leaves") return "twilightforest:giant_leaves";
-    if (itemId == "minecraft:obsidian") return "twilightforest:giant_obsidian";
+    if (itemId == "minecraft:cobblestone") return "gloamingforest:giant_cobblestone";
+    if (itemId == "minecraft:oak_log") return "gloamingforest:giant_log";
+    if (itemId == "minecraft:oak_leaves") return "gloamingforest:giant_leaves";
+    if (itemId == "minecraft:obsidian") return "gloamingforest:giant_obsidian";
     return {};
 }
 

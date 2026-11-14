@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// setupAnim -> Molang for the model converter (contract "geo", unit F2): a mechanical pass over a TF
-// model's prepareMobModel / setupAnim and the TF methods they call. Bone rotations and offsets whose
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// setupAnim -> Molang for the model converter (contract "geo", unit F2): a mechanical pass over an upstream
+// model's prepareMobModel / setupAnim and the upstream methods they call. Bone rotations and offsets whose
 // value uses only the animation parameters, constants, locals, earlier values and Mth / Math functions
 // become a Bedrock base animation; everything else is listed with its Java source for the owning unit
 // to translate by hand. Part of GloamingForest, LGPL-3.0-or-later.
@@ -15,7 +15,7 @@
 // The base path. Every value is followed with the statements it carries and the cases it depends on.
 // A condition that translates becomes a Molang ?: over both branches; one that does not (entity
 // state) counts as false (a negated one as true), unless catalog.json's baseCase gives the state's
-// value in TF's common state (or a value TF never changes, which folds to a constant): the base
+// value in upstream's common state (or a value upstream never changes, which folds to a constant): the base
 // animation runs that branch, and the condition is a "case" entry of the todo list naming the
 // channels that differ when it holds. A branch that returns early is never the base path's: the
 // other one is, and what the rest of the method sets differs in that case. An assignment inside an
@@ -272,10 +272,10 @@ namespace Gf.Models
     }
 
     // The value entity or model state has on the base path (catalog.json "baseCase"): the common state of
-    // TF's mobs, or one TF never changes (Fixed: comparisons with it fold to a constant, no case entry).
+    // upstream's mobs, or one upstream never changes (Fixed: comparisons with it fold to a constant, no case entry).
     public sealed class BaseCaseValue
     {
-        public string Scope;   // a class of the model's chain (its TF classes, its vanilla base, "HumanoidModel" /
+        public string Scope;   // a class of the model's chain (its upstream classes, its vanilla base, "HumanoidModel" /
                                // "QuadrupedModel" for their families) or "*"
         public string Expr;    // Java text: "entity" names the entity parameter, "this." a field or method of the
                                // model; "(*)" at the end stands for any arguments
@@ -335,7 +335,7 @@ namespace Gf.Models
         static readonly string[] ParamQueries = { null, "query.modified_distance_moved", "query.modified_move_speed", "query.life_time", "query.target_y_rotation", "query.target_x_rotation" };
         static readonly string[] PoseProps = { "xRot", "yRot", "zRot", "x", "y", "z" };
 
-        // The vanilla model families TF extends: the parts their setupAnim drives.
+        // The vanilla model families upstream extends: the parts their setupAnim drives.
         public static readonly string[] HumanoidFamily = { "HumanoidModel", "PlayerModel", "ZombieModel", "AbstractZombieModel", "SkeletonModel", "DrownedModel", "PiglinModel", "GiantZombieModel" };
         public static readonly string[] QuadrupedFamily = { "QuadrupedModel", "SheepModel", "CowModel", "PigModel", "PolarBearModel", "PandaModel" };
         static readonly string[] HumanoidParts = { "head", "hat", "body", "right_arm", "left_arm", "right_leg", "left_leg" };
@@ -357,7 +357,7 @@ namespace Gf.Models
             { "AgeableListModel", "nothing (AgeableListModel has no default animation)" },
         };
 
-        // Vanilla helpers TF calls from setupAnim, as Java the translator inlines: Minecraft's
+        // Vanilla helpers upstream calls from setupAnim, as Java the translator inlines: Minecraft's
         // AnimationUtils.bobModelPart / bobArms formulas (the same terms AlphaYetiModel.setupAnim writes out).
         const string VanillaHelperSource = @"package gf.vanilla; public class AnimationUtils {
             public static void bobModelPart(ModelPart modelPart, float ageInTicks, float multiplier) {
@@ -431,7 +431,7 @@ namespace Gf.Models
         {
             public AnimResult Res;
             public ClassDecl Model;
-            public string Vanilla;                        // the vanilla base class (first non-TF super class)
+            public string Vanilla;                        // the vanilla base class (first non-upstream super class)
             public List<string> VanillaParts = new List<string>();
             public Dictionary<string, BoneOut> Bones;     // Java path -> bone
             public Dictionary<string, string> FieldMap = new Dictionary<string, string>(StringComparer.Ordinal); // field -> part path
@@ -483,7 +483,7 @@ namespace Gf.Models
         public static bool IsHumanoid(string vanilla) { return vanilla != null && Array.IndexOf(HumanoidFamily, vanilla) >= 0; }
         public static bool IsQuadruped(string vanilla) { return vanilla != null && Array.IndexOf(QuadrupedFamily, vanilla) >= 0; }
 
-        // The first super class of the chain that is not a TF class (HumanoidModel, QuadrupedModel, ...).
+        // The first super class of the chain that is not an upstream class (HumanoidModel, QuadrupedModel, ...).
         public string VanillaBaseOf(ClassDecl cls)
         {
             string vanilla = null;
@@ -491,7 +491,7 @@ namespace Gf.Models
             return vanilla;
         }
 
-        // The base-case entries a model is in scope of: its TF classes, its vanilla base class and that class's
+        // The base-case entries a model is in scope of: its upstream classes, its vanilla base class and that class's
         // family ("HumanoidModel" covers ZombieModel, SkeletonModel, ...; "QuadrupedModel" SheepModel, ...).
         List<BaseCaseValue> BaseCasesFor(ClassDecl cls, string vanilla)
         {
@@ -634,7 +634,7 @@ namespace Gf.Models
         static string Label(Ctx c, string key) { int dot = key.LastIndexOf('.'); return PartName(c, key.Substring(0, dot)) + "." + key.Substring(dot + 1); }
 
         // The parts an unresolved part expression may be: a ModelPart local's candidates, HumanoidModel.getArm's
-        // two arms, an array element any part no field names (TF keeps only repeated parts in arrays), else any.
+        // two arms, an array element any part no field names (upstream keeps only repeated parts in arrays), else any.
         List<string> Candidates(Expr e, Ctx c)
         {
             List<string> list;
@@ -719,7 +719,7 @@ namespace Gf.Models
                 Exec(body, c);
                 CloseExits(c);
             }
-            if (found == 0) res.Notes.Add("no setupAnim / prepareMobModel in " + cls.Name + " or its TF super classes");
+            if (found == 0) res.Notes.Add("no setupAnim / prepareMobModel in " + cls.Name + " or its upstream super classes");
             if (!ownSetupAnim)
             {
                 // the vanilla setupAnim runs after prepareMobModel and sets the vanilla parts
@@ -735,7 +735,7 @@ namespace Gf.Models
             string hint = null;
             if (s.Vanilla != null && VanillaAnimations.TryGetValue(s.Vanilla, out hint))
             {
-                if (!ownSetupAnim) res.Notes.Add("vanilla base " + s.Vanilla + " animates every part (no setupAnim in " + cls.Name + " or its TF super classes): " + hint);
+                if (!ownSetupAnim) res.Notes.Add("vanilla base " + s.Vanilla + " animates every part (no setupAnim in " + cls.Name + " or its upstream super classes): " + hint);
                 else if (s.VanillaCalled)
                     res.Notes.Add("vanilla base " + s.Vanilla + ": super.setupAnim (line " + s.VanillaLine + ") runs " + hint + "; the base animation adds to it"
                         + (s.Overrides.Count > 0 ? ". overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)" : ""));
@@ -827,7 +827,7 @@ namespace Gf.Models
                 res.Notes.Add("catalog baseCase: " + kv.Key.Expr + " is " + kv.Key.ValueText + " on every frame (" + kv.Key.Why + "); the base animation uses that value at line"
                               + (kv.Value.Count > 1 ? "s " : " ") + string.Join(", ", kv.Value) + " (no case entry)");
             if (res.Statements.Any(x => x.Case))
-                res.Notes.Add("the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold");
+                res.Notes.Add("the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in upstream's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold");
         }
 
         // The end of a method: what it set after a condition whose other branch returns early differs in that case.
@@ -891,7 +891,7 @@ namespace Gf.Models
             CollectNested(e, true, run, poison);
             run.RemoveAll(x => c.Applied.Contains(x));      // already run (an argument that is also a value: setPos)
             poison.RemoveAll(x => c.Applied.Contains(x));
-            // calls inside the expression that change parts (a TF method, a part method) are not run: unknown
+            // calls inside the expression that change parts (an upstream method, a part method) are not run: unknown
             var called = new HashSet<string>(StringComparer.Ordinal);
             Touched(new[] { e }, c, called, new HashSet<string>(StringComparer.Ordinal), 0, true);
             called.RemoveWhere(k => !c.S.Bones.ContainsKey(k.Substring(0, k.LastIndexOf('.'))));
@@ -1506,7 +1506,7 @@ namespace Gf.Models
             }
         }
 
-        // Runs a TF method (or a vanilla helper) with its arguments: part arguments become aliases.
+        // Runs an upstream method (or a vanilla helper) with its arguments: part arguments become aliases.
         void Inline(MethodDecl md, CallExpr call, Ctx c, AnimStatement st, bool proxy)
         {
             if (c.Depth >= 8)
@@ -1559,7 +1559,7 @@ namespace Gf.Models
         // ---- what statements may change ------------------------------------------------------------------
 
         // The bone properties and locals the expressions may change: assignments, ++ / --, calls on or with
-        // parts, the TF methods they call and vanilla methods with side effects.
+        // parts, the upstream methods they call and vanilla methods with side effects.
         void Touched(IEnumerable<Expr> roots, Ctx c, HashSet<string> keys, HashSet<string> locals, int depth, bool callsOnly = false)
         {
             foreach (var root in roots)

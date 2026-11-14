@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/overlay/QuestingRamIndicatorOverlay.java
-//   src/main/java/twilightforest/network/SyncQuestsPacket.java (the client half)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/overlay/QuestingRamIndicatorOverlay.java
+//   src/main/java/gloamingforest/network/SyncQuestsPacket.java (the client half)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The Questing Ram's crosshair indicator (client mod, config client.questRamWoolIndicator): looking
 // at a quest ram while holding a quest item draws questing_ram_x (that colour is still missing) or
-// questing_ram_check, 7 x 7 at ((guiHeight - 1) / 2 - 3, (guiHeight - 1) / 2 - 11) as TF does (it
+// questing_ram_check, 7 x 7 at ((guiHeight - 1) / 2 - 3, (guiHeight - 1) / 2 - 11) as upstream does (it
 // uses the GUI height for both coordinates). The quest comes over questcamps.sync_quests; the
 // ram's colours over F8's entity data sync. The sprite is drawn with the crosshair's inverting blend
 // (blendFuncSeparate(ONE_MINUS_DST_COLOR, ONE_MINUS_SRC_COLOR, ONE, ZERO): F12's Blend::Invert), only
@@ -47,8 +47,8 @@ namespace cq = gf::core::questcamps;
 
 namespace {
 
-constexpr char kCheck[] = "textures/twilightforest/gui/sprites/questing_ram_check";
-constexpr char kX[]     = "textures/twilightforest/gui/sprites/questing_ram_x";
+constexpr char kCheck[] = "textures/gloamingforest/gui/sprites/questing_ram_check";
+constexpr char kX[]     = "textures/gloamingforest/gui/sprites/questing_ram_x";
 
 std::mutex& questMutex() {
     static std::mutex m;
@@ -81,7 +81,7 @@ int questColour(std::string const& itemId) {
 void draw(screen::Canvas& canvas, float) {
     if (!gf::config::get<fq::QuestcampsConfig>().questRamWoolIndicator) return;
     auto* player = currentPlayer();
-    // TF: not hidden GUI (the HUD layer is not drawn then), first person, not a spectator (for one,
+    // upstream: not hidden GUI (the HUD layer is not drawn then), first person, not a spectator (for one,
     // Gui#canRenderCrosshairForSpectator answers an entity hit only for a MenuProvider, which the
     // ram is not)
     if (!player || player->isSpectator()) return;

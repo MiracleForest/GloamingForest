@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:adherent",
+      "identifier": "gloamingforest:adherent",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/adherent"
+        "default": "textures/gloamingforest/entity/adherent"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.adherent"

@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    },
+    {
+      "item": "gloamingforest:armor_shard"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:armor_shard_cluster"
+  }
+}

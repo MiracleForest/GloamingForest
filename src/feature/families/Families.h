@@ -7,16 +7,16 @@
 // as family data and react through gf::blockevents / gf::signs.
 //
 // State schema: docs/spec/blockstates.md (F1, frozen, rule R1). Every Java property p is the
-// Bedrock state twilightforest:p with Java's values (booleans [false, true], integers 0..n, enums by
+// Bedrock state gloamingforest:p with Java's values (booleans [false, true], integers 0..n, enums by
 // name); no placement traits: the runtime sets the states on placement as Java's
 // getStateForPlacement does, and keeps the neighbour-dependent ones as Java's updateShape does.
 // States this kit adds to blocks (rule R1: additions only). The ones no Java block declares live
-// in the kit's own namespace, so a TF block keeps exactly its frozen twilightforest:* states:
+// in the kit's own namespace, so an upstream block keeps exactly its frozen gloamingforest:* states:
 //   gloamingforest:lid         0..4   chests and trapped chests: the lid's angle (22.5 degree steps)
 //   gloamingforest:open_count  0..15  trapped chests: the players looking inside (their signal)
 //   gloamingforest:<direction> bool   connected textures: a connection on that side
 //   gloamingforest:corner_<a>_<b> bool connected textures: the diagonal block (when the budget allows)
-//   twilightforest:layers / lighting   snowloggable / lightable blocks without those states (Java's
+//   gloamingforest:layers / lighting   snowloggable / lightable blocks without those states (Java's
 //                                      SnowLoggable / LightableBlock properties)
 // The params every family reads are documented in tools/families/README.md.
 
@@ -130,30 +130,30 @@ void loadRegistry();
 // ---- states --------------------------------------------------------------------------------------
 
 namespace state {
-inline constexpr char Facing[]     = "twilightforest:facing";
-inline constexpr char Half[]       = "twilightforest:half";
-inline constexpr char Shape[]      = "twilightforest:shape";
-inline constexpr char Type[]       = "twilightforest:type";
-inline constexpr char Hinge[]      = "twilightforest:hinge";
-inline constexpr char Open[]       = "twilightforest:open";
-inline constexpr char Powered[]    = "twilightforest:powered";
-inline constexpr char InWall[]     = "twilightforest:in_wall";
-inline constexpr char Up[]         = "twilightforest:up";
-inline constexpr char Axis[]       = "twilightforest:axis";
-inline constexpr char Face[]       = "twilightforest:face";
-inline constexpr char Distance[]   = "twilightforest:distance";
-inline constexpr char Persistent[] = "twilightforest:persistent";
-inline constexpr char Stage[]      = "twilightforest:stage";
-inline constexpr char Rotation[]   = "twilightforest:rotation";
-inline constexpr char Attached[]   = "twilightforest:attached";
-inline constexpr char Layers[]     = "twilightforest:layers";
-inline constexpr char Lighting[]   = "twilightforest:lighting";
-inline constexpr char Rotated[]    = "twilightforest:rotated";
+inline constexpr char Facing[]     = "gloamingforest:facing";
+inline constexpr char Half[]       = "gloamingforest:half";
+inline constexpr char Shape[]      = "gloamingforest:shape";
+inline constexpr char Type[]       = "gloamingforest:type";
+inline constexpr char Hinge[]      = "gloamingforest:hinge";
+inline constexpr char Open[]       = "gloamingforest:open";
+inline constexpr char Powered[]    = "gloamingforest:powered";
+inline constexpr char InWall[]     = "gloamingforest:in_wall";
+inline constexpr char Up[]         = "gloamingforest:up";
+inline constexpr char Axis[]       = "gloamingforest:axis";
+inline constexpr char Face[]       = "gloamingforest:face";
+inline constexpr char Distance[]   = "gloamingforest:distance";
+inline constexpr char Persistent[] = "gloamingforest:persistent";
+inline constexpr char Stage[]      = "gloamingforest:stage";
+inline constexpr char Rotation[]   = "gloamingforest:rotation";
+inline constexpr char Attached[]   = "gloamingforest:attached";
+inline constexpr char Layers[]     = "gloamingforest:layers";
+inline constexpr char Lighting[]   = "gloamingforest:lighting";
+inline constexpr char Rotated[]    = "gloamingforest:rotated";
 /// The namespace of the states the kit adds that no Java block declares.
 inline constexpr char kKit[]       = "gloamingforest:";
 inline constexpr char OpenCount[]  = "gloamingforest:open_count";
 inline constexpr char Lid[]        = "gloamingforest:lid";
-/// twilightforest:north / east / south / west / up / down (fence / pane / pillar connections are
+/// gloamingforest:north / east / south / west / up / down (fence / pane / pillar connections are
 /// booleans, wall sides none / low / tall)
 [[nodiscard]] std::string side(int dir);
 /// gloamingforest:north / ... (connected textures: a connection on that side)
@@ -203,9 +203,9 @@ bool                       clear(GlobalPos const& p);
 [[nodiscard]] bool               flagState(Block const& block, std::string_view name); ///< false when absent
 /// Any state as text ("north", "1", "true" for booleans); "" when absent.
 [[nodiscard]] std::string strState(Block const& block, std::string_view name);
-/// twilightforest:facing as a direction (`fallback` when absent).
+/// gloamingforest:facing as a direction (`fallback` when absent).
 [[nodiscard]] int facingOf(Block const& block, int fallback = North);
-/// twilightforest:axis as 0 x, 1 y, 2 z (1 when absent).
+/// gloamingforest:axis as 0 x, 1 y, 2 z (1 when absent).
 [[nodiscard]] int axisStateOf(Block const& block);
 /// `block` with the states replaced ({"name": bool | int | "text"}); nullptr when a value is
 /// unknown. States the block does not have are ignored.
@@ -253,7 +253,7 @@ namespace detail {
 /// Redstone signal reaching the block (vanilla sources and gf::redstone emitters).
 [[nodiscard]] bool hasNeighborSignal(BlockSource& region, BlockPos const& pos);
 
-/// Plays a TF sound event ("block.twilightforest.jar.place") at the block centre through gf::fx.
+/// Plays an upstream sound event ("block.gloamingforest.jar.place") at the block centre through gf::fx.
 void sound(BlockSource& region, BlockPos const& pos, std::string const& event, float volume = 1.f, float pitch = 1.f);
 /// Plays a Bedrock sound name (a vanilla sound Java plays: "open.wooden_door") at the block.
 void bedrockSound(BlockSource& region, BlockPos const& pos, std::string const& name, float volume = 1.f, float pitch = 1.f);
@@ -393,7 +393,7 @@ void settleLoadedChunksNow();
 /// Forgets the loads of chunk (cx, cz) of dimension `dim` that still wait to be settled (selftests
 /// that set up a chest without a block actor and must not see a retry give it one).
 void forgetLoadedChunk(int dim, int cx, int cz);
-/// A hopper looks at `pos`, which has no block actor: when it is a TF chest half (saved without its
+/// A hopper looks at `pos`, which has no block actor: when it is an upstream chest half (saved without its
 /// block actor), it and its partner are settled as settleForAccess does it (the block actor is made
 /// at the end of the tick, never inside the game's hopper code), so from the next tick on the
 /// hopper sees the chest from this half too.

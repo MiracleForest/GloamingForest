@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/aurora (U28): the aurora palace's floor plans and the aurora block colours.
 #include <gtest/gtest.h>
 
@@ -147,7 +147,7 @@ TEST(AuroraColor, BlockColourHueRange) {
         }
 }
 
-// Exact values of TF's SimplexNoiseHelper / ColorUtil / ColorHandler (TF 4.8's Java sources compiled
+// Exact values of upstream's SimplexNoiseHelper / ColorUtil / ColorHandler (upstream 4.8's Java sources compiled
 // and run on the F13 oracle's JDK 21 with stand-ins for BlockPos and Mth): pins the translation
 // beyond ranges, so a sign or permutation slip fails here.
 TEST(AuroraColor, JavaGoldens) {

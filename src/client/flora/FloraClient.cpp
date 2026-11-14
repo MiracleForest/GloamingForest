@@ -1,23 +1,23 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/entity/FireflyBlockEntity.java
-//   src/main/java/twilightforest/block/entity/CicadaBlockEntity.java
-//   src/main/java/twilightforest/block/entity/MoonwormBlockEntity.java
-//   src/main/java/twilightforest/block/FireflyJarBlock.java (animateTick)
-//   src/main/java/twilightforest/block/CicadaJarBlock.java (animateTick)
-//   src/main/java/twilightforest/block/AbstractParticleSpawnerBlock.java (animateTick)
-//   src/main/java/twilightforest/block/FireflySpawnerBlock.java (animateTick)
-//   src/main/java/twilightforest/block/MossPatchBlock.java (animateTick)
-//   src/main/java/twilightforest/block/FallenLeavesBlock.java (animateTick, entityInside)
-//   src/main/java/twilightforest/client/MovingCicadaSoundInstance.java
-//   src/main/java/twilightforest/network/SpawnFallenLeafFromPacket.java
-//   src/main/java/twilightforest/network/SetMasonJarItemPacket.java
-//   src/main/java/twilightforest/network/CreateMovingCicadaSoundPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/entity/FireflyBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/CicadaBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/MoonwormBlockEntity.java
+//   src/main/java/gloamingforest/block/FireflyJarBlock.java (animateTick)
+//   src/main/java/gloamingforest/block/CicadaJarBlock.java (animateTick)
+//   src/main/java/gloamingforest/block/AbstractParticleSpawnerBlock.java (animateTick)
+//   src/main/java/gloamingforest/block/FireflySpawnerBlock.java (animateTick)
+//   src/main/java/gloamingforest/block/MossPatchBlock.java (animateTick)
+//   src/main/java/gloamingforest/block/FallenLeavesBlock.java (animateTick, entityInside)
+//   src/main/java/gloamingforest/client/MovingCicadaSoundInstance.java
+//   src/main/java/gloamingforest/network/SpawnFallenLeafFromPacket.java
+//   src/main/java/gloamingforest/network/SetMasonJarItemPacket.java
+//   src/main/java/gloamingforest/network/CreateMovingCicadaSoundPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U6 flora on the client (client mod): what TF's critters and jars do on the client.
+// U6 flora on the client (client mod): what upstream's critters and jars do on the client.
 // - The critter block entities' client ticks: fireflies sparkle (1/20 a tick with a player within
 //   16 blocks), cicadas sing (a 100 tick song every 100..200 ticks: the cicada sound, unless
 //   silentCicadas, and note particles). The critters the client knows are the ones its renderer
@@ -81,9 +81,9 @@ namespace gf::client::flora {
 
 namespace {
 
-constexpr char kFirefly[]  = "twilightforest:firefly";
-constexpr char kCicada[]   = "twilightforest:cicada";
-constexpr char kMoonworm[] = "twilightforest:moonworm";
+constexpr char kFirefly[]  = "gloamingforest:firefly";
+constexpr char kCicada[]   = "gloamingforest:cicada";
+constexpr char kMoonworm[] = "gloamingforest:moonworm";
 
 std::mt19937& rng() {
     static std::mt19937 r{std::random_device{}()};
@@ -182,7 +182,7 @@ void wiggle(Critter& c) {
 
 void tickFirefly(LocalPlayer& player, BlockPos const& p, Critter& c, double distSq) {
     if (distSq <= 16.0 * 16.0 && nextInt(20) == 0) {
-        effect(player, "twilightforest:firefly", Vec3{p.x + nextFloat(), p.y + nextFloat(), p.z + nextFloat()});
+        effect(player, "gloamingforest:firefly", Vec3{p.x + nextFloat(), p.y + nextFloat(), p.z + nextFloat()});
         if (!st().loggedFireflies) {
             st().loggedFireflies = true;
             gf::log().info("flora: the client draws the fireflies' particles");
@@ -209,7 +209,7 @@ void tickCicada(LocalPlayer& player, BlockPos const& p, Critter& c) {
         --c.singDelay;
         return;
     }
-    if (c.singing && c.singDuration == 0 && !silent()) playSound("block.twilightforest.cicada", Vec3{static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z)}, 1.0f, (nextFloat() - nextFloat()) * 0.2f + 1.0f);
+    if (c.singing && c.singDuration == 0 && !silent()) playSound("block.gloamingforest.cicada", Vec3{static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z)}, 1.0f, (nextFloat() - nextFloat()) * 0.2f + 1.0f);
     if (c.singing && c.singDuration >= 100) {
         c.singing      = false;
         c.singDuration = 0;
@@ -285,26 +285,26 @@ void spawnLeaf(LocalPlayer& player, Vec3 const& at, Vec3 const& velocity) {
     static auto* map = new gf::fx::MolangMap();
     map->setColor("variable.color", leafColour(), false);
     map->setVelocity(velocity);
-    static HashedString const name("twilightforest:fallen_leaf");
+    static HashedString const name("gloamingforest:fallen_leaf");
     player.getLevel().addParticleEffect(name, at, map->get());
 }
 
 void animateTick(LocalPlayer& player, BlockSource const& region, BlockPos const& p, Block const& b) {
     auto const& id = b.getTypeName();
-    if (id == "twilightforest:firefly_jar") {
+    if (id == "gloamingforest:firefly_jar") {
         for (int i = 0; i < 2; ++i)
-            effect(player, "twilightforest:firefly",
+            effect(player, "gloamingforest:firefly",
                    Vec3{p.x + ((nextFloat() - nextFloat()) * 0.2f + 0.5f), p.y + 0.4f + ((nextFloat() - nextFloat()) * 0.3f), p.z + ((nextFloat() - nextFloat()) * 0.2f + 0.5f)});
-    } else if (id == "twilightforest:cicada_jar") {
+    } else if (id == "gloamingforest:cicada_jar") {
         noteEffect(player,
                    Vec3{p.x + ((nextFloat() - nextFloat()) * 0.2f + 0.5f), p.y + 0.4f + ((nextFloat() - nextFloat()) * 0.2f), p.z + ((nextFloat() - nextFloat()) * 0.2f + 0.5f)});
-        if (nextInt(75) == 0 && !silent()) playSound("block.twilightforest.cicada", Vec3{p.x + .5f, p.y + .5f, p.z + .5f}, 1.0f, 1.0f);
-    } else if (id == "twilightforest:firefly_particle_spawner") {
+        if (nextInt(75) == 0 && !silent()) playSound("block.gloamingforest.cicada", Vec3{p.x + .5f, p.y + .5f, p.z + .5f}, 1.0f, 1.0f);
+    } else if (id == "gloamingforest:firefly_particle_spawner") {
         int radius = 1;
         // the particle_radius state
         if (auto const& nbt = *b.mSerializationId; nbt.contains("states")) {
             auto const& states = nbt["states"].get<CompoundTag>();
-            if (states.contains("twilightforest:particle_radius")) radius = std::max(1, static_cast<int>(states["twilightforest:particle_radius"].get<IntTag>().data));
+            if (states.contains("gloamingforest:particle_radius")) radius = std::max(1, static_cast<int>(states["gloamingforest:particle_radius"].get<IntTag>().data));
         }
         int count = (radius + 1) / 2;
         for (int i = 0; i < count; ++i) {
@@ -312,21 +312,21 @@ void animateTick(LocalPlayer& player, BlockSource const& region, BlockPos const&
             if (m.y < region.getMinHeight() || m.y >= region.getMaxHeight()) continue;
             Block const& off = region.getBlock(m);
             if (!off.isAir() && off.getMaterial().mSolid) continue; // isCollisionShapeFullBlock
-            effect(player, "twilightforest:particle_spawner_firefly", Vec3{static_cast<float>(m.x + nextDouble()), static_cast<float>(m.y + nextDouble()), static_cast<float>(m.z + nextDouble())});
+            effect(player, "gloamingforest:particle_spawner_firefly", Vec3{static_cast<float>(m.x + nextDouble()), static_cast<float>(m.y + nextDouble()), static_cast<float>(m.z + nextDouble())});
         }
         if (nextInt(5) == 0)
-            effect(player, "twilightforest:firefly",
+            effect(player, "gloamingforest:firefly",
                    Vec3{p.x + ((nextFloat() - nextFloat()) * 0.2f + 0.5f), p.y + 0.4f + ((nextFloat() - nextFloat()) * 0.3f), p.z + ((nextFloat() - nextFloat()) * 0.2f + 0.5f)});
-    } else if (id == "twilightforest:moss_patch") {
+    } else if (id == "gloamingforest:moss_patch") {
         if (nextInt(10) == 0) effect(player, "minecraft:mycelium_dust_particle", Vec3{p.x + nextFloat(), p.y + 0.1f, p.z + nextFloat()});
-    } else if (id == "twilightforest:fallen_leaves") {
+    } else if (id == "gloamingforest:fallen_leaves") {
         if (nextInt(50) != 0) return;
         float dist = 10.0f;
         if (!const_cast<BlockSource&>(region).canSeeSkyFromBelowWater(p)) {
             for (int y = 0; y <= 10; ++y) {
                 BlockPos u{p.x, p.y + y, p.z};
                 if (u.y >= region.getMaxHeight()) break;
-                if (region.getBlock(u).getTypeName().find("leaves") != std::string::npos && region.getBlock(u).getTypeName() != "twilightforest:fallen_leaves") {
+                if (region.getBlock(u).getTypeName().find("leaves") != std::string::npos && region.getBlock(u).getTypeName() != "gloamingforest:fallen_leaves") {
                     dist = static_cast<float>(y);
                     break;
                 }
@@ -348,7 +348,7 @@ void animateTicks(LocalPlayer& player, BlockSource const& region) {
             Block const& b = region.getBlock(p);
             if (b.isAir()) continue;
             auto const& id = b.getTypeName();
-            if (id.size() < 15 || id.compare(0, 15, "twilightforest:") != 0) continue;
+            if (id.size() < 15 || id.compare(0, 15, "gloamingforest:") != 0) continue;
             animateTick(player, region, p, b);
         }
     }
@@ -364,11 +364,11 @@ void fallenLeavesSlowdown(LocalPlayer& player, BlockSource const& region, moveme
             for (int z = static_cast<int>(std::floor(box.min.z)); z <= static_cast<int>(std::floor(box.max.z - 1e-7)); ++z) {
                 BlockPos     p{x, y, z};
                 Block const& b = region.getBlock(p);
-                if (b.getTypeName() != "twilightforest:fallen_leaves") continue;
+                if (b.getTypeName() != "gloamingforest:fallen_leaves") continue;
                 auto const& nbt = *b.mSerializationId;
                 if (!nbt.contains("states")) continue;
                 auto const& states = nbt["states"].get<CompoundTag>();
-                if (states.contains("twilightforest:layers")) worst = std::max(worst, static_cast<int>(states["twilightforest:layers"].get<IntTag>().data));
+                if (states.contains("gloamingforest:layers")) worst = std::max(worst, static_cast<int>(states["gloamingforest:layers"].get<IntTag>().data));
             }
     if (worst <= 2) return;
     // Entity#makeStuckInBlock: the motion of this tick times (1 - 0.05 * (layers - 2), 1, same)
@@ -391,7 +391,7 @@ void tickCicadaSounds(LocalPlayer& player) {
         }
         if (--it->second <= 0) {
             // the looping sound, restarted at the wearer (the sound follows it)
-            if (!off) playSound("block.twilightforest.cicada", wearer->getPosition(), 1.0f, 1.0f);
+            if (!off) playSound("block.gloamingforest.cicada", wearer->getPosition(), 1.0f, 1.0f);
             it->second = 60;
         }
         ++it;
@@ -404,7 +404,7 @@ public:
         static bool registered = false;
         if (registered) return;
         registered = true;
-        // ColorHandler: fallen leaves take the biome foliage colour (TF's, U1's blend; the default
+        // ColorHandler: fallen leaves take the biome foliage colour (upstream's, U1's blend; the default
         // foliage colour without a world), the huge lily pad 0x208030 in the world and 0x71C35C without
         tint::registerBlock(gf::feature::flora::ids::FallenLeaves, tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) {
             return g.foliage() ? gf::biomes::ext::foliageColor(p, g) : 0x48B518u;
@@ -443,7 +443,7 @@ public:
             int          layers = 1;
             if (auto const& nbt = *b.mSerializationId; nbt.contains("states")) {
                 auto const& states = nbt["states"].get<CompoundTag>();
-                if (states.contains("twilightforest:layers")) layers = std::max(1, static_cast<int>(states["twilightforest:layers"].get<IntTag>().data));
+                if (states.contains("gloamingforest:layers")) layers = std::max(1, static_cast<int>(states["gloamingforest:layers"].get<IntTag>().data));
             }
             float mx = m[0].get<float>(), mz = m[2].get<float>();
             // SpawnFallenLeafFromPacket: FallenLeavesBlock#entityInside's client particle

@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.brazier",
+        "identifier": "geometry.gloamingforest.lichdecor.brazier",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,
@@ -236,7 +236,7 @@
     },
     {
       "description": {
-        "identifier": "geometry.twilightforest.lichdecor.empty",
+        "identifier": "geometry.gloamingforest.lichdecor.empty",
         "texture_width": 16,
         "texture_height": 16
       },

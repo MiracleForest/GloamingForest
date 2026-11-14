@@ -1,5 +1,5 @@
 {
-  "block.twilightforest.uncrafting_table": "Mesa de Descrafteo",
-  "block.twilightforest.uncrafting_table.disabled": "Este bloque ha sido desactivado.",
-  "gui.twilightforest.uncrafting_jei": "Descrafteo"
+  "block.gloamingforest.uncrafting_table": "Mesa de Descrafteo",
+  "block.gloamingforest.uncrafting_table.disabled": "Este bloque ha sido desactivado.",
+  "gui.gloamingforest.uncrafting_jei": "Descrafteo"
 }

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:raw_meef",
+      "identifier": "gloamingforest:raw_meef",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:raw_meef.name"
+        "value": "item.gloamingforest:raw_meef.name"
       },
       "minecraft:tags": {
         "tags": ["alexscaves:raw_meats", "c:foods/raw_meat", "farmersdelight:cabbage_roll_ingredients"]

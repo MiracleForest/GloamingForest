@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:carminite_ghastguard",
+      "identifier": "gloamingforest:carminite_ghastguard",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "carminite_ghastguard", "monster", "mob"]
+        "family": ["gloamingforest", "carminite_ghastguard", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 4,

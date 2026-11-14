@@ -1,13 +1,13 @@
 [
   {
-    "block": "twilightforest:keepsake_casket",
+    "block": "gloamingforest:keepsake_casket",
     "rows": 5,
     "slots": 45,
-    "title": "block.twilightforest.keepsake_casket",
+    "title": "block.gloamingforest.keepsake_casket",
     "skin": "",
     "chest": false,
     "pairs": false,
-    "sounds": { "open": "block.twilightforest.casket.open", "close": "block.twilightforest.casket.close" },
+    "sounds": { "open": "block.gloamingforest.casket.open", "close": "block.gloamingforest.casket.close" },
     "stat": "",
     "comparator": true
   }

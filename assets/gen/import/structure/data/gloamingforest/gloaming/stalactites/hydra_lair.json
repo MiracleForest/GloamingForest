@@ -1,0 +1,19 @@
+{
+  "type": "hydra_lair",
+  "base_stalactites": [],
+  "ore_chance": 1.0,
+  "ore_stalactites": [
+    "gloamingforest:entries/iron_stalactite",
+    "gloamingforest:entries/coal_stalactite",
+    "gloamingforest:entries/copper_stalactite",
+    "gloamingforest:entries/glowstone_stalactite",
+    "gloamingforest:entries/gold_stalactite",
+    "gloamingforest:entries/redstone_stalactite"
+  ],
+  "replace": false,
+  "stalactite_chance": 1.0,
+  "stalagmite_chance": 0.0625,
+  "stalagmites": [
+    "gloamingforest:entries/hill_stone_stalactite"
+  ]
+}

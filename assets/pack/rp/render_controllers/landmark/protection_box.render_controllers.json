@@ -1,7 +1,7 @@
 {
   "format_version": "1.10.0",
   "render_controllers": {
-    "controller.render.twilightforest.protection_box.x": {
+    "controller.render.gloamingforest.protection_box.x": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -40,7 +40,7 @@
         "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
       }
     },
-    "controller.render.twilightforest.protection_box.y": {
+    "controller.render.gloamingforest.protection_box.y": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -79,7 +79,7 @@
         "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
       }
     },
-    "controller.render.twilightforest.protection_box.z": {
+    "controller.render.gloamingforest.protection_box.z": {
       "geometry": "Geometry.default",
       "materials": [
         {

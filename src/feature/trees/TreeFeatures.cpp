@@ -1,26 +1,26 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/trees/TFTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/CanopyTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/MegaOakTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/MegaCanopyTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/LargeWinterTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/MiningTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/HollowTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/TimeTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/DarkCanopyTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/SnowTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/SnowUnderTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/config/TFTreeFeatureConfig.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/trees/TFTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/CanopyTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/MegaOakTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/MegaCanopyTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/LargeWinterTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/MiningTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/HollowTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/TimeTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/DarkCanopyTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/SnowTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/SnowUnderTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/config/TFTreeFeatureConfig.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U3 trees: TF's own tree feature types. TFTreeFeature subclasses read TFTreeFeatureConfig and
+// U3 trees: upstream's own tree feature types. TFTreeFeature subclasses read TFTreeFeatureConfig and
 // generate through a trunk, a leaves and a decoration (root) setter; the dark canopy tree and the
 // snow tree are TreeFeature copies that delegate the tree itself to the minecraft:tree interpreter
 // after their own checks and then run their own (older) updateLeaves through a decorator appended
-// to the interpreter's list; TF's own tree features run 1.21's TreeFeature.updateLeaves.
+// to the interpreter's list; upstream's own tree features run 1.21's TreeFeature.updateLeaves.
 #include "feature/trees/Trees.h"
 
 #include <algorithm>
@@ -61,7 +61,7 @@ Json const& member(Json const& j, char const* key) {
     return it == j.end() ? null : *it;
 }
 
-/// Random#nextInt with Java's bound check (a non-positive bound would throw: TF never passes one;
+/// Random#nextInt with Java's bound check (a non-positive bound would throw: upstream never passes one;
 /// 0 is answered without a draw here).
 int nextIntSafe(RandomSource& random, int bound) { return bound > 0 ? random.nextInt(bound) : 0; }
 
@@ -116,18 +116,18 @@ void javaOrder(std::vector<BlockPos>& v) {
 
 std::atomic<std::uint64_t> gLeafDistanceWrites{0};
 
-/// `block` with BlockStateProperties.DISTANCE (TF leaves: twilightforest:distance) set to `distance`,
+/// `block` with BlockStateProperties.DISTANCE (upstream leaves: gloamingforest:distance) set to `distance`,
 /// its other states kept; `block` when it has no distance.
 Block const& withDistance(Block const& block, int distance) {
     auto states = game::statesOf(block);
-    if (!states.contains("twilightforest:distance")) return block;
+    if (!states.contains("gloamingforest:distance")) return block;
     Json all = Json::object();
     for (auto const& [k, v] : states) {
         if (v == "true" || v == "false") all[k] = v == "true";
         else if (!v.empty() && v.find_first_not_of("-0123456789") == std::string::npos) all[k] = std::stoi(v);
         else all[k] = v;
     }
-    all["twilightforest:distance"] = distance;
+    all["gloamingforest:distance"] = distance;
     auto const* b = game::blockWithStates(block.getTypeName(), all);
     return b ? *b : block;
 }
@@ -135,14 +135,14 @@ Block const& withDistance(Block const& block, int distance) {
 /// LeavesBlock.getOptionalDistanceAt: 0 for #minecraft:logs, the distance of a block with one.
 std::optional<int> optionalDistanceAt(Block const& b) {
     if (kit::hasTag(b, "minecraft:logs")) return 0;
-    if (auto d = game::intState(b, "twilightforest:distance")) return *d == 0 ? 7 : *d; // 0: not computed yet (F11), Java's 7
+    if (auto d = game::intState(b, "gloamingforest:distance")) return *d == 0 ? 7 : *d; // 0: not computed yet (F11), Java's 7
     if (kit::isLeaves(b)) return 7; // Bedrock's own leaves keep no distance: none known
     return std::nullopt;
 }
 
 /// TreeFeature.updateLeaves (Minecraft 1.21.1) as TFTreeFeature#place calls it: `sources` start at
-/// distance 0 (TF hands its leaf set here), the trunk is marked done first (and the decorators'
-/// set, empty in TF's data); leaves reached from them get distance k (setBlockKnownShape) while
+/// distance 0 (upstream hands its leaf set here), the trunk is marked done first (and the decorators'
+/// set, empty in upstream's data); leaves reached from them get distance k (setBlockKnownShape) while
 /// k < 7. The seven work sets are HashSets: their iteration order (core::trees::JavaHashSet)
 /// decides the order of the writes. StructureTemplate.updateShapeAtEdge, which follows in Java,
 /// recomputes the shapes of the blocks around the box's filled cells: Bedrock connects block shapes
@@ -220,7 +220,7 @@ void updateLeaves(Region& region, std::vector<BlockPos> const& sources, std::vec
 void knownShapeUpdateLeaves(Region& region, std::vector<BlockPos> const& logs) {
     auto key = [](BlockPos const& p) { return (static_cast<std::int64_t>(p.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(p.z) & 0x3FFFFFF) << 12 | (static_cast<std::int64_t>(p.y) & 0xFFF); };
     auto distanceOf = [](Block const& b) -> std::optional<int> {
-        auto d = game::intState(b, "twilightforest:distance");
+        auto d = game::intState(b, "gloamingforest:distance");
         if (!d) return std::nullopt;
         return *d == 0 ? 7 : *d; // 0: not computed yet (F11), Java's placed 7
     };
@@ -270,7 +270,7 @@ void knownShapeUpdateLeaves(Region& region, std::vector<BlockPos> const& logs) {
 }
 
 /// The tree interpreter's decorator that runs knownShapeUpdateLeaves last (appended to the dark
-/// canopy and snow trees' decorators: TF runs it after the decorators).
+/// canopy and snow trees' decorators: upstream runs it after the decorators).
 constexpr char kKnownShapeLeaves[] = "gf_trees:legacy_update_leaves";
 
 /// TreeFeature.updateLeaves after F5's minecraft:tree (data: the import override appends it).
@@ -311,7 +311,7 @@ private:
 };
 
 /// Whether F5's minecraft:tree interpreter writes the leaves' distances itself (TreeFeature#place's
-/// updateLeaves): a small oak with twilight oak leaves placed once in an empty in-memory world; any
+/// updateLeaves): a small oak with gloaming oak leaves placed once in an empty in-memory world; any
 /// leaf left with a distance 1..6 means it does, and gf_trees:update_leaves then does nothing (the
 /// data patch stays harmless until A8 drops it). Asked once per process.
 bool interpreterUpdatesLeaves() {
@@ -319,7 +319,7 @@ bool interpreterUpdatesLeaves() {
         auto const* air = game::blockWith("minecraft:air");
         if (!air) return false;
         Json leaves{{"type", "minecraft:simple_state_provider"},
-                    {"state", {{"Name", "twilightforest:twilight_oak_leaves"}, {"Properties", {{"distance", "7"}, {"persistent", "false"}, {"waterlogged", "false"}}}}}};
+                    {"state", {{"Name", "gloamingforest:gloaming_oak_leaves"}, {"Properties", {{"distance", "7"}, {"persistent", "false"}, {"waterlogged", "false"}}}}}};
         Json config{{"trunk_placer", {{"type", "minecraft:straight_trunk_placer"}, {"base_height", 4}, {"height_rand_a", 0}, {"height_rand_b", 0}}},
                     {"foliage_placer", {{"type", "minecraft:blob_foliage_placer"}, {"radius", 2}, {"offset", 0}, {"height", 3}}},
                     {"trunk_provider", {{"type", "minecraft:simple_state_provider"}, {"state", {{"Name", "minecraft:oak_log"}, {"Properties", {{"axis", "y"}}}}}}},
@@ -334,7 +334,7 @@ bool interpreterUpdatesLeaves() {
         if (!gf::features::placeJson(Json{{"type", "minecraft:tree"}, {"config", config}}, region, BlockPos{0, 0, 0}, random)) return false;
         bool computed = false;
         region.forEach([&](Block const& b) {
-            if (auto d = game::intState(b, "twilightforest:distance"); d && *d >= 1 && *d <= 6) computed = true;
+            if (auto d = game::intState(b, "gloamingforest:distance"); d && *d >= 1 && *d <= 6) computed = true;
         });
         if (computed) gf::log().info("trees: the minecraft:tree interpreter writes leaf distances itself; gf_trees:update_leaves does nothing");
         return computed;
@@ -376,7 +376,7 @@ bool tfTree(FeatureContext const& c, GenerateFn generate) {
     if (leafSet.list.empty() && rootSet.list.empty()) return false;
     std::vector<BlockPos> decorations; // set3, the decoration setter's
     if (g.config.decorators.is_array() && !g.config.decorators.empty()) {
-        // TreeDecorator.Context(level, decorationSetter, random, set1, set2, set): TF hands the
+        // TreeDecorator.Context(level, decorationSetter, random, set1, set2, set): upstream hands the
         // leaves as "logs", the roots as "leaves" and the trunk as "roots", each a HashSet sorted
         // by y (the HashSet's iteration order first, then a stable sort)
         gf::features::TreeContext tree{region, c.random, c.config, leafSet.list, rootSet.list, trunkSet.list};
@@ -386,15 +386,15 @@ bool tfTree(FeatureContext const& c, GenerateFn generate) {
         for (auto const& d : g.config.decorators) runDecorator(tree, d, &decorations);
     }
     // TreeFeature.updateLeaves(level, encapsulatingPositions(set, set1, set2, set3), set1, set3, set):
-    // TF passes its leaves as the distance sources and the decorations and the trunk as filled
-    // (TF's data gives its own tree features no decorators: set3 stays empty there)
+    // upstream passes its leaves as the distance sources and the decorations and the trunk as filled
+    // (upstream's data gives its own tree features no decorators: set3 stays empty there)
     std::vector<BlockPos> filled = trunkSet.list;
     filled.insert(filled.end(), decorations.begin(), decorations.end());
     updateLeaves(region, leafSet.list, filled, rootSet.list);
     return true;
 }
 
-Block const* firefly(Dir facing) { return kit::javaBlock("twilightforest:firefly", Json{{"facing", dirName(facing)}}); }
+Block const* firefly(Dir facing) { return kit::javaBlock("gloamingforest:firefly", Json{{"facing", dirName(facing)}}); }
 
 /// The fireflies on a 2x2 trunk (MegaOakTreeFeature / MegaCanopyTreeFeature buildTrunk).
 void trunkFireflies(Gen& g, int treeHeight) {
@@ -647,7 +647,7 @@ bool miningTree(Gen& g) {
     putBranchWithLeaves(g, at(g.pos, 0, 7, -4), false);
     putBranchWithLeaves(g, at(g.pos, 0, 6, -5), false);
     // the minewood core (its tick runs while it is active: Cores.cpp)
-    placeCore(g, above(g.pos), above(g.pos), "twilightforest:mining_log_core");
+    placeCore(g, above(g.pos), above(g.pos), "gloamingforest:mining_log_core");
     if (hasAirAround(g.region, below(g.pos))) placeIfValidTreePos(g.region, g.trunk, g.random, below(g.pos), g.config.trunk);
     else placeIfValidRootPos(g.region, g.deco, g.random, below(g.pos), g.config.roots);
     int   numRoots = 3 + g.random.nextInt(2);
@@ -772,8 +772,8 @@ bool timeTree(Gen& g) {
     buildBranchRing(g, radius, height - (crownRadius >> 1), 0, crownRadius, 0.28, bvar, bvar + 2, 1, true);
     buildBranchRing(g, radius, height, 0, crownRadius, 0.15, 2, 4, 0, true);
     buildBranchRing(g, radius, height, 0, crownRadius >> 1, 0.05, bvar, bvar + 2, 0, true);
-    // the clock (TF checks the block above the base and sets one beside it)
-    placeCore(g, above(g.pos), at(g.pos, -1, 2, 0), "twilightforest:time_log_core");
+    // the clock (upstream checks the block above the base and sets one beside it)
+    placeCore(g, above(g.pos), at(g.pos, -1, 2, 0), "gloamingforest:time_log_core");
     return true;
 }
 
@@ -874,7 +874,7 @@ bool snowUnderTrees(FeatureContext const& c) {
             int         x   = c.origin.x + xi, z = c.origin.z + zi;
             BlockPos    top{x, c.region.height(gf::worldgen::Heightmap::MotionBlocking, x, z) - 1, z};
             auto const& t   = c.region.getBlock(top);
-            if (!kit::hasTag(t, "minecraft:leaves") || kit::javaId(t) == "twilightforest:hardened_dark_leaves") continue; // instanceof LeavesBlock
+            if (!kit::hasTag(t, "minecraft:leaves") || kit::javaId(t) == "gloamingforest:hardened_dark_leaves") continue; // instanceof LeavesBlock
             BlockPos m{x, c.region.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, x, z), z};
             if (!c.region.getBlock(m).isAir()) continue;
             if (!kit::testPredicate(sturdy, c.region, m)) continue;
@@ -896,18 +896,18 @@ Block const& leafWithDistance(Block const& block, int distance) { return withDis
 
 void registerTreeFeatures() {
     using gf::features::registerType;
-    registerType("twilightforest:mega_oak", [](FeatureContext const& c) { return tfTree(c, megaOak); });
-    registerType("twilightforest:mega_canopy", [](FeatureContext const& c) { return tfTree(c, megaCanopy); });
-    registerType("twilightforest:large_winter_tree", [](FeatureContext const& c) { return tfTree(c, largeWinter); });
-    registerType("twilightforest:miners_tree", [](FeatureContext const& c) { return tfTree(c, miningTree); });
-    registerType("twilightforest:tree_of_time", [](FeatureContext const& c) { return tfTree(c, timeTree); });
-    registerType("twilightforest:dark_canopy_tree", darkCanopy);
+    registerType("gloamingforest:mega_oak", [](FeatureContext const& c) { return tfTree(c, megaOak); });
+    registerType("gloamingforest:mega_canopy", [](FeatureContext const& c) { return tfTree(c, megaCanopy); });
+    registerType("gloamingforest:large_winter_tree", [](FeatureContext const& c) { return tfTree(c, largeWinter); });
+    registerType("gloamingforest:miners_tree", [](FeatureContext const& c) { return tfTree(c, miningTree); });
+    registerType("gloamingforest:tree_of_time", [](FeatureContext const& c) { return tfTree(c, timeTree); });
+    registerType("gloamingforest:dark_canopy_tree", darkCanopy);
     // SnowTreeFeature: a copy of TreeFeature (trees on any sturdy ground: the placement checks it)
-    registerType("twilightforest:anywhere_tree", [](FeatureContext const& c) { return placeVanillaTree(c, c.origin); });
-    registerType("twilightforest:snow_under_trees", snowUnderTrees);
+    registerType("gloamingforest:anywhere_tree", [](FeatureContext const& c) { return placeVanillaTree(c, c.origin); });
+    registerType("gloamingforest:snow_under_trees", snowUnderTrees);
     gf::features::registerTreeDecorator(kKnownShapeLeaves, [](gf::features::TreeContext& t, Json const&) { knownShapeUpdateLeaves(t.region, t.logs); });
     // TreeFeature#place's own updateLeaves (1.21.1: the trunk is the source, the decorations and roots
-    // are filled, the box holds every set), which F5's minecraft:tree interpreter does not run: TF's
+    // are filled, the box holds every set), which F5's minecraft:tree interpreter does not run: upstream's
     // vanilla-type trees (tools/import/overrides/trees.json appends it as their last decorator)
     // The decorations set (filled, and part of the box) is the interpreter's own (F5's internal
     // TreeState, not in the contract): the blocks decorators place have no distance, so leaving them

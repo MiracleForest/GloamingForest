@@ -2,7 +2,7 @@
 
 // Contract "death" (header owned by F0, implemented by F10; rule R8).
 //
-// The death pipeline (TF's CharmEvents host): lethal damage first asks the `onLethal` handlers
+// The death pipeline (upstream's CharmEvents host): lethal damage first asks the `onLethal` handlers
 // (charm of life: survive), then keepers decide which items a dying player keeps (charms of
 // keeping, phantom armour, the kept_on_death tag), the remaining drops can be taken (keepsake
 // casket), and kept items come back on respawn.

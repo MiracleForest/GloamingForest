@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mason_jar",
+      "identifier": "gloamingforest:mason_jar",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:jar_light": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        "gloamingforest:jar_light": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
       }
     },
     "components": {
@@ -17,7 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 15
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.mason_jar",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.mason_jar",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_jar_side",
@@ -48,91 +48,91 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 1",
+        "condition": "q.block_state('gloamingforest:jar_light') == 1",
         "components": {
           "minecraft:light_emission": 1
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 2",
+        "condition": "q.block_state('gloamingforest:jar_light') == 2",
         "components": {
           "minecraft:light_emission": 2
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 3",
+        "condition": "q.block_state('gloamingforest:jar_light') == 3",
         "components": {
           "minecraft:light_emission": 3
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 4",
+        "condition": "q.block_state('gloamingforest:jar_light') == 4",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 5",
+        "condition": "q.block_state('gloamingforest:jar_light') == 5",
         "components": {
           "minecraft:light_emission": 5
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 6",
+        "condition": "q.block_state('gloamingforest:jar_light') == 6",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 7",
+        "condition": "q.block_state('gloamingforest:jar_light') == 7",
         "components": {
           "minecraft:light_emission": 7
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 8",
+        "condition": "q.block_state('gloamingforest:jar_light') == 8",
         "components": {
           "minecraft:light_emission": 8
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 9",
+        "condition": "q.block_state('gloamingforest:jar_light') == 9",
         "components": {
           "minecraft:light_emission": 9
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 10",
+        "condition": "q.block_state('gloamingforest:jar_light') == 10",
         "components": {
           "minecraft:light_emission": 10
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 11",
+        "condition": "q.block_state('gloamingforest:jar_light') == 11",
         "components": {
           "minecraft:light_emission": 11
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 12",
+        "condition": "q.block_state('gloamingforest:jar_light') == 12",
         "components": {
           "minecraft:light_emission": 12
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 13",
+        "condition": "q.block_state('gloamingforest:jar_light') == 13",
         "components": {
           "minecraft:light_emission": 13
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 14",
+        "condition": "q.block_state('gloamingforest:jar_light') == 14",
         "components": {
           "minecraft:light_emission": 14
         }
       },
       {
-        "condition": "q.block_state('twilightforest:jar_light') == 15",
+        "condition": "q.block_state('gloamingforest:jar_light') == 15",
         "components": {
           "minecraft:light_emission": 15
         }

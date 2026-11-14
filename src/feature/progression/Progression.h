@@ -3,12 +3,12 @@
 // Contract "progression" (header owned by F0, implemented by F10; rule R21).
 //
 // The progression store (advancements and criteria per player, persisted in the world DB), the
-// trigger bus for TF's 13 triggers and the vanilla trigger events, and the client-side view of
+// trigger bus for upstream's 13 triggers and the vanilla trigger events, and the client-side view of
 // progression for locked biomes. U14 owns every advancement JSON and the criteria engine; other
 // units only fire triggers by string and never award advancements directly:
 //
-//     gf::progression::trigger(player, "twilightforest:kill_bug", {{"bug", "twilightforest:firefly"}});
-//     if (gf::progression::has(player, "twilightforest:progress_lich")) ...;
+//     gf::progression::trigger(player, "gloamingforest:kill_bug", {{"bug", "gloamingforest:firefly"}});
+//     if (gf::progression::has(player, "gloamingforest:progress_lich")) ...;
 //     gf::progression::events::onKilled([](Player& p, Actor& victim, std::string const& type) { ... });
 
 #include <functional>
@@ -33,7 +33,7 @@ void revoke(Player& player, std::string const& advancementId, std::string const&
 /// Whether one criterion of an advancement is done.
 [[nodiscard]] bool done(Player const& player, std::string const& advancementId, std::string const& criterion);
 
-/// Fires a trigger ("twilightforest:structure_cleared", "minecraft:inventory_changed", ...).
+/// Fires a trigger ("gloamingforest:structure_cleared", "minecraft:inventory_changed", ...).
 void trigger(Player& player, std::string const& triggerId, Json const& data = {});
 /// Listens to a trigger (U14's criteria engine; selftest fixtures).
 using TriggerFn = std::function<void(Player& player, Json const& data)>;

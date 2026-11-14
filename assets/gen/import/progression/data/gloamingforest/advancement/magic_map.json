@@ -1,0 +1,38 @@
+{
+  "parent": "gloamingforest:magic_map_focus",
+  "criteria": {
+    "magic_map": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:filled_magic_map"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.magic_map.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.filled_magic_map"
+        }
+      ]
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:filled_magic_map"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.magic_map"
+    }
+  },
+  "requirements": [
+    [
+      "magic_map"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

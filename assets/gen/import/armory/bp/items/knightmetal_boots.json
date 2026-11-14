@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:knightmetal_boots",
+      "identifier": "gloamingforest:knightmetal_boots",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:knightmetal_boots.name"
+        "value": "item.gloamingforest:knightmetal_boots.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

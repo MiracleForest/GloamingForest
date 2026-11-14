@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U26 (darktower) selftests of the mobs (rule R12: "darktower.*", testPos dx 2600..2699): F13's
 // goldens (tests/golden/mobs.json: max health, the collision box, movement speed, follow range and
@@ -49,15 +49,15 @@ struct Golden {
     float       health, width, height, movement, followRange, attack;
 };
 
-// tests/golden/mobs.json (F13, derived from TF 4.8): maxHealth, width, height and the
+// tests/golden/mobs.json (F13, derived from upstream 4.8): maxHealth, width, height and the
 // movement_speed / follow_range / attack_damage attributes (attack -1: the mob has none)
 constexpr Golden kGoldens[] = {
-    {"twilightforest:ur_ghast", 250.0f, 14.0f, 18.0f, 0.7f, 128.0f, -1.0f},
-    {"twilightforest:carminite_ghastguard", 30.0f, 4.0f, 6.0f, 0.7f, 64.0f, -1.0f},
-    {"twilightforest:carminite_ghastling", 10.0f, 1.1f, 1.5f, 0.7f, 16.0f, -1.0f},
-    {"twilightforest:carminite_golem", 40.0f, 1.4f, 2.9f, 0.25f, 16.0f, 9.0f},
-    {"twilightforest:carminite_broodling", 7.0f, 0.7f, 0.5f, 0.3f, 16.0f, 4.0f},
-    {"twilightforest:towerwood_borer", 15.0f, 0.4f, 0.3f, 0.27f, 8.0f, 5.0f},
+    {"gloamingforest:ur_ghast", 250.0f, 14.0f, 18.0f, 0.7f, 128.0f, -1.0f},
+    {"gloamingforest:carminite_ghastguard", 30.0f, 4.0f, 6.0f, 0.7f, 64.0f, -1.0f},
+    {"gloamingforest:carminite_ghastling", 10.0f, 1.1f, 1.5f, 0.7f, 16.0f, -1.0f},
+    {"gloamingforest:carminite_golem", 40.0f, 1.4f, 2.9f, 0.25f, 16.0f, 9.0f},
+    {"gloamingforest:carminite_broodling", 7.0f, 0.7f, 0.5f, 0.3f, 16.0f, 4.0f},
+    {"gloamingforest:towerwood_borer", 15.0f, 0.4f, 0.3f, 0.27f, 8.0f, 5.0f},
 };
 
 float attribute(Mob& m, Attribute const& a) {
@@ -308,7 +308,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_loot", [](Context& ctx) -> ll::coro::CoroT
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
     int tears = 0, powder = 0, other = 0;
-    for (auto const* table : {"twilightforest:entities/carminite_ghastguard", "twilightforest:entities/carminite_ghastling"}) {
+    for (auto const* table : {"gloamingforest:entities/carminite_ghastguard", "gloamingforest:entities/carminite_ghastling"}) {
         for (std::int64_t seed = 1; seed <= 40; seed++) {
             loot::LootContext lc;
             lc.region = region;

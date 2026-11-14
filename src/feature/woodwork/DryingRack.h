@@ -50,7 +50,7 @@ void refreshDisplay(GlobalPos const& pos);
 
 /// The client mod draws the item itself (DryingRackRenderer, src/client/woodwork): every companion
 /// gets "woodwork.rack" {"racks": [{"pos": [dim, x, y, z], "facing", "item" (items::toJson),
-/// "lower" (#twilightforest:lower_on_drying_rack), "display" (the display entity's unique id, which
+/// "lower" (#gloamingforest:lower_on_drying_rack), "display" (the display entity's unique id, which
 /// it hides)}], "gone": [[dim, x, y, z]], "reset": true (the whole list, when it joins)}.
 
 } // namespace gf::feature::woodwork::rack

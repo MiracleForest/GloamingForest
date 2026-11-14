@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The sweep selftests of F9 (prefix "item.sweep_", testPos dx 5960..5969): every registered
-// twilightforest block is placed and broken and its drops are compared with what TF 4.8 drops, and
-// every recipe of TF's data pack crafts its output in the game, both against F13's oracle goldens
+// gloamingforest block is placed and broken and its drops are compared with what upstream 4.8 drops, and
+// every recipe of upstream's data pack crafts its output in the game, both against F13's oracle goldens
 // (tests/golden/loot.json and recipes.json, compacted into sweep/Golden.inc by
 // sweep/gen_golden.py).
 //
 // - item.sweep_block_drops: each block's default state is placed and broken by a survival player
-//   (Block::playerDestroy: the game's break with its drops, the loot contract's Java tables for TF
+//   (Block::playerDestroy: the game's break with its drops, the loot contract's Java tables for upstream
 //   blocks) with an empty hand, shears and a silk touch diamond pickaxe, the oracle's three block
 //   contexts. A single break is one roll of the table: every item it drops must be one the oracle
 //   saw, in the per-roll count range it saw, and every item the oracle saw in every roll must be
@@ -17,7 +17,7 @@
 //   ingredient items and one of the game's crafting table recipes of its result must match it
 //   (the game's own Recipe::matches) with the oracle's count; stonecutting recipes need a game
 //   stonecutter recipe taking the input and giving the result and count; cooking recipes need the
-//   game's furnace / blast furnace / smoker / campfire result; TF's custom types (drying,
+//   game's furnace / blast furnace / smoker / campfire result; upstream's custom types (drying,
 //   uncrafting) and code recipes (special crafting) need their loader or registration.
 //
 // Genuine gaps are reviewed exceptions below (block / recipe id -> reason); each is reported as an
@@ -81,41 +81,41 @@ using gf::selftest::Context;
 namespace items = gf::game::items;
 
 constexpr int  kDx      = 5960;
-constexpr char kPrefix[] = "twilightforest:";
+constexpr char kPrefix[] = "gloamingforest:";
 
 // ---- reviewed exceptions -----------------------------------------------------------------------------
 
-/// Blocks whose drops differ from TF's for a reason reviewed here: "<block id>" (every tool) or
+/// Blocks whose drops differ from upstream's for a reason reviewed here: "<block id>" (every tool) or
 /// "<block id>@<tool>" (0 hand, 1 shears, 2 silk touch) -> the reason.
 std::map<std::string, std::string> const& blockExceptions() {
-    // Not a gap: the oracle rolled the table without a block entity. TF's AbstractSkullCandleBlock#getDrops
+    // Not a gap: the oracle rolled the table without a block entity. upstream's AbstractSkullCandleBlock#getDrops
     // adds the candles of its block entity (candles x the candle colour) to the head, and with silk touch
     // replaces the head by the skull candle itself, which is what the port drops.
     static constexpr char kOracleCandle[] =
-        "the oracle's context has no block entity: TF's getDrops adds the candles (silk touch: the skull candle itself), as the port does";
+        "the oracle's context has no block entity: upstream's getDrops adds the candles (silk touch: the skull candle itself), as the port does";
     static std::map<std::string, std::string> const m{
-        {"twilightforest:creeper_skull_candle", kOracleCandle},
-        {"twilightforest:creeper_wall_skull_candle", kOracleCandle},
-        {"twilightforest:piglin_skull_candle", kOracleCandle},
-        {"twilightforest:piglin_wall_skull_candle", kOracleCandle},
-        {"twilightforest:player_skull_candle", kOracleCandle},
-        {"twilightforest:player_wall_skull_candle", kOracleCandle},
-        {"twilightforest:skeleton_skull_candle", kOracleCandle},
-        {"twilightforest:skeleton_wall_skull_candle", kOracleCandle},
-        {"twilightforest:wither_skeleton_skull_candle", kOracleCandle},
-        {"twilightforest:wither_skeleton_wall_skull_candle", kOracleCandle},
-        {"twilightforest:zombie_skull_candle", kOracleCandle},
-        {"twilightforest:zombie_wall_skull_candle", kOracleCandle},
+        {"gloamingforest:creeper_skull_candle", kOracleCandle},
+        {"gloamingforest:creeper_wall_skull_candle", kOracleCandle},
+        {"gloamingforest:piglin_skull_candle", kOracleCandle},
+        {"gloamingforest:piglin_wall_skull_candle", kOracleCandle},
+        {"gloamingforest:player_skull_candle", kOracleCandle},
+        {"gloamingforest:player_wall_skull_candle", kOracleCandle},
+        {"gloamingforest:skeleton_skull_candle", kOracleCandle},
+        {"gloamingforest:skeleton_wall_skull_candle", kOracleCandle},
+        {"gloamingforest:wither_skeleton_skull_candle", kOracleCandle},
+        {"gloamingforest:wither_skeleton_wall_skull_candle", kOracleCandle},
+        {"gloamingforest:zombie_skull_candle", kOracleCandle},
+        {"gloamingforest:zombie_wall_skull_candle", kOracleCandle},
     };
     return m;
 }
 
-/// Recipes the game cannot craft as TF does, reviewed: recipe id -> the reason.
+/// Recipes the game cannot craft as upstream does, reviewed: recipe id -> the reason.
 std::map<std::string, std::string> const& recipeExceptions() {
     static std::map<std::string, std::string> const m{
         // F1's recipe import keeps Java's minecraft:stone_slab (Bedrock: minecraft:normal_stone_slab, tags/JavaIds.cpp);
         // the BP recipes nagastone_spiral_{0..7} ask for Bedrock's minecraft:stone_slab, which is not Java's stone slab
-        {"twilightforest:nagastone/nagastone_spiral",
+        {"gloamingforest:nagastone/nagastone_spiral",
          "F1's recipe import does not rename Java's minecraft:stone_slab to Bedrock's minecraft:normal_stone_slab: the game's recipe wants another slab"},
     };
     return m;
@@ -123,7 +123,7 @@ std::map<std::string, std::string> const& recipeExceptions() {
 
 // ---- helpers -------------------------------------------------------------------------------------------
 
-/// The Bedrock ids of a Java item id of TF's data (renamed vanilla items: tags/JavaIds.h).
+/// The Bedrock ids of a Java item id of upstream's data (renamed vanilla items: tags/JavaIds.h).
 std::vector<std::string> bedrockItems(std::string const& javaId) { return gf::tags::javaids::bedrock("item", javaId); }
 
 /// The first alternative of an ingredient ("a|b|c") that is an item of the game.
@@ -208,18 +208,18 @@ std::string compare(std::string const& table, int tool, std::map<std::string, in
     std::string diff;
     auto        add = [&](std::string const& s) { diff += (diff.empty() ? "" : "; ") + s; };
     if (!goldenTables().contains(table)) {
-        for (auto const& [id, n] : got) add("dropped " + std::to_string(n) + " " + id + " (TF has no loot table: nothing)");
+        for (auto const& [id, n] : got) add("dropped " + std::to_string(n) + " " + id + " (upstream has no loot table: nothing)");
         return diff;
     }
     auto want = expectedOf(table, tool);
     for (auto const& [id, n] : got) {
         auto it = std::find_if(want.begin(), want.end(), [&](Expected const& e) { return std::find(e.ids.begin(), e.ids.end(), id) != e.ids.end(); });
-        if (it == want.end()) add("dropped " + std::to_string(n) + " " + id + " (TF never drops it)");
-        else if (n < it->min || n > it->max) add("dropped " + std::to_string(n) + " " + id + " (TF drops " + std::to_string(it->min) + ".." + std::to_string(it->max) + ")");
+        if (it == want.end()) add("dropped " + std::to_string(n) + " " + id + " (upstream never drops it)");
+        else if (n < it->min || n > it->max) add("dropped " + std::to_string(n) + " " + id + " (upstream drops " + std::to_string(it->min) + ".." + std::to_string(it->max) + ")");
     }
     for (auto const& e : want) {
         bool any = std::any_of(e.ids.begin(), e.ids.end(), [&](std::string const& id) { return got.contains(id); });
-        if (e.present == kGoldenRolls && !any) add("no " + e.javaId + " (TF always drops " + std::to_string(e.min) + ".." + std::to_string(e.max) + ")");
+        if (e.present == kGoldenRolls && !any) add("no " + e.javaId + " (upstream always drops " + std::to_string(e.min) + ".." + std::to_string(e.max) + ")");
     }
     return diff;
 }
@@ -245,7 +245,7 @@ std::string ownerOf(std::string const& id) {
     return "?";
 }
 
-/// Every registered block type of the twilightforest namespace, sorted.
+/// Every registered block type of the gloamingforest namespace, sorted.
 std::vector<std::string> tfBlocks() {
     std::vector<std::string> out;
     auto                     level = ll::service::getLevel();
@@ -290,11 +290,11 @@ struct Reporter {
 
 } // namespace
 
-// Every registered twilightforest block, placed and broken with an empty hand, shears and a silk touch pickaxe:
-// its drops against TF's loot table (F13's oracle).
+// Every registered gloamingforest block, placed and broken with an empty hand, shears and a silk touch pickaxe:
+// its drops against upstream's loot table (F13's oracle).
 GF_REGISTER_SELFTEST("item.sweep_block_drops", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto blocks = tfBlocks();
-    ctx.require(blocks.size() >= 500, "the twilightforest blocks are registered (got " + std::to_string(blocks.size()) + ")");
+    ctx.require(blocks.size() >= 500, "the gloamingforest blocks are registered (got " + std::to_string(blocks.size()) + ")");
     auto pos = ctx.testPos(kDx, 2);
     ctx.require(co_await ctx.ensureLoaded(pos), "test position loaded");
     auto level = ll::service::getLevel();
@@ -310,7 +310,7 @@ GF_REGISTER_SELFTEST("item.sweep_block_drops", [](Context& ctx) -> ll::coro::Cor
                 "the silk touch pickaxe is enchanted");
     for (std::size_t i = 0; i < blocks.size(); ++i) {
         auto const& id    = blocks[i];
-        std::string table = "twilightforest:blocks/" + id.substr(15);
+        std::string table = "gloamingforest:blocks/" + id.substr(15);
         if (goldenTables().contains(table)) ++withTable;
         tables.insert(table);
         Block const* block = javaDefault(id);
@@ -350,21 +350,21 @@ GF_REGISTER_SELFTEST("item.sweep_block_drops", [](Context& ctx) -> ll::coro::Cor
     ctx.player().setCarriedItem(ItemStack::EMPTY_ITEM());
     ctx.player().setPlayerGameType(gameType);
     if (!before.empty() && before != "minecraft:air") ctx.setBlock(pos, before);
-    // TF's block tables whose block is not registered (the oracle's tables of blocks; "_berries" and similar
+    // upstream's block tables whose block is not registered (the oracle's tables of blocks; "_berries" and similar
     // tables of other loot uses are no blocks)
     int orphan = 0;
     for (auto const* t : kGoldenBlockTables) {
         std::string table(t);
         if (tables.contains(table)) continue;
         std::string id = std::string(kPrefix) + table.substr(22);
-        if (gf::game::blockWith(id) == nullptr && id.find("_berries") == std::string::npos && ++orphan <= 20) ctx.info("TF block table without a registered block: " + table);
+        if (gf::game::blockWith(id) == nullptr && id.find("_berries") == std::string::npos && ++orphan <= 20) ctx.info("upstream block table without a registered block: " + table);
     }
     rep.stale(covered);
-    ctx.info(std::to_string(blocks.size()) + " blocks (" + std::to_string(withTable) + " with a TF table), " + std::to_string(breaks) + " breaks, "
+    ctx.info(std::to_string(blocks.size()) + " blocks (" + std::to_string(withTable) + " with an upstream table), " + std::to_string(breaks) + " breaks, "
              + std::to_string(unplaceable) + " not placeable, " + std::to_string(rep.failed) + " differences, " + std::to_string(rep.excused) + " reviewed exceptions");
 });
 
-// Every recipe of TF's data pack crafts its output in the game.
+// Every recipe of upstream's data pack crafts its output in the game.
 GF_REGISTER_SELFTEST("item.sweep_recipes", [](Context& ctx) {
     namespace rc = gf::recipes;
     auto level   = ll::service::getLevel();
@@ -427,7 +427,7 @@ GF_REGISTER_SELFTEST("item.sweep_recipes", [](Context& ctx) {
                     }
                 }
             if (!matched)
-                rep.report(id, "", id + ": no crafting table recipe of the game makes " + std::to_string(g.count) + " " + g.result + " from TF's ingredients"
+                rep.report(id, "", id + ": no crafting table recipe of the game makes " + std::to_string(g.count) + " " + g.result + " from upstream's ingredients"
                                        + (sameResult ? " (recipes of that result exist but do not match the grid or the count)" : " (no recipe of that result)"));
         } else if (type == "minecraft:crafting" || type == "minecraft:smithing") {
             // code recipes: special crafting (or a BP recipe of the id with a special layout) or a data recipe a loader read
@@ -457,14 +457,14 @@ GF_REGISTER_SELFTEST("item.sweep_recipes", [](Context& ctx) {
                     ok  = std::find(results.begin(), results.end(), out.getTypeName()) != results.end() && out.mCount == g.count;
                 }
             }
-            if (!ok) rep.report(id, "", id + ": the game's " + tag + " makes " + got + " from " + (ings.empty() ? "?" : ings[0]) + ", TF " + std::to_string(g.count) + " " + g.result);
+            if (!ok) rep.report(id, "", id + ": the game's " + tag + " makes " + got + " from " + (ings.empty() ? "?" : ings[0]) + ", upstream " + std::to_string(g.count) + " " + g.result);
         } else {
-            // TF's custom types: their owner's loader read the data recipe
+            // upstream's custom types: their owner's loader read the data recipe
             auto const* r = rc::byId(id);
             if (!r) rep.report(id, "", id + ": the " + type + " recipe is not loaded");
-            else if (r->type != type) rep.report(id, "", id + ": loaded as " + r->type + ", TF " + type);
+            else if (r->type != type) rep.report(id, "", id + ": loaded as " + r->type + ", upstream " + type);
             else if (!results.empty() && std::find(results.begin(), results.end(), r->resultItem) == results.end())
-                rep.report(id, "", id + ": makes " + r->resultItem + ", TF " + g.result);
+                rep.report(id, "", id + ": makes " + r->resultItem + ", upstream " + g.result);
         }
     }
     rep.stale(covered);
@@ -478,7 +478,7 @@ GF_REGISTER_SELFTEST("item.sweep_recipes", [](Context& ctx) {
 // (TFCreativeTabs#createGlassSwordAndLoreVer); added once however often it is applied, removed again here.
 GF_REGISTER_SELFTEST("item.catalog_variant", [](Context& ctx) {
     namespace cat              = gf::catalog;
-    constexpr char kItem[]     = "twilightforest:naga_scale";
+    constexpr char kItem[]     = "gloamingforest:naga_scale";
     constexpr char kKey[]      = "gf_selftest";
     auto           before      = cat::internal::entriesInGroupOrder(kItem);
     ctx.require(!before.empty(), std::string(kItem) + " has a creative entry");

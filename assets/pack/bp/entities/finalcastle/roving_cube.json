@@ -2,13 +2,13 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:roving_cube",
+      "identifier": "gloamingforest:roving_cube",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "roving_cube", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "roving_cube", "monster", "mob"] },
       "minecraft:collision_box": { "width": 1.2, "height": 2.1 },
       "minecraft:health": { "value": 10, "max": 10 },
       "minecraft:movement": { "value": 0.23 },

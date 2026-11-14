@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/steeleaf_boots"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["# #", "# #"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:steeleaf_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:steeleaf_ingot"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:steeleaf_boots"
+    }
+  }
+}

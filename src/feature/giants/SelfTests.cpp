@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of U29 (rule R12: "giants.*", testPos dx 2900..2999; rule R19: the cloud castle's
 // golden hash). docs/spec/giants.md section 11.
@@ -435,7 +435,7 @@ GF_REGISTER_SELFTEST("giants.giant_mobs", [](Context& ctx) -> ll::coro::CoroTask
     if (!registered) {
         registered = true;
         gf::combat::onDealt(0, [](gf::combat::DamageInfo const& d) {
-            if (d.type == "twilightforest:ant" && d.attacker && (d.attacker->getTypeName() == id::GiantMiner || d.attacker->getTypeName() == id::ArmoredGiant)) antHits++;
+            if (d.type == "gloamingforest:ant" && d.attacker && (d.attacker->getTypeName() == id::GiantMiner || d.attacker->getTypeName() == id::ArmoredGiant)) antHits++;
         });
     }
     antHits = 0;
@@ -468,22 +468,22 @@ GF_REGISTER_SELFTEST("giants.giant_mobs", [](Context& ctx) -> ll::coro::CoroTask
     gf::loot::LootContext lc;
     lc.region     = region;
     lc.thisEntity = m;
-    ctx.check(gf::loot::roll("twilightforest:entities/giant_miner", lc).empty(), "no loot without a player");
+    ctx.check(gf::loot::roll("gloamingforest:entities/giant_miner", lc).empty(), "no loot without a player");
     lc.player   = &ctx.player();
     lc.attacker = &ctx.player();
-    auto drops  = gf::loot::roll("twilightforest:entities/giant_miner", lc);
+    auto drops  = gf::loot::roll("gloamingforest:entities/giant_miner", lc);
     ctx.check(drops.size() == 1 && game::items::idOf(drops.front()) == id::GiantPickaxe, "a player kill drops the giant pickaxe");
     lc.thisEntity = a;
-    auto drops2   = gf::loot::roll("twilightforest:entities/armored_giant", lc);
+    auto drops2   = gf::loot::roll("gloamingforest:entities/armored_giant", lc);
     ctx.check(drops2.size() == 1 && game::items::idOf(drops2.front()) == id::GiantSword, "the armored giant drops its sword");
-    // the melee is twilightforest:ant (GiantMiner#doHurtTarget): a giant's mob attack becomes it
+    // the melee is gloamingforest:ant (GiantMiner#doHurtTarget): a giant's mob attack becomes it
     auto& p = ctx.player();
     p.setPlayerGameType(GameType::Survival);
     p.teleportTo(Vec3{pos.x + 2.5f, float(pos.y), pos.z + 2.5f}, true, 0, 1, false);
     co_await ctx.ticks(2);
     if (auto* g = fe::actorById(mUid)) gf::combat::hurt(ctx.player(), 2.0f, "minecraft:mob_attack", g, g);
     // dealt inside the handler, as properlyApplyCustomDamageSource does within doHurtTarget
-    ctx.check(antHits == 1, "a giant's melee is twilightforest:ant damage, at once (" + std::to_string(antHits) + ")");
+    ctx.check(antHits == 1, "a giant's melee is gloamingforest:ant damage, at once (" + std::to_string(antHits) + ")");
     co_await ctx.ticks(2);
     // and the AI uses it (the player may be invulnerable for a moment after the first hit)
     antHits = 0;
@@ -522,7 +522,7 @@ public:
         return true;
     }
     [[nodiscard]] int          height(worldgen::Heightmap, int, int) const override { return 0; }
-    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "twilightforest:highlands"; }
+    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "gloamingforest:highlands"; }
     [[nodiscard]] std::int64_t seed() const override { return kSeed; }
     [[nodiscard]] int          dimension() const override { return -1; } // scratch: no block entity work
 
@@ -571,7 +571,7 @@ GF_REGISTER_SELFTEST("giants.cloud_castle_hash", [](Context& ctx) {
     auto bb  = structure::boxFromJson(tag["BB"]);
     ctx.check(bb.minX == 40 && bb.minY == 164 && bb.minZ == -40 && bb.maxX == 104 && bb.maxY == 180 && bb.maxZ == 24, "the castle's box: rounded to 4, (-8, -4, -8) + 64 x 16 x 64");
     if (!cloudCastleAvailable()) {
-        ctx.info("the cloud castle piece types (U27: twilightforest:TFClCa) are not registered: the golden hash waits for them");
+        ctx.info("the cloud castle piece types (U27: gloamingforest:TFClCa) are not registered: the golden hash waits for them");
         return;
     }
     int const cx = 3, cz = -2;
@@ -581,7 +581,7 @@ GF_REGISTER_SELFTEST("giants.cloud_castle_hash", [](Context& ctx) {
     ctx.require(layoutGiantHouse(context, cx * 16, 0, cz * 16, pieces), "the giant house lays out");
     std::map<std::string, int> types;
     for (auto const& p : pieces) types[p->typeId]++;
-    ctx.check(types["twilightforest:TFClCa"] == 1 && types["twilightforest:TFCloud"] == 1 && types["twilightforest:TFClTr"] == 2,
+    ctx.check(types["gloamingforest:TFClCa"] == 1 && types["gloamingforest:TFCloud"] == 1 && types["gloamingforest:TFClTr"] == 2,
               "a castle, its cloud and two cloud trees");
     ctx.check(pieces.front()->bbox.minY == 164, "the castle's box starts at y 164 (castle floor at 168)");
     MemoryRegion mem;

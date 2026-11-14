@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "particle_effect": {
     "description": {
-      "identifier": "twilightforest:drying_rack",
+      "identifier": "gloamingforest:drying_rack",
       "basic_render_parameters": {
         "material": "particles_alpha",
         "texture": "textures/particle/particles"

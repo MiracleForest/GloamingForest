@@ -9,8 +9,8 @@
     {"Name":"minecraft:mossy_stone_bricks"},
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:stone_brick_wall"},
-    {"Name":"twilightforest:wrought_iron_fence","Properties":{"post":"post"}},
-    {"Name":"twilightforest:wrought_iron_fence","Properties":{"post":"capped"}}
+    {"Name":"gloamingforest:wrought_iron_fence","Properties":{"post":"post"}},
+    {"Name":"gloamingforest:wrought_iron_fence","Properties":{"post":"capped"}}
   ],
   "blocks": [
     [1, 4], [2, 1], [1, 2], [4, 1], [1, 2], [5, 1], [1, 2], [6, 1], [1, 1], [3, 1], [0, 1], [3, 1]

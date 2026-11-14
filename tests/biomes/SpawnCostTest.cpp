@@ -1,4 +1,4 @@
-// U1 biomes: the spawn potential of TF's spawn costs (Java's PotentialCalculator, SpawnState#canSpawn).
+// U1 biomes: the spawn potential of upstream's spawn costs (Java's PotentialCalculator, SpawnState#canSpawn).
 
 #include <gtest/gtest.h>
 

@@ -2,15 +2,15 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:moonworm_shot",
+      "identifier": "gloamingforest:moonworm_shot",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/moonworm"
+        "default": "textures/gloamingforest/entity/moonworm"
       },
       "geometry": {
-        "default": "geometry.twilightforest.moonworm"
+        "default": "geometry.gloamingforest.moonworm"
       },
       "render_controllers": [
         "controller.render.default"

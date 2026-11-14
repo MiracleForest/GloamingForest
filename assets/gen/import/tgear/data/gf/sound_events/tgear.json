@@ -1,79 +1,79 @@
 {
-  "twilightforest:item.twilightforest.travellers_gear.cycle_maps": {
+  "gloamingforest:item.gloamingforest.travellers_gear.cycle_maps": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.cycle_maps",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.cycle_maps",
     "sounds": [
       {
         "file": "item/book/open_flip1"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_gear.cycle_maps_empty": {
+  "gloamingforest:item.gloamingforest.travellers_gear.cycle_maps_empty": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.cycle_maps_empty",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.cycle_maps_empty",
     "sounds": [
       {
         "file": "item/book/open_flip2"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_gear.double_jump": {
+  "gloamingforest:item.gloamingforest.travellers_gear.double_jump": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.double_jump",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.double_jump",
     "sounds": [
       {
         "file": "random/travellers/double_jump"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_gear.perfect_dodge": {
+  "gloamingforest:item.gloamingforest.travellers_gear.perfect_dodge": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.perfect_dodge",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.perfect_dodge",
     "sounds": [
       {
         "file": "random/travellers/perfect_dodge"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_gear.side_step": {
+  "gloamingforest:item.gloamingforest.travellers_gear.side_step": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.side_step",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.side_step",
     "sounds": [
       {
         "file": "random/travellers/side_step"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_gear.side_step_ready": {
+  "gloamingforest:item.gloamingforest.travellers_gear.side_step_ready": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.side_step_ready",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.side_step_ready",
     "sounds": [
       {
         "file": "random/travellers/side_step_ready"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_gear.swap_hotbar": {
+  "gloamingforest:item.gloamingforest.travellers_gear.swap_hotbar": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_gear.swap_hotbar",
+    "subtitle": "subtitles.gloamingforest.item.travellers_gear.swap_hotbar",
     "sounds": [
       {
         "event": "item.armor.equip_leather"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_goggles.zoom_in": {
+  "gloamingforest:item.gloamingforest.travellers_goggles.zoom_in": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_goggles.zoom_in",
+    "subtitle": "subtitles.gloamingforest.item.travellers_goggles.zoom_in",
     "sounds": [
       {
         "event": "item.spyglass.use"
       }
     ]
   },
-  "twilightforest:item.twilightforest.travellers_goggles.zoom_out": {
+  "gloamingforest:item.gloamingforest.travellers_goggles.zoom_out": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.travellers_goggles.zoom_out",
+    "subtitle": "subtitles.gloamingforest.item.travellers_goggles.zoom_out",
     "sounds": [
       {
         "event": "item.spyglass.stop_using"

@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/VanishingBlock.java
-//   src/main/java/twilightforest/block/ReappearingBlock.java
-//   src/main/java/twilightforest/block/LockedVanishingBlock.java
-//   src/main/java/twilightforest/block/BuilderBlock.java
-//   src/main/java/twilightforest/block/TranslucentBuiltBlock.java
-//   src/main/java/twilightforest/block/AntibuilderBlock.java
-//   src/main/java/twilightforest/block/CarminiteReactorBlock.java
-//   src/main/java/twilightforest/block/ReactorDebrisBlock.java
-//   src/main/java/twilightforest/block/GhastTrapBlock.java
-//   src/main/java/twilightforest/block/InfestedTowerwoodBlock.java
-//   src/main/java/twilightforest/block/entity/CarminiteBuilderBlockEntity.java
-//   src/main/java/twilightforest/block/entity/AntibuilderBlockEntity.java
-//   src/main/java/twilightforest/block/entity/CarminiteReactorBlockEntity.java
-//   src/main/java/twilightforest/block/entity/ReactorDebrisBlockEntity.java
-//   src/main/java/twilightforest/block/entity/GhastTrapBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/VanishingBlock.java
+//   src/main/java/gloamingforest/block/ReappearingBlock.java
+//   src/main/java/gloamingforest/block/LockedVanishingBlock.java
+//   src/main/java/gloamingforest/block/BuilderBlock.java
+//   src/main/java/gloamingforest/block/TranslucentBuiltBlock.java
+//   src/main/java/gloamingforest/block/AntibuilderBlock.java
+//   src/main/java/gloamingforest/block/CarminiteReactorBlock.java
+//   src/main/java/gloamingforest/block/ReactorDebrisBlock.java
+//   src/main/java/gloamingforest/block/GhastTrapBlock.java
+//   src/main/java/gloamingforest/block/InfestedTowerwoodBlock.java
+//   src/main/java/gloamingforest/block/entity/CarminiteBuilderBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/AntibuilderBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/CarminiteReactorBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/ReactorDebrisBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/GhastTrapBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/darktower/Devices.h"
@@ -63,10 +63,10 @@ using Facing = dt::Facing;
 
 namespace {
 
-constexpr char kActive[]   = "twilightforest:active";
-constexpr char kVanished[] = "twilightforest:vanished";
-constexpr char kLocked[]   = "twilightforest:locked";
-constexpr char kState[]    = "twilightforest:state";
+constexpr char kActive[]   = "gloamingforest:active";
+constexpr char kVanished[] = "gloamingforest:vanished";
+constexpr char kLocked[]   = "gloamingforest:locked";
+constexpr char kState[]    = "gloamingforest:state";
 
 bool isVanishingFamily(std::string const& id) {
     return id == id::VanishingBlock || id == id::ReappearingBlock || id == id::UnbreakableVanish || id == id::LockedVanish;
@@ -97,7 +97,7 @@ void tickSparkles() {
         Block const& b  = region->getBlock(bp);
         auto         id = game::blockId(b);
         bool family = id == id::VanishingBlock || id == id::ReappearingBlock || id == id::UnbreakableVanish || id == id::LockedVanish;
-        if (!family || !boolState(b, "twilightforest:active")) {
+        if (!family || !boolState(b, "gloamingforest:active")) {
             it = all.erase(it);
             continue;
         }
@@ -125,9 +125,9 @@ void vanishingTick(BlockSource& region, BlockPos const& pos, Block const& block)
     if (hasVanished(id) && vanishedState(block)) {
         if (active) {
             setStates(region, pos, {{kVanished, false}, {kActive, false}});
-            sound(region, pos, "block.twilightforest.reappearing_block.reappear", 0.3f, 0.3f);
+            sound(region, pos, "block.gloamingforest.reappearing_block.reappear", 0.3f, 0.3f);
         } else {
-            sound(region, pos, "block.twilightforest.reappearing_block.vanish", 0.3f, 0.5f);
+            sound(region, pos, "block.gloamingforest.reappearing_block.vanish", 0.3f, 0.5f);
             setStates(region, pos, {{kActive, true}});
             sparkling().insert(game::globalPos(region, pos));
             runtime::schedule(region, pos, 15);
@@ -141,7 +141,7 @@ void vanishingTick(BlockSource& region, BlockPos const& pos, Block const& block)
     } else {
         remove(region, pos);
     }
-    sound(region, pos, id == id::ReappearingBlock ? "block.twilightforest.reappearing_block.vanish" : "block.twilightforest.vanish.vanish", 0.3f, 0.5f);
+    sound(region, pos, id == id::ReappearingBlock ? "block.gloamingforest.reappearing_block.vanish" : "block.gloamingforest.vanish.vanish", 0.3f, 0.5f);
     for (int f = 0; f < 6; ++f) activateVanishing(region, rel(pos, f));
 }
 
@@ -158,7 +158,7 @@ ia::Result vanishingUse(ia::UseOnContext const& c) {
     auto bp = game::blockPos(c.pos);
     if (vanishedState(c.block) || boolState(c.block, kActive)) return ia::Result::Pass;
     if (!c.firstEvent) return ia::Result::Consume;
-    if (areBlocksLocked(*region, bp)) sound(*region, bp, "block.twilightforest.vanish.locked", 1.0f, 0.3f);
+    if (areBlocksLocked(*region, bp)) sound(*region, bp, "block.gloamingforest.vanish.locked", 1.0f, 0.3f);
     else activateVanishing(*region, bp);
     return ia::Result::Consume;
 }
@@ -174,7 +174,7 @@ ia::Result lockedUseWithKey(ia::UseOnContext const& c) {
     }
     auto bp = game::blockPos(c.pos);
     setStates(*region, bp, {{kLocked, false}});
-    sound(*region, bp, "block.twilightforest.vanish.unlock", 0.3f, 0.6f);
+    sound(*region, bp, "block.gloamingforest.vanish.unlock", 0.3f, 0.6f);
     gf::log().info("darktower: {} unlocked a locked vanishing block at {}", c.player.getRealName(), c.pos.key());
     return ia::Result::Consume;
 }
@@ -200,12 +200,12 @@ void builderNeighbor(BlockSource& region, BlockPos const& pos) {
     bool         pw      = powered(region, pos);
     if (variant == "builder_inactive" && pw) {
         setStates(region, pos, {{kState, "builder_active"}});
-        sound(region, pos, "block.twilightforest.builder.on", 0.3f, 0.6f);
+        sound(region, pos, "block.gloamingforest.builder.on", 0.3f, 0.6f);
         runtime::schedule(region, pos, 4);
     }
     if (variant == "builder_active" && !pw) {
         setStates(region, pos, {{kState, "builder_inactive"}});
-        sound(region, pos, "block.twilightforest.builder.off", 0.3f, 0.6f);
+        sound(region, pos, "block.gloamingforest.builder.off", 0.3f, 0.6f);
         runtime::schedule(region, pos, 4);
     }
     if (variant == "builder_timeout" && !pw) setStates(region, pos, {{kState, "builder_inactive"}});
@@ -215,7 +215,7 @@ void builderPlaced(BlockSource& region, BlockPos const& pos, Block const& block)
     runtime::track(region, pos);
     if (textState(block, kState) == "builder_inactive" && powered(region, pos)) {
         setStates(region, pos, {{kState, "builder_active"}});
-        sound(region, pos, "block.twilightforest.builder.on", 0.3f, 0.6f);
+        sound(region, pos, "block.gloamingforest.builder.on", 0.3f, 0.6f);
     }
 }
 
@@ -270,7 +270,7 @@ void builderDevice(BlockSource& region, BlockPos const& pos, Block const& block)
     if (!s.tracking) builderPlayers().erase(gp);
     if (r.placed) {
         set(region, BlockPos{r.at[0], r.at[1], r.at[2]}, id::BuiltBlock, {{kActive, false}});
-        sound(region, pos, "block.twilightforest.builder.create", 0.75f, 1.2f);
+        sound(region, pos, "block.gloamingforest.builder.create", 0.75f, 1.2f);
     }
     if (r.timeout) {
         setStates(region, pos, {{kState, "builder_timeout"}});
@@ -281,7 +281,7 @@ void builderDevice(BlockSource& region, BlockPos const& pos, Block const& block)
 void builtTick(BlockSource& region, BlockPos const& pos, Block const& block) {
     if (!boolState(block, kActive)) return;
     remove(region, pos);
-    sound(region, pos, "block.twilightforest.builder.replace", 0.3f, 0.5f);
+    sound(region, pos, "block.gloamingforest.builder.replace", 0.3f, 0.5f);
     for (int f = 0; f < 6; ++f) activateBuiltBlocks(region, rel(pos, f));
 }
 
@@ -299,7 +299,7 @@ core::jrand::LegacyRandom& antibuilderRandom() {
 
 /// A stable identity per block type for the snapshot (blocks, not states, are compared).
 /// The per-type facts of a block for the snapshot (blocks, not states, are compared): a stable
-/// identity, unbreakable and #twilightforest:antibuilder_ignores, cached per block type.
+/// identity, unbreakable and #gloamingforest:antibuilder_ignores, cached per block type.
 struct TypeFacts {
     int  id = 0;
     bool unbreakable = false;
@@ -332,7 +332,7 @@ TypeFacts const& typeFactsById(Block const& b) {
         TypeFacts f;
         f.id          = static_cast<int>(facts.size()) + 1;
         f.unbreakable = !b.isAir() && unbreakable(b);
-        f.ignored     = !b.isAir() && tags::has(tags::Registry::Block, "twilightforest:antibuilder_ignores", id);
+        f.ignored     = !b.isAir() && tags::has(tags::Registry::Block, "gloamingforest:antibuilder_ignores", id);
         it            = facts.emplace(id, f).first;
     }
     return it->second;
@@ -423,7 +423,7 @@ void antibuilderDevice(BlockSource& region, BlockPos const& pos, Block const&) {
 
 // ---- carminite reactor -------------------------------------------------------------------------------
 
-/// Set while the reactor's explosion runs (its entity damage becomes twilightforest:reactor).
+/// Set while the reactor's explosion runs (its entity damage becomes gloamingforest:reactor).
 bool& reactorBlast() {
     static bool b = false;
     return b;
@@ -439,7 +439,7 @@ std::map<GlobalPos, Reactor>& reactors() {
 }
 
 bool reactorImmune(Block const& b) {
-    return tags::has(tags::Registry::Block, "twilightforest:carminite_reactor_immune", game::blockId(b)) || unbreakable(b);
+    return tags::has(tags::Registry::Block, "gloamingforest:carminite_reactor_immune", game::blockId(b)) || unbreakable(b);
 }
 
 void createFakeBlock(BlockSource& region, BlockPos const& p, bool diamond) {
@@ -454,7 +454,7 @@ void transformBlock(BlockSource& region, BlockPos const& p, char const* stateId,
     if (fuzz == 0 && !there.isAir()) breakEffect(region, p, there);
     if (nether && !there.isAir()) {
         auto& r    = random();
-        auto  ores = tags::members(tags::Registry::Block, "twilightforest:carminite_reactor_ores");
+        auto  ores = tags::members(tags::Registry::Block, "gloamingforest:carminite_reactor_ores");
         bool  ore  = r.nextInt(8) == 0 && !ores.empty();
         std::string pick = ore ? ores[r.nextInt(static_cast<int>(ores.size()))] : std::string("minecraft:netherrack");
         if (pick == "minecraft:nether_quartz_ore") pick = "minecraft:quartz_ore"; // the Bedrock id
@@ -501,14 +501,14 @@ void reactorDevice(BlockSource& region, BlockPos const& pos, Block const& block)
                 transformBlock(region, BlockPos{pos.x + c[0] + b.dx, pos.y + c[1] + b.dy, pos.z + c[2] + b.dz}, call.debris ? id::ReactorDebris : "minecraft:air", b.fuzz, call.nether);
         }
         // client: the ambient whoosh every 5 ticks up to 250, volume and pitch counter / 100
-        if (te.counter <= 250) sound(region, pos, "block.twilightforest.reactor.ambient", te.counter / 100.0f, te.counter / 100.0f);
+        if (te.counter <= 250) sound(region, pos, "block.gloamingforest.reactor.ambient", te.counter / 100.0f, te.counter / 100.0f);
     }
     if (te.counter >= dt::kReactorExplodeAt) {
         auto bursts = te.bursts;
         reactors().erase(gp);
         destroy(region, pos, false);
         // CarminiteReactorBlockEntity: level.explode(null, TFDamageTypes.getDamageSource(REACTOR), ...): the
-        // explosion's entity damage is retyped to twilightforest:reactor while it runs
+        // explosion's entity damage is retyped to gloamingforest:reactor while it runs
         reactorBlast() = true;
         region.getLevel().explode(region, nullptr, Vec3{float(pos.x), float(pos.y), float(pos.z)}, 4.0f, true, true, 3.40282347e38f, false);
         reactorBlast() = false;
@@ -619,7 +619,7 @@ TrapIndex& trapIndex() {
 void makeParticlesTo(BlockSource& region, BlockPos const& pos, Vec3 const& to) {
     Vec3 top{pos.x + 0.5f, float(pos.y + 1), pos.z + 0.5f};
     Vec3 diff{top.x - to.x, top.y - to.y, top.z - to.z};
-    particle(region, "twilightforest:ghast_trap", top, Vec3{-diff.x, -diff.y, -diff.z}, 5);
+    particle(region, "gloamingforest:ghast_trap", top, Vec3{-diff.x, -diff.y, -diff.z}, 5);
 }
 
 void trapNeighbor(BlockSource& region, BlockPos const& pos) {
@@ -629,9 +629,9 @@ void trapNeighbor(BlockSource& region, BlockPos const& pos) {
     if (boolState(b, kActive) || te.dying.size() < 3 || !powered(region, pos)) return;
     AABB box{Vec3{pos.x - 6.0f, pos.y - 6.0f, pos.z - 6.0f}, Vec3{pos.x + 7.0f, pos.y + 7.0f, pos.z + 7.0f}};
     for (auto* a : actorsIn(region, box))
-        if (a->isPlayer()) progression::trigger(*static_cast<Player*>(a), "twilightforest:activate_ghast_trap");
+        if (a->isPlayer()) progression::trigger(*static_cast<Player*>(a), "gloamingforest:activate_ghast_trap");
     setStates(region, pos, {{kActive, true}});
-    sound(region, pos, "block.twilightforest.jet.start", 0.3f, 0.6f);
+    sound(region, pos, "block.gloamingforest.jet.start", 0.3f, 0.6f);
     te.counter = 0; // block event ACTIVATE
     te.dying.clear();
     gf::log().info("darktower: ghast trap at {} activated", gp.key());
@@ -666,23 +666,23 @@ void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
         }
         int charge = std::min<int>(3, static_cast<int>(te.dying.size()));
         te.counter++;
-        // the client effects of TF (every player near sees them through fx)
+        // the client effects of upstream (every player near sees them through fx)
         if (te.counter % 20 == 0 && !nearby.empty()) makeParticlesTo(region, pos, nearby[rnd.nextInt(static_cast<int>(nearby.size()))]->getEyePos());
         Vec3 snd{pos.x + 0.5f, pos.y + 1.5f, pos.z + 0.5f};
         if (charge >= 1 && te.counter % 10 == 0) {
             sparkle(region, pos);
-            soundAt(region, snd, "block.twilightforest.ghast_trap.ambient", 1.0f, 1.0f);
+            soundAt(region, snd, "block.gloamingforest.ghast_trap.ambient", 1.0f, 1.0f);
         }
         if (charge >= 2) {
             particle(region, "minecraft:smoke", Vec3{pos.x + 0.1f + rnd.nextFloat() * 0.8f, pos.y + 1.05f, pos.z + 0.1f + rnd.nextFloat() * 0.8f},
                      Vec3{(rnd.nextFloat() - rnd.nextFloat()) * 0.05f, 0.0f, (rnd.nextFloat() - rnd.nextFloat()) * 0.05f});
-            if (te.counter % 10 == 0) soundAt(region, snd, "block.twilightforest.ghast_trap.ambient", 1.2f, 0.8f);
+            if (te.counter % 10 == 0) soundAt(region, snd, "block.gloamingforest.ghast_trap.ambient", 1.2f, 0.8f);
         }
         if (charge == 3) {
             particle(region, "minecraft:large_smoke", Vec3{pos.x + 0.1f + rnd.nextFloat() * 0.8f, pos.y + 1.05f, pos.z + 0.1f + rnd.nextFloat() * 0.8f},
                      Vec3{(rnd.nextFloat() - rnd.nextFloat()) * 0.05f, 0.05f, (rnd.nextFloat() - rnd.nextFloat()) * 0.05f});
             sparkle(region, pos);
-            if (te.counter % 5 == 0) soundAt(region, snd, "block.twilightforest.ghast_trap.ambient", 1.5f, 2.0f);
+            if (te.counter % 5 == 0) soundAt(region, snd, "block.gloamingforest.ghast_trap.ambient", 1.5f, 2.0f);
         }
         return;
     }
@@ -690,15 +690,15 @@ void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
     ++te.counter;
     Vec3 base{pos.x + 0.5f, float(pos.y + 1), pos.z + 0.5f};
     if (te.counter > 100 && te.counter % 4 == 0) {
-        particle(region, "twilightforest:huge_smoke", Vec3{pos.x + 0.5f, pos.y + 0.95f, pos.z + 0.5f},
+        particle(region, "gloamingforest:huge_smoke", Vec3{pos.x + 0.5f, pos.y + 0.95f, pos.z + 0.5f},
                  Vec3{float(std::cos(te.counter / 10.0) * 0.05), 0.25f, float(std::sin(te.counter / 10.0) * 0.05)});
     } else if (te.counter < 100) {
         float dx = float(std::cos(te.counter / 10.0) * 2.5), dy = 20.0f, dz = float(std::sin(te.counter / 10.0) * 2.5);
         for (auto const& v : {Vec3{dx, dy, dz}, Vec3{-dx, dy, -dz}, Vec3{-dx, dy / 2, dz}, Vec3{dx, dy / 2, -dz}, Vec3{dx / 2, dy / 4, dz / 2}, Vec3{-dx / 2, dy / 4, -dz / 2}})
-            particle(region, "twilightforest:ghast_trap", base, v);
+            particle(region, "gloamingforest:ghast_trap", base, v);
     }
     Vec3 snd{pos.x + 0.5f, pos.y + 1.5f, pos.z + 0.5f};
-    soundAt(region, snd, te.counter < 30 ? "block.twilightforest.ghast_trap.warmup" : te.counter < 80 ? "block.twilightforest.ghast_trap.on" : "block.twilightforest.ghast_trap.spindown", 1.0f, 4.0f);
+    soundAt(region, snd, te.counter < 30 ? "block.gloamingforest.ghast_trap.warmup" : te.counter < 80 ? "block.gloamingforest.ghast_trap.on" : "block.gloamingforest.ghast_trap.spindown", 1.0f, 4.0f);
     // trap nearby ghasts: AABB(above(16).center, above(16).offset(1,1,1).center).inflate(6, 16, 6)
     AABB box{Vec3{pos.x + 0.5f - 6.0f, pos.y + 16.5f - 16.0f, pos.z + 0.5f - 6.0f}, Vec3{pos.x + 1.5f + 6.0f, pos.y + 17.5f + 16.0f, pos.z + 1.5f + 6.0f}};
     // getEntitiesOfClass intersects the boxes; Bedrock finds an actor by the chunk of its position:
@@ -826,7 +826,7 @@ void activateBuiltBlocks(BlockSource& region, BlockPos const& pos) {
     Block const& b = region.getBlock(pos);
     if (game::blockId(b) != id::BuiltBlock || boolState(b, kActive)) return;
     setStates(region, pos, {{kActive, true}});
-    sound(region, pos, "block.twilightforest.builder.replace", 0.3f, 0.6f);
+    sound(region, pos, "block.gloamingforest.builder.replace", 0.3f, 0.6f);
     runtime::schedule(region, pos, 10);
 }
 
@@ -963,10 +963,10 @@ void install() {
     runtime::onEveryTick(tickSparkles);
     // the reactor's explosion damage
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
-        if (!reactorBlast() || d.type == "twilightforest:reactor") return combat::Verdict::Pass;
+        if (!reactorBlast() || d.type == "gloamingforest:reactor") return combat::Verdict::Pass;
         if (d.type.find("explosion") == std::string::npos) return combat::Verdict::Pass;
         float amount = d.amount;
-        combat::hurt(d.victim, amount, "twilightforest:reactor");
+        combat::hurt(d.victim, amount, "gloamingforest:reactor");
         return combat::Verdict::Cancel;
     });
 }

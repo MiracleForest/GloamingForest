@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.knight_phantom": {
+    "controller.render.gloamingforest.knight_phantom": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -18,7 +18,7 @@
         "a": 0.5
       }
     },
-    "controller.render.twilightforest.lower_goblin_knight": {
+    "controller.render.gloamingforest.lower_goblin_knight": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -33,11 +33,11 @@
           "*": true
         },
         {
-          "tunic": "q.property('twilightforest:armor')"
+          "tunic": "q.property('gloamingforest:armor')"
         }
       ]
     },
-    "controller.render.twilightforest.upper_goblin_knight": {
+    "controller.render.gloamingforest.upper_goblin_knight": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -52,14 +52,14 @@
           "*": true
         },
         {
-          "breastplate": "q.property('twilightforest:armor')"
+          "breastplate": "q.property('gloamingforest:armor')"
         },
         {
-          "shield": "q.property('twilightforest:shield')"
+          "shield": "q.property('gloamingforest:shield')"
         }
       ]
     },
-    "controller.render.twilightforest.blockchain_goblin": {
+    "controller.render.gloamingforest.blockchain_goblin": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -70,7 +70,7 @@
         "Texture.default"
       ]
     },
-    "controller.render.twilightforest.blockchain_goblin_ball": {
+    "controller.render.gloamingforest.blockchain_goblin_ball": {
       "geometry": "Geometry.ball",
       "materials": [
         {
@@ -81,7 +81,7 @@
         "Texture.ball"
       ]
     },
-    "controller.render.twilightforest.helmet_crab": {
+    "controller.render.gloamingforest.helmet_crab": {
       "arrays": {
         "textures": {
           "Array.skins": [
@@ -97,10 +97,10 @@
         }
       ],
       "textures": [
-        "Array.skins[q.property('twilightforest:blue') ? 1 : 0]"
+        "Array.skins[q.property('gloamingforest:blue') ? 1 : 0]"
       ]
     },
-    "controller.render.twilightforest.thrown_wep": {
+    "controller.render.gloamingforest.thrown_wep": {
       "arrays": {
         "textures": {
           "Array.items": [
@@ -116,7 +116,7 @@
         }
       ],
       "textures": [
-        "Array.items[q.property('twilightforest:pickaxe') ? 1 : 0]"
+        "Array.items[q.property('gloamingforest:pickaxe') ? 1 : 0]"
       ]
     }
   }

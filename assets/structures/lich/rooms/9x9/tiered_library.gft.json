@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/9x9/tiered_library",
+  "id": "gloamingforest:lich_tower/9x9/tiered_library",
   "size": [11, 11, 11],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -10,8 +10,8 @@
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:iron_bars"},
-    {"Name":"twilightforest:canopy_slab","Properties":{"type":"top"}},
-    {"Name":"twilightforest:wrought_iron_fence","Properties":{"post":"post"}},
+    {"Name":"gloamingforest:canopy_slab","Properties":{"type":"top"}},
+    {"Name":"gloamingforest:wrought_iron_fence","Properties":{"post":"post"}},
     {"Name":"minecraft:ladder","Properties":{"facing":"north"}}
   ],
   "blocks": [

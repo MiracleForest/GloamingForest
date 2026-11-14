@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/FireBeetle.java
-//   src/main/java/twilightforest/entity/monster/SlimeBeetle.java
-//   src/main/java/twilightforest/entity/monster/PinchBeetle.java
-//   src/main/java/twilightforest/entity/projectile/SlimeProjectile.java
-//   src/main/java/twilightforest/util/entities/EntityUtil.java (properlyApplyCustomDamageSource)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/FireBeetle.java
+//   src/main/java/gloamingforest/entity/monster/SlimeBeetle.java
+//   src/main/java/gloamingforest/entity/monster/PinchBeetle.java
+//   src/main/java/gloamingforest/entity/projectile/SlimeProjectile.java
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java (properlyApplyCustomDamageSource)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The hollow-hill beetles. Float, look and the targets are the BP's behaviours; TF's goals run
+// The hollow-hill beetles. Float, look and the targets are the BP's behaviours; upstream's goals run
 // natively and the BP's melee / stroll (gf:vanilla_move) wait while they hold MOVE:
 //   fire beetle   2 BreathAttack (F8) 5 / 30 / 0.1: 2 scorched damage, 10 s of fire, flames;
 //   slime beetle  2 AvoidEntity Player 3 (1.25 / 2.0), 3 RangedAttack 1 / 30 / 10: slime blobs;
 //   pinch beetle  2 ChargeAttack 1.5 (F8): its hit grabs the target as its rider (IHostileMount,
-//                 F8's mount::grab) and squeezes with twilightforest:clamped.
+//                 F8's mount::grab) and squeezes with gloamingforest:clamped.
 
 #include <cmath>
 #include <memory>
@@ -80,7 +80,7 @@ void fireBreath(Mob& m) {
         dz *= velocity;
         gf::fx::particle(m.getDimension(), "minecraft:flame", at, Vec3{float(dx), float(dy), float(dz)});
     }
-    playSound(m, "entity.twilightforest.fire_beetle.shoot", r.nextFloat() * 0.5F, r.nextFloat() * 0.5F);
+    playSound(m, "entity.gloamingforest.fire_beetle.shoot", r.nextFloat() * 0.5F, r.nextFloat() * 0.5F);
 }
 
 void fireBeetleTick(Actor& self) {
@@ -88,9 +88,9 @@ void fireBeetleTick(Actor& self) {
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (!nativeGoalsPresent(self))
-        ge::addGoal(*m, 2, ge::goals::breath(*m, {.range = 5.0f, .durationTicks = 30, .chance = 0.1f, .damageType = "twilightforest:scorched"}));
+        ge::addGoal(*m, 2, ge::goals::breath(*m, {.range = 5.0f, .durationTicks = 30, .chance = 0.1f, .damageType = "gloamingforest:scorched"}));
     bool breathing = ge::ext::isBreathing(self);
-    setPropertyCached(self, "twilightforest:breathing", breathing);
+    setPropertyCached(self, "gloamingforest:breathing", breathing);
     setGroup(self, "vanilla_move", !breathing);
     if (breathing) fireBreath(*m);
 }
@@ -177,7 +177,7 @@ void pinchHit(std::int64_t beetleId, std::int64_t victimId) {
     if (!beetle) return;
     if (!beetle->getFirstPassenger()) {
         Actor* vehicle = v->getVehicle();
-        if (!vehicle || !gf::tags::has(gf::tags::Registry::EntityType, "twilightforest:rides_obstruct_snatching", vehicle->getTypeName())) {
+        if (!vehicle || !gf::tags::has(gf::tags::Registry::EntityType, "gloamingforest:rides_obstruct_snatching", vehicle->getTypeName())) {
             // pluck them from the boat, minecart, donkey, or whatever
             if (v->isPlayer()) ge::mount::grab(*beetle, static_cast<Player&>(*v));
             else {
@@ -188,14 +188,14 @@ void pinchHit(std::int64_t beetleId, std::int64_t victimId) {
     }
     // the attack damage (no weapon enchantments: the beetle holds nothing); its knockback attribute
     // is 0, so no fling
-    gf::combat::hurt(*v, attackDamage(*beetle, 4.0F), "twilightforest:clamped", beetle);
+    gf::combat::hurt(*v, attackDamage(*beetle, 4.0F), "gloamingforest:clamped", beetle);
 }
 
 } // namespace
 
 void slimeShoot(Mob& beetle, Actor& target) {
     auto& r = randomOf(beetle);
-    playSound(beetle, "entity.twilightforest.slime_beetle.squish", 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
+    playSound(beetle, "entity.gloamingforest.slime_beetle.squish", 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
     auto   tp   = target.getFeetPos();
     auto   p    = beetle.getFeetPos();
     double py   = beetle.getEyePos().y - 0.1; // ThrowableProjectile(type, owner): at the eyes - 0.1
@@ -210,7 +210,7 @@ void install() {
     ge::registerType(id::FireBeetle, {.tick = fireBeetleTick, .die = forgetActor});
     // FireBeetle#doBreathAttack: 2 scorched damage to a target that is not fire immune, then 10 s of fire
     ge::ext::onBreathAttack(id::FireBeetle, [](Mob& beetle, Actor& target) {
-        if (!target.isFireImmune() && gf::combat::hurt(target, 2.0F, "twilightforest:scorched", &beetle)) target.setOnFire(10, true);
+        if (!target.isFireImmune() && gf::combat::hurt(target, 2.0F, "gloamingforest:scorched", &beetle)) target.setOnFire(10, true);
     });
     // FireBeetle#doHurtTarget while breathing: 2 scorched damage only
     gf::combat::onIncoming(gf::combat::priority::Normal, [](gf::combat::DamageInfo& d) {
@@ -221,7 +221,7 @@ void install() {
         ia::nextTick([victim, beetle] {
             auto* v = actorById(victim);
             auto* b = actorById(beetle);
-            if (v && b && v->isAlive()) gf::combat::hurt(*v, 2.0F, "twilightforest:scorched", b);
+            if (v && b && v->isAlive()) gf::combat::hurt(*v, 2.0F, "gloamingforest:scorched", b);
         });
         return gf::combat::Verdict::Cancel;
     });

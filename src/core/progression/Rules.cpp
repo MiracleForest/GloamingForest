@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/Restriction.java
-//   src/main/java/twilightforest/util/Enforcement.java
-//   src/main/java/twilightforest/init/custom/Enforcements.java
-//   src/main/java/twilightforest/events/ProgressionEvents.java
-//   src/main/java/twilightforest/client/event/LockedBiomeToastHandler.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/Restriction.java
+//   src/main/java/gloamingforest/util/Enforcement.java
+//   src/main/java/gloamingforest/init/custom/Enforcements.java
+//   src/main/java/gloamingforest/events/ProgressionEvents.java
+//   src/main/java/gloamingforest/client/event/LockedBiomeToastHandler.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 
@@ -30,11 +30,11 @@ std::string ns(std::string id) {
 
 Enforcement enforcementOf(std::string const& id) {
     auto n = ns(id);
-    if (n == "twilightforest:darkness") return Enforcement::Darkness;
-    if (n == "twilightforest:hunger") return Enforcement::Hunger;
-    if (n == "twilightforest:fire") return Enforcement::Fire;
-    if (n == "twilightforest:frost") return Enforcement::Frost;
-    if (n == "twilightforest:acid_rain") return Enforcement::AcidRain;
+    if (n == "gloamingforest:darkness") return Enforcement::Darkness;
+    if (n == "gloamingforest:hunger") return Enforcement::Hunger;
+    if (n == "gloamingforest:fire") return Enforcement::Fire;
+    if (n == "gloamingforest:frost") return Enforcement::Frost;
+    if (n == "gloamingforest:acid_rain") return Enforcement::AcidRain;
     return Enforcement::Unknown;
 }
 

@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.quest_ram": {
+    "controller.render.gloamingforest.quest_ram": {
       "geometry": "Geometry.default",
       "materials": [
         {
@@ -65,7 +65,7 @@
         }
       ]
     },
-    "controller.render.twilightforest.quest_ram_lines": {
+    "controller.render.gloamingforest.quest_ram_lines": {
       "geometry": "Geometry.lines",
       "materials": [
         {

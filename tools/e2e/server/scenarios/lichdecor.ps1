@@ -14,6 +14,6 @@ $log = Get-ServerLog -Since $mark
 foreach ($size in '3x3', '5x5', '7x7', '9x9') {
     if (-not ($log | Select-String -SimpleMatch "${size}: ")) { throw "missing the room summary of $size" }
 }
-$goldens = @($log | Select-String -Pattern 'golden (twilightforest:lich_tower/\S+) ([0-9a-f]{16})')
+$goldens = @($log | Select-String -Pattern 'golden (gloamingforest:lich_tower/\S+) ([0-9a-f]{16})')
 if ($goldens.Count) { Write-Step "lichdecor: $($goldens.Count) room hash(es) logged for the golden table" }
 Write-Step 'lichdecor: selftests passed'

@@ -14,7 +14,7 @@
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"east","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
     {"Name":"minecraft:mossy_stone_bricks"},
-    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"up"}},
+    {"Name":"gloamingforest:etched_nagastone","Properties":{"facing":"up"}},
     {"Name":"minecraft:netherrack"},
     {"Name":"minecraft:fire","Properties":{"age":"0","east":"false","north":"false","south":"false","up":"false","west":"false"}}
   ],

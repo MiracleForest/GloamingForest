@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
-// The world's terrain preset (TF's twilight_noise_gen or skylight_noise_gen), chosen once per world
-// like TF's world preset and kept in gf:terrain:skylight; and the chunk records of Bedrock's world
-// DB that tell whether a dimension already holds generated chunks (a world whose Twilight Forest
-// was generated before the preset was kept stays twilight_noise_gen). Pure: no game headers.
+// The world's terrain preset (upstream's gloaming_noise_gen or skylight_noise_gen), chosen once per world
+// like upstream's world preset and kept in gf:terrain:skylight; and the chunk records of Bedrock's world
+// DB that tell whether a dimension already holds generated chunks (a world whose Gloaming Forest
+// was generated before the preset was kept stays gloaming_noise_gen). Pure: no game headers.
 
 #include <array>
 #include <cstddef>
@@ -41,7 +41,7 @@ struct RingProbe {
 
 enum class PresetSource {
     Stored,      ///< gf:terrain:skylight
-    SavedChunks, ///< the Twilight Forest already holds saved chunks: twilight_noise_gen
+    SavedChunks, ///< the Gloaming Forest already holds saved chunks: gloaming_noise_gen
     Provisional, ///< chunks generated in this session before the world was ready used it
     Config,      ///< a new world: the config's choice
 };
@@ -51,14 +51,14 @@ struct PresetChoice {
     PresetSource source   = PresetSource::Config;
 };
 
-/// The preset of a world: the stored one wins; else a world whose Twilight Forest has saved chunks
-/// stays twilight; else what chunks generated before the world was ready used (`provisional`: -1
-/// none, 0 twilight, 1 skylight); else the config's.
+/// The preset of a world: the stored one wins; else a world whose Gloaming Forest has saved chunks
+/// stays gloaming; else what chunks generated before the world was ready used (`provisional`: -1
+/// none, 0 gloaming, 1 skylight); else the config's.
 [[nodiscard]] PresetChoice
-choosePreset(std::optional<bool> stored, bool savedTwilightChunks, int provisional, bool configured);
+choosePreset(std::optional<bool> stored, bool savedGloamingChunks, int provisional, bool configured);
 
 /// Whether the saved chunks can change choosePreset's answer: only without a stored choice and when
-/// the alternative is skylight (the config or the provisional chunks); a twilight answer is the
+/// the alternative is skylight (the config or the provisional chunks); a gloaming answer is the
 /// same with or without saved chunks, so the world DB is not read for it.
 [[nodiscard]] bool savedChunksMatter(std::optional<bool> stored, int provisional, bool configured);
 

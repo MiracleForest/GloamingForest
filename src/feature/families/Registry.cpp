@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/RegistrationEvents.java
-//   src/main/java/twilightforest/world/components/feature/trees/growers/TFTreeGrowers.java
-//   src/main/java/twilightforest/world/components/feature/trees/growers/StructureTreeGrower.java
-//   src/main/java/twilightforest/init/TFBlocks.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/RegistrationEvents.java
+//   src/main/java/gloamingforest/world/components/feature/trees/growers/TFTreeGrowers.java
+//   src/main/java/gloamingforest/world/components/feature/trees/growers/StructureTreeGrower.java
+//   src/main/java/gloamingforest/init/TFBlocks.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -14,7 +14,7 @@
 //
 // Entries are {"id", "family", "params"} (tools/families/README.md); one id may list one shape
 // family and any modifiers (waterloggable, snowloggable, climbable, lightable). F1's entries name
-// the Java class (params.class), which refines the family, and TF's registrations fill the params
+// the Java class (params.class), which refines the family, and upstream's registrations fill the params
 // units leave out: the wall variant of a sign, the plant of a potted plant, the strippables
 // (RegistrationEvents STRIPPABLES / FlowerPotBlock.addPlant) and the tree growers (TFTreeGrowers).
 //
@@ -106,16 +106,16 @@ unsigned traitModifiers(Json const& params) {
     return out;
 }
 
-// ---- TF's registrations ----------------------------------------------------------------------------
+// ---- upstream's registrations ----------------------------------------------------------------------------
 
-/// RegistrationEvents: AxeItem.STRIPPABLES.put(log, stripped log) for TF's eight woods.
+/// RegistrationEvents: AxeItem.STRIPPABLES.put(log, stripped log) for upstream's eight woods.
 std::map<std::string, std::string, std::less<>> const& strippables() {
     static std::map<std::string, std::string, std::less<>> const m = [] {
         std::map<std::string, std::string, std::less<>> out;
-        for (char const* wood : {"twilight_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"}) {
+        for (char const* wood : {"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"}) {
             for (char const* kind : {"log", "wood"}) {
                 std::string id = std::string(wood) + "_" + kind;
-                out["twilightforest:" + id] = "twilightforest:stripped_" + id;
+                out["gloamingforest:" + id] = "gloamingforest:stripped_" + id;
             }
         }
         return out;
@@ -126,9 +126,9 @@ std::map<std::string, std::string, std::less<>> const& strippables() {
 /// RegistrationEvents: FlowerPotBlock.addPlant(plant, potted) where the names differ.
 std::map<std::string, std::string, std::less<>> const& pottedPlants() {
     static std::map<std::string, std::string, std::less<>> const m{
-        {"twilightforest:potted_thorn", "twilightforest:brown_thorns"},
-        {"twilightforest:potted_green_thorn", "twilightforest:green_thorns"},
-        {"twilightforest:potted_dead_thorn", "twilightforest:burnt_thorns"},
+        {"gloamingforest:potted_thorn", "gloamingforest:brown_thorns"},
+        {"gloamingforest:potted_green_thorn", "gloamingforest:green_thorns"},
+        {"gloamingforest:potted_dead_thorn", "gloamingforest:burnt_thorns"},
     };
     return m;
 }
@@ -136,19 +136,19 @@ std::map<std::string, std::string, std::less<>> const& pottedPlants() {
 /// TFTreeGrowers (Java TreeGrower: secondaryChance, megaTree, secondaryMegaTree, tree,
 /// secondaryTree) and StructureTreeGrower (the hollow tree structure), by sapling (TFBlocks).
 Json growerOf(std::string_view saplingId) {
-    auto f = [](char const* path) { return std::string("twilightforest:tree/") + path; };
-    if (saplingId == "twilightforest:twilight_oak_sapling")
+    auto f = [](char const* path) { return std::string("gloamingforest:tree/") + path; };
+    if (saplingId == "gloamingforest:gloaming_oak_sapling")
         return {{"secondary_chance", 0.1}, {"mega_feature", f("forest_mega_oak_tree")}, {"secondary_mega_feature", f("savannah_mega_oak_tree")},
-                {"feature", f("twilight_oak_tree")}, {"secondary_feature", f("large_twilight_oak_tree")}};
-    if (saplingId == "twilightforest:canopy_sapling") return {{"mega_feature", f("mega_canopy_tree")}, {"feature", f("canopy_tree")}};
-    if (saplingId == "twilightforest:mangrove_sapling") return {{"feature", f("mangrove_tree")}};
-    if (saplingId == "twilightforest:darkwood_sapling") return {{"feature", f("homegrown_darkwood_tree")}};
-    if (saplingId == "twilightforest:time_sapling") return {{"feature", f("time_tree")}};
-    if (saplingId == "twilightforest:transformation_sapling") return {{"feature", f("transformation_tree")}};
-    if (saplingId == "twilightforest:mining_sapling") return {{"feature", f("mining_tree")}};
-    if (saplingId == "twilightforest:sorting_sapling") return {{"feature", f("sorting_tree")}};
-    if (saplingId == "twilightforest:hollow_oak_sapling") return {{"structure", "twilightforest:hollow_tree"}};
-    if (saplingId == "twilightforest:rainbow_oak_sapling")
+                {"feature", f("gloaming_oak_tree")}, {"secondary_feature", f("large_gloaming_oak_tree")}};
+    if (saplingId == "gloamingforest:canopy_sapling") return {{"mega_feature", f("mega_canopy_tree")}, {"feature", f("canopy_tree")}};
+    if (saplingId == "gloamingforest:mangrove_sapling") return {{"feature", f("mangrove_tree")}};
+    if (saplingId == "gloamingforest:darkwood_sapling") return {{"feature", f("homegrown_darkwood_tree")}};
+    if (saplingId == "gloamingforest:time_sapling") return {{"feature", f("time_tree")}};
+    if (saplingId == "gloamingforest:transformation_sapling") return {{"feature", f("transformation_tree")}};
+    if (saplingId == "gloamingforest:mining_sapling") return {{"feature", f("mining_tree")}};
+    if (saplingId == "gloamingforest:sorting_sapling") return {{"feature", f("sorting_tree")}};
+    if (saplingId == "gloamingforest:hollow_oak_sapling") return {{"structure", "gloamingforest:hollow_tree"}};
+    if (saplingId == "gloamingforest:rainbow_oak_sapling")
         return {{"secondary_chance", 0.1}, {"feature", f("rainbow_oak")}, {"secondary_feature", f("large_rainbow_oak")}};
     return nullptr;
 }
@@ -282,7 +282,7 @@ void readFile(fs::path const& file, std::map<std::string, Entry, std::less<>>& o
     }
 }
 
-/// TF's registrations for what the data leaves out (the data always wins).
+/// upstream's registrations for what the data leaves out (the data always wins).
 void fillDefaults(std::map<std::string, Entry, std::less<>>& all) {
     auto exists = [&](std::string const& id) { return !id.empty() && all.contains(id); };
     for (auto& [id, e] : all) {
@@ -331,7 +331,7 @@ void fillDefaults(std::map<std::string, Entry, std::less<>>& all) {
             }
             break;
         case Family::Button:
-            // TF's buttons: wooden block set types, 30 ticks (TFBlocks: new ButtonBlock(set, 30, ...))
+            // upstream's buttons: wooden block set types, 30 ticks (TFBlocks: new ButtonBlock(set, 30, ...))
             if (!p.contains("ticks")) p["ticks"] = 30;
             break;
         default: break;
@@ -355,7 +355,7 @@ std::optional<Family> familyOf(std::string_view name, std::string_view cls) {
     if (*f == Family::HangingSign && cls == "WallHangingSignBlock") return Family::WallHangingSign;
     if (*f == Family::Pillar) {
         if (cls == "WallPillarBlock") return Family::WallPillar;
-        // TF's ConnectableRotatedPillarBlock subclasses (thorns)
+        // upstream's ConnectableRotatedPillarBlock subclasses (thorns)
         if (cls == "ThornsBlock" || cls == "BurntThornsBlock" || cls == "ConnectableRotatedPillarBlock") return Family::ConnectablePillar;
     }
     return f;

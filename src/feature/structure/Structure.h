@@ -2,19 +2,19 @@
 
 // Contract "structure" (header owned by F0, implemented by F7).
 //
-// The piece framework of TF's structures (StructurePiece / TFStructureComponent with per-chunk
+// The piece framework of upstream's structures (StructurePiece / TFStructureComponent with per-chunk
 // clipping), GloamingForest templates (rule R19: procedural pieces are exact translations,
-// template-backed pieces use original .gft templates validated against TF's LGPL template
+// template-backed pieces use original .gft templates validated against upstream's LGPL template
 // definitions), processors, marker handlers, wood palettes, random block selectors, jigsaw
 // assembly and speleothems.
 //
 //     class NagaCourtyardMain : public gf::structure::Piece { ... void postProcess(...) override; };
-//     gf::structure::registerPieceType("twilightforest:TFNCMn", [](nlohmann::json const& saved) { ... });
+//     gf::structure::registerPieceType("gloamingforest:TFNCMn", [](nlohmann::json const& saved) { ... });
 //
 // The shared bases are part of this contract, declared by F0 in feature/structure/bases/ and
 // implemented by F7 (neutral stubs in bases/Bases.cpp until then): Component.h
 // (TFStructureComponent, TFStructureDecorator, UtilityPiece, SortablePiece), ComponentOld.h
-// (TFStructureComponentOld), TemplatePieces.h (TFStructureComponentTemplate, TwilightTemplate /
+// (TFStructureComponentOld), TemplatePieces.h (TFStructureComponentTemplate, GloamingTemplate /
 // DoubleTemplate / Jigsaw pieces, JigsawRecord), Maze.h (TFMaze), HollowHill.h
 // (HollowHillComponent) and Tower.h (the 16 classes of the TowerWing family). Piece-local
 // coordinates follow Java: (x, y, z) inside `bbox`, turned by `orientation` and `mirror`.
@@ -50,7 +50,7 @@ enum class Rotation { None, Clockwise90, Clockwise180, Counterclockwise90 };
 /// Java's Mirror.
 enum class Mirror { None, LeftRight, FrontBack };
 
-/// StructurePiece.BlockSelector / TF's random block selectors ("twilightforest:stronghold_stones").
+/// StructurePiece.BlockSelector / upstream's random block selectors ("gloamingforest:stronghold_stones").
 class BlockSelector {
 public:
     virtual ~BlockSelector() = default;
@@ -73,7 +73,7 @@ public:
     explicit Piece(std::string typeId) : typeId(std::move(typeId)) {}
     virtual ~Piece() = default;
 
-    std::string typeId;          ///< the registered piece type ("twilightforest:TFHedge")
+    std::string typeId;          ///< the registered piece type ("gloamingforest:TFHedge")
     BlockBox    bbox;            ///< world-space bounds
     Orientation orientation = Orientation::North;
     Mirror      mirror      = Mirror::None;
@@ -90,7 +90,7 @@ public:
     virtual void               load(Json const& data);
 
     // ---- helpers in piece-local coordinates (StructurePiece / TFStructureComponentOld) --------
-    /// getWorldX / getWorldY / getWorldZ (virtual: a few TF pieces override them).
+    /// getWorldX / getWorldY / getWorldZ (virtual: a few upstream pieces override them).
     [[nodiscard]] virtual int worldX(int x, int z) const;
     [[nodiscard]] virtual int worldY(int y) const;
     [[nodiscard]] virtual int worldZ(int x, int z) const;
@@ -137,11 +137,11 @@ struct BlockInfo {
     Block const* block = nullptr;
     Json         data;  ///< block entity data (loot table, spawner entity, sign text...)
 };
-/// A structure processor ("twilightforest:nagastone_variants"): returns the replacement or
+/// A structure processor ("gloamingforest:nagastone_variants"): returns the replacement or
 /// nullopt to drop the block.
 using ProcessorFn = std::function<std::optional<BlockInfo>(Region& region, BlockInfo const& original, BlockInfo const& placed, TemplateSettings const& settings, Json const& config)>;
 void registerProcessor(std::string const& typeId, ProcessorFn fn);
-/// A template marker handler (TF's template_marker_handler_list; "loot", "drying_rack", ...).
+/// A template marker handler (upstream's template_marker_handler_list; "loot", "drying_rack", ...).
 using MarkerFn = std::function<void(Region& region, BlockPos const& pos, std::string const& marker, Json const& data, RandomSource& random)>;
 void registerMarkerHandler(std::string const& id, MarkerFn fn);
 
@@ -152,19 +152,19 @@ struct Template {
     int         sizeX = 0, sizeY = 0, sizeZ = 0;
     Json        data; ///< palette, RLE blocks, markers, jigsaw connectors, entities
 };
-/// The template `id` ("twilightforest:lich_tower/root/foyer"), nullptr when missing.
+/// The template `id` ("gloamingforest:lich_tower/root/foyer"), nullptr when missing.
 [[nodiscard]] Template const* get(std::string const& id);
 /// Places a template with its processors; false when missing.
 bool place(std::string const& id, Region& region, BlockPos const& origin, TemplateSettings const& settings);
 } // namespace templates
 
 namespace palettes {
-/// Applies wood palette `paletteId` (twilight/wood_palettes) to a block (identity if no match).
+/// Applies wood palette `paletteId` (gloaming/wood_palettes) to a block (identity if no match).
 [[nodiscard]] Block const& apply(std::string const& paletteId, Block const& block, RandomSource& random);
 } // namespace palettes
 
 namespace selectors {
-/// A shared random block selector by id ("twilightforest:stronghold_stones"); nullptr if unknown.
+/// A shared random block selector by id ("gloamingforest:stronghold_stones"); nullptr if unknown.
 [[nodiscard]] BlockSelector* get(std::string const& id);
 } // namespace selectors
 
@@ -175,7 +175,7 @@ namespace jigsaw {
 } // namespace jigsaw
 
 namespace speleothems {
-/// Places a stalactite / stalagmite of speleothem config `configId` (twilight/stalactites,
+/// Places a stalactite / stalagmite of speleothem config `configId` (gloaming/stalactites,
 /// structure_speleothem_settings) hanging from or standing on `pos`.
 bool place(Region& region, BlockPos const& pos, std::string const& configId, RandomSource& random, bool hanging);
 } // namespace speleothems

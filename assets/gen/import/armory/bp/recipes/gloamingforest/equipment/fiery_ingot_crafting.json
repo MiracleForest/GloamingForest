@@ -1,0 +1,28 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:equipment/fiery_ingot_crafting"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "tag": "gloamingforest:fiery_vial"
+      },
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:fiery_blood"
+      },
+      {
+        "item": "gloamingforest:fiery_tears"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:fiery_ingot"
+    }
+  }
+}

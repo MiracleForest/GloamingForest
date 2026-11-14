@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/components/item/ItemDisplayContents.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorBeltItem.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/item/travellers_gear/modifiers/TooltipStringInterpolator.java
-//   src/main/java/twilightforest/client/overlay/display/ClockDisplay.java
-//   src/main/java/twilightforest/client/overlay/display/MoonDialDisplay.java
-//   src/main/java/twilightforest/util/TFMathUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/components/item/ItemDisplayContents.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorBeltItem.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/item/travellers_gear/modifiers/TooltipStringInterpolator.java
+//   src/main/java/gloamingforest/client/overlay/display/ClockDisplay.java
+//   src/main/java/gloamingforest/client/overlay/display/MoonDialDisplay.java
+//   src/main/java/gloamingforest/util/TFMathUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/tgear/Logic.h"
@@ -96,10 +96,10 @@ BeltSwapPlan planHotbarSwap(std::array<HotbarSlot, 9> const& hotbar, std::array<
 
 double probabilityOfAtLeastOneSuccess(double p, double tries) { return 1 - std::pow(1 - p, tries); }
 
-double autoRepairChance(double base, bool canSeeSky, bool twilight, bool isDay) {
+double autoRepairChance(double base, bool canSeeSky, bool gloaming, bool isDay) {
     if (!canSeeSky) return base;
     double boost;
-    if (twilight) boost = kAutoRepairTwilightBoost;
+    if (gloaming) boost = kAutoRepairGloamingBoost;
     else if (isDay) boost = kAutoRepairSunlightBoost;
     else return base;
     return probabilityOfAtLeastOneSuccess(base, boost);

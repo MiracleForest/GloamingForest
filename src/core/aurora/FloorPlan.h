@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorParts.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorTypesAuroraPalace.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/IFloorDecorator.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorWith3x3Map.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorFarWallSteps.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorPillarParkour.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorPillarPlatforms.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorPillarPlatformsOutside.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorPlatform.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorQuadPillarStairs.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorTop.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorWraparoundWallSteps.java
-//   src/main/java/twilightforest/world/components/structures/icetower/floordecorators/FloorWraparoundWallStepsPillars.java
-//   src/main/java/twilightforest/world/components/structures/icetower/IceTowerWingComponent.java (createFloorPlan)
-//   src/main/java/twilightforest/util/WorldUtil.java (getRandomElementWithWeights)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorParts.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorTypesAuroraPalace.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/IFloorDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorWith3x3Map.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorFarWallSteps.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorPillarParkour.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorPillarPlatforms.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorPillarPlatformsOutside.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorPlatform.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorQuadPillarStairs.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorTop.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorWraparoundWallSteps.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/floordecorators/FloorWraparoundWallStepsPillars.java
+//   src/main/java/gloamingforest/world/components/structures/icetower/IceTowerWingComponent.java (createFloorPlan)
+//   src/main/java/gloamingforest/util/WorldUtil.java (getRandomElementWithWeights)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -69,9 +69,9 @@ struct PlannedFloor {
 };
 
 /// IceTowerWingComponent#createFloorPlan(floorCount, decoRNG): one entry per lower floor, the
-/// first entry for the floor just under the top. The candidates are taken in enum order (TF's
+/// first entry for the floor just under the top. The candidates are taken in enum order (upstream's
 /// HashMap order is per JVM run; see docs/spec/aurora.md section 1.2). `onGiveUp` runs on every
-/// iteration once the plan restarted more than 10000 times (TF logs an error there).
+/// iteration once the plan restarted more than 10000 times (upstream logs an error there).
 [[nodiscard]] std::vector<PlannedFloor> createFloorPlan(int floorCount, std::vector<Door> const& doors, jrand::RandomSource& rng,
                                                         std::function<void()> const& onGiveUp = {});
 

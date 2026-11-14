@@ -22,33 +22,33 @@ class Player;
 
 namespace gf::feature::dimension {
 
-inline constexpr char kPortalBlock[]     = "twilightforest:twilight_portal";
-inline constexpr char kOneWayState[]     = "twilightforest:is_one_way";
-inline constexpr char kWhooshSound[]     = "block.twilightforest.portal.whoosh";
-inline constexpr char kMakePortalTrigger[] = "twilightforest:make_tf_portal";
+inline constexpr char kPortalBlock[]     = "gloamingforest:gloaming_portal";
+inline constexpr char kOneWayState[]     = "gloamingforest:is_one_way";
+inline constexpr char kWhooshSound[]     = "block.gloamingforest.portal.whoosh";
+inline constexpr char kMakePortalTrigger[] = "gloamingforest:make_tf_portal";
 inline constexpr char kDefaultDelayRule[]  = "playersTfPortalDefaultDelay";
 inline constexpr char kCreativeDelayRule[] = "playersTfPortalCreativeDelay";
-/// TF's defaults of the two gamerules (TFGameRules), used while the gamerule store has no value.
+/// upstream's defaults of the two gamerules (TFGameRules), used while the gamerule store has no value.
 inline constexpr int kDefaultDelay  = 60;
 inline constexpr int kCreativeDelay = 1;
 
 // ---- dimensions ------------------------------------------------------------------------------------
 
-/// The engine id of the Twilight Forest in the current world, -1 when it is not registered. Cheap
+/// The engine id of the Gloaming Forest in the current world, -1 when it is not registered. Cheap
 /// (cached); any thread.
-[[nodiscard]] int twilightId();
+[[nodiscard]] int gloamingId();
 /// Drops the cached id (world closed / a new world).
-void resetTwilightId();
-/// Whether a dimension object is the Twilight Forest (by its identifier; any thread, no level access).
-[[nodiscard]] bool isTwilightDimension(Dimension const& dimension);
+void resetGloamingId();
+/// Whether a dimension object is the Gloaming Forest (by its identifier; any thread, no level access).
+[[nodiscard]] bool isGloamingDimension(Dimension const& dimension);
 /// "minecraft:overworld" / "minecraft:the_nether" / "minecraft:the_end" / custom identifiers -> engine id.
 [[nodiscard]] std::optional<int> dimensionByName(std::string_view identifier);
 /// The identifier of an engine dimension id ("" when unknown).
 [[nodiscard]] std::string dimensionName(int dim);
-/// Java's DimensionType#coordinateScale of a dimension: overworld 1, nether 8, end 1, Twilight 0.125.
+/// Java's DimensionType#coordinateScale of a dimension: overworld 1, nether 8, end 1, Gloaming 0.125.
 [[nodiscard]] double coordinateScaleOf(int dim);
-/// dimension_type ambient_light: writes DimensionType#brightness with TF's 0.01 into the
-/// dimension's brightness ramp (the Twilight Forest's Dimension object of a server or client
+/// dimension_type ambient_light: writes DimensionType#brightness with upstream's 0.01 into the
+/// dimension's brightness ramp (the Gloaming Forest's Dimension object of a server or client
 /// level). True when it changed.
 bool applyAmbientLight(Dimension& dimension);
 /// Build limits of a loaded dimension ([min, max) in blocks), nullopt when it is not loaded.
@@ -59,14 +59,14 @@ struct Height {
 
 // ---- portal blocks -----------------------------------------------------------------------------------
 
-/// The block is a Twilight portal (any is_one_way).
+/// The block is a Gloaming portal (any is_one_way).
 [[nodiscard]] bool isPortal(Block const& block);
 /// The block is a portal one can travel through (is_one_way = false).
 [[nodiscard]] bool isOpenPortal(Block const& block);
 /// The portal block with is_one_way = `oneWay` (nullptr when the block is not registered).
 [[nodiscard]] Block const* portalBlock(bool oneWay);
-/// Block tag test with TF's own member lists as a fallback while the tag store is empty (rule R6:
-/// the tags are F4's, imported from TF: portal/decoration, portal/edge, portal/fluid,
+/// Block tag test with upstream's own member lists as a fallback while the tag store is empty (rule R6:
+/// the tags are F4's, imported from upstream: portal/decoration, portal/edge, portal/fluid,
 /// portal/generated_decoration).
 [[nodiscard]] bool blockTagged(std::string const& tag, std::string const& blockId);
 /// The members of a block tag (same fallback).
@@ -92,7 +92,7 @@ struct PortalProcessView {
 [[nodiscard]] PortalProcessView portalProcessOf(Actor const& actor);
 /// Entity#canUsePortal(false) as TFPortalBlock#entityInside and Entity#handlePortal ask it: alive,
 /// riding nothing, of a kind that goes through portals, and the actor's own answer whether or not
-/// something rides it (Actor::canChangeDimensionsUsingPortal: F8's refusals of TF's bosses, parts
+/// something rides it (Actor::canChangeDimensionsUsingPortal: F8's refusals of upstream's bosses, parts
 /// and marked types, then the engine's).
 [[nodiscard]] bool canUsePortal(Actor& actor);
 /// The portal's own decisions about one watched actor (tests): how often TFPortalBlock#entityInside
@@ -129,11 +129,11 @@ void moveAcross(
 /// already on a trip.
 bool teleportPlayer(Player& player, int dest, Vec3 const& at, float yaw, float pitch);
 
-/// CapabilityEvents#newSpawnInTwilightForest (no-op unless newPlayersSpawnInTF).
-void newSpawnInTwilightForest(Player& player);
+/// CapabilityEvents#newSpawnInGloamingForest (no-op unless newPlayersSpawnInTF).
+void newSpawnInGloamingForest(Player& player);
 /// ServerPlayer#getRespawnPosition() != null: the player has a bed / anchor / forced spawn point.
 [[nodiscard]] bool hasRespawnPosition(Player const& player);
-/// Forgets that a player (by UUID string) was banished to the Twilight Forest (tests).
+/// Forgets that a player (by UUID string) was banished to the Gloaming Forest (tests).
 void unbanish(std::string const& uuid);
 
 /// Portal blocks changed at `pos`: the portal index reads that area again. Every portal block
@@ -142,7 +142,7 @@ void portalIndexTouch(int dim, BlockPos const& pos);
 /// The portal blocks the index knows in a dimension (the chunks near players; tests).
 [[nodiscard]] std::vector<BlockPos> indexedPortals(int dim);
 
-/// TF's functions tp_twilight / tp_overworld (Functions.cpp), `execute in <destination> run tp @p
+/// upstream's functions tp_gloaming / tp_overworld (Functions.cpp), `execute in <destination> run tp @p
 /// ~ ~ ~` run at `source` in `srcDim`: who goes (@p, 0: nobody) and where. nullopt when the
 /// destination does not exist.
 struct FunctionTeleport {
@@ -150,7 +150,7 @@ struct FunctionTeleport {
     int          dim    = 0;
     Vec3         pos;
 };
-[[nodiscard]] std::optional<FunctionTeleport> runTpFunction(int srcDim, Vec3 const& source, bool toTwilight);
+[[nodiscard]] std::optional<FunctionTeleport> runTpFunction(int srcDim, Vec3 const& source, bool toGloaming);
 
 /// Per-player state kept across ticks, keyed by the unique id (rule R16).
 [[nodiscard]] std::int64_t idOf(Actor const& actor);
@@ -229,11 +229,11 @@ void refreshPortalTypes();
 void clearItemOwners();
 /// The item `from` was copied into another dimension as `to`: it keeps its owner.
 void moveItemOwner(std::int64_t from, std::int64_t to);
-/// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability: a Twilight portal among the eight
+/// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability: a Gloaming portal among the eight
 /// blocks around the one under `pos` keeps a mushroom at `pos` alive.
 [[nodiscard]] bool portalKeepsMushroom(BlockSource& region, BlockPos const& pos);
 /// TFPortalBlock#getFluidState for SugarCaneBlock#canSurvive: sugar cane at `pos` on #dirt / #sand
-/// with a Twilight portal on a side of that soil block has its water.
+/// with a Gloaming portal on a side of that soil block has its water.
 [[nodiscard]] bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos);
 
 // ---- the portal's water (PortalFluid.cpp) -----------------------------------------------------------------

@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/9x9/holding",
+  "id": "gloamingforest:lich_tower/9x9/holding",
   "size": [11, 11, 11],
   "palette": [
     {"Name":"minecraft:structure_void"},

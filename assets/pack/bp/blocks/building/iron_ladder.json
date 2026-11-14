@@ -2,22 +2,22 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:iron_ladder",
+      "identifier": "gloamingforest:iron_ladder",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
           "east"
         ],
-        "twilightforest:left": [
+        "gloamingforest:left": [
           false,
           true
         ],
-        "twilightforest:right": [
+        "gloamingforest:right": [
           false,
           true
         ]
@@ -35,24 +35,24 @@
         "minecraft:stone_tier_destructible"
       ],
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.iron_ladder.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.iron_ladder.multipart",
         "bone_visibility": {
-          "part0": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:left')",
-          "part1": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:left')",
-          "part2": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:right')",
-          "part3": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:right')",
-          "part4": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:left')",
-          "part5": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:left')",
-          "part6": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:right')",
-          "part7": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:right')",
-          "part8": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:left')",
-          "part9": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:left')",
-          "part10": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:right')",
-          "part11": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:right')",
-          "part12": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:left')",
-          "part13": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:left')",
-          "part14": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:right')",
-          "part15": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:right')"
+          "part0": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:left')",
+          "part1": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:left')",
+          "part2": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:right')",
+          "part3": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:right')",
+          "part4": "q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:left')",
+          "part5": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:left')",
+          "part6": "q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:right')",
+          "part7": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:right')",
+          "part8": "q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:left')",
+          "part9": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:left')",
+          "part10": "q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:right')",
+          "part11": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:right')",
+          "part12": "q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:left')",
+          "part13": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:left')",
+          "part14": "q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:right')",
+          "part15": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:right')"
         }
       },
       "minecraft:material_instances": {
@@ -60,7 +60,7 @@
           "texture": "tf_block_ladder_iron",
           "render_method": "opaque"
         },
-        "t_twilightforest_block_ladder_iron": {
+        "t_gloamingforest_block_ladder_iron": {
           "texture": "tf_block_ladder_iron",
           "render_method": "opaque"
         }
@@ -78,7 +78,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -107,7 +107,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -136,7 +136,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:selection_box": {
             "origin": [
@@ -165,7 +165,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:selection_box": {
             "origin": [

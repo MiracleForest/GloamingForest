@@ -1,32 +1,32 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/stronghold/KnightStrongholdComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdAccessChamberComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdAtriumComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdBalconyRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdBossRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdCrossingComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdDeadEndComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdDecorator.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdFoundryComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdLeftTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdPieceWeight.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdPieces.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdRightTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdShieldStructure.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdSmallHallwayComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdSmallStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdTrainingRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdTreasureCorridorComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdTreasureRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperAscenderComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperCorridorComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperLeftTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperRightTurnComponent.java
-//   src/main/java/twilightforest/world/components/structures/stronghold/StrongholdUpperTIntersectionComponent.java
-//   src/main/java/twilightforest/world/components/structures/type/KnightStrongholdStructure.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/stronghold/KnightStrongholdComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdAccessChamberComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdAtriumComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdBalconyRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdBossRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdCrossingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdDeadEndComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdFoundryComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdLeftTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdPieceWeight.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdPieces.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdRightTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdShieldStructure.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdSmallHallwayComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdSmallStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdTrainingRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdTreasureCorridorComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdTreasureRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperAscenderComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperCorridorComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperLeftTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperRightTurnComponent.java
+//   src/main/java/gloamingforest/world/components/structures/stronghold/StrongholdUpperTIntersectionComponent.java
+//   src/main/java/gloamingforest/world/components/structures/type/KnightStrongholdStructure.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/stronghold/Pieces.h"
@@ -66,7 +66,7 @@ struct StrongholdDeco final : Decorator {
 };
 
 /// Vanilla 1.21.1 TreeFeatures.OAK / BIRCH / JUNGLE_TREE as configured feature JSON (F5 lists only
-/// TF's configured features; these are the same data as the vanilla registry entries).
+/// upstream's configured features; these are the same data as the vanilla registry entries).
 Json const& vanillaTree(int which) {
     auto make = [](char const* log, char const* leaves, int baseHeight, int randA, Json decorators) {
         return Json{
@@ -103,13 +103,13 @@ std::unique_ptr<Decorator> strongholdDecorator() {
     auto def         = ::gf::structure::bases::defaultDecorator();
     d->floorState    = def->floorState; // TFStructureDecorator's defaults
     d->roofState     = def->roofState;
-    d->blockState    = &J("twilightforest:underbrick");
-    d->accentState   = &J("twilightforest:cracked_underbrick");
+    d->blockState    = &J("gloamingforest:underbrick");
+    d->accentState   = &J("gloamingforest:cracked_underbrick");
     d->fenceState    = &J("minecraft:cobblestone_wall");
     d->stairState    = &J("minecraft:stone_brick_stairs");
     d->pillarState   = &J("minecraft:mossy_stone_bricks");
     d->platformState = &J("minecraft:smooth_stone_slab", Json{{"type", "top"}});
-    d->randomBlocks  = ::gf::structure::selectors::get("twilightforest:knight_stones");
+    d->randomBlocks  = ::gf::structure::selectors::get("gloamingforest:knight_stones");
     return d;
 }
 
@@ -437,7 +437,7 @@ void Knight::placeStrongholdWalls(Region& world, BlockBox const& sbb, int sx, in
 
 void Knight::placeUpperStrongholdWalls(Region& world, BlockBox const& sbb, int sx, int sy, int sz, int dx, int dy, int dz, RandomSource& rand,
                                        ::gf::structure::BlockSelector& randomBlocks) {
-    static char const* const kKnightStones[]     = {"twilightforest:cracked_underbrick", "twilightforest:mossy_underbrick", "twilightforest:underbrick"};
+    static char const* const kKnightStones[]     = {"gloamingforest:cracked_underbrick", "gloamingforest:mossy_underbrick", "gloamingforest:underbrick"};
     static char const* const kStrongholdStones[] = {"minecraft:cracked_stone_bricks", "minecraft:mossy_stone_bricks", "minecraft:infested_stone_bricks",
                                                     "minecraft:stone_bricks"};
     for (int y = sy; y <= dy; ++y)
@@ -635,9 +635,9 @@ void AccessChamber::postProcess(Region& world, RandomSource& rand, BlockBox cons
     // pillar
     placeBlock(world, *d().pillarState, 2, 0, 2, sbb);
     // pedestal
-    placeBlock(world, J("twilightforest:trophy_pedestal"), 2, 1, 2, sbb);
+    placeBlock(world, J("gloamingforest:trophy_pedestal"), 2, 1, 2, sbb);
     // block point
-    fill(world, sbb, 2, -1, 2, 6, -1, 6, J("twilightforest:stronghold_shield"), air(), false);
+    fill(world, sbb, 2, -1, 2, 6, -1, 6, J("gloamingforest:stronghold_shield"), air(), false);
 }
 
 // ==== the simple lower pieces =======================================================================================
@@ -1116,8 +1116,8 @@ void Atrium::spawnATree(Region& world, int treeNum, int x, int y, int z, BlockBo
     if (!sbb.contains(pos.x, pos.y, pos.z)) return;
     char const* treeGen = nullptr; // vanilla trees go inline
     switch (treeNum) {
-    case 3: treeGen = "twilightforest:tree/twilight_oak_tree"; break;
-    case 4: treeGen = "twilightforest:tree/rainbow_oak"; break;
+    case 3: treeGen = "gloamingforest:tree/gloaming_oak_tree"; break;
+    case 4: treeGen = "gloamingforest:tree/rainbow_oak"; break;
     default: break;
     }
     // grow a tree with world.getRandom() (the region's random, not the piece's)
@@ -1285,8 +1285,8 @@ void TreasureRoom::postProcess(Region& world, RandomSource& rand, BlockBox const
     auto const& bars = J("minecraft:iron_bars");
     fill(world, sbb, 3, 1, 8, 5, 4, 9, bars, bars, false);
     // spawners
-    setSpawner(world, 4, 1, 4, sbb, "twilightforest:helmet_crab");
-    setSpawner(world, 4, 4, 15, sbb, "twilightforest:helmet_crab");
+    setSpawner(world, 4, 1, 4, sbb, "gloamingforest:helmet_crab");
+    setSpawner(world, 4, 4, 15, sbb, "gloamingforest:helmet_crab");
     // treasure!
     manualTreaurePlacement(world, 2, 4, 13, Orientation::West, kLootRoom, false, sbb);
     manualTreaurePlacement(world, 6, 4, 13, Orientation::East, kLootRoom, false, sbb);
@@ -1354,7 +1354,7 @@ void BossRoom::postProcess(Region& world, RandomSource& rand, BlockBox const& sb
     auto const& bars = J("minecraft:iron_bars");
     fill(world, sbb, 12, 1, 3, 14, 4, 3, bars, bars, false);
     // spawner
-    placeBlock(world, J("twilightforest:knight_phantom_boss_spawner"), 13, 2, 13, sbb);
+    placeBlock(world, J("gloamingforest:knight_phantom_boss_spawner"), 13, 2, 13, sbb);
     // doors
     placeDoors(world, sbb);
 }
@@ -1513,7 +1513,7 @@ void ShieldStructure::load(Json const& data) {
 }
 
 void ShieldStructure::postProcess(Region& world, RandomSource&, BlockBox const& sbb, BlockPos const&) {
-    auto shield = [](char const* f) -> Block const& { return J("twilightforest:stronghold_shield", Json{{"facing", f}}); };
+    auto shield = [](char const* f) -> Block const& { return J("gloamingforest:stronghold_shield", Json{{"facing", f}}); };
     auto const& down  = shield("down");
     auto const& up    = shield("up");
     auto const& north = shield("north");

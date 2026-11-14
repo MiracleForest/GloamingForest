@@ -1,7 +1,7 @@
 #pragma once
 
 // Contract "families+blockevents", sign text (header owned by F0, implemented by F11; S3 decides
-// whether TF's 32 sign blocks keep their text in data-driven block actors or BlockData).
+// whether upstream's 32 sign blocks keep their text in data-driven block actors or BlockData).
 //
 //     gf::signs::setText(pos, {"Here lies", "a naga"});
 

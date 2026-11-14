@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:ironwood_hoe",
+      "identifier": "gloamingforest:ironwood_hoe",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:ironwood_hoe.name"
+        "value": "item.gloamingforest:ironwood_hoe.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

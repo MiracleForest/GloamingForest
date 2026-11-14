@@ -1,5 +1,5 @@
-## U4 (woodwork): the names of the TF boat entities. TF's boats are vanilla Boat / ChestBoat entities
+## U4 (woodwork): the names of the upstream boat entities. upstream's boats are vanilla Boat / ChestBoat entities
 ## (entity.minecraft.boat, entity.minecraft.chest_boat); on Bedrock they are the entities
-## twilightforest:boat / twilightforest:chest_boat with the wood as a property.
-entity.twilightforest:boat.name=Barco
-entity.twilightforest:chest_boat.name=Barco com baú
+## gloamingforest:boat / gloamingforest:chest_boat with the wood as a property.
+entity.gloamingforest:boat.name=Barco
+entity.gloamingforest:chest_boat.name=Barco com baú

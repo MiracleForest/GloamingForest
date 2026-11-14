@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFDamageTypes.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFDamageTypes.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract "combat" (F10): the single hurt hook of the mod (rule R8) and TF's damage types.
+// Contract "combat" (F10): the single hurt hook of the mod (rule R8) and upstream's damage types.
 //
 // - One damage pipeline: `onIncoming` handlers (higher priority first) see every damage before it
 //   applies (armour not applied yet) and may change the amount or cancel it; `onDealt` handlers
@@ -15,22 +15,22 @@
 //   inner _hurt of a hurt in progress through). Non-mob actors (boats, item entities, hanging
 //   entities) are only seen through Actor::hurt.
 // - A player hurt by a type whose DamageEffects are not "hurt" hears the effect's sound in place
-//   of the hurt sound (Player#getHurtSound: burning, freezing, TF's pinch): the game's hurt sound
+//   of the hurt sound (Player#getHurtSound: burning, freezing, upstream's pinch): the game's hurt sound
 //   for that hurt (Player::getCustomHurtSound) becomes Bedrock's matching player hurt sound, or
-//   silence for TF's pinch, which gf::fx plays.
-// - Damage types: TF's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) and
+//   silence for upstream's pinch, which gf::fx plays.
+// - Damage types: upstream's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) and
 //   Minecraft 1.21.1's 47 (data/minecraft/damage_type, with NeoForge's neoforge:poison) are built
 //   in; <mod>/data/<ns>/damage_type/*.json (F1's import) override and add. Bedrock's own damage is
 //   named by Java's ids ("minecraft:player_attack", "minecraft:arrow", ...) from its cause (and the
 //   attacker / projectile), and gf::combat::hurt with a vanilla type uses that type's Bedrock cause.
-// - Damage type tags: the data through gf::tags (F9: TF's memberships, the units' fragments) plus
+// - Damage type tags: the data through gf::tags (F9: upstream's memberships, the units' fragments) plus
 //   Minecraft 1.21.1's own tags with NeoForge 21.1's additions and neoforge: tags (is_physical,
 //   is_magic, ...), built in (Bedrock has no data for them), nested tags resolved.
 // - gf::combat::hurt(victim, amount, type, attacker, direct) builds the Bedrock damage source:
-//   the cause of a TF type follows its tags (bypasses_armor -> Magic, is_fire -> Fire,
+//   the cause of an upstream type follows its tags (bypasses_armor -> Magic, is_fire -> Fire,
 //   is_explosion -> EntityExplosion, is_fall -> Fall, is_projectile -> Projectile, ...),
 //   no_knockback turns the knockback off, the type's exhaustion is added to a hurt player, and the
-//   death message of a TF type is Java's (DamageSource#getLocalizedDeathMessage:
+//   death message of an upstream type is Java's (DamageSource#getLocalizedDeathMessage:
 //   "death.attack.<msgId>", ".player" with the kill credit, ".item" with a named weapon) through one
 //   ActorDamageSource#getDeathMessage hook; a vanilla type keeps Bedrock's message for its cause.
 
@@ -93,51 +93,51 @@ std::map<std::string, DamageTypeSpec> builtinTypes() {
         char const* effects;
     };
     static constexpr Row rows[] = {
-        {"ghast_tear", "twilightforest.ghastTear", 0.0f, "hurt"},
-        {"hydra_bite", "twilightforest.hydraBite", 0.0f, "hurt"},
-        {"hydra_fire", "twilightforest.hydraFire", 0.0f, "hurt"},
+        {"ghast_tear", "gloamingforest.ghastTear", 0.0f, "hurt"},
+        {"hydra_bite", "gloamingforest.hydraBite", 0.0f, "hurt"},
+        {"hydra_fire", "gloamingforest.hydraFire", 0.0f, "hurt"},
         {"hydra_mortar", "onFire", 0.0f, "burning"},
-        {"lich_bolt", "twilightforest.lichBolt", 0.0f, "hurt"},
-        {"lich_bomb", "twilightforest.lichBomb", 0.0f, "hurt"},
-        {"chilling_breath", "twilightforest.chillingBreath", 0.0f, "freezing"},
-        {"squish", "twilightforest.squish", 0.0f, "hurt"},
-        {"thrown_axe", "twilightforest.thrownAxe", 0.0f, "hurt"},
-        {"thrown_pickaxe", "twilightforest.thrownPickaxe", 0.0f, "hurt"},
-        {"thorns", "twilightforest.thorns", 0.1f, "hurt"},
-        {"oreberry", "twilightforest.oreberry", 0.1f, "hurt"},
-        {"knightmetal", "twilightforest.knightmetal", 0.1f, "hurt"},
-        {"fiery", "twilightforest.fiery", 0.1f, "burning"},
-        {"fire_jet", "twilightforest.fireJet", 0.1f, "burning"},
-        {"reactor", "twilightforest.reactor", 0.1f, "hurt"},
-        {"slider", "twilightforest.slider", 0.1f, "hurt"},
-        {"thrown_block", "twilightforest.thrownBlock", 0.1f, "hurt"},
-        {"axing", "twilightforest.axing", 0.1f, "hurt"},
-        {"slam", "twilightforest.axing", 0.1f, "hurt"},
-        {"yeeted", "twilightforest.yeeted", 0.1f, "hurt"},
-        {"ant", "twilightforest.ant", 0.1f, "hurt"},
-        {"haunt", "twilightforest.haunt", 0.1f, "hurt"},
-        {"clamped", "twilightforest.clamped", 0.1f, "twilightforest:pinch"},
-        {"scorched", "twilightforest.scorched", 0.1f, "burning"},
-        {"frozen", "twilightforest.frozen", 0.1f, "freezing"},
-        {"spiked", "twilightforest.spiked", 0.1f, "hurt"},
-        {"leaf_brain", "twilightforest.leafBrain", 0.1f, "hurt"},
-        {"lost_words", "twilightforest.lostWords", 0.1f, "hurt"},
-        {"schooled", "twilightforest.schooled", 0.1f, "hurt"},
-        {"snowball_fight", "twilightforest.snowballFight", 0.1f, "freezing"},
-        {"twilight_scepter", "indirectMagic", 0.0f, "hurt"},
-        {"lifedrain", "twilightforest.lifedrain", 0.0f, "hurt"},
-        {"expired", "twilightforest.expired", 0.0f, "hurt"},
+        {"lich_bolt", "gloamingforest.lichBolt", 0.0f, "hurt"},
+        {"lich_bomb", "gloamingforest.lichBomb", 0.0f, "hurt"},
+        {"chilling_breath", "gloamingforest.chillingBreath", 0.0f, "freezing"},
+        {"squish", "gloamingforest.squish", 0.0f, "hurt"},
+        {"thrown_axe", "gloamingforest.thrownAxe", 0.0f, "hurt"},
+        {"thrown_pickaxe", "gloamingforest.thrownPickaxe", 0.0f, "hurt"},
+        {"thorns", "gloamingforest.thorns", 0.1f, "hurt"},
+        {"oreberry", "gloamingforest.oreberry", 0.1f, "hurt"},
+        {"knightmetal", "gloamingforest.knightmetal", 0.1f, "hurt"},
+        {"fiery", "gloamingforest.fiery", 0.1f, "burning"},
+        {"fire_jet", "gloamingforest.fireJet", 0.1f, "burning"},
+        {"reactor", "gloamingforest.reactor", 0.1f, "hurt"},
+        {"slider", "gloamingforest.slider", 0.1f, "hurt"},
+        {"thrown_block", "gloamingforest.thrownBlock", 0.1f, "hurt"},
+        {"axing", "gloamingforest.axing", 0.1f, "hurt"},
+        {"slam", "gloamingforest.axing", 0.1f, "hurt"},
+        {"yeeted", "gloamingforest.yeeted", 0.1f, "hurt"},
+        {"ant", "gloamingforest.ant", 0.1f, "hurt"},
+        {"haunt", "gloamingforest.haunt", 0.1f, "hurt"},
+        {"clamped", "gloamingforest.clamped", 0.1f, "gloamingforest:pinch"},
+        {"scorched", "gloamingforest.scorched", 0.1f, "burning"},
+        {"frozen", "gloamingforest.frozen", 0.1f, "freezing"},
+        {"spiked", "gloamingforest.spiked", 0.1f, "hurt"},
+        {"leaf_brain", "gloamingforest.leafBrain", 0.1f, "hurt"},
+        {"lost_words", "gloamingforest.lostWords", 0.1f, "hurt"},
+        {"schooled", "gloamingforest.schooled", 0.1f, "hurt"},
+        {"snowball_fight", "gloamingforest.snowballFight", 0.1f, "freezing"},
+        {"gloaming_scepter", "indirectMagic", 0.0f, "hurt"},
+        {"lifedrain", "gloamingforest.lifedrain", 0.0f, "hurt"},
+        {"expired", "gloamingforest.expired", 0.0f, "hurt"},
         {"falling_ice", "fallingBlock", 0.1f, "hurt"},
-        {"moonworm", "twilightforest.moonworm", 0.0f, "hurt"},
-        {"acid_rain", "twilightforest.acid_rain", 0.0f, "hurt"},
-        {"ominous_fire", "twilightforest.ominous", 0.1f, "burning"},
-        {"failed_challenge", "twilightforest.failedChallenge", 0.0f, "hurt"},
-        {"stale_sandwich", "twilightforest.stale_sandwich", 0.0f, "hurt"},
+        {"moonworm", "gloamingforest.moonworm", 0.0f, "hurt"},
+        {"acid_rain", "gloamingforest.acid_rain", 0.0f, "hurt"},
+        {"ominous_fire", "gloamingforest.ominous", 0.1f, "burning"},
+        {"failed_challenge", "gloamingforest.failedChallenge", 0.0f, "hurt"},
+        {"stale_sandwich", "gloamingforest.stale_sandwich", 0.0f, "hurt"},
     };
     std::map<std::string, DamageTypeSpec> out;
     for (auto const& r : rows) {
         DamageTypeSpec s;
-        s.id         = std::string("twilightforest:") + r.path;
+        s.id         = std::string("gloamingforest:") + r.path;
         s.messageId  = r.msg;
         s.exhaustion = r.exhaustion;
         s.effects    = r.effects;
@@ -224,10 +224,10 @@ std::map<std::string, DamageTypeSpec> builtinTypes() {
 }
 
 /// Minecraft 1.21.1's own damage type tags (data/minecraft/tags/damage_type) with NeoForge 21.1's
-/// additions and its neoforge: tags (TF's code asks neoforge:is_physical / is_magic /
+/// additions and its neoforge: tags (upstream's code asks neoforge:is_physical / is_magic /
 /// is_environment / is_technical): the game data Bedrock does not have. Members without a namespace
-/// are minecraft:, "#..." are nested tags. TF's memberships (its generated tag data:
-/// minecraft:is_fire holds twilightforest:hydra_fire, ...) and every unit's union fragments come
+/// are minecraft:, "#..." are nested tags. upstream's memberships (its generated tag data:
+/// minecraft:is_fire holds gloamingforest:hydra_fire, ...) and every unit's union fragments come
 /// from the data through F9's gf::tags.
 std::map<std::string, std::vector<std::string>> const& vanillaTags() {
     static std::map<std::string, std::vector<std::string>> const t = [] {
@@ -289,7 +289,7 @@ std::map<std::string, std::vector<std::string>> const& vanillaTags() {
 /// damageTypeHasTag with the nesting depth (a nested tag of the built-in table, its members from
 /// the data and the table again).
 bool hasTagAt(std::string const& id, std::string const& tag, int depth) {
-    if (tags::has(tags::Registry::DamageType, tag, id)) return true; // the data (TF's, the units' fragments)
+    if (tags::has(tags::Registry::DamageType, tag, id)) return true; // the data (upstream's, the units' fragments)
     auto const& v  = vanillaTags();
     auto        it = v.find(tag);
     if (it == v.end()) return false;
@@ -440,9 +440,9 @@ std::uint64_t addSorted(std::vector<Entry<Fn>>& list, int priority, Fn fn) {
     return id;
 }
 
-// ---- the TF damage being applied / the marks for death messages -------------------------------------
+// ---- the upstream damage being applied / the marks for death messages -------------------------------------
 
-/// gf::combat::hurt in progress (the hook reads the TF type from here).
+/// gf::combat::hurt in progress (the hook reads the upstream type from here).
 struct Pending {
     Actor*      victim = nullptr;
     std::string type;
@@ -572,7 +572,7 @@ float healthOf(Actor& a) { return static_cast<float>(a.getHealth()); }
 
 /// Recursion guard: the attacks whose handlers run now. A hurt started inside the handlers runs the
 /// handlers again, as Java's nested damage events do (a handler that cancels a mob's hit and deals
-/// it again as a TF damage type: EntityUtil#properlyApplyCustomDamageSource, a part forwarding to
+/// it again as an upstream damage type: EntityUtil#properlyApplyCustomDamageSource, a part forwarding to
 /// its parent, a reflected blast); only the same attack again (victim, type, attacker and direct
 /// entity) on top of itself is applied as is, and so is anything nested deeper than kMaxNesting on
 /// one victim, so two handlers that keep answering each other cannot recurse without end.
@@ -672,7 +672,7 @@ std::atomic<int> gHurtSoundsReplaced{0};
 /// their own player hurt sounds). While a hurt whose DamageEffects are burning, freezing, drowning
 /// or thorns runs, the event carries the cause of that effect, so every client (vanilla too) plays
 /// the effect's sound in place of the plain hurt sound. Only an event whose data is the hurt's own
-/// cause is rewritten. TF's pinch has no cause of its own: gf::fx plays it (playDamageEffect).
+/// cause is rewritten. upstream's pinch has no cause of its own: gf::fx plays it (playDamageEffect).
 std::optional<int> hurtEventCause(Actor const& actor, int data) {
     for (auto it = tEffectHurts.rbegin(); it != tEffectHurts.rend(); ++it) {
         if (it->victim != &actor) continue;
@@ -695,13 +695,13 @@ std::optional<int> hurtEventCause(Actor const& actor, int data) {
     return std::nullopt;
 }
 
-/// The damage effect's sound through gf::fx: TF's pinch always (no damage cause sounds like it; the
+/// The damage effect's sound through gf::fx: upstream's pinch always (no damage cause sounds like it; the
 /// client's plain hurt sound plays with it), the vanilla effects only when the Hurt event could not
 /// carry their cause. An effect the cause already sounds like (fire, freezing, drowning, thorns) is
 /// not played twice.
 void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause, bool replaced) {
     auto effects = effectsFor(victim, typeId);
-    if (effects.empty() || (replaced && effects != "twilightforest:pinch")) return;
+    if (effects.empty() || (replaced && effects != "gloamingforest:pinch")) return;
     std::string event;
     if (effects == "burning") {
         if (cause == Cause::Fire || cause == Cause::FireTick || cause == Cause::Lava || cause == Cause::Magma || cause == Cause::Campfire
@@ -719,8 +719,8 @@ void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause, boo
         event = "minecraft:enchant.thorns.hit";
     } else if (effects == "poking") {
         event = "minecraft:entity.player.hurt_sweet_berry_bush";
-    } else if (effects == "twilightforest:pinch") {
-        event = "twilightforest:entity.twilightforest.pinch_beetle.attack"; // TFSounds.PINCH_BEETLE_ATTACK
+    } else if (effects == "gloamingforest:pinch") {
+        event = "gloamingforest:entity.gloamingforest.pinch_beetle.attack"; // TFSounds.PINCH_BEETLE_ATTACK
     } else {
         return;
     }
@@ -803,7 +803,7 @@ std::string nameParam(Actor& actor) {
 std::pair<std::string, std::vector<std::string>> deathMessageFor(Actor& victim, std::string const& deadName, std::optional<Cause> killingCause) {
     auto m = markOf(victim);
     if (!m) return {};
-    // the killing damage must be the TF one (not other damage in the same tick)
+    // the killing damage must be the upstream one (not other damage in the same tick)
     if (killingCause && *killingCause != causeFor(m->type, m->attacker != 0)) return {};
     auto const* spec = damageType(m->type);
     if (!spec) return {};

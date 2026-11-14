@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/giants (U29): the beanstalk grower, the giant block tiling and the cloud
 // precipitation scans.
 #include <gtest/gtest.h>
@@ -232,7 +232,7 @@ TEST(GiantsPick, GroupingCounter) {
     EXPECT_EQ(giants, 1);
     EXPECT_EQ(none, 63);
     EXPECT_EQ(m.conversion, 0);
-    EXPECT_EQ(giantConversionOf("minecraft:cobblestone"), "twilightforest:giant_cobblestone");
-    EXPECT_EQ(giantConversionOf("minecraft:obsidian"), "twilightforest:giant_obsidian");
+    EXPECT_EQ(giantConversionOf("minecraft:cobblestone"), "gloamingforest:giant_cobblestone");
+    EXPECT_EQ(giantConversionOf("minecraft:obsidian"), "gloamingforest:giant_obsidian");
     EXPECT_EQ(giantConversionOf("minecraft:stone"), "");
 }

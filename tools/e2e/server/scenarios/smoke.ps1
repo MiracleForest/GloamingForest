@@ -1,19 +1,13 @@
 # Smoke (F0): BDS loads the mod (run.ps1 waited for "GloamingForest enabled"), the world is ready,
-# the root command and its aliases answer, the foundation selftests ("core.*") pass, and the world
+# the root command answers, the foundation selftests ("core.*") pass, and the world
 # reloads after a restart with its data intact: core.persist_write leaves a marker (a world DB
 # record, a block and its block data) that only the world's own save path can carry over the
 # restart, and core.persist_read verifies it afterwards with the same nonce, then removes it.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
-# /twilightforest and its aliases /tf and /tffeature
+# /gloamingforest (no aliases)
 $mark = Get-LogMark
-Send-Console 'twilightforest stubs'
-Wait-LogLine 'contract stubs called: ' 30 -Since $mark | Out-Null
-$mark = Get-LogMark
-Send-Console 'tf stubs'
-Wait-LogLine 'contract stubs called: ' 30 -Since $mark | Out-Null
-$mark = Get-LogMark
-Send-Console 'tffeature stubs'
+Send-Console 'gloamingforest stubs'
 Wait-LogLine 'contract stubs called: ' 30 -Since $mark | Out-Null
 
 # A failing vanilla command with a parameter on the console: BDS echoes its translated reply as

@@ -1,7 +1,7 @@
 {
-  "block.twilightforest.boss_chest.appear": {
+  "block.gloamingforest.boss_chest.appear": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.block.boss_chest.appear",
+    "subtitle": "subtitles.gloamingforest.block.boss_chest.appear",
     "sounds": [
       {
         "name": "sounds/mob/evocation_illager/prepare_summon"

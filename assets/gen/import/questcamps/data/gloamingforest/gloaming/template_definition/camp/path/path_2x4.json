@@ -1,0 +1,56 @@
+{
+  "gloamingforest:camp/main_path": {
+    "height_adjustment": {
+      "ground_junction_diff_clamp": 0,
+      "heightmap": "WORLD_SURFACE_WG",
+      "y_offset": 2
+    },
+    "processors": {
+      "processors": [
+        {
+          "heightmap": "WORLD_SURFACE_WG",
+          "offset": -2,
+          "processor_type": "minecraft:gravity"
+        }
+      ]
+    },
+    "weight": 50
+  },
+  "gloamingforest:camp/path": {
+    "height_adjustment": {
+      "ground_junction_diff_clamp": 0,
+      "heightmap": "WORLD_SURFACE_WG",
+      "y_offset": 2
+    },
+    "processors": {
+      "processors": [
+        {
+          "heightmap": "WORLD_SURFACE_WG",
+          "offset": -2,
+          "processor_type": "minecraft:gravity"
+        }
+      ]
+    },
+    "weight": 50
+  },
+  "gloamingforest:camp/rack_path": {
+    "height_adjustment": {
+      "ground_junction_diff_clamp": 0,
+      "heightmap": "WORLD_SURFACE_WG",
+      "y_offset": 2
+    },
+    "pool_aliases": {
+      "gloamingforest:camp/deco": "gloamingforest:camp/rack"
+    },
+    "processors": {
+      "processors": [
+        {
+          "heightmap": "WORLD_SURFACE_WG",
+          "offset": -2,
+          "processor_type": "minecraft:gravity"
+        }
+      ]
+    },
+    "weight": 100
+  }
+}

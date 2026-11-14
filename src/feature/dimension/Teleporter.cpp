@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/TFTeleporter.java
-//   src/main/java/twilightforest/world/NoReturnTeleporter.java
-//   src/main/java/twilightforest/world/TeleporterCache.java
-//   src/main/java/twilightforest/util/Restriction.java
-//   src/main/java/twilightforest/util/iterators/DiagonalSpiralIterator.java
-//   src/main/java/twilightforest/util/iterators/XZQuadrantIterator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/TFTeleporter.java
+//   src/main/java/gloamingforest/world/NoReturnTeleporter.java
+//   src/main/java/gloamingforest/world/TeleporterCache.java
+//   src/main/java/gloamingforest/util/Restriction.java
+//   src/main/java/gloamingforest/util/iterators/DiagonalSpiralIterator.java
+//   src/main/java/gloamingforest/util/iterators/XZQuadrantIterator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 
@@ -92,14 +92,14 @@ bool sturdyTop(BlockSource& region, BlockPos const& pos) {
 }
 
 bool canFormPortal(Block const& block) {
-    return blockTagged("twilightforest:portal/fluid", block.getTypeName())
+    return blockTagged("gloamingforest:portal/fluid", block.getTypeName())
         || (isPortal(block) && game::intState(block, kOneWayState).value_or(0) != 0);
 }
 
 namespace {
 
-bool isGrassOrDirt(Block const& b) { return blockTagged("twilightforest:portal/edge", b.getTypeName()); }
-bool isNatureBlock(Block const& b) { return blockTagged("twilightforest:portal/decoration", b.getTypeName()); }
+bool isGrassOrDirt(Block const& b) { return blockTagged("gloamingforest:portal/edge", b.getTypeName()); }
+bool isNatureBlock(Block const& b) { return blockTagged("gloamingforest:portal/decoration", b.getTypeName()); }
 
 /// Java isEmptyBlock / isAir (out of the build range: void air).
 bool isEmpty(BlockSource& r, BlockPos const& p) { return !inHeight(r, p.y) || r.getBlock(p).isAir(); }
@@ -468,7 +468,7 @@ bool isOkayForFallbackPortal(BlockSource& world, BlockPos const& pos) {
 
 /// A random member of portal/generated_decoration (nullptr: none resolves, no decoration).
 Block const* randNatureBlock() {
-    auto members = blockTagMembers("twilightforest:portal/generated_decoration");
+    auto members = blockTagMembers("gloamingforest:portal/generated_decoration");
     std::vector<Block const*> blocks;
     for (auto const& id : members)
         if (auto const* b = game::blockWith(id)) blocks.push_back(b);
@@ -490,7 +490,7 @@ void cacheNewPortalCoords(Traveller const& t, BlockPos const& pos) {
 
 // ---- isSafeAround ---------------------------------------------------------------------------------------------------------------
 
-/// Restriction#isBiomeSafeFor: the biome's restriction (TF data twilight/restrictions/<biome>.json,
+/// Restriction#isBiomeSafeFor: the biome's restriction (upstream data gloaming/restrictions/<biome>.json,
 /// imported into the mod's data directory) lists advancements the player must have.
 std::vector<std::string> restrictionAdvancements(std::string const& biomeId) {
     static std::mutex                                                mutex;
@@ -501,7 +501,7 @@ std::vector<std::string> restrictionAdvancements(std::string const& biomeId) {
     auto                     colon = biomeId.find(':');
     std::string              ns    = colon == std::string::npos ? "minecraft" : biomeId.substr(0, colon);
     std::string              path  = colon == std::string::npos ? biomeId : biomeId.substr(colon + 1);
-    auto file = Mod::getInstance().getSelf().getModDir() / "data" / ns / "twilight" / "restrictions" / (path + ".json");
+    auto file = Mod::getInstance().getSelf().getModDir() / "data" / ns / "gloaming" / "restrictions" / (path + ".json");
     std::error_code ec;
     if (std::filesystem::exists(file, ec)) {
         try {
@@ -535,7 +535,7 @@ bool posOverlapsRestrictedStructureChunk(BlockSource& world, BlockPos const& pos
 }
 
 bool isUnsafe(BlockSource& world, BlockPos const& pos, Player* entity, bool checkProgression) {
-    if (!world::isTwilight(world.getDimensionId())) return false;
+    if (!world::isGloaming(world.getDimensionId())) return false;
     if (isOutsideBorder(pos)) return true;
     if (checkProgression && biomeUnsafe(world, pos, entity)) return true;
     return posOverlapsRestrictedStructureChunk(world, pos);
@@ -626,7 +626,7 @@ bool areaLoaded(BlockSource& region, BlockPos const& pos, int radius) {
 
 double horizontalScale(int dest) {
     double scale = world::coordinateScale();
-    return world::isTwilight(DimensionType(dest)) ? 1.0 / scale : scale;
+    return world::isGloaming(DimensionType(dest)) ? 1.0 / scale : scale;
 }
 
 std::vector<BlockPos> portalBlocksNear(BlockSource& region, BlockPos const& center, int radius) {

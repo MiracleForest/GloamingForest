@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:lower_goblin_knight",
+      "identifier": "gloamingforest:lower_goblin_knight",
       "materials": {
         "default": "entity_alphatest"
       },

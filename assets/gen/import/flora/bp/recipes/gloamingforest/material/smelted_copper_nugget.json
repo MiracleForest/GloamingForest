@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:material/smelted_copper_nugget"
+    },
+    "tags": ["furnace"],
+    "input": "gloamingforest:copper_berry",
+    "output": "gloamingforest:copper_nugget",
+    "unlock": [
+      {
+        "item": "gloamingforest:copper_berry"
+      }
+    ]
+  }
+}

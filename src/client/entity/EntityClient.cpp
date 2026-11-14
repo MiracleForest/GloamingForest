@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/bar/ClientTFBossBar.java
-//   src/main/java/twilightforest/network/TFBossBarPacket.java
-//   src/main/java/twilightforest/network/UpdateDeathTimePacket.java
-//   src/main/java/twilightforest/network/MovePlayerPacket.java
-//   src/main/java/twilightforest/network/UpdateThrownPacket.java
-//   src/main/java/twilightforest/network/UpdateTFMultipartPacket.java
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/bar/ClientTFBossBar.java
+//   src/main/java/gloamingforest/network/TFBossBarPacket.java
+//   src/main/java/gloamingforest/network/UpdateDeathTimePacket.java
+//   src/main/java/gloamingforest/network/MovePlayerPacket.java
+//   src/main/java/gloamingforest/network/UpdateThrownPacket.java
+//   src/main/java/gloamingforest/network/UpdateTFMultipartPacket.java
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -15,9 +15,9 @@
 //   boss.bar            ClientTFBossBar: the HUD's boss bar takes the boss's exact RGB (the vanilla
 //                       packet only carries the nearest of 8 colours). The HUD asks the screen
 //                       model for each bar's colour by index (ClientInstanceScreenModel::
-//                       getBossBarColor); the hook answers with the RGB of the TF boss whose title
+//                       getBossBarColor); the hook answers with the RGB of the upstream boss whose title
 //                       (and, between equal titles, progress) that bar shows, matched once per
-//                       change of the index's title or of the TF bars. The bar's overlay
+//                       change of the index's title or of the upstream bars. The bar's overlay
 //                       (BossBarOverlay NOTCHED_6/10/12/20: the Naga, the shielded Lich): the
 //                       HUD bar's two images get textures with the notch dividers in them (Bedrock
 //                       draws no overlay), tinted like the bar as Java tints its notch sprites.
@@ -82,20 +82,20 @@ struct DeathTime {
     Clock::time_point at;
 };
 
-/// The TF boss a HUD bar index shows, as last matched (by the bar's raw title).
+/// The upstream boss a HUD bar index shows, as last matched (by the bar's raw title).
 struct IndexMatch {
     std::string   rawTitle;
     std::uint64_t generation = 0; ///< ClientState::generation when matched
-    std::int64_t  boss       = 0; ///< 0: no TF boss
+    std::int64_t  boss       = 0; ///< 0: no upstream boss
 };
 
 struct ClientState {
     std::mutex                                       mutex; ///< everything below: net handlers vs. HUD / renderers
     std::unordered_map<std::int64_t, BossBar>        bars;
-    std::uint64_t                                    generation = 1; ///< bumped when the TF bars change (titles, set, style)
-    std::unordered_map<int, IndexMatch>              matches;        ///< HUD bar index -> TF boss
+    std::uint64_t                                    generation = 1; ///< bumped when the upstream bars change (titles, set, style)
+    std::unordered_map<int, IndexMatch>              matches;        ///< HUD bar index -> upstream boss
     std::set<std::int64_t>                           notchLogged;    ///< bars whose notches were drawn (one log line each)
-    std::uint64_t                                    notchVersion = 1; ///< bumped when an index's TF bar or a bar's overlay changes
+    std::uint64_t                                    notchVersion = 1; ///< bumped when an index's upstream bar or a bar's overlay changes
     std::unordered_map<std::int64_t, DeathTime>      deathTimes;
     std::unordered_map<std::int64_t, std::vector<Part>> multipart;
     std::unordered_map<std::int64_t, std::int64_t>   partParents;
@@ -127,7 +127,7 @@ std::string plain(std::string const& s) {
 
 } // namespace
 
-/// Whether the server still runs the death animation of the TF boss `uid` (its death time arrived
+/// Whether the server still runs the death animation of the upstream boss `uid` (its death time arrived
 /// and its bar was not removed yet).
 bool holdsDyingBody(std::int64_t uid) {
     auto&            s = C();
@@ -135,8 +135,8 @@ bool holdsDyingBody(std::int64_t uid) {
     return s.deathTimes.contains(uid);
 }
 
-/// ClientTFBossBar#renderBossBar's tint: the exact RGB of the TF boss the HUD's bar `index` shows.
-/// The bar's title is matched against the TF bars once per change (a new raw title at the index or
+/// ClientTFBossBar#renderBossBar's tint: the exact RGB of the upstream boss the HUD's bar `index` shows.
+/// The bar's title is matched against the upstream bars once per change (a new raw title at the index or
 /// a "boss.bar" message), not on every frame.
 std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, int index) {
     auto& s = C();
@@ -161,7 +161,7 @@ std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, in
         match.generation = s.generation;
         if (match.boss != best) ++s.notchVersion; // the bar at this index is another one now
         match.boss = best;
-        if (!best && s.unmatched.insert(title).second) log().info("client boss bar '{}' has no TF colour", title);
+        if (!best && s.unmatched.insert(title).second) log().info("client boss bar '{}' has no upstream colour", title);
     }
     auto it = s.bars.find(match.boss);
     if (!match.boss || it == s.bars.end()) return std::nullopt;
@@ -196,7 +196,7 @@ SpriteComponent* spriteOf(UIControl& image) {
 /// bar's own two images textures with the dividers in them (the resource pack's
 /// textures/ui/entity/boss_bar_notched_<n>_{background,progress}: original pixel art, the HUD tints
 /// them with the bar's colour as Java tints its sprites) and puts the vanilla textures back when
-/// the bar at that index shows no notched TF bar. The textures change only when the bars do (the
+/// the bar at that index shows no notched upstream bar. The textures change only when the bars do (the
 /// HUD's matches or a "boss.bar" message), not per frame.
 struct NotchedImage {
     std::weak_ptr<UIControl> control;
@@ -232,7 +232,7 @@ void setTexture(UIControl& image, std::shared_ptr<UIControl> const& owner, std::
     it->applied = texture;
 }
 
-/// Applies the overlay textures to the HUD's bars when the TF bars, their HUD indices or the HUD's
+/// Applies the overlay textures to the HUD's bars when the upstream bars, their HUD indices or the HUD's
 /// bar controls changed; otherwise a frame costs a version read and a pointer compare per bar.
 void applyNotches(ScreenView& view) {
     auto&         s = C();
@@ -266,7 +266,7 @@ void applyNotches(ScreenView& view) {
         st.grid = grid;
         st.images.clear(); // a new HUD tree: its images have their own textures
     }
-    // (HUD index, notches, boss) of the notched TF bars
+    // (HUD index, notches, boss) of the notched upstream bars
     std::vector<std::tuple<int, int, std::int64_t>> shown;
     {
         std::scoped_lock lock(s.mutex);
@@ -307,7 +307,7 @@ void applyNotches(ScreenView& view) {
 
 } // namespace gf::client::entity
 
-// The HUD reads each bar's colour through the screen model: the TF bosses' bars get their RGB.
+// The HUD reads each bar's colour through the screen model: the upstream bosses' bars get their RGB.
 LL_TYPE_INSTANCE_HOOK(
     EntityClientBossColourHook,
     ll::memory::HookPriority::Normal,
@@ -321,7 +321,7 @@ LL_TYPE_INSTANCE_HOOK(
     return colour;
 }
 
-// A dying TF boss keeps its body for its whole death animation (the server holds its removal): the
+// A dying upstream boss keeps its body for its whole death animation (the server holds its removal): the
 // client's own death ticking would end the death at 20 ticks (death smoke, the body gone) while the
 // server still has it, so it is held at 19 (the body lies on its side) until the server ends the
 // death (the bar's "remove", then RemoveActor). Vanilla clients end it at 20 on their own.
@@ -555,7 +555,7 @@ class EntityClientModule {
 public:
     // the render listener is added at mod load, before the game's threads run (as the screen
     // framework's: adding render listeners while the client runs can deadlock the game); it looks
-    // at the HUD only, and changes its bar textures only when the TF bars changed
+    // at the HUD only, and changes its bar textures only when the upstream bars changed
     void load() {
         auto& bus = ll::event::EventBus::getInstance();
         mListener = bus.emplaceListener<ll::event::AfterUIRenderEvent>([](ll::event::AfterUIRenderEvent& ev) {

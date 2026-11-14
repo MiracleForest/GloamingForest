@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.minoshroom.base": {
+    "animation.gloamingforest.minoshroom.base": {
       "loop": true,
       "bones": {
         "hat": {

@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// The U19 module (questcamps): the Questing Ram and its quest, the quest grove, the camps and TF's
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// The U19 module (questcamps): the Questing Ram and its quest, the quest grove, the camps and upstream's
 // template features (druid huts, wells, graveyards, grove ruins, stone circles).
 
 #include <utility>

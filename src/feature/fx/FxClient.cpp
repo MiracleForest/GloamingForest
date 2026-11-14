@@ -1,5 +1,5 @@
 // Client half of gf::fx (client build): the "fx.particle" handler (see Fx.cpp and
-// feature/ext/combat/FxNative.h). A TF particle goes to the native sink first (F12's particle
+// feature/ext/combat/FxNative.h). An upstream particle goes to the native sink first (F12's particle
 // factories, gf::client::particles::spawnFromFx); without a native version the resource pack's
 // effect spawns `count` times (at most kMaxClientEffects: Java's count, where vanilla clients get
 // at most kMaxVanillaParticles packets), each offset by params "spread" as gf::fx offsets the

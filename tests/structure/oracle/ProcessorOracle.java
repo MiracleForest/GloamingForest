@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/processors/CobbleVariants.java
-//   src/main/java/twilightforest/world/components/processors/InfestBlocksProcessor.java
-//   src/main/java/twilightforest/world/components/processors/NagastoneVariants.java
-//   src/main/java/twilightforest/world/components/processors/SmoothStoneVariants.java
-//   src/main/java/twilightforest/world/components/processors/StoneBricksVariants.java
-//   src/main/java/twilightforest/world/components/processors/TargetedRotProcessor.java
-//   src/main/java/twilightforest/world/components/processors/VerticalDecayProcessor.java
-//   src/main/java/twilightforest/world/components/processors/SpawnerProcessor.java
-//   src/main/java/twilightforest/world/components/feature/templates/GraveyardFeature.java (WebTemplateProcessor)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/processors/CobbleVariants.java
+//   src/main/java/gloamingforest/world/components/processors/InfestBlocksProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/NagastoneVariants.java
+//   src/main/java/gloamingforest/world/components/processors/SmoothStoneVariants.java
+//   src/main/java/gloamingforest/world/components/processors/StoneBricksVariants.java
+//   src/main/java/gloamingforest/world/components/processors/TargetedRotProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/VerticalDecayProcessor.java
+//   src/main/java/gloamingforest/world/components/processors/SpawnerProcessor.java
+//   src/main/java/gloamingforest/world/components/feature/templates/GraveyardFeature.java (WebTemplateProcessor)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -21,9 +21,9 @@
 //     other shapes, then blocks with block entity data, each list sorted by y, then x, then z;
 //   - StructureTemplate#placeInWorld: settings.getRandomPalette(palettes, offset) draws
 //     random.nextInt(1) before processBlockInfos, which runs every processor on every block;
-// with the TF processors' process() bodies (java.util.Random is LegacyRandomSource bit for bit).
+// with the upstream processors' process() bodies (java.util.Random is LegacyRandomSource bit for bit).
 // Printed: for each processor the blocks it changed against the plain placement ("x,y,z:block",
-// "-" where nothing is placed; TF's nagastone counts as air, as in the selftest's volume hashes),
+// "-" where nothing is placed; upstream's nagastone counts as air, as in the selftest's volume hashes),
 // the same lines the selftest logs as "SELFTEST INFO structure.processors: diff processor_<name>"
 // (the selftest prints Bedrock ids: minecraft:web is Java's cobweb). This is a hand model of
 // StructureTemplate's order (its FULL and BLOCK_ENTITIES sets entered by hand); TemplateOracle.java
@@ -175,7 +175,7 @@ public class ProcessorOracle {
 	}
 
 	static String asHashed(String block) {
-		return block.contains("nagastone") ? "air" : block; // TF blocks hash as air
+		return block.contains("nagastone") ? "air" : block; // upstream blocks hash as air
 	}
 
 	/** Where the two placements leave which block (the later block at a position wins), by y, z, x. */
@@ -245,7 +245,7 @@ public class ProcessorOracle {
 		// nagastone_variants on the targets' nagastone itself (the selftest's nagastone_variants_blocks)
 		StringBuilder nagastone = new StringBuilder();
 		for (Info b : place(load(TARGETS, TARGETS_PALETTE, TARGETS_NBT), new int[] {10, 64, 0}, PROCESSORS.get("nagastone_variants")))
-			if (b.block().contains("nagastone")) nagastone.append(b.x()).append(',').append(b.y()).append(',').append(b.z()).append(":twilightforest:").append(b.block()).append(';');
+			if (b.block().contains("nagastone")) nagastone.append(b.x()).append(',').append(b.y()).append(',').append(b.z()).append(":gloamingforest:").append(b.block()).append(';');
 		System.out.println("nagastone_variants_blocks: " + nagastone);
 		// the selftest structure.shared_random (its golden and its "shared_random:" info line)
 		System.out.println("shared_random: " + sharedRandom(true));

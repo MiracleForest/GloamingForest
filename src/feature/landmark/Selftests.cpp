@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of the landmark unit (F6, prefix "landmark.", testPos dx 5600..5699). They depend only
-// on W0 and this unit: the fixture landmark gf_test:landmark_fixture (locked like TF's lich tower by
-// twilightforest:progress_naga, hint book "lichtower") stands in for the W1 structures.
+// on W0 and this unit: the fixture landmark gf_test:landmark_fixture (locked like upstream's lich tower by
+// gloamingforest:progress_naga, hint book "lichtower") stands in for the W1 structures.
 //
-//   landmark.grid             the grid and TF's structure records (descriptors with every TF field,
+//   landmark.grid             the grid and upstream's structure records (descriptors with every upstream field,
 //                             structure sets, the decoration step indexes, stable over a reload),
 //                             entity names, the layouts' context random
-//   landmark.decoration       Java's decoration slots and seeds of the 21 TF structures (registry,
+//   landmark.decoration       Java's decoration slots and seeds of the 21 upstream structures (registry,
 //                             worldgen context, loaded placement), the core's structure table
 //                             against the worldgen's registry entry by entry, the decoration step
 //                             mask, the fixtures' slots past the end of their step, and the
 //                             landmark.pieces structure step placing a start at its step only with
 //                             its structure's random
-//   landmark.biomes           every landmark's biome check against TF's biome tags (tags contract)
-//   landmark.commands         TF's literals, argument shapes and texts of center / conquer
+//   landmark.biomes           every landmark's biome check against upstream's biome tags (tags contract)
+//   landmark.commands         upstream's literals, argument shapes and texts of center / conquer
 //                             [reactivate] / genbook [<structure>] (+ the generatebook alias),
 //                             locate's keys and structure tags (invalid, Minecraft's structures, a
 //                             tag's result), and commands.generic.unknown below a literal's level
@@ -108,7 +108,7 @@ namespace ia = gf::interactions;
 using JsonT  = nlohmann::json;
 
 constexpr char kFixture[] = "gf_test:landmark_fixture";
-constexpr char kLock[]    = "twilightforest:progress_naga";
+constexpr char kLock[]    = "gloamingforest:progress_naga";
 
 GlobalPos at(GlobalPos p, int dx, int dy, int dz) { return {p.dim, p.x + dx, p.y + dy, p.z + dz}; }
 
@@ -172,7 +172,7 @@ ia::Result useOnAs(Player& p, GlobalPos const& pos, std::string const& itemId, I
     return ia::dispatchUseOn(c);
 }
 
-/// Lifts a peaceful world to easy while a test needs a hostile mob (TF's hint kobold is a Monster:
+/// Lifts a peaceful world to easy while a test needs a hostile mob (upstream's hint kobold is a Monster:
 /// peaceful discards it, as Java does), and puts the difficulty back afterwards, also on abort.
 struct HostileMobsAllowed {
     using Difficulty = SharedTypes::Legacy::Difficulty;
@@ -195,8 +195,8 @@ bool hasChannel(std::vector<gf::core::Envelope> const& msgs, std::string const& 
     return std::any_of(msgs.begin(), msgs.end(), [&](auto const& m) { return m.channel == channel; });
 }
 
-/// The start chunks a test evaluates with TF's structure sets placed in the test's own dimension
-/// (setStructureDimOverride, while the Twilight Forest is the dimension contract's stub). Afterwards,
+/// The start chunks a test evaluates with upstream's structure sets placed in the test's own dimension
+/// (setStructureDimOverride, while the Gloaming Forest is the dimension contract's stub). Afterwards,
 /// also on abort: the override is lifted, the chunks are released and forgotten, every record the
 /// test added there is erased and every record it replaced there is stored again as it was (memory
 /// and world DB): the chunks' starts are what the test found, a leftover of an aborted run included.
@@ -257,88 +257,88 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
     namespace cl = gf::core::landmark;
     ctx.check(cl::nearestCenter(0, 0) == (cl::ColumnXZ{8, 8}), "the landmark center of region 0,0 is block 8,8");
     ctx.check(cl::chunkHasCenter(0, 0) && !cl::chunkHasCenter(1, 1), "chunk 0,0 holds the center");
-    ctx.check(cl::pickVariety(0, -64 + 64, -64 + 80) == "twilightforest:lich_tower", "region offset (4, 5) is a lich tower");
-    // TF's 21 structures have descriptors, the four declared-only keys have none
+    ctx.check(cl::pickVariety(0, -64 + 64, -64 + 80) == "gloamingforest:lich_tower", "region offset (4, 5) is a lich tower");
+    // upstream's 21 structures have descriptors, the four declared-only keys have none
     static char const* const keys[] = {"aurora_palace",   "camp",          "dark_tower",          "fallen_trunk",       "final_castle",     "giant_house",
                                        "hedge_maze",      "hollow_tree",   "hydra_lair",          "knight_stronghold",  "labyrinth",        "large_hollow_hill",
                                        "lich_tower",      "medium_hollow_hill", "mushroom_tower", "naga_courtyard",     "quest_grove",      "small_hollow_hill",
                                        "swamp_hollow_tree", "troll_cave",  "yeti_cave"};
     int found = 0;
-    for (auto const* k : keys) found += lm::descriptor(std::string("twilightforest:") + k) != nullptr;
-    ctx.check(found == 21, "21 TF structure descriptors (found " + std::to_string(found) + ")");
+    for (auto const* k : keys) found += lm::descriptor(std::string("gloamingforest:") + k) != nullptr;
+    ctx.check(found == 21, "21 upstream structure descriptors (found " + std::to_string(found) + ")");
     for (auto const* k : {"quest_island", "druid_grove", "floating_ruins", "world_tree"})
-        ctx.check(lm::descriptor(std::string("twilightforest:") + k) == nullptr, std::string("no descriptor for ") + k);
-    auto const* lich = lm::descriptor("twilightforest:lich_tower");
+        ctx.check(lm::descriptor(std::string("gloamingforest:") + k) == nullptr, std::string("no descriptor for ") + k);
+    auto const* lich = lm::descriptor("gloamingforest:lich_tower");
     ctx.require(lich != nullptr, "lich tower descriptor");
-    auto const* lichInfoBefore = fl::info("twilightforest:lich_tower");
+    auto const* lichInfoBefore = fl::info("gloamingforest:lich_tower");
     ctx.check(lich->lockAdvancements == std::vector<std::string>{kLock}, "the lich tower is locked by progress_naga");
-    ctx.check(lich->hintBookKey == "twilightforest.book.lichtower", "its hint book is the lich tower's");
-    ctx.check(lich->conquerable && lich->icon == "twilightforest:lich_tower", "conquerable, with its map icon");
+    ctx.check(lich->hintBookKey == "gloamingforest.book.lichtower", "its hint book is the lich tower's");
+    ctx.check(lich->conquerable && lich->icon == "gloamingforest:lich_tower", "conquerable, with its map icon");
     ctx.check(!lich->surfaceDecorationsAllowed && lich->undergroundDecorationsAllowed, "lich tower decoration clearance");
     ctx.check(lich->controlledSpawns["labelled_monster_spawns"].size() == 2, "lich tower spawn lists 0 and 1");
-    auto const* dark = lm::descriptor("twilightforest:dark_tower");
+    auto const* dark = lm::descriptor("gloamingforest:dark_tower");
     ctx.require(dark != nullptr, "dark tower descriptor");
     ctx.check(dark->controlledSpawns["labelled_monster_spawns"].size() == 2 && dark->controlledSpawns["water_spawns"].size() == 1,
               "dark tower floors: monster lists 0, 1 and the water list");
-    auto const* grove = lm::descriptor("twilightforest:quest_grove");
+    auto const* grove = lm::descriptor("gloamingforest:quest_grove");
     ctx.check(grove && grove->conquerable && grove->lockAdvancements.empty(), "the quest grove is conquerable without a lock");
-    auto const* maze = lm::descriptor("twilightforest:hedge_maze");
+    auto const* maze = lm::descriptor("gloamingforest:hedge_maze");
     ctx.check(maze && !maze->conquerable, "the hedge maze is not conquerable");
-    auto const* giant = fl::info("twilightforest:giant_house");
+    auto const* giant = fl::info("gloamingforest:giant_house");
     ctx.check(giant && giant->traits.progression && !giant->traits.landmarkTag, "the giant house is locked but not in #landmark");
-    auto const* hollowTree = fl::info("twilightforest:hollow_tree");
-    ctx.check(hollowTree && hollowTree->structureSet == "twilightforest:hollow_tree", "the hollow tree's structure set");
-    auto const* set = fl::structureSet("twilightforest:camp");
+    auto const* hollowTree = fl::info("gloamingforest:hollow_tree");
+    ctx.check(hollowTree && hollowTree->structureSet == "gloamingforest:hollow_tree", "the hollow tree's structure set");
+    auto const* set = fl::structureSet("gloamingforest:camp");
     ctx.check(set && set->placement.kind == gf::core::landmark::placement::Kind::AvoidLandmarkGrid && set->placement.spacing == 18,
               "camp: avoid_landmark_grid, spacing 18");
-    auto const* lichSet = fl::structureSet("twilightforest:lich_tower");
-    ctx.check(lichSet && lichSet->placement.gridLock == "twilightforest:lich_tower", "lich tower: landmark_grid locked to itself");
-    // Descriptor::extra: the rest of the TF record, verbatim, and what GF derives under "gf"
-    auto const* hill = lm::descriptor("twilightforest:small_hollow_hill");
+    auto const* lichSet = fl::structureSet("gloamingforest:lich_tower");
+    ctx.check(lichSet && lichSet->placement.gridLock == "gloamingforest:lich_tower", "lich tower: landmark_grid locked to itself");
+    // Descriptor::extra: the rest of the upstream record, verbatim, and what GF derives under "gf"
+    auto const* hill = lm::descriptor("gloamingforest:small_hollow_hill");
     ctx.require(hill != nullptr, "small hollow hill descriptor");
     ctx.check(hill->extra.value("hill_size", 0) == 1 && hill->extra.contains("speleothem_config"), "hollow hill: hill_size and speleothem_config");
-    ctx.check(!hill->extra.contains("controlled_spawns") && hill->extra["gf"].value("type", std::string{}) == "twilightforest:hollow_hill",
+    ctx.check(!hill->extra.contains("controlled_spawns") && hill->extra["gf"].value("type", std::string{}) == "gloamingforest:hollow_hill",
               "parsed fields left out, derived ones under extra.gf");
     for (auto const* k : {"hydra_lair", "troll_cave", "yeti_cave", "medium_hollow_hill", "large_hollow_hill"}) {
-        auto const* d = lm::descriptor(std::string("twilightforest:") + k);
+        auto const* d = lm::descriptor(std::string("gloamingforest:") + k);
         ctx.check(d && d->extra.contains("speleothem_config"), std::string(k) + ": speleothem_config");
     }
-    auto const* trunk = lm::descriptor("twilightforest:fallen_trunk");
+    auto const* trunk = lm::descriptor("gloamingforest:fallen_trunk");
     ctx.check(trunk && trunk->extra.contains("log") && trunk->extra.contains("length") && trunk->extra.contains("big_trunk_length")
-                  && trunk->extra.value("chest_loot_table", std::string{}) == "twilightforest:fallen_trunk_loot",
+                  && trunk->extra.value("chest_loot_table", std::string{}) == "gloamingforest:fallen_trunk_loot",
               "fallen trunk: log, length, big_trunk_length, chest_loot_table");
     for (auto const* k : {"hollow_tree", "swamp_hollow_tree"}) {
-        auto const* d  = lm::descriptor(std::string("twilightforest:") + k);
+        auto const* d  = lm::descriptor(std::string("gloamingforest:") + k);
         bool        ok = d != nullptr;
         for (auto const* f : {"height", "radius", "log", "wood", "leaves", "root", "vine", "bug", "dungeon_air", "dungeon_wood", "dungeon_monster",
                               "dungeon_loot_block", "dungeon_loot_table"})
             ok = ok && d->extra.contains(f);
         ctx.check(ok, std::string(k) + ": the hollow tree parameters");
     }
-    auto const* swampTree = lm::descriptor("twilightforest:swamp_hollow_tree");
+    auto const* swampTree = lm::descriptor("gloamingforest:swamp_hollow_tree");
     ctx.check(swampTree && swampTree->extra.contains("allow_in_water"), "swamp hollow tree: allow_in_water");
     // CampStructure / FallenTrunkStructure hard-code their clearance in Java: it applies, but it is no
-    // field of TF's record (extra keeps the record as it is; the fixed one sits under extra.gf)
+    // field of upstream's record (extra keeps the record as it is; the fixed one sits under extra.gf)
     for (auto const* k : {"camp", "fallen_trunk"}) {
-        auto const* d = lm::descriptor(std::string("twilightforest:") + k);
+        auto const* d = lm::descriptor(std::string("gloamingforest:") + k);
         ctx.check(d && !d->extra.contains("decoration_clearance") && d->extra["gf"].contains("fixed_decoration_clearance") && !d->surfaceDecorationsAllowed
                       && d->undergroundDecorationsAllowed,
-                  std::string(k) + ": the Java clearance applies, outside the TF record");
+                  std::string(k) + ": the Java clearance applies, outside the upstream record");
     }
     // the descriptors load once: a second install keeps every pointer handed out
     fl::loadDescriptors();
-    ctx.check(lm::descriptor("twilightforest:lich_tower") == lich && fl::info("twilightforest:lich_tower") == lichInfoBefore,
+    ctx.check(lm::descriptor("gloamingforest:lich_tower") == lich && fl::info("gloamingforest:lich_tower") == lichInfoBefore,
               "loading the descriptors again keeps their addresses");
-    // EntityType#getDescription for /tf info's spawn list: names, not ids
+    // EntityType#getDescription for /gloamingforest info's spawn list: names, not ids
     ctx.check(fl::entityName("minecraft:zombie", nullptr) == "Zombie", "minecraft:zombie is \"" + fl::entityName("minecraft:zombie", nullptr) + "\"");
     ctx.check(fl::entityName("minecraft:wither_skeleton", nullptr) == "Wither Skeleton",
               "minecraft:wither_skeleton is \"" + fl::entityName("minecraft:wither_skeleton", nullptr) + "\"");
-    ctx.check(fl::entityName("twilightforest:death_tome", nullptr) == "Death Tome",
-              "twilightforest:death_tome is \"" + fl::entityName("twilightforest:death_tome", nullptr) + "\"");
+    ctx.check(fl::entityName("gloamingforest:death_tome", nullptr) == "Death Tome",
+              "gloamingforest:death_tome is \"" + fl::entityName("gloamingforest:death_tome", nullptr) + "\"");
     // Structure.GenerationContext#random() for layouts: one deterministic source per start chunk
     {
         lm::Start s;
-        s.key    = "twilightforest:lich_tower";
+        s.key    = "gloamingforest:lich_tower";
         s.seed   = 1234;
         s.center = {0, 100, 0, 200};
         s.data   = JsonT{{"chunk", JsonT::array({6, 12})}};
@@ -348,10 +348,10 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
         ctx.check(same, "contextRandom: the same start gives the same sequence");
     }
     // ChunkGenerator#applyBiomeDecoration's index: every structure of the step before it in registry
-    // order (path, then namespace), vanilla's included: lich_tower follows 5 vanilla and 9 TF
+    // order (path, then namespace), vanilla's included: lich_tower follows 5 vanilla and 9 upstream
     // surface structures, labyrinth buried_treasure and knight_stronghold
-    auto const* lichInfo = fl::info("twilightforest:lich_tower");
-    auto const* labInfo  = fl::info("twilightforest:labyrinth");
+    auto const* lichInfo = fl::info("gloamingforest:lich_tower");
+    auto const* labInfo  = fl::info("gloamingforest:labyrinth");
     ctx.check(lichInfo && lichInfo->inRegistry && lichInfo->slot == (gf::core::landmark::decoration::Slot{4, 14}),
               "lich_tower is decoration index 14 of surface_structures");
     ctx.check(labInfo && labInfo->inRegistry && labInfo->slot == (gf::core::landmark::decoration::Slot{3, 2}),
@@ -360,21 +360,21 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
 
 namespace {
 
-/// Java's applyBiomeDecoration slot of every TF structure (GenerationStep.Decoration, index among
-/// the step's structures of Minecraft 1.21.1's and TF 4.8's Structure registry in registry order;
+/// Java's applyBiomeDecoration slot of every upstream structure (GenerationStep.Decoration, index among
+/// the step's structures of Minecraft 1.21.1's and upstream 4.8's Structure registry in registry order;
 /// tests/landmark/DecorationTest.cpp derives the same numbers).
 struct JavaSlot {
     char const* key;
     int         step, index;
 };
 constexpr JavaSlot kJavaSlots[] = {
-    {"twilightforest:knight_stronghold", 3, 1}, {"twilightforest:labyrinth", 3, 2},          {"twilightforest:troll_cave", 3, 7},
-    {"twilightforest:aurora_palace", 4, 0},     {"twilightforest:camp", 4, 2},               {"twilightforest:dark_tower", 4, 3},
-    {"twilightforest:fallen_trunk", 4, 6},      {"twilightforest:final_castle", 4, 7},       {"twilightforest:hedge_maze", 4, 8},
-    {"twilightforest:hollow_tree", 4, 9},       {"twilightforest:hydra_lair", 4, 10},        {"twilightforest:large_hollow_hill", 4, 13},
-    {"twilightforest:lich_tower", 4, 14},       {"twilightforest:medium_hollow_hill", 4, 16}, {"twilightforest:mushroom_tower", 4, 18},
-    {"twilightforest:naga_courtyard", 4, 19},   {"twilightforest:quest_grove", 4, 23},       {"twilightforest:small_hollow_hill", 4, 33},
-    {"twilightforest:swamp_hollow_tree", 4, 35}, {"twilightforest:yeti_cave", 4, 42},        {"twilightforest:giant_house", 10, 0},
+    {"gloamingforest:knight_stronghold", 3, 1}, {"gloamingforest:labyrinth", 3, 2},          {"gloamingforest:troll_cave", 3, 7},
+    {"gloamingforest:aurora_palace", 4, 0},     {"gloamingforest:camp", 4, 2},               {"gloamingforest:dark_tower", 4, 3},
+    {"gloamingforest:fallen_trunk", 4, 6},      {"gloamingforest:final_castle", 4, 7},       {"gloamingforest:hedge_maze", 4, 8},
+    {"gloamingforest:hollow_tree", 4, 9},       {"gloamingforest:hydra_lair", 4, 10},        {"gloamingforest:large_hollow_hill", 4, 13},
+    {"gloamingforest:lich_tower", 4, 14},       {"gloamingforest:medium_hollow_hill", 4, 16}, {"gloamingforest:mushroom_tower", 4, 18},
+    {"gloamingforest:naga_courtyard", 4, 19},   {"gloamingforest:quest_grove", 4, 23},       {"gloamingforest:small_hollow_hill", 4, 33},
+    {"gloamingforest:swamp_hollow_tree", 4, 35}, {"gloamingforest:yeti_cave", 4, 42},        {"gloamingforest:giant_house", 10, 0},
 };
 
 /// A worldgen::Region that only counts what is placed in it (the structure step outside a chunk
@@ -413,7 +413,7 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
     namespace dec = gf::core::landmark::decoration;
     namespace wgx = gf::worldgen::ext;
     // the slots: Java's, the worldgen registry's (what the structure step's context seeds with) and
-    // the descriptors' agree for all 21 TF structures
+    // the descriptors' agree for all 21 upstream structures
     for (auto const& w : kJavaSlots) {
         auto const* inf  = fl::info(w.key);
         auto        slot = fl::decorationSlot(w.key);
@@ -424,7 +424,7 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
                       + std::to_string(slot.index) + ", registry " + (reg ? std::to_string(reg->step) + "/" + std::to_string(reg->index) : "none") + ")");
     }
     // the core's own Structure registry (Minecraft 1.21.1's 34 structures, the gtests' table) with
-    // TF's descriptors at their steps, in registry order, is F5's structuresByStep() entry by entry:
+    // upstream's descriptors at their steps, in registry order, is F5's structuresByStep() entry by entry:
     // the two cannot drift apart unnoticed (a data pack structure F5 reads would show here too)
     {
         auto registry = dec::vanillaStructures();
@@ -465,9 +465,9 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
             if (other.structureRandomOf(w.key)) ++mismatches; // no random at another step
         }
     }
-    ctx.check(mismatches == 0, "every TF structure's decoration random is Java's (" + std::to_string(mismatches) + " mismatches)");
+    ctx.check(mismatches == 0, "every upstream structure's decoration random is Java's (" + std::to_string(mismatches) + " mismatches)");
 
-    // the steps some landmark decorates at: TF's underground_structures, surface_structures and
+    // the steps some landmark decorates at: upstream's underground_structures, surface_structures and
     // top_layer_modification (the fixtures' surface_structures); the structure step returns at once
     // at the other 8
     ctx.check(fl::decorationStepMask() == ((1u << 3) | (1u << 4) | (1u << 10)),
@@ -518,8 +518,8 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
 });
 
 // The landmarks' biome checks (Structure#biomes(): LandmarkStructure#findValidGenerationPoint,
-// Structure#isValidBiome, WorldUtil#findNearestMapLandmark) against TF 4.8's biome tags
-// (src/generated/resources/data/twilightforest/tags/worldgen/biome) through the tags contract
+// Structure#isValidBiome, WorldUtil#findNearestMapLandmark) against upstream 4.8's biome tags
+// (src/generated/resources/data/gloamingforest/tags/worldgen/biome) through the tags contract
 GF_REGISTER_SELFTEST("landmark.biomes", [](Context& ctx) {
     static char const* const tfBiomes[] = {"clearing",         "dark_forest", "dark_forest_center", "dense_forest", "dense_mushroom_forest", "enchanted_forest",
                                            "final_plateau",    "fire_swamp",  "firefly_forest",     "forest",       "glacier",               "highlands",
@@ -533,59 +533,59 @@ GF_REGISTER_SELFTEST("landmark.biomes", [](Context& ctx) {
         std::vector<std::string> members;
     };
     std::vector<Want> const want = {
-        {"aurora_palace", "#twilightforest:valid_aurora_palace_biomes", {"glacier"}},
-        {"camp", "#twilightforest:valid_camp_biomes", {"oak_savannah", "clearing", "mushroom_forest", "forest", "firefly_forest"}},
-        {"dark_tower", "#twilightforest:valid_dark_tower_biomes", {"dark_forest_center"}},
-        {"fallen_trunk", "#twilightforest:valid_hollow_tree_biomes", hollowTree},
-        {"final_castle", "#twilightforest:valid_final_castle_biomes", {"final_plateau"}},
-        {"giant_house", "#twilightforest:valid_giant_house_biomes", {"highlands"}},
-        {"hedge_maze", "#twilightforest:valid_hedge_maze_biomes", common},
-        {"hollow_tree", "#twilightforest:valid_hollow_tree_biomes", hollowTree},
-        {"hydra_lair", "#twilightforest:valid_hydra_lair_biomes", {"fire_swamp"}},
-        {"knight_stronghold", "#twilightforest:valid_knight_stronghold_biomes", {"dark_forest"}},
-        {"labyrinth", "#twilightforest:valid_labyrinth_biomes", {"swamp"}},
-        {"large_hollow_hill", "#twilightforest:valid_hollow_hill_biomes", common},
-        {"lich_tower", "#twilightforest:valid_lich_tower_biomes", common},
-        {"medium_hollow_hill", "#twilightforest:valid_hollow_hill_biomes", common},
-        {"mushroom_tower", "#twilightforest:valid_mushroom_tower_biomes", {"dense_mushroom_forest"}},
-        {"naga_courtyard", "#twilightforest:valid_naga_courtyard_biomes", common},
-        {"quest_grove", "#twilightforest:valid_quest_grove_biomes", {"enchanted_forest"}},
-        {"small_hollow_hill", "#twilightforest:valid_hollow_hill_biomes", common},
-        {"swamp_hollow_tree", "twilightforest:swamp", {"swamp"}},
-        {"troll_cave", "#twilightforest:valid_troll_cave_biomes", {"highlands"}},
-        {"yeti_cave", "#twilightforest:valid_yeti_cave_biomes", {"snowy_forest"}},
+        {"aurora_palace", "#gloamingforest:valid_aurora_palace_biomes", {"glacier"}},
+        {"camp", "#gloamingforest:valid_camp_biomes", {"oak_savannah", "clearing", "mushroom_forest", "forest", "firefly_forest"}},
+        {"dark_tower", "#gloamingforest:valid_dark_tower_biomes", {"dark_forest_center"}},
+        {"fallen_trunk", "#gloamingforest:valid_hollow_tree_biomes", hollowTree},
+        {"final_castle", "#gloamingforest:valid_final_castle_biomes", {"final_plateau"}},
+        {"giant_house", "#gloamingforest:valid_giant_house_biomes", {"highlands"}},
+        {"hedge_maze", "#gloamingforest:valid_hedge_maze_biomes", common},
+        {"hollow_tree", "#gloamingforest:valid_hollow_tree_biomes", hollowTree},
+        {"hydra_lair", "#gloamingforest:valid_hydra_lair_biomes", {"fire_swamp"}},
+        {"knight_stronghold", "#gloamingforest:valid_knight_stronghold_biomes", {"dark_forest"}},
+        {"labyrinth", "#gloamingforest:valid_labyrinth_biomes", {"swamp"}},
+        {"large_hollow_hill", "#gloamingforest:valid_hollow_hill_biomes", common},
+        {"lich_tower", "#gloamingforest:valid_lich_tower_biomes", common},
+        {"medium_hollow_hill", "#gloamingforest:valid_hollow_hill_biomes", common},
+        {"mushroom_tower", "#gloamingforest:valid_mushroom_tower_biomes", {"dense_mushroom_forest"}},
+        {"naga_courtyard", "#gloamingforest:valid_naga_courtyard_biomes", common},
+        {"quest_grove", "#gloamingforest:valid_quest_grove_biomes", {"enchanted_forest"}},
+        {"small_hollow_hill", "#gloamingforest:valid_hollow_hill_biomes", common},
+        {"swamp_hollow_tree", "gloamingforest:swamp", {"swamp"}},
+        {"troll_cave", "#gloamingforest:valid_troll_cave_biomes", {"highlands"}},
+        {"yeti_cave", "#gloamingforest:valid_yeti_cave_biomes", {"snowy_forest"}},
     };
     for (auto const& w : want) {
-        auto        key = std::string("twilightforest:") + w.key;
+        auto        key = std::string("gloamingforest:") + w.key;
         auto const* inf = fl::info(key);
         ctx.check(inf != nullptr, key + " has a descriptor");
         if (!inf) continue;
         ctx.check(inf->biomes == w.biomes, key + "'s biomes are " + w.biomes + " (got " + inf->biomes + ")");
         std::set<std::string> expected, got;
-        for (auto const& m : w.members) expected.insert("twilightforest:" + m);
+        for (auto const& m : w.members) expected.insert("gloamingforest:" + m);
         for (auto const* b : tfBiomes)
-            if (fl::biomeMatches(inf->biomes, std::string("twilightforest:") + b)) got.insert(std::string("twilightforest:") + b);
+            if (fl::biomeMatches(inf->biomes, std::string("gloamingforest:") + b)) got.insert(std::string("gloamingforest:") + b);
         std::string list;
         for (auto const& g : got) list += (list.empty() ? "" : " ") + g;
-        ctx.check(got == expected, key + " starts in TF's biomes of " + w.biomes + " (matched: " + list + ")");
+        ctx.check(got == expected, key + " starts in upstream's biomes of " + w.biomes + " (matched: " + list + ")");
         ctx.check(!fl::biomeMatches(inf->biomes, "minecraft:plains") && !fl::biomeMatches(inf->biomes, ""), key + " never in a vanilla or unknown biome");
     }
 });
 
-// TF's subcommands as TF registers them (TFCommand): literals, argument shapes and texts, from the
+// upstream's subcommands as upstream registers them (TFCommand): literals, argument shapes and texts, from the
 // console (no player: genbook's not_player, as Java's CommandSourceStack without an entity)
 GF_REGISTER_SELFTEST("landmark.commands", [](Context& ctx) {
     // ResourceLocation#read of genbook's ResourceKeyArgument
     ctx.check(fl::parseResourceLocation("lich_tower") == std::optional<std::string>("minecraft:lich_tower"), "no namespace: minecraft");
-    ctx.check(fl::parseResourceLocation("twilightforest:lich_tower") == std::optional<std::string>("twilightforest:lich_tower"), "a full id");
+    ctx.check(fl::parseResourceLocation("gloamingforest:lich_tower") == std::optional<std::string>("gloamingforest:lich_tower"), "a full id");
     ctx.check(fl::parseResourceLocation(":camp") == std::optional<std::string>("minecraft:camp"), "an empty namespace: minecraft");
-    ctx.check(!fl::parseResourceLocation("Twilightforest:Lich_Tower") && !fl::parseResourceLocation("a:b:c") && !fl::parseResourceLocation("a b"),
+    ctx.check(!fl::parseResourceLocation("Gloamingforest:Lich_Tower") && !fl::parseResourceLocation("a:b:c") && !fl::parseResourceLocation("a b"),
               "upper case, a second ':' and spaces are invalid");
-    ctx.check(fl::structureRegistered("twilightforest:lich_tower") && fl::structureRegistered("twilightforest:hollow_tree")
+    ctx.check(fl::structureRegistered("gloamingforest:lich_tower") && fl::structureRegistered("gloamingforest:hollow_tree")
                   && fl::structureRegistered("minecraft:village_plains"),
-              "TF's and Minecraft's structures are registered");
-    ctx.check(!fl::structureRegistered("twilightforest:quest_island") && !fl::structureRegistered("minecraft:lich_tower"),
-              "TF's declared-only keys and unknown ids are not");
+              "upstream's and Minecraft's structures are registered");
+    ctx.check(!fl::structureRegistered("gloamingforest:quest_island") && !fl::structureRegistered("minecraft:lich_tower"),
+              "upstream's declared-only keys and unknown ids are not");
 
     int  dim      = ctx.testPos(5670).dim;
     auto expectIn = [&](std::string const& command, bool ok, std::vector<std::string> const& texts,
@@ -603,28 +603,28 @@ GF_REGISTER_SELFTEST("landmark.commands", [](Context& ctx) {
                                             + messages + ")");
     };
     // genbook [<structure>]: the argument is resolved before generateBook checks for a player
-    expectIn("twilightforest genbook minecraft:no_such_structure", false, {"There is no structure with type \"minecraft:no_such_structure\""});
-    expectIn("twilightforest genbook lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
-    expectIn("twilightforest genbook twilightforest:quest_island", false, {"There is no structure with type \"twilightforest:quest_island\""});
+    expectIn("gloamingforest genbook minecraft:no_such_structure", false, {"There is no structure with type \"minecraft:no_such_structure\""});
+    expectIn("gloamingforest genbook lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
+    expectIn("gloamingforest genbook gloamingforest:quest_island", false, {"There is no structure with type \"gloamingforest:quest_island\""});
     // ResourceLocation#read stops at the first character no resource location holds: "Bad:Id" reads
     // as "" (minecraft:) followed by trailing data; "a:b:c" reads whole and is no valid location
-    expectIn("twilightforest genbook Bad:Id", false, {"Expected whitespace to end one argument, but found trailing data"});
-    expectIn("twilightforest genbook a:b:c", false, {"Invalid ID"});
+    expectIn("gloamingforest genbook Bad:Id", false, {"Expected whitespace to end one argument, but found trailing data"});
+    expectIn("gloamingforest genbook a:b:c", false, {"Invalid ID"});
     // the GloamingForest additions locate / place read their argument the same way (Java's /locate
     // structure and /place structure)
-    expectIn("twilightforest locate lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
-    expectIn("twilightforest place lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
+    expectIn("gloamingforest locate lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
+    expectIn("gloamingforest place lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
     // locate's tag: LocateCommand#getHolders reads Registry#getTag (the tags contract's structure
     // tags); an unknown one is ERROR_STRUCTURE_INVALID with "#" and the tag
-    ctx.check(gf::tags::members(gf::tags::Registry::Structure, "twilightforest:landmark").size() == 16, "#twilightforest:landmark has TF's 16 structures");
-    expectIn("twilightforest locate #twilightforest:no_such_tag", false, {"There is no structure with type \"#twilightforest:no_such_tag\""});
-    expectIn("twilightforest locate #Bad", false, {"Expected whitespace to end one argument, but found trailing data"});
-    // Minecraft's own structures: outside the Twilight Forest Java finds and places them, which only
+    ctx.check(gf::tags::members(gf::tags::Registry::Structure, "gloamingforest:landmark").size() == 16, "#gloamingforest:landmark has upstream's 16 structures");
+    expectIn("gloamingforest locate #gloamingforest:no_such_tag", false, {"There is no structure with type \"#gloamingforest:no_such_tag\""});
+    expectIn("gloamingforest locate #Bad", false, {"Expected whitespace to end one argument, but found trailing data"});
+    // Minecraft's own structures: outside the Gloaming Forest Java finds and places them, which only
     // Bedrock's own commands can here (the console stands in the overworld)
-    expectIn("twilightforest locate minecraft:village_plains", false, {"minecraft:village_plains is not one of them"});
-    expectIn("twilightforest place minecraft:village_plains", false, {"minecraft:village_plains is not one of them"});
+    expectIn("gloamingforest locate minecraft:village_plains", false, {"minecraft:village_plains is not one of them"});
+    expectIn("gloamingforest place minecraft:village_plains", false, {"minecraft:village_plains is not one of them"});
     // a tag's result names the structure found (LocateCommand#showLocateResult): a forced fixture
-    // start, in #twilightforest:landmark, far above this unit's row
+    // start, in #gloamingforest:landmark, far above this unit's row
     {
         auto const* fixture = fl::info(kFixture);
         ctx.require(fixture != nullptr, "the fixture descriptor");
@@ -634,26 +634,26 @@ GF_REGISTER_SELFTEST("landmark.commands", [](Context& ctx) {
         ctx.require(rec != nullptr, "a forced fixture start");
         cleanup.starts.push_back(center);
         fl::putRecord(rec);
-        expectIn("twilightforest locate #twilightforest:landmark", true, {"The nearest #twilightforest:landmark (gf_test:landmark_fixture", ", ~, "});
-        expectIn("twilightforest locate gf_test:landmark_fixture", true, {"The nearest gf_test:landmark_fixture is at [", " blocks away)"});
+        expectIn("gloamingforest locate #gloamingforest:landmark", true, {"The nearest #gloamingforest:landmark (gf_test:landmark_fixture", ", ~, "});
+        expectIn("gloamingforest locate gf_test:landmark_fixture", true, {"The nearest gf_test:landmark_fixture is at [", " blocks away)"});
     }
-    expectIn("twilightforest genbook twilightforest:lich_tower", false, {"This command must be run by a valid player!"});
-    expectIn("tf genbook minecraft:village_plains", false, {"This command must be run by a valid player!"});
-    expectIn("tffeature genbook", false, {"This command must be run by a valid player!"});
-    expectIn("twilightforest generatebook", false, {"This command must be run by a valid player!"});
+    expectIn("gloamingforest genbook gloamingforest:lich_tower", false, {"This command must be run by a valid player!"});
+    expectIn("gloamingforest genbook minecraft:village_plains", false, {"This command must be run by a valid player!"});
+    expectIn("gloamingforest genbook", false, {"This command must be run by a valid player!"});
+    expectIn("gloamingforest generatebook", false, {"This command must be run by a valid player!"});
     // conquer [reactivate]: the console stands outside every landmark here
-    expectIn("twilightforest conquer", false, {"You are not in a structure"});
-    expectIn("twilightforest conquer reactivate", false, {"You are not in a structure"});
-    // center: TF's three lines, from one run
-    expectIn("twilightforest center", true, {"The nearest feature is: ", "Center of feature: ", "Located in feature chunk: "});
+    expectIn("gloamingforest conquer", false, {"You are not in a structure"});
+    expectIn("gloamingforest conquer reactivate", false, {"You are not in a structure"});
+    // center: upstream's three lines, from one run
+    expectIn("gloamingforest center", true, {"The nearest feature is: ", "Center of feature: ", "Located in feature chunk: "});
     // a source below the literal's level: Java's requires(n) hides the literal; Bedrock answers a
     // command the source may not use with commands.generic.unknown (genbook needs Admin, the
     // others GameDirectors)
-    for (auto const* literal : {"center", "info", "conquer", "conquer reactivate", "locate twilightforest:lich_tower", "place twilightforest:lich_tower"})
-        expectIn(std::string("twilightforest ") + literal, false, {"commands.generic.unknown " + std::string(literal).substr(0, std::string(literal).find(' '))},
+    for (auto const* literal : {"center", "info", "conquer", "conquer reactivate", "locate gloamingforest:lich_tower", "place gloamingforest:lich_tower"})
+        expectIn(std::string("gloamingforest ") + literal, false, {"commands.generic.unknown " + std::string(literal).substr(0, std::string(literal).find(' '))},
                  CommandPermissionLevel::Any);
-    expectIn("twilightforest genbook", false, {"commands.generic.unknown genbook"}, CommandPermissionLevel::GameDirectors);
-    expectIn("twilightforest genbook", false, {"This command must be run by a valid player!"}, CommandPermissionLevel::Admin);
+    expectIn("gloamingforest genbook", false, {"commands.generic.unknown genbook"}, CommandPermissionLevel::GameDirectors);
+    expectIn("gloamingforest genbook", false, {"This command must be run by a valid player!"}, CommandPermissionLevel::Admin);
 });
 
 GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -735,7 +735,7 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
         ctx.check(destroyAs(g, wall) == ia::Result::Deny, "without it breaking is refused again");
     }
 
-    // Java's /place structure stores no start: a /twilightforest place landmark protects nothing
+    // Java's /place structure stores no start: a /gloamingforest place landmark protects nothing
     {
         auto const* fixture = fl::info(kFixture);
         ctx.require(fixture != nullptr, "the fixture descriptor");
@@ -750,9 +750,9 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
     }
     if (gf::config::get<fl::LandmarkConfig>().protectionBoxes) {
         ctx.check(fl::protectionBoxEntities() > 0, "a protection box entity is alive");
-        // TF's ProtectionBox is never saved: an untracked box (one loaded back with its chunk) goes,
+        // upstream's ProtectionBox is never saved: an untracked box (one loaded back with its chunk) goes,
         // the live ones stay
-        auto* stray = fl::spawnEntity(*gf::game::regionOf(center.dim), "twilightforest:protection_box", static_cast<float>(center.x) + 0.5f,
+        auto* stray = fl::spawnEntity(*gf::game::regionOf(center.dim), "gloamingforest:protection_box", static_cast<float>(center.x) + 0.5f,
                                       static_cast<float>(center.y) + 12.0f, static_cast<float>(center.z) + 0.5f);
         ctx.check(stray != nullptr, "a protection box entity can be spawned");
         if (stray) ctx.check(fl::sweepStrayProtectionBoxes() >= 1, "an untracked protection box is removed");
@@ -821,9 +821,9 @@ GF_REGISTER_SELFTEST("landmark.hint_book", [](Context& ctx) -> ll::coro::CoroTas
     (void)ctx.player();
     co_await ctx.ticks(1);
     auto&       p    = ctx.player();
-    auto const* inf  = fl::info("twilightforest:lich_tower");
+    auto const* inf  = fl::info("gloamingforest:lich_tower");
     ctx.require(inf != nullptr, "lich tower");
-    ctx.check(inf->hintBook == "lichtower" && inf->hintPages == 4 && inf->hintMob == "twilightforest:kobold", "the hint config");
+    ctx.check(inf->hintBook == "lichtower" && inf->hintPages == 4 && inf->hintMob == "gloamingforest:kobold", "the hint config");
     auto book = fl::createHintBook(*inf, &p);
     ctx.require(book.has_value(), "a hint book");
     ctx.check(gf::game::items::idOf(*book) == "minecraft:written_book", "a written book");
@@ -833,7 +833,7 @@ GF_REGISTER_SELFTEST("landmark.hint_book", [](Context& ctx) -> ll::coro::CoroTas
     auto marker = gf::game::items::getData(*book, "translatable_book");
     ctx.check(marker.value("name", std::string{}) == "lichtower" && marker.value("pages", 0) == 4, "the translatable_book marker");
     auto unknown = fl::makeBook("unknown", 2, &p);
-    ctx.check(unknown.has_value(), "the default book (twilightforest.book.unknown)");
+    ctx.check(unknown.has_value(), "the default book (gloamingforest.book.unknown)");
     ctx.check(marker.value("locale", std::string{"?"}) == gf::localeOf(p), "written in the reader's language");
     // another reader (another language): the book is written again from its keys
     ctx.check(!fl::retranslateBook(*book, p), "the same reader gets it unchanged");
@@ -844,7 +844,7 @@ GF_REGISTER_SELFTEST("landmark.hint_book", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(gf::game::items::getData(*book, "translatable_book").value("locale", std::string{}) == gf::localeOf(p)
                   && gf::game::items::getData(*book, "translatable_book").value("pages", 0) == 4,
               "in the reader's language, with its pages");
-    ctx.check(!fl::createHintBook(*fl::info("twilightforest:hedge_maze"), &p).has_value(), "no book for structures without hints");
+    ctx.check(!fl::createHintBook(*fl::info("gloamingforest:hedge_maze"), &p).has_value(), "no book for structures without hints");
 });
 
 GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -858,7 +858,7 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     // Level#getGameTime: level.dat's currentTick, the tick the level counts
     auto gt = fl::gameTime(), ct = level->getCurrentTick().tickID;
     ctx.check((gt > ct ? gt - ct : ct - gt) <= 1, "the hint timer reads level.dat's currentTick (" + std::to_string(gt) + " vs " + std::to_string(ct) + ")");
-    auto const* lich = fl::info("twilightforest:lich_tower");
+    auto const* lich = fl::info("gloamingforest:lich_tower");
     ctx.require(lich != nullptr, "lich tower");
     fl::Info carrier = *lich;
     carrier.hintMob  = "minecraft:zombie";
@@ -1080,7 +1080,7 @@ GF_REGISTER_SELFTEST("landmark.reserved_sites", [](Context& ctx) {
     int const dim  = base.dim;
     auto      center = farCenter(base, 30000);
     int const cx = center.x >> 4, cz = center.z >> 4;
-    // decorationAllowed asks the Twilight Forest: TF's structure sets are placed in the test
+    // decorationAllowed asks the Gloaming Forest: upstream's structure sets are placed in the test
     // dimension meanwhile, and every start chunk the queries evaluate (those that can reach chunk
     // cx, cz) is forgotten afterwards with the starts made there
     StartsScope scope(dim);
@@ -1095,7 +1095,7 @@ GF_REGISTER_SELFTEST("landmark.reserved_sites", [](Context& ctx) {
     bool const blockedCenter = gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, surface);
     bool const blockedCorner = gf::landmark::ext::featureBlocked(dim, cx * 16, center.y, cz * 16, surface);
 
-    auto const* tower = fl::info("twilightforest:dark_tower");
+    auto const* tower = fl::info("gloamingforest:dark_tower");
     ctx.require(tower && tower->decoration.chunkClearanceRadius > 0 && !tower->decoration.surfaceDecorations,
                 "the dark tower clears surface decorations within its chunk clearance radius");
     auto reserved = fl::createStart(*tower, dim, cx, cz, center, true);
@@ -1200,7 +1200,7 @@ GF_REGISTER_SELFTEST("landmark.spawns", [](Context& ctx) {
     // over the start box here
     {
         auto        center = farCenter(base, 30028);
-        auto const* hill   = fl::info("twilightforest:small_hollow_hill");
+        auto const* hill   = fl::info("gloamingforest:small_hollow_hill");
         ctx.require(hill && hill->type == fl::kHollowHillType && hill->traits.controlledSpawns, "the small hollow hill is a ControlledSpawns hollow hill");
         auto rec = fl::createStart(*hill, center.dim, center.x >> 4, center.z >> 4, center, true);
         ctx.require(rec != nullptr, "a small hollow hill start");
@@ -1213,7 +1213,7 @@ GF_REGISTER_SELFTEST("landmark.spawns", [](Context& ctx) {
         fl::putRecord(rec);
         struct Drop {
             GlobalPos at;
-            ~Drop() { (void)gf::landmark::ext::forgetStartForTest(at, "twilightforest:small_hollow_hill"); }
+            ~Drop() { (void)gf::landmark::ext::forgetStartForTest(at, "gloamingforest:small_hollow_hill"); }
         } drop{center};
         auto const hillList = entriesText(hill->d.controlledSpawns["labelled_monster_spawns"]["0"]);
         auto       floor    = special(center, 0, -5, 0, "monster");
@@ -1395,10 +1395,10 @@ GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<>
         ctx.check(state->load() == 1 && fl::startsEvaluated(dim, wx, wz), "and evaluates it once released (state " + std::to_string(state->load()) + ")");
     }
 
-    // /twilightforest locate's probe (CHUNK_LOAD_NEEDED): one structure set, nothing stored, and the
+    // /gloamingforest locate's probe (CHUNK_LOAD_NEEDED): one structure set, nothing stored, and the
     // same answer the Starts stage then gives the chunk
     {
-        auto const* camp = fl::structureSet("twilightforest:camp");
+        auto const* camp = fl::structureSet("gloamingforest:camp");
         ctx.require(camp != nullptr, "the camp structure set");
         auto pot = plc::potentialStructureChunk(camp->placement, fl::levelSeed(), cx, cz);
         scope.touch(pot.x, pot.z);

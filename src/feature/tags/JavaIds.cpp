@@ -1,4 +1,4 @@
-// Java -> Bedrock ids of the vanilla content in TF's data (JavaIds.h).
+// Java -> Bedrock ids of the vanilla content in upstream's data (JavaIds.h).
 #include "feature/tags/JavaIds.h"
 
 #include <algorithm>

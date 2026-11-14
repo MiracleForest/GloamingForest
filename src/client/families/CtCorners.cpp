@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/model/block/connected/ConnectedTextureModel.java
-//   src/main/java/twilightforest/client/model/block/connected/ConnectionLogic.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/model/block/connected/ConnectedTextureModel.java
+//   src/main/java/gloamingforest/client/model/block/connected/ConnectionLogic.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Block families (F11), client mod: the corners of connected texture blocks the packs have no
 // room for. A connected texture face is four quadrants; a quadrant whose two sides connect draws
 // ConnectionLogic's "cornerless" piece when the block in their corner joins too, else the "corner"
-// piece (ConnectedTextureModel.isCornerBlockPresent). Blocks with every face connected (TF's castle
+// piece (ConnectedTextureModel.isCornerBlockPresent). Blocks with every face connected (upstream's castle
 // doors, ...) would need six side and twelve corner states, past Bedrock's 65536 permutations per
 // block, so their packs draw cornerless wherever two sides connect (tools/families). Here the
 // client mod draws the corner piece over such a quadrant when its corner block is missing: the

@@ -2,7 +2,7 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:deer",
+      "identifier": "gloamingforest:deer",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
@@ -10,7 +10,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "deer",
           "animal",
           "creature",
@@ -82,7 +82,7 @@
         "items": [
           "minecraft:wheat",
           "minecraft:apple",
-          "twilightforest:shika_senbei"
+          "gloamingforest:shika_senbei"
         ],
         "can_get_scared": false
       },
@@ -124,8 +124,8 @@
         "minecraft:breedable": {
           "require_tame": false,
           "breeds_with": {
-            "mate_type": "twilightforest:deer",
-            "baby_type": "twilightforest:deer",
+            "mate_type": "gloamingforest:deer",
+            "baby_type": "gloamingforest:deer",
             "breed_event": {
               "event": "minecraft:entity_born",
               "target": "baby"
@@ -134,7 +134,7 @@
           "breed_items": [
             "minecraft:wheat",
             "minecraft:apple",
-            "twilightforest:shika_senbei"
+            "gloamingforest:shika_senbei"
           ]
         }
       },
@@ -152,7 +152,7 @@
           "feed_items": [
             "minecraft:wheat",
             "minecraft:apple",
-            "twilightforest:shika_senbei"
+            "gloamingforest:shika_senbei"
           ],
           "grow_up": {
             "event": "minecraft:ageable_grow_up",

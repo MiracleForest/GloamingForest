@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Java oracle of the structure kit's template order on Minecraft 1.21.1 itself: the server jar's
 // StructureTemplate, StructurePlaceSettings and block classes do the work ProcessorOracle.java
@@ -9,10 +9,10 @@
 //     StructureTemplate#processBlockInfos with the shared random (setRandom), the LootTableSeed
 //     drawn for every processed block with block entity data whose block entity is a
 //     RandomizableContainer (StructureTemplate#placeInWorld's placement loop), the data markers
-//     listed by StructureTemplate#filterBlocks. Only TF's processor bodies (ProcessorOracle.PROCESSORS,
-//     translated from TF 4.8) and TF's two nagastone blocks are not the game's: vanilla 1.21.1 has
-//     no TF blocks, so they stand in as full blocks no processor of the fixtures touches
-//     (lapis_block, emerald_block: addToLists' list 0, as the kit classifies TF's nagastone). Prints
+//     listed by StructureTemplate#filterBlocks. Only upstream's processor bodies (ProcessorOracle.PROCESSORS,
+//     translated from upstream 4.8) and upstream's two nagastone blocks are not the game's: vanilla 1.21.1 has
+//     no upstream blocks, so they stand in as full blocks no processor of the fixtures touches
+//     (lapis_block, emerald_block: addToLists' list 0, as the kit classifies upstream's nagastone). Prints
 //     the lines ProcessorOracle prints; they must be equal.
 //   - "lists": StructureTemplate#addToLists (the real private method) for every block state of
 //     1.21.1, with block entity data exactly for the states with a block entity (a template saves it
@@ -59,7 +59,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
 
 public class TemplateOracle {
-	/** TF's blocks of the fixtures and the vanilla full blocks standing in for them. */
+	/** upstream's blocks of the fixtures and the vanilla full blocks standing in for them. */
 	static final Map<String, String> STAND_INS = Map.of("etched_nagastone", "lapis_block", "nagastone_pillar", "emerald_block");
 
 	static Field palettes;
@@ -69,7 +69,7 @@ public class TemplateOracle {
 		return BuiltInRegistries.BLOCK.get(ResourceLocation.withDefaultNamespace(path));
 	}
 
-	/** The 1.21.1 state of a fixture palette name (ProcessorOracle's names; TF blocks by their stand-ins). */
+	/** The 1.21.1 state of a fixture palette name (ProcessorOracle's names; upstream blocks by their stand-ins). */
 	static BlockState state(String name) {
 		if (name.equals("sandstone_double_slab")) return Blocks.SANDSTONE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.DOUBLE);
 		if (name.equals("structure_block")) return Blocks.STRUCTURE_BLOCK.defaultBlockState().setValue(net.minecraft.world.level.block.StructureBlock.MODE, StructureMode.DATA);
@@ -78,7 +78,7 @@ public class TemplateOracle {
 		return b.defaultBlockState();
 	}
 
-	/** A state's fixture name (TF's for the stand-ins). */
+	/** A state's fixture name (upstream's for the stand-ins). */
 	static String nameOf(BlockState s) {
 		String path = BuiltInRegistries.BLOCK.getKey(s.getBlock()).getPath();
 		if (s.getBlock() == Blocks.SANDSTONE_SLAB && s.getValue(SlabBlock.TYPE) == SlabType.DOUBLE) return "sandstone_double_slab";
@@ -197,7 +197,7 @@ public class TemplateOracle {
 		}
 	}
 
-	/** One of TF's processor bodies (ProcessorOracle.PROCESSORS) as a StructureProcessor. */
+	/** One of upstream's processor bodies (ProcessorOracle.PROCESSORS) as a StructureProcessor. */
 	static final class Tf extends StructureProcessor {
 		final ProcessorOracle.Processor body;
 		final int[] offset;
@@ -219,7 +219,7 @@ public class TemplateOracle {
 			if (out == in) return modified;
 			BlockPos to = new BlockPos(out.x(), out.y(), out.z());
 			if (!vanilla(out.block())) {
-				// a TF block (the nagastone variants): the stand-in stays, its TF name is kept aside
+				// an upstream block (the nagastone variants): the stand-in stays, its upstream name is kept aside
 				tfNames.put(to, out.block());
 				return new StructureBlockInfo(to, modified.state(), modified.nbt());
 			}
@@ -295,7 +295,7 @@ public class TemplateOracle {
 	}
 
 	static void fixtures() throws Exception {
-		// the stand-ins are classified as the kit classifies TF's nagastone: full blocks (list 0)
+		// the stand-ins are classified as the kit classifies upstream's nagastone: full blocks (list 0)
 		for (String standIn : STAND_INS.values())
 			if (list(block(standIn).defaultBlockState()) != 0) throw new IllegalStateException(standIn + " is not a full block");
 		TreeMap<List<Integer>, String> plain = world(null);
@@ -314,7 +314,7 @@ public class TemplateOracle {
 		StringBuilder nagastone = new StringBuilder();
 		StructureTemplate targets = template(ProcessorOracle.TARGETS, ProcessorOracle.TARGETS_PALETTE, ProcessorOracle.TARGETS_NBT);
 		for (ProcessorOracle.Info b : place(targets, new int[] {10, 64, 0}, ProcessorOracle.PROCESSORS.get("nagastone_variants"), RandomSource.create(0x5eedL)))
-			if (b.block().contains("nagastone")) nagastone.append(b.x()).append(',').append(b.y()).append(',').append(b.z()).append(":twilightforest:").append(b.block()).append(';');
+			if (b.block().contains("nagastone")) nagastone.append(b.x()).append(',').append(b.y()).append(',').append(b.z()).append(":gloamingforest:").append(b.block()).append(';');
 		System.out.println("nagastone_variants_blocks: " + nagastone);
 		System.out.println("shared_random: " + sharedRandom(true));
 		System.out.println("shared_random without the data marker: " + sharedRandom(false));

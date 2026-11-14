@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/ironwood_block"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#m#", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:ironwood_ingot"
+      },
+      "m": {
+        "item": "gloamingforest:ironwood_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:ironwood_ingot"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:ironwood_block"
+    }
+  }
+}

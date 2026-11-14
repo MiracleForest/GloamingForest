@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.lower_goblin_knight.unridden": {
+    "animation.gloamingforest.lower_goblin_knight.unridden": {
       "loop": true,
       "bones": {
         "head": {
@@ -20,7 +20,7 @@
         }
       }
     },
-    "animation.twilightforest.lower_goblin_knight.unarmored": {
+    "animation.gloamingforest.lower_goblin_knight.unarmored": {
       "loop": true,
       "bones": {
         "rightArm": {
@@ -39,7 +39,7 @@
         }
       }
     },
-    "animation.twilightforest.upper_goblin_knight.spear": {
+    "animation.gloamingforest.upper_goblin_knight.spear": {
       "loop": true,
       "bones": {
         "gf_root": {
@@ -58,7 +58,7 @@
         }
       }
     },
-    "animation.twilightforest.upper_goblin_knight.unshielded": {
+    "animation.gloamingforest.upper_goblin_knight.unshielded": {
       "loop": true,
       "bones": {
         "leftArm": {
@@ -70,7 +70,7 @@
         }
       }
     },
-    "animation.twilightforest.upper_goblin_knight.shield_disabled": {
+    "animation.gloamingforest.upper_goblin_knight.shield_disabled": {
       "loop": true,
       "bones": {
         "leftArm": {
@@ -82,7 +82,7 @@
         }
       }
     },
-    "animation.twilightforest.blockchain_goblin.ball": {
+    "animation.gloamingforest.blockchain_goblin.ball": {
       "loop": true,
       "bones": {
         "block": {
@@ -94,7 +94,7 @@
         }
       }
     },
-    "animation.twilightforest.thrown_wep.spin": {
+    "animation.gloamingforest.thrown_wep.spin": {
       "loop": true,
       "bones": {
         "item": {

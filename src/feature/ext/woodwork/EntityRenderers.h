@@ -9,8 +9,8 @@
 // resource pack. Two rules: the renderer the game picks (ActorRenderDispatcher::_getRenderer, never
 // null), and the entities ActorRenderDispatcher::render skips:
 //
-//     // TF's boats: the geometry, TF textures and paddle animation of their client entities
-//     gf::woodwork_ext::renderers::useDataDriven("twilightforest:boat");
+//     // upstream's boats: the geometry, upstream textures and paddle animation of their client entities
+//     gf::woodwork_ext::renderers::useDataDriven("gloamingforest:boat");
 //     // entities the client mod draws itself (the drying rack's item display): not drawn
 //     gf::woodwork_ext::renderers::hideWhen([](Actor const& a) { return isMine(a); });
 //

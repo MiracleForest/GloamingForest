@@ -1,35 +1,35 @@
-# U30 (finalcastle): the final castle's three template pieces (original GloamingForest designs at TF's
-# template ids, rule R11 / R19; TF's .nbt files are All Rights Reserved and never opened).
+# U30 (finalcastle): the final castle's three template pieces (original GloamingForest designs at upstream's
+# template ids, rule R11 / R19; upstream's .nbt files are All Rights Reserved and never opened).
 #
 # Every template is drawn in the local frame of the piece that places it (TFStructureComponentOld,
 # orientation SOUTH: local x / z = world x / z from the piece's minimum corner), with its jigsaw
 # connector one block inside the host's junction, facing back at it:
 #
 #   gazebo       21 x 12 x 21  host FinalCastleBossGazeboComponent, junction local (10, -1, 10), UP_SOUTH;
-#                              connector "twilightforest:final_castle/final_boss" at (10, 0, 10), front down,
-#                              top north. The violet force-field cage of TF's commented-out procedural
+#                              connector "gloamingforest:final_castle/final_boss" at (10, 0, 10), front down,
+#                              top north. The violet force-field cage of upstream's commented-out procedural
 #                              code (walls 0..10, roof at y 11) and the "final_castle_wip" marker at the
 #                              connector's block (U30's handler puts the four WIP text lines and the
 #                              punch box there, docs/spec/finalcastle.md 1.2).
 #   large_tower  13 x 61 x 13  host FinalCastleLargeTowerComponent, junction local (0, 1, 2), WEST_UP;
-#                              connector "twilightforest:final_castle/large_tower" at (1, 1, 2), front west.
+#                              connector "gloamingforest:final_castle/large_tower" at (1, 1, 2), front west.
 #                              A spiral quartz stair along the walls from the yellow door (x 0, y 1..4)
-#                              to the roof deck, two floors (y 20, 40) and the sign TF's comment names.
+#                              to the roof deck, two floors (y 20, 40) and the sign upstream's comment names.
 #   bell_tower   21 x 65 x 21  host FinalCastleBellTower21Component, junction local (0, 9, 10), WEST_UP;
-#                              connector "twilightforest:final_castle/room" at (1, 9, 10), front west. The
+#                              connector "gloamingforest:final_castle/room" at (1, 9, 10), front west. The
 #                              entrance floor at y 8, a spiral stair up to the bell room floor at y 47
-#                              (under the blue force-field windows, y 48..62) with its bell, and TF's sign.
+#                              (under the blue force-field windows, y 48..62) with its bell, and upstream's sign.
 #
-# Connector names: TF's are "twilightforest:final_castle/<name>"; assemble's dangling-reference check
-# refuses twilightforest: strings that are no registry id, so the pair (template and host) uses
+# Connector names: upstream's are "gloamingforest:final_castle/<name>"; assemble's dangling-reference check
+# refuses gloamingforest: strings that are no registry id, so the pair (template and host) uses
 # "gf:final_castle/<name>" (the U21 lich tower does the same). The pool logic is unchanged.
 #
 # Cells a template leaves alone are structure_void (the tower walls, door and windows stay the host's).
 
-$brick   = 'twilightforest:castle_brick'
-$thick   = 'twilightforest:thick_castle_brick'
-$pillar  = 'twilightforest:bold_castle_brick_pillar'
-$field   = 'twilightforest:violet_force_field'
+$brick   = 'gloamingforest:castle_brick'
+$thick   = 'gloamingforest:thick_castle_brick'
+$pillar  = 'gloamingforest:bold_castle_brick_pillar'
+$field   = 'gloamingforest:violet_force_field'
 $quartz  = 'minecraft:chiseled_quartz_block'
 
 function Set-Stair($t, [int]$x, [int]$y, [int]$z, [string]$facing) {
@@ -81,10 +81,10 @@ function Set-Ring($t, [int]$x1, [int]$y, [int]$z1, [int]$x2, [int]$z2, [string]$
 }
 
 # ---- the boss gazebo ---------------------------------------------------------------------------------------------
-$t = New-Gft -Id 'twilightforest:final_castle/temp/gazebo' -Size 21, 12, 21
+$t = New-Gft -Id 'gloamingforest:final_castle/temp/gazebo' -Size 21, 12, 21
 # inside: cleared
 Set-GftBox $t 1 0 1 19 10 19 'minecraft:air'
-# four walls 0..10 and the roof at y 11 (the procedural code TF 4.8 left commented out)
+# four walls 0..10 and the roof at y 11 (the procedural code upstream 4.8 left commented out)
 Set-GftBox $t 0 0 0 20 10 0 $field
 Set-GftBox $t 0 0 20 20 10 20 $field
 Set-GftBox $t 0 0 0 0 10 20 $field
@@ -96,7 +96,7 @@ Add-GftMarker $t 10 0 10 'final_castle_wip'
 Save-Gft $t
 
 # ---- the large tower ---------------------------------------------------------------------------------------------
-$t = New-Gft -Id 'twilightforest:final_castle/temp/large_tower' -Size 13, 61, 13
+$t = New-Gft -Id 'gloamingforest:final_castle/temp/large_tower' -Size 13, 61, 13
 # a spiral from the door (the first step just inside it, going south) to the ceiling at y 59: the last
 # step replaces a ceiling block, so the stair comes out on the roof deck
 $ring = Add-Spiral $t 13 4 1 59
@@ -108,7 +108,7 @@ foreach ($fy in 20, 40) {
 Set-GftBox $t 6 1 6 6 58 6 $pillar @{ axis = 'y' }
 Set-GftBox $t 6 20 6 6 20 6 $quartz
 Set-GftBox $t 6 40 6 6 40 6 $quartz
-# the sign of TF's comment, by the pillar at the bottom
+# the sign of upstream's comment, by the pillar at the bottom
 Set-GftBlock $t 6 1 7 'minecraft:oak_sign' @{ rotation = '0'; waterlogged = 'false' }
 Add-GftMarker $t 6 1 7 'sign' @{ lines = @('', 'Parkour area 1', 'Unique monster?', '') }
 # the connector inside the door
@@ -117,7 +117,7 @@ Add-GftJigsaw $t 1 1 2 -Front west -Top up -Pool 'minecraft:empty' -Name 'gf:fin
 Save-Gft $t
 
 # ---- the bell tower ----------------------------------------------------------------------------------------------
-$t = New-Gft -Id 'twilightforest:final_castle/temp/bell_tower' -Size 21, 65, 21
+$t = New-Gft -Id 'gloamingforest:final_castle/temp/bell_tower' -Size 21, 65, 21
 # the entrance floor under the door (x 0, y 9..12)
 Set-Floor $t 1 8 1 19 19
 # the bell room floor under the windows
@@ -135,7 +135,7 @@ Set-GftBox $t 6 63 15 14 63 15 $pillar @{ axis = 'x' }
 Set-GftBox $t 9 48 9 11 48 11 $thick
 Set-GftBlock $t 10 49 10 $quartz
 Set-GftBlock $t 10 50 10 'minecraft:bell' @{ attachment = 'floor'; facing = 'north'; powered = 'false' }
-# the sign of TF's comment, on the entrance floor
+# the sign of upstream's comment, on the entrance floor
 Set-GftBlock $t 7 9 8 'minecraft:oak_sign' @{ rotation = '4'; waterlogged = 'false' }
 Add-GftMarker $t 7 9 8 'sign' @{ lines = @('', 'Parkour area 2', 'mini-boss 1', '') }
 # the connector inside the door

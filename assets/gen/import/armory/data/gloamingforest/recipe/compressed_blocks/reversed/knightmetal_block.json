@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "gloamingforest:knightmetal_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "gloamingforest:knightmetal_ingot"
+  }
+}

@@ -1,5 +1,5 @@
 // Contract extension for U3 (rule R18), see PickBlock.h. Inventory#setPickedItem and
-// Inventory#getSuitableHotbarSlot are translated from Minecraft 1.21.1's behaviour as TF relies on it
+// Inventory#getSuitableHotbarSlot are translated from Minecraft 1.21.1's behaviour as upstream relies on it
 // for HardenedDarkLeavesBlock#getCloneItemStack.
 #include "feature/ext/trees/PickBlock.h"
 

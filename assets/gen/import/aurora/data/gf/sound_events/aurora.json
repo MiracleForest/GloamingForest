@@ -1,7 +1,7 @@
 {
-  "twilightforest:entity.twilightforest.ice.ambient": {
+  "gloamingforest:entity.gloamingforest.ice.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.ice.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.ice.ambient",
     "sounds": [
       {
         "file": "mob/ice/crackle1"
@@ -11,9 +11,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.ice.death": {
+  "gloamingforest:entity.gloamingforest.ice.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.ice.death",
+    "subtitle": "subtitles.gloamingforest.entity.ice.death",
     "sounds": [
       {
         "file": "mob/ice/death1"
@@ -23,9 +23,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.ice.hurt": {
+  "gloamingforest:entity.gloamingforest.ice.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.ice.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.ice.hurt",
     "sounds": [
       {
         "file": "mob/ice/hurt1"
@@ -35,18 +35,18 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.ice.shoot": {
+  "gloamingforest:entity.gloamingforest.ice.shoot": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.ice.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.ice.shoot",
     "sounds": [
       {
         "event": "entity.snowball.throw"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_guardian.ambient": {
+  "gloamingforest:entity.gloamingforest.snow_guardian.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_guardian.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.snow_guardian.ambient",
     "sounds": [
       {
         "file": "mob/ice/crackle1"
@@ -56,9 +56,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_guardian.death": {
+  "gloamingforest:entity.gloamingforest.snow_guardian.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_guardian.death",
+    "subtitle": "subtitles.gloamingforest.entity.snow_guardian.death",
     "sounds": [
       {
         "file": "mob/ice/death1"
@@ -68,9 +68,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_guardian.hurt": {
+  "gloamingforest:entity.gloamingforest.snow_guardian.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_guardian.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.snow_guardian.hurt",
     "sounds": [
       {
         "file": "mob/ice/hurt1"
@@ -80,9 +80,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_queen.ambient": {
+  "gloamingforest:entity.gloamingforest.snow_queen.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.ambient",
     "sounds": [
       {
         "file": "mob/ice/crackle1"
@@ -92,27 +92,27 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_queen.attack": {
+  "gloamingforest:entity.gloamingforest.snow_queen.attack": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.attack",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.attack",
     "sounds": [
       {
         "event": "entity.iron_golem.attack"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_queen.break": {
+  "gloamingforest:entity.gloamingforest.snow_queen.break": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.break",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.break",
     "sounds": [
       {
         "event": "entity.item.break"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_queen.death": {
+  "gloamingforest:entity.gloamingforest.snow_queen.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.death",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.death",
     "sounds": [
       {
         "file": "mob/ice/death1"
@@ -122,9 +122,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.snow_queen.hurt": {
+  "gloamingforest:entity.gloamingforest.snow_queen.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.snow_queen.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.snow_queen.hurt",
     "sounds": [
       {
         "file": "mob/ice/hurt1"

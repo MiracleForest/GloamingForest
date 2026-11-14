@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TrophyPedestalBlock.java
-//   src/main/java/twilightforest/block/StrongholdShieldBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TrophyPedestalBlock.java
+//   src/main/java/gloamingforest/block/StrongholdShieldBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U25's two blocks.
 //
-// The trophy pedestal: custom blocks get no neighbour updates of their own, so TF's neighborChanged
+// The trophy pedestal: custom blocks get no neighbour updates of their own, so upstream's neighborChanged
 // runs from F11's neighbour dispatch of the pedestal and from the placement of a trophy (any block
-// of #twilightforest:trophy_pedestal_activation_blocks) on top of one. The comparator output is the
+// of #gloamingforest:trophy_pedestal_activation_blocks) on top of one. The comparator output is the
 // trophy's (BossVariant comparator value through gf::boss::trophyVariant). Breaking: the BP makes
 // the inactive pedestal unbreakable and the active one minable (TrophyPedestalBlock#getDestroyProgress).
 //
@@ -60,7 +60,7 @@ namespace ia = gf::feature::common::interactions;
 
 namespace {
 
-constexpr char kActivationTag[] = "twilightforest:trophy_pedestal_activation_blocks";
+constexpr char kActivationTag[] = "gloamingforest:trophy_pedestal_activation_blocks";
 
 void actionBar(Player& player, std::string const& text) {
     auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::SetTitle);
@@ -72,7 +72,7 @@ void actionBar(Player& player, std::string const& text) {
 }
 
 bool isActive(Block const& block) {
-    auto v = game::statesOf(block)["twilightforest:active"];
+    auto v = game::statesOf(block)["gloamingforest:active"];
     return v == "true" || v == "1";
 }
 
@@ -96,7 +96,7 @@ std::vector<Player*> playersAround(int dim, BlockPos const& pos) {
 
 /// PlayerHelper.doesPlayerHaveRequiredAdvancements(player, progress_lich) || abilities.instabuild.
 bool isPlayerEligible(Player& player) {
-    return gf::progression::has(player, "twilightforest:progress_lich") || player.getPlayerGameType() == GameType::Creative;
+    return gf::progression::has(player, "gloamingforest:progress_lich") || player.getPlayerGameType() == GameType::Creative;
 }
 
 /// TrophyPedestalBlock#removeNearbyShields: destroyBlock(pos, false) for every shield within 5.
@@ -114,9 +114,9 @@ int removeNearbyShields(BlockSource& region, BlockPos const& pos) {
 }
 
 void doPedestalEffect(BlockSource& region, BlockPos const& pos) {
-    if (auto const* active = game::blockWithStates(kPedestal, {{"twilightforest:active", true}})) game::setBlock(region, pos, *active);
+    if (auto const* active = game::blockWithStates(kPedestal, {{"gloamingforest:active", true}})) game::setBlock(region, pos, *active);
     int removed = removeNearbyShields(region, pos);
-    gf::fx::sound(region.getDimension(), "block.twilightforest.trophy_pedestal.activate", Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 4.0f, 0.1f);
+    gf::fx::sound(region.getDimension(), "block.gloamingforest.trophy_pedestal.activate", Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 4.0f, 0.1f);
     gf::log().info("stronghold: trophy pedestal activated at {} {} {} ({} shields removed)", pos.x, pos.y, pos.z, removed);
 }
 
@@ -140,15 +140,15 @@ bool neighborChanged(BlockSource& region, BlockPos const& pos) {
         }
         // warnIneligiblePlayers
         for (auto* p : nearby)
-            if (!isPlayerEligible(*p)) actionBar(*p, gf::trFor(*p, "misc.twilightforest.pedestal_ineligible", "You are unworthy."));
+            if (!isPlayerEligible(*p)) actionBar(*p, gf::trFor(*p, "misc.gloamingforest.pedestal_ineligible", "You are unworthy."));
     } else {
         doPedestalEffect(region, pos);
         activated = true;
     }
     // rewardNearbyPlayers (server players within 16, whether it activated or not)
     for (auto* p : nearby) {
-        gf::progression::trigger(*p, "twilightforest:placed_on_trophy_pedestal");
-        gf::stats::award(*p, "twilightforest:trophy_pedestals_activated");
+        gf::progression::trigger(*p, "gloamingforest:placed_on_trophy_pedestal");
+        gf::stats::award(*p, "gloamingforest:trophy_pedestals_activated");
     }
     return activated;
 }
@@ -156,7 +156,7 @@ bool neighborChanged(BlockSource& region, BlockPos const& pos) {
 bool canBreakShieldFrom(Block const& shield, int face) {
     // FacingID: 0 down, 1 up, 2 north, 3 south, 4 west, 5 east
     static char const* const kNames[] = {"down", "up", "north", "south", "west", "east"};
-    auto        facing = game::statesOf(shield)["twilightforest:facing"];
+    auto        facing = game::statesOf(shield)["gloamingforest:facing"];
     int         f      = 0;
     for (int i = 0; i < 6; i++)
         if (facing == kNames[i]) f = i;

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:transformation_powder",
+      "identifier": "gloamingforest:transformation_powder",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:transformation_powder.name"
+        "value": "item.gloamingforest:transformation_powder.name"
       },
       "minecraft:tags": {
-        "tags": ["twilightforest:banned_uncrafting_ingredients"]
+        "tags": ["gloamingforest:banned_uncrafting_ingredients"]
       }
     }
   }

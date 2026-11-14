@@ -20,7 +20,7 @@ foreach ($round in 1, 2) {
 
 # no F12 contract stub is called any more
 $mark = Get-LogMark
-Send-Console 'twilightforest stubs'
+Send-Console 'gloamingforest stubs'
 $line = Wait-LogLine 'contract stubs called: ' 30 -Since $mark
 foreach ($stub in 'ui.form', 'ui.ddui', 'ui.containerTitleSkin', 'movement.onInputEdge', 'movement.applyMotion', 'movement.validate') {
     if ($line -match [regex]::Escape($stub)) { throw "contract stub $stub is still called: $line" }

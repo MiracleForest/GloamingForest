@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:raw_ironwood",
+      "identifier": "gloamingforest:raw_ironwood",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:raw_ironwood.name"
+        "value": "item.gloamingforest:raw_ironwood.name"
       },
       "minecraft:tags": {
         "tags": ["alexscaves:ferromagnetic_items", "c:raw_materials", "c:raw_materials/ironwood"]

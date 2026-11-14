@@ -1,52 +1,52 @@
 {
-  "block.twilightforest.generic.annihilation": {
+  "block.gloamingforest.generic.annihilation": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.block.generic.annihilation",
+    "subtitle": "subtitles.gloamingforest.block.generic.annihilation",
     "sounds": [
       {
         "name": "sounds/random/fizz"
       }
     ]
   },
-  "item.twilightforest.block_and_chain.collide": {
+  "item.gloamingforest.block_and_chain.collide": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.item.block_and_chain.collide",
+    "subtitle": "subtitles.gloamingforest.item.block_and_chain.collide",
     "sounds": [
       {
         "name": "sounds/random/anvil_land"
       }
     ]
   },
-  "item.twilightforest.block_and_chain.fire": {
+  "item.gloamingforest.block_and_chain.fire": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.block_and_chain.fire",
+    "subtitle": "subtitles.gloamingforest.item.block_and_chain.fire",
     "sounds": [
       {
         "name": "sounds/random/bow"
       }
     ]
   },
-  "item.twilightforest.block_and_chain.hit": {
+  "item.gloamingforest.block_and_chain.hit": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.item.block_and_chain.hit",
+    "subtitle": "subtitles.gloamingforest.item.block_and_chain.hit",
     "sounds": [
       {
         "name": "sounds/mob/irongolem/throw"
       }
     ]
   },
-  "item.twilightforest.fan.whoosh": {
+  "item.gloamingforest.fan.whoosh": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.fan.whoosh",
+    "subtitle": "subtitles.gloamingforest.item.fan.whoosh",
     "sounds": [
       {
-        "name": "sounds/twilightforest/weapons/vanilla/random/breath"
+        "name": "sounds/gloamingforest/weapons/vanilla/random/breath"
       }
     ]
   },
-  "item.twilightforest.glass_sword.break": {
+  "item.gloamingforest.glass_sword.break": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.glass_sword.break",
+    "subtitle": "subtitles.gloamingforest.item.glass_sword.break",
     "sounds": [
       {
         "name": "sounds/random/glass1"
@@ -59,42 +59,42 @@
       }
     ]
   },
-  "item.twilightforest.ice_bomb.fired": {
+  "item.gloamingforest.ice_bomb.fired": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.ice_bomb.fired",
+    "subtitle": "subtitles.gloamingforest.item.ice_bomb.fired",
     "sounds": [
       {
         "name": "sounds/random/bow"
       }
     ]
   },
-  "item.twilightforest.knightmetal_shield.shatter": {
+  "item.gloamingforest.knightmetal_shield.shatter": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.knightmetal_shield.shatter",
+    "subtitle": "subtitles.gloamingforest.item.knightmetal_shield.shatter",
     "sounds": [
       {
-        "name": "sounds/twilightforest/weapons/vanilla/mob/zombie/metal1"
+        "name": "sounds/gloamingforest/weapons/vanilla/mob/zombie/metal1"
       },
       {
-        "name": "sounds/twilightforest/weapons/vanilla/mob/zombie/metal2"
+        "name": "sounds/gloamingforest/weapons/vanilla/mob/zombie/metal2"
       },
       {
-        "name": "sounds/twilightforest/weapons/vanilla/mob/zombie/metal3"
+        "name": "sounds/gloamingforest/weapons/vanilla/mob/zombie/metal3"
       }
     ]
   },
-  "item.twilightforest.lamp.burn": {
+  "item.gloamingforest.lamp.burn": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.lamp.burn",
+    "subtitle": "subtitles.gloamingforest.item.lamp.burn",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
       }
     ]
   },
-  "item.twilightforest.magnet.grab": {
+  "item.gloamingforest.magnet.grab": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.magnet.grab",
+    "subtitle": "subtitles.gloamingforest.item.magnet.grab",
     "sounds": [
       {
         "name": "sounds/mob/endermen/portal"
@@ -104,9 +104,9 @@
       }
     ]
   },
-  "item.twilightforest.moonworm.squish": {
+  "item.gloamingforest.moonworm.squish": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.moonworm.squish",
+    "subtitle": "subtitles.gloamingforest.item.moonworm.squish",
     "sounds": [
       {
         "name": "sounds/mob/slime/small1"
@@ -125,9 +125,9 @@
       }
     ]
   },
-  "item.twilightforest.transformation_powder.use": {
+  "item.gloamingforest.transformation_powder.use": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.item.transformation_powder.use",
+    "subtitle": "subtitles.gloamingforest.item.transformation_powder.use",
     "sounds": [
       {
         "name": "sounds/mob/zombie/remedy"

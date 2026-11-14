@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:rabbit_jerky",
+      "identifier": "gloamingforest:rabbit_jerky",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:rabbit_jerky.name"
+        "value": "item.gloamingforest:rabbit_jerky.name"
       },
       "minecraft:tags": {
         "tags": [

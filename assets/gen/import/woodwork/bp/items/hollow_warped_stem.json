@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:hollow_warped_stem",
+      "identifier": "gloamingforest:hollow_warped_stem",
       "menu_category": {
         "category": "construction",
         "group": "minecraft:itemGroup.name.wood"
@@ -10,10 +10,10 @@
     },
     "components": {
       "minecraft:display_name": {
-        "value": "item.twilightforest:hollow_warped_stem.name"
+        "value": "item.gloamingforest:hollow_warped_stem.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:hollow_warped_stem_horizontal"
+        "block": "gloamingforest:hollow_warped_stem_horizontal"
       },
       "minecraft:fuel": {
         "duration": 15

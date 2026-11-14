@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/landmarks/LegacyLandmarkPlacements.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/landmarks/LegacyLandmarkPlacements.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -78,24 +78,24 @@ std::string pickVariety(std::int64_t seed, int chunkX, int chunkZ) {
     int regionOffsetZ = std::abs((iadd(chunkZ, 64) >> 4) % 8);
 
     // plant two lich towers near the center of each 2048x2048 map area
-    if ((regionOffsetX == 4 && regionOffsetZ == 5) || (regionOffsetX == 4 && regionOffsetZ == 3)) return "twilightforest:lich_tower";
+    if ((regionOffsetX == 4 && regionOffsetZ == 5) || (regionOffsetX == 4 && regionOffsetZ == 3)) return "gloamingforest:lich_tower";
 
     // also two nagas
-    if ((regionOffsetX == 5 && regionOffsetZ == 4) || (regionOffsetX == 3 && regionOffsetZ == 4)) return "twilightforest:naga_courtyard";
+    if ((regionOffsetX == 5 && regionOffsetZ == 4) || (regionOffsetX == 3 && regionOffsetZ == 4)) return "gloamingforest:naga_courtyard";
 
     // okay, well that takes care of most special cases: VARIETY_LANDMARKS.getRandomValue(new
     // LegacyRandomSource(seed + chunkX * 25117L + chunkZ * 151121L)) (WeightedRandom#getRandomItem)
     auto const& list  = varietyLandmarks();
     int         total = 0;
     for (auto const& [key, weight] : list) total += weight;
-    if (total <= 0) return "twilightforest:small_hollow_hill";
+    if (total <= 0) return "gloamingforest:small_hollow_hill";
     JavaRandom random(java::chunkSeed(seed, chunkX, chunkZ));
     int        index = random.nextInt(total);
     for (auto const& [key, weight] : list) {
         index -= weight;
         if (index < 0) return key;
     }
-    return "twilightforest:small_hollow_hill";
+    return "gloamingforest:small_hollow_hill";
 }
 
 std::string pickForChunk(std::int64_t seed, int chunkX, int chunkZ, BiomeAtFn const& biomeAt) {

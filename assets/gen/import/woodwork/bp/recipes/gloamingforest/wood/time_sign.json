@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/time_sign"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "###", " - "],
+    "key": {
+      "#": {
+        "item": "gloamingforest:time_planks"
+      },
+      "-": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:time_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:time_sign",
+      "count": 3
+    }
+  }
+}

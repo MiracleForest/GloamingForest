@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.ur_ghast.base": {
+    "animation.gloamingforest.ur_ghast.base": {
       "loop": true,
       "bones": {
         "body": {

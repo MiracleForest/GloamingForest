@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:hydra",
+      "identifier": "gloamingforest:hydra",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "hydra", "monster", "mob"]
+        "family": ["gloamingforest", "hydra", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 16,

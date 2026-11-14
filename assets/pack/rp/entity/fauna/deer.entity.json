@@ -2,19 +2,19 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:deer",
+      "identifier": "gloamingforest:deer",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/wilddeer"
+        "default": "textures/gloamingforest/entity/wilddeer"
       },
       "geometry": {
-        "default": "geometry.twilightforest.deer"
+        "default": "geometry.gloamingforest.deer"
       },
       "animations": {
-        "setup": "animation.twilightforest.fauna.quadruped",
-        "antlers": "animation.twilightforest.deer.antlers"
+        "setup": "animation.gloamingforest.fauna.quadruped",
+        "antlers": "animation.gloamingforest.deer.antlers"
       },
       "scripts": {
         "animate": [

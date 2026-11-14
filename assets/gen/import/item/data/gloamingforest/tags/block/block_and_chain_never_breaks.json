@@ -1,0 +1,13 @@
+{
+  "values": [
+    "#gloamingforest:mazestone",
+    "#gloamingforest:castle_blocks",
+    "#gloamingforest:deadrock",
+    "#minecraft:wither_immune",
+    "gloamingforest:time_log_core",
+    "gloamingforest:transformation_log_core",
+    "gloamingforest:mining_log_core",
+    "gloamingforest:sorting_log_core",
+    "gloamingforest:giant_obsidian"
+  ]
+}

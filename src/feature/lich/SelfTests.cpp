@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U21 (lich): selftests (lich.*, testPos dx 2100-2199, rule R12).
 
 #include <cmath>
@@ -152,7 +152,7 @@ GF_REGISTER_SELFTEST("lich.shield_break", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(lich != nullptr, "the lich is still there");
     lichState(*lich)->attackCooldown = 1000; // no shadow attacks or teleports during the test
     float hp = health(*lich);
-    gf::combat::hurt(*lich, 6.0f, "twilightforest:lich_bolt", &ctx.player());
+    gf::combat::hurt(*lich, 6.0f, "gloamingforest:lich_bolt", &ctx.player());
     ctx.check(shieldOf(*lich) == 5, "a lich bolt broke one shield (" + std::to_string(shieldOf(*lich)) + " left)");
     ctx.check(health(*lich) == hp, "no health damage while the shield is up");
     gf::combat::hurt(*lich, 4.0f, "minecraft:player_attack", &ctx.player());
@@ -184,7 +184,7 @@ GF_REGISTER_SELFTEST("lich.clone_cap", [](Context& ctx) -> ll::coro::CoroTask<> 
         ctx.check(isShadowClone(*clone), "a clone knows its master");
         ctx.check(phaseOf(*clone) == 1 && shieldOf(*clone) == 0, "a clone is phase 1 without a shield of its own");
         float hp = health(*clone);
-        gf::combat::hurt(*clone, 6.0f, "twilightforest:lich_bolt", &p);
+        gf::combat::hurt(*clone, 6.0f, "gloamingforest:lich_bolt", &p);
         ctx.check(health(*clone) == hp, "a clone ignores damage");
     }
     despawnClones(*lich);
@@ -215,7 +215,7 @@ GF_REGISTER_SELFTEST("lich.minions", [](Context& ctx) -> ll::coro::CoroTask<> {
     lich = mobById(uid);
     ctx.require(lich != nullptr && actorById(pid) != nullptr, "the lich and the player are there");
     setTarget(*lich, actorById(pid));
-    // checkAndSpawnMinions uses a summon up even when findVecInLOSOf finds no spot (as TF does), so
+    // checkAndSpawnMinions uses a summon up even when findVecInLOSOf finds no spot (as upstream does), so
     // the test counts outcomes: never more than 3 alive, never fewer summons used than minions alive,
     // the summons only go down, and they run out after at most 9 calls that could summon
     int before = lichState(*lich)->minionsLeft;
@@ -466,7 +466,7 @@ GF_REGISTER_SELFTEST("lich.rising_zombie_converts", [](Context& ctx) -> ll::coro
     removeAround(ctx, c, "minecraft:zombie", 4.0f);
 });
 
-// Attributes against TF (tests/golden/mobs.json).
+// Attributes against upstream (tests/golden/mobs.json).
 GF_REGISTER_SELFTEST("lich.attributes", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2100, 16);
@@ -504,7 +504,7 @@ GF_REGISTER_SELFTEST("lich.attributes", [](Context& ctx) -> ll::coro::CoroTask<>
         float lost     = before - attr(*m, SharedAttributes::HEALTH());
         float expected = 4.0f * (1.0f - std::max(r.armor - 2.0f, r.armor * 0.2f) / 25.0f);
         if (r.id == std::string(kLich)) expected = lost; // the Lich's shield and phases decide its damage (lich.shield_break)
-        ctx.check(std::abs(lost - expected) < 0.05f, std::string(r.id) + " armor " + std::to_string(r.armor) + ": lost " + std::to_string(lost) + " of 4, TF " + std::to_string(expected));
+        ctx.check(std::abs(lost - expected) < 0.05f, std::string(r.id) + " armor " + std::to_string(r.armor) + ": lost " + std::to_string(lost) + " of 4, upstream " + std::to_string(expected));
         m->remove();
     }
     co_await ctx.ticks(1);
@@ -516,20 +516,20 @@ GF_REGISTER_SELFTEST("lich.loot", [](Context& ctx) {
     lc.region = ctx.region();
     lc.origin = at(ctx.testPos(2100, 2));
     lc.seed   = 21;
-    auto items = gf::loot::roll("twilightforest:entities/lich", lc);
+    auto items = gf::loot::roll("gloamingforest:entities/lich", lc);
     bool trophy = false, scepter = false, essence = false;
     for (auto const& s : items) {
         auto id = game::items::idOf(s);
-        trophy |= id == "twilightforest:lich_trophy";
-        essence |= id == "twilightforest:exanimate_essence";
-        scepter |= id == "twilightforest:twilight_scepter" || id == "twilightforest:lifedrain_scepter" || id == "twilightforest:zombie_scepter"
-                || id == "twilightforest:fortification_scepter";
+        trophy |= id == "gloamingforest:lich_trophy";
+        essence |= id == "gloamingforest:exanimate_essence";
+        scepter |= id == "gloamingforest:gloaming_scepter" || id == "gloamingforest:lifedrain_scepter" || id == "gloamingforest:zombie_scepter"
+                || id == "gloamingforest:fortification_scepter";
     }
     ctx.check(trophy, "the trophy drops");
     ctx.check(scepter, "one scepter drops");
     ctx.check(essence, "exanimate essence drops");
-    ctx.check(gf::loot::roll("twilightforest:entities/lich_minion", lc).empty(), "a minion drops nothing");
-    ctx.check(!gf::loot::roll("twilightforest:entities/death_tome_books", lc).empty(), "the tome's book table rolls a book");
+    ctx.check(gf::loot::roll("gloamingforest:entities/lich_minion", lc).empty(), "a minion drops nothing");
+    ctx.check(!gf::loot::roll("gloamingforest:entities/death_tome_books", lc).empty(), "the tome's book table rolls a book");
 });
 
 // LichSpawnerBlockEntity: a player counts only above the spawner's y - 4.
@@ -565,7 +565,7 @@ constexpr std::uint64_t kGoldenLayoutU22 = 17021626904049777675ull; // U22 prese
 // the placed layout depends on where it stands (its chunk seeds the layout): the golden holds for
 // the test area of the e2e worlds (seed 20260521, the BDS spawn); elsewhere it is logged only
 constexpr char const* kGoldenVolume    = "a6cad5e5eb1dc5ad"; // U22 absent (pieces placed in F6's sort-key order)
-// U22 present (audit A3); since U6's twilightforest:jar_light state (MasonJarBlockEntity's light) the
+// U22 present (audit A3); since U6's gloamingforest:jar_light state (MasonJarBlockEntity's light) the
 // one mason jar in these layers hashes with jar_light=0, every other block is unchanged
 constexpr char const* kGoldenVolumeU22 = "b3676e28677cce22";
 constexpr int         kGoldenVolumeAt[2] = {64, 100};
@@ -586,18 +586,18 @@ std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos co
 }
 
 void checkLayoutCounts(Context& ctx, std::map<std::string, int>& counts) {
-    ctx.check(counts["twilightforest:TFLTTFoy"] == 1, "one foyer");
-    ctx.check(counts["twilightforest:TFLTCTBase"] == 1, "one tower base");
-    ctx.check(counts["twilightforest:TFLTCTTrim"] == 1, "the base trim");
-    int slices = counts["twilightforest:TFLTCTSeg"] - 1; // the boss boundary is a segment too
+    ctx.check(counts["gloamingforest:TFLTTFoy"] == 1, "one foyer");
+    ctx.check(counts["gloamingforest:TFLTCTBase"] == 1, "one tower base");
+    ctx.check(counts["gloamingforest:TFLTCTTrim"] == 1, "the base trim");
+    int slices = counts["gloamingforest:TFLTCTSeg"] - 1; // the boss boundary is a segment too
     ctx.check(slices >= 12 && slices <= 15, "12-15 tower slices (" + std::to_string(slices) + ")");
-    ctx.check(counts["twilightforest:TFLTTBoss"] == 1 && counts["twilightforest:TFLTTBossRoof"] == 1, "the boss room and its roof");
-    ctx.check(counts["twilightforest:TFLTBridge"] >= 1, "wing bridges or covers");
-    ctx.check(counts["twilightforest:TFLTTRoom"] >= 1, "wing rooms (placeholders while U22's rooms are missing)");
+    ctx.check(counts["gloamingforest:TFLTTBoss"] == 1 && counts["gloamingforest:TFLTTBossRoof"] == 1, "the boss room and its roof");
+    ctx.check(counts["gloamingforest:TFLTBridge"] >= 1, "wing bridges or covers");
+    ctx.check(counts["gloamingforest:TFLTTRoom"] >= 1, "wing rooms (placeholders while U22's rooms are missing)");
     // the yard: the dirt, the path from the vestibule, the cross path and two side paths, the lights
-    ctx.check(counts["twilightforest:TFLTPath"] == 5, "the yard's dirt and four paths (" + std::to_string(counts["twilightforest:TFLTPath"]) + ")");
-    ctx.check(counts["twilightforest:TFLTLight"] == 1, "the lights along the first path");
-    ctx.check(counts["twilightforest:TFLTFence"] >= 1, "the perimeter fence (" + std::to_string(counts["twilightforest:TFLTFence"]) + " pieces)");
+    ctx.check(counts["gloamingforest:TFLTPath"] == 5, "the yard's dirt and four paths (" + std::to_string(counts["gloamingforest:TFLTPath"]) + ")");
+    ctx.check(counts["gloamingforest:TFLTLight"] == 1, "the lights along the first path");
+    ctx.check(counts["gloamingforest:TFLTFence"] >= 1, "the perimeter fence (" + std::to_string(counts["gloamingforest:TFLTFence"]) + " pieces)");
 }
 
 // The lich tower assembles: foyer, base, 12-15 slices, the boss room, its boundary and roof, wings
@@ -605,7 +605,7 @@ void checkLayoutCounts(Context& ctx, std::map<std::string, int>& counts) {
 // lower layers match the goldens.
 GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy; // bosses and monsters leave a peaceful world
-    bool     u22    = gf::structure::templates::get("twilightforest:lich_tower/5x5/altar") != nullptr;
+    bool     u22    = gf::structure::templates::get("gloamingforest:lich_tower/5x5/altar") != nullptr;
     BlockPos origin{0, 64, 0};
     auto     pieces = tower::layoutForTest(origin, kGoldenSeed);
     std::map<std::string, int> counts;
@@ -648,7 +648,7 @@ GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask
 });
 
 // The yard's controlled spawns (LichTowerPieces.YARD_SPAWNS): a rising zombie list on the paths,
-// the interior list in the tower; TF's rising zombies only come from here.
+// the interior list in the tower; upstream's rising zombies only come from here.
 GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = ctx.testPos(2150, 2).offset(0, 0, 400);
     gf::landmark::ext::ScopedStart forced(kTowerKey, center);
@@ -665,28 +665,28 @@ GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<
     // a spot of the yard that no tower piece covers (the highest index wins where they overlap)
     auto covered = [&](int x, int y, int z) {
         for (auto const& q : pieces)
-            if (q.type != "twilightforest:TFLTPath" && q.type != "twilightforest:TFLTGrave" && q.type != "twilightforest:TFLTLight" && q.box.minX <= x && x <= q.box.maxX
+            if (q.type != "gloamingforest:TFLTPath" && q.type != "gloamingforest:TFLTGrave" && q.type != "gloamingforest:TFLTLight" && q.box.minX <= x && x <= q.box.maxX
                 && q.box.minY <= y && y <= q.box.maxY && q.box.minZ <= z && z <= q.box.maxZ)
                 return true;
         return false;
     };
     bool path = false, interior = false;
     for (auto const& p : pieces) {
-        if (p.type != "twilightforest:TFLTPath" || path) continue;
+        if (p.type != "gloamingforest:TFLTPath" || path) continue;
         for (int x = p.box.minX; x <= p.box.maxX && !path; x += 3)
             for (int z = p.box.minZ; z <= p.box.maxZ && !path; z += 3) {
                 int y = p.box.minY + 1;
                 if (covered(x, y, z)) continue;
                 auto l = gf::landmark::ext::potentialSpawns(center.dim, "monster", x, y, z);
                 if (l)
-                    for (auto const& e : *l) path |= e.value("type", std::string()) == "twilightforest:rising_zombie";
+                    for (auto const& e : *l) path |= e.value("type", std::string()) == "gloamingforest:rising_zombie";
             }
     }
     ctx.check(path, "a rising zombie can spawn on the yard");
     for (auto const& p : pieces) {
-        if (p.type == "twilightforest:TFLTCTBase" && !interior) {
+        if (p.type == "gloamingforest:TFLTCTBase" && !interior) {
             auto ids = listAt(p.box);
-            interior = std::find(ids.begin(), ids.end(), "twilightforest:death_tome") != ids.end();
+            interior = std::find(ids.begin(), ids.end(), "gloamingforest:death_tome") != ids.end();
             ctx.check(interior, "the tower base spawns the interior list (death tomes)");
         }
     }
@@ -696,7 +696,7 @@ GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<
 namespace {
 
 /// A worldgen::Region over the server's BlockSource that answers heights the way F6's loaded-chunk
-/// adapter (landmark::generateAt, /tf place, forceStart) does: BlockSource#getAboveTopSolidBlock.
+/// adapter (landmark::generateAt, /gloamingforest place, forceStart) does: BlockSource#getAboveTopSolidBlock.
 /// The yard read its heights from the region before and turned nothing through that adapter.
 class LoadedLikeRegion final : public gf::worldgen::Region {
 public:
@@ -727,7 +727,7 @@ private:
 
 } // namespace
 
-// The lich tower as F6 places it into loaded chunks (landmark::generateAt, /tf place): the yard turns
+// The lich tower as F6 places it into loaded chunks (landmark::generateAt, /gloamingforest place): the yard turns
 // the ground to dirt and paths, lines a path with spruce fences and lights, and the perimeter fence
 // (here run toward two stand-in grounded trims, as U22's wings bring them) stands on the ground
 // with its side fences, outer_fence_1..7 steps, escape ladders and tree clearances.
@@ -748,7 +748,7 @@ GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::Cor
                         found["ground"]++;
                     if (id == "minecraft:spruce_fence") found["spruce_fence"]++;
                     if (id == "minecraft:candle") found["candle"]++;
-                    if (id == "twilightforest:wrought_iron_fence") found["iron_fence"]++;
+                    if (id == "gloamingforest:wrought_iron_fence") found["iron_fence"]++;
                     if (id == "minecraft:ladder") found["ladder"]++;
                 }
         return found;
@@ -762,7 +762,7 @@ GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::Cor
              + ", the blocks " + std::to_string(blocks.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, gx, gz)));
     // 1. the tower and its yard through the loaded-chunk adapter
     for (auto const& p : tower::layoutForTest(at, kGoldenSeed))
-        if (p.typeId == "twilightforest:TFLTPath" || p.typeId == "twilightforest:TFLTLight" || p.typeId == "twilightforest:TFLTTFoy")
+        if (p.typeId == "gloamingforest:TFLTPath" || p.typeId == "gloamingforest:TFLTLight" || p.typeId == "gloamingforest:TFLTTFoy")
             ctx.info(p.typeId.substr(15) + " box " + std::to_string(p.box.minX - at.x) + " " + std::to_string(p.box.minY - at.y) + " " + std::to_string(p.box.minZ - at.z) + " .. "
                      + std::to_string(p.box.maxX - at.x) + " " + std::to_string(p.box.maxY - at.y) + " " + std::to_string(p.box.maxZ - at.z));
     tower::placeForTest(loaded, clip, kGoldenSeed);
@@ -789,10 +789,10 @@ GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::Cor
     std::map<std::string, int> fences;
     int clearances = 0, sideFences = 0;
     for (auto const& p : perimeter) {
-        if (p.typeId.starts_with("twilightforest:TFLTFence|")) {
+        if (p.typeId.starts_with("gloamingforest:TFLTFence|")) {
             ++sideFences;
             fences[p.typeId.substr(p.typeId.find('|') + 1)]++;
-        } else if (p.typeId == "twilightforest:TFUtilityPiece") ++clearances;
+        } else if (p.typeId == "gloamingforest:TFUtilityPiece") ++clearances;
     }
     std::string summary;
     for (auto const& [id, n] : fences) summary += " " + id + "=" + std::to_string(n);
@@ -815,7 +815,7 @@ GF_REGISTER_SELFTEST("lich.zombie_tether", [](Context& ctx) -> ll::coro::CoroTas
     DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2160, 32);
     auto post = ctx.testPos(2170, 2).offset(0, 1, 0);
-    ctx.require(ctx.setBlock(post, "twilightforest:wrought_iron_fence"), "the iron post is placed");
+    ctx.require(ctx.setBlock(post, "gloamingforest:wrought_iron_fence"), "the iron post is placed");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the test region");
     auto before = edits::tetheredCount();
@@ -850,7 +850,7 @@ GF_REGISTER_SELFTEST("lich.zombie_tether", [](Context& ctx) -> ll::coro::CoroTas
 });
 
 // LichMinionModel's tint follows the minion's Strength: hit by its Lich, the minion gets
-// DAMAGE_BOOST and the client property twilightforest:strong; without it the property is off.
+// DAMAGE_BOOST and the client property gloamingforest:strong; without it the property is off.
 GF_REGISTER_SELFTEST("lich.minion_strength", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2160, 32);
@@ -887,7 +887,7 @@ GF_REGISTER_SELFTEST("lich.minion_strength", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(minion != nullptr, "the minion survived the hit");
     ctx.check(minion->getEffect(5) != nullptr, "its lich's hit gave it Strength (DAMAGE_BOOST II)");
     auto const& strong = gf::entity::data(*minion, "lich:strong");
-    ctx.check(strong.is_boolean() && strong.get<bool>(), "the minion shows its strength (twilightforest:strong)");
+    ctx.check(strong.is_boolean() && strong.get<bool>(), "the minion shows its strength (gloamingforest:strong)");
     minion->removeEffect(5);
     co_await ctx.ticks(2);
     minion = mobById(mid);
@@ -1018,7 +1018,7 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     // a zombie trap: a zombie tied to an iron post by a lead
     BlockPos trapPost = game::blockPosOf(ahead(4, -5));
     std::int64_t trapped = 0;
-    if (auto const* post = game::blockWith("twilightforest:wrought_iron_fence")) {
+    if (auto const* post = game::blockWith("gloamingforest:wrought_iron_fence")) {
         game::setBlock(*region, trapPost, *post);
         Vec3 beside = ahead(5, -6);
         if (Mob* z = edits::tieZombie(*region, trapPost, Vec3{beside.x, float(trapPost.y), beside.z})) trapped = uidOf(*z);
@@ -1098,7 +1098,7 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
         if (Mob* lich = spawnMob(*region, kLich, ahead(5, 0))) {
             lichState(*lich)->attackCooldown = 100000;
             if (deathTime >= 115) setMainHand(*lich, "");
-            gf::entity::setProperty(*lich, "twilightforest:death_time", deathTime);
+            gf::entity::setProperty(*lich, "gloamingforest:death_time", deathTime);
             shown.push_back(uidOf(*lich));
         }
         co_await hold(30);
@@ -1151,7 +1151,7 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
         for (int dz = -48; dz <= 48 && !start; dz += 8) start = gf::landmark::startAt(dim, BlockPos{at.x + dx, at.y + 2, at.z + dz});
     if (start)
         for (auto const& p : gf::landmark::ext::startPieces(*start))
-            if (p.type == "twilightforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
+            if (p.type == "gloamingforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
     if (pathC) foyerC = *pathC; // look at the first path
     Vec3  outward{foyerC.x - towerAt.x, 0.0f, foyerC.z - towerAt.z};
     float olen = std::sqrt(outward.x * outward.x + outward.z * outward.z);
@@ -1186,7 +1186,7 @@ struct WalkEnforcedScope {
     ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
 };
 
-/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,
 /// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
 /// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
 /// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
@@ -1197,7 +1197,7 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
     ctx.check(d->conquerable, key + " is conquerable");
     if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
     else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
-    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "gloamingforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
     WalkEnforcedScope enforced;
     core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
     gf::landmark::ext::ScopedStart forced(key, site);
@@ -1237,9 +1237,9 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 
 } // namespace
 
-// The lich tower against TF's LichTowerStructure record: locked by progress_naga, the lichtower
+// The lich tower against upstream's LichTowerStructure record: locked by progress_naga, the lichtower
 // hint book, conquerable; its protected pieces refuse a player without progress_naga.
-GF_REGISTER_SELFTEST("lich.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kTowerKey, "twilightforest:progress_naga", "lichtower", 150107); });
+GF_REGISTER_SELFTEST("lich.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kTowerKey, "gloamingforest:progress_naga", "lichtower", 150107); });
 
 // The boss gauntlet (audit A3): a player wakes the Lich at its spawner, breaks its six shields with
 // lich bolts (phase 1 -> 2), its minions are spent (phase 3), and kills it; after the death
@@ -1252,7 +1252,7 @@ GF_REGISTER_SELFTEST("lich.gauntlet", [](Context& ctx) -> ll::coro::CoroTask<> {
     static std::string                killedEntity;
     static bool                       listening = false;
     if (!std::exchange(listening, true))
-        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss"})
+        for (char const* id : {"minecraft:player_killed_entity", "gloamingforest:hurt_boss"})
             gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const& data) {
                 if (player.getNameTag() != "gf_lich_gauntlet") return;
                 triggers[id]++;
@@ -1291,7 +1291,7 @@ GF_REGISTER_SELFTEST("lich.gauntlet", [](Context& ctx) -> ll::coro::CoroTask<> {
         auto* p = actorById(pid);
         lich    = mobById(uid);
         ctx.require(p && lich, "the Lich and the player are there");
-        gf::combat::hurt(*lich, 6.0f, "twilightforest:lich_bolt", p);
+        gf::combat::hurt(*lich, 6.0f, "gloamingforest:lich_bolt", p);
         co_await ctx.ticks(2);
     }
     lich = mobById(uid);
@@ -1327,16 +1327,16 @@ GF_REGISTER_SELFTEST("lich.gauntlet", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.ticks(5);
     ctx.check(mobById(uid) == nullptr, "the body is gone after its death animation");
     auto chestId = ctx.blockAt(*chest);
-    ctx.check(chestId == "twilightforest:twilight_oak_chest" || chestId == "twilightforest:canopy_chest", "a twilight oak or canopy death chest (" + chestId + ")");
+    ctx.check(chestId == "gloamingforest:gloaming_oak_chest" || chestId == "gloamingforest:canopy_chest", "a gloaming oak or canopy death chest (" + chestId + ")");
     bool trophy = false, scepter = false, essence = false;
     if (auto* region = game::regionOf(chest->dim))
         if (auto inv = gf::inventory::find(*region, game::blockPos(*chest)); inv && inv->get) {
             for (int i = 0; i < inv->slots; ++i) {
                 auto id = game::items::idOf(inv->get(*chest, i));
-                trophy |= id == "twilightforest:lich_trophy";
-                essence |= id == "twilightforest:exanimate_essence";
-                scepter |= id == "twilightforest:twilight_scepter" || id == "twilightforest:lifedrain_scepter" || id == "twilightforest:zombie_scepter" ||
-                           id == "twilightforest:fortification_scepter";
+                trophy |= id == "gloamingforest:lich_trophy";
+                essence |= id == "gloamingforest:exanimate_essence";
+                scepter |= id == "gloamingforest:gloaming_scepter" || id == "gloamingforest:lifedrain_scepter" || id == "gloamingforest:zombie_scepter" ||
+                           id == "gloamingforest:fortification_scepter";
             }
             if (inv->set)
                 for (int i = 0; i < inv->slots; ++i) inv->set(*chest, i, game::items::empty());
@@ -1345,7 +1345,7 @@ GF_REGISTER_SELFTEST("lich.gauntlet", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto conquest = gf::feature::boss::lastConquest();
     ctx.check(conquest && conquest->second == kTowerKey, "the Lich's postmortem conquers its home structure key, the lich tower, at its home (no start stands in the test area) (" + (conquest ? conquest->second : std::string("none")) + ")");
     ctx.check(triggers["minecraft:player_killed_entity"] >= 1 && killedEntity == kLich, "player_killed_entity fired for " + killedEntity);
-    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired");
+    ctx.check(triggers["gloamingforest:hurt_boss"] >= 1, "hurt_boss fired");
     ctx.cleanupBlock(*chest);
     removeAround(ctx, spawner, "minecraft:xp_orb", 16.0f);
     removeAround(ctx, spawner, "minecraft:item", 16.0f);

@@ -153,7 +153,7 @@ function Read-GftOwners([string]$Path) {
 }
 
 function Test-Known($owners, [string]$kind, [string]$id) {
-    if (-not $id.StartsWith('twilightforest:')) { return $true }
+    if (-not $id.StartsWith('gloamingforest:')) { return $true }
     return $owners.ContainsKey($kind) -and $owners[$kind].Contains($id)
 }
 
@@ -176,19 +176,19 @@ function Test-GftReferences {
 }
 
 function Get-GftDataRoots([string]$Root, [string]$Registry) {
-    # imported data first (assets/gen/import/<unit>/data/<ns>/twilight/<registry>), else the TF checkout
+    # imported data first (assets/gen/import/<unit>/data/<ns>/gloaming/<registry>), else the upstream checkout
     $roots = @(Get-ChildItem (Join-Path $Root 'assets/gen/import') -Directory -ErrorAction SilentlyContinue | ForEach-Object {
             Get-ChildItem (Join-Path $_.FullName 'data') -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                $d = Join-Path $_.FullName "twilight/$Registry"
+                $d = Join-Path $_.FullName "gloaming/$Registry"
                 if (Test-Path $d) { [pscustomobject]@{ Ns = $_.Name; Dir = $d; Source = 'imported' } }
             }
         })
     if ($roots.Count) { return $roots }
-    $tf = Join-Path $env:LOCALAPPDATA 'gf-tf/src/generated/resources/data'
+    $tf = Join-Path $env:LOCALAPPDATA 'gf-upstream/view/src/generated/resources/data'
     if (Test-Path $tf) {
         return @(Get-ChildItem $tf -Directory | ForEach-Object {
-                $d = Join-Path $_.FullName "twilight/$Registry"
-                if (Test-Path $d) { [pscustomobject]@{ Ns = $_.Name; Dir = $d; Source = 'TF checkout' } }
+                $d = Join-Path $_.FullName "gloaming/$Registry"
+                if (Test-Path $d) { [pscustomobject]@{ Ns = $_.Name; Dir = $d; Source = 'upstream checkout' } }
             })
     }
     return @()
@@ -210,11 +210,11 @@ function Read-GftRegistry([string]$Root, [string]$Registry) {
 function Read-GftTemplateDefinitions([string]$Root) { return Read-GftRegistry $Root 'template_definition' }
 function Read-GftMarkerHandlerLists([string]$Root) { return Read-GftRegistry $Root 'template_marker_handler_list' }
 
-# The labels a TF marker handler (rotation / handler_switch / leaf handlers) accepts; $null: any.
+# The labels an upstream marker handler (rotation / handler_switch / leaf handlers) accepts; $null: any.
 function Get-HandlerLabels($handler) {
     switch ($handler['type']) {
-        'twilightforest:rotation' { return Get-HandlerLabels $handler['rotated'] }
-        'twilightforest:handler_switch' { return @($handler['element_processor'].Keys) }
+        'gloamingforest:rotation' { return Get-HandlerLabels $handler['rotated'] }
+        'gloamingforest:handler_switch' { return @($handler['element_processor'].Keys) }
         default { return $null }
     }
 }

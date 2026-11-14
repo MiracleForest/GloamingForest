@@ -1,0 +1,121 @@
+{
+  "key": "gloamingforest:aurora_palace",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/aurora_palace.json",
+  "structure": {
+    "advancements_required": [
+      "gloamingforest:progress_yeti"
+    ],
+    "biomes": "#gloamingforest:valid_aurora_palace_biomes",
+    "controlled_spawns": {
+      "ambient_spawns": [],
+      "labelled_monster_spawns": {
+        "0": [
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:snow_guardian",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:stable_ice_core",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:unstable_ice_core",
+            "weight": 5
+          }
+        ]
+      },
+      "water_spawns": []
+    },
+    "decoration_clearance": {
+      "adjust_structure_elevation": false,
+      "allow_biome_surface_decorations": false,
+      "allow_biome_underground_decorations": true,
+      "allow_biome_vegetation": true,
+      "chunk_clearance_radius": 2
+    },
+    "hint_creature": {
+      "hint_item": {
+        "components": {
+          "minecraft:written_book_content": {
+            "author": "gloamingforest.book.author",
+            "generation": 3,
+            "pages": [
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.icetower.1\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.icetower.2\"}"
+              },
+              {
+                "raw": "{\"translate\":\"gloamingforest.book.icetower.3\"}"
+              }
+            ],
+            "resolved": true,
+            "title": {
+              "raw": "gloamingforest.book.icetower"
+            }
+          },
+          "gloamingforest:translatable_book": {}
+        },
+        "count": 1,
+        "id": "minecraft:written_book"
+      },
+      "hint_mob": "gloamingforest:kobold"
+    },
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "surface_structures",
+    "structure_icon": "gloamingforest:aurora_palace",
+    "type": "gloamingforest:aurora_palace"
+  },
+  "structure_set": {
+    "id": "gloamingforest:aurora_palace",
+    "placement": {
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:aurora_palace",
+        "weight": 1
+      }
+    ]
+  }
+}

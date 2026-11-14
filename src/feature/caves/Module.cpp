@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U27 (caves): troll caves and the yeti cave. Installs the structures and landmark generators,
 // the blocks, the feature types and the mobs.

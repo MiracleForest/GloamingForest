@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U2 (terrain): the PieceBeardifierModifier extension (feature/ext/terrain/PieceBeard.h).
 #include "feature/ext/terrain/PieceBeard.h"
 
@@ -93,7 +93,7 @@ PieceBeard pieceBeard(landmark::ext::StartPiece const& piece) {
         }
         if (fn) return fn(piece);
     }
-    // 2. TF 4.8's piece types
+    // 2. upstream 4.8's piece types
     if (auto tf = beard::tfPieceBeard(piece.type, piece.box, piece.tag)) return {tf->modifier, nameOf(tf->adjustment), tf->box, tf->groundLevelDelta};
     // 3. F7's bases that implement PieceBeardifierModifier
     if (!piece.type.empty() && piece.tag.is_object() && piece.tag.contains("id")) {

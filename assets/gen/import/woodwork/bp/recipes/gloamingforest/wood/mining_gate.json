@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/mining_gate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["S#S", "S#S"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:mining_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:mining_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mining_fence_gate"
+    }
+  }
+}

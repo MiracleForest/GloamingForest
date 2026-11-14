@@ -1,6 +1,6 @@
 # Dark tower (U26) on the client: the unit's selftests pass in the local world (integrated server),
 # then every block, item, mob and the dark tower itself are put in front of the camera for the
-# screenshot review against TF's textures and models (%LOCALAPPDATA%\gf-tf):
+# screenshot review against upstream's textures and models (%LOCALAPPDATA%\gf-upstream\view):
 #   blocks_1..blocks_7  the 15 device / tower blocks and their other states, four per shot, seen
 #                       from five blocks away (vanishing family active / vanished, locked and
 #                       unlocked lock, builder inactive / active / timeout, built blocks,
@@ -10,11 +10,11 @@
 #   mob_<name>          each mob alone at close range: golem, broodling, borer, ghastling,
 #                       ghastguard, the Ur-Ghast idle and, against a survival player, with its
 #                       eyes open while it charges and fires (urghast_attack)
-#   tower_outside       a dark tower placed with /tf place, seen from outside
+#   tower_outside       a dark tower placed with /gloamingforest place, seen from outside
 #   tower_inside        the first main tower's ground floor
 #   closeup_debris      active reactor debris (an active reactor places it) and closeup_trap: an
 #                       active ghast trap, each from two blocks away
-#   urghast_tantrum     in the Twilight Forest, an Ur-Ghast in a tantrum: boss tears falling under it and
+#   urghast_tantrum     in the Gloaming Forest, an Ur-Ghast in a tantrum: boss tears falling under it and
 #                       the tantrum rain the client mod fades in (TFWeatherRenderer.urGhastAlive)
 # Modes: local runs the selftests on the integrated server first; remote-mod and remote-vanilla join
 # the BDS host and take the same shots. A companion (local, remote-mod) draws the tears and the rain
@@ -45,16 +45,16 @@ if ($true) {
 
     # ---- blocks: four per shot, two blocks apart, the camera five blocks south of them ----
     $groups = @(
-        @('twilightforest:vanishing_block', 'twilightforest:vanishing_block ["twilightforest:active"=true]',
-            'twilightforest:unbreakable_vanishing_block', 'twilightforest:unbreakable_vanishing_block ["twilightforest:active"=true]'),
-        @('twilightforest:reappearing_block', 'twilightforest:reappearing_block ["twilightforest:active"=true]',
-            'twilightforest:reappearing_block ["twilightforest:vanished"=true]', 'twilightforest:locked_vanishing_block'),
-        @('twilightforest:locked_vanishing_block ["twilightforest:locked"=false]', 'twilightforest:carminite_builder',
-            'twilightforest:carminite_builder ["twilightforest:state"="builder_active"]', 'twilightforest:carminite_builder ["twilightforest:state"="builder_timeout"]'),
-        @('twilightforest:built_block', 'twilightforest:built_block ["twilightforest:active"=true]', 'twilightforest:antibuilder', 'twilightforest:antibuilt_block'),
-        @('twilightforest:carminite_reactor', 'twilightforest:carminite_reactor ["twilightforest:active"=true]', 'twilightforest:reactor_debris', 'twilightforest:fake_gold'),
-        @('twilightforest:fake_diamond', 'twilightforest:slider', 'twilightforest:slider ["twilightforest:axis"="x"]', 'twilightforest:slider ["twilightforest:axis"="z"]'),
-        @('twilightforest:ghast_trap', 'twilightforest:ghast_trap ["twilightforest:active"=true]', 'twilightforest:infested_towerwood', 'twilightforest:towerwood')
+        @('gloamingforest:vanishing_block', 'gloamingforest:vanishing_block ["gloamingforest:active"=true]',
+            'gloamingforest:unbreakable_vanishing_block', 'gloamingforest:unbreakable_vanishing_block ["gloamingforest:active"=true]'),
+        @('gloamingforest:reappearing_block', 'gloamingforest:reappearing_block ["gloamingforest:active"=true]',
+            'gloamingforest:reappearing_block ["gloamingforest:vanished"=true]', 'gloamingforest:locked_vanishing_block'),
+        @('gloamingforest:locked_vanishing_block ["gloamingforest:locked"=false]', 'gloamingforest:carminite_builder',
+            'gloamingforest:carminite_builder ["gloamingforest:state"="builder_active"]', 'gloamingforest:carminite_builder ["gloamingforest:state"="builder_timeout"]'),
+        @('gloamingforest:built_block', 'gloamingforest:built_block ["gloamingforest:active"=true]', 'gloamingforest:antibuilder', 'gloamingforest:antibuilt_block'),
+        @('gloamingforest:carminite_reactor', 'gloamingforest:carminite_reactor ["gloamingforest:active"=true]', 'gloamingforest:reactor_debris', 'gloamingforest:fake_gold'),
+        @('gloamingforest:fake_diamond', 'gloamingforest:slider', 'gloamingforest:slider ["gloamingforest:axis"="x"]', 'gloamingforest:slider ["gloamingforest:axis"="z"]'),
+        @('gloamingforest:ghast_trap', 'gloamingforest:ghast_trap ["gloamingforest:active"=true]', 'gloamingforest:infested_towerwood', 'gloamingforest:towerwood')
     )
     $n = 1
     foreach ($g in $groups) {
@@ -71,14 +71,14 @@ if ($true) {
     Invoke-Chat '/fill 596 -60 600 612 -50 612 air'
 
     # ---- close-ups: active reactor debris (placed by an active reactor) and an active ghast trap ----
-    Invoke-Chat '/setblock 604 -60 606 twilightforest:reactor_debris'
-    Invoke-Chat '/setblock 606 -60 606 twilightforest:reactor_debris'
+    Invoke-Chat '/setblock 604 -60 606 gloamingforest:reactor_debris'
+    Invoke-Chat '/setblock 606 -60 606 gloamingforest:reactor_debris'
     Invoke-Teleport '/tp @s 605 -60 608.5 180 25'
     Start-Sleep -Seconds 3
     Save-Screenshot 'closeup_debris' | Out-Null
     Invoke-Chat '/fill 596 -60 600 612 -50 612 air'
-    Invoke-Chat '/setblock 604 -60 606 twilightforest:ghast_trap ["twilightforest:active"=true]'
-    Invoke-Chat '/setblock 606 -60 606 twilightforest:ghast_trap'
+    Invoke-Chat '/setblock 604 -60 606 gloamingforest:ghast_trap ["gloamingforest:active"=true]'
+    Invoke-Chat '/setblock 606 -60 606 gloamingforest:ghast_trap'
     Invoke-Teleport '/tp @s 605 -60 608.5 180 25'
     Start-Sleep -Seconds 3
     Save-Screenshot 'closeup_trap' | Out-Null
@@ -86,9 +86,9 @@ if ($true) {
 
     # ---- items in the hotbar (the HUD shows their icons) ----
     Invoke-Chat '/clear @s'
-    $items = @('twilightforest:tower_key', 'twilightforest:borer_essence', 'twilightforest:carminite', 'twilightforest:ur_ghast_spawn_egg',
-        'twilightforest:carminite_ghastguard_spawn_egg', 'twilightforest:carminite_ghastling_spawn_egg', 'twilightforest:carminite_golem_spawn_egg',
-        'twilightforest:carminite_broodling_spawn_egg', 'twilightforest:towerwood_borer_spawn_egg')
+    $items = @('gloamingforest:tower_key', 'gloamingforest:borer_essence', 'gloamingforest:carminite', 'gloamingforest:ur_ghast_spawn_egg',
+        'gloamingforest:carminite_ghastguard_spawn_egg', 'gloamingforest:carminite_ghastling_spawn_egg', 'gloamingforest:carminite_golem_spawn_egg',
+        'gloamingforest:carminite_broodling_spawn_egg', 'gloamingforest:towerwood_borer_spawn_egg')
     foreach ($i in $items) { Invoke-Chat "/give @s $i" }
     Invoke-Teleport '/tp @s 606 -60 615 0 5'
     Start-Sleep -Seconds 2
@@ -103,15 +103,15 @@ if ($true) {
     Start-Sleep -Seconds 2
     foreach ($m in $mobs) {
         Invoke-Teleport '/tp @s 610 -60 640 0 8'
-        Invoke-Chat "/summon twilightforest:$($m[0]) $($m[1])"
+        Invoke-Chat "/summon gloamingforest:$($m[0]) $($m[1])"
         Start-Sleep -Milliseconds 1200
         Save-Screenshot "mob_$($m[0])" | Out-Null
-        Invoke-Chat "/kill @e[type=twilightforest:$($m[0])]"
+        Invoke-Chat "/kill @e[type=gloamingforest:$($m[0])]"
     }
 
     # ---- the Ur-Ghast idle, then charging at a survival player (eyes open, fire texture) ----
     Invoke-Teleport '/tp @s 610 -60 640 0 -12'
-    Invoke-Chat '/summon twilightforest:ur_ghast ~ ~4 ~24'
+    Invoke-Chat '/summon gloamingforest:ur_ghast ~ ~4 ~24'
     Start-Sleep -Milliseconds 1500
     Save-Screenshot 'mob_ur_ghast' | Out-Null
     Invoke-Chat '/effect @s resistance 120 255 true'
@@ -120,13 +120,13 @@ if ($true) {
     Start-Sleep -Seconds 2
     Save-Screenshot 'urghast_attack' | Out-Null
     Invoke-Chat '/gamemode creative'
-    Invoke-Chat '/kill @e[type=twilightforest:ur_ghast]'
+    Invoke-Chat '/kill @e[type=gloamingforest:ur_ghast]'
     Invoke-Chat '/kill @e[type=minecraft:fireball]'
 
     # ---- a dark tower: placed in loaded chunks, then seen from outside and from its ground floor ----
     Invoke-Teleport '/tp @s 800 -40 800'
     Start-Sleep -Seconds 4
-    Invoke-Chat '/tf place twilightforest:dark_tower 800 -60 800'
+    Invoke-Chat '/gloamingforest place gloamingforest:dark_tower 800 -60 800'
     Start-Sleep -Seconds 12
     Invoke-Teleport '/tp @s 730 -60 730 -45 -18'
     Start-Sleep -Seconds 6
@@ -135,18 +135,18 @@ if ($true) {
     Start-Sleep -Seconds 4
     Save-Screenshot 'tower_inside' | Out-Null
 
-    # ---- the Ur-Ghast's tantrum in the Twilight Forest: tears and the client's rain ----
+    # ---- the Ur-Ghast's tantrum in the Gloaming Forest: tears and the client's rain ----
     $mark = Get-LogMark
-    Invoke-Chat '/tf tp'
-    Wait-LogLine 'dimension: .* travelled from minecraft:overworld to twilightforest:twilight_forest' 60 -Since $mark | Out-Null
+    Invoke-Chat '/gloamingforest tp'
+    Wait-LogLine 'dimension: .* travelled from minecraft:overworld to gloamingforest:gloaming_forest' 60 -Since $mark | Out-Null
     Start-Sleep -Seconds 4
     Invoke-Chat '/gamemode creative'
     Invoke-Chat '/time set noon'
     Invoke-Chat '/tp @s ~ ~ ~ 0 -20'
-    Invoke-Chat '/summon twilightforest:ur_ghast ~ ~12 ~26'
+    Invoke-Chat '/summon gloamingforest:ur_ghast ~ ~12 ~26'
     Start-Sleep -Seconds 2
     # 18 damage before the first tantrum (the constructor's setInTantrum(false) resets it to 18)
-    Invoke-Chat '/damage @e[type=twilightforest:ur_ghast,c=1] 20 entity_attack'
+    Invoke-Chat '/damage @e[type=gloamingforest:ur_ghast,c=1] 20 entity_attack'
     Wait-LogLine 'darktower: the Ur-Ghast throws a tantrum' 20 -Since $mark | Out-Null
     if ($script:Mode -eq 'remote-vanilla') {
         Start-Sleep -Seconds 4
@@ -157,7 +157,7 @@ if ($true) {
     }
     Start-Sleep -Seconds 3
     Save-Screenshot 'urghast_tantrum' | Out-Null
-    Invoke-Chat '/kill @e[type=twilightforest:ur_ghast]'
-    Invoke-Chat '/kill @e[type=twilightforest:carminite_ghastling]'
+    Invoke-Chat '/kill @e[type=gloamingforest:ur_ghast]'
+    Invoke-Chat '/kill @e[type=gloamingforest:carminite_ghastling]'
 }
 Save-Screenshot 'selftest' | Out-Null

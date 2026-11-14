@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/SinisterSpawnerBlock.java
-//   src/main/java/twilightforest/command/SinisterSpawnerCommand.java
-//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/SinisterSpawnerBlock.java
+//   src/main/java/gloamingforest/command/SinisterSpawnerCommand.java
+//   src/main/java/gloamingforest/block/entity/spawner/SinisterSpawnerBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U22 (lichdecor): the sinister spawner block's own behaviour. Its block entity (BaseSpawner +
 // SinisterSpawnerLogic: ticking, particles, the loot table field) is F8's (feature/ext/entity
 // EntityExt.h, in the block's BlockData); this file adds
-//   - /twilightforest sinister_spawner add_particle|remove_particle|set_loot|clear_loot (permission 2),
+//   - /gloamingforest sinister_spawner add_particle|remove_particle|set_loot|clear_loot (permission 2),
 //   - the creative use with a boss trophy / boss spawner item (SinisterSpawnerBlock#particlesFromItem),
 //   - the drops: the stored loot table rolled into the drops and 15 + nextInt(15) + nextInt(15) xp.
 //
@@ -78,7 +78,7 @@ namespace cl = gf::core::lichdecor;
 namespace bx = gf::boss::ext;
 namespace bd = gf::blockdata;
 
-constexpr char kSinister[] = "twilightforest:sinister_spawner";
+constexpr char kSinister[] = "gloamingforest:sinister_spawner";
 
 // ---- the (id, options) entries ---------------------------------------------------------------------
 
@@ -186,19 +186,19 @@ struct ItemParticles {
 
 std::optional<ItemParticles> particlesFromItem(std::string const& item) {
     auto is = [&](char const* boss, bool trophy = true, bool spawner = true) {
-        return (trophy && item == std::string("twilightforest:") + boss + "_trophy") || (spawner && item == std::string("twilightforest:") + boss + "_boss_spawner");
+        return (trophy && item == std::string("gloamingforest:") + boss + "_trophy") || (spawner && item == std::string("gloamingforest:") + boss + "_boss_spawner");
     };
     if (is("naga")) return ItemParticles{{"minecraft:smoke", "minecraft:crit"}};
-    if (is("lich")) return ItemParticles{{"minecraft:smoke", "twilightforest:ominous_flame"}};
+    if (is("lich")) return ItemParticles{{"minecraft:smoke", "gloamingforest:ominous_flame"}};
     if (is("minoshroom")) return ItemParticles{{"minecraft:smoke", "minecraft:crimson_spore"}};
     if (is("hydra")) return ItemParticles{{"minecraft:smoke", "minecraft:flame"}};
-    if (is("knight_phantom")) return ItemParticles{{"minecraft:smoke", "twilightforest:ominous_flame"}};
+    if (is("knight_phantom")) return ItemParticles{{"minecraft:smoke", "gloamingforest:ominous_flame"}};
     if (is("ur_ghast"))
         return ItemParticles{{"minecraft:smoke", "minecraft:dust"}, Json{{"minecraft:dust", {{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}}}}};
-    if (is("alpha_yeti")) return ItemParticles{{"twilightforest:snow", "minecraft:falling_water"}};
-    if (is("snow_queen")) return ItemParticles{{"twilightforest:snow", "twilightforest:snow_warning"}};
-    if (is("final_boss", false, true)) return ItemParticles{{"twilightforest:annihilate"}};
-    if (is("quest_ram", true, false)) return ItemParticles{{"twilightforest:transformation_particle"}};
+    if (is("alpha_yeti")) return ItemParticles{{"gloamingforest:snow", "minecraft:falling_water"}};
+    if (is("snow_queen")) return ItemParticles{{"gloamingforest:snow", "gloamingforest:snow_warning"}};
+    if (is("final_boss", false, true)) return ItemParticles{{"gloamingforest:annihilate"}};
+    if (is("quest_ram", true, false)) return ItemParticles{{"gloamingforest:transformation_particle"}};
     return std::nullopt;
 }
 
@@ -268,7 +268,7 @@ public:
             BlockPos pos = game::blockPos(c.pos);
             dropLoot(*region, pos, pending.table, &c.player, &c.item);
             // getExpDrop: 15 + nextInt(15) + nextInt(15) (no xp with silk touch in Java's
-            // Block#getExpDrop path; TF overrides it without the check, so silk touch drops xp too)
+            // Block#getExpDrop path; upstream overrides it without the check, so silk touch drops xp too)
             int xp = 15 + randomInt(15) + randomInt(15);
             ExperienceOrb::spawnOrbs(*region, Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, xp, ExperienceOrb::DropType::FromBlock, nullptr);
         });
@@ -297,7 +297,7 @@ GF_REGISTER_MODULE(gf::feature::lichdecor::SinisterSpawnerModule);
 GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     namespace ld = gf::feature::lichdecor;
     namespace cl = gf::core::lichdecor;
-    // suggestions for <loot>: every table id is too many for a soft enum; TF's ominous drops first
+    // suggestions for <loot>: every table id is too many for a soft enum; upstream's ominous drops first
     for (bool add : {true, false}) {
         cmd.overload<ld::SinisterParticleParams>()
             .text("sinister_spawner")

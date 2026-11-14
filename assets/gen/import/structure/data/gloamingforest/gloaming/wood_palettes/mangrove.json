@@ -1,0 +1,10 @@
+{
+  "banister": "gloamingforest:mangrove_banister",
+  "button": "gloamingforest:mangrove_button",
+  "fence": "gloamingforest:mangrove_fence",
+  "gate": "gloamingforest:mangrove_fence_gate",
+  "planks": "gloamingforest:mangrove_planks",
+  "plate": "gloamingforest:mangrove_pressure_plate",
+  "slab": "gloamingforest:mangrove_slab",
+  "stairs": "gloamingforest:mangrove_stairs"
+}

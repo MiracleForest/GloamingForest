@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.quest_ram.ambient": {
+  "entity.gloamingforest.quest_ram.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.quest_ram.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.quest_ram.ambient",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -14,9 +14,9 @@
       }
     ]
   },
-  "entity.twilightforest.quest_ram.death": {
+  "entity.gloamingforest.quest_ram.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.quest_ram.death",
+    "subtitle": "subtitles.gloamingforest.entity.quest_ram.death",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -29,9 +29,9 @@
       }
     ]
   },
-  "entity.twilightforest.quest_ram.hurt": {
+  "entity.gloamingforest.quest_ram.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.quest_ram.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.quest_ram.hurt",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -44,7 +44,7 @@
       }
     ]
   },
-  "entity.twilightforest.quest_ram.step": {
+  "entity.gloamingforest.quest_ram.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [

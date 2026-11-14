@@ -5,10 +5,10 @@
 // - HUD layer "ui.fixture": a panel with an item, the graphics mode, the three blit methods and the
 //   inverting blend (ui::Blend::Invert, right of the panel over the world);
 // - two toasts (Java's toast layout on the game's toast frame): LockedBiomeToast's colours (yellow
-//   title) with a flat icon (a map) and MissingAdvancementToast's (white title) with a TF block
-//   icon (twilight oak planks) and a literal body;
+//   title) with a flat icon (a map) and MissingAdvancementToast's (white title) with an upstream block
+//   icon (gloaming oak planks) and a literal body;
 // - stage renderers (the frame step, "stage": its origin): a block renderer on the fixture block left
-//   of the frame (the fixture geometry, lit by the block above it) and a tint of the twilight oak
+//   of the frame (the fixture geometry, lit by the block above it) and a tint of the gloaming oak
 //   leaves right of it built on the game's foliage colour (red and blue swapped on the stage only),
 //   and a name tag rule for the two named simulated players behind them (render::hideNameTag by type
 //   and predicate: the one named GF_UI_hidden_tag loses its name tag, the other keeps it);
@@ -20,10 +20,10 @@
 //   provider that reports the sky hook;
 // - item renderers: gf_test:fixture_item in item frames (Fixed) and gf_test:fixture_block on heads
 //   (Head): a box, the item space's axes (x red, y green, z blue) and the fixture geometry;
-// - map: TF-style decorations (gf_test:fixture_icon*) on the map the player holds, one of them
-//   conquered (TF's red X) and the vanilla player icon drawn on top (MagicMapPlayerIconRenderer);
+// - map: upstream-style decorations (gf_test:fixture_icon*) on the map the player holds, one of them
+//   conquered (upstream's red X) and the vanilla player icon drawn on top (MagicMapPlayerIconRenderer);
 // - screen "ui.fixture": a ContainerScreen with the fixture GUI skin (an original texture with
-//   the layout of TF's container GUIs), nine container slots (flat and block items) and the player
+//   the layout of upstream's container GUIs), nine container slots (flat and block items) and the player
 //   inventory;
 // - key "ui.fixture" (J, registered at mod load) and "ui.fixture_late" (K, registered at install,
 //   after the game built its input handler): forwarded to the server, which logs the presses;
@@ -125,7 +125,7 @@ struct State {
     std::atomic<int>  fogDim{-1};
     std::atomic<bool> loggedHud{false}, loggedWorld{false}, loggedFixed{false}, loggedHead{false};
     std::shared_ptr<ItemStack> hudItem;                // client thread
-    std::shared_ptr<ItemStack> hudBlock, hudTfBlock;   // client thread: a vanilla and a TF block item
+    std::shared_ptr<ItemStack> hudBlock, hudTfBlock;   // client thread: a vanilla and an upstream block item
     std::int64_t               mapId = 0; // client thread
 };
 State& st() {
@@ -167,7 +167,7 @@ void drawHud(screen::Canvas& c, float) {
         c.text(r.x + 2, r.y + r.h + 2, std::to_string(m) + (ok ? "" : " -"), 0xFFFFFFFF);
     }
     ui::setBlitMethod(keep);
-    // the inverting blend (ui::Blend::Invert, the crosshair's; TF's quest ram indicator) right of the panel,
+    // the inverting blend (ui::Blend::Invert, the crosshair's; upstream's quest ram indicator) right of the panel,
     // over the world (the sky in the screenshots): the light panel texture turns the sky dark there
     {
         screen::Rect r{panel.x + panel.w + 62, panel.y, 44, 41};
@@ -175,11 +175,11 @@ void drawHud(screen::Canvas& c, float) {
         c.text(r.x + 2, r.y + r.h + 2, std::string("inv") + (ok ? "" : " -"), 0xFFFFFFFF);
     }
     // block items on a HUD layer (drawn after the game's UI pass, as toast icons): a vanilla block and
-    // a data-driven TF block, each in a grey 18 x 18 cell, an empty cell between them (the client
+    // a data-driven upstream block, each in a grey 18 x 18 cell, an empty cell between them (the client
     // scenario checks they are GUI cubes, as in the inventory)
     if (!st().hudBlock) {
         if (auto s = game::items::make("minecraft:cobblestone")) st().hudBlock = std::make_shared<ItemStack>(std::move(*s));
-        if (auto s = game::items::make("twilightforest:twilight_oak_planks")) st().hudTfBlock = std::make_shared<ItemStack>(std::move(*s));
+        if (auto s = game::items::make("gloamingforest:gloaming_oak_planks")) st().hudTfBlock = std::make_shared<ItemStack>(std::move(*s));
     }
     float const cellX = panel.x + panel.w + 6, cellY = panel.y + 1;
     for (int i = 0; i < 3; ++i) c.fill({cellX + static_cast<float>(i) * 18 - 1, cellY - 1, 18, 18}, 0xFF8B8B8B);
@@ -235,10 +235,10 @@ void drawHead(render::RenderContext& ctx, ItemStack const&, render::ItemContext)
 
 // ---- the stage's renderers (the frame step): a block renderer and a tint on the game's foliage ----
 
-// TF leaves whose material has the "default_foliage" tint method (tools/families) and no tint of
+// upstream leaves whose material has the "default_foliage" tint method (tools/families) and no tint of
 // F11's: their mesh asks the tint resolver, so a registered tint runs (vanilla oak leaves are tinted
 // by the game without asking it)
-constexpr char kStageLeaves[] = "twilightforest:twilight_oak_leaves";
+constexpr char kStageLeaves[] = "gloamingforest:gloaming_oak_leaves";
 
 /// The stage's origin (its feet block) while the stage renderers are on (chunk builders read it).
 struct StageAt {
@@ -273,7 +273,7 @@ void drawStageBlock(render::RenderContext& ctx, BlockPos const& pos, Block const
         log().info("ui fixture: stage block renderer drawn at {} {} {} (light set {} time(s) so far)", pos.x, pos.y, pos.z, render::lightSetups());
 }
 
-/// Twilight oak leaves: the game's own foliage colour, with red and blue swapped on the stage (the
+/// Gloaming oak leaves: the game's own foliage colour, with red and blue swapped on the stage (the
 /// screenshot shows the game's colour went through the tint function); elsewhere the game's colour.
 unsigned tintStageLeaves(BlockPos const& p, tint::GameColors const& game) {
     unsigned f = game.foliage().value_or(0x48B518u); // FoliageColor.getDefaultColor without a world
@@ -391,7 +391,7 @@ void tickMap() {
     maps::setIcon(kIconA, tex().geo);
     maps::setIcon(kIconB, tex().skin);
     // corners, centre and a turned icon: the map space and the rotation show in the screenshot; the
-    // north-west icon is conquered (TF's red X over it) and the vanilla player icon, listed before the
+    // north-west icon is conquered (upstream's red X over it) and the vanilla player icon, listed before the
     // centre icon it overlaps, is drawn on top of it (MagicMapPlayerIconRenderer)
     maps::setDecorations(
         id,
@@ -437,11 +437,11 @@ void onMessage(Json const& msg) {
     }
     if (msg.value("toast", false)) {
         // LockedBiomeToast's colours (the contract's default) with a flat icon, then
-        // MissingAdvancementToast's with a block icon (TF's advancement icons are often blocks:
+        // MissingAdvancementToast's with a block icon (upstream's advancement icons are often blocks:
         // its FALLBACK is the portal miniature) and a literal body (an advancement title as text)
         toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 30000});
         toast::show(
-            toast::LiteralToastSpec{{.iconItem = "twilightforest:twilight_oak_planks", .titleKey = "gf.ui.fixture.toast_advancement", .ms = 30000}, {}, "Literal line"},
+            toast::LiteralToastSpec{{.iconItem = "gloamingforest:gloaming_oak_planks", .titleKey = "gf.ui.fixture.toast_advancement", .ms = 30000}, {}, "Literal line"},
             toast::styleOf(toast::Kind::MissingAdvancement)
         );
     }
@@ -452,7 +452,7 @@ void onMessage(Json const& msg) {
     log().info("ui fixture: shown ({})", graphicsModeName());
 }
 
-/// The fixture screen: TF's container layout (176 x 166, title at (8, 6), nine slots in a row at
+/// The fixture screen: upstream's container layout (176 x 166, title at (8, 6), nine slots in a row at
 /// y 18, the player inventory at (8, 84)).
 class FixtureScreen : public screen::ContainerScreen {
 public:

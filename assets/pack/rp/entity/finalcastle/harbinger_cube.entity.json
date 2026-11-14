@@ -2,13 +2,13 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:harbinger_cube",
+      "identifier": "gloamingforest:harbinger_cube",
       "materials": { "default": "entity_alphatest" },
-      "textures": { "default": "textures/twilightforest/entity/apocalypse2" },
-      "geometry": { "default": "geometry.twilightforest.harbinger_cube" },
+      "textures": { "default": "textures/gloamingforest/entity/apocalypse2" },
+      "geometry": { "default": "geometry.gloamingforest.harbinger_cube" },
       "render_controllers": ["controller.render.default"],
       "animations": {
-        "walk": "animation.twilightforest.harbinger_cube.walk"
+        "walk": "animation.gloamingforest.harbinger_cube.walk"
       },
       "scripts": { "animate": ["walk"] }
     }

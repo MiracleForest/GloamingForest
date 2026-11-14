@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/projectile/TFThrowable.java
-//   src/main/java/twilightforest/entity/projectile/TFArrow.java
-//   src/main/java/twilightforest/entity/projectile/ITFProjectile.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
+//   src/main/java/gloamingforest/entity/projectile/TFArrow.java
+//   src/main/java/gloamingforest/entity/projectile/ITFProjectile.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract "projectile" (F8): TF's throwables and arrows are BP entities without engine physics
+// Contract "projectile" (F8): upstream's throwables and arrows are BP entities without engine physics
 // (`minecraft:physics` without gravity / collision); the server simulates them the way
 // ThrowableProjectile#tick (TFThrowable) and AbstractArrow#tick (TFArrow) do:
 //   - the hit test runs first, along this tick's motion (ProjectileUtil#getHitResultOnMoveVector:
@@ -22,7 +22,7 @@
 //     ArrowSpec::postHurt); a block hit sticks it (shake 7, despawn after 1200 ticks, falling again
 //     when its block goes); a player touching a stuck arrow picks it up by its pickup rule; the
 //     Spec hooks run after as the subclass's additions;
-//   - every projectile hits what Java's Entity#canBeHitByProjectile allows: living things, TF
+//   - every projectile hits what Java's Entity#canBeHitByProjectile allows: living things, upstream
 //     parts, and the pickable vanilla objects (boats, minecarts, end crystals, paintings, leash
 //     knots, fireballs, wind charges, shulker bullets), which take the engine's own damage;
 //   - steering functions (seeker arrows, moonworm shots) may replace the velocity every tick.
@@ -274,7 +274,7 @@ bool pickableObject(Actor const& target) {
 }
 
 /// Projectile#canHitEntity (Entity#canBeHitByProjectile: living things, players, multipart parts,
-/// the pickable vanilla objects; never a TF projectile, which is not pickable): until the
+/// the pickable vanilla objects; never an upstream projectile, which is not pickable): until the
 /// projectile left its owner, nothing of the owner's vehicle stack (Entity#isPassengerOfSameVehicle:
 /// the owner itself, its mount, the mount's other riders); an arrow (AbstractArrow#tick) passes
 /// through players its player owner may not harm.
@@ -314,7 +314,7 @@ Impact* impactOf(std::int64_t uid) {
     return nullptr;
 }
 
-/// Java's projectiles are no LivingEntity: a TF projectile (a BP entity, which Bedrock makes a Mob)
+/// Java's projectiles are no LivingEntity: an upstream projectile (a BP entity, which Bedrock makes a Mob)
 /// loses the Mob category, so whatever asks Actor::hasCategory(ActorCategory::Mob) (the units'
 /// asMob helpers, F8's own tick, mobs choosing targets) treats it as the projectile it is.
 void dropMobCategory(Actor& projectile) {
@@ -624,7 +624,7 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
                 // ThrowableProjectile#tick moves on after a hit that kept the projectile, with the
                 // velocity its onHitBlock left (ChainBlock's bounce, a parry): one that steered it
                 // (ext::setVelocity) or cancelled the impact flies on. One that did neither rests at
-                // the hit point (TF's own keep their projectile there: IceBomb zeroes its motion and
+                // the hit point (upstream's own keep their projectile there: IceBomb zeroes its motion and
                 // gravity, HydraMortar slides on the ground) with its velocity kept for ext::velocity
                 // and a later ext::setVelocity that launches it again.
                 if (!impact.cancelled() && !impact.velocitySet()) {

@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:cube_of_annihilation",
+      "identifier": "gloamingforest:cube_of_annihilation",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "cube_of_annihilation"]
+        "family": ["gloamingforest", "cube_of_annihilation"]
       },
       "minecraft:collision_box": {
         "width": 1,

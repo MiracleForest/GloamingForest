@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:drying",
+  "filter_time": 6000,
+  "input": {
+    "item": "gloamingforest:maze_slime_ball"
+  },
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:gelatinous_maze_slime_drop"
+  }
+}

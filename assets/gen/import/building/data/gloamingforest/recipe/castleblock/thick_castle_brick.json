@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": [
+      {
+        "item": "gloamingforest:castle_brick"
+      },
+      {
+        "item": "gloamingforest:worn_castle_brick"
+      },
+      {
+        "item": "gloamingforest:cracked_castle_brick"
+      },
+      {
+        "item": "gloamingforest:mossy_castle_brick"
+      }
+    ]
+  },
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "result": {
+    "count": 4,
+    "id": "gloamingforest:thick_castle_brick"
+  }
+}

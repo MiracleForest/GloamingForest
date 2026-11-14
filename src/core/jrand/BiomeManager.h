@@ -3,7 +3,7 @@
 // Java-parity BiomeManager of Minecraft 1.21.1 (net.minecraft.world.level.biome.BiomeManager): the
 // "biome zoom" that turns the quart (4x4x4) noise biomes of a chunk into the biome of a block. Every
 // biome read at a block position in Java (Level#getBiome, WorldGenRegion#getBiome: the biome filter
-// of placed features, freeze_top_layer, the spawners, TF's blanket processors) picks one of the 8
+// of placed features, freeze_top_layer, the spawners, upstream's blanket processors) picks one of the 8
 // quarts around the position by a seeded, jittered distance. Pure C++ (gf-core).
 //
 //     auto zoom = gf::core::biome::obfuscateSeed(worldSeed);           // once per world

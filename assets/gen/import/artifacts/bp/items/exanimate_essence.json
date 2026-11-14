@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:exanimate_essence",
+      "identifier": "gloamingforest:exanimate_essence",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:exanimate_essence.name"
+        "value": "item.gloamingforest:exanimate_essence.name"
       },
       "minecraft:max_stack_size": 16
     }

@@ -1,0 +1,30 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:vanishing_block_2"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#w#", "w6w", "#w#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:encased_towerwood"
+      },
+      "6": {
+        "item": "gloamingforest:carminite"
+      },
+      "w": {
+        "item": "gloamingforest:cracked_towerwood"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:reappearing_block"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:vanishing_block",
+      "count": 8
+    }
+  }
+}

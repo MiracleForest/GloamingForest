@@ -2,17 +2,17 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:minoshroom",
+      "identifier": "gloamingforest:minoshroom",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/minoshroomtaur",
+        "default": "textures/gloamingforest/entity/minoshroomtaur",
         "mushroom": "textures/blocks/mushroom_red"
       },
       "geometry": {
-        "default": "geometry.twilightforest.minoshroom.held",
-        "mushrooms": "geometry.twilightforest.minoshroom.mushrooms"
+        "default": "geometry.gloamingforest.minoshroom.held",
+        "mushrooms": "geometry.gloamingforest.minoshroom.mushrooms"
       },
       "scripts": {
         "initialize": [
@@ -23,10 +23,10 @@
         "pre_animation": [
           "variable.dt = math.clamp((query.life_time - variable.prev_time) * 20.0, 0.0, 5.0);",
           "variable.prev_time = query.life_time;",
-          "variable.max_charge = math.max(1.0, query.property('twilightforest:ground_charge'));",
-          "variable.charge = query.property('twilightforest:ground_attack') ? math.min(variable.charge + 6.0 / variable.max_charge * variable.dt, 6.0) : math.max(variable.charge - variable.dt, 0.0);",
+          "variable.max_charge = math.max(1.0, query.property('gloamingforest:ground_charge'));",
+          "variable.charge = query.property('gloamingforest:ground_attack') ? math.min(variable.charge + 6.0 / variable.max_charge * variable.dt, 6.0) : math.max(variable.charge - variable.dt, 0.0);",
           "variable.f1 = math.pow(variable.charge / 6.0, 2);",
-          "variable.charging = query.property('twilightforest:charging');",
+          "variable.charging = query.property('gloamingforest:charging');",
           "variable.charge_extra = variable.charge_extra + (variable.charging ? 0.9 * variable.dt : 0.0);",
           "variable.limb = query.modified_distance_moved + variable.charge_extra;",
           "variable.amount = variable.charging ? 1.0 : query.modified_move_speed;"
@@ -37,12 +37,12 @@
         "should_update_bones_and_effects_offscreen": true
       },
       "animations": {
-        "base": "animation.twilightforest.minoshroom.slam"
+        "base": "animation.gloamingforest.minoshroom.slam"
       },
       "enable_attachables": true,
       "render_controllers": [
         "controller.render.default",
-        "controller.render.twilightforest.minoshroom_mushrooms"
+        "controller.render.gloamingforest.minoshroom_mushrooms"
       ],
       "spawn_egg": {
         "base_color": "#a81012",

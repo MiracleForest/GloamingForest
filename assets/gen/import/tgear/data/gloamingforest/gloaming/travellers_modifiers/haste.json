@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:haste_amplifier": 1
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.haste.description"
+    }
+  ],
+  "equipment_slots": "chest"
+}

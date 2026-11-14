@@ -20,7 +20,7 @@ class Canvas;
 
 namespace gf::client::progression {
 
-/// A toast of this unit (Toasts.cpp: Java's AdvancementToast, TF's LockedBiomeToast).
+/// A toast of this unit (Toasts.cpp: Java's AdvancementToast, upstream's LockedBiomeToast).
 struct ToastInfo {
     std::string what;              ///< the advancement id, or "locked_biome"
     std::string kind;              ///< "advancement" or "locked_biome"

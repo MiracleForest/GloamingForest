@@ -1,0 +1,12 @@
+{
+  "placement": {
+    "type": "gloamingforest:landmark_grid",
+    "structure_grid_lock": "gloamingforest:hedge_maze"
+  },
+  "structures": [
+    {
+      "structure": "gloamingforest:hedge_maze",
+      "weight": 1
+    }
+  ]
+}

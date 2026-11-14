@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/Hydra.java
-//   src/main/java/twilightforest/entity/boss/HydraHeadContainer.java
-//   src/main/java/twilightforest/entity/boss/HydraHead.java
-//   src/main/java/twilightforest/entity/boss/HydraNeck.java
-//   src/main/java/twilightforest/entity/boss/HydraPart.java
-//   src/main/java/twilightforest/entity/boss/HydraSmallPart.java
-//   src/main/java/twilightforest/block/entity/spawner/HydraSpawnerBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/Hydra.java
+//   src/main/java/gloamingforest/entity/boss/HydraHeadContainer.java
+//   src/main/java/gloamingforest/entity/boss/HydraHead.java
+//   src/main/java/gloamingforest/entity/boss/HydraNeck.java
+//   src/main/java/gloamingforest/entity/boss/HydraPart.java
+//   src/main/java/gloamingforest/entity/boss/HydraSmallPart.java
+//   src/main/java/gloamingforest/block/entity/spawner/HydraSpawnerBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The Hydra (U24). Spike S4's multipart path: every TF part is a linked part actor (F8's addPart)
-// of type twilightforest:hydra_part, whose integer property twilightforest:part (the part's index:
+// The Hydra (U24). Spike S4's multipart path: every upstream part is a linked part actor (F8's addPart)
+// of type gloamingforest:hydra_part, whose integer property gloamingforest:part (the part's index:
 // 0 body, 1 tail, then per head the head and its five necks) picks its geometry in the resource
 // pack; the head state, mouth openness, activity and the red hurt overlay travel as entity
-// properties (twilightforest:active, :mouth, :red), the head / neck facing as the part actor's
+// properties (gloamingforest:active, :mouth, :red), the head / neck facing as the part actor's
 // rotation (F8's setPartRotation), so vanilla clients draw the same Hydra as the client mod.
 // The server runs HydraHeadContainer for each head every tick (state machine, poses, facing,
 // bite / flame / mortar attacks, sounds) and the Hydra's brain (target, attack choice, secondary
-// attacks, griefing, the head deaths and respawns); the client-side particles of TF (mouth
+// attacks, griefing, the head deaths and respawns); the client-side particles of upstream (mouth
 // particles, dying parts, death animation) are sent through gf::fx.
 
 #include "feature/hydra/Hydra.h"
@@ -205,7 +205,7 @@ using world::mobGriefing;
 /// Whether `actor` is a part of the hydra `uid`.
 bool partOf(Actor const& actor, std::int64_t uid) { return fe::parentOfPart(actor) == uid; }
 
-/// Java's LivingEntity: a mob that is no TF part.
+/// Java's LivingEntity: a mob that is no upstream part.
 bool living(Actor& a) { return fe::asMob(a) != nullptr && fe::parentOfPart(a) == 0 && a.isAlive(); }
 
 AABB box(V3 const& feet, float width, float height) {
@@ -278,7 +278,7 @@ void tickPart(Actor& hydra, Runtime& rt, int idx) {
         auto  size = fullSize(idx);
         auto& r    = levelRandom();
         // 10 particles a tick: an explosion one time in five, else poof, each in the box from the
-        // part's position to position + (width, height, width) (TF's offset box), with gaussian
+        // part's position to position + (width, height, width) (upstream's offset box), with gaussian
         // 0.02 velocities
         for (int k = 0; k < 10; ++k) {
             char const* id = r.nextInt(5) == 0 ? "minecraft:explosion" : "minecraft:poof";
@@ -295,7 +295,7 @@ void syncParts(Mob& hydra, Runtime& rt) {
     bool parentRed = rt.hurtTime > 0 || rt.deathTime > 0;
     // the body's own overlay (LivingEntityRenderer: hurtTime > 0 || deathTime > 0)
     if (int red = parentRed ? 1 : 0; red != rt.sentRed) {
-        ge::setProperty(hydra, "twilightforest:red", parentRed);
+        ge::setProperty(hydra, "gloamingforest:red", parentRed);
         rt.sentRed = red;
     }
     for (int idx = 0; idx < ch::kPartCount; ++idx) {
@@ -307,25 +307,25 @@ void syncParts(Mob& hydra, Runtime& rt) {
         if (!a) continue;
         int active = p.active ? 1 : 0;
         if (active != p.sentActive) {
-            ge::setProperty(*a, "twilightforest:active", p.active);
+            ge::setProperty(*a, "gloamingforest:active", p.active);
             p.sentActive = active;
         }
         int red = (parentRed || p.hurtTime > 0 || p.deathTime > 0) ? 1 : 0;
         if (red != p.sentRed) {
-            ge::setProperty(*a, "twilightforest:red", red == 1);
+            ge::setProperty(*a, "gloamingforest:red", red == 1);
             p.sentRed = red;
         }
         if (isHeadPart(idx)) {
             // TFPartRenderer#setupRotations: a dying head flips onto its side (the necks' flip is 0)
             int death = std::min(p.deathTime, 20);
             if (death != p.sentDeath) {
-                ge::setProperty(*a, "twilightforest:death", death);
+                ge::setProperty(*a, "gloamingforest:death", death);
                 p.sentDeath = death;
             }
             int   head  = headOf(idx);
             float mouth = rt.heads[head].mouth;
             if (std::fabs(mouth - p.sentMouth) > 1e-4F) {
-                ge::setProperty(*a, "twilightforest:mouth", mouth);
+                ge::setProperty(*a, "gloamingforest:mouth", mouth);
                 p.sentMouth = mouth;
             }
             auto const& name = rt.names[head];
@@ -440,7 +440,7 @@ void setHeadFacing(Actor& hydra, Runtime& rt, int i) {
     switch (hr.head.currentState) {
     case State::BiteReady: {
         if (target) faceEntity(rt, i, *target, 5.0F, pitchC);
-        // head 0 and 1 max yaw; head 2 (TF's max / min as written)
+        // head 0 and 1 max yaw; head 2 (upstream's max / min as written)
         float biteMaxYaw = -60.0F, biteMinYaw = -90.0F;
         if (i == 2) {
             biteMaxYaw = 60.0F;
@@ -459,7 +459,7 @@ void setHeadFacing(Actor& hydra, Runtime& rt, int i) {
     case State::Biting:
     case State::BiteEnding:
         if (target) faceEntity(rt, i, *target, 5.0F, pitchC);
-        hp.xRot = clampPitch(hp.xRot + static_cast<float>(std::numbers::pi / 4.0)); // TF adds PI / 4 to degrees
+        hp.xRot = clampPitch(hp.xRot + static_cast<float>(std::numbers::pi / 4.0)); // upstream adds PI / 4 to degrees
         break;
     case State::RoarRawr: faceVec(rt, i, hr.tx, hr.ty, hr.tz, 10.0F, pitchC); break;
     case State::Flaming:
@@ -528,14 +528,14 @@ void bite(Mob& hydra, Runtime& rt, int i) {
             if (player.isBlocking()) {
                 // the shield in use: the main hand when it holds one, else the off hand
                 bool        main = game::items::idOf(player.getCarriedItem()) == "minecraft:shield"
-                         || game::items::idOf(player.getCarriedItem()) == "twilightforest:knightmetal_shield";
+                         || game::items::idOf(player.getCarriedItem()) == "gloamingforest:knightmetal_shield";
                 ItemStack&  use  = const_cast<ItemStack&>(main ? player.getCarriedItem() : player.getOffhandSlot());
                 HashedString category("shield");
                 if (!player.isItemOnCooldown(category)) {
                     // cause severe damage and play a shatter sound
                     auto& r     = levelRandom();
                     float pitch = (r.nextFloat() - r.nextFloat()) * 0.2F + 1.0F; // LivingEntity#getVoicePitch
-                    gf::fx::sound(player.getDimension(), game::items::idOf(use) == "minecraft:shield" ? "item.twilightforest.shield.shatter" : "item.twilightforest.knightmetal_shield.shatter",
+                    gf::fx::sound(player.getDimension(), game::items::idOf(use) == "minecraft:shield" ? "item.gloamingforest.shield.shatter" : "item.gloamingforest.knightmetal_shield.shatter",
                                   player.getFeetPos(), 1.0F, pitch);
                     use.hurtAndBreak(112, &player);
                     if (main) player.setCarriedItem(use);
@@ -548,8 +548,8 @@ void bite(Mob& hydra, Runtime& rt, int i) {
             }
         }
         // bite it!
-        gf::combat::hurt(*e, static_cast<float>(ch::kBiteDamage), "twilightforest:hydra_bite", &hydra);
-        // knockback (TF passes the step as the strength and 0.1 as the x ratio)
+        gf::combat::hurt(*e, static_cast<float>(ch::kBiteDamage), "gloamingforest:hydra_bite", &hydra);
+        // knockback (upstream passes the step as the strength and 0.1 as the x ratio)
         if (e->isPlayer()) fe::push(*e, Vec3{-sx * 0.5F, 0.1F, -sz * 0.5F});
         else knockback(*e, -sx, 0.1, -sz);
     }
@@ -604,7 +604,7 @@ Actor* headLookTarget(Mob& hydra, Runtime& rt, int i) {
 void flame(Mob& hydra, Runtime& rt, int i) {
     Actor* target = headLookTarget(hydra, rt, i);
     if (!target || target == &hydra || partOf(*target, fe::uidOf(hydra))) return;
-    if (!target->isFireImmune() && gf::combat::hurt(*target, static_cast<float>(ch::kFlameDamage), "twilightforest:hydra_fire", &hydra))
+    if (!target->isFireImmune() && gf::combat::hurt(*target, static_cast<float>(ch::kFlameDamage), "gloamingforest:hydra_fire", &hydra))
         target->setOnFire(ch::kFlameBurnSeconds, true);
 }
 
@@ -616,7 +616,7 @@ void executeAttacks(Mob& hydra, Runtime& rt, int i) {
         // launch blasting mortars if the player is hiding
         bool   blasting = target && !headCanSee(hydra, hp.pos, *target);
         auto&  r        = levelRandom();
-        sound(hydra, hp.pos, "entity.twilightforest.hydra.shoot", 10.0F, (r.nextFloat() - r.nextFloat()) * 0.2F + 1.0F);
+        sound(hydra, hp.pos, "entity.gloamingforest.hydra.shoot", 10.0F, (r.nextFloat() - r.nextFloat()) * 0.2F + 1.0F);
         launchMortar(hydra, i, toVec(hp.pos), hp.xRot, hp.yRot, blasting);
     }
     if (hr.head.currentState == State::Biting) bite(hydra, rt, i);
@@ -629,16 +629,16 @@ void playSounds(Actor& hydra, Runtime& rt, int i) {
     auto& r  = levelRandom();
     if (hr.head.currentState == State::Flaming && hr.tickCount % 5 == 0) {
         float v = 0.5F + r.nextFloat();
-        sound(hydra, hp.pos, "entity.twilightforest.hydra.shoot_fire", v, r.nextFloat() * 0.7F + 0.3F);
+        sound(hydra, hp.pos, "entity.gloamingforest.hydra.shoot_fire", v, r.nextFloat() * 0.7F + 0.3F);
     }
-    if (hr.head.currentState == State::RoarRawr) sound(hydra, hp.pos, "entity.twilightforest.hydra.roar", 1.25F, r.nextFloat() * 0.3F + 0.7F);
+    if (hr.head.currentState == State::RoarRawr) sound(hydra, hp.pos, "entity.gloamingforest.hydra.roar", 1.25F, r.nextFloat() * 0.3F + 0.7F);
     if (hr.head.currentState == State::BiteReady && hr.head.ticksProgress == 60) {
-        sound(hydra, hp.pos, "entity.twilightforest.hydra.warn", 2.0F, r.nextFloat() * 0.3F + 0.7F);
+        sound(hydra, hp.pos, "entity.gloamingforest.hydra.warn", 2.0F, r.nextFloat() * 0.3F + 0.7F);
         log().info("hydra: head {} warns before biting", i);
     }
 }
 
-/// HydraHeadContainer#addMouthParticles (client side in TF, sent through gf::fx).
+/// HydraHeadContainer#addMouthParticles (client side in upstream, sent through gf::fx).
 void mouthParticles(Actor& hydra, Runtime& rt, int i) {
     auto& hr = rt.heads[i];
     auto& hp = rt.parts[ch::headPartIndex(i)];
@@ -659,7 +659,7 @@ void mouthParticles(Actor& hydra, Runtime& rt, int i) {
             double dx = look.x + r.nextGaussian() * 0.0075 * spread;
             double dy = look.y + r.nextGaussian() * 0.0075 * spread;
             double dz = look.z + r.nextGaussian() * 0.0075 * spread;
-            particle(hydra, "twilightforest:large_flame", p, V3{dx * velocity, dy * velocity, dz * velocity});
+            particle(hydra, "gloamingforest:large_flame", p, V3{dx * velocity, dy * velocity, dz * velocity});
         }
         break;
     case State::BiteBeginning:
@@ -1115,7 +1115,7 @@ void tickHydra(Mob& hydra, Runtime& rt) {
     if (alive && rt.random->nextInt(1000) < rt.ambientSoundTime++) {
         rt.ambientSoundTime = -80;
         float pitch         = (rt.random->nextFloat() - rt.random->nextFloat()) * 0.2F + 1.0F;
-        sound(hydra, hydraPos(hydra), "entity.twilightforest.hydra.growl", 2.0F, pitch);
+        sound(hydra, hydraPos(hydra), "entity.gloamingforest.hydra.growl", 2.0F, pitch);
     }
     rt.tickCount++;
     // update all heads
@@ -1141,7 +1141,7 @@ void tickHydra(Mob& hydra, Runtime& rt) {
     // LivingEntity#tick after aiStep: the body turns (Hydra#tickHeadTurn)
     rt.bodyYaw = ch::tickBodyTurn(rt.bodyYaw, rt.yRot);
     applyRotation(hydra, rt);
-    // Hydra#tickDeathAnimation (client side in TF): 10 particles a tick around the body
+    // Hydra#tickDeathAnimation (client side in upstream): 10 particles a tick around the body
     if (rt.deathTime > 0) {
         auto& r = levelRandom();
         for (int k = 0; k < 10; ++k) {
@@ -1187,14 +1187,14 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     // a fire-immune boss ignores fire, except its own mortars (Hydra#isInvulnerableTo, checked by
     // super.hurt): the hit is refused below, after the head counted it (attackEntityFromPart calls
     // headCon.addDamage whatever super.hurt returns)
-    bool const fireRefused = type != "twilightforest:hydra_mortar" && fe::isFireDamage(type);
+    bool const fireRefused = type != "gloamingforest:hydra_mortar" && fe::isFireDamage(type);
     // explosions reach the parts (NeoForge's Level#getEntities returns PartEntity instances): a
     // player's TNT, a creeper, a reflected mortar; the hydra's own mortars are refused just below
     // (their causing entity is the hydra)
     auto   uid    = fe::uidOf(self);
     // DamageSource#getEntity (attacker) / #getDirectEntity (the note of this hit)
     Actor* direct = directId && noteMatches ? fe::actorById(directId) : nullptr;
-    // environmental fire (lava, a fire block, burning) never reaches a part in TF: the parts share
+    // environmental fire (lava, a fire block, burning) never reaches a part in upstream: the parts share
     // the hydra's fire-immune type, so Entity#lavaHurt, BaseFireBlock#entityInside and the burning
     // tick skip them; only an entity's fire hit (a fireball) gets to attackEntityFromPart
     if (fireRefused && !attacker && !direct) return false;
@@ -1214,7 +1214,7 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     double range = attacker ? fe::distanceSqr(self, *attacker) : -1.0;
     // give some leeway for reflected mortars: source.getDirectEntity() instanceof HydraMortar (the
     // mortar's own damage and the explosion it causes both have the mortar as direct entity)
-    bool fromMortar = (direct && direct->getTypeName() == kMortar) || type == "twilightforest:hydra_mortar";
+    bool fromMortar = (direct && direct->getTypeName() == kMortar) || type == "gloamingforest:hydra_mortar";
     if (range > 400.0 + (fromMortar ? 200.0 : 0.0)) return false;
     // ignore hits on dying heads, it's weird
     if (headCon >= 0 && rt->heads[headCon].head.isDead()) return false;
@@ -1407,8 +1407,8 @@ void installHydra() {
     gf::boss::registerBoss({
         .entityId        = kHydra,
         .homeStructure   = kLair,
-        .lootTable       = "twilightforest:entities/hydra",
-        .deathChestBlock = "twilightforest:mangrove_chest",
+        .lootTable       = "gloamingforest:entities/hydra",
+        .deathChestBlock = "gloamingforest:mangrove_chest",
         .bar             = {.rgb = ch::kBarColor},
         .deathTicks      = 200,
     });

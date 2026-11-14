@@ -1,9 +1,9 @@
-# Structure kit (F7): the structure selftests (piece framework, templates, the 17 TF processors on
-# blocks they act on, update_marking shape updates, waterlogging, flower pots, paintings, TF's
+# Structure kit (F7): the structure selftests (piece framework, templates, the 17 upstream processors on
+# blocks they act on, update_marking shape updates, waterlogging, flower pots, paintings, upstream's
 # marker handlers, jigsaw assembly with terrain height adjustment, the template definitions API,
 # wood palettes, block selectors, speleothems, TFMaze, HollowHill, the old lich tower bases, spawner
 # mob scaling and custom spawn rules) pass with their golden volume hashes, the kit loaded its data,
-# /twilightforest structure_util answers, an outline expires without harm, and across a restart
+# /gloamingforest structure_util answers, an outline expires without harm, and across a restart
 # work queued for an unloaded chunk runs once the chunk is loaded, a forced landmark start reloads
 # its pieces through F6's piece types (then is removed), a scaled mob keeps its size and
 # structure.count_loot passes again in the same world (its forced landmark start is removed when it ends).
@@ -13,7 +13,7 @@ Wait-LogLine 'structure kit: \d+ wood palettes, \d+ speleothem configs' 60 | Out
 # the next structure.scale_probe leaves a scaled calf for the run after the restart (plain runs
 # leave nothing behind)
 $mark = Get-LogMark
-Send-Console 'twilightforest structure_util scale_probe'
+Send-Console 'gloamingforest structure_util scale_probe'
 Wait-LogLine 'structure_util scale_probe armed' 30 -Since $mark | Out-Null
 
 $mark = Get-LogMark
@@ -37,17 +37,17 @@ Write-Step 'structure.count_loot passed again in the same world'
 # the dev outlines are drawn by the kit's tick listener and expire on their own: the server keeps
 # running and answering after one expired
 $mark = Get-LogMark
-Send-Console 'twilightforest structure_util outline 0 -60 0 4 -56 4 3'
+Send-Console 'gloamingforest structure_util outline 0 -60 0 4 -56 4 3'
 Wait-LogLine 'structure_util outline: \d+ outlines for 3 s' 30 -Since $mark | Out-Null
 Wait-LogLine 'structure_util outlines expired' 30 -Since $mark | Out-Null
 $mark = Get-LogMark
-Send-Console 'twilightforest structure_util templates'
+Send-Console 'gloamingforest structure_util templates'
 Wait-LogLine 'structure kit: \d+ templates' 30 -Since $mark | Out-Null
 Write-Step 'an outline expired and the server still answers'
 
 # the dev command lists the kit's registries
 $mark = Get-LogMark
-Send-Console 'twilightforest structure_util templates'
+Send-Console 'gloamingforest structure_util templates'
 $line = Wait-LogLine 'structure kit: \d+ templates, \d+ template definitions, (\d+) wood palettes, (\d+) speleothem configs, (\d+) processors' 30 -Since $mark
 Write-Step "structure_util templates: $line"
 if ($line -notmatch '17 wood palettes, 6 speleothem configs') { throw "the kit did not load the 17 wood palettes and 6 speleothem configs: $line" }
@@ -58,7 +58,7 @@ if ($line -notmatch '17 wood palettes, 6 speleothem configs') { throw "the kit d
 # landmark start (unplaced, 512 blocks further south) whose pieces must load through F6's piece
 # factories after the reload
 $mark = Get-LogMark
-Send-Console 'twilightforest structure_util pending_probe'
+Send-Console 'gloamingforest structure_util pending_probe'
 $queued = Wait-LogLine 'structure_util pending_probe queued nonce=(\d+)' 30 -Since $mark
 if ($queued -notmatch 'nonce=(\d+)') { throw "no probe nonce: $queued" }
 $nonce = $Matches[1]

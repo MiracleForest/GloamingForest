@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/acacia_banister"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---", "| |"],
+    "key": {
+      "-": {
+        "item": "minecraft:acacia_slab"
+      },
+      "|": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:acacia_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:acacia_banister",
+      "count": 3
+    }
+  }
+}

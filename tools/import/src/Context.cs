@@ -1,4 +1,4 @@
-// GloamingForest import tool (contract "import", unit F1): the shared state of one run: the TF
+// GloamingForest import tool (contract "import", unit F1): the shared state of one run: the upstream
 // checkout, docs/spec/owners.tsv, the generated files per unit, overrides, and the write / check step.
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace GfImport
     public sealed partial class Ctx
     {
         public string Root;       // repository root
-        public string Tf;         // TF checkout root
+        public string Tf;         // upstream checkout root
         public string GenRes, MainRes, JavaDir;
         public readonly List<string> Log = new List<string>();
         public readonly List<string> Warnings = new List<string>();
@@ -42,14 +42,14 @@ namespace GfImport
             Tf = tf;
             GenRes = Path.Combine(tf, "src", "generated", "resources");
             MainRes = Path.Combine(tf, "src", "main", "resources");
-            JavaDir = Path.Combine(tf, "src", "main", "java", "twilightforest");
-            if (!Directory.Exists(JavaDir)) throw new Exception("TF checkout not found at " + tf + " (run: pwsh tools/tf/fetch.ps1)");
+            JavaDir = Path.Combine(tf, "src", "main", "java", "gloamingforest");
+            if (!Directory.Exists(JavaDir)) throw new Exception("upstream checkout not found at " + tf + " (run: pwsh tools/upstream/fetch.ps1)");
             LoadOwners();
         }
 
-        // ---- reading TF ----------------------------------------------------------------------------
+        // ---- reading upstream ----------------------------------------------------------------------------
 
-        /// <summary>Text of a TF file, line endings normalised to LF (the checkout may be CRLF on CI).</summary>
+        /// <summary>Text of an upstream file, line endings normalised to LF (the checkout may be CRLF on CI).</summary>
         public static string ReadText(string path)
         {
             var s = File.ReadAllText(path, new UTF8Encoding(false));
@@ -259,7 +259,7 @@ namespace GfImport
                         f.Bytes = new UTF8Encoding(false).GetBytes(doc.ToText());
                     }
                 }
-                // familyTags: {"twilightforest:<id>": [tag ids]} sets params.tags of the unit's families entry of that id
+                // familyTags: {"gloamingforest:<id>": [tag ids]} sets params.tags of the unit's families entry of that id
                 // (data/gf/families/<unit>.json), the single source of a family block's Bedrock block tags (SyncFamilyTags)
                 if (ov["familyTags"] != null && ov["familyTags"].IsObj)
                 {

@@ -2,10 +2,10 @@
   "format_version": "1.10.0",
   "particle_effect": {
     "description": {
-      "identifier": "twilightforest:fallen_leaf",
+      "identifier": "gloamingforest:fallen_leaf",
       "basic_render_parameters": {
         "material": "particles_alpha",
-        "texture": "textures/twilightforest/particle/fallen_leaf"
+        "texture": "textures/gloamingforest/particle/fallen_leaf"
       }
     },
     "components": {

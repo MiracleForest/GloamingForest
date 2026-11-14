@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:filled_maze_map",
+      "identifier": "gloamingforest:filled_maze_map",
       "menu_category": {
         "category": "none"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:filled_maze_map.name"
+        "value": "item.gloamingforest:filled_maze_map.name"
       }
     }
   }

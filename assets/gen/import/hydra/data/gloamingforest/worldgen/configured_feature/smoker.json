@@ -1,0 +1,8 @@
+{
+  "type": "gloamingforest:fire_jet",
+  "config": {
+    "state": {
+      "Name": "gloamingforest:smoker"
+    }
+  }
+}

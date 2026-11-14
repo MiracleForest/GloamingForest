@@ -8,8 +8,8 @@
     {"Name":"minecraft:smooth_stone"},
     {"Name":"minecraft:stone_bricks"},
     {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom","waterlogged":"false"}},
-    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"north"}},
-    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"south"}},
+    {"Name":"gloamingforest:etched_nagastone","Properties":{"facing":"north"}},
+    {"Name":"gloamingforest:etched_nagastone","Properties":{"facing":"south"}},
     {"Name":"minecraft:cobblestone"}
   ],
   "blocks": [

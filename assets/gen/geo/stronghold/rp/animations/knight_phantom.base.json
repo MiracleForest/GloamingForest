@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.knight_phantom.base": {
+    "animation.gloamingforest.knight_phantom.base": {
       "loop": true,
       "bones": {
         "leftLeg": {

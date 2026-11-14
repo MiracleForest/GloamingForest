@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of U29's giants against F13's Java goldens (tests/golden/mobs.json): every attribute the
 // golden row lists that Bedrock has a component for, read from the unit's behavior pack entities
 // (assets/pack/bp/entities/giants/<name>.json). The live actors are checked by giants.giant_mobs.
@@ -32,7 +32,7 @@ TEST(GiantsMobs, MatchJavaGoldens) {
     ASSERT_TRUE(golden.contains("entities"));
     for (char const* name : {"giant_miner", "armored_giant"}) {
         SCOPED_TRACE(name);
-        std::string const id  = std::string("twilightforest:") + name;
+        std::string const id  = std::string("gloamingforest:") + name;
         auto const&       row = golden.at("entities").at(id);
         auto const        bp  = load(gf::tests::golden::repoDir() / "assets/pack/bp/entities/giants" / (std::string(name) + ".json"));
         auto const&       c   = bp.at("minecraft:entity").at("components");

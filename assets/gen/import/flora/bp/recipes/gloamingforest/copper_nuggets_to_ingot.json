@@ -1,0 +1,46 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:copper_nuggets_to_ingot"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      },
+      {
+        "item": "gloamingforest:copper_nugget"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:copper_nugget"
+      }
+    ],
+    "result": {
+      "item": "minecraft:copper_ingot"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The hopper access dispatch of the "structure" contract extension (HopperAccess.h): the engine
 // hooks on Bedrock's hopper (outside the W0 contracts; disclosed for A8) and the watched positions.

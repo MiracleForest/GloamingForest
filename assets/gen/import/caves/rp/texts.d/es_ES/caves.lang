@@ -1,6 +1,6 @@
-block.twilightforest.huge_mushgloom=Bloque de champifotón enorme
-block.twilightforest.huge_mushgloom_stem=Tallo de champifotón enorme
-entity.twilightforest.yeti=Yeti
-entity.twilightforest:yeti.name=Yeti
-tile.twilightforest:huge_mushgloom.name=Bloque de champifotón enorme
-tile.twilightforest:huge_mushgloom_stem.name=Tallo de champifotón enorme
+block.gloamingforest.huge_mushgloom=Bloque de champifotón enorme
+block.gloamingforest.huge_mushgloom_stem=Tallo de champifotón enorme
+entity.gloamingforest.yeti=Yeti
+entity.gloamingforest:yeti.name=Yeti
+tile.gloamingforest:huge_mushgloom.name=Bloque de champifotón enorme
+tile.gloamingforest:huge_mushgloom_stem.name=Tallo de champifotón enorme

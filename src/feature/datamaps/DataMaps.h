@@ -2,11 +2,11 @@
 
 // Contract "data", data maps (header owned by F0, implemented by F9).
 //
-// TF's 8 data maps (crumble_horn, transformation_powder, ore_map_color, magic_map_color,
+// upstream's 8 data maps (crumble_horn, transformation_powder, ore_map_color, magic_map_color,
 // ominous_fire, uncrafting ingredients... plus NeoForge compostables, furnace_fuels and
 // parrot_imitations), imported as data. A data map belongs to its consumer (rule R7).
 //
-//     if (auto const* v = gf::datamaps::get("twilightforest:crumble_horn", blockId)) ...;
+//     if (auto const* v = gf::datamaps::get("gloamingforest:crumble_horn", blockId)) ...;
 
 #include <string>
 #include <vector>

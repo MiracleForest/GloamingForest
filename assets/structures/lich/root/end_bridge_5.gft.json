@@ -1,14 +1,14 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/end_bridge_5",
+  "id": "gloamingforest:lich_tower/end_bridge_5",
   "size": [3, 3, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:cobblestone"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:twilight_oak_planks"},
+    {"Name":"gloamingforest:gloaming_oak_planks"},
     {"Name":"minecraft:stone_brick_wall"}
   ],
   "blocks": [

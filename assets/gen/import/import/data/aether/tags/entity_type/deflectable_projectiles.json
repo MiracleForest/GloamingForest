@@ -1,9 +1,9 @@
 {
   "values": [
-    "twilightforest:nature_bolt",
-    "twilightforest:lich_bolt",
-    "twilightforest:wand_bolt",
-    "twilightforest:slime_blob",
-    "twilightforest:ice_snowball"
+    "gloamingforest:nature_bolt",
+    "gloamingforest:lich_bolt",
+    "gloamingforest:wand_bolt",
+    "gloamingforest:slime_blob",
+    "gloamingforest:ice_snowball"
   ]
 }

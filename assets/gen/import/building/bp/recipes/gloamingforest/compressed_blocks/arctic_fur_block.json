@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/arctic_fur_block"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#m#", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:arctic_fur"
+      },
+      "m": {
+        "item": "gloamingforest:arctic_fur"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:arctic_fur"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:arctic_fur_block"
+    }
+  }
+}

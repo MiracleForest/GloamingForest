@@ -1,21 +1,21 @@
 {
   "rename": {
-    "rp/textures/twilightforest/entity/banner/naga.png": "rp/textures/entity/banner/banner_tf_naga.png",
-    "rp/textures/twilightforest/entity/banner/lich.png": "rp/textures/entity/banner/banner_tf_lich.png",
-    "rp/textures/twilightforest/entity/banner/minoshroom.png": "rp/textures/entity/banner/banner_tf_minoshroom.png",
-    "rp/textures/twilightforest/entity/banner/hydra.png": "rp/textures/entity/banner/banner_tf_hydra.png",
-    "rp/textures/twilightforest/entity/banner/knight_phantom.png": "rp/textures/entity/banner/banner_tf_knight_phantom.png",
-    "rp/textures/twilightforest/entity/banner/ur_ghast.png": "rp/textures/entity/banner/banner_tf_ur_ghast.png",
-    "rp/textures/twilightforest/entity/banner/alpha_yeti.png": "rp/textures/entity/banner/banner_tf_alpha_yeti.png",
-    "rp/textures/twilightforest/entity/banner/snow_queen.png": "rp/textures/entity/banner/banner_tf_snow_queen.png",
-    "rp/textures/twilightforest/entity/banner/quest_ram.png": "rp/textures/entity/banner/banner_tf_quest_ram.png"
+    "rp/textures/gloamingforest/entity/banner/naga.png": "rp/textures/entity/banner/banner_tf_naga.png",
+    "rp/textures/gloamingforest/entity/banner/lich.png": "rp/textures/entity/banner/banner_tf_lich.png",
+    "rp/textures/gloamingforest/entity/banner/minoshroom.png": "rp/textures/entity/banner/banner_tf_minoshroom.png",
+    "rp/textures/gloamingforest/entity/banner/hydra.png": "rp/textures/entity/banner/banner_tf_hydra.png",
+    "rp/textures/gloamingforest/entity/banner/knight_phantom.png": "rp/textures/entity/banner/banner_tf_knight_phantom.png",
+    "rp/textures/gloamingforest/entity/banner/ur_ghast.png": "rp/textures/entity/banner/banner_tf_ur_ghast.png",
+    "rp/textures/gloamingforest/entity/banner/alpha_yeti.png": "rp/textures/entity/banner/banner_tf_alpha_yeti.png",
+    "rp/textures/gloamingforest/entity/banner/snow_queen.png": "rp/textures/entity/banner/banner_tf_snow_queen.png",
+    "rp/textures/gloamingforest/entity/banner/quest_ram.png": "rp/textures/entity/banner/banner_tf_quest_ram.png"
   },
   "patch": {
     "bp/blocks/fiery_block.json": [
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:geometry",
-        "value": "geometry.twilightforest.building.fiery_block"
+        "value": "geometry.gloamingforest.building.fiery_block"
       },
       {
         "op": "add",

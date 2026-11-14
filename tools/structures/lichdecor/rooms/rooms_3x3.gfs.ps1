@@ -7,7 +7,7 @@ $ladderN = @{ facing = 'north' }
 
 # double: two storeys joined by a ladder in the back corner
 $t = New-LichRoom -Name 'double' -N 3 -Height 9
-Set-GftBox $t 1 4 1 3 4 3 'twilightforest:canopy_planks'
+Set-GftBox $t 1 4 1 3 4 3 'gloamingforest:canopy_planks'
 Set-GftBlock $t 3 4 3 'minecraft:air'
 for ($y = 1; $y -le 5; $y++) { Set-GftBlock $t 3 $y 3 'minecraft:ladder' $ladderN }
 Add-RoomMarker $t 1 1 3 'candle:1-2'
@@ -19,7 +19,7 @@ Save-Gft $t
 # taller double: three levels, a study at the top
 $t = New-LichRoom -Name 'taller_double' -N 3 -Height 11
 foreach ($y in 4, 7) {
-    Set-GftBox $t 1 $y 1 3 $y 3 'twilightforest:twilight_oak_planks'
+    Set-GftBox $t 1 $y 1 3 $y 3 'gloamingforest:gloaming_oak_planks'
     Set-GftBlock $t 3 $y 3 'minecraft:air'
 }
 for ($y = 1; $y -le 8; $y++) { Set-GftBlock $t 3 $y 3 'minecraft:ladder' $ladderN }

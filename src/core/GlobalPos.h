@@ -7,7 +7,7 @@
 namespace gf::core {
 
 /// Block position plus dimension id (0 overworld, 1 nether, 2 end, others as the game reports;
-/// the Twilight Forest's id comes from gf::world, see feature/dimension/World.h).
+/// the Gloaming Forest's id comes from gf::world, see feature/dimension/World.h).
 struct GlobalPos {
     int dim = 0;
     int x = 0, y = 0, z = 0;

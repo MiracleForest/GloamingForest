@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:phantom_chestplate",
+      "identifier": "gloamingforest:phantom_chestplate",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,14 +14,14 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:phantom_chestplate.name"
+        "value": "item.gloamingforest:phantom_chestplate.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
         "max_durability": 480
       },
       "minecraft:tags": {
-        "tags": ["twilightforest:kept_on_death"]
+        "tags": ["gloamingforest:kept_on_death"]
       }
     }
   }

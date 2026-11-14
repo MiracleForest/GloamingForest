@@ -2,30 +2,30 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:quest_ram",
+      "identifier": "gloamingforest:quest_ram",
       "materials": {
         "default": "entity_alphatest",
         "lines": "entity_alphablend"
       },
       "textures": {
         "default": "textures/entity/questcamps/tf-derived/questram_tinted",
-        "lines": "textures/twilightforest/entity/questram_lines"
+        "lines": "textures/gloamingforest/entity/questram_lines"
       },
       "geometry": {
-        "default": "geometry.twilightforest.quest_ram_tinted",
-        "lines": "geometry.twilightforest.quest_ram_lines"
+        "default": "geometry.gloamingforest.quest_ram_tinted",
+        "lines": "geometry.gloamingforest.quest_ram_lines"
       },
       "render_controllers": [
-        "controller.render.twilightforest.quest_ram",
-        "controller.render.twilightforest.quest_ram_lines"
+        "controller.render.gloamingforest.quest_ram",
+        "controller.render.gloamingforest.quest_ram_lines"
       ],
       "animations": {
-        "base": "animation.twilightforest.quest_ram.base",
-        "pose": "animation.twilightforest.quest_ram.pose"
+        "base": "animation.gloamingforest.quest_ram.base",
+        "pose": "animation.gloamingforest.quest_ram.pose"
       },
       "scripts": {
         "pre_animation": [
-          "v.qr_flags = query.property('twilightforest:color_flags');",
+          "v.qr_flags = query.property('gloamingforest:color_flags');",
           "v.qr_b0 = math.mod(math.floor(v.qr_flags / 1), 2);",
           "v.qr_b1 = math.mod(math.floor(v.qr_flags / 2), 2);",
           "v.qr_b2 = math.mod(math.floor(v.qr_flags / 4), 2);",

@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:death_tome",
+      "identifier": "gloamingforest:death_tome",
       "materials": {
         "default": "entity_alphatest"
       },
@@ -10,7 +10,7 @@
         "default": "textures/entity/enchanting_table_book"
       },
       "geometry": {
-        "default": "geometry.twilightforest.death_tome"
+        "default": "geometry.gloamingforest.death_tome"
       },
       "scripts": {
         "animate": [
@@ -37,11 +37,11 @@
         ]
       },
       "animations": {
-        "base": "animation.twilightforest.death_tome.base",
-        "lectern": "animation.twilightforest.death_tome.lectern",
-        "flip": "animation.twilightforest.death_tome.flip"
+        "base": "animation.gloamingforest.death_tome.base",
+        "lectern": "animation.gloamingforest.death_tome.lectern",
+        "flip": "animation.gloamingforest.death_tome.flip"
       },
-      "render_controllers": ["controller.render.twilightforest.death_tome"],
+      "render_controllers": ["controller.render.gloamingforest.death_tome"],
       "spawn_egg": {
         "base_color": "#774e22",
         "overlay_color": "#dbcdbe"

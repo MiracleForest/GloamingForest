@@ -23,7 +23,7 @@ namespace gf::feature::building {
 
 using Json = nlohmann::json;
 
-inline constexpr std::string_view kNs = "twilightforest:";
+inline constexpr std::string_view kNs = "gloamingforest:";
 
 enum Dir : int { Down = 0, Up = 1, North = 2, South = 3, West = 4, East = 5 };
 inline constexpr std::array<int, 6> kDx{0, 0, 0, 0, -1, 1};
@@ -44,11 +44,11 @@ inline constexpr std::array<int, 4> kHorizontal{North, South, West, East};
 
 [[nodiscard]] BlockPos relative(BlockPos const& p, int d, int n = 1);
 
-/// "twilightforest:x" of the block (its type name).
+/// "gloamingforest:x" of the block (its type name).
 [[nodiscard]] std::string idOf(Block const& block);
 [[nodiscard]] std::string idAt(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] Block const* blockAt(BlockSource& region, BlockPos const& pos);
-/// The block's state `name` ("twilightforest:x") as a string ("true"/"false" for booleans, digits
+/// The block's state `name` ("gloamingforest:x") as a string ("true"/"false" for booleans, digits
 /// for integers); "" when the block has none.
 [[nodiscard]] std::string stateOf(Block const& block, std::string const& name);
 [[nodiscard]] bool        boolState(Block const& block, std::string const& name);

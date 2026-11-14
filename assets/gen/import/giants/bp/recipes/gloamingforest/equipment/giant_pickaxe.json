@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/giant_pickaxe"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", " X ", " X "],
+    "key": {
+      "#": {
+        "item": "gloamingforest:giant_cobblestone"
+      },
+      "X": {
+        "item": "gloamingforest:giant_log"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:giant_cobblestone"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:giant_pickaxe"
+    }
+  }
+}

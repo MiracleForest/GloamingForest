@@ -1,14 +1,14 @@
 {
   "values": [
-    "twilightforest:ghast_tear",
-    "twilightforest:thorns",
-    "twilightforest:oreberry",
-    "twilightforest:fiery",
-    "twilightforest:fire_jet",
-    "twilightforest:reactor",
-    "twilightforest:clamped",
-    "twilightforest:moonworm",
-    "twilightforest:acid_rain",
-    "twilightforest:ominous_fire"
+    "gloamingforest:ghast_tear",
+    "gloamingforest:thorns",
+    "gloamingforest:oreberry",
+    "gloamingforest:fiery",
+    "gloamingforest:fire_jet",
+    "gloamingforest:reactor",
+    "gloamingforest:clamped",
+    "gloamingforest:moonworm",
+    "gloamingforest:acid_rain",
+    "gloamingforest:ominous_fire"
   ]
 }

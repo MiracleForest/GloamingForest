@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/LabyrinthStructure.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/HollowHillFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/FocusedDensityFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/LabyrinthStructure.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/HollowHillFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/FocusedDensityFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/labyrinth/Terraformer.h"
@@ -114,46 +114,46 @@ bool isNearRoom(int dx, int dz, int const* rcoords, int count, int range) {
 }
 
 char const* roomType(int i, int level) {
-    if (i == 0) return "twilightforest:TFMMR";
-    if (i == 1) return level == 1 ? "twilightforest:TFMMRE" : "twilightforest:TFMMRB";
-    if (i == 2 || i == 3) return level == 1 ? "twilightforest:TFMMRC" : "twilightforest:TFMMMR";
-    if (i == 4) return level == 1 ? "twilightforest:TFMMRF" : "twilightforest:TFMMRV";
-    return "twilightforest:TFMMRSC";
+    if (i == 0) return "gloamingforest:TFMMR";
+    if (i == 1) return level == 1 ? "gloamingforest:TFMMRE" : "gloamingforest:TFMMRB";
+    if (i == 2 || i == 3) return level == 1 ? "gloamingforest:TFMMRC" : "gloamingforest:TFMMMR";
+    if (i == 4) return level == 1 ? "gloamingforest:TFMMRF" : "gloamingforest:TFMMRV";
+    return "gloamingforest:TFMMRSC";
 }
 
 char const* deadEndType(int t, bool tripwire, int level) {
     switch (t) {
-    case 1: return "twilightforest:TFMMDEC";
-    case 2: return tripwire ? "twilightforest:TFMMDETC" : "twilightforest:TFMMDETrC";
-    case 3: return "twilightforest:TFMMDET";
-    case 4: return "twilightforest:TFMMDEF";
-    case 5: return "twilightforest:TFMMDEFL";
-    case 6: return "twilightforest:TFMMDEP";
-    case 7: return level == 1 ? "twilightforest:TFMMDER" : "twilightforest:TFMMDES";
-    default: return "twilightforest:TFMMDE"; // blank with fence doorway
+    case 1: return "gloamingforest:TFMMDEC";
+    case 2: return tripwire ? "gloamingforest:TFMMDETC" : "gloamingforest:TFMMDETrC";
+    case 3: return "gloamingforest:TFMMDET";
+    case 4: return "gloamingforest:TFMMDEF";
+    case 5: return "gloamingforest:TFMMDEFL";
+    case 6: return "gloamingforest:TFMMDEP";
+    case 7: return level == 1 ? "gloamingforest:TFMMDER" : "gloamingforest:TFMMDES";
+    default: return "gloamingforest:TFMMDE"; // blank with fence doorway
     }
 }
 
 char const* corridorType(int t, int level) {
     switch (t) {
-    case 1: return "twilightforest:TFMMC";
-    case 2: return "twilightforest:TFMMCIF";
-    case 4: return level == 1 ? "twilightforest:TFMMCR" : "twilightforest:TFMMCS";
+    case 1: return "gloamingforest:TFMMC";
+    case 2: return "gloamingforest:TFMMCIF";
+    case 4: return level == 1 ? "gloamingforest:TFMMCR" : "gloamingforest:TFMMCS";
     default: return nullptr; // 3: painting (none), 0: nothing
     }
 }
 
 float weaponModifier(char const* id) {
     std::string_view s(id ? id : "");
-    if (s == "minecraft:golden_axe" || s == "twilightforest:gold_minotaur_axe") return 6.0F;
-    if (s == "twilightforest:diamond_minotaur_axe") return 9.0F;
+    if (s == "minecraft:golden_axe" || s == "gloamingforest:gold_minotaur_axe") return 6.0F;
+    if (s == "gloamingforest:diamond_minotaur_axe") return 9.0F;
     return 0.0F;
 }
 
 char const* minotaurAxe(int roll, float effectiveDifficulty) {
     float additionalDiff = effectiveDifficulty + 1;
     int   result         = static_cast<int>(static_cast<float>(roll) / additionalDiff);
-    return result == 0 ? "twilightforest:gold_minotaur_axe" : "minecraft:golden_axe";
+    return result == 0 ? "gloamingforest:gold_minotaur_axe" : "minecraft:golden_axe";
 }
 
 float mazeSlimeHealth(int size) {

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // The "landmark" contract (feature/landmark/Landmark.h) is implemented by F6 across this unit
 // (the F0 stub that was here is replaced):
 //

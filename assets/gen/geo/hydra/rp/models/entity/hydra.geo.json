@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.hydra",
+        "identifier": "geometry.gloamingforest.hydra",
         "texture_width": 512,
         "texture_height": 256,
         "visible_bounds_width": 28.5,

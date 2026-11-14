@@ -1,47 +1,47 @@
 {
-  "twilightforest:antibuilder": {
+  "gloamingforest:antibuilder": {
     "sound": "wood"
   },
-  "twilightforest:antibuilt_block": {
+  "gloamingforest:antibuilt_block": {
     "sound": "wood"
   },
-  "twilightforest:built_block": {
+  "gloamingforest:built_block": {
     "sound": "wood"
   },
-  "twilightforest:carminite_builder": {
+  "gloamingforest:carminite_builder": {
     "sound": "wood"
   },
-  "twilightforest:carminite_reactor": {
+  "gloamingforest:carminite_reactor": {
     "sound": "wood"
   },
-  "twilightforest:fake_diamond": {
+  "gloamingforest:fake_diamond": {
     "sound": "metal"
   },
-  "twilightforest:fake_gold": {
+  "gloamingforest:fake_gold": {
     "sound": "metal"
   },
-  "twilightforest:ghast_trap": {
+  "gloamingforest:ghast_trap": {
     "sound": "wood"
   },
-  "twilightforest:infested_towerwood": {
+  "gloamingforest:infested_towerwood": {
     "sound": "wood"
   },
-  "twilightforest:locked_vanishing_block": {
+  "gloamingforest:locked_vanishing_block": {
     "sound": "wood"
   },
-  "twilightforest:reactor_debris": {
+  "gloamingforest:reactor_debris": {
     "sound": "ancient_debris"
   },
-  "twilightforest:reappearing_block": {
+  "gloamingforest:reappearing_block": {
     "sound": "wood"
   },
-  "twilightforest:slider": {
+  "gloamingforest:slider": {
     "sound": "stone"
   },
-  "twilightforest:unbreakable_vanishing_block": {
+  "gloamingforest:unbreakable_vanishing_block": {
     "sound": "wood"
   },
-  "twilightforest:vanishing_block": {
+  "gloamingforest:vanishing_block": {
     "sound": "wood"
   }
 }

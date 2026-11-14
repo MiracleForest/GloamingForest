@@ -2,7 +2,7 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:dwarf_rabbit",
+      "identifier": "gloamingforest:dwarf_rabbit",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
@@ -10,7 +10,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "dwarf_rabbit",
           "animal",
           "creature",
@@ -164,8 +164,8 @@
         "minecraft:breedable": {
           "require_tame": false,
           "breeds_with": {
-            "mate_type": "twilightforest:dwarf_rabbit",
-            "baby_type": "twilightforest:dwarf_rabbit",
+            "mate_type": "gloamingforest:dwarf_rabbit",
+            "baby_type": "gloamingforest:dwarf_rabbit",
             "breed_event": {
               "event": "minecraft:entity_born",
               "target": "baby"

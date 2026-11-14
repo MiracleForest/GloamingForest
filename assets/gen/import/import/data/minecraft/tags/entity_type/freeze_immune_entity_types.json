@@ -1,14 +1,14 @@
 {
   "values": [
-    "twilightforest:penguin",
-    "twilightforest:stable_ice_core",
-    "twilightforest:unstable_ice_core",
-    "twilightforest:snow_guardian",
-    "twilightforest:ice_crystal",
-    "twilightforest:wraith",
-    "twilightforest:knight_phantom",
-    "twilightforest:winter_wolf",
-    "twilightforest:yeti",
-    "#twilightforest:bosses"
+    "gloamingforest:penguin",
+    "gloamingforest:stable_ice_core",
+    "gloamingforest:unstable_ice_core",
+    "gloamingforest:snow_guardian",
+    "gloamingforest:ice_crystal",
+    "gloamingforest:wraith",
+    "gloamingforest:knight_phantom",
+    "gloamingforest:winter_wolf",
+    "gloamingforest:yeti",
+    "#gloamingforest:bosses"
   ]
 }

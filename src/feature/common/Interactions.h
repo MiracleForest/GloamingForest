@@ -9,12 +9,12 @@
 // priority (higher first, then registration order) until one returns something other than `Pass`.
 //
 //     namespace ia = gf::feature::common::interactions;
-//     ia::onUseOn({.block = "twilightforest:uncrafting_table"}, [](ia::UseOnContext const& c) {
+//     ia::onUseOn({.block = "gloamingforest:uncrafting_table"}, [](ia::UseOnContext const& c) {
 //         ...;
 //         return ia::Result::Consume;
 //     });
-//     ia::onUseOn(ia::Match::tag("twilightforest:mazestone"), mazebreakerRule);   // block tag
-//     ia::onUse({.item = "twilightforest:ore_magnet"}, [](ia::UseContext const& c) { ...; return ia::Result::Consume; });
+//     ia::onUseOn(ia::Match::tag("gloamingforest:mazestone"), mazebreakerRule);   // block tag
+//     ia::onUse({.item = "gloamingforest:ore_magnet"}, [](ia::UseContext const& c) { ...; return ia::Result::Consume; });
 //
 // - Server thread only; called for server players (network players and SimulatedPlayers alike),
 //   never for the client's own prediction.
@@ -77,7 +77,7 @@ struct Match {
     std::string blockTag;         ///< block tag (entity type tag for entity events), without '#'
     std::string itemTag;          ///< item tag of the held item, without '#'
 
-    /// Matches blocks (entities in entity events) of tag `tagId` ("twilightforest:mazestone").
+    /// Matches blocks (entities in entity events) of tag `tagId` ("gloamingforest:mazestone").
     [[nodiscard]] static Match tag(std::string tagId) {
         Match m;
         m.blockTag = std::move(tagId);
@@ -148,7 +148,7 @@ struct EntityContext {
     ItemStack const&   item;
     std::string const& itemId;
     Actor&             entity;
-    std::string const& entityId; ///< the entity's type id ("twilightforest:quest_ram")
+    std::string const& entityId; ///< the entity's type id ("gloamingforest:quest_ram")
     Vec                at;       ///< world position of the click
     bool               sneaking;
 };

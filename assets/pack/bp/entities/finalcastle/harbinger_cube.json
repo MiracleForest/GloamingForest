@@ -2,13 +2,13 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:harbinger_cube",
+      "identifier": "gloamingforest:harbinger_cube",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "harbinger_cube", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "harbinger_cube", "monster", "mob"] },
       "minecraft:collision_box": { "width": 1.9, "height": 2.4 },
       "minecraft:health": { "value": 40, "max": 40 },
       "minecraft:movement": { "value": 0.23 },

@@ -1,0 +1,9 @@
+{
+  "asset_name": "carminite",
+  "description": {
+    "color": "#9A0000",
+    "translate": "trim_material.gloamingforest.carminite"
+  },
+  "ingredient": "gloamingforest:carminite",
+  "item_model_index": 0.4
+}

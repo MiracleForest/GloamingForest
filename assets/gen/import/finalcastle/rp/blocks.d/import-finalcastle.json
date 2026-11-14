@@ -1,62 +1,62 @@
 {
-  "twilightforest:blue_castle_door": {
+  "gloamingforest:blue_castle_door": {
     "sound": "deepslate_bricks"
   },
-  "twilightforest:blue_force_field": {
+  "gloamingforest:blue_force_field": {
     "sound": "stone"
   },
-  "twilightforest:brown_thorns": {
+  "gloamingforest:brown_thorns": {
     "sound": "wood"
   },
-  "twilightforest:burnt_thorns": {
+  "gloamingforest:burnt_thorns": {
     "sound": "sand"
   },
-  "twilightforest:cinder_furnace": {
+  "gloamingforest:cinder_furnace": {
     "sound": "stone"
   },
-  "twilightforest:cinder_log": {
+  "gloamingforest:cinder_log": {
     "sound": "stone"
   },
-  "twilightforest:cinder_wood": {
+  "gloamingforest:cinder_wood": {
     "sound": "stone"
   },
-  "twilightforest:green_force_field": {
+  "gloamingforest:green_force_field": {
     "sound": "stone"
   },
-  "twilightforest:green_thorns": {
+  "gloamingforest:green_thorns": {
     "sound": "wood"
   },
-  "twilightforest:orange_force_field": {
+  "gloamingforest:orange_force_field": {
     "sound": "stone"
   },
-  "twilightforest:pink_castle_door": {
+  "gloamingforest:pink_castle_door": {
     "sound": "deepslate_bricks"
   },
-  "twilightforest:pink_force_field": {
+  "gloamingforest:pink_force_field": {
     "sound": "stone"
   },
-  "twilightforest:potted_dead_thorn": {
+  "gloamingforest:potted_dead_thorn": {
     "sound": "stone"
   },
-  "twilightforest:potted_green_thorn": {
+  "gloamingforest:potted_green_thorn": {
     "sound": "stone"
   },
-  "twilightforest:potted_thorn": {
+  "gloamingforest:potted_thorn": {
     "sound": "stone"
   },
-  "twilightforest:thorn_leaves": {
+  "gloamingforest:thorn_leaves": {
     "sound": "azalea_leaves"
   },
-  "twilightforest:thorn_rose": {
+  "gloamingforest:thorn_rose": {
     "sound": "grass"
   },
-  "twilightforest:violet_castle_door": {
+  "gloamingforest:violet_castle_door": {
     "sound": "deepslate_bricks"
   },
-  "twilightforest:violet_force_field": {
+  "gloamingforest:violet_force_field": {
     "sound": "stone"
   },
-  "twilightforest:yellow_castle_door": {
+  "gloamingforest:yellow_castle_door": {
     "sound": "deepslate_bricks"
   }
 }

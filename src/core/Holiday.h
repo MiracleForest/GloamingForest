@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/HolidayEvent.java
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java (customizeSplashes)
-//   src/main/java/twilightforest/item/MoonDialItem.java (April Fools)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/HolidayEvent.java
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java (customizeSplashes)
+//   src/main/java/gloamingforest/item/MoonDialItem.java (April Fools)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -19,14 +19,14 @@ struct MonthDay {
 /// Today's date in the local time zone (as Java's MonthDay.now()).
 [[nodiscard]] MonthDay today();
 
-/// TF's HolidayEvent#isHalloweenWeek: strictly after October 19 and strictly before November 4.
+/// upstream's HolidayEvent#isHalloweenWeek: strictly after October 19 and strictly before November 4.
 [[nodiscard]] bool isHalloweenWeek(MonthDay date);
 [[nodiscard]] bool isHalloweenWeek();
 
-/// The title screen splash day (August 19, the Twilight Forest's birthday).
-[[nodiscard]] bool isTwilightBirthday(MonthDay date);
+/// The title screen splash day (August 19, the Gloaming Forest's birthday).
+[[nodiscard]] bool isGloamingBirthday(MonthDay date);
 /// The ordinal of the birthday in `year` ("Happy 15th birthday ..." in 2026: year - 2011).
-[[nodiscard]] int twilightAge(int year);
+[[nodiscard]] int gloamingAge(int year);
 
 /// April 1 (MoonDialItem shows a random phase).
 [[nodiscard]] bool isAprilFools(MonthDay date);

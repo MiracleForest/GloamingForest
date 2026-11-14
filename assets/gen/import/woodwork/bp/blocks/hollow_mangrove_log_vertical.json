@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:hollow_mangrove_log_vertical",
+      "identifier": "gloamingforest:hollow_mangrove_log_vertical",
       "menu_category": {
         "category": "none"
       }
@@ -20,7 +20,7 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 5
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_mangrove_log",

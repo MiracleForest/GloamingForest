@@ -1,6 +1,6 @@
-// Contract "spawn" (F5): the Twilight Forest's spawn engine. Per-entity placement rules
+// Contract "spawn" (F5): the Gloaming Forest's spawn engine. Per-entity placement rules
 // (SpawnPlacements), per-biome tables (registered by U1, else the imported biome JSON), special
-// spawns (onSpecialSpawn: NeoForge's PotentialSpawns event, where F6 answers TF's
+// spawns (onSpecialSpawn: NeoForge's PotentialSpawns event, where F6 answers upstream's
 // EntityEvents#structureSpecialSpawns with the landmark starts' controlled spawns and the
 // structures' spawn overrides of ChunkGenerator#getMobsAt), the chunk-generation spawns
 // (NaturalSpawner#spawnMobsForChunkGeneration) and the natural spawner of the dimension
@@ -262,16 +262,16 @@ bool noCollision(worldgen::Region& region, double x, double y, double z, double 
     return true;
 }
 
-/// DimensionType#brightness for the Twilight Forest's ambient light (0.01).
+/// DimensionType#brightness for the Gloaming Forest's ambient light (0.01).
 float brightness(int light) {
     float f  = static_cast<float>(light) / 15.0F;
     float f1 = f / (4.0F - 3.0F * f);
     return f1 + 0.01F * (1.0F - f1); // Mth.lerp(ambientLight, f1, 1.0F)
 }
 
-/// Level#getSkyDarken of the Twilight Forest (fixed time 13000): Level#updateSkyBrightness with
+/// Level#getSkyDarken of the Gloaming Forest (fixed time 13000): Level#updateSkyBrightness with
 /// the dimension's rain and thunder levels.
-int twilightSkyDarken(BlockSource& region) {
+int gloamingSkyDarken(BlockSource& region) {
     double rain = 0.0, thunder = 0.0;
     if (auto const& w = region.getDimension().mWeather.get()) {
         rain    = static_cast<double>(w->mRainLevel);
@@ -295,7 +295,7 @@ int rawBrightness(worldgen::Region& region, BlockPos const& pos, bool generation
     if (!generation)
         if (auto* src = kit::blockSource(region)) {
             auto pair = src->getBrightnessPair(pos);
-            int  sky  = static_cast<int>(pair.sky->mValue) - twilightSkyDarken(*src);
+            int  sky  = static_cast<int>(pair.sky->mValue) - gloamingSkyDarken(*src);
             return std::max(sky, static_cast<int>(pair.block->mValue));
         }
     int sky = 15;
@@ -510,7 +510,7 @@ bool obstructionDefault(
 }
 
 bool biomeHasTag(std::string const& biome, std::string const& tag) {
-    // gf::tags (F9): TF's biome tags, the units' fragments and the vanilla bridge, which holds the
+    // gf::tags (F9): upstream's biome tags, the units' fragments and the vanilla bridge, which holds the
     // 1.21.1 tags the spawner reads (BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS =
     // minecraft:reduce_water_ambient_spawns: [#minecraft:is_river], is_river: [river, frozen_river])
     return tags::has(tags::Registry::Biome, tag, biome);
@@ -556,7 +556,7 @@ int spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeId
         for (int l1 = 0; l1 < k; ++l1) {
             bool flag = false;
             for (int i2 = 0; !flag && i2 < 4; ++i2) {
-                // NaturalSpawner#getTopNonCollidingPos: the entity's heightmap (the Twilight Forest
+                // NaturalSpawner#getTopNonCollidingPos: the entity's heightmap (the Gloaming Forest
                 // has no ceiling), then SpawnPlacementType#adjustSpawnPosition (ON_GROUND: one down
                 // when the block below is pathfindable)
                 int      top = region.height(heightmap, l, i1);
@@ -665,7 +665,7 @@ struct Spawner {
     void tick() {
         auto level = ll::service::getLevel();
         if (!level || !config::get<worldgen::WorldgenConfig>().naturalSpawning) return;
-        auto dimType = world::twilight();
+        auto dimType = world::gloaming();
         if (!dimType) return;
         GameRuleId rule;
         rule.mValue = static_cast<int>(GameRules::GameRulesIndex::DoMobSpawning);
@@ -735,7 +735,7 @@ struct Spawner {
         if (d2 <= 576.0) return false;
         auto level = ll::service::getLevel();
         if (level) {
-            // the shared spawn of the world (the Twilight Forest's level data derives the overworld's)
+            // the shared spawn of the world (the Gloaming Forest's level data derives the overworld's)
             auto const& spawn = level->getSharedSpawnPos();
             // Bedrock keeps y 32767 while the spawn height is not resolved: compare horizontally then
             double sx = spawn.x + 0.5 - (pos.x + 0.5), sy = spawn.y >= 32767 ? 0.0 : spawn.y + 0.5 - pos.y, sz = spawn.z + 0.5 - (pos.z + 0.5);

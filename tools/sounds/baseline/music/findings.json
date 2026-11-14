@@ -1,5 +1,5 @@
 {
-  "about": "Baseline placeholder for TF's 'findings' (196 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/findings.json.",
+  "about": "Baseline placeholder for upstream's 'findings' (196 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/findings.json.",
   "rate": 22050,
   "quality": 0.25,
   "seed": 67,

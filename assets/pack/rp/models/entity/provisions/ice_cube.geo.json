@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.provisions.ice_cube",
+        "identifier": "geometry.gloamingforest.provisions.ice_cube",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 2,

@@ -29,12 +29,12 @@ class LevelChunk;
 
 namespace gf::worldgen {
 
-/// Config section "worldgen" (rule R13; TF has no config keys of its own for it).
+/// Config section "worldgen" (rule R13; upstream has no config keys of its own for it).
 struct WorldgenConfig {
     int  version = 1;
     /// Generate a flat placeholder ground while no terrain provider (U2) is registered.
     bool fallbackTerrain = true;
-    /// Spawn the biomes' natural mobs in the Twilight Forest (Java's NaturalSpawner and mob caps).
+    /// Spawn the biomes' natural mobs in the Gloaming Forest (Java's NaturalSpawner and mob caps).
     bool naturalSpawning = true;
     /// Per-chunk generation budget (ms) the timing selftest reports against.
     int chunkBudgetMs = 50;
@@ -76,13 +76,13 @@ using NoiseBiomeFn = std::function<std::string(int qx, int qy, int qz)>;
 /// Java's BiomeManager#getBiome(pos) for world seed `seed`: the noise biome of the quart the zoom
 /// picks for `pos`.
 [[nodiscard]] std::string zoomedBiome(std::int64_t seed, BlockPos const& pos, NoiseBiomeFn const& noiseBiome);
-/// The y range of the Twilight Forest ([minY, maxY), set by the generator), for biomeAt's clamp.
-void setTwilightHeight(int minY, int maxY);
-[[nodiscard]] int twilightMinY();
-[[nodiscard]] int twilightMaxY();
+/// The y range of the Gloaming Forest ([minY, maxY), set by the generator), for biomeAt's clamp.
+void setGloamingHeight(int minY, int maxY);
+[[nodiscard]] int gloamingMinY();
+[[nodiscard]] int gloamingMaxY();
 /// The WorldGenRegion random of the region centered on chunk (cx, cz): RandomState#
 /// getOrCreateRandomFactory("minecraft:worldgen_region_random").at(the chunk's world position).
-/// TF's noise settings are not "legacy_random_source", so it is Xoroshiro-based.
+/// upstream's noise settings are not "legacy_random_source", so it is Xoroshiro-based.
 [[nodiscard]] std::unique_ptr<RandomSource> worldGenRegionRandom(std::int64_t seed, int chunkX, int chunkZ);
 
 /// Drops the per-world caches (engine biomes, block permutations); on world close.
@@ -164,7 +164,7 @@ public:
 
 /// A window of the world through a BlockSource (decoration: the 3x3 chunks around the center;
 /// selftests: any box). Heightmaps are computed by scanning, cached per column until a write.
-/// Over chunks this generator wrote (the Twilight Forest while the generator is installed, decided
+/// Over chunks this generator wrote (the Gloaming Forest while the generator is installed, decided
 /// by the constructor; setZoomedChunks overrides it): they store the zoomed biome per block, so
 /// biome(pos) reads the chunk's block biome, noiseBiome() the biome source and chunkBiomes() the
 /// raw biomes kept at generation (keptChunkBiomes); over other chunks (Bedrock's own quart biomes)

@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/entities/EntityUtil.java (tryHangPainting, getPaintingOfSize,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java (tryHangPainting, getPaintingOfSize,
 //     getPaintingsOfSizeOrSmaller, checkValidPaintingPosition, getEntitiesInAABB)
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichBossRoom.java (placePainting)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichBossRoom.java (placePainting)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Paintings of structures (the old lich tower's walls, the camps' and the lich tower revamp's
-// painting markers). The spot check is TF's: the painting's box must not collide with blocks or
+// painting markers). The spot check is upstream's: the painting's box must not collide with blocks or
 // overlap another hanging entity (during generation: the paintings queued so far, which are what
-// TF finds among a ProtoChunk's entities). A live region also asks the game, which only hangs a
+// upstream finds among a ProtoChunk's entities). A live region also asks the game, which only hangs a
 // painting that has a wall behind it.
 #include "feature/structure/Region.h"
 
@@ -49,7 +49,7 @@ std::vector<Variant> const& builtinRegistry() {
     return v;
 }
 
-// tag contents in their files' order (vanilla data / TF's datagen output), used when the mod's
+// tag contents in their files' order (vanilla data / upstream's datagen output), used when the mod's
 // data tree has no copy of the tag
 std::vector<std::string> builtinTag(std::string const& id) {
     static std::vector<std::string> const placeable{
@@ -74,8 +74,8 @@ std::vector<std::string> builtinTag(std::string const& id) {
         "passage",  "pond",     "sunflowers",      "tides"};
     std::vector<std::string> const* list = nullptr;
     if (id == "minecraft:placeable") list = &placeable;
-    else if (id == "twilightforest:tower_boss_paintings") list = &towerBoss;
-    else if (id == "twilightforest:tower_paintings") list = &tower;
+    else if (id == "gloamingforest:tower_boss_paintings") list = &towerBoss;
+    else if (id == "gloamingforest:tower_paintings") list = &tower;
     std::vector<std::string> out;
     if (list)
         for (auto const& s : *list) out.push_back("minecraft:" + s);
@@ -178,7 +178,7 @@ bool tryHang(Region& region, BlockPos const& pos, Orientation direction, std::op
                 if (blocks::blocksMotion(region.getBlock(BlockPos{x, y, z}))) return false;
     // ... and no hanging entity in it: EntityUtil.getEntitiesInAABB reads the entities of
     // ProtoChunks only, the queued paintings here. A loaded chunk is an ImposterProtoChunk without
-    // entities, so in a live world TF sees none of the paintings that hang already either (the
+    // entities, so in a live world upstream sees none of the paintings that hang already either (the
     // game then refuses an overlapping one, which drops as an item).
     if (blockentities::pendingPaintingIntersects(region.dimension(), box)) return false;
     auto motive = variant->id.substr(variant->id.find(':') + 1);
@@ -187,7 +187,7 @@ bool tryHang(Region& region, BlockPos const& pos, Orientation direction, std::op
 
 bool occupied(Region& region, BlockPos const& pos) {
     // EntityUtil.getEntitiesInAABB(world, new AABB(pos)) is not empty: the ProtoChunk entities
-    // (structure entities: the queued paintings); a live world's chunks show TF none
+    // (structure entities: the queued paintings); a live world's chunks show upstream none
     double box[6] = {static_cast<double>(pos.x), static_cast<double>(pos.y), static_cast<double>(pos.z),
                      pos.x + 1.0,                pos.y + 1.0,                pos.z + 1.0};
     return blockentities::pendingPaintingIntersects(region.dimension(), box);

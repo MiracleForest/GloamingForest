@@ -1,9 +1,9 @@
 {
   "values": [
-    "twilightforest:hydra_fire",
-    "twilightforest:hydra_mortar",
-    "twilightforest:fiery",
-    "twilightforest:fire_jet",
-    "twilightforest:scorched"
+    "gloamingforest:hydra_fire",
+    "gloamingforest:hydra_mortar",
+    "gloamingforest:fiery",
+    "gloamingforest:fire_jet",
+    "gloamingforest:scorched"
   ]
 }

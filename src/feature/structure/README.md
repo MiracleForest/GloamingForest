@@ -17,4 +17,4 @@ Fixed:
 Open:
 
 - A bed processor rule test `block_match minecraft:red_bed` matches a bed of any colour (the
-  Bedrock block is the same); TF's templates only hold red beds.
+  Bedrock block is the same); upstream's templates only hold red beds.

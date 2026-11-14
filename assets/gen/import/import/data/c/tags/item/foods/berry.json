@@ -1,13 +1,13 @@
 {
   "values": [
-    "twilightforest:torchberries",
-    "twilightforest:raspberry",
-    "twilightforest:blackberry",
-    "twilightforest:blueberry",
-    "twilightforest:maloberry",
-    "twilightforest:duskberry",
-    "twilightforest:skyberry",
-    "twilightforest:blightberry",
-    "twilightforest:stingberry"
+    "gloamingforest:torchberries",
+    "gloamingforest:raspberry",
+    "gloamingforest:blackberry",
+    "gloamingforest:blueberry",
+    "gloamingforest:maloberry",
+    "gloamingforest:duskberry",
+    "gloamingforest:skyberry",
+    "gloamingforest:blightberry",
+    "gloamingforest:stingberry"
   ]
 }

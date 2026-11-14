@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:encased_smoker"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#A#", "A^A", "#A#"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:encased_towerwood"
+      },
+      "^": {
+        "item": "gloamingforest:smoker"
+      },
+      "A": {
+        "item": "minecraft:redstone"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:smoker"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:encased_smoker"
+    }
+  }
+}

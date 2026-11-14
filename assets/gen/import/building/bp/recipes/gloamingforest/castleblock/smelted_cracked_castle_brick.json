@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:castleblock/smelted_cracked_castle_brick"
+    },
+    "tags": ["furnace"],
+    "input": "gloamingforest:castle_brick",
+    "output": "gloamingforest:cracked_castle_brick",
+    "unlock": [
+      {
+        "item": "gloamingforest:castle_brick"
+      }
+    ]
+  }
+}

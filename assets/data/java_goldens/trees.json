@@ -1,13 +1,13 @@
 {
   "format": 1,
   "kind": "trees",
-  "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
+  "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
   "note": "Each case: the flat area (grass at box.minY - 1, air in the box, the world's flat layers elsewhere), then a configured feature placed with LegacyRandomSource(seed) at pos, or saplings planted (stage 0) and advanced with SaplingBlock#advanceTree twice per sapling with one LegacyRandomSource(seed) per sapling; blocks of the box as palette indices, run-length encoded [count, index], x outermost, then y, then z.",
   "cases": [
     {
       "name": "golden_canopy_tree",
       "kind": "feature",
-      "id": "twilightforest:tree/canopy_tree",
+      "id": "gloamingforest:tree/canopy_tree",
       "seed": 20240611,
       "pos": [59, -60, -25],
       "placed": true,
@@ -15,43 +15,43 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_wood",
+          "Name": "gloamingforest:canopy_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "east"}
         },
         {
-          "Name": "twilightforest:canopy_log",
+          "Name": "gloamingforest:canopy_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "north"}
         }
       ],
@@ -777,20 +777,20 @@
     {
       "name": "golden_darkwood_tree",
       "kind": "feature",
-      "id": "twilightforest:tree/darkwood_tree",
+      "id": "gloamingforest:tree/darkwood_tree",
       "seed": 20240611,
       "pos": [69, -60, -25],
       "placed": true,
       "box": [45, -60, -49, 92, -13, -2],
       "palette": [
         {"Name": "minecraft:air"},
-        {"Name": "twilightforest:hardened_dark_leaves"},
+        {"Name": "gloamingforest:hardened_dark_leaves"},
         {
-          "Name": "twilightforest:dark_wood",
+          "Name": "gloamingforest:dark_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:dark_log",
+          "Name": "gloamingforest:dark_log",
           "Properties": {"axis": "y"}
         }
       ],
@@ -1094,7 +1094,7 @@
     {
       "name": "golden_mangrove_tree",
       "kind": "feature",
-      "id": "twilightforest:tree/mangrove_tree",
+      "id": "gloamingforest:tree/mangrove_tree",
       "seed": 20240611,
       "pos": [74, -60, -25],
       "placed": true,
@@ -1106,19 +1106,19 @@
           "Properties": {"east": "true", "north": "false", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_wood",
+          "Name": "gloamingforest:mangrove_wood",
           "Properties": {"axis": "y"}
         },
         {
@@ -1134,20 +1134,20 @@
           "Properties": {"east": "false", "north": "true", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
-        {"Name": "twilightforest:mangrove_root"},
+        {"Name": "gloamingforest:mangrove_root"},
         {
-          "Name": "twilightforest:mangrove_log",
+          "Name": "gloamingforest:mangrove_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "north"}
         }
       ],
@@ -1528,7 +1528,7 @@
     {
       "name": "golden_mega_canopy_tree",
       "kind": "feature",
-      "id": "twilightforest:tree/mega_canopy_tree",
+      "id": "gloamingforest:tree/mega_canopy_tree",
       "seed": 20240611,
       "pos": [64, -60, -25],
       "placed": true,
@@ -1536,23 +1536,23 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_wood",
+          "Name": "gloamingforest:canopy_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_log",
+          "Name": "gloamingforest:canopy_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "east"}
         }
       ],
@@ -3508,9 +3508,9 @@
       "foreignBefore": 0
     },
     {
-      "name": "sapling_twilight_oak_sapling",
+      "name": "sapling_gloaming_oak_sapling",
       "kind": "sapling",
-      "id": "twilightforest:twilight_oak_sapling",
+      "id": "gloamingforest:gloaming_oak_sapling",
       "seed": 77000,
       "pos": [81, -60, -25],
       "grown": true,
@@ -3518,23 +3518,23 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "y"}
         }
       ],
@@ -3621,7 +3621,7 @@
     {
       "name": "sapling_canopy_sapling",
       "kind": "sapling",
-      "id": "twilightforest:canopy_sapling",
+      "id": "gloamingforest:canopy_sapling",
       "seed": 77001,
       "pos": [129, -60, -25],
       "grown": true,
@@ -3629,43 +3629,43 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_wood",
+          "Name": "gloamingforest:canopy_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:canopy_log",
+          "Name": "gloamingforest:canopy_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "south"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "east"}
         }
       ],
@@ -4260,7 +4260,7 @@
     {
       "name": "sapling_mangrove_sapling",
       "kind": "sapling",
-      "id": "twilightforest:mangrove_sapling",
+      "id": "gloamingforest:mangrove_sapling",
       "seed": 77002,
       "pos": [177, -60, -25],
       "grown": true,
@@ -4272,40 +4272,40 @@
           "Properties": {"east": "true", "north": "false", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_wood",
+          "Name": "gloamingforest:mangrove_wood",
           "Properties": {"axis": "y"}
         },
-        {"Name": "twilightforest:mangrove_root"},
+        {"Name": "gloamingforest:mangrove_root"},
         {
           "Name": "minecraft:vine",
           "Properties": {"east": "false", "north": "true", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_log",
+          "Name": "gloamingforest:mangrove_log",
           "Properties": {"axis": "y"}
         },
         {
@@ -4816,7 +4816,7 @@
     {
       "name": "sapling_darkwood_sapling",
       "kind": "sapling",
-      "id": "twilightforest:darkwood_sapling",
+      "id": "gloamingforest:darkwood_sapling",
       "seed": 77003,
       "pos": [81, -60, 23],
       "grown": true,
@@ -4824,35 +4824,35 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_wood",
+          "Name": "gloamingforest:dark_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:dark_log",
+          "Name": "gloamingforest:dark_log",
           "Properties": {"axis": "y"}
         }
       ],
@@ -5814,7 +5814,7 @@
     {
       "name": "sapling_time_sapling",
       "kind": "sapling",
-      "id": "twilightforest:time_sapling",
+      "id": "gloamingforest:time_sapling",
       "seed": 77004,
       "pos": [129, -56, 23],
       "grown": true,
@@ -5822,24 +5822,24 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:time_wood",
+          "Name": "gloamingforest:time_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:time_leaves",
+          "Name": "gloamingforest:time_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:time_leaves",
+          "Name": "gloamingforest:time_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:time_log",
+          "Name": "gloamingforest:time_log",
           "Properties": {"axis": "y"}
         },
-        {"Name": "twilightforest:root"},
+        {"Name": "gloamingforest:root"},
         {
-          "Name": "twilightforest:time_log_core",
+          "Name": "gloamingforest:time_log_core",
           "Properties": {"active": "false", "axis": "y"}
         },
         {
@@ -6429,7 +6429,7 @@
     {
       "name": "sapling_transformation_sapling",
       "kind": "sapling",
-      "id": "twilightforest:transformation_sapling",
+      "id": "gloamingforest:transformation_sapling",
       "seed": 77005,
       "pos": [177, -60, 23],
       "grown": true,
@@ -6437,39 +6437,39 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_wood",
+          "Name": "gloamingforest:transformation_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:transformation_log",
+          "Name": "gloamingforest:transformation_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:transformation_log_core",
+          "Name": "gloamingforest:transformation_log_core",
           "Properties": {"active": "false", "axis": "y"}
         }
       ],
@@ -7124,7 +7124,7 @@
     {
       "name": "sapling_mining_sapling",
       "kind": "sapling",
-      "id": "twilightforest:mining_sapling",
+      "id": "gloamingforest:mining_sapling",
       "seed": 77006,
       "pos": [81, -60, 71],
       "grown": true,
@@ -7132,23 +7132,23 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:mining_leaves",
+          "Name": "gloamingforest:mining_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mining_leaves",
+          "Name": "gloamingforest:mining_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mining_log",
+          "Name": "gloamingforest:mining_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:mining_log_core",
+          "Name": "gloamingforest:mining_log_core",
           "Properties": {"active": "false", "axis": "y"}
         },
         {
-          "Name": "twilightforest:mining_wood",
+          "Name": "gloamingforest:mining_wood",
           "Properties": {"axis": "y"}
         }
       ],
@@ -7255,7 +7255,7 @@
     {
       "name": "sapling_sorting_sapling",
       "kind": "sapling",
-      "id": "twilightforest:sorting_sapling",
+      "id": "gloamingforest:sorting_sapling",
       "seed": 77007,
       "pos": [129, -60, 71],
       "grown": true,
@@ -7263,31 +7263,31 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_log",
+          "Name": "gloamingforest:sorting_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:sorting_log_core",
+          "Name": "gloamingforest:sorting_log_core",
           "Properties": {"active": "false", "axis": "y"}
         }
       ],
@@ -7379,7 +7379,7 @@
     {
       "name": "sapling_rainbow_oak_sapling",
       "kind": "sapling",
-      "id": "twilightforest:rainbow_oak_sapling",
+      "id": "gloamingforest:rainbow_oak_sapling",
       "seed": 77008,
       "pos": [177, -60, 71],
       "grown": true,
@@ -7387,27 +7387,27 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         }
       ],
@@ -7490,7 +7490,7 @@
     {
       "name": "mega_canopy_sapling",
       "kind": "sapling",
-      "id": "twilightforest:canopy_sapling",
+      "id": "gloamingforest:canopy_sapling",
       "seed": 78000,
       "pos": [90, -60, -25],
       "grown": true,
@@ -7498,27 +7498,27 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_wood",
+          "Name": "gloamingforest:canopy_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "west"}
         },
         {
-          "Name": "twilightforest:canopy_log",
+          "Name": "gloamingforest:canopy_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "south"}
         }
       ],
@@ -9346,9 +9346,9 @@
       "foreignBefore": 571
     },
     {
-      "name": "mega_twilight_oak_sapling_forest",
+      "name": "mega_gloaming_oak_sapling_forest",
       "kind": "sapling",
-      "id": "twilightforest:twilight_oak_sapling",
+      "id": "gloamingforest:gloaming_oak_sapling",
       "seed": 78001,
       "pos": [138, -60, -25],
       "grown": true,
@@ -9356,23 +9356,23 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_wood",
+          "Name": "gloamingforest:gloaming_oak_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "south"}
         }
       ],
@@ -9987,9 +9987,9 @@
       "foreignBefore": 571
     },
     {
-      "name": "mega_twilight_oak_sapling_savannah",
+      "name": "mega_gloaming_oak_sapling_savannah",
       "kind": "sapling",
-      "id": "twilightforest:twilight_oak_sapling",
+      "id": "gloamingforest:gloaming_oak_sapling",
       "seed": 83748,
       "pos": [186, -60, -25],
       "grown": true,
@@ -9997,19 +9997,19 @@
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_wood",
+          "Name": "gloamingforest:gloaming_oak_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "y"}
         }
       ],
@@ -10737,136 +10737,136 @@
       "name": "features_a",
       "kind": "multi",
       "features": [
-        {"id": "twilightforest:tree/twilight_oak_tree", "pos": [23, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/large_twilight_oak_tree", "pos": [59, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/swampy_oak_tree", "pos": [95, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/canopy_tree", "pos": [131, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/firefly_canopy_tree", "pos": [23, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/dead_canopy_tree", "pos": [59, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/mega_canopy_tree", "pos": [95, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/forest_mega_oak_tree", "pos": [131, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/savannah_mega_oak_tree", "pos": [23, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/mangrove_tree", "pos": [59, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/darkwood_tree", "pos": [95, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/homegrown_darkwood_tree", "pos": [131, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/darkwood_lantern_tree", "pos": [23, -60, 77], "placed": true},
-        {"id": "twilightforest:tree/dark_forest_oak_tree", "pos": [59, -60, 77], "placed": true},
-        {"id": "twilightforest:tree/dark_forest_birch_tree", "pos": [95, -60, 77], "placed": true},
-        {"id": "twilightforest:tree/dark_oak_bush", "pos": [131, -60, 77], "placed": true}
+        {"id": "gloamingforest:tree/gloaming_oak_tree", "pos": [23, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/large_gloaming_oak_tree", "pos": [59, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/swampy_oak_tree", "pos": [95, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/canopy_tree", "pos": [131, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/firefly_canopy_tree", "pos": [23, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/dead_canopy_tree", "pos": [59, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/mega_canopy_tree", "pos": [95, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/forest_mega_oak_tree", "pos": [131, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/savannah_mega_oak_tree", "pos": [23, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/mangrove_tree", "pos": [59, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/darkwood_tree", "pos": [95, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/homegrown_darkwood_tree", "pos": [131, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/darkwood_lantern_tree", "pos": [23, -60, 77], "placed": true},
+        {"id": "gloamingforest:tree/dark_forest_oak_tree", "pos": [59, -60, 77], "placed": true},
+        {"id": "gloamingforest:tree/dark_forest_birch_tree", "pos": [95, -60, 77], "placed": true},
+        {"id": "gloamingforest:tree/dark_oak_bush", "pos": [131, -60, 77], "placed": true}
       ],
       "box": [5, -60, -49, 148, 11, 94],
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:canopy_wood",
+          "Name": "gloamingforest:canopy_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:dark_leaves",
+          "Name": "gloamingforest:dark_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:dark_wood",
+          "Name": "gloamingforest:dark_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:twilight_oak_wood",
+          "Name": "gloamingforest:gloaming_oak_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "south"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "west"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:canopy_log",
+          "Name": "gloamingforest:canopy_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:dark_log",
+          "Name": "gloamingforest:dark_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:cicada_jar",
+          "Name": "gloamingforest:cicada_jar",
           "Properties": {"waterlogged": "false"}
         },
         {
@@ -10874,11 +10874,11 @@
           "Properties": {"axis": "y", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:firefly_jar",
+          "Name": "gloamingforest:firefly_jar",
           "Properties": {"waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:rope",
+          "Name": "gloamingforest:rope",
           "Properties": {"waterlogged": "false", "x": "false", "y": "true", "z": "false"}
         },
         {
@@ -10886,19 +10886,19 @@
           "Properties": {"east": "true", "north": "false", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -10918,24 +10918,24 @@
           "Properties": {"east": "false", "north": "true", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
           "Name": "minecraft:vine",
           "Properties": {"east": "false", "north": "false", "south": "true", "up": "false", "west": "false"}
         },
-        {"Name": "twilightforest:mangrove_root"},
+        {"Name": "gloamingforest:mangrove_root"},
         {
           "Name": "minecraft:oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_leaves",
+          "Name": "gloamingforest:gloaming_oak_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mangrove_leaves",
+          "Name": "gloamingforest:mangrove_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -10943,19 +10943,19 @@
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "z"}
         },
         {
-          "Name": "twilightforest:mangrove_log",
+          "Name": "gloamingforest:mangrove_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:mangrove_wood",
+          "Name": "gloamingforest:mangrove_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "x"}
         },
         {
@@ -10963,10 +10963,10 @@
           "Properties": {"east": "false", "north": "false", "south": "false", "up": "false", "west": "true"}
         },
         {
-          "Name": "twilightforest:canopy_leaves",
+          "Name": "gloamingforest:canopy_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
-        {"Name": "twilightforest:hardened_dark_leaves"},
+        {"Name": "gloamingforest:hardened_dark_leaves"},
         {
           "Name": "minecraft:birch_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
@@ -10988,11 +10988,11 @@
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "east"}
         },
         {
-          "Name": "twilightforest:firefly",
+          "Name": "gloamingforest:firefly",
           "Properties": {"facing": "north"}
         }
       ],
@@ -18532,52 +18532,52 @@
       "name": "features_b",
       "kind": "multi",
       "features": [
-        {"id": "twilightforest:tree/oak_bush", "pos": [33, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/rainbow_oak", "pos": [69, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/large_rainbow_oak", "pos": [105, -60, -31], "placed": true},
-        {"id": "twilightforest:tree/time_tree", "pos": [141, -56, -31], "placed": true},
-        {"id": "twilightforest:tree/transformation_tree", "pos": [33, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/mining_tree", "pos": [69, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/sorting_tree", "pos": [105, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/snowy_spruce_tree", "pos": [141, -60, 5], "placed": true},
-        {"id": "twilightforest:tree/mega_spruce_tree", "pos": [33, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/large_winter_tree", "pos": [69, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/smaller_jungle_tree", "pos": [105, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/vanilla_oak_tree", "pos": [141, -60, 41], "placed": true},
-        {"id": "twilightforest:tree/vanilla_birch_tree", "pos": [33, -60, 77], "placed": true},
-        {"id": "twilightforest:mushroom/brown_canopy_mushroom", "pos": [69, -60, 77], "placed": true},
-        {"id": "twilightforest:mushroom/canopy_red_vanilla_mushroom", "pos": [105, -60, 77], "placed": true},
-        {"id": "twilightforest:mushroom/canopy_red_smooth_mushroom", "pos": [141, -60, 77], "placed": true}
+        {"id": "gloamingforest:tree/oak_bush", "pos": [33, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/rainbow_oak", "pos": [69, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/large_rainbow_oak", "pos": [105, -60, -31], "placed": true},
+        {"id": "gloamingforest:tree/time_tree", "pos": [141, -56, -31], "placed": true},
+        {"id": "gloamingforest:tree/transformation_tree", "pos": [33, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/mining_tree", "pos": [69, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/sorting_tree", "pos": [105, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/snowy_spruce_tree", "pos": [141, -60, 5], "placed": true},
+        {"id": "gloamingforest:tree/mega_spruce_tree", "pos": [33, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/large_winter_tree", "pos": [69, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/smaller_jungle_tree", "pos": [105, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/vanilla_oak_tree", "pos": [141, -60, 41], "placed": true},
+        {"id": "gloamingforest:tree/vanilla_birch_tree", "pos": [33, -60, 77], "placed": true},
+        {"id": "gloamingforest:mushroom/brown_canopy_mushroom", "pos": [69, -60, 77], "placed": true},
+        {"id": "gloamingforest:mushroom/canopy_red_vanilla_mushroom", "pos": [105, -60, 77], "placed": true},
+        {"id": "gloamingforest:mushroom/canopy_red_smooth_mushroom", "pos": [141, -60, 77], "placed": true}
       ],
       "box": [15, -60, -49, 158, 11, 94],
       "palette": [
         {"Name": "minecraft:air"},
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_leaves",
+          "Name": "gloamingforest:transformation_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:transformation_wood",
+          "Name": "gloamingforest:transformation_wood",
           "Properties": {"axis": "y"}
         },
         {
@@ -18645,7 +18645,7 @@
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:transformation_log",
+          "Name": "gloamingforest:transformation_log",
           "Properties": {"axis": "y"}
         },
         {
@@ -18657,7 +18657,7 @@
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:transformation_log_core",
+          "Name": "gloamingforest:transformation_log_core",
           "Properties": {"active": "false", "axis": "y"}
         },
         {
@@ -18713,15 +18713,15 @@
           "Properties": {"down": "false", "east": "true", "north": "false", "south": "true", "up": "true", "west": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -18729,7 +18729,7 @@
           "Properties": {"down": "true", "east": "false", "north": "true", "south": "true", "up": "true", "west": "true"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -18737,7 +18737,7 @@
           "Properties": {"down": "false", "east": "true", "north": "false", "south": "false", "up": "true", "west": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -18753,23 +18753,23 @@
           "Properties": {"down": "true", "east": "true", "north": "false", "south": "true", "up": "false", "west": "true"}
         },
         {
-          "Name": "twilightforest:mining_leaves",
+          "Name": "gloamingforest:mining_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:mining_leaves",
+          "Name": "gloamingforest:mining_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:mining_log",
+          "Name": "gloamingforest:mining_log",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:mining_log_core",
+          "Name": "gloamingforest:mining_log_core",
           "Properties": {"active": "false", "axis": "y"}
         },
         {
@@ -18793,7 +18793,7 @@
           "Properties": {"down": "false", "east": "false", "north": "true", "south": "true", "up": "false", "west": "true"}
         },
         {
-          "Name": "twilightforest:mining_wood",
+          "Name": "gloamingforest:mining_wood",
           "Properties": {"axis": "y"}
         },
         {
@@ -18873,7 +18873,7 @@
           "Properties": {"east": "true", "north": "false", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:rainbow_oak_leaves",
+          "Name": "gloamingforest:rainbow_oak_leaves",
           "Properties": {"distance": "6", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -18905,27 +18905,27 @@
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "4", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "3", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "x"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "2", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_leaves",
+          "Name": "gloamingforest:sorting_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -18933,7 +18933,7 @@
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:sorting_log",
+          "Name": "gloamingforest:sorting_log",
           "Properties": {"axis": "y"}
         },
         {
@@ -18941,11 +18941,11 @@
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:sorting_log_core",
+          "Name": "gloamingforest:sorting_log_core",
           "Properties": {"active": "false", "axis": "y"}
         },
         {
-          "Name": "twilightforest:twilight_oak_log",
+          "Name": "gloamingforest:gloaming_oak_log",
           "Properties": {"axis": "z"}
         },
         {
@@ -18957,15 +18957,15 @@
           "Properties": {"down": "false", "east": "false", "north": "false", "south": "false", "up": "false", "west": "false"}
         },
         {
-          "Name": "twilightforest:time_wood",
+          "Name": "gloamingforest:time_wood",
           "Properties": {"axis": "y"}
         },
         {
-          "Name": "twilightforest:time_leaves",
+          "Name": "gloamingforest:time_leaves",
           "Properties": {"distance": "1", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:time_leaves",
+          "Name": "gloamingforest:time_leaves",
           "Properties": {"distance": "7", "persistent": "false", "waterlogged": "false"}
         },
         {
@@ -18973,12 +18973,12 @@
           "Properties": {"distance": "5", "persistent": "false", "waterlogged": "false"}
         },
         {
-          "Name": "twilightforest:time_log",
+          "Name": "gloamingforest:time_log",
           "Properties": {"axis": "y"}
         },
-        {"Name": "twilightforest:root"},
+        {"Name": "gloamingforest:root"},
         {
-          "Name": "twilightforest:time_log_core",
+          "Name": "gloamingforest:time_log_core",
           "Properties": {"active": "false", "axis": "y"}
         },
         {
@@ -23630,8 +23630,8 @@
       "name": "features_c",
       "kind": "multi",
       "features": [
-        {"id": "twilightforest:mushroom/canopy_red_spheroid_mushroom", "pos": [43, -60, -31], "placed": true},
-        {"id": "twilightforest:mushroom/canopy_red_flat_mushroom", "pos": [79, -60, -31], "placed": true},
+        {"id": "gloamingforest:mushroom/canopy_red_spheroid_mushroom", "pos": [43, -60, -31], "placed": true},
+        {"id": "gloamingforest:mushroom/canopy_red_flat_mushroom", "pos": [79, -60, -31], "placed": true},
         {"id": "minecraft:huge_brown_mushroom", "pos": [115, -60, -31], "placed": true},
         {"id": "minecraft:huge_red_mushroom", "pos": [151, -60, -31], "placed": true}
       ],

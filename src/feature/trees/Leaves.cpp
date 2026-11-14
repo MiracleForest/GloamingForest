@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TransformationLeavesBlock.java
-//   src/main/java/twilightforest/block/HardenedDarkLeavesBlock.java
-//   src/main/java/twilightforest/world/components/feature/trees/growers/StructureTreeGrower.java
-//   src/main/java/twilightforest/world/components/structures/type/HollowTreeStructure.java (checkSaplingClearance)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TransformationLeavesBlock.java
+//   src/main/java/gloamingforest/block/HardenedDarkLeavesBlock.java
+//   src/main/java/gloamingforest/world/components/feature/trees/growers/StructureTreeGrower.java
+//   src/main/java/gloamingforest/world/components/structures/type/HollowTreeStructure.java (checkSaplingClearance)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -16,7 +16,7 @@
 // - hardened dark leaves: no mob spawns on them (isValidSpawn = TFBlocks::noSpawning, through the
 //   spawn contract's position override) and pick block gives dark leaves (getCloneItemStack,
 //   src/feature/ext/trees/PickBlock);
-// - the robust twilight oak sapling, whose grower starts the hollow tree landmark
+// - the robust gloaming oak sapling, whose grower starts the hollow tree landmark
 //   (StructureTreeGrower -> gf::landmark::generateAt) after the hollow tree's sapling clearance.
 #include "feature/trees/Trees.h"
 
@@ -53,8 +53,8 @@ namespace gf::feature::trees {
 
 namespace {
 
-constexpr char kTransformationLeaves[] = "twilightforest:transformation_leaves";
-constexpr char kHardenedDarkLeaves[]   = "twilightforest:hardened_dark_leaves";
+constexpr char kTransformationLeaves[] = "gloamingforest:transformation_leaves";
+constexpr char kHardenedDarkLeaves[]   = "gloamingforest:hardened_dark_leaves";
 /// At most this many runes a tick go to one player without the client mod (each is a packet).
 constexpr int kMaxVanillaRunes = 16;
 
@@ -117,7 +117,7 @@ void displayTicks(Player& player) {
             if (region.getBlock(p).getTypeName() != kTransformationLeaves) continue;
             // ParticleUtils.spawnParticleOnFace(DOWN, spread 0.5)
             Vec3 v{static_cast<float>(p.x + 0.5 + (-0.5 + nextDouble())), static_cast<float>(p.y + 0.5 - 0.55), static_cast<float>(p.z + 0.5 + (-0.5 + nextDouble()))};
-            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(v, "twilightforest:leaf_rune", dim, std::nullopt));
+            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(v, "gloamingforest:leaf_rune", dim, std::nullopt));
             pkt.sendTo(player);
             ++sent;
         }
@@ -146,31 +146,31 @@ bool saplingClearance(BlockSource& region, BlockPos const& pos) {
 bool growHollowTree(BlockSource& region, BlockPos const& pos, std::string const& structureId) {
     // StructureTreeGrower#growTree: the clearance first; the sapling stays when it fails
     if (!saplingClearance(region, pos)) {
-        gf::log().info("trees: the robust twilight oak sapling at {} {} {} has no clearance for {}", pos.x, pos.y, pos.z, structureId);
+        gf::log().info("trees: the robust gloaming oak sapling at {} {} {} has no clearance for {}", pos.x, pos.y, pos.z, structureId);
         return false;
     }
-    // TF removes the sapling (UPDATE_ALL) only once the start is valid, then places the pieces.
+    // upstream removes the sapling (UPDATE_ALL) only once the start is valid, then places the pieces.
     // The landmark contract builds and places a start in one call (generateAt; it has no
     // validate-only step), so the sapling stays while the start is made: a failed start leaves it
     // untouched (no block update, no F11 removal / placement events), and after a valid one it
-    // goes unless a piece already put something else there (TF's pieces would overwrite TF's air).
+    // goes unless a piece already put something else there (upstream's pieces would overwrite upstream's air).
     Block const* sapling = &region.getBlock(pos);
     bool         ok      = gf::landmark::generateAt(structureId, region, pos);
     if (!ok) {
-        gf::log().info("trees: the robust twilight oak sapling at {} {} {} could not grow {}", pos.x, pos.y, pos.z, structureId);
+        gf::log().info("trees: the robust gloaming oak sapling at {} {} {} could not grow {}", pos.x, pos.y, pos.z, structureId);
         return false;
     }
     if (&region.getBlock(pos) == sapling) {
         // no piece put a block into the sapling's cell: the hollow tree's trunk is hollow
         // (HollowTreeTrunk#postProcess fills only radius / 2 < dist <= radius), so its center is the
-        // air TF's grower left when it removed the sapling: the usual case, not a problem. (A sapling
+        // air upstream's grower left when it removed the sapling: the usual case, not a problem. (A sapling
         // at a chunk corner grows the tree elsewhere until F6 records `forced` starts, see
         // docs/units/trees.md; the start is `placed`, so landmark::startAt cannot tell here.)
-        gf::log().debug("trees: the {} start left the robust twilight oak sapling's cell {} {} {} alone (its hollow trunk; TF cleared it before placing)",
+        gf::log().debug("trees: the {} start left the robust gloaming oak sapling's cell {} {} {} alone (its hollow trunk; upstream cleared it before placing)",
                         structureId, pos.x, pos.y, pos.z);
         if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(region, pos, *air);
     }
-    gf::log().info("trees: the robust twilight oak sapling at {} {} {} grew {}", pos.x, pos.y, pos.z, structureId);
+    gf::log().info("trees: the robust gloaming oak sapling at {} {} {} grew {}", pos.x, pos.y, pos.z, structureId);
     return true;
 }
 
@@ -214,31 +214,31 @@ void installLeaves() {
     static bool registered = false;
     if (registered) return;
     registered = true;
-    gf::families_ext::registerStructureGrower("twilightforest:hollow_tree", [](BlockSource& region, BlockPos const& pos, std::string const& id, gf::families_ext::RandomSource&) {
+    gf::families_ext::registerStructureGrower("gloamingforest:hollow_tree", [](BlockSource& region, BlockPos const& pos, std::string const& id, gf::families_ext::RandomSource&) {
         return growHollowTree(region, pos, id);
     });
-    // No natural spawn stands on TF's leaves (the spawners' position list is empty there; F5's
+    // No natural spawn stands on upstream's leaves (the spawners' position list is empty there; F5's
     // spawner does not ask BlockState#isValidSpawn):
     // - hardened dark leaves: isValidSpawn(noSpawning);
     // - the LeavesBlock leaves: the default isValidSpawn, isFaceSturdy(UP), on LeavesBlock's empty
     //   support shape. Dark leaves (DarkLeavesBlock: a full support shape) are not in the list.
     gf::spawn::onSpecialSpawn([](BlockSource& region, BlockPos const& pos, std::string const&) -> std::optional<std::vector<gf::spawn::SpawnEntry>> {
         static std::unordered_set<std::string> const noSpawn = {kHardenedDarkLeaves,
-                                                                "twilightforest:twilight_oak_leaves",
-                                                                "twilightforest:canopy_leaves",
-                                                                "twilightforest:mangrove_leaves",
-                                                                "twilightforest:rainbow_oak_leaves",
-                                                                "twilightforest:time_leaves",
+                                                                "gloamingforest:gloaming_oak_leaves",
+                                                                "gloamingforest:canopy_leaves",
+                                                                "gloamingforest:mangrove_leaves",
+                                                                "gloamingforest:rainbow_oak_leaves",
+                                                                "gloamingforest:time_leaves",
                                                                 kTransformationLeaves,
-                                                                "twilightforest:mining_leaves",
-                                                                "twilightforest:sorting_leaves"};
+                                                                "gloamingforest:mining_leaves",
+                                                                "gloamingforest:sorting_leaves"};
         BlockPos below{pos.x, pos.y - 1, pos.z};
         if (below.y < region.getMinHeight()) return std::nullopt;
         if (noSpawn.contains(region.getBlock(below).getTypeName())) return std::vector<gf::spawn::SpawnEntry>{};
         return std::nullopt;
     });
     // HardenedDarkLeavesBlock#getCloneItemStack: dark leaves
-    gf::trees_ext::setPickItem(kHardenedDarkLeaves, "twilightforest:dark_leaves");
+    gf::trees_ext::setPickItem(kHardenedDarkLeaves, "gloamingforest:dark_leaves");
 }
 
 void uninstallLeaves() {}

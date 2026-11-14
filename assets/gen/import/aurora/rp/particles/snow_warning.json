@@ -2,10 +2,10 @@
   "format_version": "1.10.0",
   "particle_effect": {
     "description": {
-      "identifier": "twilightforest:snow_warning",
+      "identifier": "gloamingforest:snow_warning",
       "basic_render_parameters": {
         "material": "particles_alpha",
-        "texture": "textures/twilightforest/particle/snow_0"
+        "texture": "textures/gloamingforest/particle/snow_0"
       }
     },
     "components": {

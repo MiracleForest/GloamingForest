@@ -1,6 +1,6 @@
 {
-  "block.twilightforest.encased_fire_jet": "Lanzallamas revestido",
-  "block.twilightforest.encased_smoker": "Lanzahumo revestido",
-  "block.twilightforest.fire_jet": "Lanzallamas",
-  "entity.twilightforest.hydra": "Hidra"
+  "block.gloamingforest.encased_fire_jet": "Lanzallamas revestido",
+  "block.gloamingforest.encased_smoker": "Lanzahumo revestido",
+  "block.gloamingforest.fire_jet": "Lanzallamas",
+  "entity.gloamingforest.hydra": "Hidra"
 }

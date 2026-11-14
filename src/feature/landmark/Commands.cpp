@@ -1,31 +1,31 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/command/CenterCommand.java
-//   src/main/java/twilightforest/command/InfoCommand.java
-//   src/main/java/twilightforest/command/ConquerCommand.java
-//   src/main/java/twilightforest/command/GenerateBookCommand.java
-//   src/main/java/twilightforest/util/WorldUtil.java
-//   src/main/java/twilightforest/asmhooks/MapHooks.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/command/CenterCommand.java
+//   src/main/java/gloamingforest/command/InfoCommand.java
+//   src/main/java/gloamingforest/command/ConquerCommand.java
+//   src/main/java/gloamingforest/command/GenerateBookCommand.java
+//   src/main/java/gloamingforest/util/WorldUtil.java
+//   src/main/java/gloamingforest/asmhooks/MapHooks.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest center | info | conquer [reactivate] | genbook [<structure>] (TF's subcommands,
+// /gloamingforest center | info | conquer [reactivate] | genbook [<structure>] (upstream's subcommands,
 // literals, argument shapes and texts) and the GloamingForest additions (docs/spec/README.md,
 // Subcommands): generatebook (an alias of genbook), locate <structure> | place <structure> [x y z]
-// (Java's vanilla /locate structure and /place structure, which know TF's structures there;
+// (Java's vanilla /locate structure and /place structure, which know upstream's structures there;
 // Bedrock's do not). Locating landmark grid
-// structures follows TF's ResolveNearestNonRandomSpreadMapStructure hook (WorldUtil
+// structures follows upstream's ResolveNearestNonRandomSpreadMapStructure hook (WorldUtil
 // #findNearestMapLandmark); random spread structures use vanilla's ring search.
 //
-// Permissions: TF's levels mapped one down onto Bedrock's (Java 2 "gamemasters" -> GameDirectors,
+// Permissions: upstream's levels mapped one down onto Bedrock's (Java 2 "gamemasters" -> GameDirectors,
 // commands::isAdmin; Java 3 "admins", genbook -> Admin, or any operator: Java's default
 // op-permission-level 4 gives operators level 3, Bedrock operators run at GameDirectors). Java's
 // requires(n) hides the literal from a source below level n, so brigadier's parse stops there.
 // Bedrock cannot hide one overload: a command's permission is the Signature's
 // (CommandRegistry::Signature::permissionLevel; CommandRegistry::Overload has no such field, and
 // ll::command::CommandRegistrar::getOrCreateCommand takes the requirement per command), and
-// /twilightforest must stay open to everyone (TF's root and structure_util clear_display require
+// /gloamingforest must stay open to everyone (upstream's root and structure_util clear_display require
 // nothing). A source below the level gets Bedrock's own answer for a command it may not use,
 // commands.generic.unknown, which the client translates.
 #include <algorithm>
@@ -71,7 +71,7 @@ struct PlaceParams {
     int         x = 0, y = 0, z = 0;
 };
 /// locate's ResourceOrTagKeyArgument: the rest of the line (Bedrock's string parameter refuses a
-/// leading '#', so "#twilightforest:landmark" could not be typed as Java takes it).
+/// leading '#', so "#gloamingforest:landmark" could not be typed as Java takes it).
 struct LocateParam {
     CommandRawText structure;
 };
@@ -134,7 +134,7 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
     auto const* inf = rec ? info(rec->start.key) : nullptr;
     if (!rec || !inf || !inf->traits.landmark) {
         log().info("landmark: info at {} {} {}: no landmark", pos.x, pos.y, pos.z);
-        return; // TF returns 0 without a message
+        return; // upstream returns 0 without a message
     }
     auto* player = commands::playerOf(origin);
     // FMLLoader.isProduction(): released builds warn that the command is WIP
@@ -150,7 +150,7 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
             bool c = rec->start.conquered;
             output.success(std::string(c ? "§l§a" : "§l§c") + say(origin, "commands.tffeature.structure.conquer.status", "Structure conquer flag: %s", c ? "true" : "false"));
         }
-        // what is the spawn list (TF underlines it: Bedrock has no underline, and its §n is the
+        // what is the spawn list (upstream underlines it: Bedrock has no underline, and its §n is the
         // copper colour, so the line stays plain)
         output.success(say(origin, "commands.tffeature.structure.spawn_list", "Spawn list for this area is:"));
         if (auto spawns = gf::landmark::ext::potentialSpawns(dim, "monster", pos.x, pos.y, pos.z)) {
@@ -207,7 +207,7 @@ std::optional<std::string> parseResourceLocation(std::string const& text) {
 }
 
 bool structureRegistered(std::string const& key) {
-    // the Structure registry: Minecraft's, TF's and the data packs' structures (the worldgen's), plus
+    // the Structure registry: Minecraft's, upstream's and the data packs' structures (the worldgen's), plus
     // the descriptors (the gf_test fixtures of development builds)
     return info(key) != nullptr || worldgen::ext::structureSlot(key).has_value();
 }
@@ -260,7 +260,7 @@ void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<s
     }
     int given = 0;
     if (!structure) {
-        // every StructureHints of the registry, in registry order (TF's keys sorted by path)
+        // every StructureHints of the registry, in registry order (upstream's keys sorted by path)
         for (auto const& key : descriptorKeys()) {
             auto const* inf = info(key);
             if (!inf || !inf->traits.progression || isFixtureKey(key)) continue;
@@ -279,7 +279,7 @@ void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<s
             ++given;
         }
     }
-    // Command.SINGLE_SUCCESS without a message, as TF
+    // Command.SINGLE_SUCCESS without a message, as upstream
     ++output.mSuccessCount;
     log().info("landmark: genbook gave {} book(s) to {}", given, player->getRealName());
 }
@@ -296,14 +296,14 @@ int horizontalDistance(int x1, int z1, int x2, int z2) {
 
 /// A registered structure without a landmark descriptor (Minecraft's own, or a data pack's): Java's
 /// /locate and /place handle it, here Bedrock's world generator owns Minecraft's structures and
-/// GloamingForest knows the Twilight Forest's only.
-void notTwilightStructure(CommandOrigin const& origin, CommandOutput& output, std::string const& printable) {
-    output.error(say(origin, "gf.landmark.not_twilight_structure",
-                     "/twilightforest locate and place know the Twilight Forest's structures only; %s is not one of them (Bedrock's own /locate finds Minecraft's)",
+/// GloamingForest knows the Gloaming Forest's only.
+void notGloamingStructure(CommandOrigin const& origin, CommandOutput& output, std::string const& printable) {
+    output.error(say(origin, "gf.landmark.not_gloaming_structure",
+                     "/gloamingforest locate and place know the Gloaming Forest's structures only; %s is not one of them (Bedrock's own /locate finds Minecraft's)",
                      printable));
 }
 
-/// `/twilightforest locate <structure>` (LocateCommand#locateStructure).
+/// `/gloamingforest locate <structure>` (LocateCommand#locateStructure).
 void locate(CommandOrigin const& origin, CommandOutput& output, std::string const& structure) {
     if (!commands::isAdmin(origin)) return denied(output, "locate");
     int  dim = originDim(origin);
@@ -315,7 +315,7 @@ void locate(CommandOrigin const& origin, CommandOutput& output, std::string cons
     // ResourceOrTagKeyArgument.Result#asPrintable
     auto printable = tag ? "#" + *parsed : *parsed;
     // LocateCommand#getHolders: Registry#getHolder for a key, Registry#getTag for a tag (the
-    // structure tags of the tags contract: TF's #twilightforest:landmark and any data pack's);
+    // structure tags of the tags contract: upstream's #gloamingforest:landmark and any data pack's);
     // neither is ERROR_STRUCTURE_INVALID with the printable argument
     std::vector<std::string> holders;
     if (tag) holders = tags::members(tags::Registry::Structure, *parsed);
@@ -324,13 +324,13 @@ void locate(CommandOrigin const& origin, CommandOutput& output, std::string cons
         log().info("landmark: locate {}: invalid", printable);
         return output.error(say(origin, "commands.locate.structure.invalid", "There is no structure with type \"%s\"", printable));
     }
-    // Minecraft's structures: in the Twilight Forest none generates (no structure set of theirs has a
-    // biome of TF's biome source), so Java finds none there either and the search below answers
+    // Minecraft's structures: in the Gloaming Forest none generates (no structure set of theirs has a
+    // biome of upstream's biome source), so Java finds none there either and the search below answers
     // not_found; anywhere else Java finds them, and only Bedrock's own /locate can
-    auto tf = twilightDim();
+    auto tf = gloamingDim();
     if ((!tf || *tf != dim) && std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return info(k) == nullptr; })) {
-        log().info("landmark: locate {}: not a Twilight Forest structure", printable);
-        return notTwilightStructure(origin, output, printable);
+        log().info("landmark: locate {}: not a Gloaming Forest structure", printable);
+        return notGloamingStructure(origin, output, printable);
     }
     // LocateCommand: ChunkGenerator#findNearestMapStructure(level, holders, pos, 100, false)
     auto hit = gf::landmark::ext::locate(dim, printable, pos.x, pos.z, 100);
@@ -346,7 +346,7 @@ void locate(CommandOrigin const& origin, CommandOutput& output, std::string cons
     log().info("landmark: locate {} from {} {}: {} at {} {} ({} blocks)", printable, pos.x, pos.z, hit->key, hit->pos.x, hit->pos.z, dist);
 }
 
-/// `/twilightforest place <structure> [x y z]`.
+/// `/gloamingforest place <structure> [x y z]`.
 void place(CommandOrigin const& origin, CommandOutput& output, std::string const& structure, std::optional<BlockPos> at) {
     if (!commands::isAdmin(origin)) return denied(output, "place");
     int  dim    = originDim(origin);
@@ -359,8 +359,8 @@ void place(CommandOrigin const& origin, CommandOutput& output, std::string const
     // PlaceCommand#placeStructure places Minecraft's structures anywhere (its biome check passes
     // everything); Bedrock's world generator owns those
     if (!info(key)) {
-        log().info("landmark: place {}: not a Twilight Forest structure", key);
-        return notTwilightStructure(origin, output, key);
+        log().info("landmark: place {}: not a Gloaming Forest structure", key);
+        return notGloamingStructure(origin, output, key);
     }
     auto region = game::regionOf(dim);
     if (!region) return output.error(say(origin, "commands.place.structure.failed", "Failed to place structure"));
@@ -382,7 +382,7 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     cmd.overload().text("info").execute([](CommandOrigin const& o, CommandOutput& out) { fl::infoCommand(o, out); });
     cmd.overload().text("conquer").execute([](CommandOrigin const& o, CommandOutput& out) { fl::conquer(o, out, true); });
     cmd.overload().text("conquer").text("reactivate").execute([](CommandOrigin const& o, CommandOutput& out) { fl::conquer(o, out, false); });
-    // TF's genbook [<structure>] (GenerateBookCommand) and GloamingForest's alias generatebook
+    // upstream's genbook [<structure>] (GenerateBookCommand) and GloamingForest's alias generatebook
     for (char const* literal : {"genbook", "generatebook"}) {
         cmd.overload().text(literal).execute([](CommandOrigin const& o, CommandOutput& out) { fl::genbook(o, out, std::nullopt); });
         cmd.overload<fl::StructureParam>().text(literal).required("structure").execute(
@@ -442,14 +442,14 @@ bool structureAt(int dimension, std::string const& key, fl::StructureSet const& 
 
 std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x, int z, int searchRadius, bool skipKnownStructures) {
     // targets: one key, or the members of a structure tag (the tags contract's), the ones with a
-    // descriptor (Minecraft's own structures never generate in the Twilight Forest). The gf_test
-    // fixtures say they are in #twilightforest:landmark (no tag file lists them)
+    // descriptor (Minecraft's own structures never generate in the Gloaming Forest). The gf_test
+    // fixtures say they are in #gloamingforest:landmark (no tag file lists them)
     std::vector<std::string> targets;
     if (keyOrTag.starts_with('#')) {
         auto const tag = keyOrTag.substr(1);
         for (auto const& k : gf::tags::members(gf::tags::Registry::Structure, tag))
             if (fl::info(k)) targets.push_back(k);
-        if (tag == "twilightforest:landmark")
+        if (tag == "gloamingforest:landmark")
             for (auto const& k : fl::descriptorKeys())
                 if (auto const* i = fl::info(k); i && fl::isFixtureKey(k) && i->traits.landmarkTag) targets.push_back(k);
     } else if (fl::info(keyOrTag)) {
@@ -472,7 +472,7 @@ std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x,
     for (auto const& rec : fl::allRecords(dimension))
         if (rec->forced && !rec->placed && fl::isFixtureKey(rec->start.key) && std::find(targets.begin(), targets.end(), rec->start.key) != targets.end())
             consider(rec->start.key, rec->start.center.x, rec->start.center.z);
-    auto tf = fl::twilightDim();
+    auto tf = fl::gloamingDim();
     if (!tf || *tf != dimension) return best;
 
     auto seed    = fl::levelSeed();
@@ -522,7 +522,7 @@ std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x,
     if (grid.empty()) return best;
 
     // MapHooks#resolveNearestNonRandomSpreadMapStructure: WorldUtil#findNearestMapLandmark over
-    // LegacyLandmarkPlacements#landmarkCenterScanner (TF passes the radius as 16-chunk cells), and
+    // LegacyLandmarkPlacements#landmarkCenterScanner (upstream passes the radius as 16-chunk cells), and
     // its result replaces vanilla's
     std::optional<Located> landmark;
     double                 landmarkDist = std::numeric_limits<double>::max();

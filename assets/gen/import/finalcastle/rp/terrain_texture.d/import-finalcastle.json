@@ -1,51 +1,51 @@
 {
   "tf_block_blue_force_field": {
-    "textures": "textures/twilightforest/block/blue_force_field"
+    "textures": "textures/gloamingforest/block/blue_force_field"
   },
   "tf_block_brown_thorns_side": {
-    "textures": "textures/twilightforest/block/brown_thorns_side"
+    "textures": "textures/gloamingforest/block/brown_thorns_side"
   },
   "tf_block_brown_thorns_top": {
-    "textures": "textures/twilightforest/block/brown_thorns_top"
+    "textures": "textures/gloamingforest/block/brown_thorns_top"
   },
   "tf_block_burnt_thorns_side": {
-    "textures": "textures/twilightforest/block/burnt_thorns_side"
+    "textures": "textures/gloamingforest/block/burnt_thorns_side"
   },
   "tf_block_burnt_thorns_top": {
-    "textures": "textures/twilightforest/block/burnt_thorns_top"
+    "textures": "textures/gloamingforest/block/burnt_thorns_top"
   },
   "tf_block_castle_door": {
-    "textures": "textures/twilightforest/block/castle_door"
+    "textures": "textures/gloamingforest/block/castle_door"
   },
   "tf_block_castle_door_vanished": {
-    "textures": "textures/twilightforest/block/castle_door_vanished"
+    "textures": "textures/gloamingforest/block/castle_door_vanished"
   },
   "tf_block_cinder_log": {
-    "textures": "textures/twilightforest/block/cinder_log"
+    "textures": "textures/gloamingforest/block/cinder_log"
   },
   "tf_block_cinder_log_top": {
-    "textures": "textures/twilightforest/block/cinder_log_top"
+    "textures": "textures/gloamingforest/block/cinder_log_top"
   },
   "tf_block_green_force_field": {
-    "textures": "textures/twilightforest/block/green_force_field"
+    "textures": "textures/gloamingforest/block/green_force_field"
   },
   "tf_block_green_thorns_side": {
-    "textures": "textures/twilightforest/block/green_thorns_side"
+    "textures": "textures/gloamingforest/block/green_thorns_side"
   },
   "tf_block_green_thorns_top": {
-    "textures": "textures/twilightforest/block/green_thorns_top"
+    "textures": "textures/gloamingforest/block/green_thorns_top"
   },
   "tf_block_orange_force_field": {
-    "textures": "textures/twilightforest/block/orange_force_field"
+    "textures": "textures/gloamingforest/block/orange_force_field"
   },
   "tf_block_pink_force_field": {
-    "textures": "textures/twilightforest/block/pink_force_field"
+    "textures": "textures/gloamingforest/block/pink_force_field"
   },
   "tf_block_thorn_rose": {
-    "textures": "textures/twilightforest/block/thorn_rose"
+    "textures": "textures/gloamingforest/block/thorn_rose"
   },
   "tf_block_violet_force_field": {
-    "textures": "textures/twilightforest/block/violet_force_field"
+    "textures": "textures/gloamingforest/block/violet_force_field"
   },
   "tf_vanilla_block_furnace_front": {
     "textures": "textures/blocks/furnace_front_off"

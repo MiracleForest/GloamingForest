@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/7x7/beard_checkered",
+  "id": "gloamingforest:lich_tower/7x7/beard_checkered",
   "size": [9, 3, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},

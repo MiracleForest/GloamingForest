@@ -1,7 +1,7 @@
 {
   "format": 1,
   "kind": "heights",
-  "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
+  "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
   "seed": -8346138912345678901,
   "note": "Block coordinates: cell (i, j) is column (x0 + i*step, z0 + j*step); values are NoiseBasedChunkGenerator#getBaseHeight (the y above the highest block of the noise terrain, before surface rules, structures, carvers and features).",
   "minY": -32,

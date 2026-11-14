@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// U2 (terrain) gtests: TF's density function types, the density graph against the F13 density
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// U2 (terrain) gtests: upstream's density function types, the density graph against the F13 density
 // goldens, the noise heights against the height goldens and the surface (rules + blankets) against
 // the surface goldens, for the oracle's three seeds.
 #include <gtest/gtest.h>
@@ -58,8 +58,8 @@ TEST(TerrainDensityTypes, AbsoluteDifferenceAndTanhHill) {
 
 TEST(TerrainDensityTypes, CompiledCustomTypes) {
     json fn = {{"type", "minecraft:add"},
-               {"argument1", {{"type", "twilightforest:sqrt"}, {"input", {{"type", "twilightforest:coord_max"}, {"max", 100.0}, {"x_center", 0.0}, {"z_center", 0.0}}}}},
-               {"argument2", {{"type", "twilightforest:hollow_hill"}, {"x_center", 0.5}, {"y_bottom", 0.5}, {"z_center", 0.5}, {"radius", 8.0}, {"height_scale", 1.0}}}};
+               {"argument1", {{"type", "gloamingforest:sqrt"}, {"input", {{"type", "gloamingforest:coord_max"}, {"max", 100.0}, {"x_center", 0.0}, {"z_center", 0.0}}}}},
+               {"argument2", {{"type", "gloamingforest:hollow_hill"}, {"x_center", 0.5}, {"y_bottom", 0.5}, {"z_center", 0.5}, {"radius", 8.0}, {"height_scale", 1.0}}}};
     std::string err;
     auto        d = Density::compile(fn, 0, {}, {}, &err);
     ASSERT_TRUE(d) << err;
@@ -69,18 +69,18 @@ TEST(TerrainDensityTypes, CompiledCustomTypes) {
 }
 
 TEST(TerrainDensityTypes, TerrainColumnPicksNearestLayer) {
-    auto const* c = terrainGrid().column("twilightforest:clearing");
+    auto const* c = terrainGrid().column("gloamingforest:clearing");
     ASSERT_NE(c, nullptr) << "biome_grid.json";
     EXPECT_EQ(terrainGrid().size(), 20U);
-    EXPECT_EQ(c->biomeAt(0), "twilightforest:clearing");
-    EXPECT_EQ(c->biomeAt(-1), "twilightforest:clearing");
-    EXPECT_EQ(c->biomeAt(-2), "twilightforest:underground"); // a tie keeps the lower key (-3)
-    EXPECT_EQ(c->biomeAt(-3), "twilightforest:underground");
+    EXPECT_EQ(c->biomeAt(0), "gloamingforest:clearing");
+    EXPECT_EQ(c->biomeAt(-1), "gloamingforest:clearing");
+    EXPECT_EQ(c->biomeAt(-2), "gloamingforest:underground"); // a tie keeps the lower key (-3)
+    EXPECT_EQ(c->biomeAt(-3), "gloamingforest:underground");
 }
 
 // ---- density goldens ------------------------------------------------------------------------------------
 
-/// The Skylight goldens: F13's oracle and dumper run on a world whose Twilight Forest uses
+/// The Skylight goldens: F13's oracle and dumper run on a world whose Gloaming Forest uses
 /// skylight_noise_gen (tests/terrain/oracle/skylight.ps1).
 fs::path skylightGoldenDir() { return repo() / "tests/terrain/golden/skylight"; }
 
@@ -100,7 +100,7 @@ void checkDensityGolden(std::string const& settingsName, fs::path const& dir) {
         auto const& scale = g.at("terrain").at("scale");
         std::map<std::pair<int, int>, DensityData> at;
         for (std::size_t i = 0; i < pts.size(); ++i) at[{pts[i][0].get<int>(), pts[i][2].get<int>()}] = DensityData{depth[i].get<double>(), scale[i].get<double>()};
-        // RandomState wires the router through mapAll, which turns TF's biome-driven routers into
+        // RandomState wires the router through mapAll, which turns upstream's biome-driven routers into
         // their ChunkCached variants: one 16 x 16 cache keyed by the section-relative column, kept
         // for every compute of the oracle's run (initial_density_without_jaggedness, then
         // final_density), so a point reads the terrain of the first point of its slot
@@ -130,7 +130,7 @@ void checkDensityGolden(std::string const& settingsName, fs::path const& dir) {
     EXPECT_EQ(files, 3);
 }
 
-TEST(TerrainGolden, DensityFinalAtPoints) { checkDensityGolden("twilight_noise_gen", golden::goldenDir()); }
+TEST(TerrainGolden, DensityFinalAtPoints) { checkDensityGolden("gloaming_noise_gen", golden::goldenDir()); }
 TEST(TerrainSkylight, DensityFinalAtPointsMatchesOracle) { checkDensityGolden("skylight_noise_gen", skylightGoldenDir()); }
 
 /// The F13 heights grid ([i][j] or [j][i]) at column (x0 + i * step, z0 + j * step).
@@ -203,11 +203,11 @@ void checkHeightsGolden(std::string const& settingsName, fs::path const& dir) {
     }
 }
 
-TEST(TerrainGolden, BaseHeightsMatch) { checkHeightsGolden("twilight_noise_gen", golden::goldenDir()); }
+TEST(TerrainGolden, BaseHeightsMatch) { checkHeightsGolden("gloaming_noise_gen", golden::goldenDir()); }
 TEST(TerrainSkylight, BaseHeightsMatchOracle) { checkHeightsGolden("skylight_noise_gen", skylightGoldenDir()); }
 
 // Every Skylight golden names the settings its dimension used, and none equals the
-// twilight_noise_gen golden of its seed (a datapack that did not apply would dump those).
+// gloaming_noise_gen golden of its seed (a datapack that did not apply would dump those).
 TEST(TerrainSkylight, GoldensAreSkylights) {
     for (auto seed : seeds()) {
         json density  = golden::readJson(skylightGoldenDir() / "density" / seedFile(seed));
@@ -218,7 +218,7 @@ TEST(TerrainSkylight, GoldensAreSkylights) {
             density.is_discarded() || heights.is_discarded() || tDensity.is_discarded() || tHeights.is_discarded()
         ) << seedFile(seed);
         for (json const* g : {&density, &heights})
-            EXPECT_EQ(g->at("source").value("settings", std::string()), "twilightforest:skylight_noise_gen")
+            EXPECT_EQ(g->at("source").value("settings", std::string()), "gloamingforest:skylight_noise_gen")
                 << seedFile(seed) << " " << g->at("kind");
         EXPECT_NE(
             density.at("router").at("final_density").at("values"),
@@ -250,7 +250,7 @@ std::vector<std::string> biomeTag(std::string const& id) {
 /// The structures off the landmark grid that reach the noise terrain of the oracle's surface chunks,
 /// computed from their structure sets and Java's generation points (the oracle's dump has no
 /// structure list):
-/// - twilightforest:fallen_trunk (avoid_landmark_grid, salt 1275623845, kept a chunk away from
+/// - gloamingforest:fallen_trunk (avoid_landmark_grid, salt 1275623845, kept a chunk away from
 ///   hollow_tree start chunks): FallenTrunkStructure#findGenerationPoint (its own
 ///   RandomSource.create(seed + chunkX * 14413411 + chunkZ * 43387781): position, radius, length,
 ///   the biome tests of isValidNoiseBiome and hasInvalidNearbyBiome, orientation) gives the trunk's
@@ -258,7 +258,7 @@ std::vector<std::string> biomeTag(std::string const& id) {
 ///   within TERRAFORM_PIECE_SIZE 10 and the mounds on the trunk's sides) reaches at most 12 blocks
 ///   from the box, and only inside the chunks the start references (terrain adaptation NONE: the
 ///   chunks of the box inflated by 10, FallenTrunkPiece#addChildren's terraforming UtilityPiece);
-/// - twilightforest:camp (salt 701432212, beard_box jigsaw pieces): CampStructure#findGenerationPoint's
+/// - gloamingforest:camp (salt 701432212, beard_box jigsaw pieces): CampStructure#findGenerationPoint's
 ///   center (the Structure.GenerationContext random), tested against #valid_camp_biomes; its pieces
 ///   stay within 32 blocks of the center, their beard reaches 12 more.
 /// hollow_tree has no terraformer (its pieces are placed after the oracle's surface status).
@@ -266,7 +266,7 @@ std::vector<Reach> structureReach(World const& w, int x0, int z0, int x1, int z1
     std::vector<Reach>                    out;
     std::map<std::string, pl::Placement> sets;
     for (auto const& [unit, id] : std::vector<std::pair<std::string, std::string>>{{"minorlandmarks", "fallen_trunk"}, {"minorlandmarks", "hollow_tree"}, {"questcamps", "camp"}})
-        sets["twilightforest:" + id] = pl::Placement::fromJson(structureSet(unit, id).at("placement"));
+        sets["gloamingforest:" + id] = pl::Placement::fromJson(structureSet(unit, id).at("placement"));
     pl::SetLookup lookup = [&](std::string const& id) -> pl::Placement const* {
         auto it = sets.find(id);
         return it == sets.end() ? nullptr : &it->second;
@@ -278,7 +278,7 @@ std::vector<Reach> structureReach(World const& w, int x0, int z0, int x1, int z1
     // fallen trunks: at most 28 long, so start chunks up to 2 chunks around the grid reach it
     for (int cx = (x0 >> 4) - 3; cx <= (x1 >> 4) + 3; ++cx)
         for (int cz = (z0 >> 4) - 3; cz <= (z1 >> 4) + 3; ++cz) {
-            if (!pl::isStructureChunk(sets["twilightforest:fallen_trunk"], w.seed, cx, cz, variety, lookup)) continue;
+            if (!pl::isStructureChunk(sets["gloamingforest:fallen_trunk"], w.seed, cx, cz, variety, lookup)) continue;
             core::jrand::LegacyRandom r(w.seed + cx * 14413411LL + cz * 43387781LL);
             int                  x = cx * 16 + r.nextInt(16), z = cz * 16 + r.nextInt(16);
             static constexpr int kRadiuses[] = {1, 2, 4};
@@ -313,7 +313,7 @@ std::vector<Reach> structureReach(World const& w, int x0, int z0, int x1, int z1
     // camps
     for (int cx = (x0 >> 4) - 4; cx <= (x1 >> 4) + 4; ++cx)
         for (int cz = (z0 >> 4) - 4; cz <= (z1 >> 4) + 4; ++cz) {
-            if (!pl::isStructureChunk(sets["twilightforest:camp"], w.seed, cx, cz, variety, lookup)) continue;
+            if (!pl::isStructureChunk(sets["gloamingforest:camp"], w.seed, cx, cz, variety, lookup)) continue;
             core::jrand::WorldgenRandom r(std::make_unique<core::jrand::LegacyRandom>(0));
             r.setLargeFeatureSeed(w.seed, cx, cz);
             // Mth.lerpDiscrete(nextFloat, chunk min, chunk max)

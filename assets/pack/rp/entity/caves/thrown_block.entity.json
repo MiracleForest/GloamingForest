@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:thrown_block",
+      "identifier": "gloamingforest:thrown_block",
       "materials": { "default": "entity_alphatest" },
       "textures": {
         "stone": "textures/blocks/stone",
@@ -12,8 +12,8 @@
         "tuff": "textures/blocks/tuff",
         "deepslate": "textures/blocks/deepslate/deepslate"
       },
-      "geometry": { "default": "geometry.twilightforest.caves_block" },
-      "render_controllers": ["controller.render.twilightforest.thrown_block"]
+      "geometry": { "default": "geometry.gloamingforest.caves_block" },
+      "render_controllers": ["controller.render.gloamingforest.thrown_block"]
     }
   }
 }

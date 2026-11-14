@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.skeleton_druid_held",
+        "identifier": "geometry.gloamingforest.skeleton_druid_held",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,

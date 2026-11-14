@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerMainBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/TowerRoofMushroomComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerDecorator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerMainBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/TowerRoofMushroomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerDecorator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// The mushroom tower's pieces ("twilightforest:TFMT*") on F7's tower base.
+// The mushroom tower's pieces ("gloamingforest:TFMT*") on F7's tower base.
 
 #include <memory>
 
@@ -22,7 +22,7 @@ namespace gf::feature::aurora {
 /// MushroomTowerDecorator ("DecoMushroomTower").
 [[nodiscard]] std::unique_ptr<structure::bases::Decorator> mushroomTowerDecorator();
 
-/// MushroomTowerWingComponent ("twilightforest:TFMTWin").
+/// MushroomTowerWingComponent ("gloamingforest:TFMTWin").
 class MushroomTowerWing : public structure::bases::TowerWing {
 public:
     static constexpr int RANGE        = 200;
@@ -63,7 +63,7 @@ private:
     void placeFloor(structure::Region& region, int dy, structure::BlockBox const& sbb);
 };
 
-/// MushroomTowerMainComponent ("twilightforest:TFMTMai").
+/// MushroomTowerMainComponent ("gloamingforest:TFMTMai").
 class MushroomTowerMain : public MushroomTowerWing {
 public:
     /// MushroomTowerMainComponent(rand, index, x, y, z): the tower at (x + 15, y + 4, z + 15), NORTH.
@@ -80,7 +80,7 @@ private:
     std::optional<structure::Rotation> makeAscenderTower(structure::bases::PieceList& list, structure::RandomSource& rand);
 };
 
-/// MushroomTowerBridgeComponent ("twilightforest:TFMTBri").
+/// MushroomTowerBridgeComponent ("gloamingforest:TFMTBri").
 class MushroomTowerBridge : public MushroomTowerWing {
 public:
     MushroomTowerBridge(std::string typeId, int index, int x, int y, int z, int pSize, int pHeight, structure::Orientation direction);
@@ -96,7 +96,7 @@ protected:
     int dHeight = 0;
 };
 
-/// MushroomTowerMainBridgeComponent ("twilightforest:TFMTMB").
+/// MushroomTowerMainBridgeComponent ("gloamingforest:TFMTMB").
 class MushroomTowerMainBridge : public MushroomTowerBridge {
 public:
     MushroomTowerMainBridge(int index, int x, int y, int z, int pHeight, structure::Orientation direction);
@@ -104,7 +104,7 @@ public:
                        structure::Rotation rotation) override;
 };
 
-/// TowerRoofMushroomComponent ("twilightforest:TFMTRoofMush").
+/// TowerRoofMushroomComponent ("gloamingforest:TFMTRoofMush").
 class TowerRoofMushroom : public structure::bases::TowerRoof {
 public:
     TowerRoofMushroom(int index, structure::bases::TowerWing const& wing, float pHang, int x, int y, int z);

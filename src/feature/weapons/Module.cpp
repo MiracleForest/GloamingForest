@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U8 (weapons): registers the unit's items, projectiles and handlers (Weapons.h).
 
 #include "feature/weapons/Weapons.h"

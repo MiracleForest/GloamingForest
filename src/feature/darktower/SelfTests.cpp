@@ -138,7 +138,7 @@ GF_REGISTER_SELFTEST("darktower.vanishing_chain", [](Context& ctx) -> ll::coro::
     placePlayer(ctx, a, -2.0f, 0.5f);
     co_await ctx.ticks(2);
     ctx.check(click(ctx, a) == ia::Result::Consume, "a click on an inactive vanishing block is taken");
-    ctx.check(boolAt(ctx, a, "twilightforest:active"), "the clicked block is active");
+    ctx.check(boolAt(ctx, a, "gloamingforest:active"), "the clicked block is active");
     co_await ctx.ticks(7);
     ctx.check(ctx.blockAt(a) == "minecraft:air", "the clicked block vanished within 2..6 ticks");
     co_await ctx.ticks(25);
@@ -159,13 +159,13 @@ GF_REGISTER_SELFTEST("darktower.reappearing_cycle", [](Context& ctx) -> ll::coro
     ctx.require(region != nullptr, "region");
     devices::activateVanishing(*region, bp(a));
     co_await ctx.ticks(7);
-    ctx.check(boolAt(ctx, a, "twilightforest:vanished") && !boolAt(ctx, a, "twilightforest:active"), "vanished within 2..6 ticks");
+    ctx.check(boolAt(ctx, a, "gloamingforest:vanished") && !boolAt(ctx, a, "gloamingforest:active"), "vanished within 2..6 ticks");
     co_await ctx.ticks(70);
-    ctx.check(boolAt(ctx, a, "twilightforest:vanished") && !boolAt(ctx, a, "twilightforest:active"), "still vanished before 80 ticks");
+    ctx.check(boolAt(ctx, a, "gloamingforest:vanished") && !boolAt(ctx, a, "gloamingforest:active"), "still vanished before 80 ticks");
     co_await ctx.ticks(13);
-    ctx.check(boolAt(ctx, a, "twilightforest:vanished") && boolAt(ctx, a, "twilightforest:active"), "the 15-tick warning after 80 ticks");
+    ctx.check(boolAt(ctx, a, "gloamingforest:vanished") && boolAt(ctx, a, "gloamingforest:active"), "the 15-tick warning after 80 ticks");
     co_await ctx.ticks(16);
-    ctx.check(ctx.blockAt(a) == id::ReappearingBlock && !boolAt(ctx, a, "twilightforest:vanished") && !boolAt(ctx, a, "twilightforest:active"),
+    ctx.check(ctx.blockAt(a) == id::ReappearingBlock && !boolAt(ctx, a, "gloamingforest:vanished") && !boolAt(ctx, a, "gloamingforest:active"),
               "the block reappeared");
 });
 
@@ -175,7 +175,7 @@ GF_REGISTER_SELFTEST("darktower.locked_door", [](Context& ctx) -> ll::coro::Coro
     (void)box;
     auto a = ctx.testPos(2627, 1).offset(0, 1, 0);
     ctx.require(ctx.setBlock(a, id::UnbreakableVanish), "door block placed");
-    ctx.require(ctx.setBlock(a.offset(1, 0, 0), id::LockedVanish, {{"twilightforest:locked", true}}), "lock placed");
+    ctx.require(ctx.setBlock(a.offset(1, 0, 0), id::LockedVanish, {{"gloamingforest:locked", true}}), "lock placed");
     placePlayer(ctx, a, -2.0f, 0.5f);
     co_await ctx.ticks(2);
     auto* region = ctx.region();
@@ -183,7 +183,7 @@ GF_REGISTER_SELFTEST("darktower.locked_door", [](Context& ctx) -> ll::coro::Coro
     ctx.check(devices::areBlocksLocked(*region, bp(a)), "the connected door is locked");
     click(ctx, a);
     co_await ctx.ticks(10);
-    ctx.check(ctx.blockAt(a) == id::UnbreakableVanish && !boolAt(ctx, a, "twilightforest:active"), "a locked door refuses (it only clicks)");
+    ctx.check(ctx.blockAt(a) == id::UnbreakableVanish && !boolAt(ctx, a, "gloamingforest:active"), "a locked door refuses (it only clicks)");
     // the key
     auto& p = ctx.player();
     static_cast<Player&>(p).setPlayerGameType(GameType::Survival);
@@ -193,7 +193,7 @@ GF_REGISTER_SELFTEST("darktower.locked_door", [](Context& ctx) -> ll::coro::Coro
     co_await ctx.ticks(1);
     auto lock = a.offset(1, 0, 0);
     ctx.check(click(ctx, lock, id::TowerKey) == ia::Result::Consume, "the key is used on the lock");
-    ctx.check(!boolAt(ctx, lock, "twilightforest:locked"), "the lock is unlocked");
+    ctx.check(!boolAt(ctx, lock, "gloamingforest:locked"), "the lock is unlocked");
     ctx.check(game::items::countOf(ctx.player().getSelectedItem()) == 1, "one key was consumed");
     ctx.check(!devices::areBlocksLocked(*region, bp(a)), "the door is no longer locked");
     click(ctx, a);
@@ -215,7 +215,7 @@ GF_REGISTER_SELFTEST("darktower.builder_bridge", [](Context& ctx) -> ll::coro::C
     ctx.check(ctx.blockAt(b) == id::Builder, "the builder is still there");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    ctx.check(textState(region->getBlock(bp(b)), "twilightforest:state") == "builder_active", "the powered builder is active");
+    ctx.check(textState(region->getBlock(bp(b)), "gloamingforest:state") == "builder_active", "the powered builder is active");
     // 17 blocks at one per 10 ticks
     for (int t = 0; t < 40; ++t) {
         placePlayer(ctx, b, 0.5f, 1.5f, 0.0f, -90.0f);
@@ -230,7 +230,7 @@ GF_REGISTER_SELFTEST("darktower.builder_bridge", [](Context& ctx) -> ll::coro::C
     ctx.cleanupBlock(b.offset(0, 1, 0));
     remove(*region, bp(b.offset(0, 1, 0)));
     co_await ctx.ticks(10);
-    ctx.check(textState(region->getBlock(bp(b)), "twilightforest:state") != "builder_active", "the unpowered builder is no longer active");
+    ctx.check(textState(region->getBlock(bp(b)), "gloamingforest:state") != "builder_active", "the unpowered builder is no longer active");
     co_await ctx.ticks(17 * 10 + 40);
     int left = 0;
     for (int i = 1; i <= 20; ++i)
@@ -287,7 +287,7 @@ GF_REGISTER_SELFTEST("darktower.reactor", [](Context& ctx) -> ll::coro::CoroTask
         ctx.setBlock(c.offset(o[0], o[1], o[2]), "minecraft:redstone_block");
     }
     co_await ctx.ticks(3);
-    ctx.check(boolAt(ctx, c, "twilightforest:active"), "the reactor fired up");
+    ctx.check(boolAt(ctx, c, "gloamingforest:active"), "the reactor fired up");
     co_await ctx.ticks(8);
     ctx.check(ctx.blockAt(c.offset(0, 1, 0)) == id::FakeDiamond && ctx.blockAt(c.offset(1, 1, 0)) == id::FakeGold
                   && ctx.blockAt(c.offset(1, 0, 1)) == id::FakeGold,
@@ -305,7 +305,7 @@ GF_REGISTER_SELFTEST("darktower.slider", [](Context& ctx) -> ll::coro::CoroTask<
     auto box = co_await ctx.flatArea(2685, 12);
     (void)box;
     auto s = ctx.testPos(2687, 2).offset(0, 1, 0);
-    ctx.require(ctx.setBlock(s, id::Slider, {{"twilightforest:axis", "y"}, {"twilightforest:delay", 0}}), "slider placed");
+    ctx.require(ctx.setBlock(s, id::Slider, {{"gloamingforest:axis", "y"}, {"gloamingforest:delay", 0}}), "slider placed");
     ctx.require(ctx.setBlock(s.offset(-1, 0, 0), "minecraft:stone"), "a wall behind it");
     placePlayer(ctx, s, 6.5f, 0.5f);
     bool spawned = false;
@@ -350,7 +350,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     fired                  = 0;
     if (!listening) {
         listening = true;
-        progression::onTrigger("twilightforest:activate_ghast_trap", [](Player&, nlohmann::json const&) { ++fired; });
+        progression::onTrigger("gloamingforest:activate_ghast_trap", [](Player&, nlohmann::json const&) { ++fired; });
     }
     co_await ctx.ticks(3);
     auto* region = ctx.region();
@@ -375,7 +375,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     // power the trap
     ctx.require(ctx.setBlock(trap.offset(0, 0, 1), "minecraft:redstone_block"), "power placed");
     co_await ctx.ticks(4);
-    ctx.check(boolAt(ctx, trap, "twilightforest:active"), "the charged, powered trap is active");
+    ctx.check(boolAt(ctx, trap, "gloamingforest:active"), "the charged, powered trap is active");
     ctx.check(fired >= 1, "activate_ghast_trap fired for the player within 6 blocks");
     co_await ctx.ticks(60);
     auto* again = actorById(urId);
@@ -390,7 +390,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
                   std::to_string(fp.z - trap.z) + " from the trap)");
     ctx.check(static_cast<float>(again->getHealth()) < before, "the trap damaged the Ur-Ghast (7 per hit)");
     co_await ctx.ticks(70);
-    ctx.check(!boolAt(ctx, trap, "twilightforest:active"), "the trap spun down after 120 ticks");
+    ctx.check(!boolAt(ctx, trap, "gloamingforest:active"), "the trap spun down after 120 ticks");
     if (auto* a = actorById(urId)) a->remove();
     removeAround(ctx, trap, id::Ghastling, 30.0f);
     ctx.require(ctx.setBlock(trap, "minecraft:air"), "trap removed");
@@ -398,7 +398,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     ctx.check(!devices::ghastTrapIndexed(trap.dim, bp(trap)), "the removed trap left the POI index");
 });
 
-// Ur-Ghast phases: 18 damage starts a tantrum (the constructor's setInTantrum(false) resets TF's field
+// Ur-Ghast phases: 18 damage starts a tantrum (the constructor's setInTantrum(false) resets upstream's field
 // initializer of 10 to 18), which divides damage by 10; 18 more ends it
 GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy;

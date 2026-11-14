@@ -33,12 +33,12 @@ using Json = nlohmann::json;
 
 // ---- blocks ---------------------------------------------------------------------------------------
 /// A Java block state {"Name": "minecraft:oak_log", "Properties": {"axis": "y"}} as the Bedrock
-/// permutation (vanilla names and properties translated; TF blocks by their imported states).
+/// permutation (vanilla names and properties translated; upstream blocks by their imported states).
 /// nullptr when the block does not exist (one warning per id).
 [[nodiscard]] Block const* javaState(Json const& state);
 /// A Java block id (+ Java properties) as the Bedrock permutation.
 [[nodiscard]] Block const* javaBlock(std::string_view javaId, Json const& properties = Json::object());
-/// The Java id of a Bedrock block ("minecraft:short_grass", "twilightforest:canopy_log").
+/// The Java id of a Bedrock block ("minecraft:short_grass", "gloamingforest:canopy_log").
 [[nodiscard]] std::string javaId(Block const& block);
 /// `block` with Java property `name` set to `value` ("axis" -> "x"); `block` when it has no such state.
 [[nodiscard]] Block const& withProperty(Block const& block, std::string_view name, std::string_view value);
@@ -53,9 +53,9 @@ using Json = nlohmann::json;
 [[nodiscard]] bool blocksMotion(Block const& block);
 [[nodiscard]] bool isLeaves(Block const& block);
 /// BlockState#canBeReplaced (the blocks built `replaceable`: air, water, grass, snow layer, ...,
-/// and TF's fiddlehead, fallen leaves, ominous fire and wispy cloud).
+/// and upstream's fiddlehead, fallen leaves, ominous fire and wispy cloud).
 [[nodiscard]] bool isReplaceable(Block const& block);
-/// Membership in a Java block tag ("minecraft:dirt", "twilightforest:mazestone"): gf::tags (TF's
+/// Membership in a Java block tag ("minecraft:dirt", "gloamingforest:mazestone"): gf::tags (upstream's
 /// tag data and its vanilla bridge, asked with the block's game id), plus the vanilla tags of Java
 /// 1.21.1 the bridge does not answer (minecraft:fences, doors, trapdoors, overworld_natural_logs).
 /// During a chunk's generation or decoration and a natural spawner tick the answer of a (tag, block)

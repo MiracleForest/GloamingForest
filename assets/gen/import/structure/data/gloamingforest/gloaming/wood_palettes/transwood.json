@@ -1,0 +1,10 @@
+{
+  "banister": "gloamingforest:transformation_banister",
+  "button": "gloamingforest:transformation_button",
+  "fence": "gloamingforest:transformation_fence",
+  "gate": "gloamingforest:transformation_fence_gate",
+  "planks": "gloamingforest:transformation_planks",
+  "plate": "gloamingforest:transformation_pressure_plate",
+  "slab": "gloamingforest:transformation_slab",
+  "stairs": "gloamingforest:transformation_stairs"
+}

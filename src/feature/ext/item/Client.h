@@ -5,7 +5,7 @@
 // custom effects ("effects.sync") and statistics ("stats.sync") on join and on every change; these
 // read the local copy (client build only, client thread).
 //
-//     if (gf::traits::ext::client::get("twilightforest:banished")) ...;
+//     if (gf::traits::ext::client::get("gloamingforest:banished")) ...;
 
 #ifdef GF_CLIENT
 

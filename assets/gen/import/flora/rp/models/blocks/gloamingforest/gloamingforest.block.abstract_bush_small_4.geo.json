@@ -1,0 +1,95 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.gloamingforest.block.abstract_bush_small_4",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-4, 8, -4],
+              "size": [8, 2, 8],
+              "uv": {
+                "north": {
+                  "uv": [4, 6],
+                  "uv_size": [8, 2],
+                  "material_instance": "snow"
+                },
+                "east": {
+                  "uv": [4, 6],
+                  "uv_size": [8, 2],
+                  "material_instance": "snow"
+                },
+                "south": {
+                  "uv": [4, 6],
+                  "uv_size": [8, 2],
+                  "material_instance": "snow"
+                },
+                "west": {
+                  "uv": [4, 6],
+                  "uv_size": [8, 2],
+                  "material_instance": "snow"
+                },
+                "up": {
+                  "uv": [12, 12],
+                  "uv_size": [-8, -8],
+                  "material_instance": "snow"
+                },
+                "down": {
+                  "uv": [12, 12],
+                  "uv_size": [-8, -8],
+                  "material_instance": "snow"
+                }
+              }
+            },
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 8, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "snow"
+                },
+                "east": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "snow"
+                },
+                "south": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "snow"
+                },
+                "west": {
+                  "uv": [0, 8],
+                  "uv_size": [16, 8],
+                  "material_instance": "snow"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "snow"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "snow"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

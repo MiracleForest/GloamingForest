@@ -1,13 +1,13 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/deco/garden_1x3",
+  "id": "gloamingforest:camp/deco/garden_1x3",
   "size": [3, 2, 6],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"z"}},
-    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"x"}},
+    {"Name":"gloamingforest:gloaming_oak_log","Properties":{"axis":"z"}},
+    {"Name":"gloamingforest:gloaming_oak_log","Properties":{"axis":"x"}},
     {"Name":"minecraft:farmland","Properties":{"moisture":"7"}},
     {"Name":"minecraft:wheat","Properties":{"age":"7"}}
   ],
@@ -16,6 +16,6 @@
     [1, 2], [5, 1], [1, 4]
   ],
   "jigsaw": [
-    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
   ]
 }

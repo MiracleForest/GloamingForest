@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveConnectComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCaveGardenComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollVaultComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/CloudCastleComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/CloudComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/CloudTreeComponent.java
-//   src/main/java/twilightforest/world/components/structures/trollcave/TrollCloudComponent.java
-//   src/main/java/twilightforest/world/components/structures/YetiCaveComponent.java
-//   src/main/java/twilightforest/world/components/structures/type/TrollCaveStructure.java
-//   src/main/java/twilightforest/world/components/structures/type/YetiCaveStructure.java
-//   src/main/java/twilightforest/util/HugeMushroomUtil.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveConnectComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCaveGardenComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollVaultComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/CloudCastleComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/CloudComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/CloudTreeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/trollcave/TrollCloudComponent.java
+//   src/main/java/gloamingforest/world/components/structures/YetiCaveComponent.java
+//   src/main/java/gloamingforest/world/components/structures/type/TrollCaveStructure.java
+//   src/main/java/gloamingforest/world/components/structures/type/YetiCaveStructure.java
+//   src/main/java/gloamingforest/util/HugeMushroomUtil.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -46,15 +46,15 @@ using st::bases::TerrainAdjustment;
 
 namespace {
 
-constexpr char kMain[]       = "twilightforest:TFTCMai";
-constexpr char kConnect[]    = "twilightforest:TFTCCon";
-constexpr char kGarden[]     = "twilightforest:TFTCGard";
-constexpr char kVault[]      = "twilightforest:TFTCVa";
-constexpr char kCastle[]     = "twilightforest:TFClCa";
-constexpr char kCloud[]      = "twilightforest:TFCloud";
-constexpr char kCloudTree[]  = "twilightforest:TFClTr";
-constexpr char kTrollCloud[] = "twilightforest:TFTCloud";
-constexpr char kYeti[]       = "twilightforest:TFYeti";
+constexpr char kMain[]       = "gloamingforest:TFTCMai";
+constexpr char kConnect[]    = "gloamingforest:TFTCCon";
+constexpr char kGarden[]     = "gloamingforest:TFTCGard";
+constexpr char kVault[]      = "gloamingforest:TFTCVa";
+constexpr char kCastle[]     = "gloamingforest:TFClCa";
+constexpr char kCloud[]      = "gloamingforest:TFCloud";
+constexpr char kCloudTree[]  = "gloamingforest:TFClTr";
+constexpr char kTrollCloud[] = "gloamingforest:TFTCloud";
+constexpr char kYeti[]       = "gloamingforest:TFYeti";
 
 /// RotationUtil.ROTATIONS (Rotation.values()).
 constexpr std::array<Rotation, 4> kRotations{Rotation::None, Rotation::Clockwise90, Rotation::Clockwise180, Rotation::Counterclockwise90};
@@ -64,8 +64,8 @@ bool gGardenBiomeCheck = true;
 /// The configured features of other units (their feature types): skipped while the selftests run
 /// the biome check off, so U27's goldens do not move when those units register their types.
 bool externalFeature(std::string const& id) {
-    static std::set<std::string> const ids{"twilightforest:uberous_soil_patch_big", "twilightforest:uberous_soil_patch_small",
-                                           "twilightforest:troll_cave_dirt", "twilightforest:troll_cave_mycelium"};
+    static std::set<std::string> const ids{"gloamingforest:uberous_soil_patch_big", "gloamingforest:uberous_soil_patch_small",
+                                           "gloamingforest:troll_cave_dirt", "gloamingforest:troll_cave_mycelium"};
     return ids.contains(id);
 }
 
@@ -142,13 +142,13 @@ int capBits(Faces const& f) {
 /// piece's placeBlock applies; F7's block rotation does not turn huge mushroom faces).
 Block const& mushroomState(std::string const& baseId, MushroomType type, Rotation rotation) {
     Faces f = rotateFaces(facesOf(type), rotation);
-    if (baseId == "twilightforest:huge_mushgloom") {
-        if (auto const* b = game::blockWithStates(baseId, Json{{"twilightforest:up", f.up},
-                                                                {"twilightforest:down", f.down},
-                                                                {"twilightforest:north", f.north},
-                                                                {"twilightforest:south", f.south},
-                                                                {"twilightforest:east", f.east},
-                                                                {"twilightforest:west", f.west}}))
+    if (baseId == "gloamingforest:huge_mushgloom") {
+        if (auto const* b = game::blockWithStates(baseId, Json{{"gloamingforest:up", f.up},
+                                                                {"gloamingforest:down", f.down},
+                                                                {"gloamingforest:north", f.north},
+                                                                {"gloamingforest:south", f.south},
+                                                                {"gloamingforest:east", f.east},
+                                                                {"gloamingforest:west", f.west}}))
             return *b;
         return blocks::java(baseId);
     }
@@ -239,7 +239,7 @@ void TrollCaveMain::postProcess(Region& region, RandomSource& rand, BlockBox con
     // uberous!
     for (int i = 0; i < 32; i++) {
         BlockPos dest = getCoordsInCave(decoRNG);
-        generateAtSurface(region, "twilightforest:uberous_soil_patch_big", decoRNG, dest.x, dest.z, sbb);
+        generateAtSurface(region, "gloamingforest:uberous_soil_patch_big", decoRNG, dest.x, dest.z, sbb);
     }
 }
 
@@ -268,12 +268,12 @@ BlockPos TrollCaveMain::getCoordsInCave(RandomSource& rand) const {
 
 void TrollCaveMain::hollowCaveMiddle(Region& region, BlockBox const& sbb, RandomSource& rand, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
     int          threshold = size / 5;
-    Block const& trollsteinn = blocks::java("twilightforest:trollsteinn");
+    Block const& trollsteinn = blocks::java("gloamingforest:trollsteinn");
     for (int y = minY; y <= maxY; ++y) {
         for (int x = minX; x <= maxX; ++x) {
             for (int z = minZ; z <= maxZ; ++z) {
                 double dist = core::caves::hollowDistance(x, y, z, minX, minY, minZ, maxX, maxY, maxZ);
-                if (blocks::inTag(getBlock(region, x, y, z, sbb), "twilightforest:cannot_troll_cave_hollow")) continue;
+                if (blocks::inTag(getBlock(region, x, y, z, sbb), "gloamingforest:cannot_troll_cave_hollow")) continue;
                 if (dist > threshold) {
                     placeBlock(region, blocks::air(), x, y, z, sbb);
                 } else if (dist == threshold && rand.nextInt(4) == 0 && blocks::inTag(getBlock(region, x, y, z, sbb), "minecraft:base_stone_overworld")) {
@@ -333,7 +333,7 @@ void TrollCaveMain::makeTreasureCrate(Region& region, BlockBox const& sbb) {
     Block const& obsidian = blocks::java("minecraft:obsidian");
     fill(region, sbb, mid - 2, 0, mid - 2, mid + 1, 3, mid + 1, obsidian, obsidian, false);
     fillAir(region, sbb, mid - 1, 1, mid - 1, mid, 2, mid);
-    placeTreasureAtCurrentPosition(region, mid, 1, mid, "twilightforest:troll_garden", false, sbb);
+    placeTreasureAtCurrentPosition(region, mid, 1, mid, "gloamingforest:troll_garden", false, sbb);
 }
 
 // ---- TrollCaveConnectComponent -----------------------------------------------------------------------------
@@ -412,7 +412,7 @@ void TrollCaveConnect::decorateWall(Region& region, BlockBox const& sbb, RandomS
         decorateStoneFormation(region, sbb, decoRNG, rotation);
         decorateStoneFormation(region, sbb, decoRNG, rotation);
     }
-    // else: decorateStoneProjection is commented out in TF
+    // else: decorateStoneProjection is commented out in upstream
 }
 
 void TrollCaveConnect::decorateStoneFormation(Region& region, BlockBox const& sbb, RandomSource& decoRNG, Rotation rotation) {
@@ -431,7 +431,7 @@ void TrollCaveConnect::decorateStoneFormation(Region& region, BlockBox const& sb
 void TrollCaveConnect::makeSingleStoneFormation(Region& region, BlockBox const& sbb, RandomSource& decoRNG, Rotation rotation, int z, int y, int width, int depth) {
     char const* id = "minecraft:stone";
     if (decoRNG.nextInt(8) == 0) id = "minecraft:obsidian";
-    else if (decoRNG.nextInt(4) == 0) id = "twilightforest:trollsteinn";
+    else if (decoRNG.nextInt(4) == 0) id = "gloamingforest:trollsteinn";
     fillBlocksRotated(region, sbb, size - (depth + 1), y - width, z - width, size - 1, y + width, z + width, blocks::java(id), rotation);
 }
 
@@ -444,7 +444,7 @@ void TrollCaveConnect::decorateBracketMushrooms(Region& region, BlockBox const& 
         int depth = 1 + decoRNG.nextInt(2);
         depth += decoRNG.nextInt(2);
         char const* mushBlock = "minecraft:red_mushroom_block";
-        if (decoRNG.nextInt(3) == 0) mushBlock = "twilightforest:huge_mushgloom";
+        if (decoRNG.nextInt(3) == 0) mushBlock = "gloamingforest:huge_mushgloom";
         else if (decoRNG.nextBoolean()) mushBlock = "minecraft:brown_mushroom_block";
         makeSingleBracketMushroom(region, sbb, rotation, z, y, width, depth, mushBlock);
         // wiggle a little
@@ -473,7 +473,7 @@ bool TrollCaveConnect::makeGardenCave(PieceList& list, RandomSource& rand, int i
     auto        cave      = std::make_unique<TrollCaveGarden>(index, dest.x, dest.y, dest.z, caveSize, caveHeight, direction, configId);
     // check to see if it intersects something already there
     Piece* intersect = st::bases::findCollisionPiece(list, cave->bbox);
-    // findNearbyGarden: TF's "large" box is the garden's box moved by -30 on every axis
+    // findNearbyGarden: upstream's "large" box is the garden's box moved by -30 on every axis
     BlockBox const& b = cave->bbox;
     BlockBox        largeBox{b.minX - 30, b.minY - 30, b.minZ - 30, b.maxX - 30, b.maxY - 30, b.maxZ - 30};
     Piece*          otherGarden = nullptr;
@@ -516,7 +516,7 @@ void TrollCaveGarden::addChildren(Piece&, PieceList&, RandomSource&) {
 
 void TrollCaveGarden::postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) {
     if (gGardenBiomeCheck) {
-        auto highlands = [](std::string const& biome) { return biome == "twilightforest:highlands" || biome == "twilightforest:highlands_underground"; };
+        auto highlands = [](std::string const& biome) { return biome == "gloamingforest:highlands" || biome == "gloamingforest:highlands_underground"; };
         if (isBoundingBoxOutsideBiomes(region, highlands, pivot)) return;
     }
     // clear inside
@@ -527,32 +527,32 @@ void TrollCaveGarden::postProcess(Region& region, RandomSource& rand, BlockBox c
     // dirt!
     for (int i = 0; i < 24; i++) {
         BlockPos dest = getCoordsInCave(decoRNG);
-        generate(region, "twilightforest:troll_cave_dirt", decoRNG, dest.x, 0, dest.z, sbb);
+        generate(region, "gloamingforest:troll_cave_dirt", decoRNG, dest.x, 0, dest.z, sbb);
     }
     // mycelium!
     for (int i = 0; i < 16; i++) {
         BlockPos dest = getCoordsInCave(decoRNG);
-        generate(region, "twilightforest:troll_cave_mycelium", decoRNG, dest.x, 0, dest.z, sbb);
+        generate(region, "gloamingforest:troll_cave_mycelium", decoRNG, dest.x, 0, dest.z, sbb);
     }
     // uberous!
     for (int i = 0; i < 16; i++) {
         BlockPos dest = getCoordsInCave(decoRNG);
-        generate(region, "twilightforest:uberous_soil_patch_small", decoRNG, dest.x, 0, dest.z, sbb);
-        generateAtSurface(region, "twilightforest:uberous_soil_patch_small", decoRNG, dest.x, dest.z, sbb);
+        generate(region, "gloamingforest:uberous_soil_patch_small", decoRNG, dest.x, 0, dest.z, sbb);
+        generateAtSurface(region, "gloamingforest:uberous_soil_patch_small", decoRNG, dest.x, dest.z, sbb);
     }
     Block const& mycelium = blocks::java("minecraft:mycelium");
     // mushglooms first
     for (int i = 0; i < 8; i++) {
         BlockPos dest = getCoordsInCave(decoRNG);
-        // TF passes the piece's own rotation as the extra turn
+        // upstream passes the piece's own rotation as the extra turn
         setBlockStateRotated(region, mycelium, dest.x, 0, dest.z, rotation, sbb);
-        generate(region, "twilightforest:troll_big_mushglooms", decoRNG, dest.x, 1, dest.z, sbb);
+        generate(region, "gloamingforest:troll_big_mushglooms", decoRNG, dest.x, 1, dest.z, sbb);
     }
     // mushrooms!
     for (int i = 0; i < 16; i++) {
         BlockPos dest = getCoordsInCave(decoRNG);
         setBlockStateRotated(region, mycelium, dest.x, 0, dest.z, rotation, sbb);
-        char const* feature = rand.nextBoolean() ? "twilightforest:troll_huge_brown_mushrooms" : "twilightforest:troll_huge_red_mushrooms";
+        char const* feature = rand.nextBoolean() ? "gloamingforest:troll_huge_brown_mushrooms" : "gloamingforest:troll_huge_red_mushrooms";
         generate(region, feature, decoRNG, dest.x, 1, dest.z, sbb);
     }
     placeSpeleothems(region, rand, sbb, decoRNG);
@@ -577,7 +577,7 @@ TrollVault::TrollVault(int index, int x, int y, int z) : ComponentOld(kVault, in
 }
 
 void TrollVault::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
-    Block const& giantObsidian = blocks::java("twilightforest:giant_obsidian");
+    Block const& giantObsidian = blocks::java("gloamingforest:giant_obsidian");
     Block const& cobblestone   = blocks::java("minecraft:cobblestone");
     // make walls
     fill(region, sbb, 0, 0, 0, 11, 11, 11, giantObsidian, giantObsidian, false);
@@ -587,8 +587,8 @@ void TrollVault::postProcess(Region& region, RandomSource&, BlockBox const& sbb,
     fill(region, sbb, 5, 5, 5, 6, 5, 6, cobblestone, cobblestone, false);
     // chests
     auto facing = st::clockwise(*getOrientation());
-    setDoubleLootChest(region, 5, 6, 5, 5, 6, 6, facing, "twilightforest:troll_vault", "twilightforest:troll_vault_with_lamp", sbb, false);
-    setDoubleLootChest(region, 6, 6, 5, 6, 6, 6, facing, "twilightforest:troll_garden", sbb, false);
+    setDoubleLootChest(region, 5, 6, 5, 5, 6, 6, facing, "gloamingforest:troll_vault", "gloamingforest:troll_vault_with_lamp", sbb, false);
+    setDoubleLootChest(region, 6, 6, 5, 6, 6, 6, facing, "gloamingforest:troll_garden", sbb, false);
 }
 
 // ---- CloudCastleComponent -----------------------------------------------------------------------------------
@@ -617,9 +617,9 @@ void CloudCastle::addChildren(Piece&, PieceList& list, RandomSource& rand) {
 }
 
 void CloudCastle::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
-    Block const& fluffy = blocks::java("twilightforest:fluffy_cloud");
-    Block const& cobble = blocks::java("twilightforest:giant_cobblestone");
-    Block const& log    = blocks::java("twilightforest:giant_log");
+    Block const& fluffy = blocks::java("gloamingforest:fluffy_cloud");
+    Block const& cobble = blocks::java("gloamingforest:giant_cobblestone");
+    Block const& log    = blocks::java("gloamingforest:giant_log");
     // make haus
     fill(region, sbb, 8, 0, 8, 23, 3, 23, fluffy, fluffy, false);
     fill(region, sbb, 8, 4, 8, 23, 15, 23, cobble, cobble, false);
@@ -629,8 +629,8 @@ void CloudCastle::postProcess(Region& region, RandomSource&, BlockBox const& sbb
     // clear door
     fillAir(region, sbb, 8, 4, 12, 12, 11, 15);
     // add giants
-    placeGiant(region, sbb, 14, 14, "twilightforest:giant_miner");
-    placeGiant(region, sbb, 17, 17, "twilightforest:armored_giant");
+    placeGiant(region, sbb, 14, 14, "gloamingforest:giant_miner");
+    placeGiant(region, sbb, 17, 17, "gloamingforest:armored_giant");
 }
 
 void CloudCastle::placeGiant(Region& region, BlockBox const& sbb, int x, int z, char const* entityId) {
@@ -667,8 +667,8 @@ void Cloud::postProcess(Region& region, RandomSource& random, BlockBox const& ch
     int genCenterX = bbox.minX - kCloudOffset - (chunkX << 4) + 16;
     int genCenterZ = bbox.minZ - kCloudOffset - (chunkZ << 4) + 16;
     bool         isCenter = genCenterX == 0 && genCenterZ == 0;
-    Block const& wispy    = blocks::java("twilightforest:wispy_cloud");
-    Block const& fluffy   = blocks::java("twilightforest:fluffy_cloud");
+    Block const& wispy    = blocks::java("gloamingforest:wispy_cloud");
+    Block const& fluffy   = blocks::java("gloamingforest:fluffy_cloud");
     Block const& top      = isCenter ? fluffy : wispy;
     auto         setIfAir = [&](int lx, int y, int lz, Block const& b) {
         BlockPos p{(chunkX << 4) + lx, y, (chunkZ << 4) + lz};
@@ -697,9 +697,9 @@ CloudTree::CloudTree(int index, int x, int y, int z) : ComponentOld(kCloudTree, 
 }
 
 void CloudTree::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
-    Block const& leaves = blocks::java("twilightforest:giant_leaves");
-    Block const& log    = blocks::java("twilightforest:giant_log");
-    Block const& fluffy = blocks::java("twilightforest:fluffy_cloud");
+    Block const& leaves = blocks::java("gloamingforest:giant_leaves");
+    Block const& log    = blocks::java("gloamingforest:giant_log");
+    Block const& fluffy = blocks::java("gloamingforest:fluffy_cloud");
     // leaves
     fill(region, sbb, 0, 12, 0, 19, 19, 19, leaves, leaves, false);
     fill(region, sbb, 4, 20, 4, 15, 23, 15, leaves, leaves, false);
@@ -740,11 +740,11 @@ void TrollCloud::postProcess(Region& region, RandomSource&, BlockBox const& sbb,
 // ---- YetiCaveComponent --------------------------------------------------------------------------------------
 
 YetiCave::YetiCave(int index, int x, int y, int z, std::string config) : HollowHill(kYeti, index, 2, x, y, z, std::move(config)) {
-    // FIXME Get rid of HollowHillComponent so this ugly hack can be sanitized (TF)
+    // FIXME Get rid of HollowHillComponent so this ugly hack can be sanitized (upstream)
     bbox.minY -= 1;
 }
 
-// FIXME Bandaid for adjusting structure box (TF)
+// FIXME Bandaid for adjusting structure box (upstream)
 int YetiCave::worldY(int y) const { return HollowHill::worldY(y + 1); }
 
 void YetiCave::postProcess(Region& region, RandomSource& rand, BlockBox const& writeableBounds, BlockPos const&) {
@@ -766,7 +766,7 @@ void YetiCave::postProcess(Region& region, RandomSource& rand, BlockBox const& w
         }
     }
     // spawn alpha yeti
-    setBlockStateRotated(region, blocks::java("twilightforest:alpha_yeti_boss_spawner"), radius, 1, radius, Rotation::None, writeableBounds);
+    setBlockStateRotated(region, blocks::java("gloamingforest:alpha_yeti_boss_spawner"), radius, 1, radius, Rotation::None, writeableBounds);
 }
 
 void YetiCave::drainWater(BlockBox const& chunkBox, Region& region, int maxDepth, Block const& airState, int xCenter, int zCenter, double radius,

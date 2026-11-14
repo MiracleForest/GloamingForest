@@ -1,5 +1,5 @@
-# F9 (item): the sweep selftests alone (item.sweep_*: every twilightforest block placed and broken
-# against TF's loot tables, every recipe of TF's data pack crafted, both against F13's oracle
+# F9 (item): the sweep selftests alone (item.sweep_*: every gloamingforest block placed and broken
+# against upstream's loot tables, every recipe of upstream's data pack crafted, both against F13's oracle
 # goldens; item.catalog_variant), with their reports: every difference is a FAIL line, every reviewed
 # exception an INFO line. The `item` scenario runs them too (item.*).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null

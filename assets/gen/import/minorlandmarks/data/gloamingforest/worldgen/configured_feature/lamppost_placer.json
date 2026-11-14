@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:random_selector",
+  "config": {
+    "default": {
+      "feature": "gloamingforest:firefly_lamppost",
+      "placement": []
+    },
+    "features": [
+      {
+        "chance": 0.1,
+        "feature": {
+          "feature": "gloamingforest:cicada_lamppost",
+          "placement": []
+        }
+      }
+    ]
+  }
+}

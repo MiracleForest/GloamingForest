@@ -1,7 +1,7 @@
-tile.twilightforest:lich_wall_trophy.name=Trofeo de Lich
-tile.twilightforest:hydra_wall_trophy.name=Trofeo de Hidra
-tile.twilightforest:knight_phantom_wall_trophy.name=Trofeo Fantasma Caballero
-tile.twilightforest:alpha_yeti_wall_trophy.name=Trofeo de Yeti Alfa
+tile.gloamingforest:lich_wall_trophy.name=Trofeo de Lich
+tile.gloamingforest:hydra_wall_trophy.name=Trofeo de Hidra
+tile.gloamingforest:knight_phantom_wall_trophy.name=Trofeo Fantasma Caballero
+tile.gloamingforest:alpha_yeti_wall_trophy.name=Trofeo de Yeti Alfa
 item.banner.tf_naga.white=White Naga Scales
 item.banner.tf_naga.orange=Escamas Naranjas de Naga
 

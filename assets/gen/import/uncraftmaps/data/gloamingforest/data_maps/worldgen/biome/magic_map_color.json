@@ -1,0 +1,144 @@
+{
+  "values": {
+    "gloamingforest:clearing": {
+      "brightness": 2,
+      "map_color": {
+        "color": 8368696,
+        "id": 1
+      }
+    },
+    "gloamingforest:dark_forest": {
+      "brightness": 3,
+      "map_color": {
+        "color": 6717235,
+        "id": 27
+      }
+    },
+    "gloamingforest:dark_forest_center": {
+      "brightness": 3,
+      "map_color": {
+        "color": 14188339,
+        "id": 15
+      }
+    },
+    "gloamingforest:dense_forest": {
+      "brightness": 0,
+      "map_color": {
+        "color": 31744,
+        "id": 7
+      }
+    },
+    "gloamingforest:dense_mushroom_forest": {
+      "brightness": 0,
+      "map_color": {
+        "color": 15892389,
+        "id": 20
+      }
+    },
+    "gloamingforest:enchanted_forest": {
+      "brightness": 2,
+      "map_color": {
+        "color": 5013401,
+        "id": 23
+      }
+    },
+    "gloamingforest:final_plateau": {
+      "brightness": 2,
+      "map_color": {
+        "color": 10066329,
+        "id": 22
+      }
+    },
+    "gloamingforest:fire_swamp": {
+      "brightness": 1,
+      "map_color": {
+        "color": 7340544,
+        "id": 35
+      }
+    },
+    "gloamingforest:firefly_forest": {
+      "brightness": 1,
+      "map_color": {
+        "color": 55610,
+        "id": 33
+      }
+    },
+    "gloamingforest:forest": {
+      "brightness": 1,
+      "map_color": {
+        "color": 31744,
+        "id": 7
+      }
+    },
+    "gloamingforest:glacier": {
+      "brightness": 1,
+      "map_color": {
+        "color": 10526975,
+        "id": 5
+      }
+    },
+    "gloamingforest:highlands": {
+      "brightness": 0,
+      "map_color": {
+        "color": 9923917,
+        "id": 10
+      }
+    },
+    "gloamingforest:lake": {
+      "brightness": 3,
+      "map_color": {
+        "color": 4210943,
+        "id": 12
+      }
+    },
+    "gloamingforest:mushroom_forest": {
+      "brightness": 0,
+      "map_color": {
+        "color": 14188339,
+        "id": 15
+      }
+    },
+    "gloamingforest:oak_savannah": {
+      "brightness": 0,
+      "map_color": {
+        "color": 8368696,
+        "id": 1
+      }
+    },
+    "gloamingforest:snowy_forest": {
+      "brightness": 1,
+      "map_color": {
+        "color": 16777215,
+        "id": 8
+      }
+    },
+    "gloamingforest:spooky_forest": {
+      "brightness": 0,
+      "map_color": {
+        "color": 8339378,
+        "id": 24
+      }
+    },
+    "gloamingforest:stream": {
+      "brightness": 1,
+      "map_color": {
+        "color": 4210943,
+        "id": 12
+      }
+    },
+    "gloamingforest:swamp": {
+      "brightness": 3,
+      "map_color": {
+        "color": 6085589,
+        "id": 31
+      }
+    },
+    "gloamingforest:thornlands": {
+      "brightness": 3,
+      "map_color": {
+        "color": 9402184,
+        "id": 13
+      }
+    }
+  }
+}

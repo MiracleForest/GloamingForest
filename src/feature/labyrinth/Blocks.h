@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U23 (labyrinth): the mazebreaker tool rule and the maze slime block (unit-internal).
@@ -10,9 +10,9 @@ class Player;
 
 namespace gf::feature::labyrinth::blocks {
 
-inline constexpr char kAcceleratedTag[] = "twilightforest:mazebreaker_accelerated_mining";
-inline constexpr char kMazebreaker[]    = "twilightforest:mazebreaker_pickaxe";
-inline constexpr char kMazeSlimeBlock[] = "twilightforest:maze_slime_block";
+inline constexpr char kAcceleratedTag[] = "gloamingforest:mazebreaker_accelerated_mining";
+inline constexpr char kMazebreaker[]    = "gloamingforest:mazebreaker_pickaxe";
+inline constexpr char kMazeSlimeBlock[] = "gloamingforest:maze_slime_block";
 /// ToolEvents#damageNonMazebreakerToolsMore: the extra durability lost.
 inline constexpr int kMazestonePenalty = 16;
 

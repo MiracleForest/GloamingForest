@@ -2,18 +2,18 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:burnt_thorns",
+      "identifier": "gloamingforest:burnt_thorns",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"],
-        "twilightforest:down": [false, true],
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:up": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:axis": ["y", "x", "z"],
+        "gloamingforest:down": [false, true],
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:up": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {
@@ -25,29 +25,29 @@
       },
       "minecraft:map_color": "#707070",
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.burnt_thorns.multipart",
+        "identifier": "geometry.tf.gloamingforest.block.burnt_thorns.multipart",
         "bone_visibility": {
-          "part0": "q.block_state('twilightforest:axis') == 'y'",
-          "part1": "q.block_state('twilightforest:axis') == 'z'",
-          "part2": "q.block_state('twilightforest:axis') == 'x'",
-          "part3": "q.block_state('twilightforest:up')",
-          "part4": "(q.block_state('twilightforest:axis') == 'z' || q.block_state('twilightforest:axis') == 'y') && !q.block_state('twilightforest:up')",
-          "part5": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:up')",
-          "part6": "q.block_state('twilightforest:down')",
-          "part7": "(q.block_state('twilightforest:axis') == 'z' || q.block_state('twilightforest:axis') == 'y') && !q.block_state('twilightforest:down')",
-          "part8": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:down')",
-          "part9": "q.block_state('twilightforest:east')",
-          "part10": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'x') && !q.block_state('twilightforest:east')",
-          "part11": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:east')",
-          "part12": "q.block_state('twilightforest:west')",
-          "part13": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'x') && !q.block_state('twilightforest:west')",
-          "part14": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:west')",
-          "part15": "q.block_state('twilightforest:south')",
-          "part16": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && !q.block_state('twilightforest:south')",
-          "part17": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:south')",
-          "part18": "q.block_state('twilightforest:north')",
-          "part19": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && !q.block_state('twilightforest:north')",
-          "part20": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:north')"
+          "part0": "q.block_state('gloamingforest:axis') == 'y'",
+          "part1": "q.block_state('gloamingforest:axis') == 'z'",
+          "part2": "q.block_state('gloamingforest:axis') == 'x'",
+          "part3": "q.block_state('gloamingforest:up')",
+          "part4": "(q.block_state('gloamingforest:axis') == 'z' || q.block_state('gloamingforest:axis') == 'y') && !q.block_state('gloamingforest:up')",
+          "part5": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:up')",
+          "part6": "q.block_state('gloamingforest:down')",
+          "part7": "(q.block_state('gloamingforest:axis') == 'z' || q.block_state('gloamingforest:axis') == 'y') && !q.block_state('gloamingforest:down')",
+          "part8": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:down')",
+          "part9": "q.block_state('gloamingforest:east')",
+          "part10": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'x') && !q.block_state('gloamingforest:east')",
+          "part11": "q.block_state('gloamingforest:axis') == 'z' && !q.block_state('gloamingforest:east')",
+          "part12": "q.block_state('gloamingforest:west')",
+          "part13": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'x') && !q.block_state('gloamingforest:west')",
+          "part14": "q.block_state('gloamingforest:axis') == 'z' && !q.block_state('gloamingforest:west')",
+          "part15": "q.block_state('gloamingforest:south')",
+          "part16": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'z') && !q.block_state('gloamingforest:south')",
+          "part17": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:south')",
+          "part18": "q.block_state('gloamingforest:north')",
+          "part19": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'z') && !q.block_state('gloamingforest:north')",
+          "part20": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:north')"
         }
       },
       "minecraft:material_instances": {
@@ -55,11 +55,11 @@
           "texture": "tf_block_burnt_thorns_side",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_burnt_thorns_side": {
+        "t_gloamingforest_block_burnt_thorns_side": {
           "texture": "tf_block_burnt_thorns_side",
           "render_method": "alpha_test"
         },
-        "t_twilightforest_block_burnt_thorns_top": {
+        "t_gloamingforest_block_burnt_thorns_top": {
           "texture": "tf_block_burnt_thorns_top",
           "render_method": "alpha_test"
         }

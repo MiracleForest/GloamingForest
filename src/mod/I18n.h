@@ -12,7 +12,7 @@ class Player;
 namespace gf {
 
 /// Loads `<dir>/<locale>.json` files (flat {"key": "text"} maps merged at build time from
-/// `assets/lang/<locale>/*.json` and the imported TF lang files, for the 29 Bedrock locales).
+/// `assets/lang/<locale>/*.json` and the imported upstream lang files, for the 29 Bedrock locales).
 void loadTranslations(std::filesystem::path const& dir);
 
 /// Looks up `key` in `locale` (empty = configured default), then en_US, then returns `fallback`.
@@ -26,7 +26,7 @@ void loadTranslations(std::filesystem::path const& dir);
 /// Translates and formats with `{}` / `{0}` / `%s` / `%1$s` placeholders, in the default locale.
 /// A translation key belongs to the unit that owns the feature (rule R9); other units pass the
 /// English text as the fallback without defining the key.
-///     gf::tr("twilightforest.book.lich", "The tower is sealed by {}", name)
+///     gf::tr("gloamingforest.book.lich", "The tower is sealed by {}", name)
 template <class... Args>
 [[nodiscard]] std::string tr(std::string_view key, std::string_view fallback, Args const&... args) {
     return core::formatMessageArgs(translate(key, fallback), args...);

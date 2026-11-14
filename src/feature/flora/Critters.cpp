@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/CritterBlock.java
-//   src/main/java/twilightforest/block/CicadaBlock.java
-//   src/main/java/twilightforest/block/FireflyBlock.java
-//   src/main/java/twilightforest/block/MoonwormBlock.java
-//   src/main/java/twilightforest/events/MiscEvents.java (updateCicadaSoundsOnHead)
-//   src/main/java/twilightforest/dispenser/TFDispenserBehaviors.java (critters on heads)
-//   src/main/java/twilightforest/advancements/KillBugTrigger.java (fired with the bug's block)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/CritterBlock.java
+//   src/main/java/gloamingforest/block/CicadaBlock.java
+//   src/main/java/gloamingforest/block/FireflyBlock.java
+//   src/main/java/gloamingforest/block/MoonwormBlock.java
+//   src/main/java/gloamingforest/events/MiscEvents.java (updateCicadaSoundsOnHead)
+//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java (critters on heads)
+//   src/main/java/gloamingforest/advancements/KillBugTrigger.java (fired with the bug's block)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -83,7 +83,7 @@ std::array<int, 6> nearestLooking(Actor const& actor) {
     return f9 > f7 ? make(z, x, y) : make(z, y, x);
 }
 
-std::string squishTable(std::string const& id) { return "twilightforest:blocks/" + id.substr(15) + "_squish"; }
+std::string squishTable(std::string const& id) { return "gloamingforest:blocks/" + id.substr(15) + "_squish"; }
 
 /// The mason jar item's stored stack is empty (CritterBlock#useItemOn: no container or an empty one).
 bool emptyMasonJar(ItemStack const& jar) {
@@ -125,7 +125,7 @@ bool squish(BlockSource& region, BlockPos const& pos, Actor* projectile, Player*
     bool         wall   = stateOf(state, st::Facing) != "up" && !stateOf(state, st::Facing).empty();
     // to air (the water stays for a waterlogged moonworm)
     removeBlock(region, pos);
-    sound(region, pos, "block.twilightforest.bug.squish", 1.0f, 1.0f);
+    sound(region, pos, "block.gloamingforest.bug.squish", 1.0f, 1.0f);
     loot::LootContext ctx;
     ctx.region = &region;
     ctx.origin = Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f};
@@ -144,8 +144,8 @@ bool squish(BlockSource& region, BlockPos const& pos, Actor* projectile, Player*
     }
     ++gSquished;
     if (owner) {
-        stats::award(*owner, "twilightforest:bugs_squished");
-        progression::trigger(*owner, "twilightforest:kill_bug", {{"block", id}});
+        stats::award(*owner, "gloamingforest:bugs_squished");
+        progression::trigger(*owner, "gloamingforest:kill_bug", {{"block", id}});
     }
     log().info("flora: a {} was squished at {} {} {}{}", id.substr(15), pos.x, pos.y, pos.z, owner ? " by " + owner->getRealName() : std::string());
     (void)projectile;
@@ -200,7 +200,7 @@ void tickCicadaWearers(Level& level) {
                 if (other.getDimensionId() != p.getDimensionId() || net::isCompanion(other)) return true;
                 Vec3 o = other.getPosition();
                 if ((o.x - at.x) * (o.x - at.x) + (o.y - at.y) * (o.y - at.y) + (o.z - at.z) * (o.z - at.z) <= 16.0 * 16.0)
-                    fx::soundTo(other, "block.twilightforest.cicada", 1.0f, 1.0f);
+                    fx::soundTo(other, "block.gloamingforest.cicada", 1.0f, 1.0f);
                 return true;
             }));
             it->second = now() + 100 + levelRandom().nextInt(100);
@@ -248,7 +248,7 @@ void installCritters() {
         // CritterBlock#entityInside: projectiles (not #dont_kill_bugs) and falling blocks squish it
         blockevents::onEntityInside(id, [](BlockSource& region, BlockPos const& pos, Actor& entity) {
             bool projectile = entity.hasType(ActorType::Projectile)
-                           && !tags::has(tags::Registry::EntityType, "twilightforest:dont_kill_bugs", entity.getTypeName());
+                           && !tags::has(tags::Registry::EntityType, "gloamingforest:dont_kill_bugs", entity.getTypeName());
             bool falling = entity.isType(ActorType::FallingBlock);
             if (!projectile && !falling) return;
             Player* owner = projectile ? entity.getPlayerOwner() : nullptr;
@@ -280,8 +280,8 @@ void installCritters() {
             auto     jar    = makeItem(c.blockId == ids::Firefly ? ids::FireflyJar : ids::CicadaJar);
             if (!jar) return ia::Result::Pass;
             auto comps = game::items::getData(c.item, "components");
-            if (comps.is_object() && comps.contains("twilightforest:jar_lid")) {
-                game::items::setData(*jar, "components", {{"twilightforest:jar_lid", comps["twilightforest:jar_lid"]}});
+            if (comps.is_object() && comps.contains("gloamingforest:jar_lid")) {
+                game::items::setData(*jar, "components", {{"gloamingforest:jar_lid", comps["gloamingforest:jar_lid"]}});
             }
             consumeHeld(c.player, c.item); // ItemStack#consume: kept in creative
             give(c.player, *jar);

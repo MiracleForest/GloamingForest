@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:weathered_deadrock",
+      "identifier": "gloamingforest:weathered_deadrock",
       "menu_category": {
         "category": "construction"
       }

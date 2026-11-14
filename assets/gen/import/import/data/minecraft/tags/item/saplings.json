@@ -1,14 +1,14 @@
 {
   "values": [
-    "twilightforest:twilight_oak_sapling",
-    "twilightforest:canopy_sapling",
-    "twilightforest:mangrove_sapling",
-    "twilightforest:darkwood_sapling",
-    "twilightforest:time_sapling",
-    "twilightforest:transformation_sapling",
-    "twilightforest:mining_sapling",
-    "twilightforest:sorting_sapling",
-    "twilightforest:hollow_oak_sapling",
-    "twilightforest:rainbow_oak_sapling"
+    "gloamingforest:gloaming_oak_sapling",
+    "gloamingforest:canopy_sapling",
+    "gloamingforest:mangrove_sapling",
+    "gloamingforest:darkwood_sapling",
+    "gloamingforest:time_sapling",
+    "gloamingforest:transformation_sapling",
+    "gloamingforest:mining_sapling",
+    "gloamingforest:sorting_sapling",
+    "gloamingforest:hollow_oak_sapling",
+    "gloamingforest:rainbow_oak_sapling"
   ]
 }

@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/PeacockFanItem.java
-//   src/main/java/twilightforest/dispenser/FeatherFanDispenseBehavior.java
-//   src/main/java/twilightforest/events/CapabilityEvents.java (feather fan fall)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/PeacockFanItem.java
+//   src/main/java/gloamingforest/dispenser/FeatherFanDispenseBehavior.java
+//   src/main/java/gloamingforest/events/CapabilityEvents.java (feather fan fall)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:peacock_feather_fan. Java moves the fanning player on its own client (the jump
+// gloamingforest:peacock_feather_fan. Java moves the fanning player on its own client (the jump
 // in the air, the elytra boost); here the server sends the motion (gf::movement::applyMotion),
 // for the client mod and vanilla clients alike. The feather_fan_falling attachment (the next
 // landing takes no fall damage) is kept per player while they are online.
@@ -89,11 +89,11 @@ int fanBlock(Player& player, BlockSource& region, BlockPos const& pos) {
         }
         return 0;
     }
-    // TF's LightableBlock (candelabra, skull candles, ...): lighting normal / dim -> off
-    if (auto it = states.find("twilightforest:lighting"); it != states.end() && (it->second == "normal" || it->second == "dim")) {
+    // upstream's LightableBlock (candelabra, skull candles, ...): lighting normal / dim -> off
+    if (auto it = states.find("gloamingforest:lighting"); it != states.end() && (it->second == "normal" || it->second == "dim")) {
         Json s = Json::object();
         for (auto const& [k, v] : states) s[k] = v == "true" ? Json(true) : v == "false" ? Json(false) : (std::isdigit(static_cast<unsigned char>(v[0])) ? Json(std::stoi(v)) : Json(v));
-        s["twilightforest:lighting"] = "off";
+        s["gloamingforest:lighting"] = "off";
         if (auto const* off = game::blockWithStates(id, s)) {
             game::setBlock(region, pos, *off);
             gf::fx::sound(region.getDimension(), "minecraft:block.candle.extinguish", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, 1.0F, 1.0F);
@@ -173,7 +173,7 @@ void registerFan() {
                 }
             }
             auto& r = world::random();
-            gf::fx::sound(player.getDimension(), "item.twilightforest.fan.whoosh", player.getFeetPos(), 1.0F + r.nextFloat(), r.nextFloat() * 0.7F + 0.3F);
+            gf::fx::sound(player.getDimension(), "item.gloamingforest.fan.whoosh", player.getFeetPos(), 1.0F + r.nextFloat(), r.nextFloat() * 0.7F + 0.3F);
             log().info("weapons: {} fanned ({} things)", player.getRealName(), fanned);
             return gf::item::Result::Consume;
         }}
@@ -214,7 +214,7 @@ void registerFan() {
             stack.hurtAndBreak(1, nullptr);
         }
         auto& r = world::random();
-        gf::fx::sound(region.getDimension(), "item.twilightforest.fan.whoosh", Vec3{at.x + .5f, at.y + .5f, at.z + .5f}, 1.0F + r.nextFloat(), r.nextFloat() * 0.7F + 0.3F);
+        gf::fx::sound(region.getDimension(), "item.gloamingforest.fan.whoosh", Vec3{at.x + .5f, at.y + .5f, at.z + .5f}, 1.0F + r.nextFloat(), r.nextFloat() * 0.7F + 0.3F);
         // FeatherFanDispenseBehavior#playAnimation: 30 clouds out of the front
         double cx = front.x + kDx[facing] * 0.6 + 0.5, cy = front.y + kDy[facing] * 0.6 + 0.5, cz = front.z + kDz[facing] * 0.6 + 0.5;
         for (int i = 0; i < 30; ++i) {

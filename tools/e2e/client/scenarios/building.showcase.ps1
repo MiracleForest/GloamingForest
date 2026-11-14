@@ -13,10 +13,10 @@
 #   z 124 (x 36..41) encased and bold castle brick stairs, mossy and cracked nagastone stairs
 
 function Get-BuildingShowcase {
-    $ns = 'twilightforest'
+    $ns = 'gloamingforest'
     $bosses = 'naga', 'lich', 'hydra', 'ur_ghast', 'knight_phantom', 'snow_queen', 'minoshroom', 'alpha_yeti', 'quest_ram'
     $spawners = 'naga', 'lich', 'hydra', 'ur_ghast', 'knight_phantom', 'snow_queen', 'minoshroom', 'alpha_yeti', 'final_boss'
-    $minis = 'twilight_portal', 'naga_courtyard', 'lich_tower', 'minotaur_labyrinth', 'dark_tower'
+    $minis = 'gloaming_portal', 'naga_courtyard', 'lich_tower', 'minotaur_labyrinth', 'dark_tower'
     $lines = [System.Collections.Generic.List[string]]::new()
     $lines.Add('fill 16 -61 16 44 -61 72 grass_block')
     $lines.Add('fill 16 -61 73 44 -61 128 grass_block')

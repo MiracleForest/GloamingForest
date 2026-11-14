@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:carminite_broodling",
+      "identifier": "gloamingforest:carminite_broodling",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "carminite_broodling", "monster", "mob"]
+        "family": ["gloamingforest", "carminite_broodling", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.7,

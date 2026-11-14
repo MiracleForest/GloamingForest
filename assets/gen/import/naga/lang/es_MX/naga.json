@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.naga": "Naga",
-  "item.twilightforest.naga_spawn_egg": "Generar Naga",
-  "subtitles.twilightforest.entity.naga.hiss": "Siseo de Naga",
-  "subtitles.twilightforest.entity.naga.hurt": "Naga herido",
-  "subtitles.twilightforest.entity.naga.rattle": "Naga cascabeles"
+  "entity.gloamingforest.naga": "Naga",
+  "item.gloamingforest.naga_spawn_egg": "Generar Naga",
+  "subtitles.gloamingforest.entity.naga.hiss": "Siseo de Naga",
+  "subtitles.gloamingforest.entity.naga.hurt": "Naga herido",
+  "subtitles.gloamingforest.entity.naga.rattle": "Naga cascabeles"
 }

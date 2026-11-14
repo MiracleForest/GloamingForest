@@ -1,0 +1,10 @@
+{
+  "banister": "gloamingforest:time_banister",
+  "button": "gloamingforest:time_button",
+  "fence": "gloamingforest:time_fence",
+  "gate": "gloamingforest:time_fence_gate",
+  "planks": "gloamingforest:time_planks",
+  "plate": "gloamingforest:time_pressure_plate",
+  "slab": "gloamingforest:time_slab",
+  "stairs": "gloamingforest:time_stairs"
+}

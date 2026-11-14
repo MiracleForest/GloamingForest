@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/client/event/TravellersClientEvents.java
-//   src/main/java/twilightforest/events/TravellersGearEvents.java
-//   src/main/java/twilightforest/client/model/armor/TravellersWingsModel.java
-//   src/main/java/twilightforest/util/TFMathUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/client/event/TravellersClientEvents.java
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java
+//   src/main/java/gloamingforest/client/model/armor/TravellersWingsModel.java
+//   src/main/java/gloamingforest/util/TFMathUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/tgmove/TgMove.h"
@@ -168,7 +168,7 @@ UnrestrainedStep unrestrainedStep(Velocity stored, double rescale, Velocity acce
                                   double engineAccelSlowdown) {
     UnrestrainedStep r;
     r.velocity = stored;
-    // the previous step's drag: the engine's friction (and slowdown) -> TF's 0.6
+    // the previous step's drag: the engine's friction (and slowdown) -> upstream's 0.6
     r.velocity.x *= rescale;
     r.velocity.z *= rescale;
     if (!active || !onGround || friction <= 0 || engineSlowdown <= 0) return r;

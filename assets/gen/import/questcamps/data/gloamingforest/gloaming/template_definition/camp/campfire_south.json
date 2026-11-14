@@ -1,0 +1,12 @@
+{
+  "gloamingforest:camp/structure_start": {
+    "height_adjustment": {
+      "heightmap": "WORLD_SURFACE_WG",
+      "y_offset": 1
+    },
+    "ignore_world_waterlog": true,
+    "marker_handlers": "gloamingforest:camp_marker_handlers",
+    "terrain_adaptation": "beard_box",
+    "weight": 100
+  }
+}

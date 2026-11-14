@@ -11,11 +11,11 @@
       ]
     },
     {
-      "rolls": { "type": "twilightforest:multiplayer_rolls", "min": 0, "max": 1 },
+      "rolls": { "type": "gloamingforest:multiplayer_rolls", "min": 0, "max": 1 },
       "bonus_rolls": 0,
       "entries": [
         { "type": "minecraft:item", "name": "minecraft:diamond",
-          "functions": [ { "function": "twilightforest:multiplayer_addition", "value": 1 } ] }
+          "functions": [ { "function": "gloamingforest:multiplayer_addition", "value": 1 } ] }
       ]
     }
   ],

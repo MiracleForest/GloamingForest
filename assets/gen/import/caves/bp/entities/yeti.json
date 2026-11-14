@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:yeti",
+      "identifier": "gloamingforest:yeti",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "yeti", "monster", "mob"]
+        "family": ["gloamingforest", "yeti", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 1.4,

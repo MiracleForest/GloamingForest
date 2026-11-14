@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/grave",
+  "id": "gloamingforest:lich_tower/grave",
   "size": [3, 3, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -18,7 +18,7 @@
     [0, 2], [5, 1], [0, 1], [5, 1], [6, 1], [5, 1]
   ],
   "markers": [
-    {"pos":[1,0,2],"marker":"loot","data":{"table":"twilightforest:chests/tower_grave_lower"}}
+    {"pos":[1,0,2],"marker":"loot","data":{"table":"gloamingforest:chests/tower_grave_lower"}}
   ],
   "jigsaw": [
     {"pos":[1,1,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/grave","target":""}

@@ -1,12 +1,12 @@
 {
   "values": [
-    "twilightforest:twilight_oak_boat",
-    "twilightforest:canopy_boat",
-    "twilightforest:mangrove_boat",
-    "twilightforest:dark_boat",
-    "twilightforest:time_boat",
-    "twilightforest:transformation_boat",
-    "twilightforest:mining_boat",
-    "twilightforest:sorting_boat"
+    "gloamingforest:gloaming_oak_boat",
+    "gloamingforest:canopy_boat",
+    "gloamingforest:mangrove_boat",
+    "gloamingforest:dark_boat",
+    "gloamingforest:time_boat",
+    "gloamingforest:transformation_boat",
+    "gloamingforest:mining_boat",
+    "gloamingforest:sorting_boat"
   ]
 }

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:rainy_cloud"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["ccc", "cbc", "ccc"],
+    "key": {
+      "b": {
+        "item": "minecraft:water_bucket"
+      },
+      "c": {
+        "item": "gloamingforest:fluffy_cloud"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:fluffy_cloud"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:rainy_cloud",
+      "count": 8
+    }
+  }
+}

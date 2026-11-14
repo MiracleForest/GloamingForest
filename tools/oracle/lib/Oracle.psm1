@@ -5,6 +5,16 @@ Set-StrictMode -Version 3.0
 
 $script:OracleRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+Import-Module (Join-Path $script:RepoRoot 'tools/upstream/Upstream.psm1') -Force
+
+# The dumper and the dumps use this project's names, the upstream jar its own: the renaming of the
+# upstream view (tools/upstream/Upstream.psm1), forwards for the dumps and backwards for the sources.
+function ConvertTo-OracleUpstreamNames([string]$Text) {
+    $r = Get-UpstreamRebrand
+    foreach ($p in $r.Pairs) { $Text = $Text.Replace($p[1], $p[0]) }
+    return $Text
+}
+function ConvertFrom-OracleUpstreamNames([string]$Text) { return ConvertTo-OwnNames $Text (Get-UpstreamRebrand) }
 
 function Get-OracleRoot { return $script:OracleRoot }
 function Get-OracleRepoRoot { return $script:RepoRoot }
@@ -71,7 +81,7 @@ function Get-OracleServerArgsFile {
 
 function Get-OracleTfJar {
     $pins = Get-OraclePins
-    return Join-Path (Get-OracleHome) "downloads/twilightforest-$($pins.twilightforest.version)-universal.jar"
+    return Join-Path (Get-OracleHome) "downloads/upstream-$($pins.upstream.version)-universal.jar"
 }
 
 # Java system properties for the proxy in $env:HTTPS_PROXY / $env:HTTP_PROXY (Java ignores those
@@ -99,7 +109,7 @@ function Get-OracleJavaProxyArgs {
 #  - NeoForge's patched Minecraft classes first, then the Mojang-mapped Minecraft jar (NeoForge
 #    1.21.1 runs with Mojang names), then every other library;
 #  - the obfuscated Minecraft jars (server, slim, unpacked, extra) are left out;
-#  - the TF jar last (compile-time only: TF classes the dumper calls).
+#  - the upstream jar last (compile-time only: upstream classes the dumper calls).
 function Get-OracleCompileClasspath {
     $pins = Get-OraclePins
     $libs = Join-Path (Get-OracleServerDir) 'libraries'
@@ -112,7 +122,7 @@ function Get-OracleCompileClasspath {
     return @($patched, $mc[0]) + $rest + @(Get-OracleTfJar)
 }
 
-# Compiles tools/oracle/dumper (javac against the server's libraries and the TF jar) into
+# Compiles tools/oracle/dumper (javac against the server's libraries and the upstream jar) into
 # <oracle home>/dumper/<hash>/gf-oracle-dumper.jar, cached by the hash of its sources and pins.
 function Build-OracleDumper([scriptblock]$Say = { param($m) Write-Host $m }) {
     $src = Join-Path $script:OracleRoot 'dumper'
@@ -134,14 +144,21 @@ function Build-OracleDumper([scriptblock]$Say = { param($m) Write-Host $m }) {
     if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
     $classes = Join-Path $tmp 'classes'
     New-Item -ItemType Directory -Force $classes | Out-Null
+    # the sources under the upstream names (ConvertTo-OracleUpstreamNames), next to the classes
+    $metaRoot = Join-Path $tmp 'src'
+    foreach ($f in $files) {
+        $rel = $f.FullName.Substring($src.Length).TrimStart('\', '/')
+        $target = Join-Path $metaRoot $rel
+        New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
+        [IO.File]::WriteAllText($target, (ConvertTo-OracleUpstreamNames ([IO.File]::ReadAllText($f.FullName))), [Text.UTF8Encoding]::new($false))
+    }
     $cp = (Get-OracleCompileClasspath | ForEach-Object { $_.Replace('\', '/') }) -join ';'
-    $sources = @($files | Where-Object Extension -eq '.java' | ForEach-Object { '"' + $_.FullName.Replace('\', '/') + '"' })
+    $sources = @(Get-ChildItem -LiteralPath $metaRoot -Recurse -File -Filter '*.java' | Sort-Object FullName | ForEach-Object { '"' + $_.FullName.Replace('\', '/') + '"' })
     $argFile = Join-Path $tmp 'javac.args'
     $lines = @('--release', '21', '-encoding', 'UTF-8', '-proc:none', '-Xlint:-options', '-cp', "`"$cp`"", '-d', "`"$($classes.Replace('\', '/'))`"") + $sources
     [IO.File]::WriteAllLines($argFile, [string[]]$lines)
     $out = & (Get-OracleJava 'javac') "@$argFile" 2>&1
     if ($LASTEXITCODE -ne 0) { throw "javac failed:`n$($out -join "`n")" }
-    $metaRoot = $src
     $out = & (Get-OracleJava 'jar') --create --file (Join-Path $tmp 'gf-oracle-dumper.jar') -C $classes . -C $metaRoot 'META-INF/neoforge.mods.toml' 2>&1
     if ($LASTEXITCODE -ne 0) { throw "jar failed:`n$($out -join "`n")" }
     if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
@@ -254,4 +271,4 @@ function Connect-OracleRcon([int]$Port, [string]$Password, [int]$TimeoutMs = 360
 
 Export-ModuleMember -Function Get-OracleRoot, Get-OracleRepoRoot, Get-OracleHome, Get-OraclePins, Get-OracleSha256,
     Get-OracleDownload, Get-OracleJdkDir, Get-OracleJava, Get-OracleJavaProxyArgs, Get-OracleServerDir, Get-OracleServerLockPath, Get-OracleServerArgsFile,
-    Get-OracleTfJar, Get-OracleCompileClasspath, Build-OracleDumper, Get-OracleFnv1a64, Get-OracleFreePort, Connect-OracleRcon
+    Get-OracleTfJar, Get-OracleCompileClasspath, Build-OracleDumper, ConvertTo-OracleUpstreamNames, ConvertFrom-OracleUpstreamNames, Get-OracleFnv1a64, Get-OracleFreePort, Connect-OracleRcon

@@ -8,7 +8,7 @@
 // redstone output is the count (TrappedChestBlockEntity#signalOpenCount, U4 through
 // redstone::registerEmitter), and a chest's lid opens while it is above zero.
 //
-//     gf::inventory::onViewersChanged("twilightforest:twilight_oak_trapped_chest", [](auto const& pos, int n) {
+//     gf::inventory::onViewersChanged("gloamingforest:gloaming_oak_trapped_chest", [](auto const& pos, int n) {
 //         gf::redstone::...;   // the signal changed
 //     });
 

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // Pure C++ (no mc/ll includes; the gtests use it too). Minecraft 1.21.1's Xoroshiro128++ random
@@ -9,7 +9,7 @@
 //     RandomState(seed).getOrCreateRandomFactory("minecraft:worldgen_region_random")
 //                      .at(centerChunk.getWorldPosition())
 //
-// where the TF dimension's noise settings use the Xoroshiro source (useLegacyRandomSource false,
+// where the upstream dimension's noise settings use the Xoroshiro source (useLegacyRandomSource false,
 // TFDimensionData#makeNoiseSettings). tests/structure/XoroshiroTest.cpp checks every value against
 // the output of tests/structure/oracle/XoroshiroOracle.java run on Minecraft 1.21.1 itself.
 //

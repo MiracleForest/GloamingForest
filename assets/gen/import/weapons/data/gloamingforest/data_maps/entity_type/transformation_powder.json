@@ -1,0 +1,100 @@
+{
+  "values": {
+    "minecraft:bat": {
+      "transform_to": "gloamingforest:raven"
+    },
+    "minecraft:cave_spider": {
+      "transform_to": "gloamingforest:swarm_spider"
+    },
+    "minecraft:chicken": {
+      "transform_to": "gloamingforest:penguin"
+    },
+    "minecraft:cow": {
+      "transform_to": "gloamingforest:deer"
+    },
+    "minecraft:ghast": {
+      "transform_to": "gloamingforest:carminite_ghastguard"
+    },
+    "minecraft:parrot": {
+      "transform_to": "gloamingforest:tiny_bird"
+    },
+    "minecraft:pig": {
+      "transform_to": "gloamingforest:boar"
+    },
+    "minecraft:rabbit": {
+      "transform_to": "gloamingforest:dwarf_rabbit"
+    },
+    "minecraft:sheep": {
+      "transform_to": "gloamingforest:bighorn_sheep"
+    },
+    "minecraft:silverfish": {
+      "transform_to": "gloamingforest:towerwood_borer"
+    },
+    "minecraft:slime": {
+      "transform_to": "gloamingforest:maze_slime"
+    },
+    "minecraft:spider": {
+      "transform_to": "gloamingforest:hedge_spider"
+    },
+    "minecraft:vex": {
+      "transform_to": "gloamingforest:wraith"
+    },
+    "minecraft:witch": {
+      "transform_to": "gloamingforest:skeleton_druid"
+    },
+    "minecraft:wolf": {
+      "transform_to": "gloamingforest:hostile_wolf"
+    },
+    "minecraft:zombified_piglin": {
+      "transform_to": "gloamingforest:minotaur"
+    },
+    "gloamingforest:bighorn_sheep": {
+      "transform_to": "minecraft:sheep"
+    },
+    "gloamingforest:boar": {
+      "transform_to": "minecraft:pig"
+    },
+    "gloamingforest:carminite_ghastguard": {
+      "transform_to": "minecraft:ghast"
+    },
+    "gloamingforest:deer": {
+      "transform_to": "minecraft:cow"
+    },
+    "gloamingforest:dwarf_rabbit": {
+      "transform_to": "minecraft:rabbit"
+    },
+    "gloamingforest:hedge_spider": {
+      "transform_to": "minecraft:spider"
+    },
+    "gloamingforest:hostile_wolf": {
+      "transform_to": "minecraft:wolf"
+    },
+    "gloamingforest:maze_slime": {
+      "transform_to": "minecraft:slime"
+    },
+    "gloamingforest:minotaur": {
+      "transform_to": "minecraft:zombified_piglin"
+    },
+    "gloamingforest:penguin": {
+      "transform_to": "minecraft:chicken"
+    },
+    "gloamingforest:raven": {
+      "transform_to": "minecraft:bat"
+    },
+    "gloamingforest:skeleton_druid": {
+      "transform_to": "minecraft:witch"
+    },
+    "gloamingforest:swarm_spider": {
+      "transform_to": "minecraft:cave_spider"
+    },
+    "gloamingforest:tiny_bird": {
+      "transform_to": "minecraft:parrot"
+    },
+    "gloamingforest:towerwood_borer": {
+      "transform_to": "minecraft:silverfish"
+    },
+    "gloamingforest:wraith": {
+      "transform_to": "minecraft:vex"
+    }
+  }
+}

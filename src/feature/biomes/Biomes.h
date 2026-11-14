@@ -3,9 +3,9 @@
 // U1 `biomes`, the unit's internal interface (not a contract: other units use the worldgen
 // contract's biomeAt / mainBiomeAt, or feature/ext/biomes/Biomes.h).
 //
-// The biome source of the Twilight Forest: TF's layer stack and terrain grid (registries
+// The biome source of the Gloaming Forest: upstream's layer stack and terrain grid (registries
 // biome_layer_stack and biome_terrain_data, read from the mod's data folder, which F1 imports
-// from TF's data pack) evaluated for the world seed. Installed into F5's worldgen pipeline with
+// from upstream's data pack) evaluated for the world seed. Installed into F5's worldgen pipeline with
 // worldgen::setBiomeSource / setMainBiomeSource and ext::setPossibleBiomes.
 
 #include <cstdint>
@@ -25,25 +25,25 @@ namespace gf::feature::biomes {
 
 inline constexpr char kUnit[] = "biomes";
 
-/// The namespaced id of `biome` ("minecraft:plains", "twilightforest:swamp"), cached per biome object
+/// The namespaced id of `biome` ("minecraft:plains", "gloamingforest:swamp"), cached per biome object
 /// on this thread and checked against the biome's name hash on every use (a biome of another world
 /// may reuse the address).
 [[nodiscard]] std::string const& biomeIdOf(Biome const& biome);
-/// Whether `biomeId` is one of TF's 22 biomes.
+/// Whether `biomeId` is one of upstream's 22 biomes.
 [[nodiscard]] bool isTfBiome(std::string_view biomeId);
 
-/// config/biomes.json (rule R13). TF has no biome config key (docs/spec/config.md): these are
+/// config/biomes.json (rule R13). upstream has no biome config key (docs/spec/config.md): these are
 /// GloamingForest's own switches.
 struct BiomesConfig {
     int version = 1;
-    /// Client mod: draw TF's position-dependent grass and foliage colours (spooky forest, dark
+    /// Client mod: draw upstream's position-dependent grass and foliage colours (spooky forest, dark
     /// forest centre, enchanted forest) on vanilla grass, plants and leaves.
     bool clientTints = true;
     /// Client mod: Java's biome blend radius for those colours (options.biomeBlendRadius, 2 = 5x5).
     int tintBlendRadius = 2;
 };
 
-/// The 22 biome ids of the Twilight Forest (TFBiomes), sorted.
+/// The 22 biome ids of the Gloaming Forest (TFBiomes), sorted.
 [[nodiscard]] std::vector<std::string> const& biomeIds();
 
 /// The layer stacks and the terrain grid read from the mod's data folder (nullptr: missing or
@@ -77,8 +77,8 @@ struct BiomeSpawns {
 [[nodiscard]] BiomeSpawns spawnsOf(std::string const& biomeId);
 /// Registers every biome's table and the spawn costs (install).
 void registerSpawns();
-/// Lets F5's natural spawns of the vanilla mobs of TF's tables through Bedrock's own spawn rules in
-/// the Twilight Forest (see Spawns.cpp; called by registerSpawns).
+/// Lets F5's natural spawns of the vanilla mobs of upstream's tables through Bedrock's own spawn rules in
+/// the Gloaming Forest (see Spawns.cpp; called by registerSpawns).
 void registerVanillaSpawns();
 /// Selftests: switches that off (true: on).
 void setVanillaSpawnsForTest(bool on);

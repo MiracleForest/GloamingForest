@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/Adherent.java
-//   src/main/java/twilightforest/entity/monster/HarbingerCube.java
-//   src/main/java/twilightforest/entity/RovingCube.java
-//   src/main/java/twilightforest/entity/ai/goal/CubeMoveToRedstoneSymbolsGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/CubeCenterOnSymbolGoal.java
-//   src/main/java/twilightforest/entity/boss/PlateauBoss.java
-//   src/main/java/twilightforest/block/entity/spawner/FinalBossSpawnerBlockEntity.java
-//   src/main/java/twilightforest/events/RegistrationEvents.java (registerSpawnPlacements)
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/Adherent.java
+//   src/main/java/gloamingforest/entity/monster/HarbingerCube.java
+//   src/main/java/gloamingforest/entity/RovingCube.java
+//   src/main/java/gloamingforest/entity/ai/goal/CubeMoveToRedstoneSymbolsGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/CubeCenterOnSymbolGoal.java
+//   src/main/java/gloamingforest/entity/boss/PlateauBoss.java
+//   src/main/java/gloamingforest/block/entity/spawner/FinalBossSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/events/RegistrationEvents.java (registerSpawnPlacements)
 //   net/minecraft/world/entity/ai/goal/RangedAttackGoal.java (vanilla, the adherent's goal)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U30's castle mobs. Their vanilla goals (float, restrict / flee sun, stroll, look, the hurt-by and
-// nearest-player targets) are the BP's behaviours (assets/pack/bp/entities/finalcastle); what TF
+// nearest-player targets) are the BP's behaviours (assets/pack/bp/entities/finalcastle); what upstream
 // adds is native here: the adherent's RangedAttackGoal with a nature bolt (U17's projectile, shot
 // by id: a missing type is skipped at runtime), the roving cube's two symbol goals and its
 // annihilation particles, the plateau boss through F8's boss kit and the final boss spawner that
 // never spawns. None of them spawns naturally in 4.8 (no castle spawn lists, no eggs); the spawn
-// placements are TF's (ON_GROUND, MOTION_BLOCKING_NO_LEAVES, Monster#checkMonsterSpawnRules).
+// placements are upstream's (ON_GROUND, MOTION_BLOCKING_NO_LEAVES, Monster#checkMonsterSpawnRules).
 //
 // Bedrock: RovingCube#aiStep's particles are client-side in Java (3 a tick at the cube's previous
 // position); here the server emits them through gf::fx at the current position, so vanilla clients
@@ -301,7 +301,7 @@ void installMobs() {
     gf::boss::registerBoss({
         .entityId        = id::PlateauBoss,
         .homeStructure   = id::FinalCastle,
-        .lootTable       = "twilightforest:entities/plateau_boss",
+        .lootTable       = "gloamingforest:entities/plateau_boss",
         .deathChestBlock = id::CanopyChest,
         .bar             = {.rgb = 0xFFFFFF},
     });

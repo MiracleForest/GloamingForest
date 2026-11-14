@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/TwilightForestRenderInfo.java
-//   src/main/java/twilightforest/config/TFClientConfig.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/GloamingForestRenderInfo.java
+//   src/main/java/gloamingforest/config/TFClientConfig.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U15 (atmosphere), server side: the config section "atmosphere" and the vanilla fallback of TF's
-// fog. A vanilla Bedrock client has no TF fog rendering; it gets the resource pack fog definitions
+// U15 (atmosphere), server side: the config section "atmosphere" and the vanilla fallback of upstream's
+// fog. A vanilla Bedrock client has no upstream fog rendering; it gets the resource pack fog definitions
 // of this unit (assets/pack/rp/fogs/atmosphere) pushed with PlayerFogPacket: twice a second the
-// server works out each vanilla player's fog stack in the Twilight Forest (the biome's fog, the
-// near fog of the dark forests below y 20; TwilightForestRenderInfo#isFoggyAt) and sends it when it
-// changed (an empty stack when the player leaves). Companions (the client mod) draw TF's own fog and
+// server works out each vanilla player's fog stack in the Gloaming Forest (the biome's fog, the
+// near fog of the dark forests below y 20; GloamingForestRenderInfo#isFoggyAt) and sends it when it
+// changed (an empty stack when the player leaves). Companions (the client mod) draw upstream's own fog and
 // are left alone.
 
 #include "feature/atmosphere/Atmosphere.h"
@@ -65,8 +65,8 @@ std::vector<std::string> fogStackFor(std::string_view biomeId, double y) {
 std::vector<std::string> fogDefinitionIds() {
     std::vector<std::string> ids;
     for (auto const& l : ca::biomeLooks()) ids.emplace_back(l.id);
-    ids.emplace_back("twilightforest:dark_forest_near");
-    ids.emplace_back("twilightforest:dark_forest_center_near");
+    ids.emplace_back("gloamingforest:dark_forest_near");
+    ids.emplace_back("gloamingforest:dark_forest_center_near");
     return ids;
 }
 
@@ -88,7 +88,7 @@ constexpr char kStale[] = "\x01stale";
 
 std::int64_t keyOf(Player const& player) { return player.getOrCreateUniqueID().rawID; }
 
-/// The biome at the player's feet (TF reads player.blockPosition(); Bedrock's getPosition is the eyes).
+/// The biome at the player's feet (upstream reads player.blockPosition(); Bedrock's getPosition is the eyes).
 std::string biomeAt(Player& player) {
     BlockPos bp     = player.getFeetBlockPos();
     auto&    region = player.getDimensionBlockSource();
@@ -114,7 +114,7 @@ std::string join(std::vector<std::string> const& v) {
 
 bool updateFog(Player& player, std::optional<std::string> const& biomeOverride) {
     std::vector<std::string> stack;
-    if (::gf::world::isTwilight(player.getDimension())) {
+    if (::gf::world::isGloaming(player.getDimension())) {
         std::optional<std::string> pinned;
         if (!biomeOverride) {
             std::lock_guard lock(fogState().mutex);
@@ -126,7 +126,7 @@ bool updateFog(Player& player, std::optional<std::string> const& biomeOverride) 
     {
         std::lock_guard lock(fogState().mutex);
         // a vanilla client may reset its fog stack on a dimension change: send the new stack (an
-        // empty one too, which clears TF's fog) whatever was sent before
+        // empty one too, which clears upstream's fog) whatever was sent before
         int const dim = static_cast<int>(player.getDimensionId());
         if (auto d = fogState().dims.find(keyOf(player)); d != fogState().dims.end() && d->second != dim) fogState().sent[keyOf(player)] = {kStale};
         fogState().dims[keyOf(player)] = dim;
@@ -171,7 +171,7 @@ public:
             auto level = ll::service::getLevel();
             if (!level) return;
             level->forEachPlayer([](Player& p) {
-                if (p.isSimulatedPlayer() || net::isCompanion(p)) return true; // the client mod draws TF's fog
+                if (p.isSimulatedPlayer() || net::isCompanion(p)) return true; // the client mod draws upstream's fog
                 updateFog(p);
                 return true;
             });

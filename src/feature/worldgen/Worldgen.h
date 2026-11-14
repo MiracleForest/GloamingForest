@@ -2,13 +2,13 @@
 
 // Contract "worldgen" (header owned by F0, implemented by F5; spike S2).
 //
-// The Twilight Forest's chunk generator runs as a staged pipeline (Java's ChunkStatus order):
+// The Gloaming Forest's chunk generator runs as a staged pipeline (Java's ChunkStatus order):
 //   Biomes -> Starts -> Noise -> Surface -> Carvers -> Features -> Pieces -> Blanket -> Spawns
 // Units plug providers into it by string id and never touch the engine's generator:
 //
 //     gf::worldgen::setBiomeSource([](int qx, int qy, int qz) { return layers.biomeAt(qx, qz); });  // U1
 //     gf::worldgen::setTerrain([](gf::worldgen::Chunk& c) { ... });                                 // U2
-//     gf::worldgen::registerCarver("twilightforest:tf_caves", carve);                               // U2
+//     gf::worldgen::registerCarver("gloamingforest:tf_caves", carve);                               // U2
 //     gf::worldgen::addStage(gf::worldgen::Stage::Pieces, "landmark.pieces", 0, placePieces);       // F6/F7
 //
 // Generation is deterministic for a seed and may run on worker threads: providers must be
@@ -44,7 +44,7 @@ public:
     [[nodiscard]] virtual Block const& getBlock(int lx, int y, int lz) const                = 0;
     virtual void                       setBlock(int lx, int y, int lz, Block const& block)  = 0;
     [[nodiscard]] virtual int          height(Heightmap type, int lx, int lz) const         = 0;
-    /// The biome id at a local position ("twilightforest:dark_forest").
+    /// The biome id at a local position ("gloamingforest:dark_forest").
     [[nodiscard]] virtual std::string  biome(int lx, int y, int lz) const                   = 0;
     virtual void                       setBiome(int lx, int y, int lz, std::string const& biomeId) = 0;
 };
@@ -72,7 +72,7 @@ public:
 
 /// Biome at quart (4-block) coordinates (Java's BiomeSource#getNoiseBiome); returns a biome id.
 using BiomeSourceFn = std::function<std::string(int quartX, int quartY, int quartZ)>;
-/// TF's "main biome" of a column (TFBiomeProvider: the layer stack result before underground
+/// upstream's "main biome" of a column (TFBiomeProvider: the layer stack result before underground
 /// biomes); used by landmark placement and the magic map.
 using MainBiomeFn     = std::function<std::string(int blockX, int blockZ)>;
 using TerrainProvider = std::function<void(Chunk& chunk)>;
@@ -81,25 +81,25 @@ using CarverFn        = std::function<void(Chunk& chunk, Region& region, RandomS
 using BlanketFn       = std::function<void(Chunk& chunk, Region& region)>;
 using ChunkFn         = std::function<void(Chunk& chunk, Region& region)>;
 
-/// Replaces the biome source of the Twilight Forest (U1).
+/// Replaces the biome source of the Gloaming Forest (U1).
 void setBiomeSource(BiomeSourceFn fn);
 void setMainBiomeSource(MainBiomeFn fn);
-/// The biome id at a block of the Twilight Forest ("" when no source is set).
+/// The biome id at a block of the Gloaming Forest ("" when no source is set).
 [[nodiscard]] std::string biomeAt(BlockPos const& pos);
-/// TF's main biome at a column.
+/// upstream's main biome at a column.
 [[nodiscard]] std::string mainBiomeAt(int blockX, int blockZ);
 
 /// The base terrain (density -> stone / water) and the surface rules (U2).
 void setTerrain(TerrainProvider fn);
 void setSurface(SurfaceProvider fn);
-/// A carver referenced by id from biome / configured_carver JSON ("twilightforest:tf_caves").
+/// A carver referenced by id from biome / configured_carver JSON ("gloamingforest:tf_caves").
 void registerCarver(std::string const& id, CarverFn fn);
-/// A chunk blanket processor ("twilightforest:canopy", "twilightforest:glacier"; Blanket stage).
+/// A chunk blanket processor ("gloamingforest:canopy", "gloamingforest:glacier"; Blanket stage).
 void registerBlanket(std::string const& id, BlanketFn fn);
 /// Adds a step to a stage; steps of a stage run by ascending `order`, then registration order.
 void addStage(Stage stage, std::string const& id, int order, ChunkFn fn);
 
-/// The seed of the world being generated (the overworld seed, as TF uses it).
+/// The seed of the world being generated (the overworld seed, as upstream uses it).
 [[nodiscard]] std::int64_t seed();
 
 } // namespace gf::worldgen

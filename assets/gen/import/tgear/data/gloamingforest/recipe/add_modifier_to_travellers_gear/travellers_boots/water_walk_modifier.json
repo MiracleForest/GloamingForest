@@ -1,0 +1,22 @@
+{
+  "type": "gloamingforest:travellers_gear_modifier_shaped_recipe",
+  "is_rotated": false,
+  "modifier_key": "gloamingforest:water_walk",
+  "pattern": {
+    "key": {
+      "B": {
+        "item": "gloamingforest:travellers_boots"
+      },
+      "L": {
+        "item": "minecraft:lily_pad"
+      },
+      "S": {
+        "item": "gloamingforest:maze_slime_ball"
+      }
+    },
+    "pattern": [
+      "SBS",
+      "L L"
+    ]
+  }
+}

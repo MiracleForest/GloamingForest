@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFMaze.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFMaze.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -48,7 +48,7 @@ inline void              putCell(Grid g, int x, int z, int value) { putRaw(g, x 
     if (dx == sx - 1 && dz == sz) return getRaw(g, sx * 2, sz * 2 + 1);
     if (dx == sx && dz == sz + 1) return getRaw(g, sx * 2 + 1, sz * 2 + 2);
     if (dx == sx && dz == sz - 1) return getRaw(g, sx * 2 + 1, sz * 2);
-    return OUT_OF_BOUNDS; // TF logs "Wall check out of bounds" here
+    return OUT_OF_BOUNDS; // upstream logs "Wall check out of bounds" here
 }
 inline void putWall(Grid g, int sx, int sz, int dx, int dz, int value) {
     if (dx == sx + 1 && dz == sz) putRaw(g, sx * 2 + 2, sz * 2 + 1, value);
@@ -86,7 +86,7 @@ inline void putWall(Grid g, int sx, int sz, int dx, int dz, int value) {
     return rand.nextInt(50) == 0;
 }
 
-/// A 3x3 cell room with exits in every direction (TF's putCell(rx, ...) quirk kept: the exit
+/// A 3x3 cell room with exits in every direction (upstream's putCell(rx, ...) quirk kept: the exit
 /// cells are addressed with raw coordinates, as in Java).
 inline void carveRoom1(Grid g, int cx, int cz) {
     int rx = cx * 2 + 1;
@@ -114,7 +114,7 @@ inline void add4Exits(Grid g) {
 }
 
 /// Recursive backtracker: marks the cell visited, carves to a random unvisited neighbour and
-/// recurses, then retries this cell twice (as TF does).
+/// recurses, then retries this cell twice (as upstream does).
 inline void rbGen(Grid g, int sx, int sz, RandomSource& rand, float doorRarity) {
     putCell(g, sx, sz, 1);
 

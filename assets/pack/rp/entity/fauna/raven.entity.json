@@ -2,18 +2,18 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:raven",
+      "identifier": "gloamingforest:raven",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/raven"
+        "default": "textures/gloamingforest/entity/raven"
       },
       "geometry": {
-        "default": "geometry.twilightforest.raven"
+        "default": "geometry.gloamingforest.raven"
       },
       "animations": {
-        "setup": "animation.twilightforest.raven.setup"
+        "setup": "animation.gloamingforest.raven.setup"
       },
       "scripts": {
         "animate": [

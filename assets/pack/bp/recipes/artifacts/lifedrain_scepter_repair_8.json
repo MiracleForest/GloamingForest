@@ -2,14 +2,14 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:equipment/lifedrain_scepter_8"
+      "identifier": "gloamingforest:equipment/lifedrain_scepter_8"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:lifedrain_scepter"
+        "item": "gloamingforest:lifedrain_scepter"
       },
       {
         "item": "minecraft:fermented_spider_eye"
@@ -40,7 +40,7 @@
       "context": "AlwaysUnlocked"
     },
     "result": {
-      "item": "twilightforest:lifedrain_scepter"
+      "item": "gloamingforest:lifedrain_scepter"
     }
   }
 }

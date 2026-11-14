@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:charm_of_life_2",
+      "identifier": "gloamingforest:charm_of_life_2",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:charm_of_life_2.name"
+        "value": "item.gloamingforest:charm_of_life_2.name"
       },
       "minecraft:tags": {
         "tags": ["curios:charm"]

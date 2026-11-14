@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:food/smoked_meef"
+    },
+    "tags": ["smoker"],
+    "input": "gloamingforest:raw_meef",
+    "output": "gloamingforest:cooked_meef",
+    "unlock": [
+      {
+        "item": "gloamingforest:raw_meef"
+      }
+    ]
+  }
+}

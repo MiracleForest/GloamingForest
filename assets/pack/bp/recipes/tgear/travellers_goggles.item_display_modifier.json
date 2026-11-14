@@ -2,7 +2,7 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shaped": {
     "description": {
-      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_goggles/item_display_modifier"
+      "identifier": "gloamingforest:add_modifier_to_travellers_gear/travellers_goggles/item_display_modifier"
     },
     "tags": [
       "crafting_table"
@@ -14,7 +14,7 @@
     ],
     "key": {
       "g": {
-        "item": "twilightforest:travellers_goggles"
+        "item": "gloamingforest:travellers_goggles"
       },
       "i": {
         "item": "minecraft:frame"
@@ -25,11 +25,11 @@
     },
     "unlock": [
       {
-        "item": "twilightforest:travellers_goggles"
+        "item": "gloamingforest:travellers_goggles"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_goggles"
+      "item": "gloamingforest:travellers_goggles"
     }
   }
 }

@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/CastleDoorBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/CastleDoorBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -29,10 +29,10 @@ namespace ia = gf::interactions;
 
 namespace {
 
-constexpr char kActive[] = "twilightforest:active";
-constexpr char kVanish[] = "twilightforest:vanish";
+constexpr char kActive[] = "gloamingforest:active";
+constexpr char kVanish[] = "gloamingforest:vanish";
 
-/// CastleDoorBlock#isBlockLocked: always false in TF 4.8.
+/// CastleDoorBlock#isBlockLocked: always false in upstream 4.8.
 bool locked(BlockSource&, BlockPos const&) { return false; }
 
 /// changeToActiveBlock(level, pos, state).
@@ -42,11 +42,11 @@ void changeToActive(BlockSource& region, BlockPos const& pos) {
 }
 
 void playVanish(BlockSource& region, BlockPos const& pos) {
-    sound(region, pos, "block.twilightforest.door.vanish", 0.125f, random().nextFloat() * 0.25f + 1.75f);
+    sound(region, pos, "block.gloamingforest.door.vanish", 0.125f, random().nextFloat() * 0.25f + 1.75f);
 }
 
 void playReappear(BlockSource& region, BlockPos const& pos) {
-    sound(region, pos, "block.twilightforest.door.reappear", 0.125f, random().nextFloat() * 0.25f + 1.25f);
+    sound(region, pos, "block.gloamingforest.door.reappear", 0.125f, random().nextFloat() * 0.25f + 1.25f);
 }
 
 void vanishParticles(BlockSource& region, BlockPos const& pos) {
@@ -57,7 +57,7 @@ void vanishParticles(BlockSource& region, BlockPos const& pos) {
             for (int dz = 0; dz < 4; ++dz) {
                 Vec3 at{float(pos.x + (dx + 0.5) / 4), float(pos.y + (dy + 0.5) / 4), float(pos.z + (dz + 0.5) / 4)};
                 Vec3 v{float(rand.nextGaussian() * 0.2), float(rand.nextGaussian() * 0.2), float(rand.nextGaussian() * 0.2)};
-                particle(region, "twilightforest:annihilate", at, v);
+                particle(region, "gloamingforest:annihilate", at, v);
             }
         }
     }
@@ -94,7 +94,7 @@ bool activateDoor(BlockSource& region, BlockPos const& pos) {
     Block const& b = region.getBlock(pos);
     if (!isDoor(game::blockId(b)) || boolState(b, kVanish) || boolState(b, kActive)) return false; // FAIL
     if (locked(region, pos)) {
-        sound(region, pos, "block.twilightforest.door.activate", 1.0f, 0.3f);
+        sound(region, pos, "block.gloamingforest.door.activate", 1.0f, 0.3f);
         return false; // PASS
     }
     changeToActive(region, pos);

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // F7 internals shared by the files of src/feature/structure (not a contract: other units use
@@ -84,7 +84,7 @@ namespace blocks {
 [[nodiscard]] bool isWater(Block const& block);
 /// BlockState#canBeReplaced (air, liquids, replaceable plants, single snow layers, ...).
 [[nodiscard]] bool canBeReplaced(Block const& block);
-/// FeatureLogic.worldGenReplaceable (canBeReplaced or #twilightforest:worldgen_replaceables, and
+/// FeatureLogic.worldGenReplaceable (canBeReplaced or #gloamingforest:worldgen_replaceables, and
 /// not #minecraft:features_cannot_replace).
 [[nodiscard]] bool worldGenReplaceable(Block const& block);
 /// StructurePiece#isReplaceableByStructures.
@@ -146,7 +146,7 @@ struct Connector {
     std::string target;
     int         priority = 0;
 };
-/// A data marker ("markers" entries): `marker` "data" carries TF's metadata label in data.metadata;
+/// A data marker ("markers" entries): `marker` "data" carries upstream's metadata label in data.metadata;
 /// any other marker is block entity data attached to the block at `pos`.
 struct Marker {
     BlockPos    pos{0, 0, 0};
@@ -196,7 +196,7 @@ struct Parsed {
 /// sorted by y, then x, then z (StructureTemplate#buildInfoList).
 [[nodiscard]] int javaList(Json const& javaState);
 /// Whether the block entity of `block` is a RandomizableContainer in Java (chests and trapped chests
-/// of every wood, TF's skull chest and keepsake casket, barrels, hoppers, dispensers, droppers,
+/// of every wood, upstream's skull chest and keepsake casket, barrels, hoppers, dispensers, droppers,
 /// shulker boxes, decorated pots, crafters): StructureTemplate#placeInWorld draws its
 /// LootTableSeed from the placement's random when the template gives it block entity data.
 [[nodiscard]] bool randomizableContainer(Block const& block);
@@ -205,7 +205,7 @@ struct Parsed {
 [[nodiscard]] Block const* dataMarkerBlock();
 /// Parses and validates a template document (errors listed; empty: valid).
 [[nodiscard]] std::vector<std::string> validate(Json const& doc);
-/// Registers an in-memory template (selftest fixtures, /tf structure_util capture); replaces one
+/// Registers an in-memory template (selftest fixtures, /gloamingforest structure_util capture); replaces one
 /// with the same id. Returns false (with `error`) when the document is invalid.
 bool add(Json const& doc, std::string* error = nullptr);
 /// The parsed form of template `id` (nullptr when missing / invalid).
@@ -241,13 +241,13 @@ struct Placed {
 };
 /// StructureTemplate#placeInWorld for a GloamingForest template: processes every block, places
 /// the ones inside settings.clip, applies their block entity markers and spawns the entities.
-/// `dataMarkers` receives the TF data markers (world position + label) inside the clip. `random`
+/// `dataMarkers` receives the upstream data markers (world position + label) inside the clip. `random`
 /// is placeInWorld's random argument: the LootTableSeed of every randomizable container with block
 /// entity data placed is drawn from it, in placement order, before the markers run.
 bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, RandomSource& random,
                   std::vector<std::pair<BlockPos, std::string>>* dataMarkers = nullptr, std::vector<Placed>* placedOut = nullptr);
 /// StructureTemplate#filterBlocks(pos, settings, Blocks.STRUCTURE_BLOCK) for the data markers: the
-/// TF data markers of `t` (world position + label) inside settings.clip, in Java's order, with
+/// upstream data markers of `t` (world position + label) inside settings.clip, in Java's order, with
 /// StructurePlaceSettings#getRandomPalette's draw (`placement.sharedRandom`'s nextInt(1)) when the
 /// placement shares a random.
 [[nodiscard]] std::vector<std::pair<BlockPos, std::string>> filterDataMarkers(Parsed const& t, Placement const& placement);
@@ -262,7 +262,7 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
 /// StructureTemplate#fillFromWorld with entities: the blocks of `box` (Bedrock ids and states) and
 /// its entities but players (paintings by the block they cover, facing and variant; the others
 /// by position, rotation and their saved actor data) as a template document `id`. `skipped` counts the entities that
-/// reach outside the box (left out). (Commands.cpp, /twilightforest structure_util capture.)
+/// reach outside the box (left out). (Commands.cpp, /gloamingforest structure_util capture.)
 [[nodiscard]] Json capture(BlockSource& source, BlockBox const& box, std::string const& id, int& skipped);
 
 } // namespace templates
@@ -307,16 +307,16 @@ void                   setCurrentClip(std::optional<BlockBox> const& clip);
 [[nodiscard]] std::vector<std::string> processorTypes();
 [[nodiscard]] std::vector<std::string> markerTypes();
 
-// ---- TF template marker handlers (Markers.cpp) ---------------------------------------------------------
+// ---- upstream template marker handlers (Markers.cpp) ---------------------------------------------------------
 namespace markers {
 /// A TemplateMarkerHandler (typed JSON: block_placement, drying_rack, loot, painting, rotation,
 /// handler_switch). Returns whether it handled the label.
 bool handle(Json const& handler, std::string const& label, BlockPos const& pos, Region& region, RandomSource& random,
             BlockBox const& chunkBounds, Rotation rotation);
-/// A template_marker_handler_list by id (data/twilightforest/twilight/template_marker_handler_list).
+/// A template_marker_handler_list by id (data/gloamingforest/gloaming/template_marker_handler_list).
 [[nodiscard]] Json const* list(std::string const& id);
 void                      addList(std::string const& id, Json const& list);
-/// BlockStateProvider#getState for the vanilla providers TF's data uses.
+/// BlockStateProvider#getState for the vanilla providers upstream's data uses.
 [[nodiscard]] Block const* provide(Json const& provider, RandomSource& random, BlockPos const& pos);
 void                       registerBuiltins();
 /// TemplateMarkerHandler.parseRange.
@@ -333,13 +333,13 @@ void container(Region& region, BlockPos const& pos, std::string const& blockId, 
                std::int64_t seed);
 /// Sets the loot table of an existing container at `pos` (custom containers: gf::inventory).
 void lootTable(Region& region, BlockPos const& pos, std::string const& tableId, std::int64_t seed);
-/// Places a mob spawner (vanilla mob_spawner, TF's setSpawner / placeSpawner) for `entityId` with
+/// Places a mob spawner (vanilla mob_spawner, upstream's setSpawner / placeSpawner) for `entityId` with
 /// optional spawner data (Delay, MinSpawnDelay, MaxSpawnDelay, SpawnCount, MaxNearbyEntities,
 /// RequiredPlayerRange, SpawnRange; entity_scale and spawn_rules from spawner_processor).
 void spawner(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data);
 /// A template's spawner block entity data for the block the template put at `pos` (the block
 /// stays, as StructureTemplate loads the data into that block's own block entity): a vanilla
-/// spawner is set up as spawner() does; TF's sinister spawner gets it in its block entity (F8's
+/// spawner is set up as spawner() does; upstream's sinister spawner gets it in its block entity (F8's
 /// gf::boss::ext::setSinisterSpawner, as BaseSpawner#load) and any such block keeps it in its
 /// BlockData "structure"."spawner" record ({"entity", "data": {the BaseSpawner fields}, "scale"?,
 /// "spawn_rules"?}: the generic.scale and custom spawn rules the kit applies to its spawns); air
@@ -354,13 +354,13 @@ void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& l
 /// through paintings::tryHang.
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data);
 /// Hangs painting `motive` ("kebab") at `pos` (the block it covers) facing `direction` once the
-/// caller ran TF's spot check (true, as EntityUtil.tryHangPainting): at once in a live region, when
+/// caller ran upstream's spot check (true, as EntityUtil.tryHangPainting): at once in a live region, when
 /// the chunk is loaded during generation. A painting the game refuses (no wall behind it) drops as
-/// a painting item at the painting's center, as TF's does on its next survival check. False for an
+/// a painting item at the painting's center, as upstream's does on its next survival check. False for an
 /// unknown motive.
 bool painting(Region& region, BlockPos const& pos, Orientation direction, std::string const& motive, Json const& box);
 /// Whether a queued (not yet spawned) painting of dimension `dim` overlaps `box` ([minX, minY,
-/// minZ, maxX, maxY, maxZ] doubles): the ProtoChunk entities TF's painting check sees. Thread safe
+/// minZ, maxX, maxY, maxZ] doubles): the ProtoChunk entities upstream's painting check sees. Thread safe
 /// (a per-chunk index of the queued paintings' boxes behind a shared lock).
 [[nodiscard]] bool pendingPaintingIntersects(int dim, double const (&box)[6]);
 /// A painting hanging in the world, as a template stores it.
@@ -404,7 +404,7 @@ bool unpackHopper(BlockSource& source, BlockPos const& pos);
 /// The number of hoppers with a pending loot table the kit watches (every dimension).
 [[nodiscard]] std::size_t pendingHoppers();
 /// SinisterSpawnerLogic's ParticleOptions decoded (PARTICLES_CODEC: ParticleTypes.CODEC.listOf()):
-/// each entry a compound {"type": particle id, ...the options its type requires} of a 1.21.1 or TF
+/// each entry a compound {"type": particle id, ...the options its type requires} of a 1.21.1 or upstream
 /// 4.8 particle type. The options go to F8's spawner as the particle's fx params.
 struct ParticleList {
     std::vector<std::string> ids;
@@ -455,7 +455,7 @@ void uninstall();
 namespace spawners {
 /// The spawner block whose spawn is under way at `at` for mob `entityId`: the nearest vanilla
 /// spawner around `at` (within its SpawnRange, one block up or down) whose mob is `entityId`,
-/// preferring the one whose delay ran out (the one spawning now); else the nearest TF sinister
+/// preferring the one whose delay ran out (the one spawning now); else the nearest upstream sinister
 /// spawner (F8's) with a kit spawner record whose spawn box holds `at` and whose mob it is.
 [[nodiscard]] std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::string const& entityId);
 /// Applies a generic.scale-like size factor to a live mob now (Bedrock bounding box data).
@@ -527,7 +527,7 @@ void boundingBox(BlockPos const& pos, Orientation direction, Variant const& vari
 /// EntityUtil.tryHangPainting.
 bool tryHang(Region& region, BlockPos const& pos, Orientation direction, std::optional<Variant> const& variant);
 /// EntityUtil.getEntitiesInAABB(new AABB(pos)) is not empty: a queued painting (the ProtoChunk
-/// entities TF reads; in a live world TF sees none) overlaps the block at `pos`.
+/// entities upstream reads; in a live world upstream sees none) overlaps the block at `pos`.
 [[nodiscard]] bool occupied(Region& region, BlockPos const& pos);
 /// EntityUtil.getPaintingOfSize.
 [[nodiscard]] std::optional<Variant> ofSize(RandomSource& random, int width, int height, bool exactMeasurements);
@@ -542,7 +542,7 @@ bool placeLabelled(std::string const& label, BlockPos const& pos, Region& region
 } // namespace paintings
 
 /// WorldGenRegion#getRandom: a random of the region being decorated, separate from the piece's
-/// random (TF draws wall selectors, canopy trees and planter trees from it). Seeded from the
+/// random (upstream draws wall selectors, canopy trees and planter trees from it). Seeded from the
 /// region's seed and center chunk; the same region keeps drawing from the same random.
 [[nodiscard]] RandomSource& regionRandom(Region& region);
 /// Forgets this thread's random of `region` (a new region object at that address starts its own;
@@ -561,11 +561,11 @@ void shutdown();
 namespace data {
 /// The mod directory's data root (`<mod>/data`).
 [[nodiscard]] std::string root();
-/// Loads every JSON under data/<ns>/<dir>/ into id -> document ("twilightforest:camp/tent").
+/// Loads every JSON under data/<ns>/<dir>/ into id -> document ("gloamingforest:camp/tent").
 [[nodiscard]] std::map<std::string, Json> loadDir(std::string const& dir);
 /// A data document data/<ns>/<dir>/<path>.json by id.
 [[nodiscard]] std::optional<Json> load(std::string const& dir, std::string const& id);
-/// (Re)loads the twilight/* registries F7 consumes (palettes, stalactites, speleothem configs,
+/// (Re)loads the gloaming/* registries F7 consumes (palettes, stalactites, speleothem configs,
 /// template definitions, marker handler lists).
 void reload();
 } // namespace data
@@ -622,8 +622,8 @@ bool spike(Region& region, BlockPos const& pos, std::string const& configId, Ran
 /// nullopt when no such container stands there.
 [[nodiscard]] std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockPos const& pos);
 /// ItemStack#getRarity() != Rarity.COMMON (count_loot's filter): F9's rarity of the stack
-/// (gf::item::ext::rarityOf: TWILIGHT, registered rarities, the enchantment bump), else the item's
-/// 1.21.1 / TF 4.8 base rarity.
+/// (gf::item::ext::rarityOf: GLOAMING, registered rarities, the enchantment bump), else the item's
+/// 1.21.1 / upstream 4.8 base rarity.
 [[nodiscard]] bool notCommon(ItemStack const& stack);
 /// CountLootCommand for landmark start `start` in `source`'s dimension: the items of the containers
 /// inside its pieces (in the loaded chunks of its box), loot tables unpacked first; only the stacks
@@ -635,7 +635,7 @@ bool spike(Region& region, BlockPos const& pos, std::string const& configId, Ran
 inline constexpr char kBlockDataKey[] = "structure";
 /// Logs `message` once per key (missing ids and the like).
 void warnOnce(std::string const& key, std::string const& message);
-/// The TF dimension's sea level (noise settings: 0).
+/// The upstream dimension's sea level (noise settings: 0).
 inline constexpr int kSeaLevel = 0;
 
 } // namespace gf::structure

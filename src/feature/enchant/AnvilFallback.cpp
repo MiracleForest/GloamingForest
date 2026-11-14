@@ -1,7 +1,7 @@
 // The vanilla-client fallback of the anvil for custom enchantments (F9; ext/item/Enchant.h).
 //
 // A vanilla Bedrock client computes the anvil's result itself and offers none when the second item
-// brings custom enchantments only (an enchanted book of TF's from loot: its enchantments live in the
+// brings custom enchantments only (an enchanted book of upstream's from loot: its enchantments live in the
 // item's user data). The server's merge (Enchant.cpp's anvil hook) never runs for it, so a vanilla
 // player who uses an anvil holding such a book also gets a form (the client opens its own anvil
 // screen on the use whatever the server answers, and drops a form that arrives meanwhile: the form

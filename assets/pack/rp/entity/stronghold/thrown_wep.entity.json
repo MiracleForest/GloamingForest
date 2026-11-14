@@ -2,22 +2,22 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:thrown_wep",
+      "identifier": "gloamingforest:thrown_wep",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "axe": "textures/twilightforest/item/knightmetal_axe",
-        "pickaxe": "textures/twilightforest/item/knightmetal_pickaxe"
+        "axe": "textures/gloamingforest/item/knightmetal_axe",
+        "pickaxe": "textures/gloamingforest/item/knightmetal_pickaxe"
       },
       "geometry": {
-        "default": "geometry.twilightforest.thrown_wep"
+        "default": "geometry.gloamingforest.thrown_wep"
       },
       "render_controllers": [
-        "controller.render.twilightforest.thrown_wep"
+        "controller.render.gloamingforest.thrown_wep"
       ],
       "animations": {
-        "spin": "animation.twilightforest.thrown_wep.spin"
+        "spin": "animation.gloamingforest.thrown_wep.spin"
       },
       "scripts": {
         "animate": [

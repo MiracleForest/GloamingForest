@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:moss_soup",
+      "identifier": "gloamingforest:moss_soup",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:moss_soup.name"
+        "value": "item.gloamingforest:moss_soup.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:tags": {

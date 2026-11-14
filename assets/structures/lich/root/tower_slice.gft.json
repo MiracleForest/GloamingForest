@@ -8,8 +8,8 @@
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:air"},
     {"Name":"minecraft:stone_bricks"},
-    {"Name":"twilightforest:twilight_oak_slab","Properties":{"type":"bottom"}},
-    {"Name":"twilightforest:twilight_oak_slab","Properties":{"type":"top"}},
+    {"Name":"gloamingforest:gloaming_oak_slab","Properties":{"type":"bottom"}},
+    {"Name":"gloamingforest:gloaming_oak_slab","Properties":{"type":"top"}},
     {"Name":"minecraft:iron_bars"}
   ],
   "blocks": [

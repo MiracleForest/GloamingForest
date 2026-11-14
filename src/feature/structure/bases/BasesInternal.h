@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // F7 internals of the shared bases (not a contract).
@@ -27,7 +27,7 @@ void                       setFrontAndTop(JigsawRecord& r, int ordinal);
 [[nodiscard]] Json         recordToJson(JigsawRecord const& r);
 [[nodiscard]] JigsawRecord recordFromJson(Json const& j);
 
-/// TwilightJigsawPiece.defaultForTemplate (pool instance settings and randomized processors).
+/// GloamingJigsawPiece.defaultForTemplate (pool instance settings and randomized processors).
 [[nodiscard]] std::unique_ptr<JigsawPiece> defaultForTemplate(int genDepth, std::string const& templateId, JigsawPlaceContext const& context,
                                                               Json const& instance, RandomSource& random);
 /// StructureTemplateDefinitions#initializeTemplateFromPool; with a generation context the pool
@@ -46,7 +46,7 @@ void                       setFrontAndTop(JigsawRecord& r, int ordinal);
 [[nodiscard]] bool projectsTerrain(JigsawPiece const& piece);
 /// The deepest genDepth jigsaw::assemble lets processJigsaw reach (thread-local, default unlimited).
 [[nodiscard]] int& maxJigsawDepth();
-/// A world seed for TwilightJigsawPiece#addJigsaws in place of worldgen::seed() (thread-local; tests).
+/// A world seed for GloamingJigsawPiece#addJigsaws in place of worldgen::seed() (thread-local; tests).
 [[nodiscard]] std::optional<std::int64_t>& jigsawSeedOverride();
 
 [[nodiscard]] TerrainAdjustment parseTerrainAdjustment(std::string const& name);

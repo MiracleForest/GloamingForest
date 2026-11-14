@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:carminite_reactor",
+      "identifier": "gloamingforest:carminite_reactor",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:active": [false, true]
+        "gloamingforest:active": [false, true]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_reactor",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_reactor",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerdev_reactor_off",
@@ -102,9 +102,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:active')",
+        "condition": "!q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_reactor",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_reactor",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_reactor_off",
@@ -188,9 +188,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_reactor_active",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_reactor_active",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_reactor_on",
@@ -274,7 +274,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
           "minecraft:light_emission": 15
         }

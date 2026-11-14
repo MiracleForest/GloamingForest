@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/ai/goal/ThrowRiderGoal.java
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/ai/goal/ThrowRiderGoal.java
 // and Minecraft 1.21.1's MeleeAttackGoal, RangedAttackGoal and NearestAttackableTargetGoal, which
-// TF's troll, yeti and alpha yeti use.
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// upstream's troll, yeti and alpha yeti use.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -212,7 +212,7 @@ private:
     int          mAttackTime = -1;
 };
 
-/// TF's ThrowRiderGoal: a melee goal that grabs the target as a rider and throws it.
+/// upstream's ThrowRiderGoal: a melee goal that grabs the target as a rider and throws it.
 class ThrowRiderGoal : public MeleeAttackGoal {
 public:
     /// `onGrab`: after an attack that took a rider (the yetis' grab sounds); `onThrow`: before the
@@ -292,9 +292,9 @@ protected:
 private:
     /// Entity#getLookAngle.
     static Vec3 lookAngle(Mob& m) { return m.getViewVector(1.0f); }
-    /// #twilightforest:rides_obstruct_snatching.
+    /// #gloamingforest:rides_obstruct_snatching.
     static bool obstructsSnatching(Actor& vehicle) {
-        return gf::tags::has(gf::tags::Registry::EntityType, "twilightforest:rides_obstruct_snatching", vehicle.getTypeName());
+        return gf::tags::has(gf::tags::Registry::EntityType, "gloamingforest:rides_obstruct_snatching", vehicle.getTypeName());
     }
 
     std::function<void(Mob&)> mOnGrab, mOnThrow;

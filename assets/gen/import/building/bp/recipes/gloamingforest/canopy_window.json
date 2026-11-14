@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:canopy_window"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["GPG", "PPP", "GPG"],
+    "key": {
+      "G": {
+        "item": "minecraft:glass"
+      },
+      "P": {
+        "item": "gloamingforest:canopy_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:canopy_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:canopy_window",
+      "count": 4
+    }
+  }
+}

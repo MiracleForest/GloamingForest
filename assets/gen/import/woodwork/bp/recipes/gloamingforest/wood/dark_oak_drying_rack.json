@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/dark_oak_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "minecraft:dark_oak_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:dark_oak_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:dark_oak_drying_rack"
+    }
+  }
+}

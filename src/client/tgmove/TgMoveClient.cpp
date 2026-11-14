@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/TravellersClientEvents.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/asmhooks/EntityHooks.java
-//   src/main/java/twilightforest/asmhooks/PlayerHooks.java
-//   src/main/java/twilightforest/events/TravellersGearEvents.java
-//   src/main/java/twilightforest/client/model/armor/TravellersWingsModel.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/TravellersClientEvents.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/asmhooks/EntityHooks.java
+//   src/main/java/gloamingforest/asmhooks/PlayerHooks.java
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java
+//   src/main/java/gloamingforest/client/model/armor/TravellersWingsModel.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -24,9 +24,9 @@
 // of the player and pushes the double jump and the sidestep itself (feature/tgmove); a jump of the
 // client's own would be put back. The wings' animation (TravellersWingsModel) is computed here
 // every frame from the synced wing state and set as public Molang variables on the wearer, which
-// animation.twilightforest.travellers_wings (assets/pack/rp/animations/tgmove) turns into the wing
+// animation.gloamingforest.travellers_wings (assets/pack/rp/animations/tgmove) turns into the wing
 // bases' pose: the client mod adds that animation to the wings' attachable (U11 / F2) as the game
-// reads it (feature/ext/tgmove/PackPatch), with no wings in first person (TF draws no armour
+// reads it (feature/ext/tgmove/PackPatch), with no wings in first person (upstream draws no armour
 // there). Vanilla clients read the attachable unchanged: their wings keep the model's rest pose and
 // never read variables they do not have. Each user-visible action logs one line ("tgmove: ...")
 // that the e2e scenario measures.
@@ -101,7 +101,7 @@ namespace {
 
 constexpr double kPi    = 3.14159265358979323846;
 constexpr double kToDeg = 180.0 / kPi;
-constexpr char   kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
+constexpr char   kStraightName[] = "gloamingforest:travellers_gear.boots_straight_ahead";
 constexpr int    kStaleFrames    = 200; ///< a remote entity unseen for this many frames is dropped
 constexpr char   kWingsAnimationKey[] = "tgmove_wings"; ///< the wing animation's short name in the attachable
 
@@ -115,7 +115,7 @@ struct SpeedRun {
     double      distance = 0;
 };
 
-/// The local player's TF attachments (per world session; reset when the world or player changes).
+/// The local player's upstream attachments (per world session; reset when the world or player changes).
 struct Local {
     std::int64_t     player = 0;
     long long        lastLevelTick = -1;
@@ -267,7 +267,7 @@ void tick(movement::MoveState& s) {
             l.waterWalking = true;
             if (!l.lastOnGround) log().info("tgmove: walking on water at y {:.2f}", *surface);
             // WaterSprintTransformer: an unrestrained wearer is not "in water" while standing on it,
-            // so it keeps sprinting there (TF changes nothing for water it does not stand on)
+            // so it keeps sprinting there (upstream changes nothing for water it does not stand on)
             if (act(Mod::Unrestrained) && p->isSprinting()) s.sprinting = true;
         }
     }
@@ -365,7 +365,7 @@ void tick(movement::MoveState& s) {
     }
 
     // ---- input: straight ahead, gliding sneak ----
-    // the engine reads its input after this hook, so TF's input changes go in as the velocity they
+    // the engine reads its input after this hook, so upstream's input changes go in as the velocity they
     // make (feature::tgmove::inputDelta), as on the server copy
     if (auto in = ctx.tryGetComponent<MoveInputComponent>()) {
         Vec2 const move = in->mMove;
@@ -395,7 +395,7 @@ void tick(movement::MoveState& s) {
             }
         }
         if (l.gliding && sneak) {
-            // speedUpControlledWhileSneaking: Java's impulses carry the 0.3 sneak factor before TF's
+            // speedUpControlledWhileSneaking: Java's impulses carry the 0.3 sneak factor before upstream's
             // / 0.2; when Bedrock's input is the unscaled one (longer than 0.35 while sneaking), its
             // factor comes later (decided on the glide's first sneaking tick)
             float len = std::sqrt(move.x * move.x + move.y * move.y);
@@ -410,7 +410,7 @@ void tick(movement::MoveState& s) {
             }
             if (l.sneakScaledLater) engine = Vec2{move.x * 0.3f, move.y * 0.3f};
             tg::unsneakImpulse(tf.y, tf.x, false);
-            if (l.sneakScaledLater) { // the raw input: TF's is its unit length
+            if (l.sneakScaledLater) { // the raw input: upstream's is its unit length
                 tf = Vec2{static_cast<float>(move.x / mult), move.y};
                 tg::unsneakImpulse(tf.y, tf.x, true, 1.0f);
             }
@@ -554,11 +554,11 @@ void setPublic(MolangVariableMap& vars, HashedString const& name, float value) {
 }
 
 bool wearsWings(Actor const& a) {
-    return game::items::idOf(a.getArmor(SharedTypes::Legacy::ArmorSlot::Legs)) == "twilightforest:travellers_wings";
+    return game::items::idOf(a.getArmor(SharedTypes::Legacy::ArmorSlot::Legs)) == "gloamingforest:travellers_wings";
 }
 
 /// One frame of the wings of `a`: the pose in degrees on its Molang variables, read by the
-/// attachable's animation (animation.twilightforest.travellers_wings).
+/// attachable's animation (animation.gloamingforest.travellers_wings).
 void animate(Actor& a, float partialTicks) {
     auto& r  = remote();
     auto  id = a.getOrCreateUniqueID().rawID;
@@ -654,17 +654,17 @@ void renderWings(float partialTicks) {
 }
 
 /// The wings' attachable as the client mod reads it: U12's wing animation (TravellersWingsModel,
-/// fed by animate()) and no wings in first person (TF draws no armour there). Returns whether it
+/// fed by animate()) and no wings in first person (upstream draws no armour there). Returns whether it
 /// changed `doc` (only the wings' attachable, once).
 bool patchWingsAttachable(Json& doc) {
     auto att = doc.find("minecraft:attachable");
     if (att == doc.end() || !att->is_object()) return false;
     auto desc = att->find("description");
-    if (desc == att->end() || !desc->is_object() || desc->value("identifier", std::string()) != "twilightforest:travellers_wings") return false;
+    if (desc == att->end() || !desc->is_object() || desc->value("identifier", std::string()) != "gloamingforest:travellers_wings") return false;
     Json& anims = (*desc)["animations"];
     if (!anims.is_object()) anims = Json::object();
     if (anims.contains(kWingsAnimationKey)) return false;
-    anims[kWingsAnimationKey] = "animation.twilightforest.travellers_wings";
+    anims[kWingsAnimationKey] = "animation.gloamingforest.travellers_wings";
     Json& scripts = (*desc)["scripts"];
     if (!scripts.is_object()) scripts = Json::object();
     Json& animate = scripts["animate"];

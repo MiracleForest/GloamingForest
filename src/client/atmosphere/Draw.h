@@ -1,6 +1,6 @@
 // U15 (atmosphere), client: immediate meshes with the engine's materials (client build only).
 //
-// RenderDragon has no GLSL for mods: TF's sky, weather and aurora shaders become CPU-built meshes
+// RenderDragon has no GLSL for mods: upstream's sky, weather and aurora shaders become CPU-built meshes
 // drawn with the game's own materials (docs/spec/atmosphere.md section 4, docs/units/atmosphere.md
 // for the material of each part in each graphics mode): vertex-coloured quads (the stars, the void
 // plate, the aurora; textured materials sample a white texture uploaded from memory) and textured
@@ -69,8 +69,8 @@ void drawColouredQuads(ScreenContext& screen, mce::MaterialPtr const& material, 
 /// Draws quads (4 vertices each) with a textured material and `tex`: each quad in the mean colour of
 /// its corners (the tessellator's quads take one colour), uv 0..1 across it.
 void drawTintedQuads(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, std::vector<ColourVertex> const& quads);
-/// Draws TF weather columns with `material` and `tex`, the uv wrapped by splitting each column at
-/// the texture's edges (TF draws them with a repeating sampler); `brightness` scales the colour of
+/// Draws upstream weather columns with `material` and `tex`, the uv wrapped by splitting each column at
+/// the texture's edges (upstream draws them with a repeating sampler); `brightness` scales the colour of
 /// the columns lit by the world (big rain).
 void drawColumns(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, std::vector<core::atmosphere::Column> const& columns, float brightness);
 /// A mesh of `quads` (4 vertices each) built with the screen's tessellator, for the level

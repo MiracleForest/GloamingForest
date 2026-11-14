@@ -2,10 +2,10 @@
   "format_version": "1.10.0",
   "particle_effect": {
     "description": {
-      "identifier": "twilightforest:shield_break",
+      "identifier": "gloamingforest:shield_break",
       "basic_render_parameters": {
         "material": "particles_alpha",
-        "texture": "textures/twilightforest/particle/shield_break"
+        "texture": "textures/gloamingforest/particle/shield_break"
       }
     },
     "components": {

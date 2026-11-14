@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.lich_minion.base": {
+    "animation.gloamingforest.lich_minion.base": {
       "loop": true,
       "bones": {
         "head": {

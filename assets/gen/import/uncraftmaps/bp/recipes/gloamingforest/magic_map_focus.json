@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:magic_map_focus"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:raven_feather"
+      },
+      {
+        "item": "gloamingforest:torchberries"
+      },
+      {
+        "item": "minecraft:glowstone_dust"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:raven_feather"
+      },
+      {
+        "item": "gloamingforest:torchberries"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:magic_map_focus"
+    }
+  }
+}

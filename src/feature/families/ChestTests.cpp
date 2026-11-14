@@ -1,4 +1,4 @@
-// Block families (F11): selftests of the chests' native containers (testPos dx 6100..6199): TF's
+// Block families (F11): selftests of the chests' native containers (testPos dx 6100..6199): upstream's
 // chests keep their slots in the block actor of minecraft:block_entity (F10's native backend), so
 // hoppers, hopper minecarts, droppers and crafters fill and empty them as Java's do (Hoppers.cpp: a
 // double chest is one CompoundContainer, the right half first, the blocked rule ignored),
@@ -70,10 +70,10 @@ namespace inv   = gf::inventory;
 namespace items = gf::game::items;
 using JsonT     = nlohmann::json; ///< (the game's headers have a ::Json namespace)
 
-constexpr char kChest[]        = "twilightforest:canopy_chest";
-constexpr char kTrappedChest[] = "twilightforest:canopy_trapped_chest";
-constexpr char kFacingState[]  = "twilightforest:facing";
-constexpr char kTypeState[]    = "twilightforest:type";
+constexpr char kChest[]        = "gloamingforest:canopy_chest";
+constexpr char kTrappedChest[] = "gloamingforest:canopy_trapped_chest";
+constexpr char kFacingState[]  = "gloamingforest:facing";
+constexpr char kTypeState[]    = "gloamingforest:type";
 
 GlobalPos at(GlobalPos p, int dx, int dy, int dz) {
     p.x += dx;
@@ -90,10 +90,10 @@ std::int64_t sessionId() {
     return id;
 }
 
-/// TF's chests are in this build (F1's skeleton through tools/families).
+/// upstream's chests are in this build (F1's skeleton through tools/families).
 bool tfChests(Context& ctx) {
     if (fam::entryOf(kChest) && gf::game::blockWith(kChest) && gf::game::blockWith(kTrappedChest)) return true;
-    ctx.info("no TF chests in this build: skipped");
+    ctx.info("no upstream chests in this build: skipped");
     return false;
 }
 
@@ -297,7 +297,7 @@ struct VisibilityScope {
 } // namespace
 
 GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // Java: TF's chests are ChestBlock / ChestBlockEntity, so hoppers fill them from above and from
+    // Java: upstream's chests are ChestBlock / ChestBlockEntity, so hoppers fill them from above and from
     // the sides and empty them from below (HopperBlockEntity#getContainerAt); a double chest is one
     // CompoundContainer of 54 slots, the RIGHT half first (a hopper on the left half fills the right
     // half's first slot, one under the left half takes from the right half); a comparator reads the
@@ -314,7 +314,7 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     ctx.require(ctx.setBlock(s, kChest, {{kFacingState, "north"}}), "a canopy chest");
     co_await ctx.ticks(1);
     auto* own = inv::nativeContainer(region, bp(s));
-    ctx.require(own != nullptr, "the TF chest keeps its slots in its block actor (minecraft:block_entity: F10's native backend)");
+    ctx.require(own != nullptr, "the upstream chest keeps its slots in its block actor (minecraft:block_entity: F10's native backend)");
     ctx.check(own->getContainerSize() == 27, "27 slots (" + std::to_string(own->getContainerSize()) + ")");
     if (auto* seen = fam::hopperContainerAt(region, bp(s)); seen) {
         seen->setItem(4, stack("minecraft:flint", 1));
@@ -325,7 +325,7 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
         ctx.check(false, "a hopper sees the chest's own container");
     }
     ctx.check(gf::families_ext::hopperVisible(kChest) && gf::families_ext::hopperVisible(kTrappedChest) && !gf::families_ext::hopperVisible("minecraft:stone"),
-              "hoppers reach the chest-like declarations (TF's chests), nothing else by default (feature/ext/families/Hoppers.h)");
+              "hoppers reach the chest-like declarations (upstream's chests), nothing else by default (feature/ext/families/Hoppers.h)");
     // a comparator south of the chest (its rear towards it), a block in front of it
     auto sComp = at(s, 0, 0, 1), sOut = at(s, 0, 0, 2);
     ctx.require(placeComparator(ctx, sComp, sOut), "a comparator behind the single chest and a block in front of it");
@@ -962,7 +962,7 @@ GF_REGISTER_SELFTEST("families.chest_hopper_half_without_actor", [](Context& ctx
 // ---- the context of a double chest's screen ----------------------------------------------------------
 
 GF_REGISTER_SELFTEST("families.chest_screen_context", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // a client mod chest screen of a TF double chest is refreshed under its context, the half the
+    // a client mod chest screen of an upstream double chest is refreshed under its context, the half the
     // inventory contract opened it for (feature/ext/combat/InventoryChanges.h): the half a player
     // clicked, or the half code opened it for. A click that opens nothing (sneaking with an item: the
     // item is used) leaves no screen; a screen code opens over another takes the new context

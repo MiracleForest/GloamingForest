@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of TF's map maths (U13): MagicMapItem, MazeMapItem, MapItemSavedData#addDecoration and
-// MapBiomesCommand (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of upstream's map maths (U13): MagicMapItem, MazeMapItem, MapItemSavedData#addDecoration and
+// MapBiomesCommand (upstream commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include <set>
@@ -113,13 +113,13 @@ TEST(UncraftMaps, DecorationPositions) {
     EXPECT_FALSE(decorationPos(1024 + 16 * 64, 1024, 1024, 1024, 4, 180.0).has_value()); // f = 64 > 63
     EXPECT_TRUE(decorationPos(1024 + 16 * 63, 1024, 1024, 1024, 4, 180.0).has_value());
     EXPECT_EQ(decorationPos(0, 0, 0, 0, 0, -90.0)->rotation, -4);
-    EXPECT_EQ(decorationName("twilightforest:lich_tower", 1280, -768), "twilightforest:lich_tower_1280_-768");
+    EXPECT_EQ(decorationName("gloamingforest:lich_tower", 1280, -768), "gloamingforest:lich_tower_1280_-768");
 }
 
 TEST(UncraftMaps, BiomePngColours) {
-    EXPECT_EQ(biomePngColor("twilightforest:forest"), 0xFF00FF00u);
-    EXPECT_EQ(biomePngColor("twilightforest:dark_forest_center"), 0xFF9D4F00u);
-    EXPECT_FALSE(biomePngColor("twilightforest:underground").has_value());
+    EXPECT_EQ(biomePngColor("gloamingforest:forest"), 0xFF00FF00u);
+    EXPECT_EQ(biomePngColor("gloamingforest:dark_forest_center"), 0xFF9D4F00u);
+    EXPECT_FALSE(biomePngColor("gloamingforest:underground").has_value());
     // the data map colour comes back with red and blue swapped
     EXPECT_EQ(biomePngDataMapColor(0x7FB238u), 0xFF38B27Fu);
 }

@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/MagicMapItem.java
-//   src/main/java/twilightforest/item/MazeMapItem.java
-//   src/main/java/twilightforest/command/MapBiomesCommand.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/MagicMapItem.java
+//   src/main/java/gloamingforest/item/MazeMapItem.java
+//   src/main/java/gloamingforest/command/MapBiomesCommand.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/uncraftmaps/Maps.h"
@@ -114,16 +114,16 @@ std::string decorationName(std::string const& assetId, int x, int z) { return as
 
 std::optional<std::uint32_t> biomePngColor(std::string const& biomeId) {
     static std::unordered_map<std::string, std::uint32_t> const colours{
-        {"twilightforest:stream", 0x0000FF},          {"twilightforest:lake", 0x0000FF},
-        {"twilightforest:clearing", 0x84F582},        {"twilightforest:oak_savannah", 0xEFF582},
-        {"twilightforest:forest", 0x00FF00},          {"twilightforest:dense_forest", 0x00AA00},
-        {"twilightforest:firefly_forest", 0x58FC66},  {"twilightforest:enchanted_forest", 0x00FFFF},
-        {"twilightforest:spooky_forest", 0x7700FF},   {"twilightforest:mushroom_forest", 0xCC008B},
-        {"twilightforest:dense_mushroom_forest", 0xB830B8}, {"twilightforest:swamp", 0x00CCBB},
-        {"twilightforest:fire_swamp", 0x8C0000},      {"twilightforest:dark_forest", 0x193D0D},
-        {"twilightforest:dark_forest_center", 0x9D4F00}, {"twilightforest:snowy_forest", 0xFFFFFF},
-        {"twilightforest:glacier", 0x82BFF5},         {"twilightforest:highlands", 0x644100},
-        {"twilightforest:thornlands", 0x80645A},      {"twilightforest:final_plateau", 0x808080},
+        {"gloamingforest:stream", 0x0000FF},          {"gloamingforest:lake", 0x0000FF},
+        {"gloamingforest:clearing", 0x84F582},        {"gloamingforest:oak_savannah", 0xEFF582},
+        {"gloamingforest:forest", 0x00FF00},          {"gloamingforest:dense_forest", 0x00AA00},
+        {"gloamingforest:firefly_forest", 0x58FC66},  {"gloamingforest:enchanted_forest", 0x00FFFF},
+        {"gloamingforest:spooky_forest", 0x7700FF},   {"gloamingforest:mushroom_forest", 0xCC008B},
+        {"gloamingforest:dense_mushroom_forest", 0xB830B8}, {"gloamingforest:swamp", 0x00CCBB},
+        {"gloamingforest:fire_swamp", 0x8C0000},      {"gloamingforest:dark_forest", 0x193D0D},
+        {"gloamingforest:dark_forest_center", 0x9D4F00}, {"gloamingforest:snowy_forest", 0xFFFFFF},
+        {"gloamingforest:glacier", 0x82BFF5},         {"gloamingforest:highlands", 0x644100},
+        {"gloamingforest:thornlands", 0x80645A},      {"gloamingforest:final_plateau", 0x808080},
     };
     auto it = colours.find(biomeId);
     if (it == colours.end()) return std::nullopt;

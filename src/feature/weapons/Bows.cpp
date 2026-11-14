@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/TripleBowItem.java
-//   src/main/java/twilightforest/item/SeekerBowItem.java
-//   src/main/java/twilightforest/item/IceBowItem.java
-//   src/main/java/twilightforest/item/EnderBowItem.java
-//   src/main/java/twilightforest/entity/projectile/SeekerArrow.java
-//   src/main/java/twilightforest/entity/projectile/IceArrow.java
-//   src/main/java/twilightforest/events/ToolEvents.java (onEnderBowHit)
-//   src/main/java/twilightforest/events/EntityEvents.java (triple bow invulnerableTime)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/TripleBowItem.java
+//   src/main/java/gloamingforest/item/SeekerBowItem.java
+//   src/main/java/gloamingforest/item/IceBowItem.java
+//   src/main/java/gloamingforest/item/EnderBowItem.java
+//   src/main/java/gloamingforest/entity/projectile/SeekerArrow.java
+//   src/main/java/gloamingforest/entity/projectile/IceArrow.java
+//   src/main/java/gloamingforest/events/ToolEvents.java (onEnderBowHit)
+//   src/main/java/gloamingforest/events/EntityEvents.java (triple bow invulnerableTime)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's four bows over BowItem#releaseUsing: the draw starts with the item's use (the BP food
+// upstream's four bows over BowItem#releaseUsing: the draw starts with the item's use (the BP food
 // component, bow animation), the release shoots. The ammunition is Player#getProjectile's: an
 // arrow in the other hand / this hand, else the first in the inventory (creative: a plain arrow).
 //   - triple_bow: vanilla arrows, three per shot (the outer two creative-only pickup, +-0.15 y),
 //     speed power * 2.5; its arrows strip the victim's hurt cooldown;
-//   - ender_bow: a vanilla arrow tagged twilightforest:ender: the shooter and a hit living non-boss
+//   - ender_bow: a vanilla arrow tagged gloamingforest:ender: the shooter and a hit living non-boss
 //     swap places;
-//   - seeker_bow / ice_bow: TF's own arrow entities (F8's TFArrow kit), seeker_arrow homing
+//   - seeker_bow / ice_bow: upstream's own arrow entities (F8's TFArrow kit), seeker_arrow homing
 //     (SeekerArrow#updateTarget, steering), ice_arrow chilling.
 
 #include "feature/weapons/Weapons.h"
@@ -70,7 +70,7 @@ int gPunches    = 0; ///< selftests: Punch knockbacks of vanilla arrows
 
 namespace {
 
-constexpr char kEnderTag[] = "twilightforest:ender";
+constexpr char kEnderTag[] = "gloamingforest:ender";
 constexpr char kSeekKey[]  = "weapons:seeker";
 constexpr char kPunchKey[] = "weapons:punch";
 
@@ -131,7 +131,7 @@ Actor* vanillaArrow(Player& player, ItemStack const& bow, ItemStack const& arrow
         if (crit) pc->mCritParticleOnHurt = true;
     }
     // Punch (the bow's minecraft:knockback post-attack effect in 1.21): the game's own bow sets it
-    // in BowItem::releaseUsing, which TF's bows replace, so the hit applies it (onDealt below)
+    // in BowItem::releaseUsing, which upstream's bows replace, so the hit applies it (onDealt below)
     if (int punch = EnchantUtils::getEnchantLevel(Enchant::Type::Punch, bow); punch > 0) gf::entity::data(*a, kPunchKey) = punch;
     return a;
 }
@@ -149,7 +149,7 @@ void doKnockback(Actor& arrow, Actor& victim, int punch) {
     ++gPunches;
 }
 
-/// The enchantments of the bow on one of TF's own arrows (Power, Punch, Flame).
+/// The enchantments of the bow on one of upstream's own arrows (Power, Punch, Flame).
 void enchantArrow(Actor& arrow, ItemStack const& bow) {
     int power = EnchantUtils::getEnchantLevel(Enchant::Type::Power, bow);
     if (power > 0) gf::projectile::ext::setBaseDamage(arrow, gf::projectile::ext::baseDamage(arrow) + power * 0.5 + 0.5);
@@ -177,7 +177,7 @@ void bowRelease(Player& player, ItemStack& bow, int used) {
             if (!a) continue;
             auto v = a->getPosDelta();
             world::setMotion(*a, Vec3{v.x, v.y + static_cast<float>(lift[j + 1]), v.z});
-            a->addTag("twilightforest:triple");
+            a->addTag("gloamingforest:triple");
             if (EnchantUtils::getEnchantLevel(Enchant::Type::Flame, bow) > 0) a->setOnFire(100, true);
         }
     } else if (id == kEnderBow) {
@@ -312,7 +312,7 @@ void registerBows() {
                 .repairWith =
                     [id = std::string(id)](ItemStack const&, ItemStack const& m) {
                         // IceBowItem: the ICE tier's repair ingredient; the others none
-                        return id == kIceBow && gf::tags::has(gf::tags::Registry::Item, "twilightforest:repairs_ice_tools", game::items::idOf(m));
+                        return id == kIceBow && gf::tags::has(gf::tags::Registry::Item, "gloamingforest:repairs_ice_tools", game::items::idOf(m));
                     },
             }
         );

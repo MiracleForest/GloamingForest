@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/FallenTrunkStructure.java
-//   src/main/java/twilightforest/world/components/structures/fallentrunk/FallenTrunkPiece.java
-//   src/main/java/twilightforest/world/components/structures/fallentrunk/Hole.java
-//   src/main/java/twilightforest/world/components/structures/fallentrunk/TrunkUnderDensityFunction.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/FallenTrunkStructure.java
+//   src/main/java/gloamingforest/world/components/structures/fallentrunk/FallenTrunkPiece.java
+//   src/main/java/gloamingforest/world/components/structures/fallentrunk/Hole.java
+//   src/main/java/gloamingforest/world/components/structures/fallentrunk/TrunkUnderDensityFunction.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The fallen trunks (twilightforest:fallen_trunk): an F6 start (avoid_landmark_grid set, exclusion
+// The fallen trunks (gloamingforest:fallen_trunk): an F6 start (avoid_landmark_grid set, exclusion
 // zone around the hollow trees) whose layout runs FallenTrunkStructure#findGenerationPoint; the
 // piece and its hole are in core/minorlandmarks (gtested), the terraformer is
 // TrunkUnderDensityFunction.
@@ -41,7 +41,7 @@ namespace jr  = gf::core::jrand;
 
 constexpr int kRadiuses[] = {1, 2, 4};
 constexpr float kMossChance = 0.44F;
-constexpr char const* kSpawnerMonsters[] = {"twilightforest:swarm_spider", "twilightforest:hostile_wolf", "minecraft:cave_spider"};
+constexpr char const* kSpawnerMonsters[] = {"gloamingforest:swarm_spider", "gloamingforest:hostile_wolf", "minecraft:cave_spider"};
 
 /// FallenTrunkPiece.
 class FallenTrunkPiece final : public st::Piece {
@@ -72,9 +72,9 @@ public:
         Piece::load(d);
         length         = d.value("length", 17);
         radius         = d.value("radius", 1);
-        log            = d.contains("log") ? d["log"] : simpleProvider("twilightforest:twilight_oak_log", Json{{"axis", "y"}});
-        chestLootTable = d.value("chest_loot_table", std::string("twilightforest:fallen_trunk_loot"));
-        // TF saves the seed with putLong and reads it back with getInt: a reloaded piece's hole uses
+        log            = d.contains("log") ? d["log"] : simpleProvider("gloamingforest:gloaming_oak_log", Json{{"axis", "y"}});
+        chestLootTable = d.value("chest_loot_table", std::string("gloamingforest:fallen_trunk_loot"));
+        // upstream saves the seed with putLong and reads it back with getInt: a reloaded piece's hole uses
         // the low 32 bits
         holeSeed = static_cast<std::int32_t>(d.value("hole_seed", std::int64_t{0}));
         rebuild();
@@ -142,7 +142,7 @@ private:
         if (!mLog) {
             jr::LegacyRandom unused(0);
             Block const*     b = sampleProvider(log, unused, BlockPos{0, 0, 0});
-            mLog               = &st::blocks::withJava(b ? *b : st::blocks::java("twilightforest:twilight_oak_log"), Json{{"axis", "z"}});
+            mLog               = &st::blocks::withJava(b ? *b : st::blocks::java("gloamingforest:gloaming_oak_log"), Json{{"axis", "z"}});
         }
         return *mLog;
     }
@@ -159,7 +159,7 @@ private:
             placeBlock(level, state, x, y, z, box);
             BlockPos up = getWorldPos(x, y + 1, z);
             if (randomChild.nextFloat() <= kMossChance && box.contains(up.x, up.y, up.z) && st::blocks::inTag(getBlock(level, x, y + 1, z, box), "minecraft:replaceable")) {
-                if (auto const* moss = st::blocks::fromJava("twilightforest:moss_patch")) placeBlock(level, *moss, x, y + 1, z, box);
+                if (auto const* moss = st::blocks::fromJava("gloamingforest:moss_patch")) placeBlock(level, *moss, x, y + 1, z, box);
             }
         }
     }
@@ -175,7 +175,7 @@ private:
         st::Orientation o = st::clockwise(orientation);
         if (mirror == st::Mirror::LeftRight) o = st::opposite(o);
 
-        // the HashSet<Vec3i> of TF's chest offsets, in its iteration order
+        // the HashSet<Vec3i> of upstream's chest offsets, in its iteration order
         std::vector<cml::Pos> first;
         for (int i = 0; i <= 6; i++) first.push_back({2, 1, -3 + i});
         first.push_back({1, 0, -3});
@@ -197,7 +197,7 @@ private:
         jr::LegacyRandom chestRandom(random.nextLong());
         // StructurePiece#createChest(level, box, chestRandom, pos, table, state)
         if (box.contains(chestPos.x, chestPos.y, chestPos.z) && !st::blocks::is(level.getBlock(chestPos), "minecraft:chest"))
-            st::blockentities::container(level, chestPos, "twilightforest:twilight_oak_chest", facing, chestLootTable, chestRandom.nextLong());
+            st::blockentities::container(level, chestPos, "gloamingforest:gloaming_oak_chest", facing, chestLootTable, chestRandom.nextLong());
     }
 
     std::unordered_set<std::int64_t> mHole;
@@ -229,7 +229,7 @@ FallenTrunkConfig FallenTrunkConfig::fromJson(Json const& s) {
     FallenTrunkConfig c;
     c.length         = s.value("length", Json{{"type", "minecraft:uniform"}, {"min_inclusive", 17}, {"max_inclusive", 24}});
     c.bigTrunkLength = s.value("big_trunk_length", Json{{"type", "minecraft:uniform"}, {"min_inclusive", 22}, {"max_inclusive", 28}});
-    c.log            = s.value("log", simpleProvider("twilightforest:twilight_oak_log", Json{{"axis", "y"}}));
+    c.log            = s.value("log", simpleProvider("gloamingforest:gloaming_oak_log", Json{{"axis", "y"}}));
     c.chestLootTable = s.value("chest_loot_table", c.chestLootTable);
     return c;
 }
@@ -262,7 +262,7 @@ void installFallenTrunks() {
     st::registerPieceType(kTFFallenTrunk, [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<FallenTrunkPiece>(saved); });
 
     FallenTrunkConfig config;
-    std::string       biomes = "#twilightforest:valid_hollow_tree_biomes";
+    std::string       biomes = "#gloamingforest:valid_hollow_tree_biomes";
     if (auto const* d = gf::landmark::descriptor(kFallenTrunk)) {
         config = FallenTrunkConfig::fromJson(d->extra);
         if (auto it = d->extra.find("biomes"); it != d->extra.end() && it->is_string()) biomes = it->get<std::string>();

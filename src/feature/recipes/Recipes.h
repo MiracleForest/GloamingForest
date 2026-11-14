@@ -3,14 +3,14 @@
 // Contract "recipes" (header owned by F0, implemented by F9).
 //
 // Vanilla-type recipes (crafting, smelting, stonecutting, smithing) are Bedrock recipe JSON (F1
-// import). TF's 13 custom recipe serializers (drying, uncrafting, travellers shaped / shapeless,
+// import). upstream's 13 custom recipe serializers (drying, uncrafting, travellers shaped / shapeless,
 // vest / gloves merge, casket_repair, emperors_cloth, essence_repair, magic / maze map cloning,
 // moonworm_queen_repair, scepter_repair, no_template_smithing) are loaded from
 // assets/data/recipes by the loader their owner registers (rule R4), and special crafting runs
 // natively. `producing` answers "which recipes make this item" for the uncrafting table (U13).
 //
-//     gf::recipes::registerType("twilightforest:drying", [](std::string const& id, nlohmann::json const& j) { ... });
-//     for (auto const* r : gf::recipes::producing("twilightforest:naga_chestplate")) ...;
+//     gf::recipes::registerType("gloamingforest:drying", [](std::string const& id, nlohmann::json const& j) { ... });
+//     for (auto const* r : gf::recipes::producing("gloamingforest:naga_chestplate")) ...;
 
 #include <functional>
 #include <optional>
@@ -34,8 +34,8 @@ struct Ingredient {
 
 /// A loaded recipe of any type.
 struct CraftingRecipe {
-    std::string             id;     ///< "twilightforest:naga_chestplate"
-    std::string             type;   ///< "minecraft:crafting_shaped", "twilightforest:drying", ...
+    std::string             id;     ///< "gloamingforest:naga_chestplate"
+    std::string             type;   ///< "minecraft:crafting_shaped", "gloamingforest:drying", ...
     int                     width  = 0; ///< shaped grids (0 for shapeless)
     int                     height = 0;
     std::vector<Ingredient> ingredients; ///< row-major for shaped recipes

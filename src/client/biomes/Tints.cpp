@@ -1,28 +1,28 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/FoliageColorHandler.java
-//   src/main/java/twilightforest/TFEnumExtensions.java
-//   src/main/java/twilightforest/asmhooks/BlockHooks.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/FoliageColorHandler.java
+//   src/main/java/gloamingforest/TFEnumExtensions.java
+//   src/main/java/gloamingforest/asmhooks/BlockHooks.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U1 `biomes`, client build: TF's position-dependent biome colours on grass, plants and leaves.
+// U1 `biomes`, client build: upstream's position-dependent biome colours on grass, plants and leaves.
 //
-// Java: a TF biome's grass colour goes through its GrassColorModifier (TFGrassColorModifier-
+// Java: an upstream biome's grass colour goes through its GrassColorModifier (TFGrassColorModifier-
 // EnumExtension: spooky forest, dark forest centre, enchanted forest, swamp, dark forest) and every
 // foliage colour lookup through FoliageColorHandler (tf-asm's FoliageColorResolverTransformer), at
 // each column of the client's biome blend (ClientLevel#calculateBlockTint, 5x5 by default).
 //
-// Bedrock: the client biome files give every TF biome its static colours (vanilla clients). With
+// Bedrock: the client biome files give every upstream biome its static colours (vanilla clients). With
 // the mod, the tints here (F12's tint registry for vanilla blocks, and every other block the game
 // draws with the biome grass or foliage colour, both through feature/ext/biomes/VanillaTint.cpp's
 // hooks on the game's tessellation policies) read the biome of every column of the blend from the
 // client's chunks (each block's biome is synced, so remote worlds need no seed), give each column
-// its own biome's TF colour (core/biomes/Colors: the modifier or foliage handler, else TF's JSON
+// its own biome's upstream colour (core/biomes/Colors: the modifier or foliage handler, else upstream's JSON
 // colour or the colour map at the biome's climate) and average the columns as Java averages them.
-// Outside TF's biomes (other dimensions) the game's colour stays.
-// A tint asked without a block source (F12's resolver path for TF's own blocks, which call
+// Outside upstream's biomes (other dimensions) the game's colour stays.
+// A tint asked without a block source (F12's resolver path for upstream's own blocks, which call
 // gf::biomes::ext::grassColor / foliageColor) recognises those biomes by the game's colour, which
 // is exactly a biome's static colour when the whole blend lies inside it.
 
@@ -68,7 +68,7 @@ constexpr unsigned kSpookyGrass             = 0xC45123;
 constexpr unsigned kSpookyFoliage           = 0xFF8501;
 constexpr unsigned kDarkForestCenterGrass   = 0x554114;
 constexpr unsigned kDarkForestCenterFoliage = 0xE94E14;
-constexpr unsigned kEnchantedStatic         = 0x00FF80; ///< grass and foliage (TF's JSON: 0x00FFFF)
+constexpr unsigned kEnchantedStatic         = 0x00FF80; ///< grass and foliage (upstream's JSON: 0x00FFFF)
 
 // GrassColor.getDefaultColor() / FoliageColor.getDefaultColor(): colours without a world
 constexpr unsigned kDefaultGrass   = 0x48B518;
@@ -93,12 +93,12 @@ bool near(unsigned a, unsigned b) {
 /// One line per biome and kind, for the e2e scenario (the tints run on chunk builder threads).
 void noteDrawn(std::string_view biome, bool foliage) {
     static std::atomic<unsigned> logged{0};
-    unsigned bit = (biome == "twilightforest:spooky_forest" ? 1u : biome == "twilightforest:dark_forest_center" ? 2u : 4u) << (foliage ? 3 : 0);
-    if (!(logged.fetch_or(bit) & bit)) log().info("biomes: client draws TF's {} colours of {}", foliage ? "foliage" : "grass", biome);
+    unsigned bit = (biome == "gloamingforest:spooky_forest" ? 1u : biome == "gloamingforest:dark_forest_center" ? 2u : 4u) << (foliage ? 3 : 0);
+    if (!(logged.fetch_or(bit) & bit)) log().info("biomes: client draws upstream's {} colours of {}", foliage ? "foliage" : "grass", biome);
 }
 
-/// TF's colour of `biome` at (x, z) before the blend: every TF biome has one (its modifier, the
-/// foliage handler, its JSON colour or the colour map at its climate); nullopt: not a TF biome.
+/// upstream's colour of `biome` at (x, z) before the blend: every upstream biome has one (its modifier, the
+/// foliage handler, its JSON colour or the colour map at its climate); nullopt: not an upstream biome.
 std::optional<int> tfColourOf(std::string const& biome, int x, int z, bool foliage) {
     return foliage ? colors::foliageAt(biome, x, z) : colors::grassAt(biome, x, z);
 }
@@ -107,9 +107,9 @@ int tfColour(std::string const& biome, int x, int z, bool foliage, unsigned game
     return tfColourOf(biome, x, z, foliage).value_or(static_cast<int>(game));
 }
 
-/// TF's colour at `pos` with the biomes read from `region`: Java's blend of every column's own
-/// biome colour (nullopt: the block is not in a TF biome, so neither is its blend: the game's
-/// colour stays). Only the Twilight Forest has TF biomes, so the centre column decides; a column of
+/// upstream's colour at `pos` with the biomes read from `region`: Java's blend of every column's own
+/// biome colour (nullopt: the block is not in an upstream biome, so neither is its blend: the game's
+/// colour stays). Only the Gloaming Forest has upstream biomes, so the centre column decides; a column of
 /// another biome inside a blend (never in a generated world) counts with the game's colour.
 std::optional<unsigned> fromRegion(BlockSource& region, BlockPos const& pos, unsigned game, bool foliage) {
     if (!isTfBiome(biomeIdOf(region.getBiome(pos)))) return std::nullopt;
@@ -123,13 +123,13 @@ std::optional<unsigned> fromRegion(BlockSource& region, BlockPos const& pos, uns
     return static_cast<unsigned>(c);
 }
 
-/// TF's colour at `pos` when the game's blended colour `game` marks a position-dependent biome
+/// upstream's colour at `pos` when the game's blended colour `game` marks a position-dependent biome
 /// (no block source).
 std::optional<unsigned> fromMarker(BlockPos const& pos, unsigned game, bool foliage) {
     char const* biome = nullptr;
-    if (near(game, foliage ? kSpookyFoliage : kSpookyGrass)) biome = "twilightforest:spooky_forest";
-    else if (near(game, foliage ? kDarkForestCenterFoliage : kDarkForestCenterGrass)) biome = "twilightforest:dark_forest_center";
-    else if (near(game, kEnchantedStatic)) biome = "twilightforest:enchanted_forest";
+    if (near(game, foliage ? kSpookyFoliage : kSpookyGrass)) biome = "gloamingforest:spooky_forest";
+    else if (near(game, foliage ? kDarkForestCenterFoliage : kDarkForestCenterGrass)) biome = "gloamingforest:dark_forest_center";
+    else if (near(game, kEnchantedStatic)) biome = "gloamingforest:enchanted_forest";
     if (!biome) return std::nullopt;
     noteDrawn(biome, foliage);
     std::string const id = biome;
@@ -177,12 +177,12 @@ constexpr char const* kFoliageBlocks[] = {
     "minecraft:mangrove_leaves",
     "minecraft:vine",
 };
-// TF's blocks of other units that ColorHandler draws with BiomeColors.getAverageGrassColor (U6's
+// upstream's blocks of other units that ColorHandler draws with BiomeColors.getAverageGrassColor (U6's
 // fiddlehead and potted fiddlehead), and the textures of their tinted faces (the cross of the
 // fiddlehead, the plant of the pot: Java's tintindex faces; the pot and its dirt stay untinted).
 constexpr char const* kTfGrassBlocks[] = {
-    "twilightforest:fiddlehead",
-    "twilightforest:potted_fiddlehead",
+    "gloamingforest:fiddlehead",
+    "gloamingforest:potted_fiddlehead",
 };
 constexpr char const* kTfGrassTextures[] = {
     "tf_block_fiddlehead",
@@ -233,7 +233,7 @@ struct BiomeTintsModule {
         for (char const* id : kFoliageBlocks)
             tint::registerBlock(id, tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) { return foliageAt(gf::biomes::ext::tintRegion(), p, g); }});
         log().info(
-            "biomes: TF biome colours on {} grass and {} foliage blocks, and {} TF grass-tinted blocks",
+            "biomes: upstream biome colours on {} grass and {} foliage blocks, and {} upstream grass-tinted blocks",
             std::size(kGrassBlocks),
             std::size(kFoliageBlocks),
             std::size(kTfGrassBlocks)

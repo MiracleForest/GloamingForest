@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFEnchantments.java
-//   src/main/java/twilightforest/enchantment/ApplyFrostedEffect.java
-//   src/main/java/twilightforest/enchantment/SmashBlocksEffect.java
-//   src/main/java/twilightforest/enchantment/RechargeScepterEffect.java
-//   src/main/java/twilightforest/components/entity/SmashBlocksEnchantmentAttachment.java
-//   src/main/java/twilightforest/entity/projectile/ChainBlock.java (canBreakBlockAt)
-//   src/main/java/twilightforest/item/ChainBlockItem.java (isCorrectToolForDrops, getHarvestLevel)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFEnchantments.java
+//   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
+//   src/main/java/gloamingforest/enchantment/SmashBlocksEffect.java
+//   src/main/java/gloamingforest/enchantment/RechargeScepterEffect.java
+//   src/main/java/gloamingforest/components/entity/SmashBlocksEnchantmentAttachment.java
+//   src/main/java/gloamingforest/entity/projectile/ChainBlock.java (canBreakBlockAt)
+//   src/main/java/gloamingforest/item/ChainBlockItem.java (isCorrectToolForDrops, getHarvestLevel)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U10 (provisions): the effects of TF's four enchantments. Their data (levels, costs, items,
-// exclusive sets) is F1's import of data/twilightforest/enchantment, which F9's enchant contract
+// U10 (provisions): the effects of upstream's four enchantments. Their data (levels, costs, items,
+// exclusive sets) is F1's import of data/gloamingforest/enchantment, which F9's enchant contract
 // loads (anvil, books, grindstone, lore); Bedrock runs no enchantment effects, so U10 runs them:
 // - fire_react / chill_aura (minecraft:post_attack, enchanted = victim, affected = attacker): after
 //   damage dealt to an entity, each worn armour piece with the enchantment rolls 0.15 x level; on
@@ -106,7 +106,7 @@ void onDealt(::gf::combat::DamageInfo const& d) {
     return ::gf::combat::Verdict::Pass;
 }
 
-/// The Bedrock potion aux value of a Java potion id (only the potions TF's scepter repair data
+/// The Bedrock potion aux value of a Java potion id (only the potions upstream's scepter repair data
 /// names; -1: unknown).
 int potionAux(std::string const& javaPotion) {
     if (javaPotion == "minecraft:strength") return 31;
@@ -116,7 +116,7 @@ int potionAux(std::string const& javaPotion) {
 }
 
 /// Ingredient#test of one recipe ingredient (an alternative list, an item, a tag, or NeoForge's
-/// components ingredient with the potion contents TF's zombie scepter asks for).
+/// components ingredient with the potion contents upstream's zombie scepter asks for).
 bool matchesIngredient(nlohmann::json const& ing, ItemStack const& stack) {
     if (ing.is_array()) {
         for (auto const& i : ing)
@@ -171,7 +171,7 @@ void renewalTick(Player& player) {
     auto check = [&](ItemStack const& held, auto&& write) {
         if (game::items::isEmpty(held) || held.getDamageValue() == 0 || held.getDamageValue() != maxDamageOf(held)) return;
         auto id = game::items::idOf(held);
-        if (!::gf::tags::has(::gf::tags::Registry::Item, "twilightforest:scepters", id)) return;
+        if (!::gf::tags::has(::gf::tags::Registry::Item, "gloamingforest:scepters", id)) return;
         if (::gf::enchant::level(held, ids::kRenewal) <= 0) return;
         ItemStack copy = held;
         if (gf::provisions::ext::rechargeScepter(player, copy)) {
@@ -206,7 +206,7 @@ bool destructionCanBreak(ItemStack const& stack, Block const& block) {
     int lvl = gf::enchant::level(stack, fp::ids::kDestruction);
     if (lvl <= 0) return false;
     auto id = gf::game::blockId(block);
-    if (!gf::tags::has(gf::tags::Registry::Block, "twilightforest:mineable_with_block_and_chain", id)) return false;
+    if (!gf::tags::has(gf::tags::Registry::Block, "gloamingforest:mineable_with_block_and_chain", id)) return false;
     return !gf::tags::has(gf::tags::Registry::Block, std::string(cp::destructionIncorrectTag(lvl)), id);
 }
 
@@ -230,7 +230,7 @@ int smashBlocks(Player& owner, Actor& projectile, ItemStack const& stack, Vec3 c
             auto const& block = region.getBlock(p);
             if (block.isAir()) continue;
             auto id = gf::game::blockId(block);
-            if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:block_and_chain_never_breaks", id)) continue;
+            if (gf::tags::has(gf::tags::Registry::Block, "gloamingforest:block_and_chain_never_breaks", id)) continue;
             // ChainBlock#canBreakBlockAt (the world border is Bedrock's own) and canEntityDestroy /
             // the break event (landmark protection, adventure mode)
             if (!destructionCanBreak(stack, block)) continue;
@@ -250,7 +250,7 @@ bool rechargeScepter(Player& player, ItemStack& item) {
     auto scepter = gf::game::items::idOf(item);
     auto& inv    = player.getInventory();
     int   size   = std::min(36, inv.getContainerSize());
-    for (auto const* recipe : gf::recipes::ofType("twilightforest:scepter_repair")) {
+    for (auto const* recipe : gf::recipes::ofType("gloamingforest:scepter_repair")) {
         if (recipe->data.value("scepter", std::string()) != scepter) continue;
         auto ingredients = recipe->data.value("repair_ingredients", nlohmann::json::array());
         std::vector<nlohmann::json> remaining(ingredients.begin(), ingredients.end());
@@ -259,7 +259,7 @@ bool rechargeScepter(Player& player, ItemStack& item) {
             auto const& s = inv.getItem(i);
             if (gf::game::items::isEmpty(s)) continue;
             auto id = gf::game::items::idOf(s);
-            if (id == "twilightforest:exanimate_essence") {
+            if (id == "gloamingforest:exanimate_essence") {
                 fp::shrinkSlot(inv, i);
                 item.setDamageValue(0);
                 ++fp::counters().recharges;

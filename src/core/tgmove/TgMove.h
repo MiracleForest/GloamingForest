@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/client/event/TravellersClientEvents.java
-//   src/main/java/twilightforest/events/TravellersGearEvents.java
-//   src/main/java/twilightforest/components/entity/TravellersWingsAttachment.java
-//   src/main/java/twilightforest/components/entity/TravellersWingsAnimAttachment.java
-//   src/main/java/twilightforest/components/entity/SlimySolesAttachment.java
-//   src/main/java/twilightforest/client/model/armor/TravellersWingsModel.java
-//   src/main/java/twilightforest/util/TFMathUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/client/event/TravellersClientEvents.java
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java
+//   src/main/java/gloamingforest/components/entity/TravellersWingsAttachment.java
+//   src/main/java/gloamingforest/components/entity/TravellersWingsAnimAttachment.java
+//   src/main/java/gloamingforest/components/entity/SlimySolesAttachment.java
+//   src/main/java/gloamingforest/client/model/armor/TravellersWingsModel.java
+//   src/main/java/gloamingforest/util/TFMathUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // The game-independent rules of U12 (Travellers' Gear movement modifiers): the numbers and state
-// machines of TF's TravellersGearLogic / TravellersClientEvents / TravellersWingsModel, shared by
+// machines of upstream's TravellersGearLogic / TravellersClientEvents / TravellersWingsModel, shared by
 // the server module (src/feature/tgmove), the client mod (src/client/tgmove) and the gtests.
 
 #include <optional>
@@ -22,7 +22,7 @@
 
 namespace gf::core::tgmove {
 
-// ---- constants (TF 4.8) ----------------------------------------------------------------------
+// ---- constants (upstream 4.8) ----------------------------------------------------------------------
 
 inline constexpr double kGravity                 = 0.08;  ///< LivingEntity#getGravity of players
 inline constexpr double kJumpStrength            = 0.42;  ///< generic.jump_strength default
@@ -105,7 +105,7 @@ struct SidestepTap {
     int   lastWalkingTime    = 0;
 };
 /// One movement-input update: the sidestep it triggers (true = left) or nullopt. `leftImpulse` is
-/// Java's Input.leftImpulse (positive = left). Off the ground nothing is recorded (TF returns first).
+/// Java's Input.leftImpulse (positive = left). Off the ground nothing is recorded (upstream returns first).
 [[nodiscard]] std::optional<bool> detectSidestep(SidestepTap& tap, float leftImpulse, int tickCount, bool onGround);
 
 /// tryPerformSidestep's cooldown: more than `cooldown` ticks since the last sidestep.
@@ -123,9 +123,9 @@ struct SidestepTap {
 /// The fall distance a glide leaves: v^2 / 2 / g.
 [[nodiscard]] float glideFallDistance(double vy, double gravity = kGravity);
 /// speedUpControlledWhileSneaking: impulses / 0.2, then (Java's getInputVector) at most length 1.
-/// Java applies the 0.3 sneak factor before TF's / 0.2. `engineScalesLater`: the engine applies
+/// Java applies the 0.3 sneak factor before upstream's / 0.2. `engineScalesLater`: the engine applies
 /// its sneak factor after these impulses (the impulses are the raw input): then the result is
-/// 1 / sneakFactor of the unit input, so the engine's factor brings it back to TF's full input.
+/// 1 / sneakFactor of the unit input, so the engine's factor brings it back to upstream's full input.
 void unsneakImpulse(float& forward, float& left, bool engineScalesLater = false, float sneakFactor = 0.3f);
 
 // ---- unrestrained (BlockHooks / EntityHooks) -------------------------------------------------------
@@ -145,8 +145,8 @@ inline constexpr double kGroundAccel          = 0.21600002; ///< LivingEntity#ge
 [[nodiscard]] double slimeStepFactor(double vy, bool steppingCarefully);
 /// One ground step of an unrestrained entity, before the engine's step. The engine multiplies the
 /// horizontal velocity of the step by `friction` x 0.91 x `engineSlowdown` (slime's step-on, a speed
-/// factor), where TF's unrestrained has 0.6 x 0.91 and no slowdown, and adds the input acceleration
-/// with `friction`'s factor, where TF has 0.6's. `stored` is the velocity the engine kept, `rescale`
+/// factor), where upstream's unrestrained has 0.6 x 0.91 and no slowdown, and adds the input acceleration
+/// with `friction`'s factor, where upstream has 0.6's. `stored` is the velocity the engine kept, `rescale`
 /// the factor the previous step left to restore (1 = none), `accel` the input acceleration
 /// (inputAcceleration) and `engineAccelSlowdown` the engine's factor on it (soul sand). Returns the
 /// velocity to step with (y unchanged); `nextRescale` is what the
@@ -177,7 +177,7 @@ struct HoneyCatchUp {
     double deficit = 0;
 };
 [[nodiscard]] HoneyCatchUp honeyCatchUp(double lost, int stepsLate);
-/// stopBouncing after the engine's slime landing: the y velocity TF keeps (0 instead of a bounce of
+/// stopBouncing after the engine's slime landing: the y velocity upstream keeps (0 instead of a bounce of
 /// a landing slower than 0.08), or nullopt when the bounce stays.
 [[nodiscard]] std::optional<double> slimeBounceStop(double vyBeforeLanding, double vyAfter);
 
@@ -289,12 +289,12 @@ struct WingPose {
 [[nodiscard]] double straightAheadMultiplier(bool active, double multiplier, float forwardImpulse);
 /// handleStraightAhead's input from Bedrock's: the engine hands a key input already normalized
 /// (0.707, 0.707 for W + A); Java divides the raw impulse (1, 1) by the multiplier and normalizes
-/// after (getInputVector). Returns TF's input (x strafe, y forward) at most length 1.
+/// after (getInputVector). Returns upstream's input (x strafe, y forward) at most length 1.
 struct Input2 {
     float strafe = 0, forward = 0;
 };
 [[nodiscard]] Input2 straightAheadInput(float strafe, float forward, double multiplier);
-/// The FOV factor (AbstractClientPlayer#getFieldOfViewModifier's walking part) that TF keeps
+/// The FOV factor (AbstractClientPlayer#getFieldOfViewModifier's walking part) that upstream keeps
 /// unchanged by straight ahead: Java's (speed / walkSpeed + 1) / 2.
 [[nodiscard]] float speedFovFactor(double speed, double walkSpeed);
 /// PlayerHooks#straightAheadNullify / Restore: the factor that turns the FOV of `speed` (which

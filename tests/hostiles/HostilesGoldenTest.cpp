@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of U17's mobs against F13's Java goldens (tests/golden/mobs.json): every attribute the
 // golden row lists that Bedrock has a component for, read from the unit's behavior pack entities
 // (assets/pack/bp/entities/hostiles/<name>.json): health, movement speed, attack damage, follow
@@ -38,7 +38,7 @@ TEST(HostilesMobs, MatchJavaGoldens) {
     for (char const* name : {"hostile_wolf", "mist_wolf", "winter_wolf", "king_spider", "hedge_spider", "swarm_spider", "skeleton_druid", "redcap",
                              "redcap_sapper", "wraith", "fire_beetle", "slime_beetle", "pinch_beetle"}) {
         SCOPED_TRACE(name);
-        std::string const id  = std::string("twilightforest:") + name;
+        std::string const id  = std::string("gloamingforest:") + name;
         auto const&       row = golden.at("entities").at(id);
         auto const        bp  = bpOf(name);
         auto const&       c   = bp.at("minecraft:entity").at("components");
@@ -67,7 +67,7 @@ TEST(HostilesMobs, ProjectileBoxes) {
     auto const golden = load(gf::tests::golden::goldenDir() / "mobs.json");
     for (char const* name : {"nature_bolt", "slime_blob"}) {
         SCOPED_TRACE(name);
-        auto const& row = golden.at("entities").at(std::string("twilightforest:") + name);
+        auto const& row = golden.at("entities").at(std::string("gloamingforest:") + name);
         auto const  bp  = bpOf(name);
         auto const& c   = bp.at("minecraft:entity").at("components");
         EXPECT_NEAR(c.at("minecraft:collision_box").at("width").get<double>(), row.at("width").get<double>(), 1e-6);

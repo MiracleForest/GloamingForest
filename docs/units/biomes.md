@@ -20,35 +20,35 @@ Spec: [docs/spec/biomes.md](../spec/biomes.md). What is where:
 ## Data
 
 The layer stacks (`biome_layer_stack`) and the terrain grid (`biome_terrain_data`) are read at
-install from the mod's data folder, `data/twilightforest/twilight/...`, which F1 imports from TF's
-data pack (`assets/gen/import/biomes/data/...`). The stack is built from that JSON as TF's codecs
+install from the mod's data folder, `data/gloamingforest/gloaming/...`, which F1 imports from upstream's
+data pack (`assets/gen/import/biomes/data/...`). The stack is built from that JSON as upstream's codecs
 read it, so a data change needs no code change.
 
 ## Pack files
 
-The BP and RP biome files are generated once from TF's imported biome JSON and committed as the
+The BP and RP biome files are generated once from upstream's imported biome JSON and committed as the
 manual layer:
 
-- BP: `minecraft:climate` (temperature; downfall: TF's, 0 where TF has `has_precipitation: false`
+- BP: `minecraft:climate` (temperature; downfall: upstream's, 0 where upstream has `has_precipitation: false`
   (enchanted forest, fire swamp) since Bedrock rains wherever the downfall is above 0, and 0.0001
-  where TF rains with a downfall of 0 (oak savannah, underground, highlands underground: the
+  where upstream rains with a downfall of 0 (oak savannah, underground, highlands underground: the
   colour map does not change visibly); snow accumulation [0, 0.125]) and `minecraft:map_tints`
-  (TF's grass / foliage colours where TF sets them).
+  (upstream's grass / foliage colours where upstream sets them).
 - RP (format 1.21.120): `minecraft:sky_color`, `minecraft:grass_appearance` /
-  `minecraft:foliage_appearance` (TF's colours; the swamp's and dark forest's are already the
-  modifiers' results), `minecraft:water_appearance` with TF's water colour in every biome (Java's
-  default `#3F76E4` where TF sets none: Bedrock's own default is `#44AFF5`), a fog
-  (`gloamingforest:<biome>_fog`) in every biome with TF's water fog (`#050533` by default; it ends
-  at 96 blocks, 81.6 in TF's `has_closer_water_fog` biomes: Java's
+  `minecraft:foliage_appearance` (upstream's colours; the swamp's and dark forest's are already the
+  modifiers' results), `minecraft:water_appearance` with upstream's water colour in every biome (Java's
+  default `#3F76E4` where upstream sets none: Bedrock's own default is `#44AFF5`), a fog
+  (`gloamingforest:<biome>_fog`) in every biome with upstream's water fog (`#050533` by default; it ends
+  at 96 blocks, 81.6 in upstream's `has_closer_water_fog` biomes: Java's
   `96 * max(0.25, waterVision)` once the eyes have adapted, without Java's 5-30 s ramp from 24
-  blocks) and TF's air fog where it is not TF's usual `#C0FFD8` (the sky and air fog of the
+  blocks) and upstream's air fog where it is not upstream's usual `#C0FFD8` (the sky and air fog of the
   dimension are U15's), and `minecraft:ambient_sounds`: the underwater loop and additions (chance
-  0.01) vanilla Bedrock biomes carry. No mood: the server plays TF's (see Ambient).
-- The server's biome registry gets TF's water colours (`Biome::mMapWaterColor`, which the biome
+  0.01) vanilla Bedrock biomes carry. No mood: the server plays upstream's (see Ambient).
+- The server's biome registry gets upstream's water colours (`Biome::mMapWaterColor`, which the biome
   definitions sent to clients carry) at install and at every world load.
-- The enchanted forest's static grass and foliage are `#00FF80`, the middle of TF's bands
+- The enchanted forest's static grass and foliage are `#00FF80`, the middle of upstream's bands
   (`0x00FFxx`): vanilla clients cannot draw the bands; the client mod does.
-- The dark forest centre's static colours are what TF draws most: foliage `#E94E14` (TF's
+- The dark forest centre's static colours are what upstream draws most: foliage `#E94E14` (upstream's
   BiomeColorAlgorithms tests `(noise + 1) / 2 < -0.1`, never true, so its leaves are always
   `#E94E14`; the biome JSON's `#F9821E` is never drawn) and grass `#554114` (the branch of
   darkForestCenterGrass taken where the temperature noise is at least -0.2, most of the map:
@@ -57,45 +57,45 @@ manual layer:
 
 ## Client colours
 
-Bedrock blends static biome colours. TF's spooky forest, dark forest centre and enchanted forest
+Bedrock blends static biome colours. Upstream's spooky forest, dark forest centre and enchanted forest
 change their colours by position. The client mod registers tints for vanilla grass and foliage
 blocks with F12's registry (`tint::registerBlock`); F12's hook only reaches blocks of the client
 block pipeline, so `src/feature/ext/biomes/VanillaTint.cpp` hooks the game's grass and foliage
 tessellation policies (`BiomeColorSampling::GrassTessellationPolicy` /
 `FoliageTessellationPolicy::get`) and applies the registry there; every other block the game draws
-with the biome grass or (default) foliage colour in a TF biome gets TF's colour too (Java's
-`BiomeColors.getAverage*Color`: TF's twilight oak / dark / giant / fallen leaves and the fiddlehead,
+with the biome grass or (default) foliage colour in an upstream biome gets upstream's colour too (Java's
+`BiomeColors.getAverage*Color`: upstream's gloaming oak / dark / giant / fallen leaves and the fiddlehead,
 and the probe block F12's resolver asks for the biome colour F11's canopy and mangrove leaves start
 from). The tint reads the biome of every column of the blend (`tintBlendRadius`, default 2 = 5x5)
 from the tessellated block source (the client's synced chunks, so remote worlds need no seed) and
-averages each column's own TF colour as Java does: the modifier or foliage handler, else TF's
+averages each column's own upstream colour as Java does: the modifier or foliage handler, else upstream's
 JSON colour (fire swamp, snowy forest), else the colour map at the biome's climate
 (`core/biomes/Colors.cpp`: Bedrock's colour maps, within one step of Java's in one channel). Outside
-TF's biomes the game's colour stays after one biome lookup per block. Caches keyed by block or
+Upstream's biomes the game's colour stays after one biome lookup per block. Caches keyed by block or
 biome addresses are checked against the object's name / serialization hash on every use, so a
 remote join that reuses addresses never draws a stale biome.
 
 Leaves: in a cold biome Bedrock draws leaves through its seasons map (the tint is a place in that
 map, not a colour; a white tint drew the map's red corner). Java has no seasons:
-`LeavesBlock::isSeasonTinted` is false in TF's biomes with the mod, so the snowy forest's leaves
-are TF's white `#FFFFFF` and the glacier's its colour-map colour. Vanilla clients keep Bedrock's
+`LeavesBlock::isSeasonTinted` is false in upstream's biomes with the mod, so the snowy forest's leaves
+are upstream's white `#FFFFFF` and the glacier's its colour-map colour. Vanilla clients keep Bedrock's
 seasons look there (they cannot be told otherwise: the foliage colour is the only data and it is
 read as a map place).
 
-Water: TF's water colours (`water_color` of TF's biome JSON) are given to the game in every place
+Water: upstream's water colours (`water_color` of upstream's biome JSON) are given to the game in every place
 U1 can reach: the client biome files (`minecraft:water_appearance`, now at the pack's `biomes/` root:
 the files under `biomes/biomes/` were not read by the client), the server's biomes
 (`Biome::mMapWaterColor`) and with them the biome definitions sent to clients (the cached
 `BiomeDefinitionListPacket`s are patched too when they exist), and with the mod
-`BiomeColorSampling::getWaterColor`. Bedrock 1.26.51 still draws the Twilight Forest's water in one
-colour. Evidence (client e2e, local and remote-vanilla): the client level's own biomes carry TF's
-colours (`client biome twilightforest:fire_swamp: map water #A66C2C2C`, the vanilla swampland
+`BiomeColorSampling::getWaterColor`. Bedrock 1.26.51 still draws the Gloaming Forest's water in one
+colour. Evidence (client e2e, local and remote-vanilla): the client level's own biomes carry upstream's
+colours (`client biome gloamingforest:fire_swamp: map water #A66C2C2C`, the vanilla swampland
 `#A5617B64` the same way), the hooked lookup answers them, and still the five test pools (white
 concrete basins, 5x5x3 water, photographed from straight above) measure the same `#436168` in the
 forest, swamp, fire swamp, spooky forest and dense forest. The water mesh's colour comes from a
 place none of these reach (no MCAPI water policy or water render attribute is exposed in the
 26.51.7 headers: `WaterTessellationPolicy`, `WaterRenderAttributes` and `BiomeTintCache` are
-empty declarations). Closest workaround in place: every data path carries TF's colour, so the water
+empty declarations). Closest workaround in place: every data path carries upstream's colour, so the water
 follows as soon as the engine reads one of them; the scenario measures the pools and logs a warning.
 
 ## Spawn costs
@@ -123,15 +123,15 @@ replaces the behaviour the mob's owner registers (U16/U17's kobolds, wolves, ...
 it. F5's fix: pass the question's purpose to `SpecialSpawnFn`, or carry the costs in `spawn::Table`
 and apply them where `filter.test` sits.
 
-## Vanilla mobs of TF's tables
+## Vanilla mobs of upstream's tables
 
 F5's `spawn::spawnMob` passes `Spawner::spawnMob(..., naturalSpawn = true, ...)` for natural and
 chunk-generation spawns (`src/feature/spawn/Spawn.cpp:394-395`), and Bedrock then refuses a vanilla
 mob (chicken, wolf, enderman, zombie, skeleton, spider, creeper, slime, witch, bat) whose own spawn
-rules do not allow it there (their biome filters need vanilla biome tags; giving TF's biomes those
-tags would let Bedrock's own spawner place vanilla mobs in the Twilight Forest, which TF does not).
+rules do not allow it there (their biome filters need vanilla biome tags; giving upstream's biomes those
+tags would let Bedrock's own spawner place vanilla mobs in the Gloaming Forest, which upstream does not).
 `Spawns.cpp` listens to LeviLamina's `SpawningMobEvent` (no hook of U1's own) and turns such a spawn
-of a vanilla mob of TF's tables in the Twilight Forest into a non-natural one: F5 has already checked
+of a vanilla mob of upstream's tables in the Gloaming Forest into a non-natural one: F5 has already checked
 Java's placement, rules and obstruction for the position. `biomes.vanilla_spawns` spawns each kind
 through `spawn::spawnMob(..., SpawnReason::Natural)` with and without it and logs both outcomes.
 
@@ -151,8 +151,8 @@ through `spawn::spawnMob(..., SpawnReason::Natural)` with and without it and log
   block's collision is the full unit cube.
 ## Mood sound
 
-TF's mood (`ambient.cave`, tick delay 6000, search extent 8, offset 2.0 in every biome) is played
-by the server per player in a TF biome as BiomeAmbientSoundsHandler does (`core/biomes/Mood`,
+Upstream's mood (`ambient.cave`, tick delay 6000, search extent 8, offset 2.0 in every biome) is played
+by the server per player in an upstream biome as BiomeAmbientSoundsHandler does (`core/biomes/Mood`,
 gtested): one random block within 8 of the eyes per tick, darkness adds `(1 - blockLight) / 6000`,
 sky light takes `sky / 15 * 0.001`; at 1 the sound plays to that player only (PlaySoundPacket,
 volume 0.5) from that block's direction, 2 blocks beyond it. The client biome files carry no mood,
@@ -161,12 +161,12 @@ so Bedrock's own timing does not add to it.
 ## Audit round 2
 
 - **Biome music**: every client biome file now carries `minecraft:biome_music` with `music_definition`
-  `twilightforest:<biome>`, the entry U10 defines for it in `sounds/music_definitions.json`
-  (`assets/pack/rp/music_definitions.d/provisions.json`: TF's biome `music`, `music.twilightforest.twilight_forest` in
+  `gloamingforest:<biome>`, the entry U10 defines for it in `sounds/music_definitions.json`
+  (`assets/pack/rp/music_definitions.d/provisions.json`: upstream's biome `music`, `music.gloamingforest.gloaming_forest` in
   every biome). Bedrock's 1.21.120 client biomes pick their music through this component (its own biomes name theirs,
-  e.g. the End's `"end"`); before, no TF biome named a definition.
+  e.g. the End's `"end"`); before, no upstream biome named a definition.
 - **Vibrant Visuals atmosphere**: every client biome file references U15's `gloamingforest:<biome>_atmospherics`
-  (`minecraft:atmosphere_identifier`; the files are U15's, `assets/pack/rp/atmospherics/atmosphere/`, same round): TF's
+  (`minecraft:atmosphere_identifier`; the files are U15's, `assets/pack/rp/atmospherics/atmosphere/`, same round): upstream's
   sky and horizon colours for VV's physical sky without the sun's dusk band. Bedrock's other per-biome VV
   identifiers (lighting, colour grading) stay the game's defaults.
 - Not verified in a client run this round (the e2e client instance was missing from the machine): the music and the

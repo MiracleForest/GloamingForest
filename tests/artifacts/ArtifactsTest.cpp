@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of TF's charm, casket, shield, flask, ore meter, scepter and moon dial rules (U9):
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of upstream's charm, casket, shield, flask, ore meter, scepter and moon dial rules (U9):
 // CharmEvents, TFItemStackUtils, FortificationShieldAttachment, PotionFlaskComponent,
-// OreScannerComponent, ScepterRepairRecipe, MoonDialItem (TeamTwilight/twilightforest @ 9e40a757,
+// OreScannerComponent, ScepterRepairRecipe, MoonDialItem (upstream commit 9e40a757,
 // LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
@@ -75,7 +75,7 @@ TEST(Artifacts, KeepingOneKeepsOnlyArmourAndOffhand) {
     inv.offhand  = s("minecraft:shield");
     auto r       = applyKeeping(inv);
     EXPECT_EQ(r.tier, 1);
-    EXPECT_EQ(inv.main[0], s(kSword)); // TF quirk: the selected stack is not kept
+    EXPECT_EQ(inv.main[0], s(kSword)); // upstream quirk: the selected stack is not kept
     EXPECT_EQ(r.kept.armor[2], s("minecraft:iron_chestplate"));
     EXPECT_EQ(r.kept.offhand, s("minecraft:shield"));
     EXPECT_TRUE(inv.main[4].empty());

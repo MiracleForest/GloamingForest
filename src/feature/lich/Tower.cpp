@@ -1,32 +1,32 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/LichTowerStructure.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerPieces.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerUtil.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerFoyer.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerFoyerDecor.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerBase.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerBaseTrim.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerSegment.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichBossRoom.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichBossRoof.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerSpawnerBridge.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerWingBridge.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerWingRoom.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerWingRoof.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerWingBeard.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerRoomDecor.java
-//   src/main/java/twilightforest/world/components/structures/lichtowerrevamp/LichTowerMagicGallery.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/LichTowerStructure.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerPieces.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerUtil.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerFoyer.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerFoyerDecor.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerBase.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerBaseTrim.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerSegment.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichBossRoom.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichBossRoof.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerSpawnerBridge.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerWingBridge.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerWingRoom.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerWingRoof.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerWingBeard.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerRoomDecor.java
+//   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/LichTowerMagicGallery.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The lich tower revamp: a foyer, the central tower stacked from slices up to the boss room, wings of
 // bridges and rooms with ladders, roofs and beards, mob bridges inside the tower and the magic
-// gallery. The pieces follow TF's code; the templates are original GloamingForest designs (rule
-// R11/R19) at TF's ids with TF's junction names (tools/structures/lich). Room interiors, roofs,
+// gallery. The pieces follow upstream's code; the templates are original GloamingForest designs (rule
+// R11/R19) at upstream's ids with upstream's junction names (tools/structures/lich). Room interiors, roofs,
 // beards and decor are U22's templates; while one is missing, a room falls back to a GloamingForest
-// placeholder room of its size (twilightforest:lich_tower/placeholder/<size>), so the tower still
+// placeholder room of its size (gloamingforest:lich_tower/placeholder/<size>), so the tower still
 // assembles.
 
 #include "feature/lich/Tower.h"
@@ -89,9 +89,9 @@ namespace {
 
 // ---- ids --------------------------------------------------------------------------------------------
 
-constexpr char const* kNs = "twilightforest:lich_tower/";
+constexpr char const* kNs = "gloamingforest:lich_tower/";
 std::string tid(char const* path) { return std::string(kNs) + path; }
-/// The templates TF's code names directly have GloamingForest ids (no TF template definition knows them).
+/// The templates upstream's code names directly have GloamingForest ids (no upstream template definition knows them).
 std::string gid(char const* path) { return std::string("gf:lich_tower/") + path; }
 
 constexpr char const* kJunctionRoom   = "gf:lich_tower/room";
@@ -110,20 +110,20 @@ constexpr int kEmptySpawns    = 2;
 constexpr int kDenySpawns     = -2; // SpawnIndexProvider.Deny
 
 // piece type ids (TFStructurePieceTypes "TFLT" + suffix)
-constexpr char const* kFoyer      = "twilightforest:TFLTTFoy";
-constexpr char const* kFoyerDecor = "twilightforest:TFLTTFoyD";
-constexpr char const* kBase       = "twilightforest:TFLTCTBase";
-constexpr char const* kBaseTrim   = "twilightforest:TFLTCTTrim";
-constexpr char const* kSegment    = "twilightforest:TFLTCTSeg";
-constexpr char const* kMobBridge  = "twilightforest:TFLTMobBridge";
-constexpr char const* kWingBridge = "twilightforest:TFLTBridge";
-constexpr char const* kWingRoof   = "twilightforest:TFLTTRoof";
-constexpr char const* kWingBeard  = "twilightforest:TFLTTBeard";
-constexpr char const* kWingRoom   = "twilightforest:TFLTTRoom";
-constexpr char const* kRoomDecor  = "twilightforest:TFLTTDecor";
-constexpr char const* kGallery    = "twilightforest:TFLTTGallery";
-constexpr char const* kBossRoom   = "twilightforest:TFLTTBoss";
-constexpr char const* kBossRoof   = "twilightforest:TFLTTBossRoof";
+constexpr char const* kFoyer      = "gloamingforest:TFLTTFoy";
+constexpr char const* kFoyerDecor = "gloamingforest:TFLTTFoyD";
+constexpr char const* kBase       = "gloamingforest:TFLTCTBase";
+constexpr char const* kBaseTrim   = "gloamingforest:TFLTCTTrim";
+constexpr char const* kSegment    = "gloamingforest:TFLTCTSeg";
+constexpr char const* kMobBridge  = "gloamingforest:TFLTMobBridge";
+constexpr char const* kWingBridge = "gloamingforest:TFLTBridge";
+constexpr char const* kWingRoof   = "gloamingforest:TFLTTRoof";
+constexpr char const* kWingBeard  = "gloamingforest:TFLTTBeard";
+constexpr char const* kWingRoom   = "gloamingforest:TFLTTRoom";
+constexpr char const* kRoomDecor  = "gloamingforest:TFLTTDecor";
+constexpr char const* kGallery    = "gloamingforest:TFLTTGallery";
+constexpr char const* kBossRoom   = "gloamingforest:TFLTTBoss";
+constexpr char const* kBossRoof   = "gloamingforest:TFLTTBossRoof";
 
 // ---- the generation context of the running layout ------------------------------------------------------
 
@@ -139,36 +139,36 @@ void grow(JigsawPiece& piece, JigsawPiece& parent, PieceList& pieces, RandomSour
 std::string json(Json const& j) { return j.dump(); }
 
 std::string updateMarker() {
-    return json({{"processor_type", "twilightforest:update_marking"},
+    return json({{"processor_type", "gloamingforest:update_marking"},
                  {"mark_updates", Json::array({"minecraft:birch_fence", "minecraft:polished_andesite_stairs", "minecraft:stone_brick_wall", "minecraft:mossy_stone_brick_wall",
-                                               "minecraft:cobblestone_wall", "minecraft:mossy_cobblestone_wall", "twilightforest:wrought_iron_fence", "twilightforest:canopy_fence",
-                                               "twilightforest:twisted_stone_pillar"})}});
+                                               "minecraft:cobblestone_wall", "minecraft:mossy_cobblestone_wall", "gloamingforest:wrought_iron_fence", "gloamingforest:canopy_fence",
+                                               "gloamingforest:twisted_stone_pillar"})}});
 }
 
 /// LichTowerUtil#addDefaultProcessors.
 void addDefaultProcessors(std::vector<std::string>& p) {
     p.push_back("minecraft:jigsaw_replacement");
     p.push_back(json({{"processor_type", "minecraft:block_ignore"}, {"blocks", Json::array({Json{{"Name", "minecraft:structure_block"}}})}}));
-    p.push_back("twilightforest:stone_brick_variants");
-    p.push_back("twilightforest:cobble_variants");
-    p.push_back("twilightforest:infest_blocks");
+    p.push_back("gloamingforest:stone_brick_variants");
+    p.push_back("gloamingforest:cobble_variants");
+    p.push_back("gloamingforest:infest_blocks");
     p.push_back(updateMarker());
 }
 
 std::string const& roomSpawners() {
-    static std::string const p = sx::compileSpawnerProcessor(2, 0.8F, {{"minecraft:spider", 1}, {"minecraft:cave_spider", 1}, {"twilightforest:swarm_spider", 1},
-                                                                        {"twilightforest:hedge_spider", 1}, {"minecraft:skeleton", 4}, {"minecraft:zombie", 4}});
+    static std::string const p = sx::compileSpawnerProcessor(2, 0.8F, {{"minecraft:spider", 1}, {"minecraft:cave_spider", 1}, {"gloamingforest:swarm_spider", 1},
+                                                                        {"gloamingforest:hedge_spider", 1}, {"minecraft:skeleton", 4}, {"minecraft:zombie", 4}});
     return p;
 }
 
 std::string const& centralSpawners() {
-    static std::string const p = sx::compileSpawnerProcessor(4, 0.0F, {{"minecraft:skeleton", 2}, {"minecraft:zombie", 1}, {"twilightforest:swarm_spider", 1}});
+    static std::string const p = sx::compileSpawnerProcessor(4, 0.0F, {{"minecraft:skeleton", 2}, {"minecraft:zombie", 1}, {"gloamingforest:swarm_spider", 1}});
     return p;
 }
 
 std::string stairDecay(float chance) {
-    return json({{"processor_type", "twilightforest:vertical_decay"},
-                 {"decay_blocks", Json::array({"twilightforest:twilight_oak_slab", "twilightforest:canopy_slab", "twilightforest:twilight_oak_banister", "twilightforest:canopy_banister"})},
+    return json({{"processor_type", "gloamingforest:vertical_decay"},
+                 {"decay_blocks", Json::array({"gloamingforest:gloaming_oak_slab", "gloamingforest:canopy_slab", "gloamingforest:gloaming_oak_banister", "gloamingforest:canopy_banister"})},
                  {"decay_chance", chance}});
 }
 
@@ -312,7 +312,7 @@ std::optional<JigsawPlaceContext> pick(BlockPos const& parentTemplatePos, Jigsaw
 }
 
 bool isBanister(Region& region, BlockPos const& pos) {
-    return gf::tags::has(gf::tags::Registry::Block, "twilightforest:banisters", game::blockId(region.getBlock(pos)));
+    return gf::tags::has(gf::tags::Registry::Block, "gloamingforest:banisters", game::blockId(region.getBlock(pos)));
 }
 
 void removeIfBanister(Region& region, BlockPos const& pos, BlockBox const& chunk) {
@@ -340,7 +340,7 @@ std::vector<std::string> javaSplit(std::string const& s, char sep) {
 /// StringUtils.isNumeric: non-empty, digits only.
 bool isNumeric(std::string const& s) { return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isdigit(c) != 0; }); }
 
-/// ResourceLocation.bySeparator(label, sep): "twilightforest.chests.x" -> "twilightforest:chests/x"
+/// ResourceLocation.bySeparator(label, sep): "gloamingforest.chests.x" -> "gloamingforest:chests/x"
 /// (the first separator splits the namespace, the others become '/'); no separator: minecraft:.
 std::string bySeparator(std::string const& label, char sep) {
     auto at = label.find(sep);
@@ -392,8 +392,8 @@ std::string pickRandomMob(RandomSource& random, std::vector<std::string> const& 
         auto monsters = javaSplit(params[1], ',');
         if (!monsters.empty()) {
             auto const& label = monsters[random.nextInt(static_cast<int>(monsters.size()))];
-            if (label == "hedge_spider") return "twilightforest:hedge_spider";
-            if (label == "swarm_spider") return "twilightforest:swarm_spider";
+            if (label == "hedge_spider") return "gloamingforest:hedge_spider";
+            if (label == "swarm_spider") return "gloamingforest:swarm_spider";
             // EntityType.byString(label).orElse(ZOMBIE): a well-formed id, else a zombie
             std::string id = label.find(':') == std::string::npos ? "minecraft:" + label : label;
             bool ok = !label.empty() && std::all_of(label.begin(), label.end(), [](unsigned char c) { return std::islower(c) || std::isdigit(c) || c == '_' || c == ':' || c == '.' || c == '/'; });
@@ -406,8 +406,8 @@ std::string pickRandomMob(RandomSource& random, std::vector<std::string> const& 
     case 9: return "minecraft:skeleton";
     case 6: return "minecraft:spider";
     case 5: return "minecraft:cave_spider";
-    case 4: return "twilightforest:hedge_spider";
-    case 3: return "twilightforest:swarm_spider";
+    case 4: return "gloamingforest:hedge_spider";
+    case 3: return "gloamingforest:swarm_spider";
     default: return "minecraft:zombie";
     }
 }
@@ -450,7 +450,7 @@ protected:
 
 LichPiece* asLich(gs::Piece* p) { return dynamic_cast<LichPiece*>(p); }
 
-/// The template position of any jigsaw parent (TwilightJigsawPiece#templatePosition()).
+/// The template position of any jigsaw parent (GloamingJigsawPiece#templatePosition()).
 BlockPos parentPos(JigsawPiece& parent) {
     if (auto* l = dynamic_cast<LichPiece*>(&parent)) return l->templatePos();
     return parent.getSourcePosition();
@@ -491,8 +491,8 @@ protected:
         if (!putChest || split[0] != (chestSide ? "chest_a" : "chest_b") || !chunk.contains(pos.x, pos.y, pos.z)) return;
         Orientation facing = rotate(Orientation::North, compose(placeSettings.rotation, dataRotation));
         placeBlock(region, "minecraft:chest", Json{{"facing", orientationName(facing)}}, pos.x, pos.y, pos.z, chunk);
-        placeContainer(region, pos, "minecraft:chest", facing, "twilightforest:chests/tower_room", random.nextLong());
-        placeBlock(region, "twilightforest:canopy_planks", Json::object(), pos.x, pos.y - 1, pos.z, chunk);
+        placeContainer(region, pos, "minecraft:chest", facing, "gloamingforest:chests/tower_room", random.nextLong());
+        placeBlock(region, "gloamingforest:canopy_planks", Json::object(), pos.x, pos.y - 1, pos.z, chunk);
     }
 
 private:
@@ -514,16 +514,16 @@ public:
         Orientation facing = rotate(Orientation::South, placeSettings.rotation); // rotation.getRotated(CLOCKWISE_180) of north
         int pick = random.nextInt(5) + (noChest ? -1 : 0);
         if (pick == 4) {
-            placeChest(region, chunk, random, at.x, at.y, at.z, "minecraft:chest", "twilightforest:chests/tower_foyer");
+            placeChest(region, chunk, random, at.x, at.y, at.z, "minecraft:chest", "gloamingforest:chests/tower_foyer");
             placeBlock(region, "minecraft:stone_brick_stairs", Json{{"half", "top"}, {"facing", dirName(facing)}}, at.x, at.y + 1, at.z, chunk);
         } else if (pick == 3) {
-            placeBlock(region, "twilightforest:candelabra",
+            placeBlock(region, "gloamingforest:candelabra",
                        Json{{"facing", dirName(rotate(Orientation::North, placeSettings.rotation))}, {"lighting", "dim"}, {"has_candle_1", true}, {"has_candle_2", true}, {"has_candle_3", true}},
                        at.x, at.y, at.z, chunk);
         } else {
             switch (random.nextInt(5)) {
             case 3:
-                placeBlock(region, "twilightforest:skeleton_skull_candle",
+                placeBlock(region, "gloamingforest:skeleton_skull_candle",
                            Json{{"lighting", "normal"}, {"candles", random.nextIntBetweenInclusive(1, 3)}, {"rotation", rotRotation(random.nextIntBetweenInclusive(7, 9))}}, at.x,
                            at.y, at.z, chunk);
                 break;
@@ -697,7 +697,7 @@ public:
 
 protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
-        sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 2, 10, "twilightforest:tower_paintings");
+        sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 2, 10, "gloamingforest:tower_paintings");
     }
 
 private:
@@ -740,7 +740,7 @@ public:
 
 protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
-        sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 3, 3, "twilightforest:tower_boss_paintings");
+        sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 3, 3, "gloamingforest:tower_boss_paintings");
     }
 };
 
@@ -765,9 +765,9 @@ private:
     void addProcessors() {
         placeSettings.processors.push_back(centralSpawners());
         if (inverted)
-            placeSettings.processors.push_back(json({{"processor_type", "twilightforest:wood_multiswizzle"},
-                                                     {"palettes", Json::array({Json::array({"twilightforest:twilight_oak", "twilightforest:canopy"}),
-                                                                               Json::array({"twilightforest:canopy", "twilightforest:twilight_oak"})})}}));
+            placeSettings.processors.push_back(json({{"processor_type", "gloamingforest:wood_multiswizzle"},
+                                                     {"palettes", Json::array({Json::array({"gloamingforest:gloaming_oak", "gloamingforest:canopy"}),
+                                                                               Json::array({"gloamingforest:canopy", "gloamingforest:gloaming_oak"})})}}));
     }
     bool inverted = false;
 };
@@ -779,7 +779,7 @@ class WingRoom;
 class WingRoof final : public LichPiece {
 public:
     WingRoof(int depth, std::string const& id, JigsawPlaceContext const& ctx) : LichPiece(kWingRoof, depth, id, ctx) {
-        placeSettings.processors.push_back("twilightforest:soft_replace");
+        placeSettings.processors.push_back("gloamingforest:soft_replace");
     }
     [[nodiscard]] BlockBox generationCollisionBox() const {
         if (span(bbox, 0) < 2 || span(bbox, 1) < 2 || span(bbox, 2) < 2) return BlockBox{bbox.minX, bbox.minY, bbox.minZ, bbox.maxX, std::max(bbox.minY, bbox.maxY - 1), bbox.maxZ};
@@ -790,7 +790,7 @@ public:
 class WingBeard final : public LichPiece {
 public:
     WingBeard(int depth, std::string const& id, JigsawPlaceContext const& ctx, bool ground) : LichPiece(kWingBeard, depth, id, ctx), generateGround(ground) {
-        placeSettings.processors.push_back("twilightforest:soft_replace");
+        placeSettings.processors.push_back("gloamingforest:soft_replace");
         terrain     = ground ? TerrainAdjustment::BeardBox : TerrainAdjustment::None;
         groundDelta = 4;
         sortKey     = -1;
@@ -1056,7 +1056,7 @@ private:
             hangers.push_back(BlockPos{p[0], p[1], p[2]});
         }
         if (hangers.empty()) return;
-        // Util.shuffle, then drop the ones sharing an x or z (the chance filter of TF keeps the
+        // Util.shuffle, then drop the ones sharing an x or z (the chance filter of upstream keeps the
         // markers whose chance roll fails out of the dedup, as filterAlignedPieces does)
         for (int i = static_cast<int>(hangers.size()); i > 1; --i) std::swap(hangers[i - 1], hangers[random.nextInt(i)]);
         std::set<int> xs, zs;
@@ -1117,11 +1117,11 @@ void WingRoom::handleDataMarker(std::string const& label, BlockPos const& pos0, 
             if (!canHang(pos)) return;
             int len = parseRange(chance.empty() ? std::string() : chance.back(), random, 1, 2);
             if (len > 0) {
-                for (int i = 0; i < len; ++i) placeBlock(region, rope ? "twilightforest:rope" : "minecraft:chain", Json::object(), pos.x, pos.y - i, pos.z, chunk);
+                for (int i = 0; i < len; ++i) placeBlock(region, rope ? "gloamingforest:rope" : "minecraft:chain", Json::object(), pos.x, pos.y - i, pos.z, chunk);
                 pos.y -= len;
             }
         } else if (mod == "pedestal") {
-            placeBlock(region, "twilightforest:twisted_stone_pillar", Json::object(), pos.x, pos.y, pos.z, chunk);
+            placeBlock(region, "gloamingforest:twisted_stone_pillar", Json::object(), pos.x, pos.y, pos.z, chunk);
             pos.y += 1;
         } else if (mod == "below") {
             pos.y -= 1; // the 9x9 winding_ways room
@@ -1151,21 +1151,21 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
     auto     turnHead = [&](int rotation16) { return (rotation16 + 4 * quarterTurns(headTurn)) % 16; };
     if (k == "air" || k == "empty") return;
     if (k == "bookshelf") return put("minecraft:bookshelf");
-    if (k == "canopy_shelf" || k == "canopy_bookshelf") return put("twilightforest:canopy_bookshelf");
+    if (k == "canopy_shelf" || k == "canopy_bookshelf") return put("gloamingforest:canopy_bookshelf");
     if (k == "stone_brick_slab") return put("minecraft:stone_brick_slab");
     if (k == "lava") return put("minecraft:lava");
     if (k == "water") return put("minecraft:water");
-    if (k == "firefly_jar") return put("twilightforest:firefly_jar");
-    if (k == "terrorcotta_arcs") return put("twilightforest:terrorcotta_arcs");
+    if (k == "firefly_jar") return put("gloamingforest:firefly_jar");
+    if (k == "terrorcotta_arcs") return put("gloamingforest:terrorcotta_arcs");
     if (k == "mason_jar") {
         // putMasonJar: the jar's loot table (or the item the label names), its item turned with the piece
-        put("twilightforest:mason_jar");
+        put("gloamingforest:mason_jar");
         if (params.size() >= 2) {
-            static std::map<std::string, std::string> const kTables{{"jar", "twilightforest:chests/tower_jars"},
-                                                                    {"room", "twilightforest:chests/tower_room"},
-                                                                    {"library", "twilightforest:chests/tower_library"},
-                                                                    {"potion", "twilightforest:chests/tower_potion"},
-                                                                    {"enchanting", "twilightforest:chests/tower_enchanting"}};
+            static std::map<std::string, std::string> const kTables{{"jar", "gloamingforest:chests/tower_jars"},
+                                                                    {"room", "gloamingforest:chests/tower_room"},
+                                                                    {"library", "gloamingforest:chests/tower_library"},
+                                                                    {"potion", "gloamingforest:chests/tower_potion"},
+                                                                    {"enchanting", "gloamingforest:chests/tower_enchanting"}};
             // a known table fills the jar; any other label is a table id, or the item when no such
             // table fills it (fillFromLootTable fails)
             auto it   = kTables.find(params[1]);
@@ -1174,12 +1174,12 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
             data["item_rotation"] = quarterTurns(placeSettings.rotation) * 4 + (params.size() == 3 ? headRotation(params[2], random) : 0);
             gf::feature::lich::pending::add(dim, pos, "jar", data);
         }
-        if (game::blockId(region.getBlock(up(pos))) == "twilightforest:canopy_bookshelf")
-            placeBlock(region, "twilightforest:canopy_slab", Json{{"type", "top"}}, pos.x, pos.y + 1, pos.z, chunk);
+        if (game::blockId(region.getBlock(up(pos))) == "gloamingforest:canopy_bookshelf")
+            placeBlock(region, "gloamingforest:canopy_slab", Json{{"type", "top"}}, pos.x, pos.y + 1, pos.z, chunk);
         return;
     }
-    if (k == "canopy_slab") return put("twilightforest:canopy_slab");
-    if (k == "canopy_stairs") return put("twilightforest:canopy_stairs");
+    if (k == "canopy_slab") return put("gloamingforest:canopy_slab");
+    if (k == "canopy_stairs") return put("gloamingforest:canopy_stairs");
     static std::map<std::string, char const*> const kHeads{{"creeper_head", "minecraft:creeper_head"},
                                                            {"skeleton_skull", "minecraft:skeleton_skull"},
                                                            {"wither_skull", "minecraft:wither_skeleton_skull"},
@@ -1188,10 +1188,10 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
         int rotation = params.size() >= 2 ? headRotation(params[1], random) : random.nextIntBetweenInclusive(0, 15);
         return put(h->second, Json{{"rotation", turnHead(rotation)}});
     }
-    static std::map<std::string, char const*> const kCandleHeads{{"creeper_candle", "twilightforest:creeper_skull_candle"},
-                                                                 {"skeleton_candle", "twilightforest:skeleton_skull_candle"},
-                                                                 {"wither_candle", "twilightforest:wither_skeleton_skull_candle"},
-                                                                 {"zombie_candle", "twilightforest:zombie_skull_candle"}};
+    static std::map<std::string, char const*> const kCandleHeads{{"creeper_candle", "gloamingforest:creeper_skull_candle"},
+                                                                 {"skeleton_candle", "gloamingforest:skeleton_skull_candle"},
+                                                                 {"wither_candle", "gloamingforest:wither_skeleton_skull_candle"},
+                                                                 {"zombie_candle", "gloamingforest:zombie_skull_candle"}};
     auto putHeadCandles = [&](BlockPos const& at, char const* id) {
         int amount = std::min(4, params.size() >= 2 ? parseRange(params[1], random, 1, 3) : random.nextIntBetweenInclusive(1, 3));
         if (amount <= 0) return;
@@ -1209,7 +1209,7 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
         gs::TemplateSettings s;
         s.processors.push_back(sx::compileSpawnerProcessor(range, 0.0F, {{mob, 1}}));
         s.clip = chunk;
-        s.seed = core::lich::blockPosAsLong(pos.x, pos.y, pos.z); // no draw from the piece random (TF draws none here)
+        s.seed = core::lich::blockPosAsLong(pos.x, pos.y, pos.z); // no draw from the piece random (upstream draws none here)
         bool placed = gs::templates::place(gid(k == "spawner" ? "stamp/spawner" : "stamp/sinister_spawner"), region, pos, s);
         if (!placed) placeSpawner(region, chunk, pos.x, pos.y, pos.z, mob);
         if (k == "sinister_spawner") {
@@ -1249,7 +1249,7 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
                 filled.push_back(i);
                 states["slot_" + std::to_string(i) + "_occupied"] = true;
             }
-        put("twilightforest:chiseled_canopy_bookshelf", states);
+        put("gloamingforest:chiseled_canopy_bookshelf", states);
         Json slots = Json::array();
         for (int i : filled) {
             // spawner shelves never hold enchanted books; otherwise 1 in 16 is enchanted at 1..40
@@ -1263,18 +1263,18 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
         // putChest: the chest turned with the piece and the marker, its loot table, a top slab above it
         std::string table;
         if (params.size() == 2) {
-            static std::map<std::string, std::string> const kTables{{"room", "twilightforest:chests/tower_room"},
-                                                                    {"library", "twilightforest:chests/tower_library"},
-                                                                    {"potion", "twilightforest:chests/tower_potion"},
-                                                                    {"enchanting", "twilightforest:chests/tower_enchanting"}};
+            static std::map<std::string, std::string> const kTables{{"room", "gloamingforest:chests/tower_room"},
+                                                                    {"library", "gloamingforest:chests/tower_library"},
+                                                                    {"potion", "gloamingforest:chests/tower_potion"},
+                                                                    {"enchanting", "gloamingforest:chests/tower_enchanting"}};
             auto it = kTables.find(params[1]);
             table   = it != kTables.end() ? it->second : bySeparator(params[1], '.');
         }
         std::string id = k == "chest" ? "minecraft:chest" : "minecraft:trapped_chest";
         put(id, Json{{"facing", facing(state)}});
         if (!table.empty()) placeContainer(region, pos, id, rotate(Orientation::North, state), table, random.nextLong());
-        if (game::blockId(region.getBlock(up(pos))) == "twilightforest:canopy_bookshelf")
-            placeBlock(region, "twilightforest:canopy_slab", Json{{"type", "top"}}, pos.x, pos.y + 1, pos.z, chunk);
+        if (game::blockId(region.getBlock(up(pos))) == "gloamingforest:canopy_bookshelf")
+            placeBlock(region, "gloamingforest:canopy_slab", Json{{"type", "top"}}, pos.x, pos.y + 1, pos.z, chunk);
         return;
     }
     if (k == "candle" || k == "candles") return putCandles(region, chunk, random, params, pos, "minecraft:candle");
@@ -1290,7 +1290,7 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
         // putZombieTrap: a capped (or post) iron fence with a zombie leashed to it on a random side
         // that stays inside the chunk
         bool open = region.getBlock(up(pos)).isAir();
-        put("twilightforest:wrought_iron_fence", Json{{"post", open ? "capped" : "post"}});
+        put("gloamingforest:wrought_iron_fence", Json{{"post", open ? "capped" : "post"}});
         std::vector<Orientation> dirs{Orientation::North, Orientation::East, Orientation::South, Orientation::West};
         // Direction.Plane.HORIZONTAL.shuffledCopy(random): Util.shuffle over [NORTH, EAST, SOUTH, WEST]
         for (int i = static_cast<int>(dirs.size()); i > 1; --i) std::swap(dirs[i - 1], dirs[random.nextInt(i)]);
@@ -1304,11 +1304,11 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
         gf::feature::lich::pending::add(dim, pos, "leashed_zombie", Json{{"post", {pos.x, pos.y, pos.z}}, {"at", {at.x + 0.5, at.y - 1, at.z + 0.5}}});
         return;
     }
-    if (k == "wrought_iron_post") return put("twilightforest:wrought_iron_fence", Json{{"post", "post"}});
+    if (k == "wrought_iron_post") return put("gloamingforest:wrought_iron_fence", Json{{"post", "post"}});
     if (k == "empty_lectern") return put("minecraft:lectern", Json{{"facing", facing(state)}});
     if (k == "candled_lectern") {
         if (random.nextInt(4) != 0) putCandles(region, chunk, random, params, up(pos), "minecraft:candle");
-        else putHeadCandles(up(pos), "twilightforest:skeleton_skull_candle");
+        else putHeadCandles(up(pos), "gloamingforest:skeleton_skull_candle");
         return put("minecraft:lectern", Json{{"facing", facing(state)}});
     }
     // any other label: the block with that id ("." or ":" as the separator), turned like a block
@@ -1431,21 +1431,21 @@ protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
         placeBlock(region, "minecraft:air", Json::object(), pos.x, pos.y, pos.z, chunk);
         if (label == "painting") {
-            // the gallery's magic painting (U22's twilightforest:magic_painting) facing the piece's
+            // the gallery's magic painting (U22's gloamingforest:magic_painting) facing the piece's
             // rotation of south, its variant named after the gallery; spawned once the chunk is loaded
             static std::map<std::string, std::string> const kVariants{
-                {"twilightforest:lich_tower/gallery/castaway_paradise", "twilightforest:castaway_paradise"},
-                {"twilightforest:lich_tower/gallery/darkness", "twilightforest:darkness"},
-                {"twilightforest:lich_tower/gallery/lucid_lands", "twilightforest:lucid_lands"},
-                {"twilightforest:lich_tower/gallery/music_in_the_mire", "twilightforest:music_in_the_mire"},
-                {"twilightforest:lich_tower/gallery/the_hostile_paradise", "twilightforest:the_hostile_paradise"}};
+                {"gloamingforest:lich_tower/gallery/castaway_paradise", "gloamingforest:castaway_paradise"},
+                {"gloamingforest:lich_tower/gallery/darkness", "gloamingforest:darkness"},
+                {"gloamingforest:lich_tower/gallery/lucid_lands", "gloamingforest:lucid_lands"},
+                {"gloamingforest:lich_tower/gallery/music_in_the_mire", "gloamingforest:music_in_the_mire"},
+                {"gloamingforest:lich_tower/gallery/the_hostile_paradise", "gloamingforest:the_hostile_paradise"}};
             auto it = kVariants.find(templateName);
             if (it == kVariants.end() || !chunk.contains(pos.x, pos.y, pos.z)) return;
             gf::feature::lich::pending::add(region.dimension(), pos, "magic_painting",
                                             Json{{"variant", it->second}, {"direction", orientationName(rotate(Orientation::South, placeSettings.rotation))}});
             return;
         }
-        sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 2, 1, "twilightforest:tower_paintings");
+        sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 2, 1, "gloamingforest:tower_paintings");
     }
 };
 
@@ -1537,10 +1537,10 @@ void Segment::process(JigsawPiece&, PieceList& pieces, RandomSource& random, Jig
 
 // ---- the yard (LichYardBox, LichPerimeterFence, LichYardGrave, LichYardLights) --------------------------
 
-constexpr char const* kYardPath   = "twilightforest:TFLTPath";
-constexpr char const* kYardFence  = "twilightforest:TFLTFence";
-constexpr char const* kYardGrave  = "twilightforest:TFLTGrave";
-constexpr char const* kYardLights = "twilightforest:TFLTLight";
+constexpr char const* kYardPath   = "gloamingforest:TFLTPath";
+constexpr char const* kYardFence  = "gloamingforest:TFLTFence";
+constexpr char const* kYardGrave  = "gloamingforest:TFLTGrave";
+constexpr char const* kYardLights = "gloamingforest:TFLTLight";
 
 /// Java's Direction for the yard pieces: the four horizontals and UP (LichYardBox's "no axis").
 struct YardDir {
@@ -1773,7 +1773,7 @@ public:
                 if (!isAir(BlockPos{x, y, z - 1}) || !isAir(BlockPos{x, y, z + 1}) || !isAir(BlockPos{x + 1, y, z}) || !isAir(BlockPos{x - 1, y, z})) continue;
                 bool nearEdge = axis == 2 ? std::min(x - bbox.minX, bbox.maxX - x) < 3 : std::min(z - bbox.minZ, bbox.maxZ - z) < 3;
                 if (!nearEdge) continue;
-                if (auto const* post = game::blockWith("twilightforest:wrought_iron_fence")) region.setBlock(at, *post, 3);
+                if (auto const* post = game::blockWith("gloamingforest:wrought_iron_fence")) region.setBlock(at, *post, 3);
                 if (auto const* candle = game::blockWithStates("minecraft:candle", Json{{"lit", true}})) region.setBlock(up(at), *candle, 3);
             }
     }
@@ -1889,7 +1889,7 @@ private:
         auto const& palette = t->data.value("palette", Json::array());
         std::vector<bool> isPost;
         for (auto const& e : palette)
-            isPost.push_back(e.value("Name", std::string()) == "twilightforest:wrought_iron_fence" && e.value("Properties", Json::object()).value("post", std::string()) == "post");
+            isPost.push_back(e.value("Name", std::string()) == "gloamingforest:wrought_iron_fence" && e.value("Properties", Json::object()).value("post", std::string()) == "post");
         int x = 0, y = 0, z = 0, sx = t->sizeX, sz = t->sizeZ;
         for (auto const& run : t->data.value("blocks", Json::array())) {
             int idx = run[0].get<int>(), n = run[1].get<int>();
@@ -2202,7 +2202,7 @@ bool layoutWith(gf::landmark::LayoutContext& ctx, RandomSource& contextRandom, s
     oriented.pos                       = BlockPos{0, 0, 0};
     auto pc = JigsawPlaceContext::pickPlaceableJunction(placePos, BlockPos{0, 0, 0}, oriented, gid("tower_foyer"), "gf:lich_tower/vestibule", random);
     if (!pc) {
-        log().warn("lich: the lich tower foyer template is missing (twilightforest:lich_tower/tower_foyer)");
+        log().warn("lich: the lich tower foyer template is missing (gloamingforest:lich_tower/tower_foyer)");
         return false;
     }
     auto  foyer = std::make_unique<Foyer>(*pc, true, random.nextBoolean());
@@ -2240,7 +2240,7 @@ bool layout(gf::landmark::LayoutContext& ctx) {
     auto ctxRandom = gf::landmark::ext::contextRandom(ctx.start);
     int  dim       = ctx.start.dimension;
     // ChunkGenerator#getFirstOccupiedHeight: the terrain provider's noise height. Where none answers
-    // (no provider for the dimension: /tf place and generateAt outside the Twilight Forest, or
+    // (no provider for the dimension: /gloamingforest place and generateAt outside the Gloaming Forest, or
     // before U2's terrain registers one) the loaded ground stands in when the layout runs on the
     // server thread (a generation thread must not touch the level), else the start's own height.
     int  fallbackY = ctx.start.center.y - 1;

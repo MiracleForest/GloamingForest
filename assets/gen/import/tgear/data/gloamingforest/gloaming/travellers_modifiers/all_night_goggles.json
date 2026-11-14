@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:all_night_goggles": {}
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.all_night_goggles.description"
+    }
+  ],
+  "equipment_slots": "head"
+}

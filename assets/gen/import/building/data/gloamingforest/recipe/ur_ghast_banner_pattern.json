@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "c:paper"
+    },
+    {
+      "item": "gloamingforest:ur_ghast_trophy"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:ur_ghast_banner_pattern"
+  }
+}

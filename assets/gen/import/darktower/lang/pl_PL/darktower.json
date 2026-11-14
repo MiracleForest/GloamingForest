@@ -1,8 +1,8 @@
 {
-  "block.twilightforest.carminite_reactor": "Reaktor Karminitowy",
-  "block.twilightforest.fake_diamond": "Blok diamentu",
-  "block.twilightforest.fake_gold": "Złoty blok",
-  "block.twilightforest.ghast_trap": "Pułapka na Ghast'a",
-  "entity.twilightforest.carminite_golem": "Karminitowy Golem",
-  "item.twilightforest.carminite": "Karminit"
+  "block.gloamingforest.carminite_reactor": "Reaktor Karminitowy",
+  "block.gloamingforest.fake_diamond": "Blok diamentu",
+  "block.gloamingforest.fake_gold": "Złoty blok",
+  "block.gloamingforest.ghast_trap": "Pułapka na Ghast'a",
+  "entity.gloamingforest.carminite_golem": "Karminitowy Golem",
+  "item.gloamingforest.carminite": "Karminit"
 }

@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:lower_goblin_knight",
+      "identifier": "gloamingforest:lower_goblin_knight",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "lower_goblin_knight", "monster", "mob"]
+        "family": ["gloamingforest", "lower_goblin_knight", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.7,

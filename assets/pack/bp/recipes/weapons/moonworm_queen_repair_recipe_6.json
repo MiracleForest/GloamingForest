@@ -2,41 +2,41 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shapeless": {
     "description": {
-      "identifier": "twilightforest:moonworm_queen_repair_recipe_6"
+      "identifier": "gloamingforest:moonworm_queen_repair_recipe_6"
     },
     "tags": [
       "crafting_table"
     ],
     "ingredients": [
       {
-        "item": "twilightforest:moonworm_queen"
+        "item": "gloamingforest:moonworm_queen"
       },
       {
-        "item": "twilightforest:torchberries"
+        "item": "gloamingforest:torchberries"
       },
       {
-        "item": "twilightforest:torchberries"
+        "item": "gloamingforest:torchberries"
       },
       {
-        "item": "twilightforest:torchberries"
+        "item": "gloamingforest:torchberries"
       },
       {
-        "item": "twilightforest:torchberries"
+        "item": "gloamingforest:torchberries"
       },
       {
-        "item": "twilightforest:torchberries"
+        "item": "gloamingforest:torchberries"
       },
       {
-        "item": "twilightforest:torchberries"
+        "item": "gloamingforest:torchberries"
       }
     ],
     "unlock": [
       {
-        "item": "twilightforest:moonworm_queen"
+        "item": "gloamingforest:moonworm_queen"
       }
     ],
     "result": {
-      "item": "twilightforest:moonworm_queen"
+      "item": "gloamingforest:moonworm_queen"
     }
   }
 }

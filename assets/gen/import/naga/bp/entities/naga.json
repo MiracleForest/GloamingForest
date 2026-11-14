@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:naga",
+      "identifier": "gloamingforest:naga",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "naga", "monster", "mob"]
+        "family": ["gloamingforest", "naga", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 2,

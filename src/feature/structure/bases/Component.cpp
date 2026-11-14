@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFStructureComponent.java
-//   src/main/java/twilightforest/world/components/structures/TFStructureDecorator.java
-//   src/main/java/twilightforest/world/components/structures/UtilityPiece.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java
+//   src/main/java/gloamingforest/world/components/structures/TFStructureDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/UtilityPiece.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/structure/bases/Component.h"
@@ -36,7 +36,7 @@ std::unique_ptr<Decorator> defaultDecorator() {
     d->platformState = &blocks::java("minecraft:stone_slab");
     d->floorState    = &blocks::java("minecraft:stone_bricks");
     d->roofState     = &blocks::java("minecraft:stone_bricks");
-    d->randomBlocks  = selectors::get("twilightforest:stronghold_stones");
+    d->randomBlocks  = selectors::get("gloamingforest:stronghold_stones");
     return d;
 }
 
@@ -83,7 +83,7 @@ void Component::load(Json const& data) {
 
 void Component::placeBlockScheduled(Region& region, Block const& block, int x, int y, int z, BlockBox const& sbb) {
     // TFStructureComponent#placeBlock: mirror, rotate, set with UPDATE_CLIENTS. The post-processing
-    // TF schedules (fence / stair shapes, liquids) is what Bedrock does on its own for placed blocks.
+    // upstream schedules (fence / stair shapes, liquids) is what Bedrock does on its own for placed blocks.
     BlockPos pos = getWorldPos(x, y, z);
     if (!sbb.contains(pos.x, pos.y, pos.z)) return;
     region.setBlock(pos, oriented(block), 2);
@@ -95,7 +95,7 @@ void Component::setInvisibleTextEntity(Region&, int, int, int, BlockBox const&, 
 
 // ---- UtilityPiece -------------------------------------------------------------------------------------
 
-UtilityPiece::UtilityPiece(int depth, BlockBox const& box, bool allow) : Piece("twilightforest:TFUtilityPiece"), allowFeatures(allow) {
+UtilityPiece::UtilityPiece(int depth, BlockBox const& box, bool allow) : Piece("gloamingforest:TFUtilityPiece"), allowFeatures(allow) {
     bbox        = box;
     genDepth    = depth;
     orientation = kNoOrientation;

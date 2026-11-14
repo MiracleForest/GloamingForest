@@ -1,52 +1,52 @@
 {
-  "twilightforest:block.twilightforest.casket.close": {
+  "gloamingforest:block.gloamingforest.casket.close": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.casket.close",
+    "subtitle": "subtitles.gloamingforest.block.casket.close",
     "sounds": [
       {
         "file": "random/casket/close"
       }
     ]
   },
-  "twilightforest:block.twilightforest.casket.locked": {
+  "gloamingforest:block.gloamingforest.casket.locked": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.casket.locked",
+    "subtitle": "subtitles.gloamingforest.block.casket.locked",
     "sounds": [
       {
         "event": "block.chest.locked"
       }
     ]
   },
-  "twilightforest:block.twilightforest.casket.open": {
+  "gloamingforest:block.gloamingforest.casket.open": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.casket.open",
+    "subtitle": "subtitles.gloamingforest.block.casket.open",
     "sounds": [
       {
         "file": "random/casket/open"
       }
     ]
   },
-  "twilightforest:block.twilightforest.casket.repair": {
+  "gloamingforest:block.gloamingforest.casket.repair": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.casket.repair",
+    "subtitle": "subtitles.gloamingforest.block.casket.repair",
     "sounds": [
       {
         "file": "random/casket/repair"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.fortification_shield.add": {
+  "gloamingforest:entity.gloamingforest.fortification_shield.add": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.fortification_shield.add",
+    "subtitle": "subtitles.gloamingforest.entity.fortification_shield.add",
     "sounds": [
       {
         "file": "random/scepter/shield_use"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.fortification_shield.block": {
+  "gloamingforest:entity.gloamingforest.fortification_shield.block": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.fortification_shield.block",
+    "subtitle": "subtitles.gloamingforest.entity.fortification_shield.block",
     "sounds": [
       {
         "event": "entity.zombie.attack_iron_door",
@@ -54,52 +54,52 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.fortification_shield.break": {
+  "gloamingforest:entity.gloamingforest.fortification_shield.break": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.fortification_shield.break",
+    "subtitle": "subtitles.gloamingforest.entity.fortification_shield.break",
     "sounds": [
       {
         "file": "random/scepter/shield_break"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.fortification_shield.expire": {
+  "gloamingforest:entity.gloamingforest.fortification_shield.expire": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.fortification_shield.expire",
+    "subtitle": "subtitles.gloamingforest.entity.fortification_shield.expire",
     "sounds": [
       {
         "file": "random/scepter/shield_stop"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.loyal_zombie.ambient": {
+  "gloamingforest:entity.gloamingforest.loyal_zombie.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.loyal_zombie.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.loyal_zombie.ambient",
     "sounds": [
       {
         "event": "entity.zombie.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.loyal_zombie.death": {
+  "gloamingforest:entity.gloamingforest.loyal_zombie.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.loyal_zombie.death",
+    "subtitle": "subtitles.gloamingforest.entity.loyal_zombie.death",
     "sounds": [
       {
         "event": "entity.zombie.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.loyal_zombie.hurt": {
+  "gloamingforest:entity.gloamingforest.loyal_zombie.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.loyal_zombie.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.loyal_zombie.hurt",
     "sounds": [
       {
         "event": "entity.zombie.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.loyal_zombie.step": {
+  "gloamingforest:entity.gloamingforest.loyal_zombie.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -108,54 +108,84 @@
       }
     ]
   },
-  "twilightforest:item.twilightforest.charm.keep": {
+  "gloamingforest:item.gloamingforest.charm.keep": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.charm.keep",
+    "subtitle": "subtitles.gloamingforest.item.charm.keep",
     "sounds": [
       {
         "event": "entity.zombie_villager.converted"
       }
     ]
   },
-  "twilightforest:item.twilightforest.charm.life": {
+  "gloamingforest:item.gloamingforest.charm.life": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.charm.life",
+    "subtitle": "subtitles.gloamingforest.item.charm.life",
     "sounds": [
       {
         "event": "item.totem.use"
       }
     ]
   },
-  "twilightforest:item.twilightforest.flask.break": {
+  "gloamingforest:item.gloamingforest.flask.break": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.flask.break",
+    "subtitle": "subtitles.gloamingforest.item.flask.break",
     "sounds": [
       {
         "event": "block.glass.break"
       }
     ]
   },
-  "twilightforest:item.twilightforest.flask.crack": {
+  "gloamingforest:item.gloamingforest.flask.crack": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.flask.crack",
+    "subtitle": "subtitles.gloamingforest.item.flask.crack",
     "sounds": [
       {
         "event": "block.glass.break"
       }
     ]
   },
-  "twilightforest:item.twilightforest.flask.fill": {
+  "gloamingforest:item.gloamingforest.flask.fill": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.flask.fill",
+    "subtitle": "subtitles.gloamingforest.item.flask.fill",
     "sounds": [
       {
         "event": "block.brewing_stand.brew"
       }
     ]
   },
-  "twilightforest:item.twilightforest.life_scepter.drain": {
+  "gloamingforest:item.gloamingforest.gloaming_scepter.pearl_hit": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.life_scepter.drain",
+    "subtitle": "subtitles.gloamingforest.item.gloaming_scepter.pearl_hit",
+    "sounds": [
+      {
+        "file": "random/scepter/gloaming_hit1"
+      },
+      {
+        "file": "random/scepter/gloaming_hit2"
+      },
+      {
+        "file": "random/scepter/gloaming_hit3"
+      }
+    ]
+  },
+  "gloamingforest:item.gloamingforest.gloaming_scepter.use": {
+    "category": "player",
+    "subtitle": "subtitles.gloamingforest.item.gloaming_scepter.use",
+    "sounds": [
+      {
+        "file": "random/scepter/gloaming_use1"
+      },
+      {
+        "file": "random/scepter/gloaming_use2"
+      },
+      {
+        "file": "random/scepter/gloaming_use3"
+      }
+    ]
+  },
+  "gloamingforest:item.gloamingforest.life_scepter.drain": {
+    "category": "player",
+    "subtitle": "subtitles.gloamingforest.item.life_scepter.drain",
     "sounds": [
       {
         "file": "random/scepter/drain1"
@@ -168,18 +198,18 @@
       }
     ]
   },
-  "twilightforest:item.twilightforest.ore_meter.clear": {
+  "gloamingforest:item.gloamingforest.ore_meter.clear": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.ore_meter.clear",
+    "subtitle": "subtitles.gloamingforest.item.ore_meter.clear",
     "sounds": [
       {
         "file": "block/crafter/craft"
       }
     ]
   },
-  "twilightforest:item.twilightforest.ore_meter.crackle": {
+  "gloamingforest:item.gloamingforest.ore_meter.crackle": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.ore_meter.crackle",
+    "subtitle": "subtitles.gloamingforest.item.ore_meter.crackle",
     "sounds": [
       {
         "file": "ambient/nether/basalt_deltas/click1"
@@ -198,57 +228,27 @@
       }
     ]
   },
-  "twilightforest:item.twilightforest.ore_meter.target_block": {
+  "gloamingforest:item.gloamingforest.ore_meter.target_block": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.ore_meter.target_block",
+    "subtitle": "subtitles.gloamingforest.item.ore_meter.target_block",
     "sounds": [
       {
         "event": "item.lodestone_compass.lock"
       }
     ]
   },
-  "twilightforest:item.twilightforest.shield.shatter": {
+  "gloamingforest:item.gloamingforest.shield.shatter": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.shield.shatter",
+    "subtitle": "subtitles.gloamingforest.item.shield.shatter",
     "sounds": [
       {
         "event": "entity.zombie.break_wooden_door"
       }
     ]
   },
-  "twilightforest:item.twilightforest.twilight_scepter.pearl_hit": {
+  "gloamingforest:item.gloamingforest.zombie_scepter.use": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.item.twilight_scepter.pearl_hit",
-    "sounds": [
-      {
-        "file": "random/scepter/twilight_hit1"
-      },
-      {
-        "file": "random/scepter/twilight_hit2"
-      },
-      {
-        "file": "random/scepter/twilight_hit3"
-      }
-    ]
-  },
-  "twilightforest:item.twilightforest.twilight_scepter.use": {
-    "category": "player",
-    "subtitle": "subtitles.twilightforest.item.twilight_scepter.use",
-    "sounds": [
-      {
-        "file": "random/scepter/twilight_use1"
-      },
-      {
-        "file": "random/scepter/twilight_use2"
-      },
-      {
-        "file": "random/scepter/twilight_use3"
-      }
-    ]
-  },
-  "twilightforest:item.twilightforest.zombie_scepter.use": {
-    "category": "player",
-    "subtitle": "subtitles.twilightforest.item.zombie_scepter.use",
+    "subtitle": "subtitles.gloamingforest.item.zombie_scepter.use",
     "sounds": [
       {
         "file": "random/scepter/zombie"

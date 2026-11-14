@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/CharmEvents.java
-//   src/main/java/twilightforest/util/TFItemStackUtils.java
-//   src/main/java/twilightforest/components/entity/FortificationShieldAttachment.java
-//   src/main/java/twilightforest/components/item/PotionFlaskComponent.java
-//   src/main/java/twilightforest/components/entity/PotionFlaskTrackingAttachment.java
-//   src/main/java/twilightforest/item/BrittleFlaskItem.java
-//   src/main/java/twilightforest/components/item/OreScannerComponent.java
-//   src/main/java/twilightforest/components/item/OreScannerData.java
-//   src/main/java/twilightforest/item/recipe/ScepterRepairRecipe.java
-//   src/main/java/twilightforest/item/MoonDialItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/CharmEvents.java
+//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+//   src/main/java/gloamingforest/components/entity/FortificationShieldAttachment.java
+//   src/main/java/gloamingforest/components/item/PotionFlaskComponent.java
+//   src/main/java/gloamingforest/components/entity/PotionFlaskTrackingAttachment.java
+//   src/main/java/gloamingforest/item/BrittleFlaskItem.java
+//   src/main/java/gloamingforest/components/item/OreScannerComponent.java
+//   src/main/java/gloamingforest/components/item/OreScannerData.java
+//   src/main/java/gloamingforest/item/recipe/ScepterRepairRecipe.java
+//   src/main/java/gloamingforest/item/MoonDialItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U9 (artifacts): the game-independent rules of TF's charms, keepsake casket, fortification
+// U9 (artifacts): the game-independent rules of upstream's charms, keepsake casket, fortification
 // shields, potion flasks, ore meter and scepter repairs (gtested in tests/artifacts). The feature
 // layer (src/feature/artifacts) maps the game's stacks and entities onto these.
 #pragma once
@@ -30,10 +30,10 @@
 
 namespace gf::core::artifacts {
 
-inline constexpr char kCasket[]   = "twilightforest:keepsake_casket";
-inline constexpr char kKeeping1[] = "twilightforest:charm_of_keeping_1";
-inline constexpr char kKeeping2[] = "twilightforest:charm_of_keeping_2";
-inline constexpr char kKeeping3[] = "twilightforest:charm_of_keeping_3";
+inline constexpr char kCasket[]   = "gloamingforest:keepsake_casket";
+inline constexpr char kKeeping1[] = "gloamingforest:charm_of_keeping_1";
+inline constexpr char kKeeping2[] = "gloamingforest:charm_of_keeping_2";
+inline constexpr char kKeeping3[] = "gloamingforest:charm_of_keeping_3";
 
 // ---- charms of keeping and the keepsake casket (CharmEvents) ------------------------------------------
 
@@ -63,7 +63,7 @@ struct SlotRef {
 };
 
 /// CharmEvents#handleCharmOfKeeping: what the charm tiers keep (III whole inventory, II hotbar, I no
-/// main slot: TF's NonNullList.of quirk), with armour and off-hand. `inv` keeps what is not kept
+/// main slot: upstream's NonNullList.of quirk), with armour and off-hand. `inv` keeps what is not kept
 /// (and loses the consumed charm); `kept` holds the kept stacks at their slots.
 struct KeepingResult {
     int                    tier = 0;            ///< 3, 2, 1, or 0 when no charm applied
@@ -194,7 +194,7 @@ struct OreScan {
 [[nodiscard]] std::int64_t oreUniversalId(std::map<std::string, int> const& counts, int chunkX, int chunkZ, int range, int total);
 /// Java's String#hashCode (UTF-16 code units of ASCII / BMP text).
 [[nodiscard]] std::int32_t javaStringHash(std::string const& s);
-/// The "%.3f" ratio TF shows (count * 100 / total, DecimalFormat "0.000").
+/// The "%.3f" ratio upstream shows (count * 100 / total, DecimalFormat "0.000").
 [[nodiscard]] std::string oreRatio(int count, int total);
 
 // ---- scepters ------------------------------------------------------------------------------------------

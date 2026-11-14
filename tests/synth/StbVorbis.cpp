@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // The reference decoder of the synth tests: stb_vorbis v1.22 by Sean Barrett (public domain / MIT,
 // tests/synth/third_party/stb_vorbis.c, unmodified), compiled as C++ into gf-tests only.
 

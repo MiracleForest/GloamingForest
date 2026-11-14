@@ -3,7 +3,7 @@
 # ranger, built-in high jump), vest (built-in swift swim) and boots (water walk, unrestrained,
 # built-in step up), equipped by the selftest tgmove.e2e.equip, uses them with real key presses and
 # the client mod measures each move (one "tgmove: ..." line per move, src/client/tgmove), compared
-# with TF:
+# with upstream:
 #   double jump  SPACE, then SPACE in the air: the second jump rises 0.62 (Jump Boost II) ->
 #                about 2.5 blocks above where it started; the client computes the wings' DOUBLE_JUMP pose and
 #                the double_jump particles fall from them (screenshots right after the jump)
@@ -20,7 +20,7 @@
 #                factor walking with straight ahead equals the one walking without it)
 #   unrestrained packed ice and slime at walking speed, the slide after letting W go on ice as short
 #                as on grass (friction 0.6, no slime step-on slowdown)
-#   glide        W held while gliding with SHIFT: TF lifts the sneak slowdown (speedUpControlled-
+#   glide        W held while gliding with SHIFT: upstream lifts the sneak slowdown (speedUpControlled-
 #                WhileSneaking), the glide moves at air speed (about 0.2 blocks per tick), not 0.3 of it
 # remote-mod runs the same against BDS (the companion packets go over the network, the host logs
 # the double jump and the sidestep); remote-vanilla checks the fallback: SPACE in the air makes the
@@ -30,7 +30,7 @@
 # screenshots of the IDLE, DOUBLE_JUMP, SIDESTEP and FALL_SLOW poses, and a first person screenshot
 # with no wings in view; remote-vanilla reads the attachable unchanged (no patch line, a clean
 # content log with a wearer in view).
-# The honey jump with unrestrained: 3 jumps, each 2.52 blocks high as TF's (Jump Boost II, no honey
+# The honey jump with unrestrained: 3 jumps, each 2.52 blocks high as upstream's (Jump Boost II, no honey
 # jump factor), made up once (by the server copy, which tells the client mod).
 # Screenshots: out/tgmove*/{start,wings-idle,double-jump-1,double-jump-2,double-jump-3,sidestep,
 # glide,first-person,water-walk,step-up,bow}.png
@@ -46,7 +46,7 @@ $VK_SPACE = 0x20; $VK_SHIFT = 0x10; $VK_A = 0x41; $VK_W = 0x57; $VK_F5 = 0x74
 
 function Invoke-E2eSelfTest([string]$name) {
     $mark = Get-LogMark
-    Invoke-Chat "/twilightforest selftest `"$name`""
+    Invoke-Chat "/gloamingforest selftest `"$name`""
     $done = Wait-LogLine 'SELFTEST DONE pass=(\d+) fail=(\d+)' 60 -Since $mark
     if ($done -notmatch 'pass=1 fail=0') { throw "${name}: $done" }
     if (-not (Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern 'equipped 1 players' -Quiet)) { throw "${name} equipped nobody (the gf_e2e.tgmove tag)" }
@@ -124,7 +124,7 @@ function Measure-HoneyJump {
     [double]$Matches[1]
 }
 
-# ---- the wings at rest, third person (TF's idle pose: wings swept back and out) ----
+# ---- the wings at rest, third person (upstream's idle pose: wings swept back and out) ----
 Invoke-Teleport '/tp @s 300.5 -60 302.5 0 0'
 Start-Sleep -Seconds 2
 Focus-Game
@@ -153,7 +153,7 @@ if ($script:Mode -eq 'remote-vanilla') {
     # the glide fallback: sneaking in the air gets Slow Falling
     Invoke-Teleport '/tp @s 300.5 -60 310.5 0 0'
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest selftest "tgmove.e2e.lift"'
+    Invoke-Chat '/gloamingforest selftest "tgmove.e2e.lift"'
     Focus-Game
     [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
     try {
@@ -167,11 +167,11 @@ Wait-LogLine "${client}tgmove: double jump at y" 20 -Since $mark | Out-Null
 $peak = Wait-LogLine "${client}tgmove: double jump peak ([0-9.]+) blocks" 20 -Since $mark
 if ($peak -notmatch 'peak ([0-9.]+) blocks') { throw "no double jump peak in '$peak'" }
 $h = [double]$Matches[1]
-$results['double jump height'] = "$h blocks (TF about 2.5)"
-if ($h -lt 2.0 -or $h -gt 3.0) { Add-Failure "double jump peak $h blocks, TF's is about 2.5 (0.62 with Jump Boost II)" }
+$results['double jump height'] = "$h blocks (upstream about 2.5)"
+if ($h -lt 2.0 -or $h -gt 3.0) { Add-Failure "double jump peak $h blocks, upstream's is about 2.5 (0.62 with Jump Boost II)" }
 try {
     $pose = Wait-LogLine "${client}tgmove: wings pose double_jump \(right ([-0-9.]+) ([-0-9.]+) ([-0-9.]+)" 10 -Since $mark
-    $results['wings pose'] = ($pose -replace '.*tgmove: ', '') + ' (TF DOUBLE_JUMP target -22.9 -45.8 -5.7, eased in)'
+    $results['wings pose'] = ($pose -replace '.*tgmove: ', '') + ' (upstream DOUBLE_JUMP target -22.9 -45.8 -5.7, eased in)'
 } catch { Add-Failure "no DOUBLE_JUMP wings pose: $_" }
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy' 20 -Since $mark | Out-Null }
 
@@ -195,8 +195,8 @@ if ($side -notmatch 'sidestep left') { Add-Failure "A A should sidestep left: '$
 $moved = Wait-LogLine "${client}tgmove: sidestep moved ([0-9.]+) blocks" 10 -Since $mark
 if ($moved -notmatch 'moved ([0-9.]+) blocks') { throw "no sidestep distance in '$moved'" }
 $d = [double]$Matches[1]
-$results['sidestep distance'] = "$d blocks (TF 1.6 / 0.454 = 3.5)"
-if ($d -lt 2.5 -or $d -gt 6.0) { Add-Failure "sidestep moved $d blocks, TF's push 1.6 gives about 3.5" }
+$results['sidestep distance'] = "$d blocks (upstream 1.6 / 0.454 = 3.5)"
+if ($d -lt 2.5 -or $d -gt 6.0) { Add-Failure "sidestep moved $d blocks, upstream's push 1.6 gives about 3.5" }
 try {
     Wait-LogLine "${client}tgmove: wings pose sidestep" 5 -Since $mark | Out-Null
 } catch { Add-Failure "no SIDESTEP wings pose: $_" }
@@ -209,13 +209,13 @@ try {
 # command would release the key)
 Invoke-Teleport '/tp @s 300.5 -60 310.5 0 0'
 $mark = Get-LogMark
-Invoke-Chat '/twilightforest selftest "tgmove.e2e.lift"'
+Invoke-Chat '/gloamingforest selftest "tgmove.e2e.lift"'
 Focus-Game
 Hold-Key $VK_F5 60 # third person: the wings' FALL_SLOW flap
 [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
 try {
 Wait-LogLine 'tgmove.e2e.lift: lifted 1' 20 -Since $mark | Out-Null
-[BsE2E.Native]::Key([uint16]$VK_W, $false) # forward while gliding: TF moves at air speed despite the sneak key
+[BsE2E.Native]::Key([uint16]$VK_W, $false) # forward while gliding: upstream moves at air speed despite the sneak key
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'glide' | Out-Null
 $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-9.]+) blocks per tick" 20 -Since $mark
@@ -226,20 +226,20 @@ $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-
 }
 if ($glide -notmatch 'after (\d+) ticks, sink ([0-9.]+)') { throw "no glide line in '$glide'" }
 $ticks = [int]$Matches[1]; $sink = [double]$Matches[2]
-$results['glide sink rate'] = "$sink blocks/tick over $ticks ticks (TF terminal 0.357)"
+$results['glide sink rate'] = "$sink blocks/tick over $ticks ticks (upstream terminal 0.357)"
 if ($ticks -lt 40) { Add-Failure "the glide lasted only $ticks ticks" }
-if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks per tick, TF's terminal is 0.357" }
+if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks per tick, upstream's terminal is 0.357" }
 $gs = Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern "${client}tgmove: speed glide ([0-9.]+) blocks per tick" | Select-Object -Last 1
 if (-not $gs -or $gs.Line -notmatch 'speed glide ([0-9.]+)') { Add-Failure 'no glide speed line' }
 else {
-    $results['glide forward with sneak'] = "$($Matches[1]) blocks/tick (TF: air speed, about 0.2; the sneak slowdown would give 0.07)"
+    $results['glide forward with sneak'] = "$($Matches[1]) blocks/tick (upstream: air speed, about 0.2; the sneak slowdown would give 0.07)"
     if ([double]$Matches[1] -lt 0.12) { Add-Failure "gliding forward with SHIFT moves $($Matches[1]) blocks per tick: the sneak slowdown was not lifted" }
 }
 $si = Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern "${client}tgmove: gliding with sneak, input length .*" | Select-Object -Last 1
 if ($si) { $results['sneak input'] = $si.Line -replace '.*tgmove: ', '' }
 } catch { Add-Failure "glide: $_" }
 
-# ---- first person: TF draws no armour there, so no wings in view (looking down at the body) ----
+# ---- first person: upstream draws no armour there, so no wings in view (looking down at the body) ----
 Invoke-Teleport '/tp @s 300.5 -60 302.5 0 70'
 Start-Sleep -Seconds 1
 Save-Screenshot 'first-person' | Out-Null
@@ -251,7 +251,7 @@ Invoke-Teleport '/tp @s 312.5 -59 300.5 0 40'
 $ww = Wait-LogLine "${client}tgmove: walking on water at y (-?[0-9.]+)" 10 -Since $mark
 if ($ww -notmatch 'at y (-?[0-9.]+)') { throw "no water walk line in '$ww'" }
 $y = [double]$Matches[1]
-$results['water walk'] = "stands at y $y (TF: source y -61 + 0.5 = -60.5)"
+$results['water walk'] = "stands at y $y (upstream: source y -61 + 0.5 = -60.5)"
 if ([Math]::Abs($y - (-60.5)) -gt 0.01) { Add-Failure "water walk surface $y, expected -60.5" }
 Focus-Game
 Hold-Key $VK_W 1200
@@ -269,7 +269,7 @@ Start-Sleep -Milliseconds 200
 Hold-Key $VK_W 1200
 $step = Wait-LogLine "${client}tgmove: stepped up ([0-9.]+) blocks" 10 -Since $mark
 if ($step -notmatch 'stepped up ([0-9.]+)') { throw "no step up line in '$step'" }
-$results['step up'] = "$($Matches[1]) blocks (TF step height 0.6 + 0.5)"
+$results['step up'] = "$($Matches[1]) blocks (upstream step height 0.6 + 0.5)"
 Save-Screenshot 'step-up' | Out-Null
 } catch { Add-Failure "step up: $_" }
 
@@ -288,7 +288,7 @@ try {
     $with.soul     = Measure-Walk 'soul_sand' '/tp @s 299.5 -60 314.5 270 0' 1500
     $with.web      = Measure-Walk 'cobweb' '/tp @s 299.5 -60 318.5 270 0' 1500
     $with.swim     = Measure-Walk 'water' '/tp @s 317.5 -62.5 301.5 0 0' 1500
-    # three honey jumps with unrestrained: each at TF's 2.52 blocks (Jump Boost II, no honey factor)
+    # three honey jumps with unrestrained: each at upstream's 2.52 blocks (Jump Boost II, no honey factor)
     $honeyJumps = @()
     foreach ($n in 1..3) {
         $honeyJumps += Measure-HoneyJump
@@ -299,8 +299,8 @@ try {
         Start-Sleep -Milliseconds 500
     }
     $with.honey = ($honeyJumps | Measure-Object -Average).Average
-    $results['unrestrained honey jumps'] = ($honeyJumps -join ', ') + ' blocks (TF 2.52)'
-    foreach ($h in $honeyJumps) { if ([Math]::Abs($h - 2.52) -gt 0.15) { Add-Failure "unrestrained honey jump $h blocks, TF's is 2.52" } }
+    $results['unrestrained honey jumps'] = ($honeyJumps -join ', ') + ' blocks (upstream 2.52)'
+    foreach ($h in $honeyJumps) { if ([Math]::Abs($h - 2.52) -gt 0.15) { Add-Failure "unrestrained honey jump $h blocks, upstream's is 2.52" } }
     Invoke-E2eSelfTest 'tgmove.e2e.plain'
     $without.forward = Measure-Walk 'forward' '/tp @s 302.5 -60 296.5 0 0' 1500 -Strafe
     $without.fov     = Wait-LogLine "${client}tgmove: fov forward in ([0-9.]+) out ([0-9.]+)" 10 -Since $script:walkMark
@@ -315,7 +315,7 @@ try {
     $results['agile ranger'] = "bow draw walk $($with.bow) with, $($without.bow) without (walk $($with.forward))"
     if ($with.bow -lt 3 * $without.bow -or $with.bow -lt 0.85 * $with.forward) { Add-Failure "agile ranger: walking while drawing a bow $($with.bow) with, $($without.bow) without, walking $($with.forward)" }
     $results['unrestrained'] = "soul sand $($with.soul) / $($without.soul), cobweb $($with.web) / $($without.web), honey jump $($with.honey) / $($without.honey)"
-    # TF: walking speed on soul sand (Bedrock's own slowdown there is milder than Java's 0.4)
+    # upstream: walking speed on soul sand (Bedrock's own slowdown there is milder than Java's 0.4)
     if ($with.soul -lt 0.9 * $with.forward -or $with.soul -lt 1.1 * $without.soul) { Add-Failure "unrestrained on soul sand: $($with.soul) with, $($without.soul) without, walk $($with.forward)" }
     if ($with.web -lt 3 * $without.web) { Add-Failure "unrestrained in cobweb: $($with.web) with, $($without.web) without" }
     if ($with.honey -lt $without.honey + 0.5) { Add-Failure "unrestrained honey jump: $($with.honey) with, $($without.honey) without" }
@@ -323,16 +323,16 @@ try {
     if ($with.swim -lt 1.4 * $without.swim) { Add-Failure "swift swim: $($with.swim) with the vest, $($without.swim) without" }
     $ratio = $without.forward / $with.forward
     $results['straight ahead'] = "forward walk x$([Math]::Round($ratio, 3)) ($($without.forward) / $($with.forward))"
-    if ($ratio -lt 1.25 -or $ratio -gt 1.55) { Add-Failure "straight ahead: forward x$ratio, TF x1.4" }
+    if ($ratio -lt 1.25 -or $ratio -gt 1.55) { Add-Failure "straight ahead: forward x$ratio, upstream x1.4" }
     $sa = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead strafe ([-0-9.]+) -> ([-0-9.]+)" | Select-Object -Last 1
     if (-not $sa -or $sa.Line -notmatch 'strafe ([-0-9.]+) -> ([-0-9.]+)') { Add-Failure 'no straight ahead strafe line' }
     else {
-        # TF divides the raw strafe impulse by 1.4 and normalizes after: W + A (Bedrock 0.707, 0.707) -> 0.581
+        # upstream divides the raw strafe impulse by 1.4 and normalizes after: W + A (Bedrock 0.707, 0.707) -> 0.581
         $raw = [double]$Matches[1]; $got = [double]$Matches[2]
         $k = if ([Math]::Abs($raw) -gt 0.7 -and [Math]::Abs($raw) -lt 0.71) { 1.0 } else { $raw }
         $want = if ($k -eq 1.0) { [Math]::Sign($raw) * (1 / 1.4) / [Math]::Sqrt(1 / 1.96 + 1) } else { $raw / 1.4 }
-        $results['straight ahead strafe'] = "$raw -> $got (TF $([Math]::Round($want, 3)))"
-        if ([Math]::Abs($got - $want) -gt 0.01) { Add-Failure "straight ahead strafe $raw -> $got, TF $want" }
+        $results['straight ahead strafe'] = "$raw -> $got (upstream $([Math]::Round($want, 3)))"
+        if ([Math]::Abs($got - $want) -gt 0.01) { Add-Failure "straight ahead strafe $raw -> $got, upstream $want" }
     }
     $fov = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead fov x([0-9.]+)" | Select-Object -Last 1
     if (-not $fov) { Add-Failure 'the FOV was not compensated for straight ahead' } else { $results['straight ahead fov'] = $fov.Line -replace '.*tgmove: ', '' }

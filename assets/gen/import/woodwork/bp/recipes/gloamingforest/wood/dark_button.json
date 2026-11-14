@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:wood/dark_button"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:dark_planks"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:dark_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:dark_button"
+    }
+  }
+}

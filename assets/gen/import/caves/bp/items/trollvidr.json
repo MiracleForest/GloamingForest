@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:trollvidr",
+      "identifier": "gloamingforest:trollvidr",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:trollvidr.name"
+        "value": "tile.gloamingforest:trollvidr.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:trollvidr",
+        "block": "gloamingforest:trollvidr",
         "replace_block_item": true
       }
     }

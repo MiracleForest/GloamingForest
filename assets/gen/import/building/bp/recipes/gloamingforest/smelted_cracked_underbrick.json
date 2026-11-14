@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:smelted_cracked_underbrick"
+    },
+    "tags": ["furnace"],
+    "input": "gloamingforest:underbrick",
+    "output": "gloamingforest:cracked_underbrick",
+    "unlock": [
+      {
+        "item": "gloamingforest:underbrick"
+      }
+    ]
+  }
+}

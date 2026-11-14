@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/HostileWolf.java
-//   src/main/java/twilightforest/entity/monster/LoyalZombie.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/HostileWolf.java
+//   src/main/java/gloamingforest/entity/monster/LoyalZombie.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Contract "entity" (F8): Mob#checkDespawn on Peaceful for TF's monsters. Java removes every
+// Contract "entity" (F8): Mob#checkDespawn on Peaceful for upstream's monsters. Java removes every
 // Monster (and the types that answer shouldDespawnInPeaceful true: HostileWolf, the Ghast
 // subclasses) on Peaceful; Bedrock keeps custom monsters. The bosses go back to their spawners
 // through the boss kit (BaseTFBoss#checkDespawn), LoyalZombie (a TamableAnimal) stays.
@@ -26,24 +26,24 @@ namespace gf::feature::entity {
 
 namespace {
 
-/// The non-boss TF types whose shouldDespawnInPeaceful is true (F13's goldens, as the U17 spawn
+/// The non-boss upstream types whose shouldDespawnInPeaceful is true (F13's goldens, as the U17 spawn
 /// sweep table src/core/hostiles/MobSweep.h lists them).
 std::unordered_set<std::string>& peacefulTypes() {
     static std::unordered_set<std::string> set{
-        "twilightforest:adherent", "twilightforest:armored_giant", "twilightforest:blockchain_goblin",
-        "twilightforest:carminite_broodling", "twilightforest:carminite_ghastguard", "twilightforest:carminite_ghastling",
-        "twilightforest:carminite_golem", "twilightforest:death_tome", "twilightforest:fire_beetle",
-        "twilightforest:giant_miner", "twilightforest:harbinger_cube", "twilightforest:hedge_spider",
-        "twilightforest:helmet_crab", "twilightforest:hostile_wolf", "twilightforest:ice_crystal",
-        "twilightforest:king_spider", "twilightforest:kobold", "twilightforest:lich_minion",
-        "twilightforest:lower_goblin_knight", "twilightforest:maze_slime", "twilightforest:minotaur",
-        "twilightforest:mist_wolf", "twilightforest:mosquito_swarm", "twilightforest:pinch_beetle",
-        "twilightforest:redcap", "twilightforest:redcap_sapper", "twilightforest:rising_zombie",
-        "twilightforest:roving_cube", "twilightforest:skeleton_druid", "twilightforest:slime_beetle",
-        "twilightforest:snow_guardian", "twilightforest:stable_ice_core", "twilightforest:swarm_spider",
-        "twilightforest:towerwood_borer", "twilightforest:troll", "twilightforest:unstable_ice_core",
-        "twilightforest:upper_goblin_knight", "twilightforest:winter_wolf", "twilightforest:wraith",
-        "twilightforest:yeti",
+        "gloamingforest:adherent", "gloamingforest:armored_giant", "gloamingforest:blockchain_goblin",
+        "gloamingforest:carminite_broodling", "gloamingforest:carminite_ghastguard", "gloamingforest:carminite_ghastling",
+        "gloamingforest:carminite_golem", "gloamingforest:death_tome", "gloamingforest:fire_beetle",
+        "gloamingforest:giant_miner", "gloamingforest:harbinger_cube", "gloamingforest:hedge_spider",
+        "gloamingforest:helmet_crab", "gloamingforest:hostile_wolf", "gloamingforest:ice_crystal",
+        "gloamingforest:king_spider", "gloamingforest:kobold", "gloamingforest:lich_minion",
+        "gloamingforest:lower_goblin_knight", "gloamingforest:maze_slime", "gloamingforest:minotaur",
+        "gloamingforest:mist_wolf", "gloamingforest:mosquito_swarm", "gloamingforest:pinch_beetle",
+        "gloamingforest:redcap", "gloamingforest:redcap_sapper", "gloamingforest:rising_zombie",
+        "gloamingforest:roving_cube", "gloamingforest:skeleton_druid", "gloamingforest:slime_beetle",
+        "gloamingforest:snow_guardian", "gloamingforest:stable_ice_core", "gloamingforest:swarm_spider",
+        "gloamingforest:towerwood_borer", "gloamingforest:troll", "gloamingforest:unstable_ice_core",
+        "gloamingforest:upper_goblin_knight", "gloamingforest:winter_wolf", "gloamingforest:wraith",
+        "gloamingforest:yeti",
     };
     return set;
 }

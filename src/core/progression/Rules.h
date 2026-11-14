@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/Restriction.java
-//   src/main/java/twilightforest/util/Enforcement.java
-//   src/main/java/twilightforest/init/custom/Enforcements.java
-//   src/main/java/twilightforest/events/ProgressionEvents.java
-//   src/main/java/twilightforest/client/event/LockedBiomeToastHandler.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/Restriction.java
+//   src/main/java/gloamingforest/util/Enforcement.java
+//   src/main/java/gloamingforest/init/custom/Enforcements.java
+//   src/main/java/gloamingforest/events/ProgressionEvents.java
+//   src/main/java/gloamingforest/client/event/LockedBiomeToastHandler.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -23,13 +23,13 @@
 
 namespace gf::core::progression {
 
-/// TF's five enforcements (twilightforest:<name>).
+/// upstream's five enforcements (gloamingforest:<name>).
 enum class Enforcement { Darkness, Hunger, Fire, Frost, AcidRain, Unknown };
 [[nodiscard]] Enforcement enforcementOf(std::string const& id);
 [[nodiscard]] char const* enforcementName(Enforcement e);
 
-/// One entry of the twilightforest:restrictions registry
-/// (data/<ns>/twilight/restrictions/<biome path>.json).
+/// One entry of the gloamingforest:restrictions registry
+/// (data/<ns>/gloaming/restrictions/<biome path>.json).
 struct Restriction {
     std::string              biome;        ///< the registry key: the restricted biome
     std::string              structureKey; ///< hint structure ("" none)

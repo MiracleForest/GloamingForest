@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.ur_ghast.setup": {
+    "animation.gloamingforest.ur_ghast.setup": {
       "loop": true,
       "bones": {
         "body": {
@@ -265,7 +265,7 @@
         }
       }
     },
-    "animation.twilightforest.carminite_ghast.setup": {
+    "animation.gloamingforest.carminite_ghast.setup": {
       "loop": true,
       "bones": {
         "body": {
@@ -340,26 +340,26 @@
         }
       }
     },
-    "animation.twilightforest.carminite_golem.attack": {
+    "animation.gloamingforest.carminite_golem.attack": {
       "loop": true,
       "bones": {
         "right_arm": {
           "rotation": [
-            "q.property('twilightforest:attack_timer') > 0 ? (-2.0 + 1.5 * (math.abs(math.mod(q.property('twilightforest:attack_timer') - q.frame_alpha, 10.0) - 5.0) - 2.5) / 2.5) * 57.29578 : 0.0",
+            "q.property('gloamingforest:attack_timer') > 0 ? (-2.0 + 1.5 * (math.abs(math.mod(q.property('gloamingforest:attack_timer') - q.frame_alpha, 10.0) - 5.0) - 2.5) / 2.5) * 57.29578 : 0.0",
             0,
             0
           ]
         },
         "left_arm": {
           "rotation": [
-            "q.property('twilightforest:attack_timer') > 0 ? (-2.0 + 1.5 * (math.abs(math.mod(q.property('twilightforest:attack_timer') - q.frame_alpha, 10.0) - 5.0) - 2.5) / 2.5) * 57.29578 : 0.0",
+            "q.property('gloamingforest:attack_timer') > 0 ? (-2.0 + 1.5 * (math.abs(math.mod(q.property('gloamingforest:attack_timer') - q.frame_alpha, 10.0) - 5.0) - 2.5) / 2.5) * 57.29578 : 0.0",
             0,
             0
           ]
         }
       }
     },
-    "animation.twilightforest.carminite_golem.sway": {
+    "animation.gloamingforest.carminite_golem.sway": {
       "loop": true,
       "bones": {
         "body": {
@@ -371,14 +371,14 @@
         }
       }
     },
-    "animation.twilightforest.slider.spin": {
+    "animation.gloamingforest.slider.spin": {
       "loop": true,
       "bones": {
         "block": {
           "rotation": [
-            "q.property('twilightforest:axis') == 1 ? q.life_time * 1200.0 : (q.property('twilightforest:axis') == 2 ? 90.0 : 0.0)",
-            "q.property('twilightforest:axis') == 0 ? q.life_time * 1200.0 : 0.0",
-            "q.property('twilightforest:axis') == 1 ? 90.0 : (q.property('twilightforest:axis') == 2 ? q.life_time * 1200.0 : 0.0)"
+            "q.property('gloamingforest:axis') == 1 ? q.life_time * 1200.0 : (q.property('gloamingforest:axis') == 2 ? 90.0 : 0.0)",
+            "q.property('gloamingforest:axis') == 0 ? q.life_time * 1200.0 : 0.0",
+            "q.property('gloamingforest:axis') == 1 ? 90.0 : (q.property('gloamingforest:axis') == 2 ? q.life_time * 1200.0 : 0.0)"
           ]
         }
       }

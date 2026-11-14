@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/OreMagnetItem.java
-//   src/main/java/twilightforest/events/ToolEvents.java (refreshOreMagnetCache)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/OreMagnetItem.java
+//   src/main/java/gloamingforest/events/ToolEvents.java (refreshOreMagnetCache)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:ore_magnet: released after more than 10 use ticks it casts a 32-block voxel line
-// from the eye along the look (then the eight 10-degree offsets in TF's order until something
-// moved): the first #twilightforest:ore_magnet/ore_safe_replace_block block is the base, the first
+// gloamingforest:ore_magnet: released after more than 10 use ticks it casts a 32-block voxel line
+// from the eye along the look (then the eight 10-degree offsets in upstream's order until something
+// moved): the first #gloamingforest:ore_magnet/ore_safe_replace_block block is the base, the first
 // ore after it (an ore of a c:ores_in_ground/<g> tag with a c:ore_bearing_ground/<g> tag, not in
-// #twilightforest:ore_magnet/ignored_ores; ancient debris -> netherrack) is pulled: up to 24
+// #gloamingforest:ore_magnet/ignored_ores; ancient debris -> netherrack) is pulled: up to 24
 // connected blocks of it move by base - ore, leaving their ground block behind.
 
 #include "feature/weapons/Weapons.h"
@@ -47,16 +47,16 @@ std::map<std::string, std::string> const& oreToGround() {
             auto grounds = gf::tags::members(Registry::Block, std::string("c:ore_bearing_ground/") + g);
             for (auto const& ground : grounds)
                 for (auto const& ore : ores)
-                    if (!gf::tags::has(Registry::Block, "twilightforest:ore_magnet/ignored_ores", ore)) out[ore] = ground;
+                    if (!gf::tags::has(Registry::Block, "gloamingforest:ore_magnet/ignored_ores", ore)) out[ore] = ground;
         }
-        if (!gf::tags::has(Registry::Block, "twilightforest:ore_magnet/ignored_ores", "minecraft:ancient_debris") && !out.contains("minecraft:ancient_debris"))
+        if (!gf::tags::has(Registry::Block, "gloamingforest:ore_magnet/ignored_ores", "minecraft:ancient_debris") && !out.contains("minecraft:ancient_debris"))
             out["minecraft:ancient_debris"] = "minecraft:netherrack";
         return out;
     }();
     return m;
 }
 
-bool safeReplace(std::string const& id) { return gf::tags::has(Registry::Block, "twilightforest:ore_magnet/ore_safe_replace_block", id); }
+bool safeReplace(std::string const& id) { return gf::tags::has(Registry::Block, "gloamingforest:ore_magnet/ore_safe_replace_block", id); }
 
 } // namespace
 
@@ -123,7 +123,7 @@ void registerMagnet() {
                     int moved = magnetUse(player);
                     if (moved > 0) {
                         hurtAndBreak(stack, moved, &player);
-                        gf::fx::sound(player.getDimension(), "item.twilightforest.magnet.grab", player.getFeetPos(), 1.0F, 1.0F);
+                        gf::fx::sound(player.getDimension(), "item.gloamingforest.magnet.grab", player.getFeetPos(), 1.0F, 1.0F);
                         log().info("weapons: {}'s ore magnet moved {} blocks", player.getRealName(), moved);
                     }
                 },

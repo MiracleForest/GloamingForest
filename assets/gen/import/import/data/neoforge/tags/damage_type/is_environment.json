@@ -1,13 +1,13 @@
 {
   "values": [
-    "twilightforest:thorns",
-    "twilightforest:oreberry",
-    "twilightforest:knightmetal",
-    "twilightforest:fiery",
-    "twilightforest:fire_jet",
-    "twilightforest:reactor",
-    "twilightforest:slider",
-    "twilightforest:falling_ice",
-    "twilightforest:acid_rain"
+    "gloamingforest:thorns",
+    "gloamingforest:oreberry",
+    "gloamingforest:knightmetal",
+    "gloamingforest:fiery",
+    "gloamingforest:fire_jet",
+    "gloamingforest:reactor",
+    "gloamingforest:slider",
+    "gloamingforest:falling_ice",
+    "gloamingforest:acid_rain"
   ]
 }

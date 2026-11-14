@@ -1,0 +1,5 @@
+{
+  "type": "gloamingforest:builtin",
+  "component": "gloamingforest:high_jump_amplifier",
+  "equipment_slots": "legs"
+}

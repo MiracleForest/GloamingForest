@@ -13,7 +13,7 @@ class Player;
 
 namespace gf::commands {
 
-/// The root command is TF's: `/twilightforest`, with the aliases `/tf` and `/tffeature`
+/// The root command: `/gloamingforest`, without aliases
 /// (TFCommand). Units add subcommands (rule R14: every subcommand has one owner in
 /// docs/spec/owners.tsv). The function runs every time the command is (re)registered (BDS start,
 /// every client local world):
@@ -26,11 +26,11 @@ namespace gf::commands {
 using SubcommandFn       = std::function<void(ll::command::CommandHandle&)>;
 using SubcommandRegistry = StaticRegistry<SubcommandFn>;
 
-inline constexpr char kRootCommand[] = "twilightforest";
+inline constexpr char kRootCommand[] = "gloamingforest";
 
 /// The player who ran the command (nullptr for the console / command blocks).
 [[nodiscard]] Player* playerOf(CommandOrigin const& origin);
-/// Permission level 2+ (TF's admin commands need it).
+/// Permission level 2+ (upstream's admin commands need it).
 [[nodiscard]] bool isAdmin(CommandOrigin const& origin);
 
 namespace detail {

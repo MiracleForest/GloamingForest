@@ -1,11 +1,11 @@
 {
   "tf_flora_item_firefly": {
-    "textures": "textures/twilightforest/block/firefly"
+    "textures": "textures/gloamingforest/block/firefly"
   },
   "tf_flora_item_cicada": {
-    "textures": "textures/twilightforest/block/cicada"
+    "textures": "textures/gloamingforest/block/cicada"
   },
   "tf_flora_item_moonworm": {
-    "textures": "textures/twilightforest/block/moonworm"
+    "textures": "textures/gloamingforest/block/moonworm"
   }
 }

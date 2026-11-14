@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:gloaming_forest_type",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "gloamingforest:gloaming_biomes",
+      "terrain_data": "gloamingforest:biome_grid"
+    },
+    "settings": "gloamingforest:gloaming_noise_gen"
+  }
+}

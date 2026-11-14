@@ -7,7 +7,7 @@
 // decides per player and shows the particle to that player only:
 //
 //     if (roll < gf::woodwork_ext::particles::animateTickChance(dx, dy, dz) / 5.0)
-//         gf::woodwork_ext::particles::particleTo(player, "twilightforest:drying_rack", pos);
+//         gf::woodwork_ext::particles::particleTo(player, "gloamingforest:drying_rack", pos);
 //
 // particleTo sends the particle's resource-pack effect (the effect identifier is the particle id)
 // to that one player as a SpawnParticleEffectPacket, with no molang variables (a still particle).

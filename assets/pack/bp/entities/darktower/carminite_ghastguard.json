@@ -2,12 +2,12 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:carminite_ghastguard",
+      "identifier": "gloamingforest:carminite_ghastguard",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:attack_timer": {
+        "gloamingforest:attack_timer": {
           "type": "int",
           "range": [
             -40,
@@ -16,12 +16,12 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:charging": {
+        "gloamingforest:charging": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:attack_status": {
+        "gloamingforest:attack_status": {
           "type": "int",
           "range": [
             0,
@@ -35,7 +35,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "carminite_ghastguard",
           "ghast",
           "monster",

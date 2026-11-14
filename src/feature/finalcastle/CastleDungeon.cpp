@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonStepsComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonExitComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonForgeRoomComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonStepsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonExitComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonForgeRoomComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -32,10 +32,10 @@ T* add(PieceList& list, std::unique_ptr<T> piece) {
     return raw;
 }
 
-/// Air or a deadrock variant (TF: "TODO add a deadrock tag, or a tag for castle replaceables").
+/// Air or a deadrock variant (upstream: "TODO add a deadrock tag, or a tag for castle replaceables").
 bool replacing(Block const& b) {
-    return st::blocks::isAir(b) || st::blocks::is(b, "twilightforest:deadrock") || st::blocks::is(b, "twilightforest:cracked_deadrock") ||
-           st::blocks::is(b, "twilightforest:weathered_deadrock");
+    return st::blocks::isAir(b) || st::blocks::is(b, "gloamingforest:deadrock") || st::blocks::is(b, "gloamingforest:cracked_deadrock") ||
+           st::blocks::is(b, "gloamingforest:weathered_deadrock");
 }
 
 } // namespace
@@ -167,7 +167,7 @@ bool DungeonRoom31::addDungeonRoom(Piece& parent, PieceList& list, RandomSource&
 }
 
 bool DungeonRoom31::addDungeonExit(PieceList& list, RandomSource& rand, Rotation rot) {
-    // TODO in TF: check if we are sufficiently near the castle center
+    // TODO in upstream: check if we are sufficiently near the castle center
     rot         = st::addRotation(rot, rotation);
     BlockPos rc = getNewRoomCoords(rand, rot);
     auto     dRoom = std::make_unique<DungeonExit>(genDepth + 1, rc.x, rc.y, rc.z, st::rotateDir(Orientation::South, rot), level);
@@ -189,15 +189,15 @@ BlockPos DungeonRoom31::getNewRoomCoords(RandomSource& rand, Rotation rot) const
 }
 
 void DungeonRoom31::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const& pivot) {
-    auto plateauBiomes = [](std::string const& biome) { return biome == "twilightforest:thornlands" || biome == "twilightforest:final_plateau"; };
+    auto plateauBiomes = [](std::string const& biome) { return biome == "gloamingforest:thornlands" || biome == "gloamingforest:final_plateau"; };
     if (isBoundingBoxOutsideBiomes(region, plateauBiomes, pivot)) return;
 
     core::jrand::LegacyRandom decoRNG(decoSeed(region, bbox));
 
     fillWithAir(region, sbb, 0, 0, 0, size - 1, height - 1, size - 1, replacing);
 
-    Block const& floor  = J("twilightforest:castle_brick");
-    Block const& border = J("twilightforest:thick_castle_brick");
+    Block const& floor  = J("gloamingforest:castle_brick");
+    Block const& border = J("gloamingforest:thick_castle_brick");
     constexpr int cs    = 7;
     fillWithBlocks(region, sbb, cs, -1, cs, size - 1 - cs, -1, size - 1 - cs, border, floor, replacing);
     fillWithBlocks(region, sbb, cs, height, cs, size - 1 - cs, height, size - 1 - cs, border, floor, replacing);
@@ -273,7 +273,7 @@ void DungeonExit::addChildren(Piece& parent, PieceList& list, RandomSource& rand
 
     // add stairway down
     Rotation bestDir = findStairDirectionTowards(parent.bbox.minX, parent.bbox.minZ);
-    // (TF passes the box's minZ as the x coordinate)
+    // (upstream passes the box's minZ as the x coordinate)
     auto* steps0 = add(list, std::make_unique<DungeonSteps>(5, bbox.minZ + 15, bbox.minY, bbox.minZ + 15, st::rotateDir(Orientation::South, bestDir)));
     steps0->addChildren(*this, list, rand);
 

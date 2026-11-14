@@ -1,10 +1,10 @@
-// The staged pipeline of the Twilight Forest generator (F5), in Java's ChunkStatus order:
+// The staged pipeline of the Gloaming Forest generator (F5), in Java's ChunkStatus order:
 //   loadChunk:  Biomes -> Starts -> Noise -> Surface -> Blanket -> Carvers
 //   decoration: for each GenerationStep.Decoration step: the structure steps (ext::
 //               addStructureStep; the plain Pieces steps once, at SurfaceStructures), then the
 //               step's placed features (ChunkGenerator#applyBiomeDecoration); then Features ->
 //               LargeWriter -> Spawns
-// The Blanket stage runs at surface time because TF injects ChunkBlanketProcessors#chunkBlanketing
+// The Blanket stage runs at surface time because upstream injects ChunkBlanketProcessors#chunkBlanketing
 // right after ChunkGenerator#buildSurface in ChunkStatusTasks#generateSurface (tf-asm
 // ChunkStatusTaskTransformer). Deterministic for a seed: every placed feature is seeded with
 // WorldgenRandom#setFeatureSeed(decorationSeed, featureIndex, step) over FeatureSorter's order, and
@@ -322,7 +322,7 @@ void generateChunk(Providers const& p, Chunk& chunk, Region& chunkRegion, std::i
     runSteps(p, Stage::Noise, chunk, chunkRegion);
     if (p.surface) p.surface(chunk, chunkRegion);
     runSteps(p, Stage::Surface, chunk, chunkRegion);
-    // Blanket: TF's ChunkBlanketProcessors#chunkBlanketing, right after buildSurface (before the
+    // Blanket: upstream's ChunkBlanketProcessors#chunkBlanketing, right after buildSurface (before the
     // carvers and every feature), with the surface step's WorldGenRegion random
     if (!p.blankets.empty() || p.stages.contains(Stage::Blanket)) {
         if (biomes.empty()) {

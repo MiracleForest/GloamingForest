@@ -5,10 +5,10 @@
 //
 // The client mod draws a custom effect's icon (Java's MobEffectTextureManager sprite) on the HUD and
 // in the inventory's effect list. By default the icon is the resource pack texture
-// "textures/<namespace>/mob_effect/<path>" (where F1 imports TF's textures/mob_effect/*.png:
-// "textures/twilightforest/mob_effect/frosted"); an owner may name another one:
+// "textures/<namespace>/mob_effect/<path>" (where F1 imports upstream's textures/mob_effect/*.png:
+// "textures/gloamingforest/mob_effect/frosted"); an owner may name another one:
 //
-//     gf::effects::ext::setIcon("twilightforest:frosted", "textures/twilightforest/mob_effect/frosted");
+//     gf::effects::ext::setIcon("gloamingforest:frosted", "textures/gloamingforest/mob_effect/frosted");
 
 #include <string>
 

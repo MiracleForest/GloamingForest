@@ -194,9 +194,9 @@ GF_REGISTER_SELFTEST("woodwork.trapped_chest", [](Context& ctx) -> ll::coro::Cor
     auto t0 = ctx.testPos(430, 2);
     ctx.require(co_await ctx.ensureLoaded(t0), "test area loaded");
     int n = 0;
-    for (auto const* id : {"twilightforest:twilight_oak_trapped_chest", "twilightforest:sorting_trapped_chest"}) {
+    for (auto const* id : {"gloamingforest:gloaming_oak_trapped_chest", "gloamingforest:sorting_trapped_chest"}) {
         auto t = at(t0, 3 * n++, 0, 0);
-        ctx.require(ctx.setBlock(t, id, {{"twilightforest:facing", "north"}}), std::string(id));
+        ctx.require(ctx.setBlock(t, id, {{"gloamingforest:facing", "north"}}), std::string(id));
         ctx.require(ctx.setBlock(at(t, 1, 0, 0), "minecraft:redstone_wire"), "dust beside it");
         co_await ctx.ticks(2);
         ctx.check(dustSignal(ctx, at(t, 1, 0, 0)) == 0, std::string(id) + ": no signal while closed");
@@ -218,25 +218,25 @@ GF_REGISTER_SELFTEST("woodwork.trapped_chest", [](Context& ctx) -> ll::coro::Cor
 // ---- signs --------------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("woodwork.signs", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // the TF signs place from their items (standing, on a wall, hanging) and keep their text
+    // the upstream signs place from their items (standing, on a wall, hanging) and keep their text
     (void)co_await ctx.flatArea(435, 5);
     auto p = ctx.testPos(435, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    auto s = co_await place(ctx, at(p, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "twilightforest:twilight_oak_sign");
-    ctx.require(s.has_value(), "a twilight oak sign placed");
-    ctx.check(ctx.blockAt(*s) == "twilightforest:twilight_oak_sign", "a standing sign on the ground (" + ctx.blockAt(*s) + ")");
-    ctx.check(gf::signs::setText(*s, {"Twilight", "Forest"}) && gf::signs::text(*s).size() >= 2 && gf::signs::text(*s)[0] == "Twilight", "the sign keeps its text");
+    auto s = co_await place(ctx, at(p, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gloamingforest:gloaming_oak_sign");
+    ctx.require(s.has_value(), "a gloaming oak sign placed");
+    ctx.check(ctx.blockAt(*s) == "gloamingforest:gloaming_oak_sign", "a standing sign on the ground (" + ctx.blockAt(*s) + ")");
+    ctx.check(gf::signs::setText(*s, {"Gloaming", "Forest"}) && gf::signs::text(*s).size() >= 2 && gf::signs::text(*s)[0] == "Gloaming", "the sign keeps its text");
     ctx.check(gf::signs::setText(*s, {"back"}, false) && gf::signs::text(*s, false)[0] == "back", "and the text of its back");
-    // the twilight oak wall sign keeps TF's id (twilight_wall_sign) and its text (its placement on
+    // the gloaming oak wall sign keeps upstream's id (gloaming_wall_sign) and its text (its placement on
     // a wall is the families kit's, tested there)
     auto wall = at(p, 2, 0, 0);
     ctx.require(ctx.setBlock(wall, "minecraft:stone"), "a wall");
     std::optional<GlobalPos> w = at(p, 1, 0, 0);
-    ctx.require(ctx.setBlock(*w, "twilightforest:twilight_wall_sign", {{"twilightforest:facing", "west"}}), "the twilight wall sign exists");
+    ctx.require(ctx.setBlock(*w, "gloamingforest:gloaming_wall_sign", {{"gloamingforest:facing", "west"}}), "the gloaming wall sign exists");
     ctx.check(gf::signs::setText(*w, {"wall"}) && gf::signs::text(*w)[0] == "wall", "the wall sign keeps its text");    auto roof = at(p, 0, 2, 2);
     ctx.require(ctx.setBlock(roof, "minecraft:stone"), "a roof");
-    auto h = co_await place(ctx, roof, Facing::Down, Vec3{0.5f, 0.0f, 0.5f}, "twilightforest:canopy_hanging_sign");
-    ctx.check(h && ctx.blockAt(*h) == "twilightforest:canopy_hanging_sign", "under a block a hanging sign (" + (h ? ctx.blockAt(*h) : std::string("-")) + ")");
+    auto h = co_await place(ctx, roof, Facing::Down, Vec3{0.5f, 0.0f, 0.5f}, "gloamingforest:canopy_hanging_sign");
+    ctx.check(h && ctx.blockAt(*h) == "gloamingforest:canopy_hanging_sign", "under a block a hanging sign (" + (h ? ctx.blockAt(*h) : std::string("-")) + ")");
     if (h) ctx.check(gf::signs::setText(*h, {"hanging"}) && gf::signs::text(*h)[0] == "hanging", "the hanging sign keeps its text");
     for (auto const& q : {std::optional<GlobalPos>(s), w, h})
         if (q) ctx.cleanupBlock(*q);
@@ -293,12 +293,12 @@ GF_REGISTER_SELFTEST("woodwork.recipe_unlock", [](Context& ctx) -> ll::coro::Cor
     player.getInventory().removeAllItems();
     auto unlocked = player.getEntityContext().tryGetComponent<UnlockedRecipesServerComponent>();
     ctx.require(static_cast<bool>(unlocked), "the player has the game's unlocked recipes");
-    auto ids = gameRecipes("twilightforest:wood/canopy_planks");
+    auto ids = gameRecipes("gloamingforest:wood/canopy_planks");
     ctx.require(!ids.empty(), "the canopy planks recipes");
     bool before = false;
     for (auto const* r : ids) before |= unlocked->mUnlockedRecipes.get().contains(r->mRecipeId.get());
     if (before) ctx.info("the canopy planks were unlocked before (an earlier run)");
-    ctx.give("twilightforest:canopy_log", 1);
+    ctx.give("gloamingforest:canopy_log", 1);
     bool after = false;
     for (int i = 0; i < 40 && !after; ++i) {
         co_await ctx.ticks(1);
@@ -312,7 +312,7 @@ GF_REGISTER_SELFTEST("woodwork.recipe_unlock", [](Context& ctx) -> ll::coro::Cor
 // ---- fuel ----------------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("woodwork.fuel", [](Context& ctx) {
-    // Java's fuel values (vanilla fuel tags, TF's banister row, HollowLogItem), as a part of coal's
+    // Java's fuel values (vanilla fuel tags, upstream's banister row, HollowLogItem), as a part of coal's
     auto burn = [](char const* id) -> float {
         auto s = gf::game::items::make(id);
         return s ? FurnaceBlockActor::getBurnDuration(*s, 200.0f) : -1.0f;
@@ -323,24 +323,24 @@ GF_REGISTER_SELFTEST("woodwork.fuel", [](Context& ctx) {
         char const* id;
         int         ticks;
     };
-    for (auto const& f : {Fuel{"twilightforest:canopy_log", 300}, Fuel{"twilightforest:stripped_canopy_wood", 300}, Fuel{"twilightforest:twilight_oak_planks", 300},
-                          Fuel{"twilightforest:mining_slab", 150}, Fuel{"twilightforest:time_stairs", 300}, Fuel{"twilightforest:sorting_fence", 300},
-                          Fuel{"twilightforest:transformation_fence_gate", 300}, Fuel{"twilightforest:mangrove_trapdoor", 300},
-                          Fuel{"twilightforest:dark_pressure_plate", 300}, Fuel{"twilightforest:canopy_button", 100}, Fuel{"twilightforest:canopy_door", 200},
-                          Fuel{"twilightforest:canopy_sign", 200}, Fuel{"twilightforest:canopy_hanging_sign", 800}, Fuel{"twilightforest:canopy_boat", 1200},
-                          Fuel{"twilightforest:canopy_chest_boat", 1200}, Fuel{"twilightforest:oak_banister", 300}, Fuel{"twilightforest:hollow_oak_log", 300},
-                          Fuel{"twilightforest:hollow_canopy_log", 300}}) {
+    for (auto const& f : {Fuel{"gloamingforest:canopy_log", 300}, Fuel{"gloamingforest:stripped_canopy_wood", 300}, Fuel{"gloamingforest:gloaming_oak_planks", 300},
+                          Fuel{"gloamingforest:mining_slab", 150}, Fuel{"gloamingforest:time_stairs", 300}, Fuel{"gloamingforest:sorting_fence", 300},
+                          Fuel{"gloamingforest:transformation_fence_gate", 300}, Fuel{"gloamingforest:mangrove_trapdoor", 300},
+                          Fuel{"gloamingforest:dark_pressure_plate", 300}, Fuel{"gloamingforest:canopy_button", 100}, Fuel{"gloamingforest:canopy_door", 200},
+                          Fuel{"gloamingforest:canopy_sign", 200}, Fuel{"gloamingforest:canopy_hanging_sign", 800}, Fuel{"gloamingforest:canopy_boat", 1200},
+                          Fuel{"gloamingforest:canopy_chest_boat", 1200}, Fuel{"gloamingforest:oak_banister", 300}, Fuel{"gloamingforest:hollow_oak_log", 300},
+                          Fuel{"gloamingforest:hollow_canopy_log", 300}}) {
         float b = burn(f.id);
         ctx.check(std::abs(b - coal * f.ticks / 1600.0f) < 0.02f * coal, std::string(f.id) + " burns " + std::to_string(f.ticks) + " ticks (" + std::to_string(b) + " / coal " + std::to_string(coal) + ")");
     }
-    ctx.check(!gf::woodwork_ext::fuel::burnTicks("twilightforest:canopy_chest"), "a TF chest is no Java fuel (only Blocks.CHEST is)");
-    // #twilightforest:darkwood_logs is not in #minecraft:logs_that_burn: dark logs and wood are no fuel
-    for (auto const* id : {"twilightforest:dark_log", "twilightforest:stripped_dark_log", "twilightforest:dark_wood", "twilightforest:stripped_dark_wood"}) {
+    ctx.check(!gf::woodwork_ext::fuel::burnTicks("gloamingforest:canopy_chest"), "an upstream chest is no Java fuel (only Blocks.CHEST is)");
+    // #gloamingforest:darkwood_logs is not in #minecraft:logs_that_burn: dark logs and wood are no fuel
+    for (auto const* id : {"gloamingforest:dark_log", "gloamingforest:stripped_dark_log", "gloamingforest:dark_wood", "gloamingforest:stripped_dark_wood"}) {
         ctx.check(!gf::woodwork_ext::fuel::burnTicks(id), std::string(id) + " is no Java fuel (not in #minecraft:logs_that_burn)");
         float b = burn(id);
         ctx.check(b <= 0.0f, std::string(id) + " does not burn in a furnace (" + std::to_string(b) + ")");
     }
-    ctx.check(gf::woodwork_ext::fuel::burnTicks("twilightforest:dark_planks") == 300, "dark planks still burn 300 ticks (#minecraft:planks)");
+    ctx.check(gf::woodwork_ext::fuel::burnTicks("gloamingforest:dark_planks") == 300, "dark planks still burn 300 ticks (#minecraft:planks)");
 });
 
 // ---- boats --------------------------------------------------------------------------------------------
@@ -352,24 +352,24 @@ GF_REGISTER_SELFTEST("woodwork.boat_crash", [](Context& ctx) -> ll::coro::CoroTa
     auto c = ctx.testPos(445, 2);
     ctx.require(co_await ctx.ensureLoaded(c), "test area loaded");
     clearItemsNear(ctx, c);
-    auto r = gf::selftest::runServerCommand("summon twilightforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y + 7) + " " + std::to_string(c.z) + " 0 0 twilightforest:canopy", ctx.dimension());
+    auto r = gf::selftest::runServerCommand("summon gloamingforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y + 7) + " " + std::to_string(c.z) + " 0 0 gloamingforest:canopy", ctx.dimension());
     ctx.require(r.ok, "a canopy boat summoned 7 blocks up: " + r.messages);
     bool gone = false;
     for (int i = 0; i < 80 && !gone; ++i) {
         co_await ctx.ticks(1);
-        gone = actorsNear(ctx, c, "twilightforest:boat").empty();
+        gone = actorsNear(ctx, c, "gloamingforest:boat").empty();
     }
     ctx.check(gone, "the boat broke on landing");
     co_await ctx.ticks(2);
-    ctx.check(countNear(ctx, c, "twilightforest:canopy_planks") == 3, "3 canopy planks dropped (" + std::to_string(countNear(ctx, c, "twilightforest:canopy_planks")) + ")");
+    ctx.check(countNear(ctx, c, "gloamingforest:canopy_planks") == 3, "3 canopy planks dropped (" + std::to_string(countNear(ctx, c, "gloamingforest:canopy_planks")) + ")");
     ctx.check(countNear(ctx, c, "minecraft:stick") == 2, "2 sticks dropped (" + std::to_string(countNear(ctx, c, "minecraft:stick")) + ")");
-    ctx.check(countNear(ctx, c, "twilightforest:canopy_boat") == 0, "no boat item");
+    ctx.check(countNear(ctx, c, "gloamingforest:canopy_boat") == 0, "no boat item");
     clearItemsNear(ctx, c);
     // a chest boat breaks the same way and spills its chest (ChestBoat#remove: Containers.dropContents)
     auto at = std::to_string(c.x) + " " + std::to_string(c.y + 7) + " " + std::to_string(c.z);
-    r       = gf::selftest::runServerCommand("summon twilightforest:chest_boat " + at + " 0 0 twilightforest:time", ctx.dimension());
+    r       = gf::selftest::runServerCommand("summon gloamingforest:chest_boat " + at + " 0 0 gloamingforest:time", ctx.dimension());
     ctx.require(r.ok, "a time chest boat summoned 7 blocks up: " + r.messages);
-    auto sel = "@e[type=twilightforest:chest_boat,x=" + std::to_string(c.x) + ",y=" + std::to_string(c.y + 7) + ",z=" + std::to_string(c.z) + ",r=2,c=1]";
+    auto sel = "@e[type=gloamingforest:chest_boat,x=" + std::to_string(c.x) + ",y=" + std::to_string(c.y + 7) + ",z=" + std::to_string(c.z) + ",r=2,c=1]";
     r        = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory 0 minecraft:diamond 5", ctx.dimension());
     ctx.require(r.ok, "5 diamonds in the chest: " + r.messages);
     r = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory 26 minecraft:apple 3", ctx.dimension());
@@ -377,21 +377,21 @@ GF_REGISTER_SELFTEST("woodwork.boat_crash", [](Context& ctx) -> ll::coro::CoroTa
     gone = false;
     for (int i = 0; i < 80 && !gone; ++i) {
         co_await ctx.ticks(1);
-        gone = actorsNear(ctx, c, "twilightforest:chest_boat").empty();
+        gone = actorsNear(ctx, c, "gloamingforest:chest_boat").empty();
     }
     ctx.check(gone, "the chest boat broke on landing");
     co_await ctx.ticks(2);
     ctx.check(countNear(ctx, c, "minecraft:diamond") == 5, "the chest's 5 diamonds dropped (" + std::to_string(countNear(ctx, c, "minecraft:diamond")) + ")");
     ctx.check(countNear(ctx, c, "minecraft:apple") == 3, "the chest's 3 apples dropped (" + std::to_string(countNear(ctx, c, "minecraft:apple")) + ")");
-    ctx.check(countNear(ctx, c, "twilightforest:time_planks") == 3, "3 time planks dropped (" + std::to_string(countNear(ctx, c, "twilightforest:time_planks")) + ")");
+    ctx.check(countNear(ctx, c, "gloamingforest:time_planks") == 3, "3 time planks dropped (" + std::to_string(countNear(ctx, c, "gloamingforest:time_planks")) + ")");
     ctx.check(countNear(ctx, c, "minecraft:stick") == 2, "2 sticks dropped");
-    ctx.check(countNear(ctx, c, "twilightforest:time_chest_boat") == 0 && countNear(ctx, c, "minecraft:chest") == 0, "no chest boat item, no chest");
+    ctx.check(countNear(ctx, c, "gloamingforest:time_chest_boat") == 0 && countNear(ctx, c, "minecraft:chest") == 0, "no chest boat item, no chest");
     clearItemsNear(ctx, c);
     // a short drop does not break it
-    r = gf::selftest::runServerCommand("summon twilightforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y + 2) + " " + std::to_string(c.z) + " 0 0 twilightforest:mining", ctx.dimension());
+    r = gf::selftest::runServerCommand("summon gloamingforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y + 2) + " " + std::to_string(c.z) + " 0 0 gloamingforest:mining", ctx.dimension());
     ctx.require(r.ok, "a mining boat summoned 2 blocks up");
     co_await ctx.ticks(40);
-    auto boats = actorsNear(ctx, c, "twilightforest:boat");
+    auto boats = actorsNear(ctx, c, "gloamingforest:boat");
     ctx.check(boats.size() == 1, "a 2 block drop leaves the boat whole");
     for (auto* b : boats) b->remove();
     clearItemsNear(ctx, c);
@@ -403,7 +403,7 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
     (void)co_await ctx.flatArea(425, 5);
     auto p = ctx.testPos(425, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    ctx.require(ctx.setBlock(p, "twilightforest:canopy_drying_rack", {{"twilightforest:facing", "east"}}), "a rack");
+    ctx.require(ctx.setBlock(p, "gloamingforest:canopy_drying_rack", {{"gloamingforest:facing", "east"}}), "a rack");
     co_await ctx.ticks(1);
     auto h = gf::inventory::find(*ctx.region(), gf::game::blockPos(p));
     ctx.require(h.has_value(), "the rack's storage");
@@ -495,7 +495,7 @@ GF_REGISTER_SELFTEST("woodwork.hollow_log_water", [](Context& ctx) -> ll::coro::
     (void)co_await ctx.flatArea(415, 5);
     auto p = ctx.testPos(415, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    auto const* oak = ww::hollowLogOf("twilightforest:hollow_oak_log");
+    auto const* oak = ww::hollowLogOf("gloamingforest:hollow_oak_log");
     ctx.require(oak != nullptr, "the oak set");
     auto const* water = gf::game::blockWith("minecraft:water");
     ctx.require(ctx.setBlock(p, oak->vertical) && water, "a vertical hollow log");
@@ -507,13 +507,13 @@ GF_REGISTER_SELFTEST("woodwork.hollow_log_water", [](Context& ctx) -> ll::coro::
     ctx.check(!ww::waterAt(*ctx.region(), gf::game::blockPos(p)), "the vine variant holds no water");
     // the player stands south of the log looking down into it: the ray meets the north inner wall,
     // whose face points south
-    ctx.check(ww::stateOf(ctx.region()->getBlock(gf::game::blockPos(p)), "twilightforest:facing") == "south", "the vine faces the inner wall the look reaches (south)");
+    ctx.check(ww::stateOf(ctx.region()->getBlock(gf::game::blockPos(p)), "gloamingforest:facing") == "south", "the vine faces the inner wall the look reaches (south)");
     clearItemsNear(ctx, p);
     ctx.require(ctx.setBlock(p, oak->vertical), "the log again");
     ctx.region()->setExtraBlock(gf::game::blockPos(p), *water, 3);
     co_await ctx.ticks(2);
     co_await click(ctx, p, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:ladder");
-    ctx.check(ww::stateOf(ctx.region()->getBlock(gf::game::blockPos(p)), "twilightforest:variant") == "ladder_waterlogged", "a ladder in water is ladder_waterlogged");
+    ctx.check(ww::stateOf(ctx.region()->getBlock(gf::game::blockPos(p)), "gloamingforest:variant") == "ladder_waterlogged", "a ladder in water is ladder_waterlogged");
     ctx.check(ww::waterSourceAt(*ctx.region(), gf::game::blockPos(p)), "and keeps its water");
     if (auto const* air = gf::game::blockWith("minecraft:air")) ctx.region()->setExtraBlock(gf::game::blockPos(p), *air, 3);
     ctx.cleanupBlock(p);

@@ -1,5 +1,5 @@
 {
-  "twilightforest:annihilate": {
-    "textures": ["textures/twilightforest/particle/annihilate_particle"]
+  "gloamingforest:annihilate": {
+    "textures": ["textures/gloamingforest/particle/annihilate_particle"]
   }
 }

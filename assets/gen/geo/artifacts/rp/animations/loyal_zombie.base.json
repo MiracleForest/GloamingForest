@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.loyal_zombie.base": {
+    "animation.gloamingforest.loyal_zombie.base": {
       "loop": true,
       "bones": {
         "leftArm": {

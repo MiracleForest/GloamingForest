@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/ColorHandler.java
-//   src/main/java/twilightforest/util/ColorUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/ColorHandler.java
+//   src/main/java/gloamingforest/util/ColorUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The colour of a falling_dust particle (Java's FallingDustParticle.Provider): a FallingBlock's
 // getDustColor, else BlockColors#getColor(state, level, pos), which calls the block's BlockColor
-// with a null level and position and tint index 0 (vanilla's BlockColors.createDefault and TF's
+// with a null level and position and tint index 0 (vanilla's BlockColors.createDefault and upstream's
 // ColorHandler#registerBlockColors), and falls back to the map colour for a block without one.
 // -1 (a BlockColor that needs a level, or tint index 1) draws the particle white. The map colour
 // (the caller's fallback, Fx.cpp) is the block state's, read at the particle's position.
@@ -32,7 +32,7 @@ constexpr int kFoliageBirch     = 0x80A755; // FoliageColor.getBirchColor() 8431
 constexpr int kFoliageMangrove  = 0x92C648; // FoliageColor.getMangroveColor() 9619016
 // GrassColor.getDefaultColor() = get(0.5, 1.0): the grass colormap's pixel (127, 127)
 constexpr int kGrassDefault = 0x7CBB6C;
-constexpr int kLilyPad      = 7455580; // the lily pad's (and TF's huge lily pad's) colour without a level
+constexpr int kLilyPad      = 7455580; // the lily pad's (and upstream's huge lily pad's) colour without a level
 
 // ColorUtil#rgb
 int rgb(float r, float g, float b) {
@@ -83,10 +83,10 @@ std::array<float, 3> rgbToHsv(int r, int g, int b) {
     return {h, s, v};
 }
 
-// TF's aurora block without a level: hsvToRGB(0.45, 1, 1)
+// upstream's aurora block without a level: hsvToRGB(0.45, 1, 1)
 int auroraColor() { return hsvToRgb(0.45f, 1.0f, 1.0f); }
 
-// TF's aurora pillar, slab and auroralized glass: the aurora colour paled
+// upstream's aurora pillar, slab and auroralized glass: the aurora colour paled
 int auroraPaleColor() {
     int const normal = auroraColor();
     auto      hsb    = rgbToHsv((normal >> 16) & 255, (normal >> 8) & 255, normal & 255);
@@ -132,38 +132,38 @@ std::unordered_map<std::string, Entry> const& table() {
         t["minecraft:redstone_wire"] = Entry{Rule::Redstone};
         t["minecraft:melon_stem"]    = Entry{Rule::Stem};
         t["minecraft:pumpkin_stem"]  = Entry{Rule::Stem};
-        // TF (ColorHandler#registerBlockColors), with a null getter and position, tint index 0
-        fixed({"twilightforest:aurora_block"}, auroraColor());
-        fixed({"twilightforest:aurora_pillar", "twilightforest:aurora_slab", "twilightforest:auroralized_glass"}, auroraPaleColor());
-        fixed({"twilightforest:smoker", "twilightforest:fire_jet"}, kGrassDefault); // the short grass colour
-        fixed({"twilightforest:huge_lily_pad"}, kLilyPad);
-        fixed({"twilightforest:time_leaves"}, 106 << 16 | 156 << 8 | 23);
-        fixed({"twilightforest:transformation_leaves"}, 108 << 16 | 204 << 8 | 234);
-        fixed({"twilightforest:mining_leaves"}, 252 << 16 | 241 << 8 | 68);
-        fixed({"twilightforest:sorting_leaves"}, 54 << 16 | 76 << 8 | 3);
-        fixed({"twilightforest:towerwood", "twilightforest:cracked_towerwood", "twilightforest:infested_towerwood", "twilightforest:mossy_towerwood"}, -1);
-        fixed({"twilightforest:twilight_oak_leaves", "twilightforest:dark_leaves", "twilightforest:hardened_dark_leaves", "twilightforest:giant_leaves", "twilightforest:fallen_leaves", "twilightforest:rainbow_oak_leaves"}, kFoliageDefault);
-        fixed({"twilightforest:canopy_leaves", "twilightforest:beanstalk_leaves", "twilightforest:thorn_leaves"}, kFoliageEvergreen);
-        fixed({"twilightforest:mangrove_leaves"}, kFoliageBirch);
-        fixed({"twilightforest:fiddlehead", "twilightforest:potted_fiddlehead"}, kGrassDefault);
-        for (auto const* wood : {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "vangrove", "cherry", "twilight_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"}) {
-            t[std::string("twilightforest:hollow_") + wood + "_log_horizontal"] = Entry{Rule::Fixed, -1};
-            t[std::string("twilightforest:hollow_") + wood + "_log_climbable"]  = Entry{Rule::Fixed, -1};
+        // upstream (ColorHandler#registerBlockColors), with a null getter and position, tint index 0
+        fixed({"gloamingforest:aurora_block"}, auroraColor());
+        fixed({"gloamingforest:aurora_pillar", "gloamingforest:aurora_slab", "gloamingforest:auroralized_glass"}, auroraPaleColor());
+        fixed({"gloamingforest:smoker", "gloamingforest:fire_jet"}, kGrassDefault); // the short grass colour
+        fixed({"gloamingforest:huge_lily_pad"}, kLilyPad);
+        fixed({"gloamingforest:time_leaves"}, 106 << 16 | 156 << 8 | 23);
+        fixed({"gloamingforest:transformation_leaves"}, 108 << 16 | 204 << 8 | 234);
+        fixed({"gloamingforest:mining_leaves"}, 252 << 16 | 241 << 8 | 68);
+        fixed({"gloamingforest:sorting_leaves"}, 54 << 16 | 76 << 8 | 3);
+        fixed({"gloamingforest:towerwood", "gloamingforest:cracked_towerwood", "gloamingforest:infested_towerwood", "gloamingforest:mossy_towerwood"}, -1);
+        fixed({"gloamingforest:gloaming_oak_leaves", "gloamingforest:dark_leaves", "gloamingforest:hardened_dark_leaves", "gloamingforest:giant_leaves", "gloamingforest:fallen_leaves", "gloamingforest:rainbow_oak_leaves"}, kFoliageDefault);
+        fixed({"gloamingforest:canopy_leaves", "gloamingforest:beanstalk_leaves", "gloamingforest:thorn_leaves"}, kFoliageEvergreen);
+        fixed({"gloamingforest:mangrove_leaves"}, kFoliageBirch);
+        fixed({"gloamingforest:fiddlehead", "gloamingforest:potted_fiddlehead"}, kGrassDefault);
+        for (auto const* wood : {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "vangrove", "cherry", "gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"}) {
+            t[std::string("gloamingforest:hollow_") + wood + "_log_horizontal"] = Entry{Rule::Fixed, -1};
+            t[std::string("gloamingforest:hollow_") + wood + "_log_climbable"]  = Entry{Rule::Fixed, -1};
         }
         for (auto const* stem : {"crimson", "warped"}) {
-            t[std::string("twilightforest:hollow_") + stem + "_stem_horizontal"] = Entry{Rule::Fixed, -1};
-            t[std::string("twilightforest:hollow_") + stem + "_stem_climbable"]  = Entry{Rule::Fixed, -1};
+            t[std::string("gloamingforest:hollow_") + stem + "_stem_horizontal"] = Entry{Rule::Fixed, -1};
+            t[std::string("gloamingforest:hollow_") + stem + "_stem_climbable"]  = Entry{Rule::Fixed, -1};
         }
-        fixed({"twilightforest:twilight_portal_miniature_structure", "twilightforest:naga_courtyard_miniature_structure"}, -1);
-        fixed({"twilightforest:pink_castle_rune_brick", "twilightforest:pink_castle_door"}, 0xFF00FF);
-        fixed({"twilightforest:blue_castle_rune_brick", "twilightforest:blue_castle_door"}, 0x00FFFF);
-        fixed({"twilightforest:yellow_castle_rune_brick", "twilightforest:yellow_castle_door"}, 0xFFFF00);
-        fixed({"twilightforest:violet_castle_rune_brick", "twilightforest:violet_castle_door"}, 0x4B0082);
-        fixed({"twilightforest:violet_force_field"}, 0x5C1074);
-        fixed({"twilightforest:pink_force_field"}, 0xFA057E);
-        fixed({"twilightforest:orange_force_field"}, 0xFF5B02);
-        fixed({"twilightforest:green_force_field"}, 0x89E701);
-        fixed({"twilightforest:blue_force_field"}, 0x0DDEFF);
+        fixed({"gloamingforest:gloaming_portal_miniature_structure", "gloamingforest:naga_courtyard_miniature_structure"}, -1);
+        fixed({"gloamingforest:pink_castle_rune_brick", "gloamingforest:pink_castle_door"}, 0xFF00FF);
+        fixed({"gloamingforest:blue_castle_rune_brick", "gloamingforest:blue_castle_door"}, 0x00FFFF);
+        fixed({"gloamingforest:yellow_castle_rune_brick", "gloamingforest:yellow_castle_door"}, 0xFFFF00);
+        fixed({"gloamingforest:violet_castle_rune_brick", "gloamingforest:violet_castle_door"}, 0x4B0082);
+        fixed({"gloamingforest:violet_force_field"}, 0x5C1074);
+        fixed({"gloamingforest:pink_force_field"}, 0xFA057E);
+        fixed({"gloamingforest:orange_force_field"}, 0xFF5B02);
+        fixed({"gloamingforest:green_force_field"}, 0x89E701);
+        fixed({"gloamingforest:blue_force_field"}, 0x0DDEFF);
         return t;
     }();
     return m;

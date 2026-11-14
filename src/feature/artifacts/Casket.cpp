@@ -1,24 +1,24 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/KeepsakeCasketBlock.java
-//   src/main/java/twilightforest/block/SkullChestBlock.java
-//   src/main/java/twilightforest/block/entity/SkullChestBlockEntity.java
-//   src/main/java/twilightforest/block/entity/KeepsakeCasketBlockEntity.java
-//   src/main/java/twilightforest/item/KeepsakeCasketItem.java
-//   src/main/java/twilightforest/events/CharmEvents.java (stockKeepsakeCasket)
-//   src/main/java/twilightforest/events/EntityEvents.java (onCasketBreak)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/KeepsakeCasketBlock.java
+//   src/main/java/gloamingforest/block/SkullChestBlock.java
+//   src/main/java/gloamingforest/block/entity/SkullChestBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/KeepsakeCasketBlockEntity.java
+//   src/main/java/gloamingforest/item/KeepsakeCasketItem.java
+//   src/main/java/gloamingforest/events/CharmEvents.java (stockKeepsakeCasket)
+//   src/main/java/gloamingforest/events/EntityEvents.java (onCasketBreak)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The keepsake casket block: a 45-slot container of F10's inventory contract (declared in
 // assets/data/containers/artifacts.json: storage, open / close sounds, comparator output, the
-// contents dropping when it goes) with TF's own rules on top:
+// contents dropping when it goes) with upstream's own rules on top:
 //   - use: not while solidly logged; a charm of keeping III repairs a damaged casket one level;
 //     a locked casket (owner set) opens only for its owner or an operator, others get the red
 //     "only <owner>" message and the locked click; the screen's title is the casket's name;
 //   - breaking an owned, non-empty casket is refused unless the breaker is an operator and the owner
-//     (TF's `!op || !owner` test); a survival break drops the casket item with its damage and name,
+//     (upstream's `!op || !owner` test); a survival break drops the casket item with its damage and name,
 //     and the block it was logged with;
 //   - placing restores the item's damage and faces the player; the fluid at the spot logs it;
 //   - lava and water around it turn a lava / water log into obsidian, basalt or stone (fizz).
@@ -64,9 +64,9 @@ namespace items = game::items;
 namespace {
 
 constexpr char kBdKey[]     = "artifacts";
-constexpr char kDamage[]    = "twilightforest:damage";
-constexpr char kFacing[]    = "twilightforest:facing";
-constexpr char kLogged[]    = "twilightforest:multilogged";
+constexpr char kDamage[]    = "gloamingforest:damage";
+constexpr char kFacing[]    = "gloamingforest:facing";
+constexpr char kLogged[]    = "gloamingforest:multilogged";
 constexpr int  kCasketSlots = 45;
 
 std::string stateText(Block const& b, char const* name) {
@@ -125,8 +125,8 @@ void spawnAt(BlockSource& region, BlockPos const& pos, ItemStack const& s) {
 
 /// The casket item's name by damage (KeepsakeCasketItem#getDescriptionId).
 std::string itemName(int damage, Player const* viewer) {
-    if (damage == 1) return viewer ? trFor(*viewer, "block.twilightforest.chipped_keepsake_casket", "Chipped Keepsake Casket") : tr("block.twilightforest.chipped_keepsake_casket", "Chipped Keepsake Casket");
-    if (damage >= 2) return viewer ? trFor(*viewer, "block.twilightforest.damaged_keepsake_casket", "Damaged Keepsake Casket") : tr("block.twilightforest.damaged_keepsake_casket", "Damaged Keepsake Casket");
+    if (damage == 1) return viewer ? trFor(*viewer, "block.gloamingforest.chipped_keepsake_casket", "Chipped Keepsake Casket") : tr("block.gloamingforest.chipped_keepsake_casket", "Chipped Keepsake Casket");
+    if (damage >= 2) return viewer ? trFor(*viewer, "block.gloamingforest.damaged_keepsake_casket", "Damaged Keepsake Casket") : tr("block.gloamingforest.damaged_keepsake_casket", "Damaged Keepsake Casket");
     return {};
 }
 
@@ -219,7 +219,7 @@ bool placeCasket(Player& player, std::vector<ItemStack> const& contents, int dam
         info.ownerUuid = player.getUuid().asString();
         info.ownerName = player.getRealName();
     }
-    std::string blockName = tr("block.twilightforest.keepsake_casket", "Keepsake Casket");
+    std::string blockName = tr("block.gloamingforest.keepsake_casket", "Keepsake Casket");
     info.name = core::artifacts::casketName(player.getRealName(), r.nextInt(1000) == 0 ? std::string("Costco Casket") : blockName);
     setCasketInfo(region, pos, info);
     auto gpos = game::globalPos(region, pos);
@@ -248,19 +248,19 @@ void registerCasket() {
             Json j = Json{{kFacing, stateText(c.block, kFacing)}, {kLogged, stateText(c.block, kLogged)}, {kDamage, dmg - 1}};
             if (auto const* b = game::blockWithStates(kCasket, j)) game::setBlock(*region, pos, *b);
             auto& r = levelRandom();
-            gf::fx::sound(c.player.getDimension(), "block.twilightforest.casket.repair", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, 0.5F, r.nextFloat() * 0.1F + 0.9F);
+            gf::fx::sound(c.player.getDimension(), "block.gloamingforest.casket.repair", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, 0.5F, r.nextFloat() * 0.1F + 0.9F);
             log().info("artifacts: {} repaired a keepsake casket to damage {}", c.player.getRealName(), dmg - 1);
             return ia::Result::Consume;
         }
         if (!canOpenCasket(c.player, *region, pos)) {
             auto info = casketInfo(*region, pos);
-            gf::fx::soundTo(c.player, "block.twilightforest.casket.locked", 0.5F, 0.5F);
-            actionBar(c.player, "§c" + trFor(c.player, "block.twilightforest.casket.locked", "This Casket can only be opened by %s!", info ? info->ownerName : std::string()));
+            gf::fx::soundTo(c.player, "block.gloamingforest.casket.locked", 0.5F, 0.5F);
+            actionBar(c.player, "§c" + trFor(c.player, "block.gloamingforest.casket.locked", "This Casket can only be opened by %s!", info ? info->ownerName : std::string()));
             log().info("artifacts: {} was refused a locked keepsake casket", c.player.getRealName());
             return ia::Result::Deny;
         }
         auto info  = casketInfo(*region, pos);
-        auto title = info && !info->name.empty() ? info->name : std::string("block.twilightforest.keepsake_casket");
+        auto title = info && !info->name.empty() ? info->name : std::string("block.gloamingforest.keepsake_casket");
         gf::inventory::openChestLike(c.player, c.pos, 5, title);
         return ia::Result::Consume;
     }, ia::priority::High);

@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/StructureSpeleothemConfig.java
-//   src/main/java/twilightforest/data/custom/stalactites/entry/SpeleothemVarietyConfig.java
-//   src/main/java/twilightforest/data/custom/stalactites/entry/Stalactite.java
-//   src/main/java/twilightforest/data/custom/stalactites/entry/StalactiteReloadListener.java
-//   src/main/java/twilightforest/world/components/feature/BlockSpikeFeature.java
-//   src/main/java/twilightforest/util/iterators/RectangleLatticeIterator.java
-//   src/main/java/twilightforest/util/iterators/ZippedIterator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/StructureSpeleothemConfig.java
+//   src/main/java/gloamingforest/data/custom/stalactites/entry/SpeleothemVarietyConfig.java
+//   src/main/java/gloamingforest/data/custom/stalactites/entry/Stalactite.java
+//   src/main/java/gloamingforest/data/custom/stalactites/entry/StalactiteReloadListener.java
+//   src/main/java/gloamingforest/world/components/feature/BlockSpikeFeature.java
+//   src/main/java/gloamingforest/util/iterators/RectangleLatticeIterator.java
+//   src/main/java/gloamingforest/util/iterators/ZippedIterator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/structure/Internal.h"
@@ -55,7 +55,7 @@ struct Config {
 
 std::shared_mutex              gMutex;
 std::map<std::string, Variety> gVarieties; ///< by type ("small_hollow_hill")
-std::map<std::string, Config>  gConfigs;   ///< by id ("twilightforest:small_hollow_hill")
+std::map<std::string, Config>  gConfigs;   ///< by id ("gloamingforest:small_hollow_hill")
 
 Stalactite parseStalactite(Json const& j) {
     Stalactite s;
@@ -68,7 +68,7 @@ Stalactite parseStalactite(Json const& j) {
     return s;
 }
 
-/// Java's Float.toString for the small values TF uses (shortest round-trip, ".0" on integers).
+/// Java's Float.toString for the small values upstream uses (shortest round-trip, ".0" on integers).
 std::string javaFloat(float v) {
     char buf[64];
     auto res = std::to_chars(buf, buf + sizeof(buf), v);
@@ -119,8 +119,8 @@ Stalactite const& pick(std::vector<std::pair<Stalactite, int>> const& list, Rand
 
 bool isBlockNotOk(Block const& b) {
     auto const& id = blocks::id(b);
-    return blocks::isLiquid(b) || id == "minecraft:bedrock" || id.starts_with("twilightforest:giant_") || blocks::inTag(b, "twilightforest:clouds") ||
-           id == "twilightforest:hardened_dark_leaves";
+    return blocks::isLiquid(b) || id == "minecraft:bedrock" || id.starts_with("gloamingforest:giant_") || blocks::inTag(b, "gloamingforest:clouds") ||
+           id == "gloamingforest:hardened_dark_leaves";
 }
 
 bool faceSturdyUp(Block const& b) { return !b.isAir() && !blocks::isLiquid(b) && (b.hasProperty(BlockProperty::CubeShaped) || !blocks::isPartial(b)); }
@@ -130,7 +130,7 @@ bool makeSpike(Region& region, BlockPos const& start, Stalactite const& config, 
     if (!hang) {
         BlockPos     below{start.x, start.y - 2, start.z};
         Block const& belowState = region.getBlock(below);
-        if (!blocks::inTag(belowState, "twilightforest:supports_stalagmites") &&
+        if (!blocks::inTag(belowState, "gloamingforest:supports_stalagmites") &&
             (!blocks::worldGenReplaceable(belowState) || !faceSturdyUp(belowState) || isBlockNotOk(belowState)))
             return false;
     }

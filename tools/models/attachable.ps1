@@ -11,8 +11,8 @@
                    the parts HumanoidArmorLayer shows for it (helmet: head + hat, chestplate: body +
                    arms, leggings: inner layer body + legs, boots: legs); vanilla-model armor uses
                    geometry.humanoid.armor.*; render controller controller.render.armor.
-    extracts       parts of a TF model drawn through a chain of PoseStack transforms (CustomHeadLayer or
-                   ItemInHandLayer, the display transform of TF's item model, the ISTER, TrophyRenderer,
+    extracts       parts of an upstream model drawn through a chain of PoseStack transforms (CustomHeadLayer or
+                   ItemInHandLayer, the display transform of upstream's item model, the ISTER, TrophyRenderer,
                    renderTrophy), hung from the wearer's head / rightArm / leftArm bone: one geometry per
                    slot the item is drawn in (trophies and the mystic crown on the head and in either
                    hand, the knightmetal shield in either hand), each drawn only in its slot.
@@ -25,8 +25,8 @@
   Exit code 0 = OK, 1 = an error, an unknown item or (with -Check) a difference.
 
 .EXAMPLE
-  pwsh tools/models/attachable.ps1 -Item twilightforest:fiery_helmet
-  pwsh tools/models/attachable.ps1 -Item twilightforest:naga_trophy -Check
+  pwsh tools/models/attachable.ps1 -Item gloamingforest:fiery_helmet
+  pwsh tools/models/attachable.ps1 -Item gloamingforest:naga_trophy -Check
 #>
 param(
     [string]$Item,

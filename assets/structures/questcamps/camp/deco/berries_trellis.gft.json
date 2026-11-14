@@ -1,19 +1,19 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/deco/berries_trellis",
+  "id": "gloamingforest:camp/deco/berries_trellis",
   "size": [3, 4, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:air"},
-    {"Name":"twilightforest:blackberry_bush","Properties":{"age":"3","layers":"0"}},
-    {"Name":"twilightforest:twilight_oak_fence"},
-    {"Name":"twilightforest:twilight_oak_planks"}
+    {"Name":"gloamingforest:blackberry_bush","Properties":{"age":"3","layers":"0"}},
+    {"Name":"gloamingforest:gloaming_oak_fence"},
+    {"Name":"gloamingforest:gloaming_oak_planks"}
   ],
   "blocks": [
     [1, 3], [2, 3], [3, 3], [1, 6], [3, 3], [1, 6], [3, 1], [4, 1], [3, 1], [1, 9]
   ],
   "jigsaw": [
-    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
   ]
 }

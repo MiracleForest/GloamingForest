@@ -1,4 +1,4 @@
-config.twilightforest.aurora_biomes=Шейдери полярного сяйва біомів
-config.twilightforest.aurora_biomes.button=Редагувати біоми
-config.twilightforest.aurora_biomes.tooltip=Керує тим, у яких біомах з’являтиметься ефект шейдера полярного сяйва. Залиште список порожнім, щоби вимкнути ефект.
-subtitles.twilightforest.environment.acid_rain=Кислотний дощ обпікає
+config.gloamingforest.aurora_biomes=Шейдери полярного сяйва біомів
+config.gloamingforest.aurora_biomes.button=Редагувати біоми
+config.gloamingforest.aurora_biomes.tooltip=Керує тим, у яких біомах з’являтиметься ефект шейдера полярного сяйва. Залиште список порожнім, щоби вимкнути ефект.
+subtitles.gloamingforest.environment.acid_rain=Кислотний дощ обпікає

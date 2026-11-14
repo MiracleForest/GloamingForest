@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/5x5/full_junction_3",
+  "id": "gloamingforest:lich_tower/5x5/full_junction_3",
   "size": [7, 7, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -10,10 +10,10 @@
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:iron_bars"},
-    {"Name":"twilightforest:terrorcotta_curves","Properties":{"facing":"north"}},
-    {"Name":"twilightforest:terrorcotta_curves","Properties":{"facing":"east"}},
-    {"Name":"twilightforest:terrorcotta_curves","Properties":{"facing":"south"}},
-    {"Name":"twilightforest:terrorcotta_curves","Properties":{"facing":"west"}}
+    {"Name":"gloamingforest:terrorcotta_curves","Properties":{"facing":"north"}},
+    {"Name":"gloamingforest:terrorcotta_curves","Properties":{"facing":"east"}},
+    {"Name":"gloamingforest:terrorcotta_curves","Properties":{"facing":"south"}},
+    {"Name":"gloamingforest:terrorcotta_curves","Properties":{"facing":"west"}}
   ],
   "blocks": [
     [1, 16], [6, 1], [7, 1], [8, 1], [1, 4], [7, 1], [8, 1], [9, 1], [1, 4], [8, 1], [9, 1], [6, 1], [1, 16], [3, 1], [1, 2], [2, 1],

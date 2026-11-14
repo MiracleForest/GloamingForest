@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:slider",
+    "id": "gloamingforest:slider",
     "family": "pillar",
     "params": {
       "class": "SliderBlock",

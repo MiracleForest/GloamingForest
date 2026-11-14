@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TFPortalBlock.java
-//   src/main/java/twilightforest/events/ProgressionEvents.java (portal creation check)
-//   src/main/java/twilightforest/config/TFConfig.java (getPortalLockingAdvancement)
-//   src/main/java/twilightforest/asmhooks/BlockHooks.java (modifySoilDecisionForMushroomBlockSurvivability)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TFPortalBlock.java
+//   src/main/java/gloamingforest/events/ProgressionEvents.java (portal creation check)
+//   src/main/java/gloamingforest/config/TFConfig.java (getPortalLockingAdvancement)
+//   src/main/java/gloamingforest/asmhooks/BlockHooks.java (modifySoilDecisionForMushroomBlockSurvivability)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Lighting a Twilight portal: a player's portal activator item (a diamond) thrown into a water
+// Lighting a Gloaming portal: a player's portal activator item (a diamond) thrown into a water
 // pool whose rim is dirt topped with plants; the pool turns into portal blocks under a lightning
 // bolt. Portal blocks fall back to water when their floor or rim breaks. Mushrooms next to a portal
 // survive in any light, and sugar cane takes a portal next to its soil for its water
 // (TFPortalBlock#getFluidState; the rest of what the portal's water does is in PortalFluid.cpp).
 // Explosions: ExplosionDamageCalculator#getBlockExplosionResistance takes the larger of the block's
 // resistance (strength(-1.0F): 0) and its fluid's (water: 100): during an explosion the portal holds
-// the water's resistance, the block keeps TF's 0 otherwise.
+// the water's resistance, the block keeps upstream's 0 otherwise.
 
 #include <algorithm>
 #include <atomic>
@@ -120,7 +120,7 @@ thread_local std::int64_t gThrower = 0;
 } // namespace
 
 LL_TYPE_INSTANCE_HOOK(
-    TwilightPlayerDropHook,
+    GloamingPlayerDropHook,
     ll::memory::HookPriority::Normal,
     Player,
     &Player::$drop,
@@ -137,7 +137,7 @@ LL_TYPE_INSTANCE_HOOK(
 }
 
 LL_TYPE_INSTANCE_HOOK(
-    TwilightItemThrowerHook,
+    GloamingItemThrowerHook,
     ll::memory::HookPriority::Normal,
     Spawner,
     &Spawner::$spawnItem,
@@ -203,9 +203,9 @@ bool portalKeepsMushroom(BlockSource& region, BlockPos const& pos) {
 }
 
 /// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability (MushroomBlock#canSurvive): the soil
-/// decision is "yes" when a Twilight portal is next to the block under the mushroom.
+/// decision is "yes" when a Gloaming portal is next to the block under the mushroom.
 LL_TYPE_INSTANCE_HOOK(
-    TwilightMushroomHook,
+    GloamingMushroomHook,
     ll::memory::HookPriority::Normal,
     MushroomBlock,
     &MushroomBlock::$canSurvive,
@@ -230,11 +230,11 @@ bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos) {
 }
 
 /// TFPortalBlock#getFluidState (the portal is a little water, "and this checks the checkbox in
-/// Sugar Cane logic to not destroy itself when portal is made"): a Twilight portal next to the
+/// Sugar Cane logic to not destroy itself when portal is made"): a Gloaming portal next to the
 /// cane's soil counts as its water. Bedrock's sugar cane asks mayPlace when it is placed and
 /// whenever it checks that it can stay.
 LL_TYPE_INSTANCE_HOOK(
-    TwilightSugarCaneHook,
+    GloamingSugarCaneHook,
     ll::memory::HookPriority::Normal,
     SugarCaneBlock,
     &SugarCaneBlock::$mayPlace,
@@ -317,26 +317,26 @@ float portalWaterResistance() { return gWaterResistance.load(); }
 /// TFPortalBlock#getFluidState for explosions. The explosion's rays read each block's resistance
 /// straight from its permutation's direct data (inline: a hook on BlockType::getExplosionResistance
 /// is not consulted, selftest round 4), so the portal's two permutations hold the water's
-/// resistance while any explosion runs and TF's 0 otherwise (the explosion window above: nested
-/// explosions, explosions on several threads and an explosion that throws all leave TF's 0 behind).
-LL_TYPE_INSTANCE_HOOK(TwilightPortalExplosionHook, ll::memory::HookPriority::Normal, Explosion, &Explosion::explode, bool, IRandom& random) {
+/// resistance while any explosion runs and upstream's 0 otherwise (the explosion window above: nested
+/// explosions, explosions on several threads and an explosion that throws all leave upstream's 0 behind).
+LL_TYPE_INSTANCE_HOOK(GloamingPortalExplosionHook, ll::memory::HookPriority::Normal, Explosion, &Explosion::explode, bool, IRandom& random) {
     PortalExplosionScope window;
     return origin(random);
 }
 
 void installItemOwners() {
-    TwilightPlayerDropHook::hook();
-    TwilightItemThrowerHook::hook();
-    TwilightMushroomHook::hook();
-    TwilightSugarCaneHook::hook();
-    TwilightPortalExplosionHook::hook();
+    GloamingPlayerDropHook::hook();
+    GloamingItemThrowerHook::hook();
+    GloamingMushroomHook::hook();
+    GloamingSugarCaneHook::hook();
+    GloamingPortalExplosionHook::hook();
 }
 void uninstallItemOwners() {
-    TwilightPortalExplosionHook::unhook();
-    TwilightSugarCaneHook::unhook();
-    TwilightMushroomHook::unhook();
-    TwilightItemThrowerHook::unhook();
-    TwilightPlayerDropHook::unhook();
+    GloamingPortalExplosionHook::unhook();
+    GloamingSugarCaneHook::unhook();
+    GloamingMushroomHook::unhook();
+    GloamingItemThrowerHook::unhook();
+    GloamingPlayerDropHook::unhook();
     clearItemOwners();
 }
 
@@ -395,16 +395,16 @@ std::optional<std::string> portalLockingAdvancement(bool quiet) {
         return cfg.portalUnlockedByAdvancement;
     }
     if (cfg.portalUnlockedByAdvancement != checked) {
-        // a build without TF's advancement data (before the import ships it) can't tell: keep it
+        // a build without upstream's advancement data (before the import ships it) can't tell: keep it
         std::error_code ec;
-        auto shipped = Mod::getInstance().getSelf().getModDir() / "data" / "twilightforest" / "advancement";
+        auto shipped = Mod::getInstance().getSelf().getModDir() / "data" / "gloamingforest" / "advancement";
         if (!std::filesystem::is_directory(shipped, ec)) {
             log().warn("dimension: no advancement data to check the portal locking advancement '{}' against", cfg.portalUnlockedByAdvancement);
             checked = cfg.portalUnlockedByAdvancement;
             return cfg.portalUnlockedByAdvancement;
         }
         if (!advancementExists(cfg.portalUnlockedByAdvancement)) {
-            // TF logs it as fatal; a selftest provoking it asks for a warning (e2e runs fail on errors)
+            // upstream logs it as fatal; a selftest provoking it asks for a warning (e2e runs fail on errors)
             auto line = std::format(
                 "The portal locking advancement is not a valid advancement! Setting to null! ('{}', config/dimension.json)",
                 cfg.portalUnlockedByAdvancement
@@ -425,7 +425,7 @@ bool unworthy(Player& player) {
     if (player.isCreative() || player.isSpectator()) return false;
     auto requirement = portalLockingAdvancement();
     if (!requirement || progression::has(player, *requirement)) return false;
-    actionBar(player, trFor(player, "misc.twilightforest.portal_unworthy", "The Portal pool is unresponsive. Perhaps something was neglected?"));
+    actionBar(player, trFor(player, "misc.gloamingforest.portal_unworthy", "The Portal pool is unresponsive. Perhaps something was neglected?"));
     auto id = idOf(player);
     if (!playersNotified().contains(id)) {
         // MissingAdvancementToastPacket with the advancement's title and icon
@@ -443,7 +443,7 @@ void causeLightning(BlockSource& region, BlockPos const& pos, bool destructive) 
     Vec3          at{pos.x + 0.5f, static_cast<float>(pos.y), pos.z + 0.5f};
     ActorUniqueID id{};
     auto*         bolt = CommandUtils::spawnEntityAt(region, at, ActorDefinitionIdentifier("minecraft:lightning_bolt"), id, nullptr);
-    // TF: bolt.setVisualOnly(destructive), then the destructive kind strikes the entities around itself
+    // upstream: bolt.setVisualOnly(destructive), then the destructive kind strikes the entities around itself
     if (bolt && destructive) static_cast<LightningBolt*>(bolt)->mCanHurt = false;
     if (!destructive) return;
     double const range = 3.0;
@@ -485,10 +485,10 @@ bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* cata
     auto const& cfg = gf::config::get<DimensionConfig>();
     if (!cfg.checkPortalPlacement) {
         bool checkProgression = landmark::enforcedProgression();
-        // TF checks around the catalyst item: the biome restrictions apply to players only, never here
+        // upstream checks around the catalyst item: the biome restrictions apply to players only, never here
         if (!teleporter::isSafeAround(region, pos, nullptr, checkProgression)) {
-            // TODO in TF: "failure" effect - particles?
-            if (player) actionBar(*player, trFor(*player, "misc.twilightforest.portal_unsafe", "It doesn't seem safe here..."));
+            // TODO in upstream: "failure" effect - particles?
+            if (player) actionBar(*player, trFor(*player, "misc.gloamingforest.portal_unsafe", "It doesn't seem safe here..."));
             return false;
         }
     }
@@ -528,7 +528,7 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
     auto const& cfg    = gf::config::get<DimensionConfig>();
     int         dim    = static_cast<int>(player.getDimensionId());
     auto        origin = dimensionByName(cfg.originDimension);
-    if (!(origin && dim == *origin) && !world::isTwilight(DimensionType(dim)) && !cfg.allowPortalsInOtherDimensions) return;
+    if (!(origin && dim == *origin) && !world::isGloaming(DimensionType(dim)) && !cfg.allowPortalsInOtherDimensions) return;
 
     AABB box = player.getAABB();
     box      = AABB{box.min - Vec3(rangeToCheck, rangeToCheck, rangeToCheck), box.max + Vec3(rangeToCheck, rangeToCheck, rangeToCheck)};
@@ -537,7 +537,7 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
     for (auto* actor : world.getEntities(box, 0.0f, ActorType::ItemEntity)) {
         if (!actor || actor->getEntityTypeId() != ActorType::ItemEntity) continue;
         auto& item = static_cast<ItemActor&>(*actor);
-        if (!itemTagged("twilightforest:portal/activator", game::items::idOf(item.item()))) continue;
+        if (!itemTagged("gloamingforest:portal/activator", game::items::idOf(item.item()))) continue;
         BlockPos at = game::blockPosOf(item.getFeetPos());
         if (at.y < world.getMinHeight() || at.y >= world.getMaxHeight() || !canFormPortal(world.getBlock(at))) continue;
         if (itemOwner(item) != owner.rawID) continue;
@@ -547,7 +547,7 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
     if (!qualified) return;
     if (unworthy(player)) return; // Item qualifies, but the player doesn't
 
-    // (TF adds two EFFECT particles here with ServerLevel#addParticle, which does nothing on a
+    // (upstream adds two EFFECT particles here with ServerLevel#addParticle, which does nothing on a
     // server: none)
     Vec3 at = qualified->getFeetPos();
     if (tryToCreatePortal(world, game::blockPosOf(at), qualified, &player)) {
@@ -628,7 +628,7 @@ bool portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
         BlockPos side{pos.x + dx, pos.y, pos.z + dz};
         if (!readable(side)) return false;
         Block const& neighboringState = region.getBlock(side);
-        good = blockTagged("twilightforest:portal/edge", neighboringState.getTypeName()) || &neighboringState == &state;
+        good = blockTagged("gloamingforest:portal/edge", neighboringState.getTypeName()) || &neighboringState == &state;
     }
     if (good) return false;
     region.getLevel().broadcastLevelEvent(

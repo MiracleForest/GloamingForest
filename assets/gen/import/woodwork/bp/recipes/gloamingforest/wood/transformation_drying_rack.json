@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/transformation_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "gloamingforest:transformation_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:transformation_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:transformation_drying_rack"
+    }
+  }
+}

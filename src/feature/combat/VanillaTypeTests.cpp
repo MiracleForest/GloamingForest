@@ -7,8 +7,8 @@
 //     event (the hurt pipeline's DamageInfo), the causes round-trip, gf::combat::hurt applies a
 //     vanilla type with its cause (no "unknown damage type"), and a vanilla type's death keeps
 //     Bedrock's message (or Bedrock's key where its cause would name it otherwise);
-//   - combat.fx_vanilla_sounds: the vanilla sound events Java plays for TF (AbstractArrow's hits, the
-//     DamageEffects sounds, the events TF's code names) map to Bedrock's sound names.
+//   - combat.fx_vanilla_sounds: the vanilla sound events Java plays for upstream (AbstractArrow's hits, the
+//     DamageEffects sounds, the events upstream's code names) map to Bedrock's sound names.
 
 #include <algorithm>
 #include <string>
@@ -107,8 +107,8 @@ GF_REGISTER_SELFTEST("combat.vanilla_damage_types", [](Context& ctx) {
     ctx.check(berry->effects == "poking" && c::damageType("minecraft:thorns")->effects == "thorns" && c::damageType("minecraft:lava")->effects == "burning",
               "the DamageEffects: poking, thorns, burning");
     ctx.check(poison->messageId == "magic", "neoforge:poison: NeoForge's poison effect damage, message id magic");
-    ctx.check(!c::damageType("twilightforest:hydra_bite")->vanilla, "TF's types are not vanilla");
-    // the tags: vanilla's own members, NeoForge's additions, nested tags (with TF's data members)
+    ctx.check(!c::damageType("gloamingforest:hydra_bite")->vanilla, "upstream's types are not vanilla");
+    // the tags: vanilla's own members, NeoForge's additions, nested tags (with upstream's data members)
     struct Row {
         char const* tag;
         char const* member;
@@ -122,9 +122,9 @@ GF_REGISTER_SELFTEST("combat.vanilla_damage_types", [](Context& ctx) {
         {"minecraft:bypasses_armor", "neoforge:poison", true},          // NeoForge: #neoforge:is_poison
         {"minecraft:bypasses_shield", "minecraft:fall", true},          // #minecraft:bypasses_armor
         {"minecraft:bypasses_shield", "minecraft:falling_anvil", true},
-        {"minecraft:bypasses_shield", "twilightforest:lich_bolt", true}, // nested, TF's member of bypasses_armor (data)
+        {"minecraft:bypasses_shield", "gloamingforest:lich_bolt", true}, // nested, upstream's member of bypasses_armor (data)
         {"minecraft:always_hurts_ender_dragons", "minecraft:fireworks", true},
-        {"minecraft:always_hurts_ender_dragons", "twilightforest:lich_bomb", true}, // #is_explosion, TF's member (data)
+        {"minecraft:always_hurts_ender_dragons", "gloamingforest:lich_bomb", true}, // #is_explosion, upstream's member (data)
         {"minecraft:bypasses_wolf_armor", "minecraft:generic_kill", true}, // #bypasses_invulnerability
         {"minecraft:no_knockback", "minecraft:cactus", true},
         {"minecraft:no_knockback", "minecraft:player_attack", false},
@@ -136,7 +136,7 @@ GF_REGISTER_SELFTEST("combat.vanilla_damage_types", [](Context& ctx) {
         {"neoforge:is_physical", "minecraft:magic", false},
         {"neoforge:is_magic", "minecraft:wither_skull", true},          // #neoforge:is_wither
         {"neoforge:is_magic", "neoforge:poison", true},                 // #neoforge:is_poison
-        {"neoforge:is_magic", "twilightforest:chilling_breath", true},  // TF's data
+        {"neoforge:is_magic", "gloamingforest:chilling_breath", true},  // upstream's data
         {"neoforge:is_environment", "minecraft:sweet_berry_bush", true},
         {"neoforge:is_technical", "minecraft:out_of_world", true},
     };
@@ -166,10 +166,10 @@ GF_REGISTER_SELFTEST("combat.vanilla_damage_types", [](Context& ctx) {
                                                           + std::to_string(static_cast<int>(c::causeFor(r.id, true))) + ")");
     ctx.check(c::causeFor("minecraft:explosion", false) == Cause::BlockExplosion && c::causeFor("minecraft:explosion", true) == Cause::EntityExplosion,
               "an explosion is a block explosion, or the causing entity's");
-    // TF's types still follow their tags
-    ctx.check(c::causeFor("twilightforest:lich_bolt", true) == Cause::Magic && c::causeFor("twilightforest:hydra_fire", true) == Cause::Fire
-                  && c::causeFor("twilightforest:expired", false) == Cause::Override && c::causeFor("twilightforest:hydra_bite", true) == Cause::EntityAttack,
-              "TF's types keep the causes their tags call for");
+    // upstream's types still follow their tags
+    ctx.check(c::causeFor("gloamingforest:lich_bolt", true) == Cause::Magic && c::causeFor("gloamingforest:hydra_fire", true) == Cause::Fire
+                  && c::causeFor("gloamingforest:expired", false) == Cause::Override && c::causeFor("gloamingforest:hydra_bite", true) == Cause::EntityAttack,
+              "upstream's types keep the causes their tags call for");
 });
 
 GF_REGISTER_SELFTEST("combat.vanilla_damage_sources", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -259,7 +259,7 @@ GF_REGISTER_SELFTEST("combat.fx_vanilla_sounds", [](Context& ctx) {
         char const* bedrock;
     };
     static constexpr Row rows[] = {
-        // AbstractArrow for TF's arrows (the projectile kit)
+        // AbstractArrow for upstream's arrows (the projectile kit)
         {"minecraft:entity.arrow.hit", "random.bowhit"},
         {"minecraft:entity.arrow.hit_player", "random.orb"},
         {"minecraft:entity.arrow.shoot", "random.bow"},
@@ -270,7 +270,7 @@ GF_REGISTER_SELFTEST("combat.fx_vanilla_sounds", [](Context& ctx) {
         {"minecraft:entity.player.hurt_on_fire", "mob.player.hurt_on_fire"},
         {"minecraft:entity.player.hurt_freeze", "mob.player.hurt_freeze"},
         {"minecraft:entity.player.hurt_drown", "mob.player.hurt_drown"},
-        // events TF's code names whose earlier names were no Bedrock sound
+        // events upstream's code names whose earlier names were no Bedrock sound
         {"minecraft:block.candle.break", "dig.candle"},
         {"minecraft:block.lily_pad.place", "dig.grass"},
         {"minecraft:entity.zombie.attack_iron_door", "random.anvil_land"},

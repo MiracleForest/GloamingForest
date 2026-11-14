@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/carminite_block"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#m#", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:carminite"
+      },
+      "m": {
+        "item": "gloamingforest:carminite"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:carminite"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:carminite_block"
+    }
+  }
+}

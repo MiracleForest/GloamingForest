@@ -16,19 +16,19 @@ class Player;
 namespace gf::feature::provisions {
 
 namespace ids {
-inline constexpr char kE115[]        = "twilightforest:experiment_115";
-inline constexpr char kHydraChop[]   = "twilightforest:hydra_chop";
-inline constexpr char kStroganoff[]  = "twilightforest:meef_stroganoff";
-inline constexpr char kStaleBread[]  = "twilightforest:stale_bread";
-inline constexpr char kFrosted[]     = "twilightforest:frosted";
-inline constexpr char kFireReact[]   = "twilightforest:fire_react";
-inline constexpr char kChillAura[]   = "twilightforest:chill_aura";
-inline constexpr char kDestruction[] = "twilightforest:destruction";
-inline constexpr char kRenewal[]     = "twilightforest:renewal";
-inline constexpr char kSlicesEaten[] = "twilightforest:e115_slices_eaten";
-inline constexpr char kHydraTrigger[] = "twilightforest:consume_hydra_chop_on_low_hunger";
-inline constexpr char kStaleSandwich[] = "twilightforest:stale_sandwich";
-inline constexpr char kSmashKey[]    = "twilightforest:smash_blocks";
+inline constexpr char kE115[]        = "gloamingforest:experiment_115";
+inline constexpr char kHydraChop[]   = "gloamingforest:hydra_chop";
+inline constexpr char kStroganoff[]  = "gloamingforest:meef_stroganoff";
+inline constexpr char kStaleBread[]  = "gloamingforest:stale_bread";
+inline constexpr char kFrosted[]     = "gloamingforest:frosted";
+inline constexpr char kFireReact[]   = "gloamingforest:fire_react";
+inline constexpr char kChillAura[]   = "gloamingforest:chill_aura";
+inline constexpr char kDestruction[] = "gloamingforest:destruction";
+inline constexpr char kRenewal[]     = "gloamingforest:renewal";
+inline constexpr char kSlicesEaten[] = "gloamingforest:e115_slices_eaten";
+inline constexpr char kHydraTrigger[] = "gloamingforest:consume_hydra_chop_on_low_hunger";
+inline constexpr char kStaleSandwich[] = "gloamingforest:stale_sandwich";
+inline constexpr char kSmashKey[]    = "gloamingforest:smash_blocks";
 } // namespace ids
 
 /// The player's food level (Bedrock's hunger attribute, 0..20).
@@ -45,7 +45,7 @@ struct E115State {
 /// Sets the block to E115 with the state (bites < 0 removes it).
 bool setE115(BlockSource& region, BlockPos const& pos, E115State state);
 
-/// Experiment115Item#useOn on a non-E115 block: places one slice (TF's default state) on the clicked
+/// Experiment115Item#useOn on a non-E115 block: places one slice (upstream's default state) on the clicked
 /// face when the target is replaceable and the block below is solid. True when placed.
 bool placeE115(Player& player, BlockSource& region, BlockPos const& clicked, int face, bool creative);
 

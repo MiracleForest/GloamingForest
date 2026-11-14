@@ -1,4 +1,4 @@
-block.twilightforest.encased_smoker=Dymiarka
-entity.twilightforest.hydra=Hydra
-entity.twilightforest:hydra.name=Hydra
-tile.twilightforest:encased_smoker.name=Dymiarka
+block.gloamingforest.encased_smoker=Dymiarka
+entity.gloamingforest.hydra=Hydra
+entity.gloamingforest:hydra.name=Hydra
+tile.gloamingforest:encased_smoker.name=Dymiarka

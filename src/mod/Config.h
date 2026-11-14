@@ -14,7 +14,7 @@
 namespace gf::config {
 
 /// Per-section JSON configs under `<mod dir>/config/<section>.json` (rule R13: one section per
-/// unit, named after it; every TF config key is mapped to exactly one section in
+/// unit, named after it; every upstream config key is mapped to exactly one section in
 /// docs/spec/config.md).
 ///
 /// Declare a reflectable aggregate with an integral `version` member and register it once:
@@ -25,8 +25,8 @@ namespace gf::config {
 ///     bool off = gf::config::get<UncraftingConfig>().disableUncraftingOnly;   // anywhere
 ///
 /// Files are created with defaults on first load, merged with new defaults when `version`
-/// changes, edited in game with `/twilightforest config [section]` and reloaded by
-/// `/twilightforest reload`. Configs are global (not per world). Keep fields plain reflectable
+/// changes, edited in game with `/gloamingforest config [section]` and reloaded by
+/// `/gloamingforest reload`. Configs are global (not per world). Keep fields plain reflectable
 /// values (bool, numbers, strings, nested structs / maps) so the config screen can edit them.
 template <class T>
 T& mut() {

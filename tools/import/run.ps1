@@ -1,28 +1,28 @@
 <#
 .SYNOPSIS
-  Contract "import" (unit F1): imports The Twilight Forest 4.8 into assets/gen/import/<unit>/**.
+  Contract "import" (unit F1): imports the upstream 4.8 into assets/gen/import/<unit>/**.
 
 .DESCRIPTION
-  Reads the shared TF checkout (tools/tf/fetch.ps1; fetched when missing) and writes, partitioned by
+  Reads the shared upstream checkout (tools/upstream/fetch.ps1; fetched when missing) and writes, partitioned by
   docs/spec/owners.tsv into assets/gen/import/<unit>/{bp,rp,data,lang}/** (rule R3, deterministic):
 
-    textures      TF textures (CC BY-NC-SA 4.0) -> rp/textures/twilightforest/**, terrain / item / flipbook
+    textures      upstream textures (CC BY-NC-SA 4.0) -> rp/textures/gloamingforest/**, terrain / item / flipbook
                   atlas fragments, the generated chest-boat textures
-    models        Java block models -> Bedrock block geometry (rp/models/blocks/twilightforest/**)
+    models        Java block models -> Bedrock block geometry (rp/models/blocks/gloamingforest/**)
     blockstates   the 523 blocks -> bp/blocks/*.json (frozen states from the Java classes, permutations,
                   materials, light per state, flammability), rp/blocks.d sounds, docs/spec/blockstates.md;
-                  checked against tools/import/expected-states.json and TF's blockstates
+                  checked against tools/import/expected-states.json and upstream's blockstates
     lang          en_us + translations -> lang/<locale>/<unit>.json and rp/texts.d/<locale>/<unit>.lang
     tags, loot, recipes, advancements, worldgen, datamaps, registries
-                  TF data -> data/<namespace>/** (Java format, kept by id); vanilla-type recipes also
+                  upstream data -> data/<namespace>/** (Java format, kept by id); vanilla-type recipes also
                   -> bp/recipes/** with the unlock items of their recipe advancement
     particles     particle JSON -> rp/particles/*.json skeletons + data/gf/particles
     sounds        no sound_definitions (F3 writes them): checks that every event of sounds.json has an
                   owner, data listing data/gf/sound_events/<unit>.json (never the .ogg files)
     skeleton      items, flat block items, entities (+ placeholder visuals, spawn eggs), id index
     catalog       TFCreativeTabs -> bp/item_catalog.d/import.json + data/gf/catalog
-    families      block families and traits from the TF block classes -> data/gf/families/<unit>.json
-  Every twilightforest: reference of the output must resolve (data, BP, owners.tsv, tools/import/known-ids.json).
+    families      block families and traits from the upstream block classes -> data/gf/families/<unit>.json
+  Every gloamingforest: reference of the output must resolve (data, BP, owners.tsv, tools/import/known-ids.json).
 
   Overrides: tools/import/overrides/<unit>.json {"drop": [globs], "patch": {"<path>": [ops]},
   "rename": {"<path>": "<new path>"}} are applied on regeneration (docs/spec/import.md).
@@ -48,11 +48,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 
-if (-not $TfDir) { $TfDir = if ($env:GF_TF_HOME) { $env:GF_TF_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-tf' } }
-if (-not (Test-Path (Join-Path $TfDir 'src/main/java/twilightforest'))) {
-    Write-Host "[import] TF checkout not found at ${TfDir}: fetching it (tools/tf/fetch.ps1)"
-    & pwsh -NoProfile -File (Join-Path $root 'tools/tf/fetch.ps1') -Dest $TfDir -Quiet | Out-Null
-    if ($LASTEXITCODE -ne 0) { Write-Host '[import] tools/tf/fetch.ps1 failed' -ForegroundColor Red; exit 1 }
+if (-not $TfDir) { $TfDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
+if (-not (Test-Path (Join-Path $TfDir 'src/main/java/gloamingforest'))) {
+    Write-Host "[import] upstream checkout not found at ${TfDir}: fetching it (tools/upstream/fetch.ps1)"
+    & pwsh -NoProfile -File (Join-Path $root 'tools/upstream/fetch.ps1') -Quiet | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Host '[import] tools/upstream/fetch.ps1 failed' -ForegroundColor Red; exit 1 }
 }
 
 # The importer is C# (tools/import/src/*.cs), compiled once per source hash and cached.

@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:time_sign",
+      "identifier": "gloamingforest:time_sign",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,11 +14,11 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:time_sign.name"
+        "value": "tile.gloamingforest:time_sign.name"
       },
       "minecraft:max_stack_size": 16,
       "minecraft:block_placer": {
-        "block": "twilightforest:time_sign",
+        "block": "gloamingforest:time_sign",
         "replace_block_item": true
       },
       "minecraft:fuel": {

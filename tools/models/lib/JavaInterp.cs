@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Interpreter for the model converter (contract "geo", unit F2): runs The Twilight Forest's
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Interpreter for the model converter (contract "geo", unit F2): runs The Gloaming Forest's
 // LayerDefinition factories (createBodyLayer / create / checkForPack / addPieces ...) on a small
 // Java runtime with Java's numeric semantics (int / long / float / double promotion, float
 // arithmetic, Mth's sine table, LegacyRandomSource) and builtins for Minecraft's model builder API
 // (MeshDefinition, PartDefinition, CubeListBuilder, PartPose, CubeDeformation, LayerDefinition)
-// plus the vanilla meshes TF extends (HumanoidModel.createMesh, QuadrupedModel.createBodyMesh).
+// plus the vanilla meshes upstream extends (HumanoidModel.createMesh, QuadrupedModel.createBodyMesh).
 // Part of GloamingForest, LGPL-3.0-or-later.
 using System;
 using System.Collections.Generic;
@@ -151,7 +151,7 @@ namespace Gf.Models
         public List<object> Items = new List<object>();
     }
 
-    // A value that names a class (for static member access): a TF class or a builtin.
+    // A value that names a class (for static member access): an upstream class or a builtin.
     public sealed class ClassRef
     {
         public ClassDecl User;
@@ -238,7 +238,7 @@ namespace Gf.Models
             return rel.Replace('\\', '/');
         }
 
-        // The top-level TF class with this simple name, preferring the imports / package of `context`.
+        // The top-level upstream class with this simple name, preferring the imports / package of `context`.
         public ClassDecl Find(string simple, ClassDecl context)
         {
             // nested classes of the context and its outer classes
@@ -295,7 +295,7 @@ namespace Gf.Models
         static readonly HashSet<string> Builtins = new HashSet<string> {
             "Mth", "Math", "PartPose", "CubeListBuilder", "CubeDeformation", "MeshDefinition", "LayerDefinition", "LayerDefinitions",
             "HumanoidModel", "QuadrupedModel", "PigModel", "SheepModel", "SkeletonModel", "PlayerModel", "RandomSource", "Direction", "Vector3f",
-            "JappaPackReloadListener", "TwilightForestMod", "Float", "Integer", "Double", "Long", "String", "List", "ImmutableList", "Arrays",
+            "JappaPackReloadListener", "GloamingForestMod", "Float", "Integer", "Double", "Long", "String", "List", "ImmutableList", "Arrays",
             "EnumSet", "Set", "ModelLayerLocation", "ResourceLocation", "Collections", "Boolean", "System", "Objects"
         };
 
@@ -621,7 +621,7 @@ namespace Gf.Models
         static bool CaseEquals(object sel, object label)
         {
             if (sel is DirectionObj d) return label is string s ? string.Equals(s, d.Name, StringComparison.OrdinalIgnoreCase) : ReferenceEquals(sel, label);
-            // a TF enum constant ("BossVariant.NAGA") against a case label ("NAGA")
+            // an upstream enum constant ("BossVariant.NAGA") against a case label ("NAGA")
             if (sel is OpaqueObj o) return label is string ls2 ? o.Type == ls2 || o.Type.EndsWith("." + ls2, StringComparison.Ordinal) : label is OpaqueObj lo && lo.Type == o.Type;
             if (sel is string ss) return label is string ls && ss == ls;
             if (IsNumeric(sel) && IsNumeric(label)) return Convert.ToInt64(sel) == Convert.ToInt64(label);
@@ -738,7 +738,7 @@ namespace Gf.Models
 
         object EvalField(FieldExpr fe, Frame f)
         {
-            // dotted package names: twilightforest.client.X
+            // dotted package names: gloamingforest.client.X
             if (fe.Target is NameExpr pn && f.Find(pn.Name) == null && ResolveClass(pn.Name, f.Class) == null && !HasStaticField(f.Class, pn.Name))
             {
                 var cr0 = ResolveClass(fe.Name, f.Class);
@@ -1059,8 +1059,8 @@ namespace Gf.Models
                 case "LayerDefinitions.INNER_ARMOR_DEFORMATION": return new CubeDeformationObj(0.5F, 0.5F, 0.5F);
                 case "LayerDefinitions.OUTER_ARMOR_DEFORMATION": return new CubeDeformationObj(1.0F, 1.0F, 1.0F);
                 case "JappaPackReloadListener.INSTANCE": return new OpaqueObj("JappaPackReloadListener");
-                case "TwilightForestMod.LOGGER": return new OpaqueObj("TwilightForestMod.LOGGER");
-                case "TwilightForestMod.ID": return "twilightforest";
+                case "GloamingForestMod.LOGGER": return new OpaqueObj("GloamingForestMod.LOGGER");
+                case "GloamingForestMod.ID": return "gloamingforest";
                 case "Float.MAX_VALUE": return float.MaxValue;
                 case "Float.MIN_VALUE": return float.Epsilon;
                 case "Integer.MAX_VALUE": return int.MaxValue;
@@ -1148,9 +1148,9 @@ namespace Gf.Models
                 case "Direction":
                     if (name == "values") { var arr = new JArray(6, "Direction"); for (int i = 0; i < 6; i++) arr.Items[i] = DirectionObj.Values[i]; return arr; }
                     break;
-                case "TwilightForestMod":
-                    if (name == "prefix") return "twilightforest:" + a[0];
-                    if (name == "getModelTexture") return "twilightforest:textures/entity/" + a[0];
+                case "GloamingForestMod":
+                    if (name == "prefix") return "gloamingforest:" + a[0];
+                    if (name == "getModelTexture") return "gloamingforest:textures/entity/" + a[0];
                     break;
                 case "ResourceLocation":
                     if (name == "withDefaultNamespace") return "minecraft:" + a[0];
@@ -1178,7 +1178,7 @@ namespace Gf.Models
             throw Err(at, ctx, "unsupported builtin " + cls + "." + name + "(" + a.Count + " args)");
         }
 
-        // HumanoidModel.createMesh (Minecraft 1.21.1): the vanilla biped TF's humanoid models extend.
+        // HumanoidModel.createMesh (Minecraft 1.21.1): the vanilla biped upstream's humanoid models extend.
         static MeshDef HumanoidMesh(CubeDeformationObj def, float y)
         {
             var mesh = new MeshDef();
@@ -1286,8 +1286,8 @@ namespace Gf.Models
                     }
                     break;
                 case OpaqueObj o:
-                    if (o.Type == "JappaPackReloadListener" && name == "isJappaPackLoaded") return false; // the Jappa models ship in an optional pack; TF's own textures use the classic models
-                    if (o.Type == "TwilightForestMod.LOGGER") { Notes.Add("LOGGER." + name + ": " + string.Join(", ", a.Select(JavaString))); return null; }
+                    if (o.Type == "JappaPackReloadListener" && name == "isJappaPackLoaded") return false; // the Jappa models ship in an optional pack; upstream's own textures use the classic models
+                    if (o.Type == "GloamingForestMod.LOGGER") { Notes.Add("LOGGER." + name + ": " + string.Join(", ", a.Select(JavaString))); return null; }
                     if (name == "ordinal" || name == "name") return o.Type;
                     break;
                 case JArray arr:

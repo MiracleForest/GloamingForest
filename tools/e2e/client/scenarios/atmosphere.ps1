@@ -1,14 +1,14 @@
-# U15 (atmosphere): the Twilight Forest's sky, fog, locked-biome weather and aurora in the real
+# U15 (atmosphere): the Gloaming Forest's sky, fog, locked-biome weather and aurora in the real
 # game (docs/spec/atmosphere.md section 5).
 #
-# local / remote-mod: the player goes to the Twilight Forest (/twilightforest tp, clear weather) and
+# local / remote-mod: the player goes to the Gloaming Forest (/gloamingforest tp, clear weather) and
 #   the atmosphere.* selftests run untagged (the client ones read the client mod's state there:
 #   provider, fog, the aurora fading in over 60 ticks, the valid aurora biomes, the cloud colour,
 #   locked-biome weather from previews and from the real restrictions, the Ur-Ghast rain). Then,
 #   tagged gf_atmosphere_show, the atmosphere.show_* selftests send previews (a biome for every
-#   lookup, locked biomes, protected boxes) because TF's biomes come from U1, and the screenshots
+#   lookup, locked biomes, protected boxes) because upstream's biomes come from U1, and the screenshots
 #   show:
-#     <mode>-sky-up-noon / -midnight (no sun or moon, TF's stars; the fixed time keeps both alike),
+#     <mode>-sky-up-noon / -midnight (no sun or moon, upstream's stars; the fixed time keeps both alike),
 #     <mode>-sky-horizon (grey clouds, no sunset band), <mode>-fog-forest, <mode>-fog-spooky (the near
 #     fog, smoothed in) and <mode>-fog-spooky-up (the stars unfogged over it), <mode>-fog-dark-forest,
 #     <mode>-fog-boss (a boss bar's world fog),
@@ -164,26 +164,26 @@ function Invoke-AtmosphereTest([string]$name) {
     return $r
 }
 
-function Enter-Twilight {
-    # /twilightforest tp keeps x / z and scales y: from the flat overworld's ground it lands inside the
-    # Twilight Forest's ground (the player suffocates), so the player goes up first (y 200 -> about
+function Enter-Gloaming {
+    # /gloamingforest tp keeps x / z and scales y: from the flat overworld's ground it lands inside the
+    # Gloaming Forest's ground (the player suffocates), so the player goes up first (y 200 -> about
     # 166 there), unhurt by the fall, and then stands on a glass platform at y 100 under the open sky
     Invoke-Chat '/effect @s resistance 99999 255 true'
     Invoke-Chat '/tp @s ~ 200 ~'
     Start-Sleep -Seconds 1
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest tp'
+    Invoke-Chat '/gloamingforest tp'
     if (-not $vanilla) {
-        try { Wait-LogLine 'client dimension twilightforest:twilight_forest: y -32\.\.256' 90 -Since $mark | Out-Null }
+        try { Wait-LogLine 'client dimension gloamingforest:gloaming_forest: y -32\.\.256' 90 -Since $mark | Out-Null }
         catch {
-            # a restarted game may come back into the world inside the Twilight Forest already
-            if (-not (Get-LeviLog -Since $script:AtmosphereSessionMark | Select-String -Pattern 'client dimension twilightforest:twilight_forest' -Quiet)) { throw }
-            Write-Step 'already in the Twilight Forest'
+            # a restarted game may come back into the world inside the Gloaming Forest already
+            if (-not (Get-LeviLog -Since $script:AtmosphereSessionMark | Select-String -Pattern 'client dimension gloamingforest:gloaming_forest' -Quiet)) { throw }
+            Write-Step 'already in the Gloaming Forest'
         }
     }
     Start-Sleep -Seconds 6 # the chunks around the arrival load
     # no level weather and creative mode: the views show only what each preview asks for (the real
-    # progression locks the glacier in survival: TF draws its blizzard there)
+    # progression locks the glacier in survival: upstream draws its blizzard there)
     Invoke-Chat '/gamemode creative'
     Invoke-Chat '/gamerule doweathercycle false'
     Invoke-Chat '/weather clear'
@@ -210,7 +210,7 @@ function Show-Atmosphere([string]$test, [string]$shot, [string]$wait = '', [int]
 function Invoke-AtmosphereViews([string]$mode) {
     $vv = $mode -eq 'vibrant'
     Invoke-AtmosphereTest 'atmosphere.show_clear' | Out-Null
-    # the sky: no sun or moon, TF's star field, the same at noon and midnight (fixed time 13000)
+    # the sky: no sun or moon, upstream's star field, the same at noon and midnight (fixed time 13000)
     Set-View 0 -90
     Invoke-Chat '/time set noon'
     Start-Sleep -Seconds 2
@@ -220,7 +220,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     $midnight = Save-Screenshot "$mode-sky-up-midnight"
     $d = Get-ColourDistance (Get-AtmosphereColour $noon) (Get-AtmosphereColour $midnight)
     Write-Step "$mode sky noon vs midnight: colour distance $d"
-    if ($d -gt 25) { throw "the Twilight Forest sky changed with the time of day ($d)" }
+    if ($d -gt 25) { throw "the Gloaming Forest sky changed with the time of day ($d)" }
     Test-AtmosphereSignature "$mode stars in the zenith view (noon)" (Get-AtmosphereSignature $noon).Stars 30 1500
     Test-AtmosphereSignature "$mode stars in the zenith view (midnight)" (Get-AtmosphereSignature $midnight).Stars 30 1500
     Set-View 90 -15
@@ -233,23 +233,23 @@ function Invoke-AtmosphereViews([string]$mode) {
 
     # fog: the forest's, the spooky forest's near fog (smoothed in over seconds), the dark forest
     Set-View 0 0
-    $forest = Show-Atmosphere 'show_forest' "$mode-fog-forest" 'atmosphere: fog of twilightforest:forest' 4
-    $spooky = Show-Atmosphere 'show_spooky' "$mode-fog-spooky" 'atmosphere: fog of twilightforest:spooky_forest' 12
+    $forest = Show-Atmosphere 'show_forest' "$mode-fog-forest" 'atmosphere: fog of gloamingforest:forest' 4
+    $spooky = Show-Atmosphere 'show_spooky' "$mode-fog-spooky" 'atmosphere: fog of gloamingforest:spooky_forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $spooky)
     Test-AtmosphereSignature "$mode fog forest vs spooky forest colour distance" $d 4 1000
-    # TF draws its stars without fog (TFSkyRenderer: FogRenderer.setupNoFog): they stay over the
+    # upstream draws its stars without fog (TFSkyRenderer: FogRenderer.setupNoFog): they stay over the
     # spooky forest's near fog
     Set-View 0 -50
     Start-Sleep -Seconds 1
     $spookyUp = Save-Screenshot "$mode-fog-spooky-up"
     Test-AtmosphereSignature "$mode stars over the spooky forest's fog" (Get-AtmosphereSignature $spookyUp).Stars 30 1500
     Set-View 0 0
-    Show-Atmosphere 'show_dark_forest' "$mode-fog-dark-forest" 'atmosphere: fog of twilightforest:dark_forest' 4 | Out-Null
-    $boss = Show-Atmosphere 'show_boss_fog' "$mode-fog-boss" 'atmosphere: fog of twilightforest:forest' 12
+    Show-Atmosphere 'show_dark_forest' "$mode-fog-dark-forest" 'atmosphere: fog of gloamingforest:dark_forest' 4 | Out-Null
+    $boss = Show-Atmosphere 'show_boss_fog' "$mode-fog-boss" 'atmosphere: fog of gloamingforest:forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $boss)
     Write-Step "$mode fog forest vs boss world fog: colour distance $d"
 
-    # the aurora over the glacier (fades in over 60 ticks), against the same view without it: TF's
+    # the aurora over the glacier (fades in over 60 ticks), against the same view without it: upstream's
     # green-cyan glow
     Set-View 0 -50
     $clearUp = Show-Atmosphere 'show_forest' "$mode-aurora-clear" '' 3
@@ -341,7 +341,7 @@ function Show-AuroraBiomesEditor([string]$mode) {
 }
 
 if ($vanilla) {
-    Enter-Twilight
+    Enter-Gloaming
     Invoke-Chat "/tag @s add $tag"
     Set-View 0 55 # down at the ground below the platform: the fog lies over it
     $mark = Get-LogMark
@@ -350,20 +350,20 @@ if ($vanilla) {
     $clear = Save-Screenshot 'vanilla-clear'
     $mark = Get-LogMark
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_spooky' | Out-Null
-    Wait-LogLine "${hostRx}atmosphere: fog twilightforest:spooky_forest sent to" 30 -Since $mark | Out-Null
+    Wait-LogLine "${hostRx}atmosphere: fog gloamingforest:spooky_forest sent to" 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 4
     $spooky = Save-Screenshot 'vanilla-spooky'
-    # the spooky fog's colour as the vanilla client draws it (the horizon: fog only), against TF's
+    # the spooky fog's colour as the vanilla client draws it (the horizon: fog only), against upstream's
     # getBrightnessDependentFogColor at 13000 (the fog colour times about 0.42)
     Set-View 0 0
     Start-Sleep -Seconds 2
     $spookyHorizon = Save-Screenshot 'vanilla-spooky-horizon'
     $c = Get-AtmosphereColour $spookyHorizon
-    Write-Step "vanilla spooky fog at the horizon $($c -join ', ') (TF's raw fog 130, 115, 145; at 13000 about 54, 48, 63)"
+    Write-Step "vanilla spooky fog at the horizon $($c -join ', ') (upstream's raw fog 130, 115, 145; at 13000 about 54, 48, 63)"
     Set-View 0 55
     $mark = Get-LogMark
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_glacier' | Out-Null
-    Wait-LogLine "${hostRx}atmosphere: fog twilightforest:glacier sent to" 30 -Since $mark | Out-Null
+    Wait-LogLine "${hostRx}atmosphere: fog gloamingforest:glacier sent to" 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 4
     Save-Screenshot 'vanilla-glacier' | Out-Null
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_clear' | Out-Null
@@ -381,8 +381,8 @@ if ($vanilla) {
 }
 
 $script:AtmosphereSessionMark = 0
-Enter-Twilight
-foreach ($rx in 'atmosphere: sun, moon and vanilla stars hidden', 'atmosphere: TF stars drawn', 'atmosphere: cloud colour and sunrise of the frame overridden') { Wait-LogLine $rx 60 | Out-Null }
+Enter-Gloaming
+foreach ($rx in 'atmosphere: sun, moon and vanilla stars hidden', 'atmosphere: upstream stars drawn', 'atmosphere: cloud colour and sunrise of the frame overridden') { Wait-LogLine $rx 60 | Out-Null }
 Invoke-AtmosphereTest 'atmosphere.*' | Out-Null
 if (-not ($calibrate -and $env:GF_ATMOSPHERE_VV_ONLY -eq '1')) { # (a calibration of Vibrant Visuals alone)
     Invoke-Chat "/tag @s add $tag"
@@ -402,7 +402,7 @@ if (-not $remote) {
     Wait-HudReady
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $script:AtmosphereSessionMark = [Math]::Max(0, (Get-LogMark) - 400) # this game's lines (the world load)
-    Enter-Twilight
+    Enter-Gloaming
     Invoke-Chat "/tag @s add $tag"
     Invoke-AtmosphereViews 'vibrant'
     Invoke-Chat "/tag @s remove $tag"

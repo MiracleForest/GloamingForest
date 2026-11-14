@@ -34,7 +34,7 @@ struct Model {
     std::vector<Quad> quads;
 };
 
-/// Every geometry of a parsed geo file, by identifier ("geometry.twilightforest.naga_trophy").
+/// Every geometry of a parsed geo file, by identifier ("geometry.gloamingforest.naga_trophy").
 [[nodiscard]] std::map<std::string, Model> parse(nlohmann::json const& file, std::string* error = nullptr);
 
 /// The geometry `id` from the resource packs of the mod (`<mod>/resource_packs/*/models/**.geo.json`),

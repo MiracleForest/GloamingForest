@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:minotaur",
+      "identifier": "gloamingforest:minotaur",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "minotaur", "monster", "mob"]
+        "family": ["gloamingforest", "minotaur", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

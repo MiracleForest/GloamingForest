@@ -1,4 +1,4 @@
-# U11 (tgear) on the client: Travellers' Gear worn by a real player and TF's keys pressed.
+# U11 (tgear) on the client: Travellers' Gear worn by a real player and upstream's keys pressed.
 #
 # tgear.real_arm dresses the player (goggles with the item display holding a map, a compass, a clock and
 # a moon dial, and red thread vision; a vest with gloves and haste; the wings with swap_hotbar; boots;
@@ -68,7 +68,7 @@ Save-Screenshot 'inventory' | Out-Null
 Close-Screen
 if ($script:Mode -ne 'remote-vanilla') {
     # TravellersGearItemModel / the red thread's size models: the slot icons drawn with their layers
-    try { Wait-LogLine 'tgear: icon of twilightforest:\S+ drawn with' 5 -Since $iconMark | Out-Null } catch { throw 'no slot icon was drawn with its layers (the broken vest, the modifier overlays, the red thread spool)' }
+    try { Wait-LogLine 'tgear: icon of gloamingforest:\S+ drawn with' 5 -Since $iconMark | Out-Null } catch { throw 'no slot icon was drawn with its layers (the broken vest, the modifier overlays, the red thread spool)' }
 }
 
 if ($script:Mode -ne 'remote-vanilla') {
@@ -106,21 +106,21 @@ if ($script:Mode -ne 'remote-vanilla') {
 #    pillar at 44 -60 42, and threads on the floor and a wall behind a stone wall (z 46)
 Invoke-Chat '/fill 39 -60 44 43 -57 44 stone'
 Invoke-Chat '/setblock 44 -60 42 stone'
-Invoke-Chat '/setblock 41 -60 46 twilightforest:red_thread ["twilightforest:down"=true]'
-Invoke-Chat '/setblock 42 -60 46 twilightforest:red_thread ["twilightforest:down"=true]'
-Invoke-Chat '/setblock 43 -60 46 twilightforest:red_thread ["twilightforest:down"=true,"twilightforest:south"=true]'
-Invoke-Chat '/setblock 43 -59 46 twilightforest:red_thread ["twilightforest:south"=true]'
-Invoke-Chat '/setblock 40 -60 42 twilightforest:red_thread ["twilightforest:down"=true]'
-Invoke-Chat '/setblock 41 -60 42 twilightforest:red_thread ["twilightforest:down"=true]'
-Invoke-Chat '/setblock 42 -60 42 twilightforest:red_thread ["twilightforest:down"=true]'
-Invoke-Chat '/setblock 43 -60 42 twilightforest:red_thread ["twilightforest:down"=true,"twilightforest:east"=true]'
-Invoke-Chat '/setblock 43 -59 42 twilightforest:red_thread ["twilightforest:east"=true]'
+Invoke-Chat '/setblock 41 -60 46 gloamingforest:red_thread ["gloamingforest:down"=true]'
+Invoke-Chat '/setblock 42 -60 46 gloamingforest:red_thread ["gloamingforest:down"=true]'
+Invoke-Chat '/setblock 43 -60 46 gloamingforest:red_thread ["gloamingforest:down"=true,"gloamingforest:south"=true]'
+Invoke-Chat '/setblock 43 -59 46 gloamingforest:red_thread ["gloamingforest:south"=true]'
+Invoke-Chat '/setblock 40 -60 42 gloamingforest:red_thread ["gloamingforest:down"=true]'
+Invoke-Chat '/setblock 41 -60 42 gloamingforest:red_thread ["gloamingforest:down"=true]'
+Invoke-Chat '/setblock 42 -60 42 gloamingforest:red_thread ["gloamingforest:down"=true]'
+Invoke-Chat '/setblock 43 -60 42 gloamingforest:red_thread ["gloamingforest:down"=true,"gloamingforest:east"=true]'
+Invoke-Chat '/setblock 43 -59 42 gloamingforest:red_thread ["gloamingforest:east"=true]'
 # a thread along the inside of the stone wall at z 44 (north faces), turning onto the floor
-Invoke-Chat '/setblock 40 -59 43 twilightforest:red_thread ["twilightforest:south"=true]'
-Invoke-Chat '/setblock 41 -59 43 twilightforest:red_thread ["twilightforest:south"=true]'
-Invoke-Chat '/setblock 41 -60 43 twilightforest:red_thread ["twilightforest:south"=true,"twilightforest:down"=true]'
+Invoke-Chat '/setblock 40 -59 43 gloamingforest:red_thread ["gloamingforest:south"=true]'
+Invoke-Chat '/setblock 41 -59 43 gloamingforest:red_thread ["gloamingforest:south"=true]'
+Invoke-Chat '/setblock 41 -60 43 gloamingforest:red_thread ["gloamingforest:south"=true,"gloamingforest:down"=true]'
 Invoke-Teleport '/tp @s 41.5 -60 39.5 0 25'
-Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 twilightforest:red_thread 32'
+Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 gloamingforest:red_thread 32'
 Start-Sleep -Seconds 2
 Save-Screenshot 'red-thread' | Out-Null
 # close up, no thread in hand (the block's own model, the connections at the block's light)

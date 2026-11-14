@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // Pure C++ (no mc/ll includes; the gtests use it too). java.util.Random / Minecraft's
 // LegacyRandomSource bit for bit, plus the Mth helpers the structure kit needs (Mth.getSeed,
-// positiveModulo, floor, ceil, sin / cos tables are not needed: TF's structures use Math.cos /
+// positiveModulo, floor, ceil, sin / cos tables are not needed: upstream's structures use Math.cos /
 // Mth.cos only for float geometry).
 //
 // The structure kit creates its own position-seeded sources exactly as vanilla does
@@ -96,7 +96,7 @@ public:
     }
     [[nodiscard]] int nextInt() override { return next(32); }
     [[nodiscard]] int nextInt(int bound) override {
-        if (bound <= 0) return 0; // Java throws IllegalArgumentException; callers translate TF code that never passes it
+        if (bound <= 0) return 0; // Java throws IllegalArgumentException; callers translate upstream code that never passes it
         if ((bound & (bound - 1)) == 0) return static_cast<int>((static_cast<std::int64_t>(bound) * static_cast<std::int64_t>(next(31))) >> 31);
         int bits = 0, val = 0;
         do {

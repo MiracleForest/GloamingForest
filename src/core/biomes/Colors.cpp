@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/BiomeColorAlgorithms.java
-//   src/main/java/twilightforest/client/FoliageColorHandler.java
-//   src/main/java/twilightforest/TFEnumExtensions.java
-//   src/main/java/twilightforest/util/ColorUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/BiomeColorAlgorithms.java
+//   src/main/java/gloamingforest/client/FoliageColorHandler.java
+//   src/main/java/gloamingforest/TFEnumExtensions.java
+//   src/main/java/gloamingforest/util/ColorUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The colour-map constants: TF's flat swamp and dark forest colours are
+// The colour-map constants: upstream's flat swamp and dark forest colours are
 // ((map & 0xFEFEFE) + tint) / 2, so only the map value's upper 7 bits per channel matter. The dark
 // forest's are vanilla's forest colours (GrassColor.get(0.7, 0.8) = #79C05A, FoliageColor.get(0.7,
-// 0.8) = #59AE30); the swamp's are recovered from the colours TF's biome JSON stores for the swamp
+// 0.8) = #59AE30); the swamp's are recovered from the colours upstream's biome JSON stores for the swamp
 // (#5C694E grass, #496137 foliage: BiomeMaker writes the modifier's result), which also reproduces
 // the dark forest's JSON colours from the known values (tests/biomes/ColorsTest.cpp checks all four).
 #include "core/biomes/Colors.h"
@@ -28,11 +28,11 @@ namespace gf::core::biomes::colors {
 
 namespace {
 
-constexpr std::string_view kEnchanted        = "twilightforest:enchanted_forest";
-constexpr std::string_view kSwamp            = "twilightforest:swamp";
-constexpr std::string_view kDarkForest       = "twilightforest:dark_forest";
-constexpr std::string_view kDarkForestCenter = "twilightforest:dark_forest_center";
-constexpr std::string_view kSpooky           = "twilightforest:spooky_forest";
+constexpr std::string_view kEnchanted        = "gloamingforest:enchanted_forest";
+constexpr std::string_view kSwamp            = "gloamingforest:swamp";
+constexpr std::string_view kDarkForest       = "gloamingforest:dark_forest";
+constexpr std::string_view kDarkForestCenter = "gloamingforest:dark_forest_center";
+constexpr std::string_view kSpooky           = "gloamingforest:spooky_forest";
 
 /// Biome.TEMPERATURE_NOISE.getValue(x * 0.0225, z * 0.0225, false).
 double temperatureNoise(double x, double z) {
@@ -75,7 +75,7 @@ int darkForest(bool foliage) { return (((foliage ? kFoliageForestMap : kGrassFor
 int darkForestCenterGrass(double x, double z) { return temperatureNoise(x, z) < -0.2 ? 0x667540 : 0x554114; }
 
 int darkForestCenterFoliage(double x, double z) {
-    // (noise + 1) / 2 is never below -0.1 in TF: always 0xE94E14 (kept as TF has it)
+    // (noise + 1) / 2 is never below -0.1 in upstream: always 0xE94E14 (kept as upstream has it)
     double noise = (temperatureNoise(x, z) + 1.0) / 2.0;
     return noise < -0.1 ? 0xF9821E : 0xE94E14;
 }
@@ -121,29 +121,29 @@ struct StaticColours {
     int              grass, foliage;
 };
 
-// TF's biome JSON (src/generated/resources/data/twilightforest/worldgen/biome/*.json): the explicit
+// upstream's biome JSON (src/generated/resources/data/gloamingforest/worldgen/biome/*.json): the explicit
 // colours of the fire swamp and the snowy forest; the others the colour map at (temperature,
 // downfall) as GrassColor.get / FoliageColor.get read it (Java float climate widened to double).
 // The biomes with a modifier (enchanted forest, dark forest centre, spooky forest, swamp, dark
 // forest) are not here: their modifier gives every colour.
 constexpr StaticColours kStatic[] = {
-    {"twilightforest:clearing", 0x92BC58, 0x77AB2F},              // 0.8, 0.4
-    {"twilightforest:dense_forest", 0x79BF5A, 0x59AE30},          // 0.7, 0.8
-    {"twilightforest:dense_mushroom_forest", 0x61C64B, 0x3BB61E}, // 0.8, 1.0
-    {"twilightforest:final_plateau", 0xA6BB4D, 0x91A922},         // 1.0, 0.2
-    {"twilightforest:fire_swamp", 0x572E23, 0x64260F},            // JSON
-    {"twilightforest:firefly_forest", 0x7CBB6C, 0x5BAB46},        // 0.5, 1.0
-    {"twilightforest:forest", 0x8DB870, 0x71A74D},                // 0.5, 0.5
-    {"twilightforest:glacier", 0x84B491, 0x66A275},               // 0.08, 0.1
-    {"twilightforest:highlands", 0x88B777, 0x6AA755},             // 0.4, 0.7
-    {"twilightforest:highlands_underground", 0x96B47F, 0x7BA35F}, // 0.35, 0.0
-    {"twilightforest:lake", 0x70C05B, 0x4CB031},                  // 0.66, 1.0
-    {"twilightforest:mushroom_forest", 0x71C34F, 0x4EB224},       // 0.8, 0.8
-    {"twilightforest:oak_savannah", 0xB8B55B, 0xA6A432},          // 0.9, 0.0
-    {"twilightforest:snowy_forest", 0xFFFFFF, 0xFFFFFF},          // JSON
-    {"twilightforest:stream", 0x9BB574, 0x83A352},                // 0.5, 0.1
-    {"twilightforest:thornlands", 0x8FB582, 0x74A362},            // 0.3, 0.2
-    {"twilightforest:underground", 0xABB568, 0x97A342},           // 0.7, 0.0
+    {"gloamingforest:clearing", 0x92BC58, 0x77AB2F},              // 0.8, 0.4
+    {"gloamingforest:dense_forest", 0x79BF5A, 0x59AE30},          // 0.7, 0.8
+    {"gloamingforest:dense_mushroom_forest", 0x61C64B, 0x3BB61E}, // 0.8, 1.0
+    {"gloamingforest:final_plateau", 0xA6BB4D, 0x91A922},         // 1.0, 0.2
+    {"gloamingforest:fire_swamp", 0x572E23, 0x64260F},            // JSON
+    {"gloamingforest:firefly_forest", 0x7CBB6C, 0x5BAB46},        // 0.5, 1.0
+    {"gloamingforest:forest", 0x8DB870, 0x71A74D},                // 0.5, 0.5
+    {"gloamingforest:glacier", 0x84B491, 0x66A275},               // 0.08, 0.1
+    {"gloamingforest:highlands", 0x88B777, 0x6AA755},             // 0.4, 0.7
+    {"gloamingforest:highlands_underground", 0x96B47F, 0x7BA35F}, // 0.35, 0.0
+    {"gloamingforest:lake", 0x70C05B, 0x4CB031},                  // 0.66, 1.0
+    {"gloamingforest:mushroom_forest", 0x71C34F, 0x4EB224},       // 0.8, 0.8
+    {"gloamingforest:oak_savannah", 0xB8B55B, 0xA6A432},          // 0.9, 0.0
+    {"gloamingforest:snowy_forest", 0xFFFFFF, 0xFFFFFF},          // JSON
+    {"gloamingforest:stream", 0x9BB574, 0x83A352},                // 0.5, 0.1
+    {"gloamingforest:thornlands", 0x8FB582, 0x74A362},            // 0.3, 0.2
+    {"gloamingforest:underground", 0xABB568, 0x97A342},           // 0.7, 0.0
 };
 
 StaticColours const* staticOf(std::string_view id) {
@@ -152,19 +152,19 @@ StaticColours const* staticOf(std::string_view id) {
     return nullptr;
 }
 
-/// TF's JSON grass colour before the modifier (BiomeMaker): the enchanted forest's 0x00FFFF.
+/// upstream's JSON grass colour before the modifier (BiomeMaker): the enchanted forest's 0x00FFFF.
 constexpr int kEnchantedJson = 0x00FFFF;
 
 struct WaterColours {
     std::string_view id;
     int              water, fog;
 };
-// TF's biome JSON effects.water_color / water_fog_color where they are not 0x3F76E4 / 0x050533
+// upstream's biome JSON effects.water_color / water_fog_color where they are not 0x3F76E4 / 0x050533
 constexpr WaterColours kWater[] = {
-    {"twilightforest:dense_forest", 0x005522, 0x005522},
-    {"twilightforest:fire_swamp", 0x6C2C2C, 0x6C2C2C},
-    {"twilightforest:spooky_forest", 0xBC8857, 0xBC8857},
-    {"twilightforest:swamp", 0x95B55F, 0x95B55F},
+    {"gloamingforest:dense_forest", 0x005522, 0x005522},
+    {"gloamingforest:fire_swamp", 0x6C2C2C, 0x6C2C2C},
+    {"gloamingforest:spooky_forest", 0xBC8857, 0xBC8857},
+    {"gloamingforest:swamp", 0x95B55F, 0x95B55F},
 };
 
 bool isTf(std::string_view id) { return staticOf(id) != nullptr || hasModifier(id); }
@@ -205,7 +205,7 @@ std::optional<int> waterFog(std::string_view id) {
     return 0x050533;
 }
 
-bool closerWaterFog(std::string_view id) { return id == kSpooky || id == kSwamp || id == "twilightforest:fire_swamp"; }
+bool closerWaterFog(std::string_view id) { return id == kSpooky || id == kSwamp || id == "gloamingforest:fire_swamp"; }
 
 int blend(int x, int z, int radius, std::function<int(int, int)> const& colorAt) {
     if (radius <= 0) return colorAt(x, z);

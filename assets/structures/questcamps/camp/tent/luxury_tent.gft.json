@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/tent/luxury_tent",
+  "id": "gloamingforest:camp/tent/luxury_tent",
   "size": [9, 5, 8],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -11,7 +11,7 @@
     {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"foot"}},
     {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"head"}},
     {"Name":"minecraft:chest","Properties":{"facing":"north","type":"single","waterlogged":"false"}},
-    {"Name":"twilightforest:twilight_oak_fence"}
+    {"Name":"gloamingforest:gloaming_oak_fence"}
   ],
   "blocks": [
     [2, 1], [1, 7], [2, 2], [1, 2], [3, 3], [1, 2], [2, 2], [1, 2], [3, 3], [1, 2], [2, 2], [1, 2], [3, 3], [1, 2], [2, 2], [1, 1],
@@ -24,13 +24,13 @@
     [2, 1], [1, 8], [2, 1], [1, 8], [2, 1], [1, 8], [2, 1], [1, 8], [2, 1], [1, 8], [2, 1], [1, 8], [2, 1], [1, 4]
   ],
   "markers": [
-    {"pos":[4,0,6],"marker":"loot","data":{"table":"twilightforest:camp_tent"}},
+    {"pos":[4,0,6],"marker":"loot","data":{"table":"gloamingforest:camp_tent"}},
     {"pos":[3,0,6],"marker":"data","data":{"metadata":"tent_pot@north"}},
     {"pos":[5,0,6],"marker":"data","data":{"metadata":"camp_armor_rack@north"}},
     {"pos":[4,1,6],"marker":"data","data":{"metadata":"painting@north"}},
-    {"pos":[1,0,1],"marker":"data","data":{"metadata":"twilight_oak_slab@east"}}
+    {"pos":[1,0,1],"marker":"data","data":{"metadata":"gloaming_oak_slab@east"}}
   ],
   "jigsaw": [
-    {"pos":[4,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/tent","target":""}
+    {"pos":[4,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/tent","target":""}
   ]
 }

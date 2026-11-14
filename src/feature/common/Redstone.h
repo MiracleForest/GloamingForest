@@ -17,12 +17,12 @@
 // Server thread only. Watches are polled every `kPollTicks` ticks (and once right after
 // `watch`), only while their chunk is loaded; the callback runs when the power level changes.
 //
-// Comparator output: a unit registers Java's getAnalogOutputSignal for its block ids (TF's trophies,
+// Comparator output: a unit registers Java's getAnalogOutputSignal for its block ids (upstream's trophies,
 // trophy pedestal, ...) and
 // vanilla comparators read it (one ComparatorCapacitor hook here gives the comparator's circuit
 // component its rear analog input):
 //
-//     rs::registerAnalog("twilightforest:naga_trophy", [](BlockSource& r, BlockPos const& p, Block const& b)
+//     rs::registerAnalog("gloamingforest:naga_trophy", [](BlockSource& r, BlockPos const& p, Block const& b)
 //         -> std::optional<int> { return level0to15; });   // nullopt: no comparator output now
 //
 // As in Java (ComparatorBlock.getInputSignal) a comparator reads the block right behind it, or,
@@ -69,7 +69,7 @@ void    unwatch(WatchId id);
 
 /// The signal a custom block at `at` sends into its neighbour on side `towards` (FacingID from
 /// `at`), Java's getSignal. Custom blocks are not part of the game's circuit graph: units whose
-/// blocks emit redstone (TF's tower devices, ...) register them here so that
+/// blocks emit redstone (upstream's tower devices, ...) register them here so that
 /// `power` / `signalFrom` see them like vanilla sources.
 using EmitterFn = std::function<int(BlockSource& region, BlockPos const& at, Block const& block, int towards)>;
 /// Registers a signal source block id (replaces an earlier one for the same id).

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U26 (darktower) selftests of the dark tower structure (rule R12: "darktower.*", testPos dx
 // 2600..2699; rule R19 golden hash). The tower (three main towers up to 86 high with their wings,
@@ -121,7 +121,7 @@ std::map<std::string, int> typesOf(::gf::structure::bases::PieceList const& piec
 
 std::string describe(std::map<std::string, int> const& types, ::gf::structure::bases::PieceList const& pieces) {
     std::string s;
-    for (auto const& [t, n] : types) s += t.substr(std::string("twilightforest:").size()) + "=" + std::to_string(n) + " ";
+    for (auto const& [t, n] : types) s += t.substr(std::string("gloamingforest:").size()) + "=" + std::to_string(n) + " ";
     BlockBox all = pieces.front()->bbox;
     for (auto const& p : pieces)
         all = BlockBox::of(std::min(all.minX, p->bbox.minX), std::min(all.minY, p->bbox.minY), std::min(all.minZ, p->bbox.minZ), std::max(all.maxX, p->bbox.maxX),
@@ -141,7 +141,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 
 // Recorded from the translation (GloamingForest's own goldens: chunk (2, -3), y 8, seed 20260521).
 constexpr char kLayout[] = "TFDTBB=4 TFDTBT=4 TFDTBal=9 TFDTBea=38 TFDTBri=38 TFDTEB=2 TFDTEnt=2 TFDTMB=2 TFDTMai=3 TFDTRA=14 TFDTRC=8 TFDTRFP=5 TFDTRR=7 TFDTWin=32 1,8,-103,103,196,-1";
-constexpr char kHash[]   = "4fc7bd59b5d3a5c2"; // planter trees: vanilla oak / birch inline, TF trees from U3 (with tree_roots)
+constexpr char kHash[]   = "4fc7bd59b5d3a5c2"; // planter trees: vanilla oak / birch inline, upstream trees from U3 (with tree_roots)
 
 } // namespace
 
@@ -178,7 +178,7 @@ GF_REGISTER_SELFTEST("darktower.structure_layout", [](Context& ctx) {
     for (auto const& p : pieces) {
         int si = static_cast<::gf::structure::bases::Component&>(*p).getSpawnIndex();
         if (p->typeId == tower::kBossTrap) ctx.check(si == -1, "no spawns in boss traps");
-        if (p->typeId.rfind("twilightforest:TFDTR", 0) == 0) ctx.check(si == 1, "roof spawn list 1: " + p->typeId);
+        if (p->typeId.rfind("gloamingforest:TFDTR", 0) == 0) ctx.check(si == 1, "roof spawn list 1: " + p->typeId);
     }
     golden(ctx, "darktower_layout", kLayout, describe(types, pieces));
 });
@@ -193,24 +193,24 @@ GF_REGISTER_SELFTEST("darktower.golden_hash", [](Context& ctx) {
         if (p->typeId == tower::kMain && p->genDepth == 2) {
             int  h   = p->bbox.maxY - p->bbox.minY + 1;
             auto pos = p->getWorldPos(9, h - 2, 9);
-            ctx.check(mem.idAt(pos) == "twilightforest:ur_ghast_boss_spawner", "the Ur-Ghast spawner at (9, height - 2, 9): " + mem.idAt(pos));
+            ctx.check(mem.idAt(pos) == "gloamingforest:ur_ghast_boss_spawner", "the Ur-Ghast spawner at (9, height - 2, 9): " + mem.idAt(pos));
             spawners++;
         }
     ctx.check(spawners == 1, "one boss tower");
-    ctx.check(mem.count("twilightforest:ghast_trap") == 4, "a ghast trap in each boss trap tower");
-    ctx.check(mem.count("twilightforest:encased_towerwood") > 1000, "encased towerwood");
-    ctx.check(mem.count("twilightforest:towerwood") > 1000, "towerwood walls");
-    ctx.check(mem.count("twilightforest:locked_vanishing_block") == 8, "two locked doors with four locks each");
-    ctx.check(mem.count("twilightforest:unbreakable_vanishing_block") > 20, "vanishing doors");
-    ctx.check(mem.count("twilightforest:reappearing_block") > 0, "reappearing doors");
+    ctx.check(mem.count("gloamingforest:ghast_trap") == 4, "a ghast trap in each boss trap tower");
+    ctx.check(mem.count("gloamingforest:encased_towerwood") > 1000, "encased towerwood");
+    ctx.check(mem.count("gloamingforest:towerwood") > 1000, "towerwood walls");
+    ctx.check(mem.count("gloamingforest:locked_vanishing_block") == 8, "two locked doors with four locks each");
+    ctx.check(mem.count("gloamingforest:unbreakable_vanishing_block") > 20, "vanishing doors");
+    ctx.check(mem.count("gloamingforest:reappearing_block") > 0, "reappearing doors");
     ctx.check(mem.count("minecraft:mob_spawner") > 0, "mob spawners");
     ctx.check(mem.count("minecraft:chest") > 0, "chests");
-    ctx.check(mem.count("twilightforest:carminite_builder") + mem.count("twilightforest:antibuilder") > 0, "tower devices");
+    ctx.check(mem.count("gloamingforest:carminite_builder") + mem.count("gloamingforest:antibuilder") > 0, "tower devices");
     golden(ctx, "darktower_hash", kHash, mem.hash());
 });
 
 GF_REGISTER_SELFTEST("darktower.structure_start", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     // a start forced far from the test rows (removed afterwards)
     auto pos = ctx.testPos(2690);
     pos.x += 8192;
@@ -222,7 +222,7 @@ GF_REGISTER_SELFTEST("darktower.structure_start", [](Context& ctx) -> ll::coro::
         auto at = gf::landmark::startAt(pos.dim, BlockPos{pos.x + 10, pos.y + 20, pos.z + 10});
         ctx.check(at && at->key == tower::kDarkTower, "startAt finds the tower at the main tower");
         auto const* d = gf::landmark::descriptor(tower::kDarkTower);
-        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "twilightforest:progress_knights", "locked behind the knight phantoms");
+        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "gloamingforest:progress_knights", "locked behind the knight phantoms");
     }
     co_return;
 });

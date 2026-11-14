@@ -90,7 +90,7 @@ std::vector<std::string_view> concat(std::vector<std::string_view> a, std::vecto
 
 /// Java 1.21.1's humanoid armour of one slot ("_helmet", ...): the six armour materials, plus the
 /// turtle shell for the head. Only armour: carved pumpkins, skulls and mob heads (Bedrock's other
-/// humanoid wearables) are no armour in Java's tags; TF's data adds TF's armour to these tags.
+/// humanoid wearables) are no armour in Java's tags; upstream's data adds upstream's armour to these tags.
 std::vector<std::string_view> armorIds(std::string_view suffix) {
     std::vector<std::string_view> out;
     for (std::string_view m : {"leather", "chainmail", "golden", "iron", "diamond", "netherite"}) out.push_back(stored(std::string(m) + std::string(suffix)));
@@ -285,7 +285,7 @@ Rules buildRules() {
 
     // ---- mining ------------------------------------------------------------------------------------
     // Bedrock's native tags hold the vanilla blocks; the includes are Java 1.21.1's (they bring the
-    // data members TF adds to those tags, as Java's nesting does)
+    // data members upstream adds to those tags, as Java's nesting does)
     block("minecraft:mineable/pickaxe",
           {.native  = {"minecraft:is_pickaxe_item_destructible"},
            .include = {"minecraft:stone_buttons", "minecraft:walls", "minecraft:shulker_boxes", "minecraft:anvil", "minecraft:cauldrons", "minecraft:rails"}});
@@ -396,7 +396,7 @@ Rules buildRules() {
 
     // ---- structures --------------------------------------------------------------------------------
     // Minecraft 1.21.1's data/minecraft/tags/worldgen/structure (every tag file), by Java structure id:
-    // /locate and the structure HolderSets of TF's data name them (none generates in the Twilight
+    // /locate and the structure HolderSets of upstream's data name them (none generates in the Gloaming
     // Forest: Java finds none there)
     structure("minecraft:cats_spawn_as_black", {.ids = {"swamp_hut"}});
     structure("minecraft:cats_spawn_in", {.ids = {"swamp_hut"}});
@@ -423,8 +423,8 @@ Rules buildRules() {
     structure("minecraft:village", {.ids = {"village_plains", "village_desert", "village_savanna", "village_snowy", "village_taiga"}});
 
     // ---- NeoForge common tags (c:) -----------------------------------------------------------------
-    // TF's data only adds TF entries to c: tags (replace: false); the vanilla members are NeoForge's
-    // (21.1, data/c/tags), given here with Bedrock ids. Every c: tag TF's data and code reference.
+    // upstream's data only adds upstream entries to c: tags (replace: false); the vanilla members are NeoForge's
+    // (21.1, data/c/tags), given here with Bedrock ids. Every c: tag upstream's data and code reference.
     // ores and the ground they sit in
     both("c:ores/coal", {.include = {"minecraft:coal_ores"}});
     both("c:ores/copper", {.include = {"minecraft:copper_ores"}});

@@ -1,0 +1,59 @@
+{
+  "parent": "gloamingforest:beanstalk",
+  "criteria": {
+    "giant": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:giant_miner"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "pickaxe": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:magic_beans"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.giants.desc",
+      "with": [
+        {
+          "translate": "entity.gloamingforest.giant_miner"
+        },
+        {
+          "translate": "item.gloamingforest.giant_pickaxe"
+        }
+      ]
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:giant_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.giants"
+    }
+  },
+  "requirements": [
+    [
+      "giant"
+    ],
+    [
+      "pickaxe"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,5 +1,5 @@
 {
-  "about": "U28 aurora: refinements of the baseline (tools/sounds/baseline/aurora.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's; as in TF the ice cores, the Snow Guardian and the Snow Queen share the ice files. The ice crackles: sparse frosty clicks and icy pings over a faint cold glimmer; a hit is a pair of hard ice knocks with a splintering crackle; a death is a shatter: a crunch of breaking ice, a spray of falling shards and a fading glassy ring.",
+  "about": "U28 aurora: refinements of the baseline (tools/sounds/baseline/aurora.json). Original sound designs; upstream's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay upstream's; as in upstream the ice cores, the Snow Guardian and the Snow Queen share the ice files. The ice crackles: sparse frosty clicks and icy pings over a faint cold glimmer; a hit is a pair of hard ice knocks with a splintering crackle; a death is a shatter: a crunch of breaking ice, a spray of falling shards and a fading glassy ring.",
   "patches": {
     "ice/crackle": {
       "about": "Ice crackle: frosty clicks and pings over a faint glimmer.",

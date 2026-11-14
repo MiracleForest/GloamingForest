@@ -2,17 +2,17 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:knight_phantom",
+      "identifier": "gloamingforest:knight_phantom",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:charging": {
+        "gloamingforest:charging": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:formation": {
+        "gloamingforest:formation": {
           "type": "int",
           "range": [
             0,
@@ -21,7 +21,7 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:number": {
+        "gloamingforest:number": {
           "type": "int",
           "range": [
             0,
@@ -30,12 +30,12 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:guarding": {
+        "gloamingforest:guarding": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:dying_visible": {
+        "gloamingforest:dying_visible": {
           "type": "bool",
           "default": true,
           "client_sync": true
@@ -45,7 +45,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "knight_phantom",
           "boss",
           "monster",

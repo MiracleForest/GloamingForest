@@ -1,10 +1,10 @@
 #pragma once
 
-// U14 (progression): TF's 45 advancements, their criteria engine, the biome restrictions and
+// U14 (progression): upstream's 45 advancements, their criteria engine, the biome restrictions and
 // their enforcement, the advancement screen and toasts. Internal header of the unit.
 //
 // The progression store and the trigger bus are F10's (feature/progression/Progression.h); this
-// unit loads TF's advancement JSON (data/twilightforest/advancement/*.json), listens to every
+// unit loads upstream's advancement JSON (data/gloamingforest/advancement/*.json), listens to every
 // trigger the criteria name and grants the criteria through progression::grant.
 
 #include <cstdint>
@@ -36,12 +36,12 @@ enum class Frame { Task, Goal, Challenge };
 
 struct Criterion {
     std::string name;
-    std::string trigger;    ///< "minecraft:inventory_changed", "twilightforest:hurt_boss", ...
+    std::string trigger;    ///< "minecraft:inventory_changed", "gloamingforest:hurt_boss", ...
     Json        conditions; ///< the criterion's "conditions" object
 };
 
 struct Advancement {
-    std::string              id;      ///< "twilightforest:progress_naga"
+    std::string              id;      ///< "gloamingforest:progress_naga"
     std::string              parent;  ///< "" for the root
     bool                     hasDisplay = false;
     std::string              titleKey, descKey; ///< the components' translation keys
@@ -60,11 +60,11 @@ struct Advancement {
     int                      experience = 0;    ///< rewards.experience
 };
 
-/// The loaded advancements (TF's 45; empty before the mod dir is known), in display order.
+/// The loaded advancements (upstream's 45; empty before the mod dir is known), in display order.
 [[nodiscard]] std::vector<Advancement> const& advancements();
 [[nodiscard]] Advancement const* find(std::string const& id);
 
-/// The biome restrictions (twilightforest:restrictions), by biome id.
+/// The biome restrictions (gloamingforest:restrictions), by biome id.
 [[nodiscard]] std::map<std::string, core::progression::Restriction> const& restrictions();
 /// The restriction a player in `biome` is under (none once it is lifted).
 [[nodiscard]] core::progression::Restriction const* restrictionFor(Player const& player, std::string const& biome);
@@ -117,7 +117,7 @@ struct Progress {
 /// An advancement text component in `player`'s language (the arguments translated too).
 [[nodiscard]] std::string textFor(Player const& player, Json const& component);
 /// The icon as item JSON (game::items::toJson): the item with its components stored as item data
-/// under the component ids (`twilightforest:e115_variant`, ...), so the icon keeps its variant.
+/// under the component ids (`gloamingforest:e115_variant`, ...), so the icon keeps its variant.
 [[nodiscard]] Json iconItem(Advancement const& adv);
 
 /// Opens the advancement screen (native for companions, the form otherwise).

@@ -3,17 +3,17 @@
 // Contract "landmark" (header owned by F0, implemented by F6). The pure grid maths are in
 // core/landmark/Landmark.h.
 //
-// Landmarks are TF's structures with a center on the landmark grid (LegacyLandmarkPlacements,
+// Landmarks are upstream's structures with a center on the landmark grid (LegacyLandmarkPlacements,
 // LandmarkGridPlacement / AvoidLandmarkGridPlacement). F6 reserves every site and keeps the starts
 // persistent; the structure units (U18-U30) register a generator for their key:
 //
-//     gf::landmark::registerGenerator("twilightforest:lich_tower", {
+//     gf::landmark::registerGenerator("gloamingforest:lich_tower", {
 //         .layout = [](gf::landmark::LayoutContext& ctx) { ctx.pieces.push_back(...); return true; },
 //     });
 //     if (gf::landmark::isProtectedFor(player, pos)) ...;              // ProgressionEvents
-//     gf::landmark::setConquered(dim, pos, "twilightforest:lich_tower", true);  // structure_cleared
+//     gf::landmark::setConquered(dim, pos, "gloamingforest:lich_tower", true);  // structure_cleared
 //
-// Protection runs at interactions priority Highest (F6). Descriptors carry the data of TF's
+// Protection runs at interactions priority Highest (F6). Descriptors carry the data of upstream's
 // structure records: icon, lock advancements, hint, decoration clearance, controlled spawns
 // (dark tower floors included), spawn overrides, conquerable.
 
@@ -45,20 +45,20 @@ struct ChunkPos {
     friend bool operator==(ChunkPos const&, ChunkPos const&) = default;
 };
 
-/// TF's per-structure record (DecorationClearance, StructureHints, ControlledSpawns,
+/// upstream's per-structure record (DecorationClearance, StructureHints, ControlledSpawns,
 /// ProgressionStructure, ConquerableStructure, the structure's map icon).
 struct Descriptor {
-    std::string              key;                  ///< "twilightforest:lich_tower"
+    std::string              key;                  ///< "gloamingforest:lich_tower"
     std::string              icon;                 ///< map decoration id
     std::vector<std::string> lockAdvancements;     ///< required advancements (progression lock)
-    std::string              hintBookKey;          ///< "twilightforest.book.lich_tower" (F6 owns the book keys)
+    std::string              hintBookKey;          ///< "gloamingforest.book.lich_tower" (F6 owns the book keys)
     bool                     conquerable  = false;
     bool                     surfaceDecorationsAllowed = false; ///< DecorationClearance
     bool                     undergroundDecorationsAllowed = true;
     int                      clearanceChunks = 0;
     Json                     controlledSpawns;     ///< per floor / area spawn lists
     Json                     spawnOverrides;
-    Json                     extra;                ///< anything else of the TF record
+    Json                     extra;                ///< anything else of the upstream record
 };
 
 /// A placed (or reserved) landmark start, persisted per world.
@@ -106,12 +106,12 @@ void registerGenerator(std::string const& key, Generator generator);
 void setConquered(int dimension, BlockPos const& pos, std::string const& key, bool conquered);
 /// Whether `pos` is protected against `player` (locked landmark, ProgressionEvents rules).
 [[nodiscard]] bool isProtectedFor(Player const& player, BlockPos const& pos);
-/// Gives `player` the hint book of `start` and spawns a kobold carrying it (TF's hint system),
+/// Gives `player` the hint book of `start` and spawns a kobold carrying it (upstream's hint system),
 /// rate limited; true when a hint was shown.
 bool trySpawnHint(Player& player, Start const& start, BlockPos const& pos);
 /// Generates landmark `key` at `pos` now (commands, saplings: hollow_oak_sapling -> hollow_tree).
 bool generateAt(std::string const& key, BlockSource& region, BlockPos const& pos);
-/// Creates (and generates) a start of `key` at `pos` without the grid (selftests, /tf place).
+/// Creates (and generates) a start of `key` at `pos` without the grid (selftests, /gloamingforest place).
 [[nodiscard]] std::optional<Start> forceStart(std::string const& key, GlobalPos const& pos);
 /// The tfEnforcedProgression gamerule (locked landmarks and biomes enforced).
 [[nodiscard]] bool enforcedProgression();

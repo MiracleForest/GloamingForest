@@ -1,7 +1,7 @@
 {
-  "block.twilightforest.drying_rack.add_item": {
+  "block.gloamingforest.drying_rack.add_item": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.drying_rack.add_item",
+    "subtitle": "subtitles.gloamingforest.block.drying_rack.add_item",
     "sounds": [
       {
         "name": "sounds/block/itemframe/add_item1"
@@ -17,9 +17,9 @@
       }
     ]
   },
-  "block.twilightforest.drying_rack.remove_item": {
+  "block.gloamingforest.drying_rack.remove_item": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.drying_rack.remove_item",
+    "subtitle": "subtitles.gloamingforest.block.drying_rack.remove_item",
     "sounds": [
       {
         "name": "sounds/block/itemframe/add_item1"

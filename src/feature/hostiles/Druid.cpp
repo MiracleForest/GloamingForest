@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/SkeletonDruid.java
-//   src/main/java/twilightforest/entity/projectile/NatureBolt.java
-//   src/main/java/twilightforest/entity/projectile/TFThrowable.java
-//   src/main/java/twilightforest/util/entities/EntityUtil.java (canDestroyBlock)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/SkeletonDruid.java
+//   src/main/java/gloamingforest/entity/projectile/NatureBolt.java
+//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java (canDestroyBlock)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -108,7 +108,7 @@ bool canReplaceBlock(BlockSource& region, BlockPos const& pos) {
     float hardness = block.getBlockType().getDestroySpeed();
     if (hardness < 0.0F || hardness >= 50.0F) return false;
     if (!mobs::stableDestination(region, BlockPos{pos.x, pos.y + 1, pos.z})) return false; // isSolidRender
-    return gf::tags::has(gf::tags::Registry::Block, "twilightforest:druid_projectile_replaceable", gf::game::blockId(block));
+    return gf::tags::has(gf::tags::Registry::Block, "gloamingforest:druid_projectile_replaceable", gf::game::blockId(block));
 }
 
 bool boltHitBlock(Actor& bolt, BlockPos const& pos, int) {
@@ -134,7 +134,7 @@ bool boltHitEntity(Actor& bolt, Actor& target) {
     Actor* owner = gf::projectile::ext::owner(bolt);
     if (isLiving(target) && (!owner || (&target != owner && &target != owner->getVehicle()))) {
         // TFDamageTypes.LEAF_BRAIN, indirect: the bolt, by its owner
-        if (gf::combat::hurt(target, 2.0F, "twilightforest:leaf_brain", owner, &bolt) && difficulty() != 0) {
+        if (gf::combat::hurt(target, 2.0F, "gloamingforest:leaf_brain", owner, &bolt) && difficulty() != 0) {
             int seconds = difficulty() == 3 ? 7 : 3;
             addEffect(target, Effect::Poison, seconds * 20, 0);
         }
@@ -150,7 +150,7 @@ void markBaby(Actor& druid) { ge::data(druid, "hostiles:baby") = true; }
 void performRangedAttack(Mob& druid, Actor& target) {
     if (!holdsHoe(druid)) return; // a stick: no attack (and Bedrock's druid holds no bow)
     auto& r = randomOf(druid);
-    playSound(druid, "entity.twilightforest.skeleton_druid.shoot", 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
+    playSound(druid, "entity.gloamingforest.skeleton_druid.shoot", 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
     auto   tp = target.getFeetPos();
     auto   p  = druid.getFeetPos();
     double tx = tp.x - p.x;

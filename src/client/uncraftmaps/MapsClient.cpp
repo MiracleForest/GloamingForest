@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/network/MagicMapPacket.java (client handler)
-//   src/main/java/twilightforest/network/MazeMapPacket.java (client handler)
-//   src/main/java/twilightforest/client/renderer/map/ConqueredMapIconRenderer.java
-//   src/main/java/twilightforest/client/renderer/map/MagicMapPlayerIconRenderer.java
-//   src/main/java/twilightforest/init/TFMapDecorations.java (the icons)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/network/MagicMapPacket.java (client handler)
+//   src/main/java/gloamingforest/network/MazeMapPacket.java (client handler)
+//   src/main/java/gloamingforest/client/renderer/map/ConqueredMapIconRenderer.java
+//   src/main/java/gloamingforest/client/renderer/map/MagicMapPlayerIconRenderer.java
+//   src/main/java/gloamingforest/init/TFMapDecorations.java (the icons)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's map icons with the client mod: the 15 TFMapDecorations textures, the magic map's landmark
-// icons from "uncraftmaps.magic_map" drawn over the map by F12 with TF's two decoration renderers
+// upstream's map icons with the client mod: the 15 TFMapDecorations textures, the magic map's landmark
+// icons from "uncraftmaps.magic_map" drawn over the map by F12 with upstream's two decoration renderers
 // (a conquered landmark gets the red X; the player icons lie on top), and the vanilla stand-ins the
 // server adds for vanilla clients removed from this client's copy of the map (they would double the
-// TF icons). The maze map's yCenter / ore flag (MazeMapPacket) are kept for the tooltip.
+// upstream icons). The maze map's yCenter / ore flag (MazeMapPacket) are kept for the tooltip.
 #ifdef GF_CLIENT
 
 #include <map>
@@ -51,7 +51,7 @@ constexpr char const* kDecorations[] = {
 
 struct State {
     std::mutex                                           mutex;
-    std::map<std::int64_t, std::vector<Json>>           magic; ///< map id -> TF decorations
+    std::map<std::int64_t, std::vector<Json>>           magic; ///< map id -> upstream decorations
     std::map<std::int64_t, std::pair<int, bool>>        maze;  ///< map id -> (yCenter, ore)
 };
 State& st() {
@@ -66,7 +66,7 @@ MapItemSavedData* clientMap(std::int64_t id) {
     return level ? level->getMapSavedData(ActorUniqueID{id}) : nullptr;
 }
 
-/// Every client tick: the TF decorations of each magic map with the player icons on top, and the
+/// Every client tick: the upstream decorations of each magic map with the player icons on top, and the
 /// vanilla stand-ins (Other-tracked decorations) taken off this client's copy.
 void tick() {
     std::map<std::int64_t, std::vector<Json>> magic;
@@ -99,7 +99,7 @@ void tick() {
 class MapsClientModule {
 public:
     void install() {
-        for (auto const* name : kDecorations) maps::setIcon(std::string("twilightforest:") + name, std::string("textures/twilightforest/map/decorations/") + name);
+        for (auto const* name : kDecorations) maps::setIcon(std::string("gloamingforest:") + name, std::string("textures/gloamingforest/map/decorations/") + name);
         net::client::on("uncraftmaps.magic_map", [](Json const& msg) {
             auto id = msg.value("map", std::int64_t{0});
             std::vector<Json> list;

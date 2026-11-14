@@ -1,7 +1,7 @@
 {
-  "twilightforest:environment.twilightforest.acid_rain": {
+  "gloamingforest:environment.gloamingforest.acid_rain": {
     "category": "ambient",
-    "subtitle": "subtitles.twilightforest.environment.acid_rain",
+    "subtitle": "subtitles.gloamingforest.environment.acid_rain",
     "sounds": [
       {
         "event": "block.fire.extinguish"

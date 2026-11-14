@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:snow_queen_trophy",
+      "identifier": "gloamingforest:snow_queen_trophy",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:snow_queen_trophy.name"
+        "value": "tile.gloamingforest:snow_queen_trophy.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:snow_queen_trophy",
+        "block": "gloamingforest:snow_queen_trophy",
         "replace_block_item": true
       },
       "minecraft:wearable": {

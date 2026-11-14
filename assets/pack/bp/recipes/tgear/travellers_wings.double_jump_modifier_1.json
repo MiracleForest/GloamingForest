@@ -2,7 +2,7 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shaped": {
     "description": {
-      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_wings/double_jump_modifier_1"
+      "identifier": "gloamingforest:add_modifier_to_travellers_gear/travellers_wings/double_jump_modifier_1"
     },
     "tags": [
       "crafting_table"
@@ -24,16 +24,16 @@
         "item": "minecraft:string"
       },
       "W": {
-        "item": "twilightforest:travellers_wings"
+        "item": "gloamingforest:travellers_wings"
       }
     },
     "unlock": [
       {
-        "item": "twilightforest:travellers_wings"
+        "item": "gloamingforest:travellers_wings"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_wings"
+      "item": "gloamingforest:travellers_wings"
     }
   }
 }

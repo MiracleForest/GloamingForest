@@ -1,16 +1,16 @@
 {
-  "twilightforest:block.twilightforest.core.time": {
+  "gloamingforest:block.gloamingforest.core.time": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.core.time",
+    "subtitle": "subtitles.gloamingforest.block.core.time",
     "sounds": [
       {
         "event": "block.comparator.click"
       }
     ]
   },
-  "twilightforest:block.twilightforest.core.transformation": {
+  "gloamingforest:block.gloamingforest.core.transformation": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.core.transformation",
+    "subtitle": "subtitles.gloamingforest.block.core.transformation",
     "sounds": [
       {
         "event": "block.note_block.harp"

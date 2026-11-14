@@ -1,35 +1,35 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleFoundation48Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleRoof48CrenellatedComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleStairTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleLargeTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMazeTower13Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDamagedTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleWreckedTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleFoundation13Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleFoundation13ComponentThorns.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBellFoundation21Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceSideTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceBottomTowerComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleEntranceStairsComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleBellTower21Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleRoof13ConicalComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleRoof13CrenellatedComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleRoof13PeakedComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleRoof9CrenellatedComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonStepsComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonExitComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleDungeonForgeRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/FinalCastleMuralComponent.java
-//   src/main/java/twilightforest/world/components/structures/finalcastle/StructureTFDecoratorCastle.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleFoundation48Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleRoof48CrenellatedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleStairTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleLargeTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMazeTower13Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDamagedTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleWreckedTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleFoundation13Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleFoundation13ComponentThorns.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBellFoundation21Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceSideTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceBottomTowerComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleEntranceStairsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBellTower21Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleRoof13ConicalComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleRoof13CrenellatedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleRoof13PeakedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleRoof9CrenellatedComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonStepsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonExitComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonForgeRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleMuralComponent.java
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/StructureTFDecoratorCastle.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -62,58 +62,58 @@ using ::gf::structure::bases::Decorator;
 using ::gf::structure::bases::PieceList;
 using ::gf::structure::bases::TowerWing;
 
-inline constexpr char kFinalCastle[] = "twilightforest:final_castle";
+inline constexpr char kFinalCastle[] = "gloamingforest:final_castle";
 
 namespace type {
-inline constexpr char Main[]            = "twilightforest:TFFCMain";
-inline constexpr char Foundation48[]    = "twilightforest:TFFCToF48";
-inline constexpr char Roof48[]          = "twilightforest:TFFCRo48Cr";
-inline constexpr char Gazebo[]          = "twilightforest:TFFCBoGaz";
-inline constexpr char StairTower[]      = "twilightforest:TFFCStTo";
-inline constexpr char LargeTower[]      = "twilightforest:TFFCLaTo";
-inline constexpr char MazeTower[]       = "twilightforest:TFFCSiTo";
-inline constexpr char Bridge[]          = "twilightforest:TFFCBri";
-inline constexpr char Damaged[]         = "twilightforest:TFFCDamT";
-inline constexpr char Wrecked[]         = "twilightforest:TFFCWrT";
-inline constexpr char Foundation13[]    = "twilightforest:TFFCToF13";
-inline constexpr char Thorns[]          = "twilightforest:TFFCFTh21";
-inline constexpr char EntranceTower[]   = "twilightforest:TFFCEnTo";
-inline constexpr char EntranceSide[]    = "twilightforest:TFFCEnSiTo";
-inline constexpr char EntranceBottom[]  = "twilightforest:TFFCEnBoTo";
-inline constexpr char EntranceStairs[]  = "twilightforest:TFFCEnSt";
-inline constexpr char BellTower[]       = "twilightforest:TFFCBelTo";
-inline constexpr char BellFoundation[]  = "twilightforest:TFFCBeF21";
-inline constexpr char Roof13Conical[]   = "twilightforest:TFFCRo13Con";
-inline constexpr char Roof13Cren[]      = "twilightforest:TFFCRo13Cr";
-inline constexpr char Roof13Peaked[]    = "twilightforest:TFFCRo13Pk";
-inline constexpr char Roof9Cren[]       = "twilightforest:TFFCRo9Cr";
-inline constexpr char DungeonSteps[]    = "twilightforest:TFFCDunSt";
-inline constexpr char DungeonEntrance[] = "twilightforest:TFFCDunEn";
-inline constexpr char DungeonRoom[]     = "twilightforest:TFFCDunR31";
-inline constexpr char DungeonExit[]     = "twilightforest:TFFCDunEx";
-inline constexpr char ForgeRoom[]       = "twilightforest:TFFCDunBoR";
-inline constexpr char Mural[]           = "twilightforest:TFFCMur";
+inline constexpr char Main[]            = "gloamingforest:TFFCMain";
+inline constexpr char Foundation48[]    = "gloamingforest:TFFCToF48";
+inline constexpr char Roof48[]          = "gloamingforest:TFFCRo48Cr";
+inline constexpr char Gazebo[]          = "gloamingforest:TFFCBoGaz";
+inline constexpr char StairTower[]      = "gloamingforest:TFFCStTo";
+inline constexpr char LargeTower[]      = "gloamingforest:TFFCLaTo";
+inline constexpr char MazeTower[]       = "gloamingforest:TFFCSiTo";
+inline constexpr char Bridge[]          = "gloamingforest:TFFCBri";
+inline constexpr char Damaged[]         = "gloamingforest:TFFCDamT";
+inline constexpr char Wrecked[]         = "gloamingforest:TFFCWrT";
+inline constexpr char Foundation13[]    = "gloamingforest:TFFCToF13";
+inline constexpr char Thorns[]          = "gloamingforest:TFFCFTh21";
+inline constexpr char EntranceTower[]   = "gloamingforest:TFFCEnTo";
+inline constexpr char EntranceSide[]    = "gloamingforest:TFFCEnSiTo";
+inline constexpr char EntranceBottom[]  = "gloamingforest:TFFCEnBoTo";
+inline constexpr char EntranceStairs[]  = "gloamingforest:TFFCEnSt";
+inline constexpr char BellTower[]       = "gloamingforest:TFFCBelTo";
+inline constexpr char BellFoundation[]  = "gloamingforest:TFFCBeF21";
+inline constexpr char Roof13Conical[]   = "gloamingforest:TFFCRo13Con";
+inline constexpr char Roof13Cren[]      = "gloamingforest:TFFCRo13Cr";
+inline constexpr char Roof13Peaked[]    = "gloamingforest:TFFCRo13Pk";
+inline constexpr char Roof9Cren[]       = "gloamingforest:TFFCRo9Cr";
+inline constexpr char DungeonSteps[]    = "gloamingforest:TFFCDunSt";
+inline constexpr char DungeonEntrance[] = "gloamingforest:TFFCDunEn";
+inline constexpr char DungeonRoom[]     = "gloamingforest:TFFCDunR31";
+inline constexpr char DungeonExit[]     = "gloamingforest:TFFCDunEx";
+inline constexpr char ForgeRoom[]       = "gloamingforest:TFFCDunBoR";
+inline constexpr char Mural[]           = "gloamingforest:TFFCMur";
 } // namespace type
 
 namespace id {
-inline constexpr char YellowRune[]  = "twilightforest:yellow_castle_rune_brick";
-inline constexpr char BlueRune[]    = "twilightforest:blue_castle_rune_brick";
-inline constexpr char PinkRune[]    = "twilightforest:pink_castle_rune_brick";
-inline constexpr char VioletRune[]  = "twilightforest:violet_castle_rune_brick";
-inline constexpr char YellowDoor[]  = "twilightforest:yellow_castle_door";
-inline constexpr char BlueDoor[]    = "twilightforest:blue_castle_door";
-inline constexpr char PinkDoor[]    = "twilightforest:pink_castle_door";
-inline constexpr char VioletDoor[]  = "twilightforest:violet_castle_door";
-inline constexpr char PinkField[]   = "twilightforest:pink_force_field";
-inline constexpr char BlueField[]   = "twilightforest:blue_force_field";
-inline constexpr char GreenField[]  = "twilightforest:green_force_field";
-inline constexpr char VioletField[] = "twilightforest:violet_force_field";
-inline constexpr char Deadrock[]    = "twilightforest:deadrock";
-inline constexpr char GazeboPool[]     = "twilightforest:final_castle/temp/gazebo";
-inline constexpr char LargeTowerPool[] = "twilightforest:final_castle/temp/large_tower";
-inline constexpr char BellTowerPool[]  = "twilightforest:final_castle/temp/bell_tower";
-/// The jigsaw names the hosts select (TF: "twilightforest:final_castle/final_boss", ".../large_tower",
-/// ".../room"; GloamingForest names them in its own namespace, as assemble refuses twilightforest:
+inline constexpr char YellowRune[]  = "gloamingforest:yellow_castle_rune_brick";
+inline constexpr char BlueRune[]    = "gloamingforest:blue_castle_rune_brick";
+inline constexpr char PinkRune[]    = "gloamingforest:pink_castle_rune_brick";
+inline constexpr char VioletRune[]  = "gloamingforest:violet_castle_rune_brick";
+inline constexpr char YellowDoor[]  = "gloamingforest:yellow_castle_door";
+inline constexpr char BlueDoor[]    = "gloamingforest:blue_castle_door";
+inline constexpr char PinkDoor[]    = "gloamingforest:pink_castle_door";
+inline constexpr char VioletDoor[]  = "gloamingforest:violet_castle_door";
+inline constexpr char PinkField[]   = "gloamingforest:pink_force_field";
+inline constexpr char BlueField[]   = "gloamingforest:blue_force_field";
+inline constexpr char GreenField[]  = "gloamingforest:green_force_field";
+inline constexpr char VioletField[] = "gloamingforest:violet_force_field";
+inline constexpr char Deadrock[]    = "gloamingforest:deadrock";
+inline constexpr char GazeboPool[]     = "gloamingforest:final_castle/temp/gazebo";
+inline constexpr char LargeTowerPool[] = "gloamingforest:final_castle/temp/large_tower";
+inline constexpr char BellTowerPool[]  = "gloamingforest:final_castle/temp/bell_tower";
+/// The jigsaw names the hosts select (upstream: "gloamingforest:final_castle/final_boss", ".../large_tower",
+/// ".../room"; GloamingForest names them in its own namespace, as assemble refuses gloamingforest:
 /// strings that are no registry id).
 inline constexpr char FinalBossJigsaw[]  = "gf:final_castle/final_boss";
 inline constexpr char LargeTowerJigsaw[] = "gf:final_castle/large_tower";

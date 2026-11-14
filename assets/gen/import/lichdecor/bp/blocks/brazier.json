@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:brazier",
+      "identifier": "gloamingforest:brazier",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:half": ["lower", "upper"],
-        "twilightforest:light": ["off", "dim", "half", "bright", "full"]
+        "gloamingforest:half": ["lower", "upper"],
+        "gloamingforest:light": ["off", "dim", "half", "bright", "full"]
       }
     },
     "components": {
@@ -28,25 +28,25 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'dim'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'dim'",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'half'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'half'",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'bright'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'bright'",
         "components": {
           "minecraft:light_emission": 9
         }
       },
       {
-        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'full'",
+        "condition": "q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:light') == 'full'",
         "components": {
           "minecraft:light_emission": 12
         }

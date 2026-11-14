@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.upper_goblin_knight.base": {
+    "animation.gloamingforest.upper_goblin_knight.base": {
       "loop": true,
       "bones": {
         "head": {

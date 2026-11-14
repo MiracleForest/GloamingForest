@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/7x7/ritual",
+  "id": "gloamingforest:lich_tower/7x7/ritual",
   "size": [9, 9, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},

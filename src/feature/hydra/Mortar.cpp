@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/HydraMortar.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/HydraMortar.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:hydra_mortar, a ThrowableProjectile simulated by F8's projectile kit (gravity
+// gloamingforest:hydra_mortar, a ThrowableProjectile simulated by F8's projectile kit (gravity
 // 0.05, drag 0.99). Its own state (fuse, blasting, on ground, the owner that a reflection changes)
 // is kept in data(mortar, "hydra_mortar"). A mortar landing on a block's top stays on the ground
 // and slides on with its horizontal speed (Java's ThrowableProjectile keeps moving it and never
@@ -80,7 +80,7 @@ Actor* ownerOf(Actor& mortar) {
     return uid ? fe::actorById(uid) : nullptr;
 }
 
-/// Entity#is: a TF part "is" its parent too (HydraPart#is).
+/// Entity#is: an upstream part "is" its parent too (HydraPart#is).
 bool sameEntity(Actor& a, Actor* b) {
     if (!b) return false;
     if (&a == b) return true;
@@ -92,7 +92,7 @@ bool sameEntity(Actor& a, Actor* b) {
 std::atomic_ref<float> resistanceOf(Block const& block) { return std::atomic_ref<float>(const_cast<Block&>(block).mDirectData->mExplosionResistance); }
 
 /// HydraMortar#getBlockExplosionResistance of a blasting mortar: min(0.8, resistance) for every
-/// block but #twilightforest:common_protections, for the duration of its own explosion. The
+/// block but #gloamingforest:common_protections, for the duration of its own explosion. The
 /// permutations in reach of the blast (power 4: rays end within 7 blocks) hold the capped value
 /// while Level::explode runs and get their own back afterwards.
 class BlastingResistance {
@@ -107,7 +107,7 @@ public:
                     if (y < region.getMinHeight() || y >= region.getMaxHeight() || !region.hasChunksAt(p, 0, false)) continue;
                     for (Block const* b : {&region.getBlock(p), &region.getLiquidBlock(p)}) {
                         if (!seen.insert(b).second || b->isAir()) continue;
-                        if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:common_protections", game::blockId(*b))) continue;
+                        if (gf::tags::has(gf::tags::Registry::Block, "gloamingforest:common_protections", game::blockId(*b))) continue;
                         float own = resistanceOf(*b).load();
                         if (own <= kCap) continue;
                         mSaved.emplace_back(b, own);
@@ -153,7 +153,7 @@ void detonate(Actor& mortar) {
         bool hydra = e->getTypeName() == kHydra || (part && ge::ext::parentOf(*e) && ge::ext::parentOf(*e)->getTypeName() == kHydra);
         // every entity in reach (items, vehicles, other mortars: their hurt reflects them)
         auto id = fe::uidOf(*e);
-        if ((!e->isFireImmune() || hydra) && gf::combat::hurt(*e, kDirectDamage, "twilightforest:hydra_mortar", owner, &mortar)) {
+        if ((!e->isFireImmune() || hydra) && gf::combat::hurt(*e, kDirectDamage, "gloamingforest:hydra_mortar", owner, &mortar)) {
             if (!part && (e = fe::actorById(id)) && e->isAlive()) e->setOnFire(kBurnSeconds, true);
             ++hits;
         }

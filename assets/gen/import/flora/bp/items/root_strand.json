@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:root_strand",
+      "identifier": "gloamingforest:root_strand",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:root_strand.name"
+        "value": "tile.gloamingforest:root_strand.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:root_strand",
+        "block": "gloamingforest:root_strand",
         "replace_block_item": true
       }
     }

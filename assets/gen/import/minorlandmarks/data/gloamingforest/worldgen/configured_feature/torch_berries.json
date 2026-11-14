@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:underground_plants",
+  "config": {
+    "state": {
+      "Name": "gloamingforest:torchberry_plant",
+      "Properties": {
+        "has_torchberries": "true"
+      }
+    }
+  }
+}

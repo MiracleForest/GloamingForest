@@ -1,8 +1,8 @@
 {
-  "twilightforest:stronghold_shield": {
+  "gloamingforest:stronghold_shield": {
     "sound": "metal"
   },
-  "twilightforest:trophy_pedestal": {
+  "gloamingforest:trophy_pedestal": {
     "sound": "stone"
   }
 }

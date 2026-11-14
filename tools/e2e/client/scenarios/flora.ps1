@@ -4,9 +4,9 @@
 # cicada jar notes, the firefly particle spawner's wandering fireflies), the bushes in all four ages
 # and with snow, the fallen leaves piles and the huge lily pad on water, then runs the server's
 # flora selftests on the integrated server.
-# Compare with TF's textures (textures/block/*berry*, *oreberry*, fallen_leaves, moss/clover patch,
+# Compare with upstream's textures (textures/block/*berry*, *oreberry*, fallen_leaves, moss/clover patch,
 # mayapple, fiddlehead, mushgloom, root(s), liveroot, torchberry_plant, huge_lily_pad, jar_*,
-# entity/firefly-tiny, cicada-model, moonworm) and TF's critter models.
+# entity/firefly-tiny, cicada-model, moonworm) and upstream's critter models.
 # remote-vanilla: the same garden from a vanilla client (static critter models, no client particles).
 # Screenshots: out/flora*/{garden-day,garden-night,bushes,critters-1,critters-2,jars-1,jars-2,spawner,leaves,lily,selftest}.png
 Save-Screenshot 'hud' | Out-Null
@@ -22,42 +22,42 @@ Invoke-Chat "/fill $($x - 2) $y $($z - 2) $($x + 22) $($y + 6) $($z + 14) air"
 # row 0: the berry bushes, ages 0..3
 $bushes = 'raspberry_bush', 'blueberry_bush', 'blackberry_bush', 'maloberry_bush'
 for ($i = 0; $i -lt $bushes.Count; $i++) {
-    for ($a = 0; $a -le 3; $a++) { Invoke-Chat "/setblock $($x + $i * 5 + $a) $y $z twilightforest:$($bushes[$i]) [`"twilightforest:age`"=$a]" }
+    for ($a = 0; $a -le 3; $a++) { Invoke-Chat "/setblock $($x + $i * 5 + $a) $y $z gloamingforest:$($bushes[$i]) [`"gloamingforest:age`"=$a]" }
 }
 # row 2: dark tower bushes on netherrack, oreberries on stone (ripe), one snowy bush
 $dark = 'blightberry_bush', 'duskberry_bush', 'skyberry_bush', 'stingberry_bush'
 for ($i = 0; $i -lt $dark.Count; $i++) {
     Invoke-Chat "/setblock $($x + $i * 2) $($y - 1) $($z + 2) netherrack"
-    Invoke-Chat "/setblock $($x + $i * 2) $y $($z + 2) twilightforest:$($dark[$i]) [`"twilightforest:age`"=3]"
+    Invoke-Chat "/setblock $($x + $i * 2) $y $($z + 2) gloamingforest:$($dark[$i]) [`"gloamingforest:age`"=3]"
 }
 $ore = 'iron_oreberry', 'gold_oreberry', 'copper_oreberry', 'essence_oreberry'
 for ($i = 0; $i -lt $ore.Count; $i++) {
     Invoke-Chat "/setblock $($x + 10 + $i * 2) $($y - 1) $($z + 2) stone"
-    Invoke-Chat "/setblock $($x + 10 + $i * 2) $y $($z + 2) twilightforest:$($ore[$i]) [`"twilightforest:age`"=3]"
+    Invoke-Chat "/setblock $($x + 10 + $i * 2) $y $($z + 2) gloamingforest:$($ore[$i]) [`"gloamingforest:age`"=3]"
 }
-Invoke-Chat "/setblock $($x + 20) $y $($z + 2) twilightforest:raspberry_bush [`"twilightforest:age`"=1,`"twilightforest:layers`"=3]"
+Invoke-Chat "/setblock $($x + 20) $y $($z + 2) gloamingforest:raspberry_bush [`"gloamingforest:age`"=1,`"gloamingforest:layers`"=3]"
 # row 4: ground plants
 $plants = 'moss_patch', 'clover_patch', 'mayapple', 'fiddlehead', 'mushgloom', 'potted_mayapple', 'potted_fiddlehead', 'potted_mushgloom', 'liveroot_block', 'root', 'huge_water_lily'
-for ($i = 0; $i -lt $plants.Count; $i++) { Invoke-Chat "/setblock $($x + $i * 2) $y $($z + 4) twilightforest:$($plants[$i])" }
-for ($l = 1; $l -le 8; $l++) { Invoke-Chat "/setblock $($x + $l - 1) $y $($z + 6) twilightforest:fallen_leaves [`"twilightforest:layers`"=$l]" }
+for ($i = 0; $i -lt $plants.Count; $i++) { Invoke-Chat "/setblock $($x + $i * 2) $y $($z + 4) gloamingforest:$($plants[$i])" }
+for ($l = 1; $l -le 8; $l++) { Invoke-Chat "/setblock $($x + $l - 1) $y $($z + 6) gloamingforest:fallen_leaves [`"gloamingforest:layers`"=$l]" }
 # hanging plants under a dirt beam
 Invoke-Chat "/fill $($x + 10) $($y + 3) $($z + 6) $($x + 14) $($y + 3) $($z + 6) dirt"
-Invoke-Chat "/setblock $($x + 10) $($y + 2) $($z + 6) twilightforest:root_strand"
-Invoke-Chat "/setblock $($x + 12) $($y + 2) $($z + 6) twilightforest:torchberry_plant [`"twilightforest:has_torchberries`"=true]"
-Invoke-Chat "/setblock $($x + 14) $($y + 2) $($z + 6) twilightforest:torchberry_plant [`"twilightforest:has_torchberries`"=false]"
+Invoke-Chat "/setblock $($x + 10) $($y + 2) $($z + 6) gloamingforest:root_strand"
+Invoke-Chat "/setblock $($x + 12) $($y + 2) $($z + 6) gloamingforest:torchberry_plant [`"gloamingforest:has_torchberries`"=true]"
+Invoke-Chat "/setblock $($x + 14) $($y + 2) $($z + 6) gloamingforest:torchberry_plant [`"gloamingforest:has_torchberries`"=false]"
 # row 8: critters (floor, wall, ceiling) and jars
 $critters = 'firefly', 'cicada', 'moonworm'
 for ($i = 0; $i -lt $critters.Count; $i++) {
-    Invoke-Chat "/setblock $($x + $i * 3) $y $($z + 8) twilightforest:$($critters[$i]) [`"twilightforest:facing`"=`"up`"]"
+    Invoke-Chat "/setblock $($x + $i * 3) $y $($z + 8) gloamingforest:$($critters[$i]) [`"gloamingforest:facing`"=`"up`"]"
     Invoke-Chat "/setblock $($x + $i * 3 + 1) $y $($z + 9) stone"
-    Invoke-Chat "/setblock $($x + $i * 3 + 1) $y $($z + 8) twilightforest:$($critters[$i]) [`"twilightforest:facing`"=`"north`"]"
+    Invoke-Chat "/setblock $($x + $i * 3 + 1) $y $($z + 8) gloamingforest:$($critters[$i]) [`"gloamingforest:facing`"=`"north`"]"
 }
 $jars = 'firefly_jar', 'cicada_jar', 'mason_jar', 'firefly_particle_spawner'
-for ($i = 0; $i -lt $jars.Count; $i++) { Invoke-Chat "/setblock $($x + 12 + $i * 2) $y $($z + 8) twilightforest:$($jars[$i])" }
+for ($i = 0; $i -lt $jars.Count; $i++) { Invoke-Chat "/setblock $($x + 12 + $i * 2) $y $($z + 8) gloamingforest:$($jars[$i])" }
 # the huge lily pad on a pool
 Invoke-Chat "/fill $($x + 18) $($y - 1) $($z + 10) $($x + 21) $($y - 1) $($z + 13) water"
 foreach ($p in @(@(0, 0, 'nw'), @(1, 0, 'ne'), @(0, 1, 'sw'), @(1, 1, 'se'))) {
-    Invoke-Chat "/setblock $($x + 19 + $p[0]) $y $($z + 11 + $p[1]) twilightforest:huge_lily_pad [`"twilightforest:facing`"=`"north`",`"twilightforest:piece`"=`"$($p[2])`"]"
+    Invoke-Chat "/setblock $($x + 19 + $p[0]) $y $($z + 11 + $p[1]) gloamingforest:huge_lily_pad [`"gloamingforest:facing`"=`"north`",`"gloamingforest:piece`"=`"$($p[2])`"]"
 }
 Start-Sleep -Seconds 3
 Invoke-Teleport "/tp @s $($x + 10) $($y + 9) $($z - 7) 0 45"

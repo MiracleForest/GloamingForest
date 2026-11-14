@@ -22,24 +22,24 @@
 #   out/families/families-8-snowloggable.png   the snowloggable close up (its 3 snow layers)
 #   out/families/families-9-sign-editor.png    the native sign editor (client mod: Java's
 #                                           SignEditScreen, the sign drawn with the line on it)
-#   out/families/families-10-tf-woodwork.png   TF's own blocks through the kit: canopy door, sign,
+#   out/families/families-10-tf-woodwork.png   upstream's own blocks through the kit: canopy door, sign,
 #                                           wall sign, hanging and wall hanging sign, chest, trapped
-#                                           chest double, trapdoor, button (TF's textures)
+#                                           chest double, trapdoor, button (upstream's textures)
 #   out/families/families-11-tf-plants.png  a grown blackberry bush with 2 snow layers, a young
-#                                           blueberry bush with 1, TF's leaves (time, mining, sorting,
+#                                           blueberry bush with 1, upstream's leaves (time, mining, sorting,
 #                                           transformation, rainbow oak pre-tinted with Java's colour
-#                                           without a world; twilight oak by the biome; canopy and
+#                                           without a world; gloaming oak by the biome; canopy and
 #                                           mangrove: the client mod blends the biome foliage as
 #                                           ColorHandler, a vanilla client tints evergreen / birch),
 #                                           castle doors (connected textures), a time log
-#   out/families/families-12-tf-close.png   TF's signs and chests close up
+#   out/families/families-12-tf-close.png   upstream's signs and chests close up
 #   out/families/families-13-tf-bush.png    the snowy berry bush close up (client mod: the grass
 #                                           below drawn snowy)
 #   out/families/families-15-ct-close.png   the six-face connected texture fixture close up (client
 #                                           mod: the corner piece at the L's inner corner)
 #   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
 #                                           game's own sign.edit text)
-#   out/families/families-25-tf-chest-hopper.png   TF's canopy double chest with a hopper on its left
+#   out/families/families-25-tf-chest-hopper.png   upstream's canopy double chest with a hopper on its left
 #                                           half that emptied itself into the chest
 #   out/families/families-26-tf-chest-hopper-screen.png   that chest right-clicked: the client mod's
 #                                           54-slot chest screen (local, remote-mod) or the game's large
@@ -51,10 +51,10 @@
 #                                           cobblestone in the right half's third slot (Java's ChestMenu
 #                                           broadcastChanges: the client mod's screen is refreshed after a
 #                                           hopper's tick, the vanilla screen follows F10's proxy)
-#   out/families/families-29-tf-slab-in-water.png  a twilight oak slab the player placed into a water
+#   out/families/families-29-tf-slab-in-water.png  a gloaming oak slab the player placed into a water
 #                                           source (waterlogged; the content log names no missing
 #                                           place_in_water or chest sound)
-#   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
+#   out/families/families-16-tf-sign-text.png        client mod: upstream's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
 #                                           (blue, glowing: the dark blue outline), the hanging sign
@@ -69,7 +69,7 @@
 #                                           name tag of the side facing it (the front; the back's
 #                                           "back side" is hidden for this viewer)
 #   out/families/families-20-compare-black.png ... families-23-compare-glow-blue.png   client mod:
-#                                           TF's canopy signs (right) next to the game's own oak
+#                                           upstream's canopy signs (right) next to the game's own oak
 #                                           signs (left) in the same light, written and coloured
 #                                           the same way: black text, red dye, glow ink on black
 #                                           (hanging signs), blue dye and glow ink (standing signs)
@@ -106,16 +106,16 @@ Invoke-Build 'gamerule sendcommandfeedback false'
 
 $y  = -60 # the flat world's first air layer
 $z  = 46
-$f  = 'twilightforest:facing'
+$f  = 'gloamingforest:facing'
 $rows = @(
     @{ name = 'families-1-shapes'; x = 0; blocks = @(
-            @(0, 0, 0, 'gf_test:family_stairs', "[`"$f`"=`"north`",`"twilightforest:half`"=`"bottom`"]"),
-            @(1, 0, 0, 'gf_test:family_stairs', "[`"$f`"=`"east`",`"twilightforest:half`"=`"top`"]"),
-            @(2, 0, 1, 'gf_test:family_stairs', "[`"$f`"=`"west`",`"twilightforest:half`"=`"bottom`"]"),
-            @(2, 0, 2, 'gf_test:family_stairs', "[`"$f`"=`"north`",`"twilightforest:half`"=`"bottom`"]"),
-            @(4, 0, 0, 'gf_test:family_slab', '["twilightforest:type"="bottom"]'),
-            @(5, 0, 0, 'gf_test:family_slab', '["twilightforest:type"="top"]'),
-            @(6, 0, 0, 'gf_test:family_slab', '["twilightforest:type"="double"]'),
+            @(0, 0, 0, 'gf_test:family_stairs', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"bottom`"]"),
+            @(1, 0, 0, 'gf_test:family_stairs', "[`"$f`"=`"east`",`"gloamingforest:half`"=`"top`"]"),
+            @(2, 0, 1, 'gf_test:family_stairs', "[`"$f`"=`"west`",`"gloamingforest:half`"=`"bottom`"]"),
+            @(2, 0, 2, 'gf_test:family_stairs', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"bottom`"]"),
+            @(4, 0, 0, 'gf_test:family_slab', '["gloamingforest:type"="bottom"]'),
+            @(5, 0, 0, 'gf_test:family_slab', '["gloamingforest:type"="top"]'),
+            @(6, 0, 0, 'gf_test:family_slab', '["gloamingforest:type"="double"]'),
             @(8, 0, 0, 'gf_test:family_fence', ''),
             @(9, 0, 0, 'gf_test:family_fence', ''),
             @(11, 0, 0, 'gf_test:family_fence', ''),
@@ -128,106 +128,106 @@ $rows = @(
             @(20, 0, 0, 'gf_test:family_pane', ''))
     },
     @{ name = 'families-2-mechanisms'; x = 30; blocks = @(
-            @(0, 0, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"lower`"]"),
-            @(0, 1, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"upper`"]"),
-            @(2, 0, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"lower`",`"twilightforest:open`"=true,`"twilightforest:hinge`"=`"right`"]"),
-            @(2, 1, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"upper`",`"twilightforest:open`"=true,`"twilightforest:hinge`"=`"right`"]"),
-            @(4, 0, 0, 'gf_test:family_trapdoor', '["twilightforest:half"="bottom"]'),
-            @(5, 0, 0, 'gf_test:family_trapdoor', "[`"$f`"=`"north`",`"twilightforest:open`"=true]"),
+            @(0, 0, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"lower`"]"),
+            @(0, 1, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"upper`"]"),
+            @(2, 0, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"lower`",`"gloamingforest:open`"=true,`"gloamingforest:hinge`"=`"right`"]"),
+            @(2, 1, 0, 'gf_test:family_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"upper`",`"gloamingforest:open`"=true,`"gloamingforest:hinge`"=`"right`"]"),
+            @(4, 0, 0, 'gf_test:family_trapdoor', '["gloamingforest:half"="bottom"]'),
+            @(5, 0, 0, 'gf_test:family_trapdoor', "[`"$f`"=`"north`",`"gloamingforest:open`"=true]"),
             @(7, 0, 0, 'minecraft:stone', ''),
-            @(7, 1, 0, 'gf_test:family_button', '["twilightforest:face"="floor"]'),
-            @(7, 0, -1, 'gf_test:family_button', "[`"twilightforest:face`"=`"wall`",`"$f`"=`"north`",`"twilightforest:powered`"=true]"),
+            @(7, 1, 0, 'gf_test:family_button', '["gloamingforest:face"="floor"]'),
+            @(7, 0, -1, 'gf_test:family_button', "[`"gloamingforest:face`"=`"wall`",`"$f`"=`"north`",`"gloamingforest:powered`"=true]"),
             @(8, 0, 0, 'gf_test:family_pressure_plate', ''),
-            @(10, 0, 0, 'gf_test:family_log', '["twilightforest:axis"="y"]'),
-            @(11, 0, 0, 'gf_test:family_log', '["twilightforest:axis"="x"]'),
-            @(12, 0, 0, 'gf_test:family_stripped_log', '["twilightforest:axis"="y"]'),
+            @(10, 0, 0, 'gf_test:family_log', '["gloamingforest:axis"="y"]'),
+            @(11, 0, 0, 'gf_test:family_log', '["gloamingforest:axis"="x"]'),
+            @(12, 0, 0, 'gf_test:family_stripped_log', '["gloamingforest:axis"="y"]'),
             @(13, 0, 0, 'gf_test:family_wood', ''),
-            @(14, 0, 0, 'gf_test:family_leaves', '["twilightforest:persistent"=true]'),
+            @(14, 0, 0, 'gf_test:family_leaves', '["gloamingforest:persistent"=true]'),
             @(15, 0, 0, 'gf_test:family_sapling', ''),
             @(16, 0, 0, 'gf_test:family_potted', ''))
     },
     @{ name = 'families-3-containers'; x = 60; blocks = @(
-            @(0, 0, 0, 'gf_test:family_sign', '["twilightforest:rotation"=0]'),
-            @(1, 0, 0, 'gf_test:family_sign', '["twilightforest:rotation"=2]'),
-            @(2, 0, 0, 'gf_test:family_sign', '["twilightforest:rotation"=6]'),
+            @(0, 0, 0, 'gf_test:family_sign', '["gloamingforest:rotation"=0]'),
+            @(1, 0, 0, 'gf_test:family_sign', '["gloamingforest:rotation"=2]'),
+            @(2, 0, 0, 'gf_test:family_sign', '["gloamingforest:rotation"=6]'),
             @(4, 0, 1, 'minecraft:stone', ''),
             @(4, 0, 0, 'gf_test:family_wall_sign', "[`"$f`"=`"north`"]"),
             @(6, 2, 0, 'minecraft:stone', ''),
-            @(6, 1, 0, 'gf_test:family_hanging_sign', '["twilightforest:rotation"=8]'),
+            @(6, 1, 0, 'gf_test:family_hanging_sign', '["gloamingforest:rotation"=8]'),
             @(8, 1, 0, 'minecraft:stone', ''),
             @(10, 1, 0, 'minecraft:stone', ''),
             @(9, 1, 0, 'gf_test:family_wall_hanging_sign', "[`"$f`"=`"north`"]"),
             @(12, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`"]"),
-            @(14, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"),
-            @(15, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"),
-            @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`",`"gloamingforest:lid`"=4]"),
-            @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`",`"gloamingforest:lid`"=4]"),
+            @(14, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:type`"=`"left`"]"),
+            @(15, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:type`"=`"right`"]"),
+            @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:type`"=`"left`",`"gloamingforest:lid`"=4]"),
+            @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:type`"=`"right`",`"gloamingforest:lid`"=4]"),
             @(20, 0, 0, 'gf_test:family_trapped_chest', "[`"$f`"=`"north`"]"),
             @(13, 0, -2, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:lid`"=2]"))
     },
     @{ name = 'families-4-variants'; x = 90; blocks = @(
             @(0, 0, 0, 'gf_test:family_horizontal', "[`"$f`"=`"north`"]"),
             @(1, 0, 0, 'gf_test:family_directional', "[`"$f`"=`"north`"]"),
-            @(2, 0, 0, 'gf_test:family_binary', '["twilightforest:rotated"=false]'),
-            @(3, 0, 0, 'gf_test:family_binary', '["twilightforest:rotated"=true]'),
-            @(5, 0, 0, 'gf_test:family_wall_pillar', '["twilightforest:axis"="y","twilightforest:up"=true]'),
-            @(5, 1, 0, 'gf_test:family_wall_pillar', '["twilightforest:axis"="y","twilightforest:down"=true]'),
-            @(7, 0, 0, 'gf_test:family_connectable_pillar', '["twilightforest:axis"="y","twilightforest:up"=true]'),
-            @(7, 1, 0, 'gf_test:family_connectable_pillar', '["twilightforest:axis"="y","twilightforest:down"=true]'),
+            @(2, 0, 0, 'gf_test:family_binary', '["gloamingforest:rotated"=false]'),
+            @(3, 0, 0, 'gf_test:family_binary', '["gloamingforest:rotated"=true]'),
+            @(5, 0, 0, 'gf_test:family_wall_pillar', '["gloamingforest:axis"="y","gloamingforest:up"=true]'),
+            @(5, 1, 0, 'gf_test:family_wall_pillar', '["gloamingforest:axis"="y","gloamingforest:down"=true]'),
+            @(7, 0, 0, 'gf_test:family_connectable_pillar', '["gloamingforest:axis"="y","gloamingforest:up"=true]'),
+            @(7, 1, 0, 'gf_test:family_connectable_pillar', '["gloamingforest:axis"="y","gloamingforest:down"=true]'),
             @(9, 0, 0, 'gf_test:family_ct', ''),
             @(10, 0, 0, 'gf_test:family_ct', ''),
             @(9, 1, 0, 'gf_test:family_ct', ''),
             @(12, 0, 0, 'gf_test:family_ct_flat', ''),
             @(13, 0, 0, 'gf_test:family_ct_flat', ''),
             @(12, 1, 0, 'gf_test:family_ct_flat', ''),
-            @(15, 0, 0, 'gf_test:family_lightable', '["twilightforest:lighting"="normal"]'),
+            @(15, 0, 0, 'gf_test:family_lightable', '["gloamingforest:lighting"="normal"]'),
             @(17, 0, 0, 'gf_test:family_climbable', ''),
-            @(20, 0, 0, 'gf_test:family_snowloggable', '["twilightforest:layers"=3]'))
+            @(20, 0, 0, 'gf_test:family_snowloggable', '["gloamingforest:layers"=3]'))
     },
-    # TF's own blocks through the kit (F1's skeleton and textures): canopy door, sign, wall sign,
+    # upstream's own blocks through the kit (F1's skeleton and textures): canopy door, sign, wall sign,
     # hanging sign, wall hanging sign, chest, trapped chest double
     @{ name = 'families-10-tf-woodwork'; x = 120; blocks = @(
-            @(0, 0, 0, 'twilightforest:canopy_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"lower`"]"),
-            @(0, 1, 0, 'twilightforest:canopy_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"upper`"]"),
-            @(2, 0, 0, 'twilightforest:canopy_sign', '["twilightforest:rotation"=0]'),
+            @(0, 0, 0, 'gloamingforest:canopy_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"lower`"]"),
+            @(0, 1, 0, 'gloamingforest:canopy_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"upper`"]"),
+            @(2, 0, 0, 'gloamingforest:canopy_sign', '["gloamingforest:rotation"=0]'),
             @(4, 0, 1, 'minecraft:stone', ''),
-            @(4, 0, 0, 'twilightforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
+            @(4, 0, 0, 'gloamingforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
             @(6, 2, 0, 'minecraft:stone', ''),
-            @(6, 1, 0, 'twilightforest:canopy_hanging_sign', '["twilightforest:rotation"=8]'),
+            @(6, 1, 0, 'gloamingforest:canopy_hanging_sign', '["gloamingforest:rotation"=8]'),
             @(8, 1, 0, 'minecraft:stone', ''),
             @(10, 1, 0, 'minecraft:stone', ''),
-            @(9, 1, 0, 'twilightforest:canopy_wall_hanging_sign', "[`"$f`"=`"north`"]"),
-            @(12, 0, 0, 'twilightforest:canopy_chest', "[`"$f`"=`"north`"]"),
-            @(14, 0, 0, 'twilightforest:canopy_trapped_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"),
-            @(15, 0, 0, 'twilightforest:canopy_trapped_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"),
-            @(17, 0, 0, 'twilightforest:canopy_trapdoor', "[`"$f`"=`"north`",`"twilightforest:half`"=`"bottom`"]"),
-            @(19, 0, 0, 'twilightforest:canopy_planks', ''),
-            @(19, 1, 0, 'twilightforest:canopy_button', "[`"twilightforest:face`"=`"floor`",`"$f`"=`"north`"]"))
+            @(9, 1, 0, 'gloamingforest:canopy_wall_hanging_sign', "[`"$f`"=`"north`"]"),
+            @(12, 0, 0, 'gloamingforest:canopy_chest', "[`"$f`"=`"north`"]"),
+            @(14, 0, 0, 'gloamingforest:canopy_trapped_chest', "[`"$f`"=`"north`",`"gloamingforest:type`"=`"left`"]"),
+            @(15, 0, 0, 'gloamingforest:canopy_trapped_chest', "[`"$f`"=`"north`",`"gloamingforest:type`"=`"right`"]"),
+            @(17, 0, 0, 'gloamingforest:canopy_trapdoor', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"bottom`"]"),
+            @(19, 0, 0, 'gloamingforest:canopy_planks', ''),
+            @(19, 1, 0, 'gloamingforest:canopy_button', "[`"gloamingforest:face`"=`"floor`",`"$f`"=`"north`"]"))
     },
-    # a snowy grown berry bush (TF's shape and snow), TF's leaves (the time, mining and rainbow oak
-    # leaves pre-tinted with Java's colour without a world, twilight oak by the biome), castle
+    # a snowy grown berry bush (upstream's shape and snow), upstream's leaves (the time, mining and rainbow oak
+    # leaves pre-tinted with Java's colour without a world, gloaming oak by the biome), castle
     # doors (six-face connected textures)
     @{ name = 'families-11-tf-plants'; x = 150; blocks = @(
-            @(0, 0, 0, 'twilightforest:blackberry_bush', '["twilightforest:age"=3,"twilightforest:layers"=2]'),
-            @(2, 0, 0, 'twilightforest:blueberry_bush', '["twilightforest:age"=0,"twilightforest:layers"=1]'),
-            @(4, 0, 0, 'twilightforest:time_leaves', '["twilightforest:persistent"=true]'),
-            @(5, 0, 0, 'twilightforest:mining_leaves', '["twilightforest:persistent"=true]'),
-            @(6, 0, 0, 'twilightforest:sorting_leaves', '["twilightforest:persistent"=true]'),
-            @(7, 0, 0, 'twilightforest:transformation_leaves', '["twilightforest:persistent"=true]'),
-            @(8, 0, 0, 'twilightforest:rainbow_oak_leaves', '["twilightforest:persistent"=true]'),
-            @(9, 0, 0, 'twilightforest:twilight_oak_leaves', '["twilightforest:persistent"=true]'),
-            @(10, 0, 0, 'twilightforest:canopy_leaves', '["twilightforest:persistent"=true]'),
-            @(11, 0, 0, 'twilightforest:mangrove_leaves', '["twilightforest:persistent"=true]'),
-            @(12, 0, 0, 'twilightforest:blue_castle_door', ''),
-            @(12, 1, 0, 'twilightforest:blue_castle_door', ''),
-            @(13, 0, 0, 'twilightforest:blue_castle_door', ''),
-            @(15, 0, 0, 'twilightforest:time_log', '["twilightforest:axis"="y"]'),
-            @(15, 1, 0, 'twilightforest:time_leaves', '["twilightforest:persistent"=true]'),
+            @(0, 0, 0, 'gloamingforest:blackberry_bush', '["gloamingforest:age"=3,"gloamingforest:layers"=2]'),
+            @(2, 0, 0, 'gloamingforest:blueberry_bush', '["gloamingforest:age"=0,"gloamingforest:layers"=1]'),
+            @(4, 0, 0, 'gloamingforest:time_leaves', '["gloamingforest:persistent"=true]'),
+            @(5, 0, 0, 'gloamingforest:mining_leaves', '["gloamingforest:persistent"=true]'),
+            @(6, 0, 0, 'gloamingforest:sorting_leaves', '["gloamingforest:persistent"=true]'),
+            @(7, 0, 0, 'gloamingforest:transformation_leaves', '["gloamingforest:persistent"=true]'),
+            @(8, 0, 0, 'gloamingforest:rainbow_oak_leaves', '["gloamingforest:persistent"=true]'),
+            @(9, 0, 0, 'gloamingforest:gloaming_oak_leaves', '["gloamingforest:persistent"=true]'),
+            @(10, 0, 0, 'gloamingforest:canopy_leaves', '["gloamingforest:persistent"=true]'),
+            @(11, 0, 0, 'gloamingforest:mangrove_leaves', '["gloamingforest:persistent"=true]'),
+            @(12, 0, 0, 'gloamingforest:blue_castle_door', ''),
+            @(12, 1, 0, 'gloamingforest:blue_castle_door', ''),
+            @(13, 0, 0, 'gloamingforest:blue_castle_door', ''),
+            @(15, 0, 0, 'gloamingforest:time_log', '["gloamingforest:axis"="y"]'),
+            @(15, 1, 0, 'gloamingforest:time_leaves', '["gloamingforest:persistent"=true]'),
             # grass with its sides in view: under a snowy bush (the client mod draws it snowy) and bare
             @(18, 0, 0, 'minecraft:grass_block', ''),
-            @(18, 1, 0, 'twilightforest:blackberry_bush', '["twilightforest:age"=3,"twilightforest:layers"=2]'),
+            @(18, 1, 0, 'gloamingforest:blackberry_bush', '["gloamingforest:age"=3,"gloamingforest:layers"=2]'),
             @(20, 0, 0, 'minecraft:grass_block', ''),
-            @(20, 1, 0, 'gf_test:family_snowloggable', '["twilightforest:layers"=3]'),
+            @(20, 1, 0, 'gf_test:family_snowloggable', '["gloamingforest:layers"=3]'),
             @(22, 0, 0, 'minecraft:grass_block', ''))
     }
 )
@@ -270,11 +270,11 @@ Set-OpenLids
 Start-Sleep -Seconds 2
 Save-Screenshot 'families-5-close' | Out-Null
 # a close look at the snowloggable (3 snow layers under the sapling; it stands 5 blocks from the lit
-# lamp: block light 10, so TF's SnowLoggable.meltSnow, which melts above 11, leaves the snow)
+# lamp: block light 10, so upstream's SnowLoggable.meltSnow, which melts above 11, leaves the snow)
 Invoke-Teleport "/tp @s 110.5 $($y + 1) $($z - 2.5) 0 40"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-8-snowloggable' | Out-Null
-# TF's chests and signs close up (their TF textures), and the snowy berry bush on the grass (the
+# upstream's chests and signs close up (their upstream textures), and the snowy berry bush on the grass (the
 # client mod draws the grass below snowy, TFBushBlock.updateSnowBeneath)
 Invoke-Teleport "/tp @s 133 $($y + 1) $($z - 4) 0 15"
 Start-Sleep -Seconds 3
@@ -289,7 +289,7 @@ Invoke-Teleport "/tp @s 99.5 $($y + 1) $($z - 2.5) 0 10"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-15-ct-close' | Out-Null
 
-# TF's canopy double chest fed by a hopper on its LEFT half (Hoppers.cpp: the game's hopper sees the
+# upstream's canopy double chest fed by a hopper on its LEFT half (Hoppers.cpp: the game's hopper sees the
 # chest's block actor container, the double chest as Java's CompoundContainer, the right half first),
 # then opened by a right click: the client mod's 54-slot chest screen (local, remote-mod) or the
 # game's large chest screen through F10's proxy (remote-vanilla), the hopper's 3 gold ingots and 2
@@ -297,8 +297,8 @@ Save-Screenshot 'families-15-ct-close' | Out-Null
 $hx = 190
 Invoke-Teleport "/tp @s $($hx + 1) $($y + 2) $($z - 6) 0 15"
 Start-Sleep -Seconds 4
-Invoke-Build "setblock $hx $y $z twilightforest:canopy_chest [`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"
-Invoke-Build "setblock $($hx + 1) $y $z twilightforest:canopy_chest [`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"
+Invoke-Build "setblock $hx $y $z gloamingforest:canopy_chest [`"$f`"=`"north`",`"gloamingforest:type`"=`"left`"]"
+Invoke-Build "setblock $($hx + 1) $y $z gloamingforest:canopy_chest [`"$f`"=`"north`",`"gloamingforest:type`"=`"right`"]"
 Invoke-Build "setblock $hx $($y + 1) $z hopper [`"facing_direction`"=0]"
 Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 gold_ingot 3"
 Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 1 diamond 2"
@@ -348,7 +348,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     $mark = Get-LogMark
     Click 0.5 0.5 -Relative -Right
     Wait-LogLine 'client screen: families.sign' 20 -Since $mark | Out-Null
-    Type-Text 'Twilight'
+    Type-Text 'Gloaming'
     Start-Sleep -Seconds 1
     Save-Screenshot 'families-9-sign-editor' | Out-Null
     Close-Screen
@@ -366,7 +366,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Save-Screenshot 'families-7-sign-text-hud' | Out-Null
     if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
 
-    # Java's sign text on TF's signs, written through the editor and coloured with items (client
+    # Java's sign text on upstream's signs, written through the editor and coloured with items (client
     # mod: drawn flat on the board as SignRenderer / HangingSignRenderer draw it; the display
     # entities' name tags hidden): the canopy wall sign's front (black), the standing sign's back
     # (blue dye, then glow ink: glowing blue with its outline), the hanging sign's front (glow ink:
@@ -411,7 +411,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     # block up: 25 degrees down; the hanging ones' at eye height: 6 degrees)
     $sx = $tf.x
     Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
-    Write-Sign ($sx + 4.5) $y ($z - 2) 25 @('Welcome to', 'the', 'Twilight', 'Forest')
+    Write-Sign ($sx + 4.5) $y ($z - 2) 25 @('Welcome to', 'the', 'Gloaming', 'Forest')
     Write-Sign ($sx + 2.5) $y ($z - 2) 25 @('The back of', 'a canopy sign')
     Use-OnSign ($sx + 2.5) $y ($z - 2) 25 'blue_dye'
     Use-OnSign ($sx + 2.5) $y ($z - 2) 25 'glow_ink_sac'
@@ -435,25 +435,25 @@ if ($script:Mode -ne 'remote-vanilla') {
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-18-tf-sign-text-far' | Out-Null
 
-    # Vanilla references in the same light: each TF canopy sign (west) next to the game's own oak
+    # Vanilla references in the same light: each upstream canopy sign (west) next to the game's own oak
     # sign (east of it: on the left in the pictures), written and coloured the same way (the game's
     # own editor and dye handling for the oak ones): black text on wall signs, red dye on wall
     # signs, glow ink on black hanging signs, blue dye and glow ink on standing signs
     $vx = 200
     $compare = @(
         @(0, 0, 1, 'minecraft:stone', ''),
-        @(0, 0, 0, 'twilightforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
+        @(0, 0, 0, 'gloamingforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
         @(1, 0, 1, 'minecraft:stone', ''),
         @(1, 0, 0, 'minecraft:wall_sign', '["facing_direction"=2]'),
         @(4, 0, 1, 'minecraft:stone', ''),
-        @(4, 0, 0, 'twilightforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
+        @(4, 0, 0, 'gloamingforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
         @(5, 0, 1, 'minecraft:stone', ''),
         @(5, 0, 0, 'minecraft:wall_sign', '["facing_direction"=2]'),
         @(8, 2, 0, 'minecraft:stone', ''),
-        @(8, 1, 0, 'twilightforest:canopy_hanging_sign', '["twilightforest:rotation"=8]'),
+        @(8, 1, 0, 'gloamingforest:canopy_hanging_sign', '["gloamingforest:rotation"=8]'),
         @(9, 2, 0, 'minecraft:stone', ''),
         @(9, 1, 0, 'minecraft:oak_hanging_sign', '["hanging"=true,"attached_bit"=false,"facing_direction"=2]'),
-        @(12, 0, 0, 'twilightforest:canopy_sign', '["twilightforest:rotation"=8]'),
+        @(12, 0, 0, 'gloamingforest:canopy_sign', '["gloamingforest:rotation"=8]'),
         @(13, 0, 0, 'minecraft:standing_sign', '["ground_sign_direction"=8]')
     )
     Invoke-Teleport "/tp @s $($vx + 6) $($y + 2) $($z - 9) 0 15"
@@ -503,7 +503,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Use-OnVanillaSign ($vx + 13.5) $y ($z - 2) 25 'glow_ink_sac'
     Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
     Start-Sleep -Seconds 1
-    # one pair a picture, 2.5 blocks from the boards: TF's on the right, the oak one on the left
+    # one pair a picture, 2.5 blocks from the boards: upstream's on the right, the oak one on the left
     Invoke-Teleport "/tp @s $($vx + 1) $y $($z - 2.5) 0 20"
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-20-compare-black' | Out-Null
@@ -537,7 +537,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
 }
 
-# A TF waterloggable slab placed by the player into a water source (Java: BlockItem#place plays the
+# An upstream waterloggable slab placed by the player into a water source (Java: BlockItem#place plays the
 # place sound once): the game plays the sound type's place_in_water (tools/families defines it as
 # the type's place event), on this client too (its own prediction); checked at the end through the
 # content log, which must not say "No sound found ... 'place_in_water'" (nor the same for the chest
@@ -548,26 +548,26 @@ $px = 230
 Invoke-Build "setblock $px $($y - 1) $z water"
 Invoke-Teleport "/tp @s $($px + 0.5) $y $($z + 1.5) 180 69"
 Start-Sleep -Seconds 3
-Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 twilightforest:twilight_oak_slab 4"
+Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 gloamingforest:gloaming_oak_slab 4"
 Start-Sleep -Seconds 2
 Click 0.5 0.5 -Relative -Right
 Start-Sleep -Seconds 2
 Save-Screenshot 'families-29-tf-slab-in-water' | Out-Null
 Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
 # the server confirms the slab went into the water and holds it (the screenshot alone hardly tells a
-# waterlogged slab from the floor): families.water_slab_probe names a twilight_oak_slab with water
+# waterlogged slab from the floor): families.water_slab_probe names a gloaming_oak_slab with water
 # in its extra layer near this client's player
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'families.water_slab_probe'
 if ($r.Pass -ne 1) { throw 'families.water_slab_probe did not pass' }
-$wetLine = "twilightforest:twilight_oak_slab in water at $px $($y - 1) $z"
+$wetLine = "gloamingforest:gloaming_oak_slab in water at $px $($y - 1) $z"
 try { Wait-LogLine ([regex]::Escape($wetLine)) 15 -Since $mark | Out-Null; $wet = $true }
 catch { if ("$_" -match '^Game exited') { throw }; $wet = $false }
 if (-not $wet) {
-    $seen = @(Get-LeviLog -Since $mark | Select-String -Pattern 'twilight_oak_slab|nothing to probe|near the client players' | ForEach-Object { $_.Line })
-    throw "the slab placed into the water is not a waterlogged twilight_oak_slab at $px $($y - 1) $z on the server ($($seen -join '; '))"
+    $seen = @(Get-LeviLog -Since $mark | Select-String -Pattern 'gloaming_oak_slab|nothing to probe|near the client players' | ForEach-Object { $_.Line })
+    throw "the slab placed into the water is not a waterlogged gloaming_oak_slab at $px $($y - 1) $z on the server ($($seen -join '; '))"
 }
-Write-Step "the server holds a waterlogged twilight_oak_slab at $px $($y - 1) $z"
+Write-Step "the server holds a waterlogged gloaming_oak_slab at $px $($y - 1) $z"
 
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
 # board (front: four lines), a vanilla client shows the name tag of the side facing it (the front:

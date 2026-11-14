@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:salmon_jerky",
+      "identifier": "gloamingforest:salmon_jerky",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:salmon_jerky.name"
+        "value": "item.gloamingforest:salmon_jerky.name"
       },
       "minecraft:tags": {
         "tags": ["c:foods", "c:foods/jerky"]

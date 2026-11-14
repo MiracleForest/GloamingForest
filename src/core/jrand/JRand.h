@@ -4,7 +4,7 @@
 // gtest goldens against Java values; spike S2). Pure C++ (gf-core), usable on worker threads.
 //
 // Bit-exact equivalents of Minecraft 1.21.1's random sources, so generation driven by the same
-// seed makes the same choices as TF on Java:
+// seed makes the same choices as upstream on Java:
 //   - LegacyRandom      net.minecraft.world.level.levelgen.LegacyRandomSource (java.util.Random LCG)
 //   - Xoroshiro128pp    net.minecraft.world.level.levelgen.XoroshiroRandomSource (Xoroshiro128++)
 //   - WorldgenRandom    net.minecraft.world.level.levelgen.WorldgenRandom (decoration / feature /
@@ -46,7 +46,7 @@ public:
     [[nodiscard]] virtual std::unique_ptr<PositionalRandomFactory> forkPositional() = 0;
 };
 
-/// Java's java.util.Random LCG (LegacyRandomSource, also used by TF's landmark placement).
+/// Java's java.util.Random LCG (LegacyRandomSource, also used by upstream's landmark placement).
 class LegacyRandom final : public RandomSource {
 public:
     explicit LegacyRandom(std::int64_t seed = 0);

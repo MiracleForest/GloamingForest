@@ -1,8 +1,8 @@
-# Synth (F3): the client plays every TF sound event once. Local: synth.play_all runs in the client
+# Synth (F3): the client plays every upstream sound event once. Local: synth.play_all runs in the client
 # process and plays each event through the game's own sound engine: an event the engine does not
-# know fails, the engine's subtitle must be TF's, a long synthesized sound must still be playing a
+# know fails, the engine's subtitle must be upstream's, a long synthesized sound must still be playing a
 # quarter second later (a file the engine cannot decode does not play) and the engine's volume and
-# pitch must be TF's; synth.definitions also checks the vanilla sounds the definitions name (packs
+# pitch must be upstream's; synth.definitions also checks the vanilla sounds the definitions name (packs
 # vanilla and vanilla_music). Remote: the BDS host runs the tests and sends every event to this
 # client as PlaySoundPacket (remote-vanilla: the client only has the packs the server sent).
 # Content-log errors (a sound file that does not load) fail the run. Screenshots: out/synth/{hud,played}.png

@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/HostileWolf.java
-//   src/main/java/twilightforest/entity/monster/MistWolf.java
-//   src/main/java/twilightforest/entity/monster/WinterWolf.java
-//   src/main/java/twilightforest/client/renderer/entity/MistWolfRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/HostileWolf.java
+//   src/main/java/gloamingforest/entity/monster/MistWolf.java
+//   src/main/java/gloamingforest/entity/monster/WinterWolf.java
+//   src/main/java/gloamingforest/client/renderer/entity/MistWolfRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The hostile, mist and winter wolves. Their vanilla goals (float, leap, melee, stroll, look, the
 // hurt-by and nearest-attackable targets) are the BP's behaviours (assets/pack/bp/entities/hostiles);
-// what TF adds runs here: the angry face and tail (entity properties), the target sound, the mist
+// what upstream adds runs here: the angry face and tail (entity properties), the target sound, the mist
 // wolf's blinding bite and light-dependent translucency, the winter wolf's frost breath (F8's
 // BreathAttackGoal) with its snow and sound.
 
@@ -47,11 +47,11 @@ std::unordered_map<std::int64_t, std::int64_t>& lastTargets() {
 
 std::string soundOf(std::string const& type, char const* event) {
     auto name = type.substr(type.find(':') + 1);
-    return "entity.twilightforest." + name + "." + event;
+    return "entity.gloamingforest." + name + "." + event;
 }
 
 /// WinterWolf#aiStep while breathing: 10 snow particles half a block ahead at y + 1.25 (client side
-/// in TF; sent through gf::fx here) and the shoot sound.
+/// in upstream; sent through gf::fx here) and the shoot sound.
 void winterBreath(Mob& m) {
     auto&  r    = randomOf(m);
     Vec3   look = m.getViewVector(1.0f);
@@ -71,9 +71,9 @@ void winterBreath(Mob& m) {
         dx *= velocity;
         dy *= velocity;
         dz *= velocity;
-        gf::fx::particle(m.getDimension(), "twilightforest:snow", at, Vec3{float(dx), float(dy), float(dz)});
+        gf::fx::particle(m.getDimension(), "gloamingforest:snow", at, Vec3{float(dx), float(dy), float(dz)});
     }
-    playSound(m, "entity.twilightforest.winter_wolf.shoot", r.nextFloat() * 0.5F, r.nextFloat() * 0.5F);
+    playSound(m, "entity.gloamingforest.winter_wolf.shoot", r.nextFloat() * 0.5F, r.nextFloat() * 0.5F);
 }
 
 void wolfTick(Actor& self) {
@@ -88,8 +88,8 @@ void wolfTick(Actor& self) {
     }
     // the angry face (HostileWolf#getTexture: isAggressive) and the tail (getTailAngle: a target)
     Actor* target = targetOf(*m);
-    setPropertyCached(self, "twilightforest:has_target", target != nullptr);
-    setPropertyCached(self, "twilightforest:aggressive", target != nullptr);
+    setPropertyCached(self, "gloamingforest:has_target", target != nullptr);
+    setPropertyCached(self, "gloamingforest:aggressive", target != nullptr);
     // HostileWolf#setTarget: a new target plays the target sound at volume 4
     auto& last = lastTargets()[uidOf(self)];
     auto  now  = target ? uidOf(*target) : 0;
@@ -97,11 +97,11 @@ void wolfTick(Actor& self) {
     last = now;
     if (type == id::MistWolf && self.mTickCount % 5 == 0) {
         // MistWolfRenderer's colour comes from the light at the wolf's block
-        setPropertyCached(self, "twilightforest:brightness", maxLocalRawBrightness(self.getDimensionBlockSource(), blockPosOf(self)));
+        setPropertyCached(self, "gloamingforest:brightness", maxLocalRawBrightness(self.getDimensionBlockSource(), blockPosOf(self)));
     }
     if (type == id::WinterWolf) {
         bool breathing = ge::ext::isBreathing(self);
-        setPropertyCached(self, "twilightforest:breathing", breathing);
+        setPropertyCached(self, "gloamingforest:breathing", breathing);
         // the breath goal holds MOVE / LOOK: melee and stroll (priorities 3, 6) wait
         setGroup(self, "vanilla_move", !breathing);
         if (breathing) winterBreath(*m);

@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of the landmark grid (F6) against the Java oracle goldens (F13, tests/golden/landmarks):
-// the facts TF 4.8 (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later) computed on a
+// the facts upstream 4.8 (upstream commit 9e40a757, LGPL-2.1-or-later) computed on a
 // NeoForge 1.21.1 server for three seeds. Every center and sampled chunk is checked with the C++
 // translation of LegacyLandmarkPlacements (getNearestCenterXZ, chunkHasLandmarkCenter,
 // manhattanDistanceFromLandmarkCenter, pickVarietyLandmark, pickLandmarkForChunk), and the
@@ -63,7 +63,7 @@ std::set<std::string> startsOf(json const& center) {
 std::map<std::string, plc::Placement> gridSets() {
     std::map<std::string, plc::Placement> out;
     std::error_code                       ec;
-    for (auto const& e : fs::directory_iterator(repoDir() / "assets/data/landmarks/twilightforest", ec)) {
+    for (auto const& e : fs::directory_iterator(repoDir() / "assets/data/landmarks/gloamingforest", ec)) {
         if (e.path().extension() != ".json") continue;
         auto j = readJson(e.path());
         if (!j.is_object() || !j.contains("structure_set")) continue;
@@ -159,7 +159,7 @@ TEST(LandmarkOracle, GridStartsFollowLandmarkGridPlacement) {
     // center only where its set's placement accepts the center chunk
     REQUIRE_ORACLE();
     auto sets = gridSets();
-    ASSERT_EQ(sets.size(), 16u) << "the 16 landmark grid structures of TF";
+    ASSERT_EQ(sets.size(), 16u) << "the 16 landmark grid structures of upstream";
     int starts = 0, refused = 0;
     for (auto const& file : landmarkGoldens()) {
         SCOPED_TRACE(file.filename().string());
@@ -187,30 +187,30 @@ TEST(LandmarkOracle, GridStartsFollowLandmarkGridPlacement) {
 
 namespace {
 
-/// The members of TF's structure biome tags (BiomeTagGenerator#addTags, TF 4.8 @ 9e40a757,
-/// LGPL-2.1-or-later; data/twilightforest/tags/worldgen/biome/valid_*_biomes.json).
+/// The members of upstream's structure biome tags (BiomeTagGenerator#addTags, upstream 4.8 @ 9e40a757,
+/// LGPL-2.1-or-later; data/gloamingforest/tags/worldgen/biome/valid_*_biomes.json).
 std::map<std::string, std::set<std::string>> const& validBiomeTags() {
     static std::map<std::string, std::set<std::string>> const tags = [] {
         std::set<std::string> const landmarkForests = {
-            "twilightforest:clearing",        "twilightforest:dense_forest", "twilightforest:dense_mushroom_forest", "twilightforest:firefly_forest",
-            "twilightforest:forest",          "twilightforest:mushroom_forest", "twilightforest:oak_savannah",      "twilightforest:spooky_forest",
+            "gloamingforest:clearing",        "gloamingforest:dense_forest", "gloamingforest:dense_mushroom_forest", "gloamingforest:firefly_forest",
+            "gloamingforest:forest",          "gloamingforest:mushroom_forest", "gloamingforest:oak_savannah",      "gloamingforest:spooky_forest",
         };
         return std::map<std::string, std::set<std::string>>{
-            {"#twilightforest:valid_quest_grove_biomes", {"twilightforest:enchanted_forest"}},
-            {"#twilightforest:valid_mushroom_tower_biomes", {"twilightforest:dense_mushroom_forest"}},
-            {"#twilightforest:valid_hedge_maze_biomes", landmarkForests},
-            {"#twilightforest:valid_hollow_hill_biomes", landmarkForests},
-            {"#twilightforest:valid_naga_courtyard_biomes", landmarkForests},
-            {"#twilightforest:valid_lich_tower_biomes", landmarkForests},
-            {"#twilightforest:valid_labyrinth_biomes", {"twilightforest:swamp"}},
-            {"#twilightforest:valid_hydra_lair_biomes", {"twilightforest:fire_swamp"}},
-            {"#twilightforest:valid_knight_stronghold_biomes", {"twilightforest:dark_forest"}},
-            {"#twilightforest:valid_dark_tower_biomes", {"twilightforest:dark_forest_center"}},
-            {"#twilightforest:valid_yeti_cave_biomes", {"twilightforest:snowy_forest"}},
-            {"#twilightforest:valid_aurora_palace_biomes", {"twilightforest:glacier"}},
-            {"#twilightforest:valid_troll_cave_biomes", {"twilightforest:highlands"}},
-            {"#twilightforest:valid_giant_house_biomes", {"twilightforest:highlands"}},
-            {"#twilightforest:valid_final_castle_biomes", {"twilightforest:final_plateau"}},
+            {"#gloamingforest:valid_quest_grove_biomes", {"gloamingforest:enchanted_forest"}},
+            {"#gloamingforest:valid_mushroom_tower_biomes", {"gloamingforest:dense_mushroom_forest"}},
+            {"#gloamingforest:valid_hedge_maze_biomes", landmarkForests},
+            {"#gloamingforest:valid_hollow_hill_biomes", landmarkForests},
+            {"#gloamingforest:valid_naga_courtyard_biomes", landmarkForests},
+            {"#gloamingforest:valid_lich_tower_biomes", landmarkForests},
+            {"#gloamingforest:valid_labyrinth_biomes", {"gloamingforest:swamp"}},
+            {"#gloamingforest:valid_hydra_lair_biomes", {"gloamingforest:fire_swamp"}},
+            {"#gloamingforest:valid_knight_stronghold_biomes", {"gloamingforest:dark_forest"}},
+            {"#gloamingforest:valid_dark_tower_biomes", {"gloamingforest:dark_forest_center"}},
+            {"#gloamingforest:valid_yeti_cave_biomes", {"gloamingforest:snowy_forest"}},
+            {"#gloamingforest:valid_aurora_palace_biomes", {"gloamingforest:glacier"}},
+            {"#gloamingforest:valid_troll_cave_biomes", {"gloamingforest:highlands"}},
+            {"#gloamingforest:valid_giant_house_biomes", {"gloamingforest:highlands"}},
+            {"#gloamingforest:valid_final_castle_biomes", {"gloamingforest:final_plateau"}},
         };
     }();
     return tags;
@@ -220,7 +220,7 @@ std::map<std::string, std::set<std::string>> const& validBiomeTags() {
 std::map<std::string, std::string> gridBiomes() {
     std::map<std::string, std::string> out;
     std::error_code                    ec;
-    for (auto const& e : fs::directory_iterator(repoDir() / "assets/data/landmarks/twilightforest", ec)) {
+    for (auto const& e : fs::directory_iterator(repoDir() / "assets/data/landmarks/gloamingforest", ec)) {
         if (e.path().extension() != ".json") continue;
         auto j = readJson(e.path());
         if (!j.is_object() || !j.contains("structure") || !j.contains("structure_set")) continue;

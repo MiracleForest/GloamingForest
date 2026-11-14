@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/dark_sign"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "###", " - "],
+    "key": {
+      "#": {
+        "item": "gloamingforest:dark_planks"
+      },
+      "-": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:dark_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:dark_sign",
+      "count": 3
+    }
+  }
+}

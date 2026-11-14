@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Contract "client.render" (F12): world text (feature/ext/ui/Client.h, render::WorldText), the
-// look of Java's Display.TextDisplay that TF's final castle gazebo uses for its "WIP" lines
+// look of Java's Display.TextDisplay that upstream's final castle gazebo uses for its "WIP" lines
 // (TFStructureComponent#setInvisibleTextEntity: VERTICAL billboard, default background):
 // - the pose: the position, the billboard (FIXED: the entity's yRot / xRot; VERTICAL: turned about
 //   the vertical axis to the camera; HORIZONTAL: the entity's yRot, the camera's pitch; CENTER:

@@ -1,0 +1,21 @@
+{
+  "type": "gloamingforest:travellers_gear_modifier_shapeless_recipe",
+  "ingredients": [
+    {
+      "item": "gloamingforest:hydra_chop"
+    },
+    {
+      "item": "gloamingforest:hydra_chop"
+    },
+    {
+      "item": "gloamingforest:hydra_chop"
+    },
+    {
+      "item": "minecraft:bundle"
+    },
+    {
+      "item": "gloamingforest:travellers_vest"
+    }
+  ],
+  "modifier_key": "gloamingforest:efficient_eater"
+}

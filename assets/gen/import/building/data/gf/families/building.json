@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:arctic_fur_block",
+    "id": "gloamingforest:arctic_fur_block",
     "family": "connected_texture",
     "params": {
       "class": "ArcticFurBlock",
@@ -10,28 +10,28 @@
     }
   },
   {
-    "id": "twilightforest:bold_castle_brick_pillar",
+    "id": "gloamingforest:bold_castle_brick_pillar",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
-      "copyOf": "twilightforest:castle_brick",
+      "copyOf": "gloamingforest:castle_brick",
       "states": ["axis"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:bold_castle_brick_stairs",
+    "id": "gloamingforest:bold_castle_brick_stairs",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:bold_castle_brick_pillar",
+      "base": "gloamingforest:bold_castle_brick_pillar",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:bold_stone_pillar",
+    "id": "gloamingforest:bold_stone_pillar",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
@@ -40,7 +40,7 @@
     }
   },
   {
-    "id": "twilightforest:canopy_window_pane",
+    "id": "gloamingforest:canopy_window_pane",
     "family": "pane",
     "params": {
       "class": "IronBarsBlock",
@@ -49,29 +49,29 @@
     }
   },
   {
-    "id": "twilightforest:castle_brick_stairs",
+    "id": "gloamingforest:castle_brick_stairs",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:castle_brick",
+      "base": "gloamingforest:castle_brick",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:cracked_castle_brick_stairs",
+    "id": "gloamingforest:cracked_castle_brick_stairs",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:cracked_castle_brick",
+      "base": "gloamingforest:cracked_castle_brick",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:cracked_etched_nagastone",
+    "id": "gloamingforest:cracked_etched_nagastone",
     "family": "directional",
     "params": {
       "class": "EtchedNagastoneBlock",
@@ -81,7 +81,7 @@
     }
   },
   {
-    "id": "twilightforest:cracked_nagastone_pillar",
+    "id": "gloamingforest:cracked_nagastone_pillar",
     "family": "pillar",
     "params": {
       "class": "DirectionalRotatedPillarBlock",
@@ -91,61 +91,61 @@
     }
   },
   {
-    "id": "twilightforest:cracked_nagastone_stairs_left",
+    "id": "gloamingforest:cracked_nagastone_stairs_left",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:cracked_etched_nagastone",
+      "base": "gloamingforest:cracked_etched_nagastone",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:cracked_nagastone_stairs_right",
+    "id": "gloamingforest:cracked_nagastone_stairs_right",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:cracked_etched_nagastone",
+      "base": "gloamingforest:cracked_etched_nagastone",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:dark_tower_miniature_structure",
+    "id": "gloamingforest:dark_tower_miniature_structure",
     "family": "horizontal",
     "params": {
       "class": "MiniatureStructureBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
-      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "copyOf": "gloamingforest:gloaming_portal_miniature_structure",
       "states": ["facing"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:encased_castle_brick_pillar",
+    "id": "gloamingforest:encased_castle_brick_pillar",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
-      "copyOf": "twilightforest:castle_brick",
+      "copyOf": "gloamingforest:castle_brick",
       "states": ["axis"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:encased_castle_brick_stairs",
+    "id": "gloamingforest:encased_castle_brick_stairs",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:encased_castle_brick_pillar",
+      "base": "gloamingforest:encased_castle_brick_pillar",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:etched_nagastone",
+    "id": "gloamingforest:etched_nagastone",
     "family": "directional",
     "params": {
       "class": "EtchedNagastoneBlock",
@@ -155,7 +155,17 @@
     }
   },
   {
-    "id": "twilightforest:iron_ladder",
+    "id": "gloamingforest:gloaming_portal_miniature_structure",
+    "family": "horizontal",
+    "params": {
+      "class": "MiniatureStructureBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "states": ["facing"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
+    }
+  },
+  {
+    "id": "gloamingforest:iron_ladder",
     "family": "climbable",
     "params": {
       "class": "IronLadderBlock",
@@ -166,7 +176,7 @@
     }
   },
   {
-    "id": "twilightforest:knightmetal_block",
+    "id": "gloamingforest:knightmetal_block",
     "family": "waterloggable",
     "params": {
       "class": "KnightmetalBlock",
@@ -176,40 +186,40 @@
     }
   },
   {
-    "id": "twilightforest:lich_tower_miniature_structure",
+    "id": "gloamingforest:lich_tower_miniature_structure",
     "family": "horizontal",
     "params": {
       "class": "MiniatureStructureBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
-      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "copyOf": "gloamingforest:gloaming_portal_miniature_structure",
       "states": ["facing"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:minotaur_labyrinth_miniature_structure",
+    "id": "gloamingforest:minotaur_labyrinth_miniature_structure",
     "family": "horizontal",
     "params": {
       "class": "MiniatureStructureBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
-      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "copyOf": "gloamingforest:gloaming_portal_miniature_structure",
       "states": ["facing"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:mossy_castle_brick_stairs",
+    "id": "gloamingforest:mossy_castle_brick_stairs",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:mossy_castle_brick",
+      "base": "gloamingforest:mossy_castle_brick",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
-    "id": "twilightforest:mossy_etched_nagastone",
+    "id": "gloamingforest:mossy_etched_nagastone",
     "family": "directional",
     "params": {
       "class": "EtchedNagastoneBlock",
@@ -219,7 +229,7 @@
     }
   },
   {
-    "id": "twilightforest:mossy_nagastone_pillar",
+    "id": "gloamingforest:mossy_nagastone_pillar",
     "family": "pillar",
     "params": {
       "class": "DirectionalRotatedPillarBlock",
@@ -229,40 +239,40 @@
     }
   },
   {
-    "id": "twilightforest:mossy_nagastone_stairs_left",
+    "id": "gloamingforest:mossy_nagastone_stairs_left",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:mossy_etched_nagastone",
+      "base": "gloamingforest:mossy_etched_nagastone",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:mossy_nagastone_stairs_right",
+    "id": "gloamingforest:mossy_nagastone_stairs_right",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:mossy_etched_nagastone",
+      "base": "gloamingforest:mossy_etched_nagastone",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:naga_courtyard_miniature_structure",
+    "id": "gloamingforest:naga_courtyard_miniature_structure",
     "family": "horizontal",
     "params": {
       "class": "MiniatureStructureBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
-      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "copyOf": "gloamingforest:gloaming_portal_miniature_structure",
       "states": ["facing"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:nagastone_head",
+    "id": "gloamingforest:nagastone_head",
     "family": "horizontal",
     "params": {
       "class": "TFHorizontalBlock",
@@ -272,7 +282,7 @@
     }
   },
   {
-    "id": "twilightforest:nagastone_pillar",
+    "id": "gloamingforest:nagastone_pillar",
     "family": "pillar",
     "params": {
       "class": "DirectionalRotatedPillarBlock",
@@ -282,29 +292,29 @@
     }
   },
   {
-    "id": "twilightforest:nagastone_stairs_left",
+    "id": "gloamingforest:nagastone_stairs_left",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:etched_nagastone",
+      "base": "gloamingforest:etched_nagastone",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:nagastone_stairs_right",
+    "id": "gloamingforest:nagastone_stairs_right",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:etched_nagastone",
+      "base": "gloamingforest:etched_nagastone",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
-    "id": "twilightforest:rope",
+    "id": "gloamingforest:rope",
     "family": "climbable",
     "params": {
       "class": "RopeBlock",
@@ -314,7 +324,7 @@
     }
   },
   {
-    "id": "twilightforest:spiral_bricks",
+    "id": "gloamingforest:spiral_bricks",
     "family": "waterloggable",
     "params": {
       "class": "SpiralBrickBlock",
@@ -325,17 +335,7 @@
     }
   },
   {
-    "id": "twilightforest:twilight_portal_miniature_structure",
-    "family": "horizontal",
-    "params": {
-      "class": "MiniatureStructureBlock",
-      "vanillaClass": "HorizontalDirectionalBlock",
-      "states": ["facing"],
-      "tags": ["minecraft:is_pickaxe_item_destructible"]
-    }
-  },
-  {
-    "id": "twilightforest:twisted_stone",
+    "id": "gloamingforest:twisted_stone",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
@@ -344,7 +344,7 @@
     }
   },
   {
-    "id": "twilightforest:twisted_stone_pillar",
+    "id": "gloamingforest:twisted_stone_pillar",
     "family": "pillar",
     "params": {
       "class": "WallPillarBlock",
@@ -355,12 +355,12 @@
     }
   },
   {
-    "id": "twilightforest:worn_castle_brick_stairs",
+    "id": "gloamingforest:worn_castle_brick_stairs",
     "family": "stairs",
     "params": {
       "class": "StairBlock",
       "traits": ["waterloggable"],
-      "base": "twilightforest:worn_castle_brick",
+      "base": "gloamingforest:worn_castle_brick",
       "states": ["facing", "half", "shape"],
       "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }

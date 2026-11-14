@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.blockchain_goblin.base": {
+    "animation.gloamingforest.blockchain_goblin.base": {
       "loop": true,
       "bones": {
         "body": {

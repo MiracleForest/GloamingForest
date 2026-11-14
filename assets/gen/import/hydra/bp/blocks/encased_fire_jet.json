@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:encased_fire_jet",
+      "identifier": "gloamingforest:encased_fire_jet",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:state": ["idle", "popping", "flame", "timeout"]
+        "gloamingforest:state": ["idle", "popping", "flame", "timeout"]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.encased_fire_jet",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_fire_jet",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_encased_towerwood",
@@ -58,9 +58,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:state') == 'flame'",
+        "condition": "q.block_state('gloamingforest:state') == 'flame'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.encased_fire_jet_on",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_fire_jet_on",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_encased_towerwood",
@@ -100,9 +100,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:state') == 'idle'",
+        "condition": "q.block_state('gloamingforest:state') == 'idle'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.encased_fire_jet",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_fire_jet",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_encased_towerwood",
@@ -142,9 +142,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:state') == 'popping'",
+        "condition": "q.block_state('gloamingforest:state') == 'popping'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.encased_fire_jet_on",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_fire_jet_on",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_encased_towerwood",
@@ -184,9 +184,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:state') == 'timeout'",
+        "condition": "q.block_state('gloamingforest:state') == 'timeout'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.encased_fire_jet",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.encased_fire_jet",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_encased_towerwood",
@@ -226,7 +226,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:state') == 'flame'",
+        "condition": "q.block_state('gloamingforest:state') == 'flame'",
         "components": {
           "minecraft:light_emission": 15
         }

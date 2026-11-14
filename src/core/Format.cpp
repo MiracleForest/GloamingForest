@@ -51,7 +51,7 @@ std::string formatMessage(std::string_view fmt, std::span<std::string const> arg
             }
         }
         if (c == '%' && i + 1 < fmt.size()) {
-            // Java's String.format subset used by TF's lang files: %s, %d, %1$s, %%.
+            // Java's String.format subset used by upstream's lang files: %s, %d, %1$s, %%.
             if (fmt[i + 1] == '%') {
                 out += '%';
                 ++i;

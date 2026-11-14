@@ -1,0 +1,91 @@
+{
+  "parent": {
+    "parent": {
+      "parent": {
+        "parent": {
+          "parent": {
+            "parent": {
+              "parent": {
+                "parent": {
+                  "parent": {
+                    "parent": {
+                      "common_biomes": [
+                        "gloamingforest:forest",
+                        "gloamingforest:dense_forest",
+                        "gloamingforest:mushroom_forest",
+                        "gloamingforest:oak_savannah",
+                        "gloamingforest:firefly_forest"
+                      ],
+                      "layer_type": "gloamingforest:random_biomes",
+                      "rare_biome_chance": 15,
+                      "rare_biomes": [
+                        "gloamingforest:lake",
+                        "gloamingforest:dense_mushroom_forest",
+                        "gloamingforest:enchanted_forest",
+                        "gloamingforest:clearing",
+                        "gloamingforest:spooky_forest"
+                      ],
+                      "salt": 1
+                    },
+                    "key_biomes": [
+                      "gloamingforest:glacier",
+                      "gloamingforest:fire_swamp",
+                      "gloamingforest:dark_forest_center",
+                      "gloamingforest:final_plateau"
+                    ],
+                    "layer_type": "gloamingforest:key_biomes",
+                    "salt": 1000
+                  },
+                  "keys_to_companions": [
+                    {
+                      "companion": "gloamingforest:swamp",
+                      "key": "gloamingforest:fire_swamp"
+                    },
+                    {
+                      "companion": "gloamingforest:snowy_forest",
+                      "key": "gloamingforest:glacier"
+                    },
+                    {
+                      "companion": "gloamingforest:dark_forest",
+                      "key": "gloamingforest:dark_forest_center"
+                    },
+                    {
+                      "companion": "gloamingforest:highlands",
+                      "key": "gloamingforest:final_plateau"
+                    }
+                  ],
+                  "layer_type": "gloamingforest:companion_biomes",
+                  "salt": 1000
+                },
+                "fuzzy": false,
+                "layer_type": "gloamingforest:zoom",
+                "salt": 1000
+              },
+              "fuzzy": false,
+              "layer_type": "gloamingforest:zoom",
+              "salt": 1001
+            },
+            "layer_type": "gloamingforest:stabilize",
+            "salt": 700
+          },
+          "bordering_biome": "gloamingforest:thornlands",
+          "layer_type": "gloamingforest:border",
+          "salt": 500,
+          "target_biome": "gloamingforest:final_plateau"
+        },
+        "fuzzy": false,
+        "layer_type": "gloamingforest:zoom",
+        "salt": 1002
+      },
+      "fuzzy": false,
+      "layer_type": "gloamingforest:zoom",
+      "salt": 1003
+    },
+    "fuzzy": false,
+    "layer_type": "gloamingforest:zoom",
+    "salt": 1004
+  },
+  "fuzzy": false,
+  "layer_type": "gloamingforest:zoom",
+  "salt": 1005
+}

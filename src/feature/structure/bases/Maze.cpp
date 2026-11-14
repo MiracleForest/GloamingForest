@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/TFMaze.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/TFMaze.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -32,8 +32,8 @@ Maze::Maze(int cellsWidth, int cellsDepth, RandomSource&)
   rawWidth(cellsWidth * 2 + 1),
   rawDepth(cellsDepth * 2 + 1),
   storage(static_cast<std::size_t>(rawWidth) * static_cast<std::size_t>(rawDepth), 0) {
-    wallBlockState   = &blocks::java("twilightforest:cut_mazestone");
-    rootBlockState   = &blocks::java("twilightforest:mazestone");
+    wallBlockState   = &blocks::java("gloamingforest:cut_mazestone");
+    rootBlockState   = &blocks::java("gloamingforest:mazestone");
     torchBlockState  = &blocks::java("minecraft:torch");
     pillarBlockState = &blocks::air();
     headBlockState   = &blocks::air();
@@ -67,8 +67,8 @@ void Maze::copyToStructure(Region& region, int dx, int dy, int dz, ComponentOld&
     auto put = [&](Block const* b, int x, int y, int z) {
         if (b) component.placeBlock(region, *b, x, y, z, sbb);
     };
-    // TF draws the wall selector and the canopy trees from world.getRandom() (the region's random),
-    // so `rand` sees only the shouldTree / shouldTorch draws, as in TF
+    // upstream draws the wall selector and the canopy trees from world.getRandom() (the region's random),
+    // so `rand` sees only the shouldTree / shouldTorch draws, as in upstream
     RandomSource& worldRandom  = regionRandom(region);
     auto          putWallBlock = [&](int x, int y, int z) {
         if (wallBlocks) component.placeBlock(region, wallBlocks->next(worldRandom, x, y, z, true), x, y, z, sbb);
@@ -96,7 +96,7 @@ void Maze::copyToStructure(Region& region, int dx, int dy, int dz, ComponentOld&
                         // putCanopyTree: only where the middle of the tree is in this chunk
                         BlockPos pos = component.getBlockPosWithOffset(mdx, dy, mdz);
                         if (sbb.contains(pos.x, pos.y, pos.z)) {
-                            if (!features::place("twilightforest:tree/canopy_tree", region, pos, worldRandom)) makeWallThing(mdx, mdz, 0, 0);
+                            if (!features::place("gloamingforest:tree/canopy_tree", region, pos, worldRandom)) makeWallThing(mdx, mdz, 0, 0);
                         }
                     } else {
                         for (int even = 0; even < evenBias; even++)

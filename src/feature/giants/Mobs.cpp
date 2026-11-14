@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/GiantMiner.java
-//   src/main/java/twilightforest/entity/monster/ArmoredGiant.java
-//   src/main/java/twilightforest/util/EntityUtil.java (properlyApplyCustomDamageSource)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/GiantMiner.java
+//   src/main/java/gloamingforest/entity/monster/ArmoredGiant.java
+//   src/main/java/gloamingforest/util/EntityUtil.java (properlyApplyCustomDamageSource)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The giant miner and the armored giant. Their vanilla goals (float, melee, stroll, look, hurt-by /
 // nearest-player targets), attributes and size are the BP's (assets/pack/bp/entities/giants); what
-// is TF's own is native: the gear (populateDefaultEquipmentSlots, never enchanted, never dropped),
-// the melee as twilightforest:ant damage (doHurtTarget) and the spawn rule (fewer than 5 giants
-// around, on #twilightforest:giants_spawnable_on).
+// is upstream's own is native: the gear (populateDefaultEquipmentSlots, never enchanted, never dropped),
+// the melee as gloamingforest:ant damage (doHurtTarget) and the spawn rule (fewer than 5 giants
+// around, on #gloamingforest:giants_spawnable_on).
 #include <bitset>
 #include <cmath>
 
@@ -69,7 +69,7 @@ void put(Mob& mob, Slot slot, char const* item) {
 /// GiantMiner#canSpawn + #checkSpawnRules.
 bool canSpawn(BlockSource& region, std::string const&, BlockPos const& pos, gf::spawn::SpawnReason, gf::spawn::RandomSource&) {
     BlockPos below{pos.x, pos.y - 1, pos.z};
-    if (!gf::tags::has(gf::tags::Registry::Block, "twilightforest:giants_spawnable_on", game::blockId(region.getBlock(below)))) return false;
+    if (!gf::tags::has(gf::tags::Registry::Block, "gloamingforest:giants_spawnable_on", game::blockId(region.getBlock(below)))) return false;
     // fewer than 5 GiantMiners (armored giants included) in the box inflated by (100, 10, 100)
     AABB box{Vec3{pos.x - 1.2f - 100.0f, static_cast<float>(pos.y) - 10.0f, pos.z - 1.2f - 100.0f},
              Vec3{pos.x + 1.2f + 100.0f, pos.y + 7.2f + 10.0f, pos.z + 1.2f + 100.0f}};
@@ -126,10 +126,10 @@ void installMobs() {
     // GiantMiner#doHurtTarget: EntityUtil#properlyApplyCustomDamageSource with TFDamageTypes.ANT
     gf::combat::onIncoming(gf::combat::priority::High, [](gf::combat::DamageInfo& d) {
         if (!d.attacker || !isGiant(*d.attacker) || (d.direct && d.direct != d.attacker)) return gf::combat::Verdict::Pass;
-        if (d.type == "twilightforest:ant") return gf::combat::Verdict::Pass;
+        if (d.type == "gloamingforest:ant") return gf::combat::Verdict::Pass;
         if (d.type != "minecraft:mob_attack" && d.type != "minecraft:generic") return gf::combat::Verdict::Pass;
         // the ant damage instead, through the whole pipeline (F10 runs the handlers of a nested hurt)
-        gf::combat::hurt(d.victim, giantAttackDamage(*d.attacker), "twilightforest:ant", d.attacker, d.attacker);
+        gf::combat::hurt(d.victim, giantAttackDamage(*d.attacker), "gloamingforest:ant", d.attacker, d.attacker);
         return gf::combat::Verdict::Cancel;
     });
     // setDropChance(slot, 0): the gear never drops (the loot tables give the tool to players)

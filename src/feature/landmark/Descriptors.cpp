@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/util/LandmarkStructure.java
-//   src/main/java/twilightforest/world/components/structures/util/ProgressionStructure.java
-//   src/main/java/twilightforest/world/components/structures/util/ControlledSpawningStructure.java
-//   src/main/java/twilightforest/world/components/structures/util/StructureHints.java
-//   src/main/java/twilightforest/world/components/structures/util/DecorationClearance.java
-//   src/main/java/twilightforest/data/tags/StructureTagGenerator.java
-//   src/main/java/twilightforest/init/TFStructureTypes.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/util/LandmarkStructure.java
+//   src/main/java/gloamingforest/world/components/structures/util/ProgressionStructure.java
+//   src/main/java/gloamingforest/world/components/structures/util/ControlledSpawningStructure.java
+//   src/main/java/gloamingforest/world/components/structures/util/StructureHints.java
+//   src/main/java/gloamingforest/world/components/structures/util/DecorationClearance.java
+//   src/main/java/gloamingforest/data/tags/StructureTagGenerator.java
+//   src/main/java/gloamingforest/init/TFStructureTypes.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Landmark descriptors: TF's structure records (codec fields of the Java structure classes) read
-// from <mod>/data/gf/landmarks/*.json (assets/data/landmarks, made from TF's generated structure
-// and structure set JSON). When the imported TF worldgen data (F1) is present, records missing
-// here are read from data/twilightforest/worldgen/{structure,structure_set}.
+// Landmark descriptors: upstream's structure records (codec fields of the Java structure classes) read
+// from <mod>/data/gf/landmarks/*.json (assets/data/landmarks, made from upstream's generated structure
+// and structure set JSON). When the imported upstream worldgen data (F1) is present, records missing
+// here are read from data/gloamingforest/worldgen/{structure,structure_set}.
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -68,30 +68,30 @@ Traits traitsOf(std::string const& type) {
     auto   controlled = [&] {
         t.landmark = t.conquerable = t.progression = t.controlledSpawns = true;
     };
-    if (type == "twilightforest:aurora_palace" || type == "twilightforest:dark_tower" || type == "twilightforest:final_castle"
-        || type == "twilightforest:knight_stronghold") {
+    if (type == "gloamingforest:aurora_palace" || type == "gloamingforest:dark_tower" || type == "gloamingforest:final_castle"
+        || type == "gloamingforest:knight_stronghold") {
         controlled(); // ControlledSpawningStructure
-        t.topBelowStart = type == "twilightforest:knight_stronghold"; // KnightStructureStart
-    } else if (type == "twilightforest:labyrinth" || type == "twilightforest:lich_tower" || type == "twilightforest:yeti_cave") {
+        t.topBelowStart = type == "gloamingforest:knight_stronghold"; // KnightStructureStart
+    } else if (type == "gloamingforest:labyrinth" || type == "gloamingforest:lich_tower" || type == "gloamingforest:yeti_cave") {
         controlled();
         t.customDensity = true;
-    } else if (type == "twilightforest:giant_house" || type == "twilightforest:troll_cave") {
+    } else if (type == "gloamingforest:giant_house" || type == "gloamingforest:troll_cave") {
         controlled(); // ProgressionStructure implements ConfigurableSpawns
-    } else if (type == "twilightforest:hydra_lair") {
+    } else if (type == "gloamingforest:hydra_lair") {
         t.landmark = t.conquerable = t.progression = t.customDensity = true;
-    } else if (type == "twilightforest:naga_courtyard") {
+    } else if (type == "gloamingforest:naga_courtyard") {
         t.landmark = t.conquerable = t.customDensity = true;
-    } else if (type == "twilightforest:quest_grove") {
+    } else if (type == "gloamingforest:quest_grove") {
         t.landmark = t.conquerable = true;
-    } else if (type == "twilightforest:hedge_maze") {
+    } else if (type == "gloamingforest:hedge_maze") {
         t.landmark = t.customDensity = true;
-    } else if (type == "twilightforest:hollow_hill") {
+    } else if (type == "gloamingforest:hollow_hill") {
         t.landmark = t.controlledSpawns = t.customDensity = true;
-    } else if (type == "twilightforest:mushroom_tower" || type == "twilightforest:landmark") {
+    } else if (type == "gloamingforest:mushroom_tower" || type == "gloamingforest:landmark") {
         t.landmark = true; // LandmarkStructure, LandmarkWrappedStructure
-    } else if (type == "twilightforest:progression") {
+    } else if (type == "gloamingforest:progression") {
         t.landmark = t.conquerable = t.progression = true; // ProgressionWrappedStructure
-    } else if (type == "twilightforest:fallen_trunk") {
+    } else if (type == "gloamingforest:fallen_trunk") {
         t.customDensity = true;
     }
     return t;
@@ -101,21 +101,21 @@ Traits traitsOf(std::string const& type) {
 /// #adjustForTerrain over the center chunk widened by a radius (no clamp, adjust_structure_elevation
 /// not consulted); every other one uses DecorationClearance#adjustForTerrain.
 std::optional<TerrainOverride> terrainOverrideOf(std::string const& type) {
-    if (type == "twilightforest:lich_tower") return TerrainOverride{32, 4, 0};     // LichTowerStructure#adjustForTerrain
-    if (type == "twilightforest:hedge_maze") return TerrainOverride{24, 4, 0};     // HedgeMazeStructure#adjustForTerrain
-    if (type == "twilightforest:naga_courtyard") return TerrainOverride{40, 4, 2}; // NagaCourtyardStructure#adjustForTerrain: + 2
+    if (type == "gloamingforest:lich_tower") return TerrainOverride{32, 4, 0};     // LichTowerStructure#adjustForTerrain
+    if (type == "gloamingforest:hedge_maze") return TerrainOverride{24, 4, 0};     // HedgeMazeStructure#adjustForTerrain
+    if (type == "gloamingforest:naga_courtyard") return TerrainOverride{40, 4, 2}; // NagaCourtyardStructure#adjustForTerrain: + 2
     return std::nullopt;
 }
 
 /// StructureTagGenerator.LANDMARK.
 bool inLandmarkTag(std::string const& key) {
     static char const* const members[] = {
-        "twilightforest:hedge_maze",        "twilightforest:quest_grove",       "twilightforest:mushroom_tower",
-        "twilightforest:small_hollow_hill", "twilightforest:medium_hollow_hill", "twilightforest:large_hollow_hill",
-        "twilightforest:naga_courtyard",    "twilightforest:lich_tower",        "twilightforest:labyrinth",
-        "twilightforest:hydra_lair",        "twilightforest:knight_stronghold", "twilightforest:dark_tower",
-        "twilightforest:yeti_cave",         "twilightforest:aurora_palace",     "twilightforest:troll_cave",
-        "twilightforest:final_castle",
+        "gloamingforest:hedge_maze",        "gloamingforest:quest_grove",       "gloamingforest:mushroom_tower",
+        "gloamingforest:small_hollow_hill", "gloamingforest:medium_hollow_hill", "gloamingforest:large_hollow_hill",
+        "gloamingforest:naga_courtyard",    "gloamingforest:lich_tower",        "gloamingforest:labyrinth",
+        "gloamingforest:hydra_lair",        "gloamingforest:knight_stronghold", "gloamingforest:dark_tower",
+        "gloamingforest:yeti_cave",         "gloamingforest:aurora_palace",     "gloamingforest:troll_cave",
+        "gloamingforest:final_castle",
     };
     return std::find(std::begin(members), std::end(members), key) != std::end(members);
 }
@@ -130,11 +130,11 @@ std::optional<Json> readJson(std::filesystem::path const& file) {
 
 /// Descriptor::extra["gf"]: what GloamingForest derives from the record (type traits, defaults).
 constexpr char kDerivedKey[] = "gf";
-/// The TF record keys parsed into Descriptor's own fields (left out of Descriptor::extra).
+/// The upstream record keys parsed into Descriptor's own fields (left out of Descriptor::extra).
 constexpr char const* kDescriptorFields[] = {"structure_icon", "advancements_required", "controlled_spawns", "spawn_overrides"};
 
-/// Merges a landmark descriptor's record over the imported TF record of the same key (top-level
-/// keys of the descriptor win), so no TF field is lost when both exist.
+/// Merges a landmark descriptor's record over the imported upstream record of the same key (top-level
+/// keys of the descriptor win), so no upstream field is lost when both exist.
 Json mergeRecord(Json const* imported, Json const& own) {
     Json merged = imported && imported->is_object() ? *imported : Json::object();
     if (own.is_object())
@@ -167,7 +167,7 @@ StructureSet parseSet(std::string const& id, Json const& j) {
 
 std::string normalizeKey(std::string const& id) {
     if (id.empty() || id.find(':') != std::string::npos) return id;
-    return "twilightforest:" + id;
+    return "gloamingforest:" + id;
 }
 
 Info parseRecord(std::string const& key, Json const& record, Json const* fixedClearance) {
@@ -209,17 +209,17 @@ Info parseRecord(std::string const& key, Json const& record, Json const* fixedCl
         auto item = hint->value("hint_item", Json::object());
         auto book = item.value("components", Json::object()).value("minecraft:written_book_content", Json::object());
         auto title = book.value("title", Json::object()).value("raw", std::string{});
-        static constexpr std::string_view prefix = "twilightforest.book.";
+        static constexpr std::string_view prefix = "gloamingforest.book.";
         if (title.starts_with(prefix)) i.hintBook = title.substr(prefix.size());
         if (auto pages = book.find("pages"); pages != book.end() && pages->is_array()) i.hintPages = static_cast<int>(pages->size());
         if (!i.hintBook.empty()) i.d.hintBookKey = std::string(prefix) + i.hintBook;
     }
 
-    // Descriptor::extra: everything of the TF record the descriptor fields do not carry, verbatim
+    // Descriptor::extra: everything of the upstream record the descriptor fields do not carry, verbatim
     // (type-specific codec fields: hill_size, speleothem_config, the fallen trunk and hollow tree
     // parameters, decoration_clearance, hint_creature, biomes, step, terrain_adaptation, ...), plus
     // what GloamingForest derives from the record under the separate key "gf" (a Java-side fixed
-    // clearance included: it is no field of the TF record)
+    // clearance included: it is no field of the upstream record)
     i.d.extra = record.is_object() ? record : Json::object();
     for (auto const* parsed : kDescriptorFields) i.d.extra.erase(parsed);
     i.d.extra.erase("gf_runtime");
@@ -264,23 +264,23 @@ void loadDescriptorsLocked() {
     auto const                          data = Mod::getInstance().getSelf().getModDir() / "data";
     std::error_code                     ec;
 
-    // 1. the imported TF worldgen data (F1), when present
-    auto tfSets = data / "twilightforest" / "worldgen" / "structure_set";
+    // 1. the imported upstream worldgen data (F1), when present
+    auto tfSets = data / "gloamingforest" / "worldgen" / "structure_set";
     if (std::filesystem::is_directory(tfSets, ec)) {
         for (auto const& e : std::filesystem::directory_iterator(tfSets, ec)) {
             if (e.path().extension() != ".json") continue;
             if (auto j = readJson(e.path())) {
-                auto id = "twilightforest:" + e.path().stem().string();
+                auto id = "gloamingforest:" + e.path().stem().string();
                 guarded(e.path(), [&] { sets[id] = parseSet(id, *j); });
             }
         }
     }
-    auto tfStructures = data / "twilightforest" / "worldgen" / "structure";
+    auto tfStructures = data / "gloamingforest" / "worldgen" / "structure";
     if (std::filesystem::is_directory(tfStructures, ec)) {
         for (auto const& e : std::filesystem::directory_iterator(tfStructures, ec)) {
             if (e.path().extension() != ".json") continue;
             if (auto j = readJson(e.path())) {
-                auto key = "twilightforest:" + e.path().stem().string();
+                auto key = "gloamingforest:" + e.path().stem().string();
                 guarded(e.path(), [&] { infos[key] = parseRecord(key, *j); });
             }
         }
@@ -316,7 +316,7 @@ void loadDescriptorsLocked() {
         for (auto const& [key, weight] : set.structures)
             if (auto it = infos.find(key); it != infos.end()) it->second.structureSet = id;
 
-    // the unimplemented TF keys never get a descriptor
+    // the unimplemented upstream keys never get a descriptor
     for (auto it = infos.begin(); it != infos.end();) {
         if (core::landmark::isUnimplementedKey(it->first)) it = infos.erase(it);
         else ++it;
@@ -381,7 +381,7 @@ std::vector<StructureSet const*> structureSets() {
 }
 
 void registerInfo(Info i) {
-    ensureLoaded(); // the data's descriptors first: a fixture never takes a TF key's place
+    ensureLoaded(); // the data's descriptors first: a fixture never takes an upstream key's place
     i.raw["gf_runtime"] = true;
     assignSlot(i, 0); // the worldgen's registry first (its own lock), outside the store lock
     std::unique_lock lock(store().mutex);

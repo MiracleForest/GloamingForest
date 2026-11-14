@@ -1,11 +1,11 @@
 {
   "values": [
-    "twilightforest:ironwood_helmet",
-    "twilightforest:steeleaf_helmet",
-    "twilightforest:knightmetal_helmet",
-    "twilightforest:phantom_helmet",
-    "twilightforest:fiery_helmet",
-    "twilightforest:arctic_helmet",
-    "twilightforest:yeti_helmet"
+    "gloamingforest:ironwood_helmet",
+    "gloamingforest:steeleaf_helmet",
+    "gloamingforest:knightmetal_helmet",
+    "gloamingforest:phantom_helmet",
+    "gloamingforest:fiery_helmet",
+    "gloamingforest:arctic_helmet",
+    "gloamingforest:yeti_helmet"
   ]
 }

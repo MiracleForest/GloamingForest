@@ -2,21 +2,21 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:fire_beetle",
+      "identifier": "gloamingforest:fire_beetle",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/firebeetle"
+        "default": "textures/gloamingforest/entity/firebeetle"
       },
       "geometry": {
-        "default": "geometry.twilightforest.fire_beetle"
+        "default": "geometry.gloamingforest.fire_beetle"
       },
       "render_controllers": [
         "controller.render.default"
       ],
       "animations": {
-        "base": "animation.twilightforest.fire_beetle.base"
+        "base": "animation.gloamingforest.fire_beetle.base"
       },
       "scripts": {
         "animate": [

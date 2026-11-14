@@ -13,7 +13,7 @@
    {"op": "add", "path": "/minecraft:item/components/minecraft:use_modifiers", "value": {"use_duration": 1.6, "movement_modifier": 0.2}},
    {"op": "add", "path": "/minecraft:item/components/minecraft:use_animation", "value": "eat"}
   ],
-  "bp/blocks/twilight_oak_banister.json": [
+  "bp/blocks/gloaming_oak_banister.json": [
    {
     "op": "add",
     "path": "/minecraft:block/permutations/0/components/minecraft:collision_box",
@@ -25865,7 +25865,7 @@
     }
    }
   ],
-  "bp/blocks/twilight_oak_drying_rack.json": [
+  "bp/blocks/gloaming_oak_drying_rack.json": [
    {
     "op": "add",
     "path": "/minecraft:block/permutations/0/components/minecraft:collision_box",
@@ -29031,7 +29031,7 @@
     }
    }
   ],
-  "bp/blocks/hollow_twilight_oak_log_horizontal.json": [
+  "bp/blocks/hollow_gloaming_oak_log_horizontal.json": [
    {
     "op": "add",
     "path": "/minecraft:block/permutations/0/components/minecraft:collision_box",
@@ -29690,7 +29690,7 @@
     }
    }
   ],
-  "bp/blocks/hollow_twilight_oak_log_vertical.json": [
+  "bp/blocks/hollow_gloaming_oak_log_vertical.json": [
    {
     "op": "add",
     "path": "/minecraft:block/components/minecraft:collision_box",
@@ -29746,7 +29746,7 @@
     ]
    }
   ],
-  "bp/blocks/hollow_twilight_oak_log_climbable.json": [
+  "bp/blocks/hollow_gloaming_oak_log_climbable.json": [
    {
     "op": "add",
     "path": "/minecraft:block/permutations/0/components/minecraft:collision_box",
@@ -30606,12 +30606,12 @@
     ]
    }
   ],
-  "bp/items/hollow_twilight_oak_log.json": [
+  "bp/items/hollow_gloaming_oak_log.json": [
    {
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_twilight_oak_log_horizontal"
+     "block": "gloamingforest:hollow_gloaming_oak_log_horizontal"
     }
    },
    {
@@ -32206,7 +32206,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_canopy_log_horizontal"
+     "block": "gloamingforest:hollow_canopy_log_horizontal"
     }
    },
    {
@@ -33801,7 +33801,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_mangrove_log_horizontal"
+     "block": "gloamingforest:hollow_mangrove_log_horizontal"
     }
    },
    {
@@ -35396,7 +35396,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_dark_log_horizontal"
+     "block": "gloamingforest:hollow_dark_log_horizontal"
     }
    },
    {
@@ -36991,7 +36991,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_time_log_horizontal"
+     "block": "gloamingforest:hollow_time_log_horizontal"
     }
    },
    {
@@ -38586,7 +38586,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_transformation_log_horizontal"
+     "block": "gloamingforest:hollow_transformation_log_horizontal"
     }
    },
    {
@@ -40181,7 +40181,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_mining_log_horizontal"
+     "block": "gloamingforest:hollow_mining_log_horizontal"
     }
    },
    {
@@ -41776,7 +41776,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_sorting_log_horizontal"
+     "block": "gloamingforest:hollow_sorting_log_horizontal"
     }
    },
    {
@@ -43371,7 +43371,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_oak_log_horizontal"
+     "block": "gloamingforest:hollow_oak_log_horizontal"
     }
    },
    {
@@ -44974,7 +44974,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_spruce_log_horizontal"
+     "block": "gloamingforest:hollow_spruce_log_horizontal"
     }
    },
    {
@@ -46577,7 +46577,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_birch_log_horizontal"
+     "block": "gloamingforest:hollow_birch_log_horizontal"
     }
    },
    {
@@ -48180,7 +48180,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_jungle_log_horizontal"
+     "block": "gloamingforest:hollow_jungle_log_horizontal"
     }
    },
    {
@@ -49783,7 +49783,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_acacia_log_horizontal"
+     "block": "gloamingforest:hollow_acacia_log_horizontal"
     }
    },
    {
@@ -51386,7 +51386,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_dark_oak_log_horizontal"
+     "block": "gloamingforest:hollow_dark_oak_log_horizontal"
     }
    },
    {
@@ -52989,7 +52989,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_crimson_stem_horizontal"
+     "block": "gloamingforest:hollow_crimson_stem_horizontal"
     }
    },
    {
@@ -54592,7 +54592,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_warped_stem_horizontal"
+     "block": "gloamingforest:hollow_warped_stem_horizontal"
     }
    },
    {
@@ -56195,7 +56195,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_vangrove_log_horizontal"
+     "block": "gloamingforest:hollow_vangrove_log_horizontal"
     }
    },
    {
@@ -57798,7 +57798,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_cherry_log_horizontal"
+     "block": "gloamingforest:hollow_cherry_log_horizontal"
     }
    },
    {
@@ -57821,7 +57821,7 @@
     "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
-  "bp/items/twilight_oak_door.json": [
+  "bp/items/gloaming_oak_door.json": [
    {
     "op": "add",
     "path": "/minecraft:item/components/minecraft:fuel",
@@ -57830,7 +57830,7 @@
     }
    }
   ],
-  "bp/items/twilight_oak_sign.json": [
+  "bp/items/gloaming_oak_sign.json": [
    {
     "op": "add",
     "path": "/minecraft:item/components/minecraft:fuel",
@@ -57839,7 +57839,7 @@
     }
    }
   ],
-  "bp/items/twilight_oak_hanging_sign.json": [
+  "bp/items/gloaming_oak_hanging_sign.json": [
    {
     "op": "add",
     "path": "/minecraft:item/components/minecraft:fuel",
@@ -57848,7 +57848,7 @@
     }
    }
   ],
-  "bp/items/twilight_oak_boat.json": [
+  "bp/items/gloaming_oak_boat.json": [
    {
     "op": "add",
     "path": "/minecraft:item/components/minecraft:fuel",
@@ -57857,7 +57857,7 @@
     }
    }
   ],
-  "bp/items/twilight_oak_chest_boat.json": [
+  "bp/items/gloaming_oak_chest_boat.json": [
    {
     "op": "add",
     "path": "/minecraft:item/components/minecraft:fuel",

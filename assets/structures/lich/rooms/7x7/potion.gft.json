@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/7x7/potion",
+  "id": "gloamingforest:lich_tower/7x7/potion",
   "size": [9, 9, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},

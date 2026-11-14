@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TFBushBlock.java
-//   src/main/java/twilightforest/block/BerryBushBlock.java
-//   src/main/java/twilightforest/block/DarkTowerBerryBushBlock.java
-//   src/main/java/twilightforest/block/OreBerryBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/BerryBushBlock.java
+//   src/main/java/gloamingforest/block/DarkTowerBerryBushBlock.java
+//   src/main/java/gloamingforest/block/OreBerryBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -43,12 +43,12 @@ namespace bushes {
 
 namespace {
 
-constexpr std::array<char const*, 4> kOverworld{"twilightforest:raspberry_bush", "twilightforest:blueberry_bush", "twilightforest:blackberry_bush",
-                                                "twilightforest:maloberry_bush"};
-constexpr std::array<char const*, 4> kDarkTower{"twilightforest:blightberry_bush", "twilightforest:duskberry_bush", "twilightforest:skyberry_bush",
-                                                "twilightforest:stingberry_bush"};
-constexpr std::array<char const*, 3> kOre{"twilightforest:iron_oreberry", "twilightforest:gold_oreberry", "twilightforest:copper_oreberry"};
-constexpr char                       kEssence[] = "twilightforest:essence_oreberry";
+constexpr std::array<char const*, 4> kOverworld{"gloamingforest:raspberry_bush", "gloamingforest:blueberry_bush", "gloamingforest:blackberry_bush",
+                                                "gloamingforest:maloberry_bush"};
+constexpr std::array<char const*, 4> kDarkTower{"gloamingforest:blightberry_bush", "gloamingforest:duskberry_bush", "gloamingforest:skyberry_bush",
+                                                "gloamingforest:stingberry_bush"};
+constexpr std::array<char const*, 3> kOre{"gloamingforest:iron_oreberry", "gloamingforest:gold_oreberry", "gloamingforest:copper_oreberry"};
+constexpr char                       kEssence[] = "gloamingforest:essence_oreberry";
 
 constexpr int kMaxAge = 3;
 
@@ -60,9 +60,9 @@ bool in(std::array<char const*, N> const& a, std::string const& id) {
 /// TFBushBlock#canBePlacedAt: the "placed on" tag of the bush.
 bool canBePlacedAt(Kind kind, BlockSource& region, BlockPos const& below) {
     switch (kind) {
-    case Kind::Overworld: return tagged(region, below, "twilightforest:tf_berry_bushes_survive");
-    case Kind::DarkTower: return tagged(region, below, "twilightforest:dark_tower_berry_bushes_survive");
-    default: return tagged(region, below, "twilightforest:oreberry_bushes_survive");
+    case Kind::Overworld: return tagged(region, below, "gloamingforest:tf_berry_bushes_survive");
+    case Kind::DarkTower: return tagged(region, below, "gloamingforest:dark_tower_berry_bushes_survive");
+    default: return tagged(region, below, "gloamingforest:oreberry_bushes_survive");
     }
 }
 
@@ -129,9 +129,9 @@ Kind kindOf(std::string const& blockId) {
 }
 
 std::string berryTable(std::string const& blockId) {
-    if (blockId == kEssence) return "twilightforest:blocks/essence_berry_bush_berries";
-    if (in(kOre, blockId)) return "twilightforest:blocks/" + blockId.substr(15) + "_bush_berries";
-    return "twilightforest:blocks/" + blockId.substr(15) + "_berries";
+    if (blockId == kEssence) return "gloamingforest:blocks/essence_berry_bush_berries";
+    if (in(kOre, blockId)) return "gloamingforest:blocks/" + blockId.substr(15) + "_bush_berries";
+    return "gloamingforest:blocks/" + blockId.substr(15) + "_berries";
 }
 
 /// TFBushBlock#canSurvive (+ OreBerryBlock's light limit).
@@ -240,23 +240,23 @@ void installBushes() {
     // DarkTowerBerryBushBlock#updateShape / tick: dies on the die tag (destroyed with drops a tick later)
     for (auto const* bush : kDarkTower) {
         blockevents::onNeighborChanged(bush, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
-            if (!tagged(region, relative(pos, Down), "twilightforest:dark_tower_berry_bushes_die")) return;
+            if (!tagged(region, relative(pos, Down), "gloamingforest:dark_tower_berry_bushes_die")) return;
             GlobalPos gp = game::globalPos(region, pos);
             schedule(1, [gp] {
                 auto* r = game::regionOf(gp.dim);
                 if (!r) return;
                 BlockPos p = game::blockPos(gp);
-                if (!isBush(idAt(*r, p)) || !tagged(*r, relative(p, Down), "twilightforest:dark_tower_berry_bushes_die")) return;
+                if (!isBush(idAt(*r, p)) || !tagged(*r, relative(p, Down), "gloamingforest:dark_tower_berry_bushes_die")) return;
                 destroyBlock(*r, p, true);
                 log().info("flora: {} at {} {} {} died on nylium", "dark tower bush", p.x, p.y, p.z);
             });
         });
     }
-    // OreBerryBlock#entityInside: 1 damage of twilightforest:oreberry to anything but item entities
-    for (std::string const& ore : {"twilightforest:iron_oreberry", "twilightforest:gold_oreberry", "twilightforest:copper_oreberry", "twilightforest:essence_oreberry"}) {
+    // OreBerryBlock#entityInside: 1 damage of gloamingforest:oreberry to anything but item entities
+    for (std::string const& ore : {"gloamingforest:iron_oreberry", "gloamingforest:gold_oreberry", "gloamingforest:copper_oreberry", "gloamingforest:essence_oreberry"}) {
         blockevents::onEntityInside(ore, [](BlockSource&, BlockPos const&, Actor& entity) {
             if (entity.hasType(ActorType::ItemEntity) || !entity.isAlive()) return;
-            combat::hurt(entity, 1.0f, "twilightforest:oreberry");
+            combat::hurt(entity, 1.0f, "gloamingforest:oreberry");
         });
     }
 }

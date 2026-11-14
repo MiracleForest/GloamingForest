@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/time_gate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["S#S", "S#S"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:time_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:time_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:time_fence_gate"
+    }
+  }
+}

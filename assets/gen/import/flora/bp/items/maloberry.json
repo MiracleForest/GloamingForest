@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:maloberry",
+      "identifier": "gloamingforest:maloberry",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:maloberry.name"
+        "value": "item.gloamingforest:maloberry.name"
       },
       "minecraft:tags": {
         "tags": ["c:foods/berry"]

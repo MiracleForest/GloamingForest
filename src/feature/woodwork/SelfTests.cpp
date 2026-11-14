@@ -64,7 +64,7 @@ namespace rack = gf::feature::woodwork::rack;
 namespace ia   = gf::interactions;
 using Facing   = ScriptModuleMinecraft::ScriptFacing;
 
-constexpr char kTf[] = "twilightforest:";
+constexpr char kTf[] = "gloamingforest:";
 
 GlobalPos at(GlobalPos p, int dx, int dy, int dz) { return p.offset(dx, dy, dz); }
 
@@ -214,7 +214,7 @@ bool anyBoxContains(std::vector<AABB> const& boxes, Vec3 const& v) {
 // ---- logs ---------------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("woodwork.strip_logs", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // AxeItem.STRIPPABLES (RegistrationEvents): every TF log and wood strips, keeping the axis
+    // AxeItem.STRIPPABLES (RegistrationEvents): every upstream log and wood strips, keeping the axis
     (void)co_await ctx.flatArea(400, 5);
     auto p = ctx.testPos(400, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -222,10 +222,10 @@ GF_REGISTER_SELFTEST("woodwork.strip_logs", [](Context& ctx) -> ll::coro::CoroTa
         for (auto const* kind : {"_log", "_wood"}) {
             std::string id       = std::string(kTf) + std::string(w) + kind;
             std::string stripped = std::string(kTf) + "stripped_" + std::string(w) + kind;
-            ctx.require(ctx.setBlock(p, id, {{"twilightforest:axis", "x"}}), id + " placed on its side");
+            ctx.require(ctx.setBlock(p, id, {{"gloamingforest:axis", "x"}}), id + " placed on its side");
             co_await click(ctx, p, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:iron_axe", 1);
             ctx.check(ctx.blockAt(p) == stripped, "the axe strips " + id + " (" + ctx.blockAt(p) + ")");
-            ctx.check(st(ctx, p, "twilightforest:axis") == "x", stripped + " keeps the axis");
+            ctx.check(st(ctx, p, "gloamingforest:axis") == "x", stripped + " keeps the axis");
         }
     }
 });
@@ -236,35 +236,35 @@ GF_REGISTER_SELFTEST("woodwork.banister", [](Context& ctx) -> ll::coro::CoroTask
     (void)co_await ctx.flatArea(410, 5);
     auto ground = ctx.testPos(410, 2).offset(0, -1, 0);
     ctx.require(co_await ctx.ensureLoaded(ground), "test area loaded");
-    constexpr char kId[] = "twilightforest:canopy_banister";
+    constexpr char kId[] = "gloamingforest:canopy_banister";
     // getStateForPlacement: the player's horizontal direction, tall
     auto placed = co_await place(ctx, ground, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, kId);
     ctx.require(placed && ctx.blockAt(*placed) == kId, "a banister placed from its item");
     auto b = *placed;
-    ctx.check(st(ctx, b, "twilightforest:facing") == "north", "it faces the way the player looks (north): " + st(ctx, b, "twilightforest:facing"));
-    ctx.check(st(ctx, b, "twilightforest:shape") == "tall", "it is tall");
+    ctx.check(st(ctx, b, "gloamingforest:facing") == "north", "it faces the way the player looks (north): " + st(ctx, b, "gloamingforest:facing"));
+    ctx.check(st(ctx, b, "gloamingforest:shape") == "tall", "it is tall");
     // an axe cycles short -> tall -> connected -> short; back at tall the extension toggles
     std::vector<std::pair<std::string, std::string>> expect{{"connected", "false"}, {"short", "false"}, {"tall", "true"}, {"connected", "true"}};
     for (auto const& [shape, extended] : expect) {
         co_await click(ctx, b, Facing::South, Vec3{0.5f, 0.9f, 1.0f}, "minecraft:stone_axe", 1);
-        ctx.check(st(ctx, b, "twilightforest:shape") == shape && st(ctx, b, "twilightforest:extended") == extended,
-                  "axe cycle -> " + shape + "/" + extended + " (" + st(ctx, b, "twilightforest:shape") + "/" + st(ctx, b, "twilightforest:extended") + ")");
+        ctx.check(st(ctx, b, "gloamingforest:shape") == shape && st(ctx, b, "gloamingforest:extended") == extended,
+                  "axe cycle -> " + shape + "/" + extended + " (" + st(ctx, b, "gloamingforest:shape") + "/" + st(ctx, b, "gloamingforest:extended") + ")");
     }
     // a banister placed under another one is connected; placing a non-short banister below an
     // extended one un-extends it
     auto upper = at(b, 0, 2, 0);
-    ctx.require(ctx.setBlock(upper, kId, {{"twilightforest:shape", "tall"}, {"twilightforest:extended", true}}), "an extended banister above");
+    ctx.require(ctx.setBlock(upper, kId, {{"gloamingforest:shape", "tall"}, {"gloamingforest:extended", true}}), "an extended banister above");
     co_await ctx.ticks(1);
     auto wallAt = at(b, 0, 1, 1);
     ctx.require(ctx.setBlock(wallAt, "minecraft:stone"), "a stone to place against");
     auto lower = co_await place(ctx, wallAt, Facing::North, Vec3{0.5f, 0.5f, 0.0f}, kId);
     ctx.require(lower && *lower == at(b, 0, 1, 0), "a banister placed between them");
     co_await ctx.ticks(2);
-    ctx.check(st(ctx, *lower, "twilightforest:shape") == "connected", "under a banister it is connected (" + st(ctx, *lower, "twilightforest:shape") + ")");
-    ctx.check(st(ctx, upper, "twilightforest:extended") == "false", "the extended banister above un-extends");
+    ctx.check(st(ctx, *lower, "gloamingforest:shape") == "connected", "under a banister it is connected (" + st(ctx, *lower, "gloamingforest:shape") + ")");
+    ctx.check(st(ctx, upper, "gloamingforest:extended") == "false", "the extended banister above un-extends");
     // with a non-short banister below, the axe never extends
     for (int i = 0; i < 3; ++i) co_await click(ctx, upper, Facing::South, Vec3{0.5f, 0.9f, 1.0f}, "minecraft:stone_axe", 1);
-    ctx.check(st(ctx, upper, "twilightforest:shape") == "tall" && st(ctx, upper, "twilightforest:extended") == "false", "over a non-short banister a full cycle stays un-extended");
+    ctx.check(st(ctx, upper, "gloamingforest:shape") == "tall" && st(ctx, upper, "gloamingforest:extended") == "false", "over a non-short banister a full cycle stays un-extended");
     ctx.cleanupBlock(upper);
     ctx.cleanupBlock(*lower);
     ctx.cleanupBlock(b);
@@ -277,9 +277,9 @@ GF_REGISTER_SELFTEST("woodwork.drying_rack", [](Context& ctx) -> ll::coro::CoroT
     auto p = ctx.testPos(420, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     ctx.require(rack::recipeFor(*gf::game::items::make("minecraft:kelp")) != nullptr, "the drying recipes are loaded");
-    ctx.check(gf::recipes::ofType("twilightforest:drying").size() >= 35, "35 drying recipes (" + std::to_string(gf::recipes::ofType("twilightforest:drying").size()) + ")");
-    constexpr char kRack[] = "twilightforest:oak_drying_rack";
-    ctx.require(ctx.setBlock(p, kRack, {{"twilightforest:facing", "north"}}), "a drying rack");
+    ctx.check(gf::recipes::ofType("gloamingforest:drying").size() >= 35, "35 drying recipes (" + std::to_string(gf::recipes::ofType("gloamingforest:drying").size()) + ")");
+    constexpr char kRack[] = "gloamingforest:oak_drying_rack";
+    ctx.require(ctx.setBlock(p, kRack, {{"gloamingforest:facing", "north"}}), "a drying rack");
     co_await ctx.ticks(1);
     // an empty hand on an empty rack does nothing
     co_await click(ctx, p, Facing::South, Vec3{0.5f, 0.9f, 1.0f}, "");
@@ -347,9 +347,9 @@ GF_REGISTER_SELFTEST("woodwork.drying_rack", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(droppedNear(ctx, p, "minecraft:wet_sponge"), "a broken rack drops its item");
     clearItemsNear(ctx, p);
     // placement faces the player's horizontal direction
-    auto placed = co_await place(ctx, at(p, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "twilightforest:dark_drying_rack");
-    ctx.check(placed && ctx.blockAt(*placed) == "twilightforest:dark_drying_rack" && st(ctx, *placed, "twilightforest:facing") == "north",
-              "a placed rack faces the player's direction (" + (placed ? st(ctx, *placed, "twilightforest:facing") : std::string("-")) + ")");
+    auto placed = co_await place(ctx, at(p, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gloamingforest:dark_drying_rack");
+    ctx.check(placed && ctx.blockAt(*placed) == "gloamingforest:dark_drying_rack" && st(ctx, *placed, "gloamingforest:facing") == "north",
+              "a placed rack faces the player's direction (" + (placed ? st(ctx, *placed, "gloamingforest:facing") : std::string("-")) + ")");
     if (placed) ctx.cleanupBlock(*placed);
 });
 
@@ -359,7 +359,7 @@ GF_REGISTER_SELFTEST("woodwork.hollow_logs", [](Context& ctx) -> ll::coro::CoroT
     (void)co_await ctx.flatArea(440, 5);
     auto p = ctx.testPos(440, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    auto const* oak = ww::hollowLogOf("twilightforest:hollow_oak_log");
+    auto const* oak = ww::hollowLogOf("gloamingforest:hollow_oak_log");
     ctx.require(oak != nullptr, "the oak hollow log set");
     // HollowLogItem: the top face places the vertical log, a side face the horizontal one
     auto v = co_await place(ctx, at(p, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, oak->item);
@@ -368,41 +368,41 @@ GF_REGISTER_SELFTEST("woodwork.hollow_logs", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(ctx.setBlock(hpos, "minecraft:planks"), "a wall");
     auto h = co_await place(ctx, hpos, Facing::West, Vec3{0.0f, 0.5f, 0.5f}, oak->item);
     ctx.require(h && ctx.blockAt(*h) == oak->horizontal, "the item on a side face places the horizontal log (" + (h ? ctx.blockAt(*h) : std::string("-")) + ")");
-    ctx.check(st(ctx, *h, "twilightforest:axis") == "x", "along the clicked face's axis (" + st(ctx, *h, "twilightforest:axis") + ")");
+    ctx.check(st(ctx, *h, "gloamingforest:axis") == "x", "along the clicked face's axis (" + st(ctx, *h, "gloamingforest:axis") + ")");
     ctx.cleanupBlock(hpos);
     auto hl = *h; // at p + (1, 0, 0), axis x: the tunnel opens west and east
     // moss patch -> moss, grass -> moss_and_grass, shears -> empty (+ drops)
     Vec3 inside{0.0f, 0.5f, 0.5f};
-    co_await click(ctx, hl, Facing::West, inside, "twilightforest:moss_patch", 2);
-    ctx.check(st(ctx, hl, "twilightforest:variant") == "moss", "a moss patch carpets the log (" + st(ctx, hl, "twilightforest:variant") + ")");
-    ctx.check(carried(ctx, "twilightforest:moss_patch") == 1, "one moss patch used");
+    co_await click(ctx, hl, Facing::West, inside, "gloamingforest:moss_patch", 2);
+    ctx.check(st(ctx, hl, "gloamingforest:variant") == "moss", "a moss patch carpets the log (" + st(ctx, hl, "gloamingforest:variant") + ")");
+    ctx.check(carried(ctx, "gloamingforest:moss_patch") == 1, "one moss patch used");
     co_await click(ctx, hl, Facing::West, inside, "minecraft:short_grass", 2);
-    ctx.check(st(ctx, hl, "twilightforest:variant") == "moss_and_grass", "grass on the moss (" + st(ctx, hl, "twilightforest:variant") + ")");
+    ctx.check(st(ctx, hl, "gloamingforest:variant") == "moss_and_grass", "grass on the moss (" + st(ctx, hl, "gloamingforest:variant") + ")");
     clearItemsNear(ctx, hl);
     co_await click(ctx, hl, Facing::West, inside, "minecraft:shears", 1);
-    ctx.check(st(ctx, hl, "twilightforest:variant") == "empty", "shears clear it");
-    ctx.check(droppedNear(ctx, hl, "twilightforest:moss_patch") && droppedNear(ctx, hl, "minecraft:short_grass"), "the moss patch and the grass drop");
+    ctx.check(st(ctx, hl, "gloamingforest:variant") == "empty", "shears clear it");
+    ctx.check(droppedNear(ctx, hl, "gloamingforest:moss_patch") && droppedNear(ctx, hl, "minecraft:short_grass"), "the moss patch and the grass drop");
     clearItemsNear(ctx, hl);
     // snowball -> snow, shovel -> empty + a snowball
     co_await click(ctx, hl, Facing::West, inside, "minecraft:snowball", 2);
-    ctx.check(st(ctx, hl, "twilightforest:variant") == "snow", "a snowball fills it with snow");
+    ctx.check(st(ctx, hl, "gloamingforest:variant") == "snow", "a snowball fills it with snow");
     co_await click(ctx, hl, Facing::West, inside, "minecraft:iron_shovel", 1);
-    ctx.check(st(ctx, hl, "twilightforest:variant") == "empty" && droppedNear(ctx, hl, "minecraft:snowball"), "a shovel digs the snow out (a snowball drops)");
+    ctx.check(st(ctx, hl, "gloamingforest:variant") == "empty" && droppedNear(ctx, hl, "minecraft:snowball"), "a shovel digs the snow out (a snowball drops)");
     clearItemsNear(ctx, hl);
     // a click outside the tunnel (the top face) does nothing
-    co_await click(ctx, hl, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "twilightforest:moss_patch", 2);
-    ctx.check(st(ctx, hl, "twilightforest:variant") == "empty", "a click outside the tunnel is not inside");
+    co_await click(ctx, hl, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gloamingforest:moss_patch", 2);
+    ctx.check(st(ctx, hl, "gloamingforest:variant") == "empty", "a click outside the tunnel is not inside");
     // vertical: vine -> climbable vine, shears -> back; ladder -> climbable ladder facing the clicked face
     auto vl = *v;
     co_await click(ctx, vl, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:vine", 2);
-    ctx.check(ctx.blockAt(vl) == oak->climbable && st(ctx, vl, "twilightforest:variant") == "vine", "a vine makes it climbable (" + ctx.blockAt(vl) + ")");
-    ctx.check(st(ctx, vl, "twilightforest:facing") == "south", "a top click faces away from the player (south: " + st(ctx, vl, "twilightforest:facing") + ")");
+    ctx.check(ctx.blockAt(vl) == oak->climbable && st(ctx, vl, "gloamingforest:variant") == "vine", "a vine makes it climbable (" + ctx.blockAt(vl) + ")");
+    ctx.check(st(ctx, vl, "gloamingforest:facing") == "south", "a top click faces away from the player (south: " + st(ctx, vl, "gloamingforest:facing") + ")");
     clearItemsNear(ctx, vl);
     co_await click(ctx, vl, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:shears", 1);
     ctx.check(ctx.blockAt(vl) == oak->vertical && droppedNear(ctx, vl, "minecraft:vine"), "shears take the vine back (" + ctx.blockAt(vl) + ")");
     clearItemsNear(ctx, vl);
     co_await click(ctx, vl, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:ladder", 2);
-    ctx.check(ctx.blockAt(vl) == oak->climbable && st(ctx, vl, "twilightforest:variant") == "ladder", "a ladder makes it climbable (" + st(ctx, vl, "twilightforest:variant") + ")");
+    ctx.check(ctx.blockAt(vl) == oak->climbable && st(ctx, vl, "gloamingforest:variant") == "ladder", "a ladder makes it climbable (" + st(ctx, vl, "gloamingforest:variant") + ")");
     // the climbable log climbs (#minecraft:climbable, BlockProperty::Climbable)
     ctx.check(gf::tags::has(gf::tags::Registry::Block, "minecraft:climbable", oak->climbable), "the climbable log is in #minecraft:climbable");
     auto const* cb = gf::game::blockWith(oak->climbable);
@@ -427,7 +427,7 @@ GF_REGISTER_SELFTEST("woodwork.shapes", [](Context& ctx) -> ll::coro::CoroTask<>
         float       minX, minZ, maxX, maxZ;
     };
     for (auto const& c : {RackCase{"north", 0, 0, 1, 0.25f}, RackCase{"south", 0, 0.75f, 1, 1}, RackCase{"west", 0, 0, 0.25f, 1}, RackCase{"east", 0.75f, 0, 1, 1}}) {
-        ctx.require(ctx.setBlock(p, "twilightforest:oak_drying_rack", {{"twilightforest:facing", c.facing}}), "a rack");
+        ctx.require(ctx.setBlock(p, "gloamingforest:oak_drying_rack", {{"gloamingforest:facing", c.facing}}), "a rack");
         auto boxes = collisionBoxes(ctx, p);
         bool ok    = boxes.size() == 1 && near(boxes[0].min.x, c.minX) && near(boxes[0].min.z, c.minZ) && near(boxes[0].max.x, c.maxX) && near(boxes[0].max.z, c.maxZ)
                && near(boxes[0].min.y, 0.75f);
@@ -436,25 +436,25 @@ GF_REGISTER_SELFTEST("woodwork.shapes", [](Context& ctx) -> ll::coro::CoroTask<>
         ctx.check(near(o.min.z, c.minZ) && near(o.max.x, c.maxX), std::string("a ") + c.facing + " rack's outline " + boxText(o));
     }
     // BanisterBlock: a north tall banister has its rail at z 0..4 px, y 12..16 px
-    ctx.require(ctx.setBlock(p, "twilightforest:oak_banister", {{"twilightforest:facing", "north"}, {"twilightforest:shape", "tall"}}), "a banister");
+    ctx.require(ctx.setBlock(p, "gloamingforest:oak_banister", {{"gloamingforest:facing", "north"}, {"gloamingforest:shape", "tall"}}), "a banister");
     auto boxes = collisionBoxes(ctx, p);
     ctx.check(boxes.size() == 3 && anyBoxContains(boxes, Vec3{0.5f, 0.9f, 0.1f}) && !anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.5f}) && !anyBoxContains(boxes, Vec3{0.5f, 0.9f, 0.9f}),
               "a north tall banister: rail and posts on the north side (" + std::to_string(boxes.size()) + " boxes)");
-    ctx.require(ctx.setBlock(p, "twilightforest:oak_banister", {{"twilightforest:facing", "east"}, {"twilightforest:shape", "short"}}), "a banister");
+    ctx.require(ctx.setBlock(p, "gloamingforest:oak_banister", {{"gloamingforest:facing", "east"}, {"gloamingforest:shape", "short"}}), "a banister");
     boxes = collisionBoxes(ctx, p);
     ctx.check(anyBoxContains(boxes, Vec3{0.9f, 0.4f, 0.5f}) && !anyBoxContains(boxes, Vec3{0.1f, 0.4f, 0.5f}), "an east short banister: its rail on the east side");
     // hollow logs: the tunnel is free, the walls collide
-    ctx.require(ctx.setBlock(p, "twilightforest:hollow_oak_log_horizontal", {{"twilightforest:axis", "x"}}), "a horizontal hollow log");
+    ctx.require(ctx.setBlock(p, "gloamingforest:hollow_oak_log_horizontal", {{"gloamingforest:axis", "x"}}), "a horizontal hollow log");
     boxes = collisionBoxes(ctx, p);
     ctx.check(!anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.5f}) && anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.02f}) && anyBoxContains(boxes, Vec3{0.5f, 0.02f, 0.5f}),
               "an x hollow log: free inside, walls at z 0 and the floor");
-    ctx.require(ctx.setBlock(p, "twilightforest:hollow_oak_log_horizontal", {{"twilightforest:axis", "z"}}), "a horizontal hollow log");
+    ctx.require(ctx.setBlock(p, "gloamingforest:hollow_oak_log_horizontal", {{"gloamingforest:axis", "z"}}), "a horizontal hollow log");
     boxes = collisionBoxes(ctx, p);
     ctx.check(!anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.5f}) && anyBoxContains(boxes, Vec3{0.02f, 0.5f, 0.5f}), "a z hollow log: walls at x 0");
-    ctx.require(ctx.setBlock(p, "twilightforest:hollow_oak_log_vertical"), "a vertical hollow log");
+    ctx.require(ctx.setBlock(p, "gloamingforest:hollow_oak_log_vertical"), "a vertical hollow log");
     boxes = collisionBoxes(ctx, p);
     ctx.check(!anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.5f}) && anyBoxContains(boxes, Vec3{0.02f, 0.5f, 0.5f}), "a vertical hollow log: an open shaft");
-    ctx.require(ctx.setBlock(p, "twilightforest:hollow_oak_log_climbable", {{"twilightforest:facing", "south"}, {"twilightforest:variant", "ladder"}}), "a laddered hollow log");
+    ctx.require(ctx.setBlock(p, "gloamingforest:hollow_oak_log_climbable", {{"gloamingforest:facing", "south"}, {"gloamingforest:variant", "ladder"}}), "a laddered hollow log");
     boxes = collisionBoxes(ctx, p);
     ctx.check(anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.15f}) && !anyBoxContains(boxes, Vec3{0.5f, 0.5f, 0.5f}), "a south ladder: its plate on the north side (LADDER_SOUTH)");
     ctx.cleanupBlock(p);
@@ -471,17 +471,17 @@ GF_REGISTER_SELFTEST("woodwork.bookshelf", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(ctx.setBlock(t, "minecraft:enchanting_table"), "an enchanting table");
     auto vanillaShelf = at(t, -2, 0, 0);
     auto canopyShelf  = at(t, 2, 0, 0);
-    ctx.require(ctx.setBlock(vanillaShelf, "minecraft:bookshelf") && ctx.setBlock(canopyShelf, "twilightforest:canopy_bookshelf"), "two bookshelves");
+    ctx.require(ctx.setBlock(vanillaShelf, "minecraft:bookshelf") && ctx.setBlock(canopyShelf, "gloamingforest:canopy_bookshelf"), "two bookshelves");
     BlockPos tb = gf::game::blockPos(t);
     auto     list = EnchantUtils::getBookCasePositions(*ctx.region(), Vec3{float(tb.x), float(tb.y), float(tb.z)});
     std::string seen;
     for (auto const& v : list) seen += "(" + std::to_string(v.x) + " " + std::to_string(v.y) + " " + std::to_string(v.z) + ")";
     ctx.info("bookcase positions: " + seen);
     ctx.check(list.size() == 2, "the table counts both bookshelves (" + std::to_string(list.size()) + ")");
-    ctx.check(gf::feature::woodwork::tfBookshelvesAround(*ctx.region(), tb).size() == 1, "one TF bookshelf around the table");
+    ctx.check(gf::feature::woodwork::tfBookshelvesAround(*ctx.region(), tb).size() == 1, "one upstream bookshelf around the table");
     ctx.require(ctx.setBlock(at(t, 1, 0, 0), "minecraft:stone"), "a stone between");
     ctx.check(gf::feature::woodwork::tfBookshelvesAround(*ctx.region(), tb).empty(), "a solid block between blocks it (enchantment_power_transmitter)");
-    ctx.check(gf::tags::has(gf::tags::Registry::Block, "minecraft:enchantment_power_provider", "twilightforest:canopy_bookshelf"), "the canopy bookshelf provides enchantment power");
+    ctx.check(gf::tags::has(gf::tags::Registry::Block, "minecraft:enchantment_power_provider", "gloamingforest:canopy_bookshelf"), "the canopy bookshelf provides enchantment power");
 });
 
 // ---- chests and recipes -------------------------------------------------------------------------------
@@ -491,13 +491,13 @@ GF_REGISTER_SELFTEST("woodwork.chest_pairs", [](Context& ctx) -> ll::coro::CoroT
     (void)co_await ctx.flatArea(470, 5);
     auto ground = ctx.testPos(470, 2).offset(0, -1, 0);
     ctx.require(co_await ctx.ensureLoaded(ground), "test area loaded");
-    for (auto const* id : {"twilightforest:canopy_chest", "twilightforest:dark_trapped_chest"}) {
+    for (auto const* id : {"gloamingforest:canopy_chest", "gloamingforest:dark_trapped_chest"}) {
         auto standAt = Vec3{ground.x + 1.0f, float(ground.y + 1), ground.z + 3.5f};
         auto a       = co_await place(ctx, ground, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, id, standAt);
         auto b       = co_await place(ctx, at(ground, 1, 0, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, id, standAt);
         ctx.require(a && b, std::string(id) + ": two chests placed");
-        auto ta = st(ctx, *a, "twilightforest:type");
-        auto tb = st(ctx, *b, "twilightforest:type");
+        auto ta = st(ctx, *a, "gloamingforest:type");
+        auto tb = st(ctx, *b, "gloamingforest:type");
         ctx.check((ta == "left" && tb == "right") || (ta == "right" && tb == "left"), std::string(id) + " pairs (" + ta + ", " + tb + ")");
         auto h = gf::inventory::find(*ctx.region(), gf::game::blockPos(*a));
         ctx.check(h && h->slots == 27, std::string(id) + " is a 27-slot container");
@@ -509,8 +509,8 @@ GF_REGISTER_SELFTEST("woodwork.chest_pairs", [](Context& ctx) -> ll::coro::CoroT
 
 GF_REGISTER_SELFTEST("woodwork.recipes", [](Context& ctx) {
     // a sample of every recipe kind U4 owns (R4): wood set crafting, stonecutting, drying
-    for (auto const* id : {"twilightforest:wood/canopy_planks", "twilightforest:wood/dark_banister", "twilightforest:wood/mining_chest", "twilightforest:drying/kelp",
-                           "twilightforest:drying/sponge", "twilightforest:tanned_leather", "twilightforest:sorting_boat"}) {
+    for (auto const* id : {"gloamingforest:wood/canopy_planks", "gloamingforest:wood/dark_banister", "gloamingforest:wood/mining_chest", "gloamingforest:drying/kelp",
+                           "gloamingforest:drying/sponge", "gloamingforest:tanned_leather", "gloamingforest:sorting_boat"}) {
         ctx.check(gf::recipes::byId(id) != nullptr, std::string("recipe ") + id + " is loaded");
     }
     struct Dry {
@@ -519,8 +519,8 @@ GF_REGISTER_SELFTEST("woodwork.recipes", [](Context& ctx) {
         int         time;
     };
     for (auto const& d : {Dry{"minecraft:kelp", "minecraft:dried_kelp", 3600}, Dry{"minecraft:mud", "minecraft:clay", 7200}, Dry{"minecraft:wet_sponge", "minecraft:sponge", 2400},
-                          Dry{"twilightforest:treated_leather", "twilightforest:tanned_leather", 6000}, Dry{"minecraft:slime_ball", "twilightforest:gelatinous_slime_drop", 6000},
-                          Dry{"minecraft:bread", "twilightforest:stale_bread", 6000}, Dry{"minecraft:oak_sapling", "minecraft:deadbush", 7200},
+                          Dry{"gloamingforest:treated_leather", "gloamingforest:tanned_leather", 6000}, Dry{"minecraft:slime_ball", "gloamingforest:gelatinous_slime_drop", 6000},
+                          Dry{"minecraft:bread", "gloamingforest:stale_bread", 6000}, Dry{"minecraft:oak_sapling", "minecraft:deadbush", 7200},
                           Dry{"minecraft:fire_coral_fan", "minecraft:dead_fire_coral_fan", 40}}) {
         auto in = gf::game::items::make(d.input);
         if (!in) {
@@ -539,7 +539,7 @@ namespace {
 int woodProperty(Actor& a) {
     auto props = a.getEntityContext().tryGetComponent<PropertyComponent>();
     if (!props) return -1;
-    auto v = props->mPropertyContainer->getValueVariant(HashedString::computeHash("twilightforest:wood"));
+    auto v = props->mPropertyContainer->getValueVariant(HashedString::computeHash("gloamingforest:wood"));
     if (!v) return -2;
     auto const* i = std::get_if<int>(&*v);
     return i ? *i : -3;
@@ -557,7 +557,7 @@ std::vector<Actor*> boatsNear(Context& ctx, GlobalPos const& p, char const* type
 } // namespace
 
 GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // BoatItem#use on water: a TF boat of the item's wood; riding it; breaking it drops the TF item
+    // BoatItem#use on water: an upstream boat of the item's wood; riding it; breaking it drops the upstream item
     (void)co_await ctx.flatArea(490, 5);
     auto c = ctx.testPos(490, 2);
     ctx.require(co_await ctx.ensureLoaded(c), "test area loaded");
@@ -574,7 +574,7 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         char const* entity;
         int         wood;
     };
-    for (auto const& k : {Kind{"twilightforest:canopy_boat", "twilightforest:boat", 1}, Kind{"twilightforest:sorting_chest_boat", "twilightforest:chest_boat", 7}}) {
+    for (auto const& k : {Kind{"gloamingforest:canopy_boat", "gloamingforest:boat", 1}, Kind{"gloamingforest:sorting_chest_boat", "gloamingforest:chest_boat", 7}}) {
         auto& sp = simPlayer(ctx);
         sp.teleport(Vec3{c.x + 0.5f, float(c.y + 1), c.z + 3.5f}, sp.getDimensionId());
         sp.simulateLookAt(Vec3{c.x + 0.5f, c.y + 0.9f, c.z + 0.5f}, sim::LookDuration::Instant);
@@ -628,10 +628,10 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         clearItemsNear(ctx, at(c, 0, 0, 2));
     }
     // a boat summoned with its wood's spawn event (commands, the client scenario)
-    auto r = gf::selftest::runServerCommand("summon twilightforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y) + " " + std::to_string(c.z) + " 0 0 twilightforest:mining", ctx.dimension());
+    auto r = gf::selftest::runServerCommand("summon gloamingforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y) + " " + std::to_string(c.z) + " 0 0 gloamingforest:mining", ctx.dimension());
     ctx.check(r.ok, "summon with the wood's event: " + r.messages);
     co_await ctx.ticks(2);
-    auto summoned = boatsNear(ctx, c, "twilightforest:boat");
+    auto summoned = boatsNear(ctx, c, "gloamingforest:boat");
     ctx.check(summoned.size() == 1 && woodProperty(*summoned[0]) == 6, "the summoned boat is a mining boat (" + (summoned.empty() ? std::string("none") : std::to_string(woodProperty(*summoned[0]))) + ")");
     for (auto* b : summoned) b->remove();
 });
@@ -684,8 +684,8 @@ GF_REGISTER_SELFTEST("woodwork.fixture_showcase", [](Context& ctx) -> ll::coro::
             sc.tick = nullptr;
         });
     auto* region = ctx.region();
-    char const* items[] = {"minecraft:kelp", "minecraft:rotten_flesh", "minecraft:oak_sapling", "twilightforest:treated_leather", "minecraft:oak_log"};
-    auto const* rackBlock = gf::game::blockWithStates("twilightforest:oak_drying_rack", {{"twilightforest:facing", "south"}});
+    char const* items[] = {"minecraft:kelp", "minecraft:rotten_flesh", "minecraft:oak_sapling", "gloamingforest:treated_leather", "minecraft:oak_log"};
+    auto const* rackBlock = gf::game::blockWithStates("gloamingforest:oak_drying_rack", {{"gloamingforest:facing", "south"}});
     auto const* wall      = gf::game::blockWith("minecraft:stone");
     ctx.require(region && rackBlock && wall, "blocks");
     auto& s = showcase();
@@ -722,7 +722,7 @@ GF_REGISTER_SELFTEST("woodwork.persist_a_write", [](Context& ctx) -> ll::coro::C
     auto p = ctx.testPos(480, 4);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto* region = ctx.region();
-    auto const* rackBlock = gf::game::blockWithStates("twilightforest:oak_drying_rack", {{"twilightforest:facing", "south"}});
+    auto const* rackBlock = gf::game::blockWithStates("gloamingforest:oak_drying_rack", {{"gloamingforest:facing", "south"}});
     ctx.require(region && rackBlock, "a rack");
     gf::game::setBlock(*region, gf::game::blockPos(p), *rackBlock); // not restored: the read test removes it
     auto h = gf::inventory::find(*region, gf::game::blockPos(p));

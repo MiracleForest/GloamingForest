@@ -1,9 +1,9 @@
 # Import (F1): the client loads the full content skeleton (resource pack: textures, block geometry,
-# texts, client entities), the import.* selftests pass (local), a row of TF blocks of every shape
-# family renders in the world, and the creative inventory shows TF's items with their icons and names
-# (a search for "twilight" and TF's group at the end of the construction category).
+# texts, client entities), the import.* selftests pass (local), a row of upstream blocks of every shape
+# family renders in the world, and the creative inventory shows upstream's items with their icons and names
+# (a search for "gloaming" and upstream's group at the end of the construction category).
 # Remote modes: the BDS host sends the same packs to the client (remote-vanilla: no client mod).
-# Screenshots: out/import/{blocks-row,creative-*}.png: compare them with TF's textures in %LOCALAPPDATA%\gf-tf.
+# Screenshots: out/import/{blocks-row,creative-*}.png: compare them with upstream's textures in %LOCALAPPDATA%\gf-upstream\view.
 $remote = $script:Mode -ne 'local'
 function Invoke-ImportCommand([string]$Command) {
     # remote: the host console runs it (the joined player is not an operator); local: chat
@@ -26,10 +26,10 @@ if (-not $remote) {
 
 # A showcase row in front of the player (the flat test world's surface is y -61).
 $blocks = @(
-    'twilightforest:twilight_oak_log', 'twilightforest:canopy_planks', 'twilightforest:canopy_stairs', 'twilightforest:canopy_slab',
-    'twilightforest:canopy_fence', 'twilightforest:twilight_oak_leaves', 'twilightforest:twilight_oak_sapling', 'twilightforest:nagastone',
-    'twilightforest:mazestone_brick', 'twilightforest:castle_brick', 'twilightforest:canopy_door', 'twilightforest:canopy_trapdoor',
-    'twilightforest:firefly_jar', 'twilightforest:huge_mushgloom', 'twilightforest:brown_thorns', 'twilightforest:uncrafting_table'
+    'gloamingforest:gloaming_oak_log', 'gloamingforest:canopy_planks', 'gloamingforest:canopy_stairs', 'gloamingforest:canopy_slab',
+    'gloamingforest:canopy_fence', 'gloamingforest:gloaming_oak_leaves', 'gloamingforest:gloaming_oak_sapling', 'gloamingforest:nagastone',
+    'gloamingforest:mazestone_brick', 'gloamingforest:castle_brick', 'gloamingforest:canopy_door', 'gloamingforest:canopy_trapdoor',
+    'gloamingforest:firefly_jar', 'gloamingforest:huge_mushgloom', 'gloamingforest:brown_thorns', 'gloamingforest:uncrafting_table'
 )
 Invoke-ImportCommand '/gamemode creative @s'
 Invoke-ImportCommand '/time set noon'
@@ -43,21 +43,21 @@ foreach ($b in $blocks) {
 Start-Sleep -Seconds 3
 Save-Screenshot 'blocks-row' | Out-Null
 
-# Creative inventory (opens on "All items"): search "twilight" (TF's names), then the construction
-# category, whose last group is TF's "blocks" tab (bp/item_catalog.d/import.json).
+# Creative inventory (opens on "All items"): search "gloaming" (upstream's names), then the construction
+# category, whose last group is upstream's "blocks" tab (bp/item_catalog.d/import.json).
 Open-Inventory
 Save-Screenshot 'creative-open' | Out-Null
 Click 0.5 0.311 -Relative          # the search field
-Type-Text 'twilight'
+Type-Text 'gloaming'
 Start-Sleep -Seconds 2
-Save-Screenshot 'creative-search-twilight' | Out-Null
+Save-Screenshot 'creative-search-gloaming' | Out-Null
 Click 0.217 0.1875 -Relative       # the construction tab
 Start-Sleep -Seconds 1
 Move-Mouse 0.5 0.6 -Relative
 Scroll -400
 Start-Sleep -Seconds 2
 Save-Screenshot 'creative-construction-end' | Out-Null
-Click 0.6016 0.514 -Relative       # the last group of the category: TF's blocks tab
+Click 0.6016 0.514 -Relative       # the last group of the category: upstream's blocks tab
 Start-Sleep -Seconds 2
 Save-Screenshot 'creative-construction-tf' | Out-Null
 Close-Screen

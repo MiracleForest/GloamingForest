@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:fiery_leggings",
+      "identifier": "gloamingforest:fiery_leggings",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:fiery_leggings.name"
+        "value": "item.gloamingforest:fiery_leggings.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -32,13 +32,13 @@
         "repair_items": [
           {
             "items": [
-              "twilightforest:fiery_ingot"
+              "gloamingforest:fiery_ingot"
             ],
             "repair_amount": "query.max_durability * 0.25"
           },
           {
             "items": [
-              "twilightforest:fiery_leggings"
+              "gloamingforest:fiery_leggings"
             ],
             "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
           }

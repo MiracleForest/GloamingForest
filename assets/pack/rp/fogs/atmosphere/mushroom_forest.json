@@ -2,7 +2,7 @@
   "format_version": "1.16.100",
   "minecraft:fog_settings": {
     "description": {
-      "identifier": "twilightforest:mushroom_forest"
+      "identifier": "gloamingforest:mushroom_forest"
     },
     "distance": {
       "air": {

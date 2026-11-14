@@ -1,6 +1,6 @@
 {
-  "death.attack.twilightforest.acid_rain": "%1$s Tenía ganas de bailar en la lluvia ácida.",
-  "death.attack.twilightforest.expired": "La vida de %1$s expiró.",
-  "death.attack.twilightforest.expired.player": "La vida de %1$s ha expirado.",
-  "death.attack.twilightforest.lichBolt": "La puntería del Liche fue mejor que la de %1$s"
+  "death.attack.gloamingforest.acid_rain": "%1$s Tenía ganas de bailar en la lluvia ácida.",
+  "death.attack.gloamingforest.expired": "La vida de %1$s expiró.",
+  "death.attack.gloamingforest.expired.player": "La vida de %1$s ha expirado.",
+  "death.attack.gloamingforest.lichBolt": "La puntería del Liche fue mejor que la de %1$s"
 }

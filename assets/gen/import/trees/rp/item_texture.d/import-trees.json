@@ -1,32 +1,32 @@
 {
   "tf_block_canopy_sapling": {
-    "textures": "textures/twilightforest/block/canopy_sapling"
+    "textures": "textures/gloamingforest/block/canopy_sapling"
   },
   "tf_block_darkwood_sapling": {
-    "textures": "textures/twilightforest/block/darkwood_sapling"
+    "textures": "textures/gloamingforest/block/darkwood_sapling"
+  },
+  "tf_block_gloaming_oak_sapling": {
+    "textures": "textures/gloamingforest/block/gloaming_oak_sapling"
   },
   "tf_block_hollow_oak_sapling": {
-    "textures": "textures/twilightforest/block/hollow_oak_sapling"
+    "textures": "textures/gloamingforest/block/hollow_oak_sapling"
   },
   "tf_block_mangrove_sapling": {
-    "textures": "textures/twilightforest/block/mangrove_sapling"
+    "textures": "textures/gloamingforest/block/mangrove_sapling"
   },
   "tf_block_mining_sapling": {
-    "textures": "textures/twilightforest/block/mining_sapling"
+    "textures": "textures/gloamingforest/block/mining_sapling"
   },
   "tf_block_rainbow_oak_sapling": {
-    "textures": "textures/twilightforest/block/rainbow_oak_sapling"
+    "textures": "textures/gloamingforest/block/rainbow_oak_sapling"
   },
   "tf_block_sorting_sapling": {
-    "textures": "textures/twilightforest/block/sorting_sapling"
+    "textures": "textures/gloamingforest/block/sorting_sapling"
   },
   "tf_block_time_sapling": {
-    "textures": "textures/twilightforest/block/time_sapling"
+    "textures": "textures/gloamingforest/block/time_sapling"
   },
   "tf_block_transformation_sapling": {
-    "textures": "textures/twilightforest/block/transformation_sapling"
-  },
-  "tf_block_twilight_oak_sapling": {
-    "textures": "textures/twilightforest/block/twilight_oak_sapling"
+    "textures": "textures/gloamingforest/block/transformation_sapling"
   }
 }

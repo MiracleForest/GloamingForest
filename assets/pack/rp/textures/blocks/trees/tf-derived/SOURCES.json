@@ -1,6 +1,6 @@
 {
-  "time_leaves_item.png": "src/main/resources/assets/twilightforest/textures/block/time_leaves.png",
-  "transformation_leaves_item.png": "src/main/resources/assets/twilightforest/textures/block/transformation_leaves.png",
-  "mining_leaves_item.png": "src/main/resources/assets/twilightforest/textures/block/mining_leaves.png",
-  "sorting_leaves_item.png": "src/main/resources/assets/twilightforest/textures/block/sorting_leaves.png"
+  "time_leaves_item.png": "src/main/resources/assets/gloamingforest/textures/block/time_leaves.png",
+  "transformation_leaves_item.png": "src/main/resources/assets/gloamingforest/textures/block/transformation_leaves.png",
+  "mining_leaves_item.png": "src/main/resources/assets/gloamingforest/textures/block/mining_leaves.png",
+  "sorting_leaves_item.png": "src/main/resources/assets/gloamingforest/textures/block/sorting_leaves.png"
 }

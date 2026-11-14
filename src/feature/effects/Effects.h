@@ -2,12 +2,12 @@
 
 // Contract "enchant+effects", mob effects (header owned by F0, implemented by F9; spike S6).
 //
-// Bedrock's effect ids are fixed (vanilla clients know 38), so TF's effect (frosted) is a native
+// Bedrock's effect ids are fixed (vanilla clients know 38), so upstream's effect (frosted) is a native
 // effect with a vanilla *carrier* effect that vanilla clients see (frosted: a hidden Slowness);
 // the client mod shows the exact HUD icon.
 //
-//     gf::effects::registerType("twilightforest:frosted", {.carrier = "minecraft:slowness", .color = 0x56CBFD});
-//     gf::effects::apply(target, "twilightforest:frosted", 100, 1);
+//     gf::effects::registerType("gloamingforest:frosted", {.carrier = "minecraft:slowness", .color = 0x56CBFD});
+//     gf::effects::apply(target, "gloamingforest:frosted", 100, 1);
 
 #include <functional>
 #include <string>
@@ -21,7 +21,7 @@ struct Spec {
     bool        hideCarrierParticles = true;
     unsigned    color      = 0xFFFFFF;
     bool        beneficial = false;
-    std::string nameKey;          ///< "effect.twilightforest.frosted"
+    std::string nameKey;          ///< "effect.gloamingforest.frosted"
     /// Every tick while active (applyEffectTick), with the amplifier.
     std::function<void(Actor& actor, int amplifier)> tick;
     /// How often `tick` runs (shouldApplyEffectTickThisTick); 1 = every tick.

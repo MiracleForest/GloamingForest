@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "gloamingforest:nagastone/smelted_cracked_nagastone_pillar"
+    },
+    "tags": ["furnace"],
+    "input": "gloamingforest:nagastone_pillar",
+    "output": "gloamingforest:cracked_nagastone_pillar",
+    "unlock": [
+      {
+        "item": "gloamingforest:nagastone_pillar"
+      }
+    ]
+  }
+}

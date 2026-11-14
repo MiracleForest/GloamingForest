@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/SliderBlock.java
-//   src/main/java/twilightforest/entity/SlideBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/SliderBlock.java
+//   src/main/java/gloamingforest/entity/SlideBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/darktower/Slider.h"
@@ -37,8 +37,8 @@ namespace {
 
 constexpr int    kWarmup      = 20;
 constexpr double kPlayerRange = 32.0;
-constexpr char   kAxis[]      = "twilightforest:axis";
-constexpr char   kDelay[]     = "twilightforest:delay";
+constexpr char   kAxis[]      = "gloamingforest:axis";
+constexpr char   kDelay[]     = "gloamingforest:delay";
 constexpr char   kData[]      = "darktower:slide";
 
 bool isWater(Block const& b);
@@ -113,7 +113,7 @@ void sliderTick(BlockSource& region, BlockPos const& pos, Block const& block) {
                 if (isAir(region, offset(pos, check[i]))) dir = static_cast<int>(check[i]), found = true;
             d["dir"] = dir;
             int axisIndex = axis == "x" ? 1 : axis == "z" ? 2 : 0;
-            gf::entity::setProperty(*e, "twilightforest:axis", axisIndex);
+            gf::entity::setProperty(*e, "gloamingforest:axis", axisIndex);
         }
     }
     scheduleUpdate(region, pos);
@@ -150,7 +150,7 @@ void damageKnockback(BlockSource& region, Actor& self, Vec3 const& p) {
     AABB box{Vec3{p.x - 0.49f, p.y, p.z - 0.49f}, Vec3{p.x + 0.49f, p.y + 0.98f, p.z + 0.49f}};
     for (auto* a : actorsIn(region, box)) {
         if (a == &self || !asMob(*a) || typeOf(*a) == id::SlideEntity) continue;
-        combat::hurt(*a, 5.0f, "twilightforest:slider");
+        combat::hurt(*a, 5.0f, "gloamingforest:slider");
         auto q = a->getFeetPos();
         knockback(*a, 2.0, (p.x - q.x) * 2.0, (p.z - q.z) * 2.0);
     }
@@ -199,7 +199,7 @@ void slideTick(Actor& self) {
     d["pos"] = {p.x, p.y, p.z};
     d["vel"] = {v.x, v.y, v.z};
     self.teleportTo(p, false, 0, 0, false);
-    if (time % 5 == 0) soundAt(region, p, "block.twilightforest.slider.move", 1.0f, 0.9f + random().nextFloat() * 0.4f);
+    if (time % 5 == 0) soundAt(region, p, "block.gloamingforest.slider.move", 1.0f, 0.9f + random().nextFloat() * 0.4f);
     BlockPos pos{int(std::floor(p.x)), int(std::floor(p.y)), int(std::floor(p.z))};
     Json const  states = d.contains("states") ? d["states"] : Json{{kAxis, d["axis"].get<std::string>()}, {kDelay, d.value("delay", 0)}};
     bool const  water  = d.value("water", false);
@@ -263,7 +263,7 @@ void install() {
     blockevents::onPlaced(id::Slider, [](BlockSource& r, BlockPos const& p, Block const&, Actor*) { scheduleUpdate(r, p); });
     blockevents::onEntityInside(id::Slider, [](BlockSource& region, BlockPos const& pos, Actor& e) {
         if (typeOf(e) == id::SlideEntity) return;
-        combat::hurt(e, 5.0f, "twilightforest:slider");
+        combat::hurt(e, 5.0f, "gloamingforest:slider");
         if (asMob(e)) {
             auto q = e.getFeetPos();
             knockback(e, 2.0, (pos.x + 0.5 - q.x) * 2.0, (pos.z + 0.5 - q.z) * 2.0);

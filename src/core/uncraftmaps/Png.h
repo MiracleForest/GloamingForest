@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
-// A minimal PNG writer for /twilightforest biomepng (U13): 8-bit RGBA, zlib with stored
+// A minimal PNG writer for /gloamingforest biomepng (U13): 8-bit RGBA, zlib with stored
 // (uncompressed) deflate blocks. Pure C++, no game code.
 
 #include <cstdint>

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:nagastone/nagastone_spiral_1"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["BSS", "BSS", "BBB"],
+    "key": {
+      "B": {
+        "item": "minecraft:stone_bricks"
+      },
+      "S": {
+        "item": "minecraft:stone_brick_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:spiral_bricks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:spiral_bricks",
+      "count": 8
+    }
+  }
+}

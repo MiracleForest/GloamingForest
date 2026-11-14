@@ -1,5 +1,5 @@
 {
-  "about": "Java vanilla sound events and files that TF's sounds.json plays, mapped to the Bedrock vanilla sound files of the same sound (paths in the game's vanilla resource packs vanilla and vanilla_music, referenced by name, never copied; checked by the synth.definitions selftest). Entries with 'synth' (one stand-in, or a list with the Java file names) have no Bedrock counterpart and are synthesized instead. Used by tools/sounds/baseline/generate.ps1.",
+  "about": "Java vanilla sound events and files that upstream's sounds.json plays, mapped to the Bedrock vanilla sound files of the same sound (paths in the game's vanilla resource packs vanilla and vanilla_music, referenced by name, never copied; checked by the synth.definitions selftest). Entries with 'synth' (one stand-in, or a list with the Java file names) have no Bedrock counterpart and are synthesized instead. Used by tools/sounds/baseline/generate.ps1.",
   "events": {
     "block.anvil.land": ["sounds/random/anvil_land"],
     "block.brewing_stand.brew": ["sounds/block/brewing_stand/brew1", "sounds/block/brewing_stand/brew2"],

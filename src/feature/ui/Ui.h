@@ -2,7 +2,7 @@
 
 // Contract "client.ui", server side (header owned by F0, implemented by F12; spike S5).
 //
-// Vanilla-client fallbacks for TF's screens (rule: vanilla clients never receive companion
+// Vanilla-client fallbacks for upstream's screens (rule: vanilla clients never receive companion
 // packets): server forms, Data-Driven UI (DDUI) documents where the game supports them, and the
 // container-title convention the resource pack's JSON-UI uses to skin vanilla container screens.
 // Companions get the native screens (client/ui/Ui.h, opened through feature/common/Screens.h).

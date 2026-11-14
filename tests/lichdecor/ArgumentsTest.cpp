@@ -7,14 +7,14 @@
 using namespace gf::core::lichdecor;
 
 namespace {
-bool knownTable(std::string const& id) { return id == "twilightforest:blocks/ominous_spawner_drops"; }
+bool knownTable(std::string const& id) { return id == "gloamingforest:blocks/ominous_spawner_drops"; }
 } // namespace
 
 TEST(LichdecorArguments, Registry) {
     EXPECT_EQ(particleRegistry().size(), 109u + 29u);
     EXPECT_TRUE(isRegisteredParticle("minecraft:smoke"));
-    EXPECT_TRUE(isRegisteredParticle("twilightforest:ominous_flame"));
-    EXPECT_FALSE(isRegisteredParticle("twilightforest:no_such_particle"));
+    EXPECT_TRUE(isRegisteredParticle("gloamingforest:ominous_flame"));
+    EXPECT_FALSE(isRegisteredParticle("gloamingforest:no_such_particle"));
 }
 
 TEST(LichdecorArguments, Particle) {
@@ -24,9 +24,9 @@ TEST(LichdecorArguments, Particle) {
     EXPECT_EQ(p->id, "minecraft:smoke");
     EXPECT_TRUE(p->valueEqual);
 
-    EXPECT_FALSE(parseParticle("twilightforest:no_such_particle", &e));
+    EXPECT_FALSE(parseParticle("gloamingforest:no_such_particle", &e));
     EXPECT_EQ(e.key, "particle.notFound");
-    EXPECT_EQ(e.text, "Unknown particle: twilightforest:no_such_particle");
+    EXPECT_EQ(e.text, "Unknown particle: gloamingforest:no_such_particle");
 
     EXPECT_FALSE(parseParticle("Bad:Id", &e));
     EXPECT_EQ(e.key, "argument.id.invalid");
@@ -48,11 +48,11 @@ TEST(LichdecorArguments, Particle) {
 
 TEST(LichdecorArguments, Loot) {
     ArgError e;
-    auto     l = parseLoot("twilightforest:blocks/ominous_spawner_drops", knownTable, &e);
+    auto     l = parseLoot("gloamingforest:blocks/ominous_spawner_drops", knownTable, &e);
     ASSERT_TRUE(l);
     EXPECT_FALSE(l->inlineTable);
-    EXPECT_FALSE(parseLoot("twilightforest:no_such_table", knownTable, &e));
-    EXPECT_EQ(e.text, "Failed to parse structure: Failed to get element ResourceKey[minecraft:loot_table / twilightforest:no_such_table]");
+    EXPECT_FALSE(parseLoot("gloamingforest:no_such_table", knownTable, &e));
+    EXPECT_EQ(e.text, "Failed to parse structure: Failed to get element ResourceKey[minecraft:loot_table / gloamingforest:no_such_table]");
     auto inl = parseLoot("{}", knownTable, &e);
     ASSERT_TRUE(inl);
     EXPECT_TRUE(inl->inlineTable);

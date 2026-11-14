@@ -2,28 +2,28 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:knight_phantom",
+      "identifier": "gloamingforest:knight_phantom",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/phantomskeleton"
+        "default": "textures/gloamingforest/entity/phantomskeleton"
       },
       "geometry": {
-        "default": "geometry.twilightforest.knight_phantom"
+        "default": "geometry.gloamingforest.knight_phantom"
       },
       "render_controllers": [
-        "controller.render.twilightforest.knight_phantom"
+        "controller.render.gloamingforest.knight_phantom"
       ],
       "animations": {
         "look_at_target": "animation.humanoid.look_at_target.default",
         "attack": "animation.humanoid.attack.rotations",
         "bob": "animation.humanoid.bob",
-        "base": "animation.twilightforest.knight_phantom.base",
-        "charging_fx": "controller.animation.twilightforest.knight_phantom.charging"
+        "base": "animation.gloamingforest.knight_phantom.base",
+        "charging_fx": "controller.animation.gloamingforest.knight_phantom.charging"
       },
       "scripts": {
-        "scale": "!q.property('twilightforest:dying_visible') ? 0.0 : (q.property('twilightforest:charging') ? 1.8 : 1.2)",
+        "scale": "!q.property('gloamingforest:dying_visible') ? 0.0 : (q.property('gloamingforest:charging') ? 1.8 : 1.2)",
         "animate": [
           "look_at_target",
           "attack",

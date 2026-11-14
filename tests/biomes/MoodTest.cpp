@@ -1,4 +1,4 @@
-// U1 biomes: the biomes' mood sound (BiomeAmbientSoundsHandler with TF's LEGACY_CAVE_SETTINGS).
+// U1 biomes: the biomes' mood sound (BiomeAmbientSoundsHandler with upstream's LEGACY_CAVE_SETTINGS).
 
 #include <gtest/gtest.h>
 

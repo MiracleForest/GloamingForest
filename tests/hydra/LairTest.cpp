@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of src/core/hydra/Lair (U24): the hydra lair terraformer and speleothem lattice.
 #include <gtest/gtest.h>
 

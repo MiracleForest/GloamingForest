@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:feature/druid_hut/basement_shelves",
+  "id": "gloamingforest:feature/druid_hut/basement_shelves",
   "size": [8, 13, 8],
   "palette": [
     {"Name":"minecraft:structure_void"},

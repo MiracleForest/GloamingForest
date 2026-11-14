@@ -1,14 +1,14 @@
 // Unit U4 (woodwork): the fuel values Java gives the wood set items through the vanilla item tags
 // (net.minecraft AbstractFurnaceBlockEntity#buildFuels, NeoForge 21.1's neoforge:furnace_fuels of
-// vanilla), read from the imported tags (TF's ItemTagGenerator puts its wood items into them). The
-// banisters keep TF's own row (#twilightforest:banisters 300, F9's data map), the hollow log items
+// vanilla), read from the imported tags (upstream's ItemTagGenerator puts its wood items into them). The
+// banisters keep upstream's own row (#gloamingforest:banisters 300, F9's data map), the hollow log items
 // HollowLogItem#getBurnTime (300). Chests and the canopy bookshelf burn in Java only as the vanilla
-// blocks themselves (Blocks.CHEST, TRAPPED_CHEST, BOOKSHELF), not as tag members: TF's do not burn.
+// blocks themselves (Blocks.CHEST, TRAPPED_CHEST, BOOKSHELF), not as tag members: upstream's do not burn.
 // Only the wood tags (the unit's items): #minecraft:saplings (100) is U3's to apply (rule R7).
 // Logs burn through #minecraft:logs_that_burn (vanilla 1.21.1 buildFuels), not #minecraft:logs:
-// TF's ItemTagGenerator puts every TF log tag into logs_that_burn except #twilightforest:darkwood_logs,
-// so dark logs and dark wood (stripped too) are no fuel in TF 4.8. Dark planks and the rest of the
-// dark set still burn (TF adds nothing to #minecraft:non_flammable_wood, buildFuels' exclusion).
+// upstream's ItemTagGenerator puts every upstream log tag into logs_that_burn except #gloamingforest:darkwood_logs,
+// so dark logs and dark wood (stripped too) are no fuel in upstream 4.8. Dark planks and the rest of the
+// dark set still burn (upstream adds nothing to #minecraft:non_flammable_wood, buildFuels' exclusion).
 
 #include <array>
 #include <optional>
@@ -24,7 +24,7 @@ namespace gf::feature::woodwork {
 namespace {
 
 /// Java's vanilla fuel tags in buildFuels order (the first match wins as in Java's map, where no
-/// TF item is in two of them with different values).
+/// upstream item is in two of them with different values).
 constexpr std::array<std::pair<char const*, int>, 14> kFuelTags{{
     {"minecraft:logs_that_burn", 300},
     {"minecraft:planks", 300},

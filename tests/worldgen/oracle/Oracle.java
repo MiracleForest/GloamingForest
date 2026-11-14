@@ -145,7 +145,7 @@ public class Oracle {
         for (int[] p : pts) sb.append(" ").append(call(null, MTH, "getSeed", P("int", "int", "int"), p[0], p[1], p[2]));
         System.out.println(sb);
         sb = new StringBuilder("hash");
-        for (String s : new String[]{"", "octave_-3", "minecraft:offset", "twilightforest:dark_forest", "日本"}) sb.append(" ").append(s.hashCode());
+        for (String s : new String[]{"", "octave_-3", "minecraft:offset", "example:dark_forest", "日本"}) sb.append(" ").append(s.hashCode());
         System.out.println(sb);
         sb = new StringBuilder("log");
         for (double d : new double[]{0.5, 1e-300, 0.999999, 1.0000001, 0.123456789, 4.9e-324, 0.25}) sb.append(" ").append(Double.doubleToRawLongBits(StrictMath.log(d)));

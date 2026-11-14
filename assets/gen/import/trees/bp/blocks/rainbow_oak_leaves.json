@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:rainbow_oak_leaves",
+      "identifier": "gloamingforest:rainbow_oak_leaves",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:distance": [0, 1, 2, 3, 4, 5, 6, 7],
-        "twilightforest:persistent": [false, true]
+        "gloamingforest:distance": [0, 1, 2, 3, 4, 5, 6, 7],
+        "gloamingforest:persistent": [false, true]
       }
     },
     "components": {

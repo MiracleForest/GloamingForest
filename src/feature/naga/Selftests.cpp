@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U20 (naga.*, testPos dx 2000-2099): the Naga's attributes and difficulty health,
 // its segments, the movement pattern with a seeded random, the home invulnerability, the loot
 // table, the boss spawner, a whole fight to the death chest, and the courtyard (layout, landmark
@@ -161,7 +161,7 @@ public:
     Block const& getBlock(BlockPos const& pos) const override { return mSource.getBlock(pos); }
     bool         setBlock(BlockPos const& pos, Block const& block, int) override { return game::setBlock(mSource, pos, block); }
     int          height(worldgen::Heightmap, int, int) const override { return 0; }
-    std::string  biome(BlockPos const&) const override { return "twilightforest:twilight_forest"; }
+    std::string  biome(BlockPos const&) const override { return "gloamingforest:gloaming_forest"; }
     std::int64_t seed() const override { return 0; }
     int          dimension() const override { return mDim; }
 
@@ -200,7 +200,7 @@ GF_REGISTER_SELFTEST("naga.spawn_health", [](Context& ctx) -> ll::coro::CoroTask
             ctx.check(std::abs((bb.max.x - bb.min.x) - 2.0f) < 0.01f && std::abs((bb.max.y - bb.min.y) - 3.0f) < 0.01f, "the Naga is 2 x 3");
             ctx.check(naga->isFireImmune(), "the Naga is fire immune");
             ctx.check(ge::ext::parts(*naga).size() == kMaxSegments, "the Naga has 12 segment parts");
-            ctx.check(naga->getTypeName() == kNagaId, "the id is twilightforest:naga");
+            ctx.check(naga->getTypeName() == kNagaId, "the id is gloamingforest:naga");
         }
     }
 });
@@ -257,7 +257,7 @@ GF_REGISTER_SELFTEST("naga.segments", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(naga != nullptr, "the Naga is still there");
     s = stateOf(*naga);
     ctx.check(activeSegments(*s) == 4, "4 active segments once the others popped (" + std::to_string(activeSegments(*s)) + ")");
-    // a popped segment is hidden (twilightforest:active false; Bedrock keeps a minimal hitbox for a
+    // a popped segment is hidden (gloamingforest:active false; Bedrock keeps a minimal hitbox for a
     // 0 x 0 size) and takes no hits
     ctx.check(!s->segments[8].active && s->segments[8].deathCounter == 0, "segment 8 popped and is inactive");
 });
@@ -325,7 +325,7 @@ GF_REGISTER_SELFTEST("naga.state_machine", [](Context& ctx) -> ll::coro::CoroTas
     naga = mobById(n.uid);
     ctx.require(naga != nullptr, "the Naga is still there");
     s = stateOf(*naga);
-    ctx.check(s->dazed, "a dazed Naga sets DATA_DAZE (twilightforest:dazed)");
+    ctx.check(s->dazed, "a dazed Naga sets DATA_DAZE (gloamingforest:dazed)");
     // 16 damage while dazed forces the circle
     if (auto* p = byId(spId)) gf::combat::hurt(*naga, 8.0f, "minecraft:player_attack", p);
     co_await ctx.ticks(12);
@@ -343,10 +343,10 @@ GF_REGISTER_SELFTEST("naga.state_machine", [](Context& ctx) -> ll::coro::CoroTas
 // NagaSegment#hurt: 2/3 of a hit on a segment reaches the head.
 GF_REGISTER_SELFTEST("naga.home_invulnerable", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
-    // DamageTypeTags.IS_EXPLOSION: vanilla's members and TF's lich_bomb; a wither skull or a
+    // DamageTypeTags.IS_EXPLOSION: vanilla's members and upstream's lich_bomb; a wither skull or a
     // fireball is a projectile, not an explosion (it hurts the Naga)
     ctx.check(isExplosionDamage("minecraft:explosion") && isExplosionDamage("minecraft:player_explosion") && isExplosionDamage("minecraft:fireworks") &&
-                  isExplosionDamage("minecraft:bad_respawn_point") && isExplosionDamage("twilightforest:lich_bomb"),
+                  isExplosionDamage("minecraft:bad_respawn_point") && isExplosionDamage("gloamingforest:lich_bomb"),
               "the is_explosion damage types");
     ctx.check(!isExplosionDamage("minecraft:wither_skull") && !isExplosionDamage("minecraft:fireball") && !isExplosionDamage("minecraft:arrow"),
               "wither skulls, fireballs and arrows are not explosions");
@@ -610,17 +610,17 @@ GF_REGISTER_SELFTEST("naga.destroy_blocks", [](Context& ctx) -> ll::coro::CoroTa
         {"minecraft:barrel", nlohmann::json::object(), false},
         {"minecraft:bedrock", nlohmann::json::object(), false},
         {"minecraft:obsidian", nlohmann::json::object(), false},
-        {"twilightforest:naga_boss_spawner", nlohmann::json::object(), false},
-        {"twilightforest:skull_chest", nlohmann::json::object(), false},
-        {"twilightforest:vanishing_block", {{"twilightforest:active", false}}, true},
-        {"twilightforest:vanishing_block", {{"twilightforest:active", true}}, true},
+        {"gloamingforest:naga_boss_spawner", nlohmann::json::object(), false},
+        {"gloamingforest:skull_chest", nlohmann::json::object(), false},
+        {"gloamingforest:vanishing_block", {{"gloamingforest:active", false}}, true},
+        {"gloamingforest:vanishing_block", {{"gloamingforest:active", true}}, true},
     };
     for (std::size_t i = 0; i < cases.size(); i++) ctx.require(ctx.setBlock(at.offset(int(i % 7) - 3, 0, int(i / 7) * 2 - 2), cases[i].id, cases[i].states), std::string("placed ") + cases[i].id);
     // an inactive vanishing block joined (through another vanishing block) to a locked one
     auto locked = at.offset(-3, 0, 2); // on the ground: a floating sign or pot pops off
-    ctx.require(ctx.setBlock(locked, "twilightforest:locked_vanishing_block", {{"twilightforest:locked", true}}), "a locked vanishing block");
-    ctx.require(ctx.setBlock(locked.offset(1, 0, 0), "twilightforest:vanishing_block", {{"twilightforest:active", false}}), "a vanishing block next to it");
-    ctx.require(ctx.setBlock(locked.offset(2, 0, 0), "twilightforest:vanishing_block", {{"twilightforest:active", false}}), "a vanishing block one further");
+    ctx.require(ctx.setBlock(locked, "gloamingforest:locked_vanishing_block", {{"gloamingforest:locked", true}}), "a locked vanishing block");
+    ctx.require(ctx.setBlock(locked.offset(1, 0, 0), "gloamingforest:vanishing_block", {{"gloamingforest:active", false}}), "a vanishing block next to it");
+    ctx.require(ctx.setBlock(locked.offset(2, 0, 0), "gloamingforest:vanishing_block", {{"gloamingforest:active", false}}), "a vanishing block one further");
     co_await ctx.ticks(2);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the test region");
@@ -638,7 +638,7 @@ GF_REGISTER_SELFTEST("naga.destroy_blocks", [](Context& ctx) -> ll::coro::CoroTa
 });
 
 // A Naga whose U20 state is gone while F8 kept its own (its chunk stayed unloaded a while) comes
-// back as a fresh one, as in TF (no save data for the segments or the pattern): the synced flags
+// back as a fresh one, as in upstream (no save data for the segments or the pattern): the synced flags
 // off, the 12 parts F8 kept re-used (no new ones), the segments active again.
 GF_REGISTER_SELFTEST("naga.reattach", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
@@ -653,7 +653,7 @@ GF_REGISTER_SELFTEST("naga.reattach", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* s = stateOf(*naga);
     ctx.require(s && activeSegments(*s) == 12, "12 active segments");
     s->dazed = true;
-    ge::setProperty(*naga, "twilightforest:dazed", true);
+    ge::setProperty(*naga, "gloamingforest:dazed", true);
     dropStateForTest(*naga);
     co_await ctx.ticks(3);
     naga = mobById(n.uid);
@@ -668,7 +668,7 @@ GF_REGISTER_SELFTEST("naga.reattach", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)box;
 });
 
-// TF's loot table entities/naga: 6..11 naga scales and the trophy.
+// upstream's loot table entities/naga: 6..11 naga scales and the trophy.
 GF_REGISTER_SELFTEST("naga.loot", [](Context& ctx) {
     auto* region = game::regionOf(ctx.dimension());
     ctx.require(region != nullptr, "a region");
@@ -676,12 +676,12 @@ GF_REGISTER_SELFTEST("naga.loot", [](Context& ctx) {
         gf::loot::LootContext lc;
         lc.region = region;
         lc.seed   = 2040 + i;
-        auto items = gf::loot::roll("twilightforest:entities/naga", lc);
+        auto items = gf::loot::roll("gloamingforest:entities/naga", lc);
         int  scales = 0, trophies = 0;
         for (auto const& it : items) {
             auto id = game::items::idOf(it);
-            if (id == "twilightforest:naga_scale") scales += game::items::countOf(it);
-            if (id == "twilightforest:naga_trophy") trophies += game::items::countOf(it);
+            if (id == "gloamingforest:naga_scale") scales += game::items::countOf(it);
+            if (id == "gloamingforest:naga_trophy") trophies += game::items::countOf(it);
         }
         ctx.check(scales >= 6 && scales <= 11, "roll " + std::to_string(i) + ": " + std::to_string(scales) + " naga scales (6..11)");
         ctx.check(trophies == 1, "roll " + std::to_string(i) + ": the naga trophy");
@@ -727,18 +727,18 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     static bool                       sawScale = false, sawTrophy = false;
     static bool                       listening = false;
     if (!std::exchange(listening, true)) {
-        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss", "minecraft:inventory_changed"})
+        for (char const* id : {"minecraft:player_killed_entity", "gloamingforest:hurt_boss", "minecraft:inventory_changed"})
             gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const& data) {
                 if (player.getNameTag() != "naga_fight") return;
                 triggers[id]++;
                 if (id == "minecraft:player_killed_entity") killedEntity = data.value("entity", std::string());
-                if (id == "twilightforest:hurt_boss") hurtBossData = data.dump(), hurtBossEntity = data.value("entity", std::string());
+                if (id == "gloamingforest:hurt_boss") hurtBossData = data.dump(), hurtBossEntity = data.value("entity", std::string());
                 if (id == "minecraft:inventory_changed") {
                     auto const& inv = player.getInventory();
                     for (int i = 0; i < inv.getContainerSize(); i++) {
                         auto itemId = game::items::idOf(inv.getItem(i));
-                        sawScale |= itemId == "twilightforest:naga_scale";
-                        sawTrophy |= itemId == "twilightforest:naga_trophy";
+                        sawScale |= itemId == "gloamingforest:naga_scale";
+                        sawTrophy |= itemId == "gloamingforest:naga_trophy";
                     }
                 }
             });
@@ -794,7 +794,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
             }
         }
         auto id = ctx.blockAt(chestPos);
-        if (id == "twilightforest:twilight_oak_chest" || id == "twilightforest:canopy_chest") chestAt = t;
+        if (id == "gloamingforest:gloaming_oak_chest" || id == "gloamingforest:canopy_chest") chestAt = t;
     }
     ctx.info("segments popped until tick " + std::to_string(lastPop) + ", the chest at tick " + std::to_string(chestAt) + ", death time while popping at most " +
              std::to_string(maxDeathTimeWhilePopping));
@@ -805,7 +805,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
               "the death chest comes 124 ticks after the last segment popped (" + std::to_string(chestAt - lastPop) + ")");
     co_await ctx.ticks(5);
     auto chestId = ctx.blockAt(chestPos);
-    ctx.check(chestId == "twilightforest:twilight_oak_chest" || chestId == "twilightforest:canopy_chest", "the death chest is a twilight oak or canopy chest (" + chestId + ")");
+    ctx.check(chestId == "gloamingforest:gloaming_oak_chest" || chestId == "gloamingforest:canopy_chest", "the death chest is a gloaming oak or canopy chest (" + chestId + ")");
     int                    scales = 0, trophies = 0;
     std::vector<ItemStack> taken;
     if (auto* region = game::regionOf(home.dim))
@@ -813,8 +813,8 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
             for (int i = 0; i < handler->slots; i++) {
                 auto it = handler->get(chestPos, i);
                 auto id = game::items::idOf(it);
-                if (id == "twilightforest:naga_scale") scales += game::items::countOf(it);
-                if (id == "twilightforest:naga_trophy") trophies += game::items::countOf(it);
+                if (id == "gloamingforest:naga_scale") scales += game::items::countOf(it);
+                if (id == "gloamingforest:naga_trophy") trophies += game::items::countOf(it);
                 if (!game::items::isEmpty(it)) taken.push_back(it);
             }
             for (int i = 0; i < handler->slots; i++)
@@ -827,11 +827,11 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(conquest && conquest->second == kCourtyard && conquest->first.x == home.x && conquest->first.z == home.z,
               "the Naga's postmortem conquers its home structure key, the naga courtyard, at its home (" + (conquest ? conquest->second : std::string("none")) + ")");
     // progress_naga's criteria (one of them completes it): naga (player_killed_entity of a
-    // twilightforest:naga), was_in_fight (hurt_boss of a twilightforest:naga), scale and trophy
+    // gloamingforest:naga), was_in_fight (hurt_boss of a gloamingforest:naga), scale and trophy
     // (inventory_changed with the items). U14's criteria engine grants it; these are its inputs.
     ctx.check(triggers["minecraft:player_killed_entity"] >= 1 && killedEntity == kNagaId,
               "player_killed_entity fired for " + killedEntity + " (progress_naga's naga criterion)");
-    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired (progress_naga's was_in_fight criterion): " + hurtBossData);
+    ctx.check(triggers["gloamingforest:hurt_boss"] >= 1, "hurt_boss fired (progress_naga's was_in_fight criterion): " + hurtBossData);
     // the player takes the chest's loot: the scale and trophy criteria's trigger fires
     triggers["minecraft:inventory_changed"] = 0;
     if (auto* pl = byId(spId); pl && pl->isPlayer())
@@ -843,7 +843,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     // JSON the mod ships) matched against the trigger data that fired, the way a vanilla criteria
     // engine reads them (entity_properties type, item predicates), and its requirements met.
     {
-        auto file = Mod::getInstance().getSelf().getModDir() / "data" / "twilightforest" / "advancement" / "progress_naga.json";
+        auto file = Mod::getInstance().getSelf().getModDir() / "data" / "gloamingforest" / "advancement" / "progress_naga.json";
         std::ifstream in(file);
         ctx.require(in.good(), "the progress_naga advancement ships (" + file.string() + ")");
         auto adv = nlohmann::json::parse(in, nullptr, false);
@@ -859,10 +859,10 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
             auto conds = crit.value("conditions", nlohmann::json::object());
             bool ok    = false;
             if (trig == "minecraft:player_killed_entity") ok = triggers[trig] >= 1 && entityType(conds, "entity") == killedEntity;
-            else if (trig == "twilightforest:hurt_boss") ok = triggers[trig] >= 1 && entityType(conds, "hurt_entity") == hurtBossEntity;
+            else if (trig == "gloamingforest:hurt_boss") ok = triggers[trig] >= 1 && entityType(conds, "hurt_entity") == hurtBossEntity;
             else if (trig == "minecraft:inventory_changed") {
                 auto item = conds.value("items", nlohmann::json::array()).empty() ? std::string() : conds["items"][0].value("items", std::string());
-                ok        = triggers[trig] >= 1 && ((item == "twilightforest:naga_scale" && sawScale) || (item == "twilightforest:naga_trophy" && sawTrophy));
+                ok        = triggers[trig] >= 1 && ((item == "gloamingforest:naga_scale" && sawScale) || (item == "gloamingforest:naga_trophy" && sawTrophy));
             }
             ctx.check(ok, "progress_naga criterion " + name + " (" + trig + ") is met by the fight");
             if (ok) met.insert(name);
@@ -876,7 +876,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
         ctx.check(all && met.size() == 4, "progress_naga's requirements are met (" + std::to_string(met.size()) + " of 4 criteria)");
     }
     if (auto* pl = byId(spId); pl && pl->isPlayer()) {
-        if (gf::progression::has(*static_cast<Player*>(pl), "twilightforest:progress_naga")) ctx.info("progress_naga granted (U14's criteria engine)");
+        if (gf::progression::has(*static_cast<Player*>(pl), "gloamingforest:progress_naga")) ctx.info("progress_naga granted (U14's criteria engine)");
         else ctx.info("progress_naga not granted: no criteria engine in this build (U14)");
     }
     ctx.check(mobById(n.uid) == nullptr, "the body is gone after the death animation");
@@ -886,10 +886,10 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
 });
 
 #ifdef GF_CLIENT
-// TFMapDecorations.NAGA_COURTYARD: the client draws the decoration with TF's map icon.
+// TFMapDecorations.NAGA_COURTYARD: the client draws the decoration with upstream's map icon.
 GF_REGISTER_SELFTEST("naga.map_icon", [](Context& ctx) {
-    auto icon = gf::client::maps::iconOf("twilightforest:naga_courtyard");
-    ctx.check(icon == "textures/twilightforest/map/decorations/naga_courtyard", "the naga_courtyard map decoration has TF's icon (" + icon + ")");
+    auto icon = gf::client::maps::iconOf("gloamingforest:naga_courtyard");
+    ctx.check(icon == "textures/gloamingforest/map/decorations/naga_courtyard", "the naga_courtyard map decoration has upstream's icon (" + icon + ")");
 });
 #endif
 
@@ -938,8 +938,8 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
             if (s->charging != (ph == 1) || s->dazed != (ph == 2)) {
                 s->charging = ph == 1;
                 s->dazed    = ph == 2;
-                ge::setProperty(m, "twilightforest:charging", s->charging);
-                ge::setProperty(m, "twilightforest:dazed", s->dazed);
+                ge::setProperty(m, "gloamingforest:charging", s->charging);
+                ge::setProperty(m, "gloamingforest:dazed", s->dazed);
             }
         }
     };
@@ -961,8 +961,8 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
                     auto  v     = props ? props->tryGetBool(HashedString::computeHash(name)) : std::nullopt;
                     return v ? (*v ? "1" : "0") : "?";
                 };
-                ctx.info(std::string("naga ") + phases[ph] + " (properties charging=" + prop("twilightforest:charging") + " dazed=" + prop("twilightforest:dazed") + ")");
-                ctx.check(std::string(prop("twilightforest:charging")) == (ph == 1 ? "1" : "0") && std::string(prop("twilightforest:dazed")) == (ph == 2 ? "1" : "0"),
+                ctx.info(std::string("naga ") + phases[ph] + " (properties charging=" + prop("gloamingforest:charging") + " dazed=" + prop("gloamingforest:dazed") + ")");
+                ctx.check(std::string(prop("gloamingforest:charging")) == (ph == 1 ? "1" : "0") && std::string(prop("gloamingforest:dazed")) == (ph == 2 ? "1" : "0"),
                           std::string("the ") + phases[ph] + " Naga carries its synced properties");
             }
         }
@@ -994,14 +994,14 @@ GF_REGISTER_SELFTEST("naga.courtyard_start", [](Context& ctx) {
     auto pieces = gf::landmark::ext::startPieces(*forced);
     std::map<std::string, int> types;
     for (auto const& p : pieces) types[p.type]++;
-    ctx.check(!pieces.empty() && pieces.front().type == "twilightforest:TFNCMn", "CourtyardMain is the first piece");
+    ctx.check(!pieces.empty() && pieces.front().type == "gloamingforest:TFNCMn", "CourtyardMain is the first piece");
     ctx.check(pieces.size() >= 120 && pieces.size() <= 400, "the courtyard has " + std::to_string(pieces.size()) + " pieces");
-    ctx.check(types["twilightforest:TFJigsawTemplate"] == 1, "the spawner piece from pool courtyard/center");
-    ctx.check(types["twilightforest:TFNCWC"] == 8 && types["twilightforest:TFNCWA"] == 4, "8 outer and 4 inner wall corners");
-    ctx.check(types["twilightforest:TFNCPa"] > 0 && types["twilightforest:TFNCWl"] > 0, "paths and walls");
+    ctx.check(types["gloamingforest:TFJigsawTemplate"] == 1, "the spawner piece from pool courtyard/center");
+    ctx.check(types["gloamingforest:TFNCWC"] == 8 && types["gloamingforest:TFNCWA"] == 4, "8 outer and 4 inner wall corners");
+    ctx.check(types["gloamingforest:TFNCPa"] > 0 && types["gloamingforest:TFNCWl"] > 0, "paths and walls");
     bool spawnerAtCenter = false;
     for (auto const& p : pieces)
-        if (p.type == "twilightforest:TFJigsawTemplate") spawnerAtCenter = p.box.contains(forced->center.x + 1, p.box.minY, forced->center.z + 1);
+        if (p.type == "gloamingforest:TFJigsawTemplate") spawnerAtCenter = p.box.contains(forced->center.x + 1, p.box.minY, forced->center.z + 1);
     ctx.check(spawnerAtCenter, "the spawner dais is at the courtyard's center");
 });
 
@@ -1171,7 +1171,7 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
     for (int x = all.minX; x <= all.maxX; x += 3)
         for (int z = all.minZ; z <= all.maxZ; z += 3) {
             auto id = ctx.blockAt(core::GlobalPos{ctx.dimension(), x, cy + 1, z});
-            hedges += id == "twilightforest:hedge";
+            hedges += id == "gloamingforest:hedge";
             bricks += id.find("stone_brick") != std::string::npos;
         }
     ctx.check(hedges > 20, "the maze has hedges (" + std::to_string(hedges) + " samples)");
@@ -1208,7 +1208,7 @@ struct WalkEnforcedScope {
     ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
 };
 
-/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,
 /// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
 /// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
 /// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
@@ -1219,7 +1219,7 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
     ctx.check(d->conquerable, key + " is conquerable");
     if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
     else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
-    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "gloamingforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
     WalkEnforcedScope enforced;
     core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
     gf::landmark::ext::ScopedStart forced(key, site);
@@ -1259,7 +1259,7 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 
 } // namespace
 
-// The naga courtyard against TF's NagaCourtyardStructure record: no progression lock, no hint,
+// The naga courtyard against upstream's NagaCourtyardStructure record: no progression lock, no hint,
 // conquerable; it protects nothing.
 GF_REGISTER_SELFTEST("naga.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kCourtyard, "", "", 150007); });
 

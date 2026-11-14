@@ -117,7 +117,7 @@ std::filesystem::path writeTree(std::vector<std::pair<std::string, JsonDoc>> con
 
 /// Loads a synthetic tree for the duration of a (synchronous) test; the real data comes back
 /// afterwards. Its tags are private to the test's thread (a ScopedSnapshot; the tag runtime publishes
-/// nothing while the root is overridden), so world generation on other threads keeps TF's tags; the
+/// nothing while the root is overridden), so world generation on other threads keeps upstream's tags; the
 /// data maps, recipes and the rest load from the tree (they read the thread's tags while loading).
 struct ScopedTree {
     std::filesystem::path                             dir;
@@ -179,16 +179,16 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_bridge", [](Context& ctx) {
     ctx.info("minecraft:planks has " + std::to_string(planks.size()) + " members");
 });
 
-// The NeoForge common tags (c:) TF's data nests: their vanilla members come from the bridge.
+// The NeoForge common tags (c:) upstream's data nests: their vanilla members come from the bridge.
 GF_REGISTER_SELFTEST("item.tags_common", [](Context& ctx) {
     using gf::tags::Registry;
-    // TF's own tags, when F1's import is in the data tree
+    // upstream's own tags, when F1's import is in the data tree
     auto itemTags = gf::tags::internal::tagsOf("item");
-    if (std::find(itemTags.begin(), itemTags.end(), "twilightforest:squirrel_tempt_items") != itemTags.end()) {
-        ctx.check(gf::tags::has(Registry::Item, "twilightforest:squirrel_tempt_items", "minecraft:wheat_seeds"), "TF's squirrel_tempt_items (#c:seeds) holds wheat seeds");
-        ctx.check(gf::tags::has(Registry::Item, "twilightforest:boar_tempt_items", "minecraft:carrot"), "TF's boar_tempt_items (#c:crops/carrot) holds carrots");
+    if (std::find(itemTags.begin(), itemTags.end(), "gloamingforest:squirrel_tempt_items") != itemTags.end()) {
+        ctx.check(gf::tags::has(Registry::Item, "gloamingforest:squirrel_tempt_items", "minecraft:wheat_seeds"), "upstream's squirrel_tempt_items (#c:seeds) holds wheat seeds");
+        ctx.check(gf::tags::has(Registry::Item, "gloamingforest:boar_tempt_items", "minecraft:carrot"), "upstream's boar_tempt_items (#c:crops/carrot) holds carrots");
     } else {
-        ctx.info("TF's tag data is not in this build (F1's import): the synthetic tree stands in");
+        ctx.info("upstream's tag data is not in this build (F1's import): the synthetic tree stands in");
     }
     ScopedTree tree({
         {"gf_test/tags/item/tempt.json", {{"values", {"#c:seeds"}}}},
@@ -219,7 +219,7 @@ GF_REGISTER_SELFTEST("item.tags_common", [](Context& ctx) {
     ctx.check(rc::internal::matches(rc::internal::parseIngredient(JsonDoc{{"tag", "c:ender_pearls"}}), "minecraft:ender_pearl"), "c:ender_pearls takes an ender pearl");
     ctx.check(rc::internal::matches(rc::internal::parseIngredient(JsonDoc{{"tag", "c:ingots/iron"}}), "minecraft:iron_ingot"), "c:ingots/iron takes an iron ingot");
     ctx.check(gf::tags::has(Registry::Item, "c:dusts/redstone", "minecraft:redstone") && gf::tags::has(Registry::Item, "c:tools/shield", "minecraft:shield"),
-              "the c: tags TF's code reads (dusts/redstone, tools/shield)");
+              "the c: tags upstream's code reads (dusts/redstone, tools/shield)");
 });
 
 // ext::hasIn on a vanilla registry directory answers as gf::tags (bridge and cache shared).
@@ -233,18 +233,18 @@ GF_REGISTER_SELFTEST("item.tags_ext_dirs", [](Context& ctx) {
     ctx.check(std::find(planks.begin(), planks.end(), "minecraft:oak_planks") != planks.end(), "membersIn of a vanilla directory lists the bridge's members");
 });
 
-// TF's data names vanilla content by Java id: tags and data maps hold the game's Bedrock ids.
+// upstream's data names vanilla content by Java id: tags and data maps hold the game's Bedrock ids.
 GF_REGISTER_SELFTEST("item.tags_java_ids", [](Context& ctx) {
     using gf::tags::Registry;
-    // TF's own data, when F1's import is in this build
-    if (gf::datamaps::get("twilightforest:crumble_horn", "minecraft:cobblestone")) {
-        auto const* bricks = gf::datamaps::get("twilightforest:crumble_horn", "minecraft:nether_brick");
+    // upstream's own data, when F1's import is in this build
+    if (gf::datamaps::get("gloamingforest:crumble_horn", "minecraft:cobblestone")) {
+        auto const* bricks = gf::datamaps::get("gloamingforest:crumble_horn", "minecraft:nether_brick");
         ctx.check(bricks != nullptr, "crumble_horn's minecraft:nether_bricks is Bedrock's nether_brick block");
-        ctx.check(gf::datamaps::get("twilightforest:crumble_horn", "minecraft:dirt_with_roots") != nullptr, "rooted_dirt is dirt_with_roots");
-        auto const* piglin = gf::datamaps::get("twilightforest:ominous_fire", "minecraft:piglin");
+        ctx.check(gf::datamaps::get("gloamingforest:crumble_horn", "minecraft:dirt_with_roots") != nullptr, "rooted_dirt is dirt_with_roots");
+        auto const* piglin = gf::datamaps::get("gloamingforest:ominous_fire", "minecraft:piglin");
         ctx.check(piglin && piglin->value("transform_to", std::string()) == "minecraft:zombie_pigman", "ominous_fire turns a piglin into Bedrock's zombie_pigman");
     } else {
-        ctx.info("TF's data maps are not in this build (F1's import): the synthetic tree stands in");
+        ctx.info("upstream's data maps are not in this build (F1's import): the synthetic tree stands in");
     }
     // the map's id field (as a consumer registers it); other fields keep their strings
     gf::datamaps::ext::registerIdField("gf_test:crumble", "crumble_to", "block");
@@ -269,15 +269,15 @@ GF_REGISTER_SELFTEST("item.tags_java_ids", [](Context& ctx) {
     ctx.check(v && v->value("sound", std::string()) == "minecraft:snow", "a field that is no id field keeps its string (Java's minecraft:snow is no block here)");
     auto const* other = gf::datamaps::get("gf_test:other", "minecraft:stone");
     ctx.check(other && other->value("crumble_to", std::string()) == "minecraft:magma_block", "a map without registered id fields keeps its values");
-    // TF's own maps' fields are built in (CrumbledBlock, EntityTransformation)
+    // upstream's own maps' fields are built in (CrumbledBlock, EntityTransformation)
     auto fieldOf = [](std::string const& map, std::string const& field) {
         auto f  = gf::datamaps::internal::idFields(map);
         auto it = f.find(field);
         return it == f.end() ? std::string() : it->second;
     };
-    ctx.check(fieldOf("twilightforest:crumble_horn", "crumble_to") == "block" && fieldOf("twilightforest:ominous_fire", "transform_to") == "entity_type"
-                  && fieldOf("twilightforest:transformation_powder", "transform_to") == "entity_type",
-              "crumble_to (block) and transform_to (entity type) are TF's id fields");
+    ctx.check(fieldOf("gloamingforest:crumble_horn", "crumble_to") == "block" && fieldOf("gloamingforest:ominous_fire", "transform_to") == "entity_type"
+                  && fieldOf("gloamingforest:transformation_powder", "transform_to") == "entity_type",
+              "crumble_to (block) and transform_to (entity type) are upstream's id fields");
     gf::datamaps::internal::unregisterIdField("gf_test:crumble", "crumble_to");
 });
 
@@ -290,7 +290,7 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
             {"gf_test/tags/block/inner.json", {{"values", {"gf_test:a", {{"id", "gf_test:b"}, {"required", false}}}}}},
             {"gf_test/tags/block/outer.json", {{"values", {"#gf_test:inner", "gf_test:c", "#minecraft:logs"}}}},
             {"gf_test/tags/blocks/legacy.json", {{"values", {"gf_test:old"}}}},
-            {"gf_test/tags/twilight/wood_palettes/common.json", {{"values", {"gf_test:palette"}}}},
+            {"gf_test/tags/gloaming/wood_palettes/common.json", {{"values", {"gf_test:palette"}}}},
             {"gf_test/data_maps/block/crumble.json",
              {{"values", {{"gf_test:a", {{"crumble_chance", 0.5}}}, {"#gf_test:inner", {{"crumble_chance", 0.2}}}, {"gf_test:gone", 1}}}, {"remove", {"gf_test:gone"}}}},
             {"neoforge/data_maps/item/compostables.json", {{"values", {{kFixture, {{"chance", 0.65}}}}}}},
@@ -298,25 +298,25 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
             {"gf_test/recipe/shaped.json",
              {{"type", "minecraft:crafting_shaped"}, {"pattern", {"ab", " a"}}, {"key", {{"a", {{"item", "minecraft:stick"}}}, {"b", {{"tag", "minecraft:planks"}}}}}, {"result", {{"id", "minecraft:ladder"}, {"count", 3}}}}},
             {"gf_test/recipe/uncraft.json",
-             {{"type", "twilightforest:uncrafting"}, {"cost", 0}, {"input", {{"item", "gf_test:box"}}}, {"key", {{"C", {{"item", "minecraft:chest"}}}}}, {"pattern", {"C"}}}},
+             {{"type", "gloamingforest:uncrafting"}, {"cost", 0}, {"input", {{"item", "gf_test:box"}}}, {"key", {{"C", {{"item", "minecraft:chest"}}}}}, {"pattern", {"C"}}}},
             {"gf_test/recipe/modifier.json",
-             {{"type", "twilightforest:travellers_gear_modifier_shapeless_recipe"},
-              {"ingredients", {{{"item", "minecraft:feather"}}, {{"item", "twilightforest:travellers_vest"}}}},
-              {"modifier_key", "twilightforest:stealth"}}},
+             {{"type", "gloamingforest:travellers_gear_modifier_shapeless_recipe"},
+              {"ingredients", {{{"item", "minecraft:feather"}}, {{"item", "gloamingforest:travellers_vest"}}}},
+              {"modifier_key", "gloamingforest:stealth"}}},
             {"gf_test/recipe/scepter.json",
-             {{"type", "twilightforest:scepter_repair"}, {"durability", 9}, {"repair_ingredients", {{{"item", "minecraft:golden_apple"}}}}, {"scepter", "gf_test:scepter"}}},
-            {"gf_test/recipe/cloth.json", {{"type", "twilightforest:emperors_cloth_recipe"}, {"category", "misc"}}},
-            {"gf/recipes/unit.json", {{"gf_test:bundled", {{"type", "twilightforest:drying"}, {"input", {{"item", "minecraft:kelp"}}}, {"result", {{"id", "minecraft:dried_kelp"}}}, {"filter_time", 40}}}}},
+             {{"type", "gloamingforest:scepter_repair"}, {"durability", 9}, {"repair_ingredients", {{{"item", "minecraft:golden_apple"}}}}, {"scepter", "gf_test:scepter"}}},
+            {"gf_test/recipe/cloth.json", {{"type", "gloamingforest:emperors_cloth_recipe"}, {"category", "misc"}}},
+            {"gf/recipes/unit.json", {{"gf_test:bundled", {{"type", "gloamingforest:drying"}, {"input", {{"item", "minecraft:kelp"}}}, {"result", {{"id", "minecraft:dried_kelp"}}}, {"filter_time", 40}}}}},
             {"gf_test/enchantment/fixture.json",
              {{"anvil_cost", 8}, {"max_level", 3}, {"weight", 1}, {"description", {{"translate", "enchantment.gf_test.fixture"}}}, {"supported_items", "#minecraft:enchantable/armor"},
               {"exclusive_set", {"minecraft:thorns"}}, {"min_cost", {{"base", 5}, {"per_level_above_first", 9}}}, {"max_cost", {{"base", 20}, {"per_level_above_first", 9}}}}},
-            {"gf_test/twilight/travellers_modifiers/fixture.json", {{"type", "twilightforest:component"}, {"equipment_slots", "head"}, {"component", {{"gf_test:x", JsonDoc::object()}}}}},
+            {"gf_test/gloaming/travellers_modifiers/fixture.json", {{"type", "gloamingforest:component"}, {"equipment_slots", "head"}, {"component", {{"gf_test:x", JsonDoc::object()}}}}},
         });
         // tags
         ctx.check(gf::tags::has(Registry::Block, "gf_test:outer", "gf_test:b"), "nested tags resolve (optional entries too)");
         ctx.check(gf::tags::has(Registry::Block, "gf_test:outer", "minecraft:birch_log"), "a nested vanilla tag goes through the bridge");
         ctx.check(gf::tags::has(Registry::Block, "gf_test:legacy", "gf_test:old"), "plural tag directories are read");
-        ctx.check(gf::tags::ext::hasIn("twilight", "gf_test:wood_palettes/common", "gf_test:palette"), "tags of TF's own registries by directory");
+        ctx.check(gf::tags::ext::hasIn("gloaming", "gf_test:wood_palettes/common", "gf_test:palette"), "tags of upstream's own registries by directory");
         // data maps
         auto const* a = gf::datamaps::get("gf_test:crumble", "gf_test:a");
         ctx.check(a && a->value("crumble_chance", 0.0) == 0.5, "data map value by id");
@@ -345,16 +345,16 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
         ctx.check(shaped->ingredients[1].tag == "minecraft:planks" && shaped->ingredients[2].empty(), "keys map to ingredients, spaces to empty");
         ctx.check(shaped->resultItem == "minecraft:ladder" && shaped->resultCount == 3, "the result and its count");
         auto const* uncraft = gf::recipes::byId("gf_test:uncraft");
-        ctx.check(uncraft && uncraft->type == "twilightforest:uncrafting" && uncraft->resultItem == "gf_test:box", "uncrafting: the input is the recipe's item");
+        ctx.check(uncraft && uncraft->type == "gloamingforest:uncrafting" && uncraft->resultItem == "gf_test:box", "uncrafting: the input is the recipe's item");
         auto const* mod = gf::recipes::byId("gf_test:modifier");
-        ctx.check(mod && mod->resultItem.empty() && mod->data.value("gear_item", std::string()) == "twilightforest:travellers_vest" && mod->ingredients.size() == 2,
+        ctx.check(mod && mod->resultItem.empty() && mod->data.value("gear_item", std::string()) == "gloamingforest:travellers_vest" && mod->ingredients.size() == 2,
                   "travellers modifier recipe: no result (Java's EMPTY), the gear in data");
         bool listed = false;
-        for (auto const* r : gf::recipes::producing("twilightforest:travellers_vest")) listed = listed || r->id == "gf_test:modifier";
+        for (auto const* r : gf::recipes::producing("gloamingforest:travellers_vest")) listed = listed || r->id == "gf_test:modifier";
         ctx.check(!listed, "producing (the uncrafting table) does not list a modifier recipe");
         auto const* scepter = gf::recipes::byId("gf_test:scepter");
         ctx.check(scepter && scepter->resultItem == "gf_test:scepter" && scepter->ingredients.size() == 2, "scepter repair: scepter + repair ingredients");
-        ctx.check(gf::recipes::byId("gf_test:cloth") != nullptr, "code-only TF recipes are indexed");
+        ctx.check(gf::recipes::byId("gf_test:cloth") != nullptr, "code-only upstream recipes are indexed");
         ctx.check(gf::recipes::byId("gf_test:bundled") != nullptr, "unit bundles of data/gf/recipes are read");
         bool found = false;
         for (auto const* r : gf::recipes::producing("minecraft:ladder")) found = found || r->id == "gf_test:shaped";
@@ -369,7 +369,7 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
         // enchantment specs from the data
         auto spec = gf::enchant::internal::specOf("gf_test:fixture");
         ctx.check(spec && spec->maxLevel == 3 && spec->anvilCost == 8 && spec->minCost.perLevelAboveFirst == 9, "enchantment spec read from the data");
-        ctx.check(spec && !spec->discoverable, "not in #minecraft:in_enchanting_table: not discoverable (as TF's four)");
+        ctx.check(spec && !spec->discoverable, "not in #minecraft:in_enchanting_table: not discoverable (as upstream's four)");
         // travellers modifiers
         auto helmet = items::make("minecraft:iron_helmet");
         ctx.require(helmet.has_value(), "an iron helmet");
@@ -388,9 +388,9 @@ GF_REGISTER_SELFTEST("item.recipes_fixture", [](Context& ctx) {
     ctx.check(gf::recipes::internal::matches(shaped->ingredients[0], "minecraft:stick"), "the ingredient is a stick");
     auto const* drying = gf::recipes::byId("gf_test:fixture_drying");
     ctx.require(drying != nullptr, "the fixture drying recipe is loaded");
-    ctx.check(drying->type == "twilightforest:drying" && drying->resultItem == "minecraft:stick", "drying recipe: stick from the fixture item");
-    ctx.check(!gf::recipes::ofType("twilightforest:drying").empty(), "ofType lists drying recipes");
-    auto const* first = gf::recipes::findFirst("twilightforest:drying", [](auto const& r) { return r.id == "gf_test:fixture_drying"; });
+    ctx.check(drying->type == "gloamingforest:drying" && drying->resultItem == "minecraft:stick", "drying recipe: stick from the fixture item");
+    ctx.check(!gf::recipes::ofType("gloamingforest:drying").empty(), "ofType lists drying recipes");
+    auto const* first = gf::recipes::findFirst("gloamingforest:drying", [](auto const& r) { return r.id == "gf_test:fixture_drying"; });
     ctx.check(first == drying, "findFirst finds it");
     bool data = false, native = false;
     for (auto const* r : gf::recipes::producing(kFixture)) {
@@ -489,14 +489,14 @@ struct TestGrid {
 };
 } // namespace
 
-// TF's code-only data recipes have the special recipes' ids (twilightforest:casket_repair_recipe):
+// upstream's code-only data recipes have the special recipes' ids (gloamingforest:casket_repair_recipe):
 // the crafting hook takes the BP recipe of the id, never the data recipe that shadows it in byId.
 GF_REGISTER_SELFTEST("item.special_crafting_shadowed", [](Context& ctx) {
     namespace rc = gf::recipes;
     ctx.require(rc::internal::nativeById(kFixture) != nullptr, "the test BP recipe gf_test:fixture_item is one of the game's recipes");
-    rc::internal::setTestDataRecipe(kFixture, {{"type", "twilightforest:casket_repair_recipe"}, {"category", "misc"}});
+    rc::internal::setTestDataRecipe(kFixture, {{"type", "gloamingforest:casket_repair_recipe"}, {"category", "misc"}});
     auto const* data = rc::byId(kFixture);
-    ctx.check(data && data->type == "twilightforest:casket_repair_recipe" && data->resultItem.empty(),
+    ctx.check(data && data->type == "gloamingforest:casket_repair_recipe" && data->resultItem.empty(),
               "a SimpleCraftingRecipeSerializer data recipe of the same id shadows it in byId (no result item)");
     auto const* bp = rc::internal::nativeById(kFixture);
     ctx.check(bp && bp->resultItem == kFixture, "the BP recipe stays the game's recipe of the id");
@@ -585,33 +585,33 @@ GF_REGISTER_SELFTEST("item.special_crafting_shared_result", [](Context& ctx) {
     ctx.check(rc::internal::nativeById("gf_test:twin_a") == nullptr, "the stand-ins are gone");
 });
 
-// NeoForge's recipe conditions: TF's jeed integration recipes (mod_loaded) are not there (and no
+// NeoForge's recipe conditions: upstream's jeed integration recipes (mod_loaded) are not there (and no
 // "no loader" warning names their type); the uncrafting table recipe follows its condition.
 GF_REGISTER_SELFTEST("item.recipes_conditions", [](Context& ctx) {
     namespace rc = gf::recipes;
     using J      = JsonDoc;
     ctx.check(!rc::internal::conditionsHold(J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "jeed"}}})), "mod_loaded jeed: false");
-    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "twilightforest"}}})), "mod_loaded twilightforest: true");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "gloamingforest"}}})), "mod_loaded gloamingforest: true");
     ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:not"}, {"value", {{"type", "neoforge:false"}}}}})), "not false");
     ctx.check(!rc::internal::conditionsHold(J::array({{{"type", "neoforge:and"}, {"values", J::array({{{"type", "neoforge:true"}}, {{"type", "neoforge:false"}}})}}})), "and");
     ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:or"}, {"values", J::array({{{"type", "neoforge:false"}}, {{"type", "neoforge:true"}}})}}})), "or");
-    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:item_exists"}, {"item", "twilightforest:naga_scale"}}}))
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:item_exists"}, {"item", "gloamingforest:naga_scale"}}}))
                   && !rc::internal::conditionsHold(J::array({{{"type", "neoforge:item_exists"}, {"item", "othermod:thing"}}})),
-              "item_exists: TF's items, no other mod's");
-    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "twilightforest:uncrafting_table_enabled"}}})), "uncrafting_table_enabled: TF's default (enabled)");
-    // TF's own data, when F1's import is in this build
-    if (rc::byId("twilightforest:uncrafting_table")) {
-        ctx.check(rc::byId("twilightforest:jeed/strength") == nullptr, "TF's jeed recipes are not loaded");
+              "item_exists: upstream's items, no other mod's");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "gloamingforest:uncrafting_table_enabled"}}})), "uncrafting_table_enabled: upstream's default (enabled)");
+    // upstream's own data, when F1's import is in this build
+    if (rc::byId("gloamingforest:uncrafting_table")) {
+        ctx.check(rc::byId("gloamingforest:jeed/strength") == nullptr, "upstream's jeed recipes are not loaded");
         ctx.check(!rc::internal::typesWithoutLoader().contains("jeed:effect_provider"), "and their type is not reported as unknown");
     } else {
-        ctx.info("TF's recipe data is not in this build (F1's import): the synthetic tree stands in");
+        ctx.info("upstream's recipe data is not in this build (F1's import): the synthetic tree stands in");
     }
     {
         ScopedTree tree({
             {"gf_test/recipe/jeed.json",
              {{"neoforge:conditions", J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "jeed"}}})}, {"type", "jeed:effect_provider"}, {"effect", "minecraft:strength"}}},
             {"gf_test/recipe/table.json",
-             {{"neoforge:conditions", J::array({{{"type", "twilightforest:uncrafting_table_enabled"}}})},
+             {{"neoforge:conditions", J::array({{{"type", "gloamingforest:uncrafting_table_enabled"}}})},
               {"type", "minecraft:crafting_shaped"},
               {"pattern", {"##", "##"}},
               {"key", {{"#", {{"item", "minecraft:oak_planks"}}}}},
@@ -619,9 +619,9 @@ GF_REGISTER_SELFTEST("item.recipes_conditions", [](Context& ctx) {
         });
         ctx.check(rc::byId("gf_test:jeed") == nullptr && !rc::internal::typesWithoutLoader().contains("jeed:effect_provider"), "a failing condition skips the recipe quietly");
         ctx.check(rc::byId("gf_test:table") != nullptr, "the table recipe loads while the table is enabled");
-        rc::ext::registerCondition("twilightforest:uncrafting_table_enabled", [](JsonDoc const&) { return false; });
+        rc::ext::registerCondition("gloamingforest:uncrafting_table_enabled", [](JsonDoc const&) { return false; });
         ctx.check(rc::byId("gf_test:table") == nullptr, "an owner's condition (disableEntireTable) removes it at the next query");
-        rc::internal::unregisterCondition("twilightforest:uncrafting_table_enabled");
+        rc::internal::unregisterCondition("gloamingforest:uncrafting_table_enabled");
         ctx.check(rc::byId("gf_test:table") != nullptr, "and the default brings it back");
     }
 });
@@ -757,7 +757,7 @@ GF_REGISTER_SELFTEST("item.behaviour_java", [](Context& ctx) {
         sword.mItem->hurtActor(sword, victim, player);
         ctx.check(sword.getDamageValue() == afterTrue, "hurtEnemy false: no durability lost");
     } else {
-        ctx.info("minecraft:iron_sword is not a component item here (the hook serves TF's data-driven items)");
+        ctx.info("minecraft:iron_sword is not a component item here (the hook serves upstream's data-driven items)");
     }
     gf::item::internal::unregister("minecraft:iron_sword");
 });
@@ -941,13 +941,13 @@ GF_REGISTER_SELFTEST("item.enchant_flags", [](Context& ctx) {
     ctx.check(rolled(), "and the table rolls it then (weight 1000)");
     en::ext::clearFlags("gf_test:flag_probe");
     ctx.check(!en::internal::specOf("gf_test:flag_probe")->discoverable && !rolled(), "back to the tags");
-    // TF's four, when F1's import is in this build: none is offered by the table, none is treasure
-    for (auto const* id : {"twilightforest:fire_react", "twilightforest:chill_aura", "twilightforest:destruction", "twilightforest:renewal"})
-        if (auto s = en::internal::specOf(id)) ctx.check(!s->discoverable && !s->treasure, std::string(id) + " is neither discoverable nor treasure (TF's tags)");
+    // upstream's four, when F1's import is in this build: none is offered by the table, none is treasure
+    for (auto const* id : {"gloamingforest:fire_react", "gloamingforest:chill_aura", "gloamingforest:destruction", "gloamingforest:renewal"})
+        if (auto s = en::internal::specOf(id)) ctx.check(!s->discoverable && !s->treasure, std::string(id) + " is neither discoverable nor treasure (upstream's tags)");
     en::internal::unregisterType("gf_test:flag_probe");
 });
 
-// The vanilla client's anvil fallback: a TF enchanted book (custom enchantments only) applied from a
+// The vanilla client's anvil fallback: an upstream enchanted book (custom enchantments only) applied from a
 // form with AnvilMenu's numbers.
 GF_REGISTER_SELFTEST("item.enchant_anvil_form", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace en = gf::enchant;
@@ -1062,7 +1062,7 @@ GF_REGISTER_SELFTEST("item.enchant_anvil_choice", [](Context& ctx) -> ll::coro::
     ctx.require(offer.has_value() && offer->cost == 4, "the sword's offer: fixture_react I at 4 levels");
     ItemStack const listed = inv.getItem(1);
     en::internal::AnvilChoice choice{1, 0, anvil, listed, inv.getItem(0), offer->cost};
-    // another TF book of the same cost in the book's slot: not the book the form listed
+    // another upstream book of the same cost in the book's slot: not the book the form listed
     inv.setItem(1, book("gf_test:fixture_other"));
     auto swapped = en::internal::anvilOffer(*p, 1, 0);
     ctx.check(swapped.has_value() && swapped->cost == 4, "(the other book makes an offer of the same cost)");
@@ -1246,9 +1246,9 @@ GF_REGISTER_SELFTEST("item.stats_traits", [](Context& ctx) {
     auto& player = ctx.player();
     gf::net::setTestCompanion(player, true);
     (void)gf::net::takeTestMessages(player);
-    auto before = gf::stats::value(player, "twilightforest:bugs_squished");
-    gf::stats::award(player, "twilightforest:bugs_squished", 2);
-    ctx.check(gf::stats::value(player, "twilightforest:bugs_squished") == before + 2, "award adds to the statistic");
+    auto before = gf::stats::value(player, "gloamingforest:bugs_squished");
+    gf::stats::award(player, "gloamingforest:bugs_squished", 2);
+    ctx.check(gf::stats::value(player, "gloamingforest:bugs_squished") == before + 2, "award adds to the statistic");
     gf::traits::set(player, "gf_test:fixture_trait", true);
     ctx.check(gf::traits::get(player, "gf_test:fixture_trait"), "a trait reads back");
     auto doc = gf::game::db::get("gf:traits:" + player.getUuid().asString());
@@ -1299,24 +1299,24 @@ GF_REGISTER_SELFTEST("item.gear_modifiers", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("item.catalog", [](Context& ctx) {
     auto const& groups = gf::catalog::groups();
-    ctx.require(groups.size() == 4, "TF's four creative tabs");
-    ctx.check(groups[0].id == "twilightforest:blocks" && groups[1].id == "twilightforest:items" && groups[2].id == "twilightforest:equipment"
-                  && groups[3].id == "twilightforest:food",
-              "in TF's order");
-    ctx.check(groups[2].nameKey == "itemGroup.twilightforest.equipment", "with TF's titles");
-    ctx.check(gf::catalog::groupOf("minecraft:stone").empty(), "vanilla items are in no TF tab");
+    ctx.require(groups.size() == 4, "upstream's four creative tabs");
+    ctx.check(groups[0].id == "gloamingforest:blocks" && groups[1].id == "gloamingforest:items" && groups[2].id == "gloamingforest:equipment"
+                  && groups[3].id == "gloamingforest:food",
+              "in upstream's order");
+    ctx.check(groups[2].nameKey == "itemGroup.gloamingforest.equipment", "with upstream's titles");
+    ctx.check(gf::catalog::groupOf("minecraft:stone").empty(), "vanilla items are in no upstream tab");
     auto names = gf::catalog::internal::groupNames();
     ctx.check(!names.empty(), "the server's creative registry is readable (" + std::to_string(names.size()) + " groups)");
     std::size_t tf = 0;
     for (auto const& g : groups) tf += g.items.size();
-    ctx.info("TF catalog items: " + std::to_string(tf));
+    ctx.info("upstream catalog items: " + std::to_string(tf));
 });
 
 GF_REGISTER_SELFTEST("item.rarity", [](Context& ctx) {
     namespace ex = gf::item::ext;
-    ctx.check(ex::rarityOf("twilightforest:naga_trophy") == ex::Rarity::Twilight, "trophies are TWILIGHT");
-    ctx.check(ex::rarityOf("twilightforest:lich_banner_pattern") == ex::Rarity::Twilight, "banner patterns are TWILIGHT");
-    ctx.check(std::string(ex::rarityColor(ex::Rarity::Twilight)) == sect() + "2", "TWILIGHT names are dark green");
+    ctx.check(ex::rarityOf("gloamingforest:naga_trophy") == ex::Rarity::Gloaming, "trophies are GLOAMING");
+    ctx.check(ex::rarityOf("gloamingforest:lich_banner_pattern") == ex::Rarity::Gloaming, "banner patterns are GLOAMING");
+    ctx.check(std::string(ex::rarityColor(ex::Rarity::Gloaming)) == sect() + "2", "GLOAMING names are dark green");
     ctx.check(ex::rarityOf("minecraft:stone") == ex::Rarity::Common, "others are common");
     gf::item::setBar(kFixture, [](ItemStack const&) -> std::optional<gf::item::Bar> { return gf::item::Bar{1.5f, 0x123456}; });
     auto stack = items::make(kFixture);
@@ -1336,15 +1336,15 @@ GF_REGISTER_SELFTEST("item.rarity", [](Context& ctx) {
     ctx.check(!ex::barOf(*stack), "and hides without it");
     gf::item::internal::unregister(kFixture);
     ctx.check(!ex::barOf(*stack), "no bar once unregistered");
-    // ItemStack#getRarity: an enchanted UNCOMMON stack shows RARE, RARE shows EPIC, TWILIGHT stays
+    // ItemStack#getRarity: an enchanted UNCOMMON stack shows RARE, RARE shows EPIC, GLOAMING stays
     ex::setRarity(kFixture, ex::Rarity::Uncommon);
     ItemStack enchanted = *stack;
     gf::enchant::set(enchanted, "minecraft:unbreaking", 1);
     ctx.check(ex::rarityOf(*stack) == ex::Rarity::Uncommon && ex::rarityOf(enchanted) == ex::Rarity::Rare, "enchanted uncommon -> rare");
     ex::setRarity(kFixture, ex::Rarity::Rare);
     ctx.check(ex::rarityOf(enchanted) == ex::Rarity::Epic, "enchanted rare -> epic");
-    ex::setRarity(kFixture, ex::Rarity::Twilight);
-    ctx.check(ex::rarityOf(enchanted) == ex::Rarity::Twilight, "TWILIGHT stays");
+    ex::setRarity(kFixture, ex::Rarity::Gloaming);
+    ctx.check(ex::rarityOf(enchanted) == ex::Rarity::Gloaming, "GLOAMING stays");
     ex::setRarity(kFixture, ex::Rarity::Common);
 });
 

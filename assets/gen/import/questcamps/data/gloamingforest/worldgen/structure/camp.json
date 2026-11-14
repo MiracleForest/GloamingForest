@@ -1,0 +1,7 @@
+{
+  "type": "gloamingforest:camp",
+  "biomes": "#gloamingforest:valid_camp_biomes",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_box"
+}

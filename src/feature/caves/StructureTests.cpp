@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of U27's structures and features (rule R12: "caves.*", testPos dx 2700..2799; rule
 // R19 golden hashes). The troll caves, the cloud castle and the yeti cave are generated on an
@@ -68,7 +68,7 @@ public:
             if (!getBlock(BlockPos{x, y, z}).isAir()) return y + 1;
         return mGround;
     }
-    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "twilightforest:highlands"; }
+    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "gloamingforest:highlands"; }
     [[nodiscard]] std::int64_t seed() const override { return kSeed; }
     [[nodiscard]] int          dimension() const override { return -1; } // scratch: no block entity work
 
@@ -169,7 +169,7 @@ struct TestMode {
 };
 
 // Recorded from the translation (GloamingForest's own goldens, docs/units/caves.md).
-constexpr char kTrollLayout[]  = "twilightforest:TFTCCon=11 twilightforest:TFTCGard=4 twilightforest:TFTCMai=1 twilightforest:TFTCVa=1 28,-15,-100,163,11,25";
+constexpr char kTrollLayout[]  = "gloamingforest:TFTCCon=11 gloamingforest:TFTCGard=4 gloamingforest:TFTCMai=1 gloamingforest:TFTCVa=1 28,-15,-100,163,11,25";
 constexpr char kTrollHash[]    = "bedf1a4ba1742ba7"; // giant blocks carry U29's gf:giant_* tiling states
 constexpr char kCastleHash[]   = "af832880f6c53481"; // giant blocks carry U29's gf:giant_* tiling states
 constexpr char kYetiHash[]     = "219d7a9970bbf71a"; // with the ice stalactites (the heightmap sees the hill)
@@ -183,14 +183,14 @@ constexpr char kFeaturesHash[] = "bcf3047b03b92576";
 GF_REGISTER_SELFTEST("caves.troll_cave_layout", [](Context& ctx) {
     auto pieces = trollCave(5, -3, 0);
     auto types  = typesOf(pieces);
-    ctx.require(!pieces.empty() && pieces.front()->typeId == "twilightforest:TFTCMai", "the main cave comes first");
+    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:TFTCMai", "the main cave comes first");
     auto const& main = *pieces.front();
     // TrollCaveMainComponent(0, x, y + 11, z): a 30 x 20 x 30 box from (-15, -20, -15)
     ctx.check(main.bbox.maxX - main.bbox.minX == 30 && main.bbox.maxY - main.bbox.minY == 20 && main.bbox.maxY == 11, "main cave box 30 x 20 x 30 ending at y + 11");
-    ctx.check(types["twilightforest:TFTCVa"] == 1, "one troll vault (" + describe(types) + ")");
-    ctx.check(types["twilightforest:TFTCCon"] >= 1, "connecting caves");
+    ctx.check(types["gloamingforest:TFTCVa"] == 1, "one troll vault (" + describe(types) + ")");
+    ctx.check(types["gloamingforest:TFTCCon"] >= 1, "connecting caves");
     for (auto const& p : pieces) {
-        if (p->typeId == "twilightforest:TFTCVa") {
+        if (p->typeId == "gloamingforest:TFTCVa") {
             ctx.check(p->bbox.maxX - p->bbox.minX == 12 && ((p->bbox.minX + 8) & 3) == 0, "the vault is 13 wide, aligned to 4");
             ctx.check(static_cast<st::bases::Component&>(*p).getSpawnIndex() == -1, "no controlled spawns in the vault");
         }
@@ -206,12 +206,12 @@ GF_REGISTER_SELFTEST("caves.troll_cave_hash", [](Context& ctx) {
     auto         pieces = trollCave(5, -3, 0);
     MemoryRegion mem(40);
     generate(pieces, mem);
-    ctx.check(mem.count("twilightforest:giant_obsidian") > 100, "the vault's giant obsidian walls");
+    ctx.check(mem.count("gloamingforest:giant_obsidian") > 100, "the vault's giant obsidian walls");
     ctx.check(mem.count("minecraft:chest") >= 4, "the vault's two double chests");
     ctx.check(mem.count("minecraft:air") > 10000, "hollowed caves");
-    ctx.check(mem.count("twilightforest:trollsteinn") > 0, "trollsteinn on the cave walls: " + std::to_string(mem.count("twilightforest:trollsteinn")));
+    ctx.check(mem.count("gloamingforest:trollsteinn") > 0, "trollsteinn on the cave walls: " + std::to_string(mem.count("gloamingforest:trollsteinn")));
     for (auto const& p : pieces)
-        if (p->typeId == "twilightforest:TFTCVa") {
+        if (p->typeId == "gloamingforest:TFTCVa") {
             ctx.check(mem.idAt(p->getWorldPos(5, 5, 5)) == "minecraft:cobblestone", "the cobblestone platform");
             ctx.check(mem.idAt(p->getWorldPos(5, 6, 5)) == "minecraft:chest", "the vault chest");
         }
@@ -224,13 +224,13 @@ GF_REGISTER_SELFTEST("caves.cloud_castle_hash", [](Context& ctx) {
     pieces.push_back(std::make_unique<CloudCastle>(0, 1000, 160, -2000));
     pieces.front()->addChildren(*pieces.front(), pieces, rand);
     auto types = typesOf(pieces);
-    ctx.check(types["twilightforest:TFCloud"] == 1 && types["twilightforest:TFClTr"] == 2, "a cloud and two cloud trees (" + describe(types) + ")");
+    ctx.check(types["gloamingforest:TFCloud"] == 1 && types["gloamingforest:TFClTr"] == 2, "a cloud and two cloud trees (" + describe(types) + ")");
     MemoryRegion mem(-64);
     generate(pieces, mem);
     auto const& castle = *pieces.front();
-    ctx.check(mem.idAt(castle.getWorldPos(8, 0, 8)) == "twilightforest:fluffy_cloud", "the fluffy cloud slab");
-    ctx.check(mem.idAt(castle.getWorldPos(8, 6, 20)) == "twilightforest:giant_cobblestone", "giant cobblestone walls");
-    ctx.check(mem.count("twilightforest:wispy_cloud") > 0, "the procedural cloud");
+    ctx.check(mem.idAt(castle.getWorldPos(8, 0, 8)) == "gloamingforest:fluffy_cloud", "the fluffy cloud slab");
+    ctx.check(mem.idAt(castle.getWorldPos(8, 6, 20)) == "gloamingforest:giant_cobblestone", "giant cobblestone walls");
+    ctx.check(mem.count("gloamingforest:wispy_cloud") > 0, "the procedural cloud");
     for (auto const& p : pieces) {
         auto loaded = st::loadPiece(p->save());
         ctx.check(loaded && loaded->bbox == p->bbox, "piece " + p->typeId + " loads back");
@@ -241,7 +241,7 @@ GF_REGISTER_SELFTEST("caves.cloud_castle_hash", [](Context& ctx) {
 GF_REGISTER_SELFTEST("caves.yeti_cave_hash", [](Context& ctx) {
     PieceList pieces;
     layoutYetiCave(64, 0, 64, pieces);
-    ctx.require(pieces.size() == 1 && pieces.front()->typeId == "twilightforest:TFYeti", "one yeti cave piece");
+    ctx.require(pieces.size() == 1 && pieces.front()->typeId == "gloamingforest:TFYeti", "one yeti cave piece");
     auto& yeti = static_cast<YetiCave&>(*pieces.front());
     // HollowHillComponent(size 2) at y + 4, its box lowered by one
     ctx.check(yeti.bbox.maxX - yeti.bbox.minX == 68, "hill radius 34");
@@ -257,7 +257,7 @@ GF_REGISTER_SELFTEST("caves.yeti_cave_hash", [](Context& ctx) {
             }
     generate(pieces, mem);
     auto spawner = yeti.getWorldPos(34, 1, 34);
-    ctx.check(mem.idAt(spawner) == "twilightforest:alpha_yeti_boss_spawner", "the alpha yeti spawner at local (34, 1, 34): " + mem.idAt(spawner));
+    ctx.check(mem.idAt(spawner) == "gloamingforest:alpha_yeti_boss_spawner", "the alpha yeti spawner at local (34, 1, 34): " + mem.idAt(spawner));
     // the yeti_cave speleothems: ice, packed ice and blue ice stalactites only (stalagmite chance 0)
     auto ice = mem.count("minecraft:packed_ice") + mem.count("minecraft:ice") + mem.count("minecraft:blue_ice");
     ctx.check(ice > 100 && mem.count("minecraft:ice") > 0 && mem.count("minecraft:packed_ice") > 0 && mem.count("minecraft:blue_ice") > 0,
@@ -287,10 +287,10 @@ GF_REGISTER_SELFTEST("caves.features", [](Context& ctx) {
         for (int z = -4; z <= 4; z++) mem.setBlock(BlockPos{x, -1, z}, st::blocks::java("minecraft:mycelium"), 2);
     core::jrand::LegacyRandom r(kSeed);
     bool                      glooms = false, brown = false, red = false;
-    for (int i = 0; i < 8 && !glooms; i++) glooms = gf::features::place("twilightforest:troll_big_mushglooms", mem, BlockPos{0, 0, 0}, r);
-    for (int i = 0; i < 8 && !brown; i++) brown = gf::features::place("twilightforest:troll_huge_brown_mushrooms", mem, BlockPos{20, 0, 0}, r);
-    for (int i = 0; i < 8 && !red; i++) red = gf::features::place("twilightforest:troll_huge_red_mushrooms", mem, BlockPos{40, 0, 0}, r);
-    ctx.check(glooms && mem.count("twilightforest:huge_mushgloom") > 0 && mem.count("twilightforest:huge_mushgloom_stem") > 0, "a big mushgloom");
+    for (int i = 0; i < 8 && !glooms; i++) glooms = gf::features::place("gloamingforest:troll_big_mushglooms", mem, BlockPos{0, 0, 0}, r);
+    for (int i = 0; i < 8 && !brown; i++) brown = gf::features::place("gloamingforest:troll_huge_brown_mushrooms", mem, BlockPos{20, 0, 0}, r);
+    for (int i = 0; i < 8 && !red; i++) red = gf::features::place("gloamingforest:troll_huge_red_mushrooms", mem, BlockPos{40, 0, 0}, r);
+    ctx.check(glooms && mem.count("gloamingforest:huge_mushgloom") > 0 && mem.count("gloamingforest:huge_mushgloom_stem") > 0, "a big mushgloom");
     ctx.check(brown && mem.count("minecraft:brown_mushroom_block") > 0, "a troll cave brown mushroom");
     ctx.check(red && mem.count("minecraft:red_mushroom_block") > 0, "a troll cave red mushroom");
     ctx.check(mem.count("minecraft:mushroom_stem") > 0, "mushroom stems");
@@ -299,13 +299,13 @@ GF_REGISTER_SELFTEST("caves.features", [](Context& ctx) {
     for (int x = -6; x <= 6; x++)
         for (int z = -6; z <= 6; z++) cave.setBlock(BlockPos{x, 40, z}, st::blocks::java("minecraft:stone"), 2);
     core::jrand::LegacyRandom r2(kSeed);
-    gf::features::place("twilightforest:troll_roots", cave, BlockPos{0, 39, 0}, r2);
-    ctx.check(cave.count("twilightforest:trollvidr") + cave.count("twilightforest:unripe_trollber") > 0, "troll roots under the stone ceiling");
+    gf::features::place("gloamingforest:troll_roots", cave, BlockPos{0, 39, 0}, r2);
+    ctx.check(cave.count("gloamingforest:trollvidr") + cave.count("gloamingforest:unripe_trollber") > 0, "troll roots under the stone ceiling");
     golden(ctx, "features_hash", kFeaturesHash, mem.hash());
 });
 
 GF_REGISTER_SELFTEST("caves.starts", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await ctx.inGloaming(), "the Gloaming Forest is available");
     auto pos = ctx.testPos(2710);
     pos.x += 6144;
     pos.z += 4096;
@@ -314,14 +314,14 @@ GF_REGISTER_SELFTEST("caves.starts", [](Context& ctx) -> ll::coro::CoroTask<> {
         ctx.require(forced && forced->generated, "forced a troll cave start");
         ctx.check(forced->pieceBoxes.size() >= 3, "the troll cave has its pieces");
         auto const* d = gf::landmark::descriptor(kTrollCave);
-        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "twilightforest:progress_merge", "locked behind the Hydra, Lich and Ur-Ghast merge");
+        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "gloamingforest:progress_merge", "locked behind the Hydra, Lich and Ur-Ghast merge");
     }
     {
         gf::landmark::ext::ScopedStart forced(kYetiCave, pos);
         ctx.require(forced && forced->generated, "forced a yeti cave start");
         ctx.check(forced->pieceBoxes.size() == 1, "one yeti cave piece");
         auto const* d = gf::landmark::descriptor(kYetiCave);
-        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "twilightforest:progress_lich", "locked behind the Lich");
+        ctx.check(d && !d->lockAdvancements.empty() && d->lockAdvancements.front() == "gloamingforest:progress_lich", "locked behind the Lich");
         // the terraformer reaches the start's chunks
         ctx.check(gf::landmark::ext::hasTerraformers(pos.dim, forced->center.x >> 4, forced->center.z >> 4), "the yeti cave terraforms its chunks");
     }

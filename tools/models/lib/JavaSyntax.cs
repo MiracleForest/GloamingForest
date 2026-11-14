@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java syntax for the model converter (contract "geo", unit F2): a lexer and a recursive-descent
-// parser for the subset of Java that The Twilight Forest's model classes use (LayerDefinition /
+// parser for the subset of Java that The Gloaming Forest's model classes use (LayerDefinition /
 // createBodyLayer builders, setupAnim). Part of GloamingForest, LGPL-3.0-or-later.
 //
 // The parser reads whole compilation units: package, imports, classes / interfaces / enums with

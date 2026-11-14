@@ -2,7 +2,7 @@
   "format_version": "1.16.100",
   "minecraft:fog_settings": {
     "description": {
-      "identifier": "twilightforest:snowy_forest"
+      "identifier": "gloamingforest:snowy_forest"
     },
     "distance": {
       "air": {

@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:cracked_nagastone_pillar",
+      "identifier": "gloamingforest:cracked_nagastone_pillar",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"],
-        "twilightforest:reversed": [false, true]
+        "gloamingforest:axis": ["y", "x", "z"],
+        "gloamingforest:reversed": [false, true]
       }
     },
     "components": {
@@ -54,7 +54,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:reversed')",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:reversed')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -95,7 +95,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:reversed')",
+        "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:reversed')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -136,7 +136,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && !q.block_state('twilightforest:reversed')",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && !q.block_state('gloamingforest:reversed')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -177,7 +177,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:reversed')",
+        "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:reversed')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -218,7 +218,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:reversed')",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && !q.block_state('gloamingforest:reversed')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -259,7 +259,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:reversed')",
+        "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:reversed')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

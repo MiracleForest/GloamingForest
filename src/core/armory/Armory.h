@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFArmorMaterials.java
-//   src/main/java/twilightforest/util/TFToolMaterials.java
-//   src/main/java/twilightforest/init/TFItems.java
-//   src/main/java/twilightforest/init/TFTrimMaterials.java
-//   src/main/java/twilightforest/events/ToolEvents.java
-//   src/main/java/twilightforest/events/EntityEvents.java
-//   src/main/java/twilightforest/enchantment/ApplyFrostedEffect.java
-//   src/main/java/twilightforest/loot/modifiers/FieryToolSmeltingModifier.java
-//   src/main/java/twilightforest/data/CraftingGenerator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFArmorMaterials.java
+//   src/main/java/gloamingforest/util/TFToolMaterials.java
+//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/init/TFTrimMaterials.java
+//   src/main/java/gloamingforest/events/ToolEvents.java
+//   src/main/java/gloamingforest/events/EntityEvents.java
+//   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
+//   src/main/java/gloamingforest/loot/modifiers/FieryToolSmeltingModifier.java
+//   src/main/java/gloamingforest/data/CraftingGenerator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U7 (armory), pure logic: the armour materials and tool tiers with TF's numbers, the attack and
+// U7 (armory), pure logic: the armour materials and tool tiers with upstream's numbers, the attack and
 // set-reaction rules of ToolEvents / EntityEvents, Java's armour absorption (CombatRules) for the
 // armour toughness Bedrock's data items lack, the default enchantments of the crafted gear, the
 // trim materials and the fiery smelting XP rounding. No game headers (gtested in tests/armory).
@@ -36,7 +36,7 @@ enum class ArmorType { Boots = 0, Leggings = 1, Chestplate = 2, Helmet = 3 };
 
 /// TFArmorMaterials entry.
 struct ArmorMaterial {
-    std::string_view   name;               ///< "ironwood" (twilightforest:<name>)
+    std::string_view   name;               ///< "ironwood" (gloamingforest:<name>)
     std::array<int, 4> defense;            ///< by ArmorType
     int                enchantability;
     float              toughness;
@@ -47,9 +47,9 @@ struct ArmorMaterial {
     std::string_view   equipSound;         ///< "" = armor.equip_generic
 };
 
-/// A TF armour piece.
+/// An upstream armour piece.
 struct ArmorPiece {
-    std::string_view id; ///< "twilightforest:ironwood_helmet"
+    std::string_view id; ///< "gloamingforest:ironwood_helmet"
     std::string_view material;
     ArmorType        type;
 };
@@ -100,7 +100,7 @@ struct Tool {
 [[nodiscard]] float fractionalDamage(Tool const& tool);
 [[nodiscard]] int enchantability(Tool const& tool);
 
-/// TF's crafting materials (59 items in all with the pieces and the tools).
+/// upstream's crafting materials (59 items in all with the pieces and the tools).
 struct MaterialItem {
     std::string_view id;
     Rarity           rarity;
@@ -143,7 +143,7 @@ struct ChillAura {
     int  duration  = 0; ///< ticks
     int  amplifier = 0;
 };
-/// yeti pieces worn y -> twilightforest:frosted for 5y + 5 ticks at amplifier y, only when y > 0.
+/// yeti pieces worn y -> gloamingforest:frosted for 5y + 5 ticks at amplifier y, only when y > 0.
 [[nodiscard]] ChillAura chillAura(int yetiPieces);
 
 // ---- CombatRules (Minecraft 1.21.1) -------------------------------------------------------------
@@ -157,7 +157,7 @@ struct ChillAura {
 
 // ---- CraftingGenerator: default enchantments of crafted gear ------------------------------------
 struct DefaultEnchantments {
-    std::string_view                                       recipe; ///< "twilightforest:equipment/ironwood_axe"
+    std::string_view                                       recipe; ///< "gloamingforest:equipment/ironwood_axe"
     std::string_view                                       item;
     std::vector<std::pair<std::string_view, int>>          enchantments; ///< Java ids
 };
@@ -166,7 +166,7 @@ struct DefaultEnchantments {
 
 // ---- TFTrimMaterials -------------------------------------------------------------------------------
 struct TrimMaterial {
-    std::string_view id;         ///< "twilightforest:fiery"
+    std::string_view id;         ///< "gloamingforest:fiery"
     std::string_view ingredient; ///< item id
     unsigned         rgb;        ///< description colour
     float            itemModelIndex;

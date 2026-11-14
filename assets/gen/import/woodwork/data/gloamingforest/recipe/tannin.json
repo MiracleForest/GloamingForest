@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water"
+        }
+      },
+      "items": "minecraft:potion"
+    },
+    {
+      "item": "gloamingforest:gloaming_oak_sapling"
+    },
+    {
+      "item": "gloamingforest:root_strand"
+    },
+    {
+      "item": "gloamingforest:gloaming_oak_leaves"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:tannin"
+  }
+}

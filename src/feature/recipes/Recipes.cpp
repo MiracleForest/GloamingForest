@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFRecipes.java
-//   src/main/java/twilightforest/item/recipe/DryingRecipe.java
-//   src/main/java/twilightforest/item/recipe/UncraftingRecipe.java
-//   src/main/java/twilightforest/item/recipe/ScepterRepairRecipe.java
-//   src/main/java/twilightforest/item/recipe/NoTemplateSmithingRecipe.java
-//   src/main/java/twilightforest/item/recipe/travellers/TravellersGearModifierShapedRecipe.java
-//   src/main/java/twilightforest/item/recipe/travellers/TravellersGearModifierShapelessRecipe.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFRecipes.java
+//   src/main/java/gloamingforest/item/recipe/DryingRecipe.java
+//   src/main/java/gloamingforest/item/recipe/UncraftingRecipe.java
+//   src/main/java/gloamingforest/item/recipe/ScepterRepairRecipe.java
+//   src/main/java/gloamingforest/item/recipe/NoTemplateSmithingRecipe.java
+//   src/main/java/gloamingforest/item/recipe/travellers/TravellersGearModifierShapedRecipe.java
+//   src/main/java/gloamingforest/item/recipe/travellers/TravellersGearModifierShapelessRecipe.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Contract "recipes" (F9). Three sources:
 // - the Java-format recipes of the data tree (data/<ns>/recipe/**.json, F1's import, plus unit
 //   bundles data/gf/recipes/<unit>.json), parsed by the loader of their type: the vanilla types and
-//   TF's 13 serializers are built in (the codecs of TFRecipes), an owner's `registerType` replaces
+//   upstream's 13 serializers are built in (the codecs of TFRecipes), an owner's `registerType` replaces
 //   the built-in loader of its type (rule R4);
 // - the game's own crafting table recipes (Level::getRecipes(), the vanilla ones and the Bedrock
 //   recipes of the packs), converted once per world for `producing` (the uncrafting table
@@ -27,7 +27,7 @@
 // built-in loaders hold the game's Bedrock ids (tags/JavaIds.h; ext::parseIngredient / itemId for
 // owners' loaders); a recipe's `data` keeps the file's JSON as it is.
 // Data recipes with "neoforge:conditions" load only when the conditions hold (NeoForge's
-// ConditionalOps; TF's uncrafting_table_enabled, mod_loaded for the jeed integration recipes).
+// ConditionalOps; upstream's uncrafting_table_enabled, mod_loaded for the jeed integration recipes).
 // The recipe pointers the queries return stay valid for the process: a data reload or a new world
 // keeps the previous generation of recipes alive instead of freeing it.
 #include "feature/recipes/Recipes.h"
@@ -222,7 +222,7 @@ Ingredient one(Json const& j) {
 std::string travellersItemOf(std::vector<Ingredient> const& list) {
     for (auto const& i : list)
         for (auto const& id : i.items)
-            if (id.starts_with("twilightforest:travellers_")) return id;
+            if (id.starts_with("gloamingforest:travellers_")) return id;
     return {};
 }
 
@@ -248,36 +248,36 @@ std::optional<CraftingRecipe> builtIn(std::string const& id, Json const& j) {
         parseResult(j.value("result", Json()), r);
     } else if (t == "minecraft:smithing_trim") {
         r.ingredients = {one(j.value("template", Json())), one(j.value("base", Json())), one(j.value("addition", Json()))};
-    } else if (t == "twilightforest:drying") {
+    } else if (t == "gloamingforest:drying") {
         // DryingRecipe: input, result, filter_time (the fixture spells them ingredient / time)
         r.ingredients = {one(j.contains("input") ? j["input"] : j.value("ingredient", Json()))};
         parseResult(j.value("result", Json()), r);
-    } else if (t == "twilightforest:uncrafting") {
+    } else if (t == "gloamingforest:uncrafting") {
         // UncraftingRecipe: the input (input_count of it) comes apart into the pattern
         if (!parsePattern(j, r)) return std::nullopt;
         auto input    = one(j.value("input", Json()));
         r.resultItem  = input.items.empty() ? std::string() : input.items.front();
         r.resultCount = j.value("input_count", 1);
-    } else if (t == "twilightforest:travellers_gear_modifier_shaped_recipe") {
+    } else if (t == "gloamingforest:travellers_gear_modifier_shaped_recipe") {
         // a CustomRecipe: getResultItem is EMPTY on Java (the uncrafting table never sees it); the
         // gear the modifier goes on is data["gear_item"]
         if (!parsePattern(j.value("pattern", Json::object()), r)) return std::nullopt;
         r.data["gear_item"] = travellersItemOf(r.ingredients);
-    } else if (t == "twilightforest:travellers_gear_modifier_shapeless_recipe") {
+    } else if (t == "gloamingforest:travellers_gear_modifier_shapeless_recipe") {
         r.ingredients       = parseList(j.value("ingredients", Json::array()));
         r.data["gear_item"] = travellersItemOf(r.ingredients);
-    } else if (t == "twilightforest:scepter_repair") {
+    } else if (t == "gloamingforest:scepter_repair") {
         // ScepterRepairRecipe: the scepter plus its repair ingredients restore `durability`
         auto scepter = bedrockItem(j.value("scepter", std::string()));
         r.ingredients.push_back(Ingredient{{scepter}, {}});
         for (auto& i : parseList(j.value("repair_ingredients", Json::array()))) r.ingredients.push_back(std::move(i));
         r.resultItem = scepter;
-    } else if (t == "twilightforest:no_template_smithing") {
+    } else if (t == "gloamingforest:no_template_smithing") {
         // NoTemplateSmithingRecipe: base + addition, the base gets additional_data
         r.ingredients = {one(j.value("base", Json())), one(j.value("addition", Json()))};
-    } else if (t == "twilightforest:casket_repair_recipe" || t == "twilightforest:emperors_cloth_recipe" || t == "twilightforest:essence_repair_recipe"
-               || t == "twilightforest:magic_map_cloning_recipe" || t == "twilightforest:maze_map_cloning_recipe"
-               || t == "twilightforest:moonworm_queen_repair_recipe" || t == "twilightforest:travellers_vest_gloves_merge_recipe") {
+    } else if (t == "gloamingforest:casket_repair_recipe" || t == "gloamingforest:emperors_cloth_recipe" || t == "gloamingforest:essence_repair_recipe"
+               || t == "gloamingforest:magic_map_cloning_recipe" || t == "gloamingforest:maze_map_cloning_recipe"
+               || t == "gloamingforest:moonworm_queen_repair_recipe" || t == "gloamingforest:travellers_vest_gloves_merge_recipe") {
         // SimpleCraftingRecipeSerializer: code only (special crafting of the owner), {"category"}
     } else if (t.starts_with("minecraft:crafting_special_") || t == "minecraft:crafting_decorated_pot" || t == "minecraft:crafting_transmute") {
         // vanilla code recipes: nothing to index
@@ -321,7 +321,7 @@ bool allHold(Store& s, Json const& list) {
     return true;
 }
 
-/// One condition (lock held): the registered test of its type, else NeoForge's own and TF's.
+/// One condition (lock held): the registered test of its type, else NeoForge's own and upstream's.
 bool conditionHolds(Store& s, Json const& c) {
     if (!c.is_object()) return true;
     auto type = data::withNamespace(c.value("type", std::string()));
@@ -345,21 +345,21 @@ bool conditionHolds(Store& s, Json const& c) {
         return false;
     }
     if (type == "neoforge:mod_loaded") {
-        // the platform runs vanilla and TF only (TF's jeed integration recipes stay out)
+        // the platform runs vanilla and upstream only (upstream's jeed integration recipes stay out)
         auto mod = c.value("modid", std::string());
-        return mod == "minecraft" || mod == "neoforge" || mod == "twilightforest";
+        return mod == "minecraft" || mod == "neoforge" || mod == "gloamingforest";
     }
     if (type == "neoforge:item_exists") {
         auto item = data::withNamespace(c.value("item", std::string()));
-        return item.starts_with("minecraft:") || item.starts_with("twilightforest:") || item.starts_with("gf_test:");
+        return item.starts_with("minecraft:") || item.starts_with("gloamingforest:") || item.starts_with("gf_test:");
     }
     if (type == "neoforge:tag_empty") {
         // the vanilla tag bridge enumerates the game's items: evaluated again once a world is ready
         if (!ll::service::getLevel()) s.levelConditions = true;
         return tags::members(tags::Registry::Item, data::withNamespace(c.value("tag", std::string()))).empty();
     }
-    // UncraftingTableCondition: !TFConfig.disableEntireTable, TF's default until U13 registers it
-    if (type == "twilightforest:uncrafting_table_enabled") return true;
+    // UncraftingTableCondition: !TFConfig.disableEntireTable, upstream's default until U13 registers it
+    if (type == "gloamingforest:uncrafting_table_enabled") return true;
     static std::set<std::string> warned;
     if (warned.insert(type).second) log().warn("recipes: unknown recipe condition type {}: the recipe does not load", type);
     return false;

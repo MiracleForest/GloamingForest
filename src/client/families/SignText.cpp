@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/RegistrationEvents.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/RegistrationEvents.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Block families (F11), client mod: the text of TF's signs drawn flat on the board, front and back.
-// TF adds its 16 signs to BlockEntityType.SIGN and its 16 hanging signs to HANGING_SIGN
+// Block families (F11), client mod: the text of upstream's signs drawn flat on the board, front and back.
+// upstream adds its 16 signs to BlockEntityType.SIGN and its 16 hanging signs to HANGING_SIGN
 // (RegistrationEvents), so Java draws their text with vanilla's SignRenderer / HangingSignRenderer:
 // - the pose: SignRenderer.translateSign (the block's centre 0.75 x the model scale 2/3 up, turned
 //   by -getYRotationDegrees; a wall sign 0.3125 down and 0.4375 back), HangingSignRenderer

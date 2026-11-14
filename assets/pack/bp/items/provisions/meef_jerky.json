@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:meef_jerky",
+      "identifier": "gloamingforest:meef_jerky",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:meef_jerky.name"
+        "value": "item.gloamingforest:meef_jerky.name"
       },
       "minecraft:tags": {
         "tags": [

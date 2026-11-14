@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:mining_pressure_plate",
+      "identifier": "gloamingforest:mining_pressure_plate",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:powered": [false, true]
+        "gloamingforest:powered": [false, true]
       }
     },
     "components": {
@@ -39,7 +39,7 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:powered')",
+        "condition": "!q.block_state('gloamingforest:powered')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.pressure_plate_up",
           "minecraft:material_instances": {
@@ -59,7 +59,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:powered')",
+        "condition": "q.block_state('gloamingforest:powered')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.pressure_plate_down",
           "minecraft:material_instances": {

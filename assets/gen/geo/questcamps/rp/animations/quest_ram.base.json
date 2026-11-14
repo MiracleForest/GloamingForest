@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.quest_ram.base": {
+    "animation.gloamingforest.quest_ram.base": {
       "loop": true,
       "bones": {
         "head": {

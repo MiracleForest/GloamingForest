@@ -2,23 +2,23 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:bighorn_sheep",
+      "identifier": "gloamingforest:bighorn_sheep",
       "materials": {
         "default": "entity_alphatest",
         "fur": "sheep"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/bighorn",
+        "default": "textures/gloamingforest/entity/bighorn",
         "fur": "textures/entity/sheep/sheep"
       },
       "geometry": {
-        "default": "geometry.twilightforest.bighorn_sheep",
-        "fur": "geometry.twilightforest.bighorn_sheep_fur"
+        "default": "geometry.gloamingforest.bighorn_sheep",
+        "fur": "geometry.gloamingforest.bighorn_sheep_fur"
       },
       "animations": {
-        "setup": "animation.twilightforest.fauna.quadruped",
-        "horns": "animation.twilightforest.bighorn_sheep.horns",
-        "graze": "animation.twilightforest.bighorn_sheep.graze"
+        "setup": "animation.gloamingforest.fauna.quadruped",
+        "horns": "animation.gloamingforest.bighorn_sheep.horns",
+        "graze": "animation.gloamingforest.bighorn_sheep.graze"
       },
       "scripts": {
         "animate": [
@@ -32,7 +32,7 @@
       "render_controllers": [
         "controller.render.default",
         {
-          "controller.render.twilightforest.bighorn_sheep_fur": "!q.is_sheared"
+          "controller.render.gloamingforest.bighorn_sheep_fur": "!q.is_sheared"
         }
       ],
       "spawn_egg": {

@@ -2,7 +2,7 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:boar",
+      "identifier": "gloamingforest:boar",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
@@ -10,7 +10,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "boar",
           "animal",
           "creature",
@@ -109,8 +109,8 @@
         "minecraft:breedable": {
           "require_tame": false,
           "breeds_with": {
-            "mate_type": "twilightforest:boar",
-            "baby_type": "twilightforest:boar",
+            "mate_type": "gloamingforest:boar",
+            "baby_type": "gloamingforest:boar",
             "breed_event": {
               "event": "minecraft:entity_born",
               "target": "baby"

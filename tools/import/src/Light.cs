@@ -1,4 +1,4 @@
-// GloamingForest import tool (contract "import", unit F1): state-dependent block light. TF computes a
+// GloamingForest import tool (contract "import", unit F1): state-dependent block light. upstream computes a
 // block's light from its state (BlockBehaviour.Properties.lightLevel lambdas in init/TFBlocks.java or in a
 // block class's constructor, and getLightEmission overrides). These are small expressions over the block's
 // own properties (ternaries, ==, !=, *, switch, the brazier's BrazierLight.getLight(), the candelabra's
@@ -16,7 +16,7 @@ namespace GfImport
     {
         public string Source;                                  // where the expression was found
         public string Expr;                                    // the expression (or the switch statement)
-        public string ContextClass;                            // the TF class whose constants it names
+        public string ContextClass;                            // the upstream class whose constants it names
         public List<JProp> Reads = new List<JProp>();          // the properties it reads
         public Func<Dictionary<string, string>, int> Eval;     // property name -> value => light
     }
@@ -39,7 +39,7 @@ namespace GfImport
                     return Compile(ctx, bi, cls, "switch", body, cls + ".getLightEmission", warn);
                 }
             }
-            // 2. a lightLevel lambda in a TF class constructor (SpecialMagicLogBlock), applied after the registration's
+            // 2. a lightLevel lambda in an upstream class constructor (SpecialMagicLogBlock), applied after the registration's
             foreach (var cls in bi.Chain)
             {
                 string text = Java.ClassText(ctx, cls);

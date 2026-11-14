@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:knightmetal_shield",
+      "identifier": "gloamingforest:knightmetal_shield",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:knightmetal_shield.name"
+        "value": "item.gloamingforest:knightmetal_shield.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {

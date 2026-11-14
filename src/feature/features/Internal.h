@@ -90,17 +90,17 @@ struct Data {
     std::map<std::string, Json> structures; ///< structure id -> JSON (worldgen/structure)
     std::map<std::string, std::unordered_set<std::string>> biomeFeatureSets; ///< biome id -> its placed feature ids
     std::map<std::string, std::vector<std::vector<std::string>>> biomeSteps;   ///< biome id -> placed feature ids per step
-    /// block id -> its Java class chain (data/gf/import/skeleton.json "classes": TF's classes, then
-    /// the vanilla class reached), for the survival rules of TF's blocks
+    /// block id -> its Java class chain (data/gf/import/skeleton.json "classes": upstream's classes, then
+    /// the vanilla class reached), for the survival rules of upstream's blocks
     std::map<std::string, std::vector<std::string>> blockClasses;
     std::uint64_t generation = 0; ///< increases with every (re)load (cache keys)
 };
 /// The imported worldgen data of every namespace under <mod>/data (loaded once), plus the vanilla
-/// features TF's biomes reference.
+/// features upstream's biomes reference.
 [[nodiscard]] Data const& data();
-/// Reloads the data (tests, /twilightforest reload).
+/// Reloads the data (tests, /gloamingforest reload).
 void reloadData();
-/// The vanilla placed / configured features TF's biomes use ({"placed": {...}, "configured": {...}}).
+/// The vanilla placed / configured features upstream's biomes use ({"placed": {...}, "configured": {...}}).
 [[nodiscard]] Json const& vanillaFeatures();
 
 // ---- placement --------------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void clearBlockCache();
 /// A block as {"name", "states"} (LargeWriter persistence) and back.
 [[nodiscard]] Json        blockToJson(Block const& block);
 [[nodiscard]] Block const* blockFromJson(Json const& json);
-/// The survival rule (BlockState#canSurvive) of a TF block, from its Java class chain: Engine for
+/// The survival rule (BlockState#canSurvive) of an upstream block, from its Java class chain: Engine for
 /// vanilla blocks (Block::canSurvive answers) and for blocks without a rule.
 enum class Survival {
     Engine,
@@ -146,14 +146,14 @@ enum class Survival {
     FallenLeaves,       ///< FallenLeavesBlock: a sturdy top face or water below
     Mushgloom,          ///< MushgloomBlock: a sturdy top face or uberous soil below
     Mushroom,           ///< MushroomBlock: #minecraft:mushroom_grow_block or a solid block below
-    HangingPlant,       ///< TFPlantBlock.canPlaceRootAt: #twilightforest:plants_hang_on above
+    HangingPlant,       ///< TFPlantBlock.canPlaceRootAt: #gloamingforest:plants_hang_on above
     RootStrand,         ///< RootStrandBlock: plants_hang_on or another root strand above
     TrollRoot,          ///< TrollRootBlock: #minecraft:base_stone_overworld or a troll root block above
     ThornRose,          ///< ThornRoseBlock: thorns or a sturdy face behind it
     Waterlily,          ///< WaterlilyBlock: a water source or ice below, no fluid at the block
-    BerryBush,          ///< BerryBushBlock: #twilightforest:tf_berry_bushes_survive below
-    DarkTowerBerryBush, ///< DarkTowerBerryBushBlock: #twilightforest:dark_tower_berry_bushes_survive below
-    OreBerry,           ///< OreBerryBlock: #twilightforest:oreberry_bushes_survive below
+    BerryBush,          ///< BerryBushBlock: #gloamingforest:tf_berry_bushes_survive below
+    DarkTowerBerryBush, ///< DarkTowerBerryBushBlock: #gloamingforest:dark_tower_berry_bushes_survive below
+    OreBerry,           ///< OreBerryBlock: #gloamingforest:oreberry_bushes_survive below
 };
 [[nodiscard]] Survival survivalRule(Block const& block);
 /// Whether `block` may stand at `pos` of `region` under `rule`.
@@ -166,7 +166,7 @@ enum class Survival {
 /// answer per HolderSet there; nested scopes share them, the outermost one forgets them. Opened around
 /// work that asks the same tags many times with no tag data reload in between: a chunk's generation
 /// and its decoration, a natural spawner tick. Outside a scope every call asks gf::tags, whose data
-/// may reload between two calls (/twilightforest reload; F9's selftests swap the data tree).
+/// may reload between two calls (/gloamingforest reload; F9's selftests swap the data tree).
 class TagCacheScope {
 public:
     TagCacheScope();

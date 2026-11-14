@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/config/TFCommonConfig.java
-//   src/main/java/twilightforest/config/TFConfig.java
-//   src/main/java/twilightforest/network/SyncUncraftingTableConfigPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/config/TFCommonConfig.java
+//   src/main/java/gloamingforest/config/TFConfig.java
+//   src/main/java/gloamingforest/network/SyncUncraftingTableConfigPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -105,20 +105,20 @@ public:
         once = true;
         net::onCompanionJoined([](Player& p) { syncTo(p); });
         gf::config::onReload([] { syncAll(); });
-        // UncraftingTableCondition (recipe condition of twilightforest:uncrafting_table):
+        // UncraftingTableCondition (recipe condition of gloamingforest:uncrafting_table):
         // !TFConfig.disableEntireTable
-        recipes::ext::registerCondition("twilightforest:uncrafting_table_enabled", [](nlohmann::json const&) { return !config().disableUncraftingTable; });
+        recipes::ext::registerCondition("gloamingforest:uncrafting_table_enabled", [](nlohmann::json const&) { return !config().disableUncraftingTable; });
         // The same condition on the table's own BP crafting recipe (Bedrock loads it whatever the
         // config): a special crafting gate over that layout refuses the craft while the table is
         // disabled and crafts the recipe's own result otherwise
         recipes::registerSpecialCrafting(
-            "twilightforest:uncrafting_table_enabled_gate", [](recipes::CraftingGrid const&) { return !config().disableUncraftingTable; },
+            "gloamingforest:uncrafting_table_enabled_gate", [](recipes::CraftingGrid const&) { return !config().disableUncraftingTable; },
             [](recipes::CraftingGrid const&) {
-                auto s = game::items::make("twilightforest:uncrafting_table", 1);
+                auto s = game::items::make("gloamingforest:uncrafting_table", 1);
                 return s ? *s : ItemStack{};
             }
         );
-        recipes::ext::addSpecialLayout("twilightforest:uncrafting_table_enabled_gate", "twilightforest:uncrafting_table");
+        recipes::ext::addSpecialLayout("gloamingforest:uncrafting_table_enabled_gate", "gloamingforest:uncrafting_table");
     }
     void uninstall() {}
 };

@@ -6,11 +6,11 @@
 .DESCRIPTION
   Below -ModDir (a deployed GloamingForest folder, never the repository), whose pack already holds
   every converted geometry, base animation and attachable (assets/gen/geo/**), writes the packs
-  GloamingForest_ModelPreview_BP / _RP: one actor gfpreview:<geometry> per converted model (its TF
+  GloamingForest_ModelPreview_BP / _RP: one actor gfpreview:<geometry> per converted model (its upstream
   texture, its base animation, scaled to about 1.6 blocks, name tag), test items gfpreview:item_<item>
   with copies of the generated attachables (armor, Travellers' Gear, worn trophies, mystic crown,
   knightmetal shield) for armor stands, and functions gfpreview:shot_NN that summon one screenshot's
-  actors in front of a fixed camera. The TF textures are copied from the shared checkout
+  actors in front of a fixed camera. The upstream textures are copied from the shared checkout
   (CC BY-NC-SA 4.0) into the deployed test pack only; nothing is written to the repository.
 
   Writes <OutDir>/preview-shots.json (the shots and what they show) for the scenario.
@@ -32,7 +32,7 @@ if ($r.Errors.Count) { throw "converter errors: $($r.Errors -join '; ')" }
 
 # ---- the preview packs ---------------------------------------------------------------------------
 $index = $r.Files['assets/gen/geo/models/data/gf/models/index.json'] | ConvertFrom-Json
-$tfTextures = Join-Path (Split-Path -Parent (Get-GfTfJavaRoot)) 'resources/assets/twilightforest/textures'
+$tfTextures = Join-Path (Split-Path -Parent (Get-GfTfJavaRoot)) 'resources/assets/gloamingforest/textures'
 $bp = Join-Path $ModDir 'behavior_packs/GloamingForest_ModelPreview_BP'
 $prp = Join-Path $ModDir 'resource_packs/GloamingForest_ModelPreview_RP'
 foreach ($d in $bp, $prp) { if (Test-Path $d) { Remove-Item -Recurse -Force $d } }
@@ -49,12 +49,12 @@ Write-J (Join-Path $prp 'manifest.json') ([ordered]@{ format_version = 2; header
 
 $copiedTex = @{}
 function Copy-Texture([string]$bedrockPath) {
-    # textures/twilightforest/<tf path> -> the TF checkout; vanilla textures are the game's own
+    # textures/gloamingforest/<tf path> -> the upstream checkout; vanilla textures are the game's own
     if ($bedrockPath -notlike "$($index.texture_prefix)*") { return }
     if ($copiedTex.ContainsKey($bedrockPath)) { return }
     $rel = $bedrockPath.Substring($index.texture_prefix.Length)
     $src = Join-Path $tfTextures "$rel.png"
-    if (-not (Test-Path $src)) { throw "TF texture not found: $src" }
+    if (-not (Test-Path $src)) { throw "upstream texture not found: $src" }
     $dst = Join-Path $prp "$bedrockPath.png"
     New-Item -ItemType Directory -Force (Split-Path -Parent $dst) | Out-Null
     Copy-Item $src $dst
@@ -62,7 +62,7 @@ function Copy-Texture([string]$bedrockPath) {
 }
 
 # actors: every geometry that stands on its own (entity, block entity and item models, trophy
-# extracts, vanilla-model layers with their TF texture); worn / held extracts and armor go on stands
+# extracts, vanilla-model layers with their upstream texture); worn / held extracts and armor go on stands
 $actors = [System.Collections.Generic.List[object]]::new()
 foreach ($g in $index.geometries) {
     if ($g.kind -in 'armor', 'worn', 'held') { continue }
@@ -71,7 +71,7 @@ foreach ($g in $index.geometries) {
     if (-not $tex -and $g.preview -and $g.preview.texture) { $tex = $g.preview.texture }
     if (-not $tex) { $tex = 'textures/entity/steve' }
     Copy-Texture $tex
-    $name = if ($g.vanilla) { $g.layer } else { $g.identifier -replace '^geometry\.twilightforest\.', '' }
+    $name = if ($g.vanilla) { $g.layer } else { $g.identifier -replace '^geometry\.gloamingforest\.', '' }
     $id = 'gfpreview:' + ($name -replace '[^a-z0-9_]', '_')
     # scale to about 1.6 blocks (visible bounds carry a margin of one block)
     $scale = 1.0
@@ -255,5 +255,5 @@ for ($i = 0; $i -lt $standList.Count; $i += 4) {
 }
 $plan = [ordered]@{ camera = $camera; actors = $actors.Count; stands = $standList.Count; shots = $shots }
 if ($OutDir) { New-Item -ItemType Directory -Force $OutDir | Out-Null; Write-J (Join-Path $OutDir 'preview-shots.json') $plan }
-Write-Host "[geo-e2e] preview: $($actors.Count) actors, $($standList.Count) stands, $($shots.Count) shots, $($copiedTex.Count) TF textures"
+Write-Host "[geo-e2e] preview: $($actors.Count) actors, $($standList.Count) stands, $($shots.Count) shots, $($copiedTex.Count) upstream textures"
 exit 0

@@ -3,9 +3,9 @@
   U10 (provisions): composes GloamingForest's soundtrack, tools/sounds/music/<track>.json.
 
 .DESCRIPTION
-  The Twilight Forest's nine tracks (the music discs and the Twilight Forest music event) are All
-  Rights Reserved and never opened (rule R10): only their names and jukebox lengths are TF's
-  (data/twilightforest/jukebox_song: length_in_seconds, so jukeboxes and comparators keep TF's
+  The Gloaming Forest's nine tracks (the music discs and the Gloaming Forest music event) are All
+  Rights Reserved and never opened (rule R10): only their names and jukebox lengths are upstream's
+  (data/gloamingforest/jukebox_song: length_in_seconds, so jukeboxes and comparators keep upstream's
   timing). Everything else here is an original composition for F3's tracker
   (src/core/synth/Sequencer.h): each track has its own key, mode, tempo, two written themes (A and
   B, as scale degrees and durations), harmony for each section, a bass style, an accompaniment
@@ -302,7 +302,7 @@ foreach ($name in $tracks.Keys) {
         shaker  = [ordered]@{ patch = 'music/shaker'; gain = -17 }
     }
     $track = [ordered]@{
-        about       = "GloamingForest's '$name' ($($t.length) s, TF's jukebox length), an original composition by tools/sounds/music/compose.ps1 (U10)."
+        about       = "GloamingForest's '$name' ($($t.length) s, upstream's jukebox length), an original composition by tools/sounds/music/compose.ps1 (U10)."
         rate        = 22050
         quality     = 0.25
         seed        = $t.seed

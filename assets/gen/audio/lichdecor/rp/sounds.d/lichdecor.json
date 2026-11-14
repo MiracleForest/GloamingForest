@@ -1,74 +1,74 @@
 {
-  "block.twilightforest.candelabra.light": {
+  "block.gloamingforest.candelabra.light": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.candelabra.light",
+    "subtitle": "subtitles.gloamingforest.block.candelabra.light",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lichdecor/random/candelabra/light"
+        "name": "sounds/gloamingforest/lichdecor/random/candelabra/light"
       }
     ]
   },
-  "block.twilightforest.candelabra.ominous": {
+  "block.gloamingforest.candelabra.ominous": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.candelabra.ominous",
+    "subtitle": "subtitles.gloamingforest.block.candelabra.ominous",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lichdecor/random/candelabra/ominous"
+        "name": "sounds/gloamingforest/lichdecor/random/candelabra/ominous"
       }
     ]
   },
-  "block.twilightforest.chiseled_bookshelf.convert": {
+  "block.gloamingforest.chiseled_bookshelf.convert": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.chiseled_bookshelf.convert",
+    "subtitle": "subtitles.gloamingforest.block.chiseled_bookshelf.convert",
     "sounds": [
       {
         "name": "sounds/mob/zombie/remedy"
       }
     ]
   },
-  "block.twilightforest.ominous_fire.light": {
+  "block.gloamingforest.ominous_fire.light": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.ominous_fire.light",
+    "subtitle": "subtitles.gloamingforest.block.ominous_fire.light",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lichdecor/random/candelabra/ominous"
+        "name": "sounds/gloamingforest/lichdecor/random/candelabra/ominous"
       }
     ]
   },
-  "block.twilightforest.skull_chest.close": {
+  "block.gloamingforest.skull_chest.close": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.skull_chest.close",
+    "subtitle": "subtitles.gloamingforest.block.skull_chest.close",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lichdecor/random/casket/close"
+        "name": "sounds/gloamingforest/lichdecor/random/casket/close"
       }
     ]
   },
-  "block.twilightforest.skull_chest.locked": {
+  "block.gloamingforest.skull_chest.locked": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.skull_chest.locked",
+    "subtitle": "subtitles.gloamingforest.block.skull_chest.locked",
     "sounds": [
       {
         "name": "sounds/random/door_close"
       }
     ]
   },
-  "block.twilightforest.skull_chest.open": {
+  "block.gloamingforest.skull_chest.open": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.skull_chest.open",
+    "subtitle": "subtitles.gloamingforest.block.skull_chest.open",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lichdecor/random/casket/open",
+        "name": "sounds/gloamingforest/lichdecor/random/casket/open",
         "pitch": 1.25
       }
     ]
   },
-  "block.twilightforest.wrought_iron_fence.extend": {
+  "block.gloamingforest.wrought_iron_fence.extend": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.wrought_iron_fence.extend",
+    "subtitle": "subtitles.gloamingforest.block.wrought_iron_fence.extend",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lichdecor/random/casket/repair"
+        "name": "sounds/gloamingforest/lichdecor/random/casket/repair"
       }
     ]
   }

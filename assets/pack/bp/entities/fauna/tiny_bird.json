@@ -2,12 +2,12 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:tiny_bird",
+      "identifier": "gloamingforest:tiny_bird",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:landed": {
+        "gloamingforest:landed": {
           "type": "bool",
           "default": true,
           "client_sync": true
@@ -17,7 +17,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "tiny_bird",
           "animal",
           "creature",
@@ -185,7 +185,7 @@
           ]
         },
         "set_property": {
-          "twilightforest:landed": false
+          "gloamingforest:landed": false
         }
       },
       "land": {
@@ -200,7 +200,7 @@
           ]
         },
         "set_property": {
-          "twilightforest:landed": true
+          "gloamingforest:landed": true
         }
       },
       "set_variant_0": {

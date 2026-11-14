@@ -1,6 +1,6 @@
 [
   {
-    "id": "twilightforest:blue_castle_door",
+    "id": "gloamingforest:blue_castle_door",
     "family": "connected_texture",
     "params": {
       "class": "CastleDoorBlock",
@@ -11,7 +11,7 @@
     }
   },
   {
-    "id": "twilightforest:blue_force_field",
+    "id": "gloamingforest:blue_force_field",
     "family": "waterloggable",
     "params": {
       "class": "ForceFieldBlock",
@@ -21,7 +21,7 @@
     }
   },
   {
-    "id": "twilightforest:brown_thorns",
+    "id": "gloamingforest:brown_thorns",
     "family": "pillar",
     "params": {
       "class": "ThornsBlock",
@@ -31,7 +31,7 @@
     }
   },
   {
-    "id": "twilightforest:burnt_thorns",
+    "id": "gloamingforest:burnt_thorns",
     "family": "pillar",
     "params": {
       "class": "BurntThornsBlock",
@@ -41,7 +41,7 @@
     }
   },
   {
-    "id": "twilightforest:cinder_log",
+    "id": "gloamingforest:cinder_log",
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
@@ -50,7 +50,7 @@
     }
   },
   {
-    "id": "twilightforest:green_force_field",
+    "id": "gloamingforest:green_force_field",
     "family": "waterloggable",
     "params": {
       "class": "ForceFieldBlock",
@@ -60,7 +60,7 @@
     }
   },
   {
-    "id": "twilightforest:green_thorns",
+    "id": "gloamingforest:green_thorns",
     "family": "pillar",
     "params": {
       "class": "ThornsBlock",
@@ -70,7 +70,7 @@
     }
   },
   {
-    "id": "twilightforest:orange_force_field",
+    "id": "gloamingforest:orange_force_field",
     "family": "waterloggable",
     "params": {
       "class": "ForceFieldBlock",
@@ -80,7 +80,7 @@
     }
   },
   {
-    "id": "twilightforest:pink_castle_door",
+    "id": "gloamingforest:pink_castle_door",
     "family": "connected_texture",
     "params": {
       "class": "CastleDoorBlock",
@@ -91,7 +91,7 @@
     }
   },
   {
-    "id": "twilightforest:pink_force_field",
+    "id": "gloamingforest:pink_force_field",
     "family": "waterloggable",
     "params": {
       "class": "ForceFieldBlock",
@@ -101,34 +101,34 @@
     }
   },
   {
-    "id": "twilightforest:potted_dead_thorn",
+    "id": "gloamingforest:potted_dead_thorn",
     "family": "potted",
     "params": {
       "class": "SpecialFlowerPotBlock",
       "vanillaClass": "FlowerPotBlock",
-      "plant": "twilightforest:burnt_thorns"
+      "plant": "gloamingforest:burnt_thorns"
     }
   },
   {
-    "id": "twilightforest:potted_green_thorn",
+    "id": "gloamingforest:potted_green_thorn",
     "family": "potted",
     "params": {
       "class": "SpecialFlowerPotBlock",
       "vanillaClass": "FlowerPotBlock",
-      "plant": "twilightforest:green_thorns"
+      "plant": "gloamingforest:green_thorns"
     }
   },
   {
-    "id": "twilightforest:potted_thorn",
+    "id": "gloamingforest:potted_thorn",
     "family": "potted",
     "params": {
       "class": "SpecialFlowerPotBlock",
       "vanillaClass": "FlowerPotBlock",
-      "plant": "twilightforest:brown_thorns"
+      "plant": "gloamingforest:brown_thorns"
     }
   },
   {
-    "id": "twilightforest:thorn_leaves",
+    "id": "gloamingforest:thorn_leaves",
     "family": "leaves",
     "params": {
       "class": "SpecialStemLeavesBlock",
@@ -144,7 +144,7 @@
     }
   },
   {
-    "id": "twilightforest:violet_castle_door",
+    "id": "gloamingforest:violet_castle_door",
     "family": "connected_texture",
     "params": {
       "class": "CastleDoorBlock",
@@ -155,7 +155,7 @@
     }
   },
   {
-    "id": "twilightforest:violet_force_field",
+    "id": "gloamingforest:violet_force_field",
     "family": "waterloggable",
     "params": {
       "class": "ForceFieldBlock",
@@ -165,7 +165,7 @@
     }
   },
   {
-    "id": "twilightforest:yellow_castle_door",
+    "id": "gloamingforest:yellow_castle_door",
     "family": "connected_texture",
     "params": {
       "class": "CastleDoorBlock",

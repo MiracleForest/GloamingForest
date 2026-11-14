@@ -163,7 +163,7 @@ GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
     ctx.check(!r::hasItemRenderer("gf_test:ui_test_item", r::FirstPerson), "contexts not asked for are not");
     auto t = r::tintOf("gf_test:ui_test_block", 1, 5, 2);
     ctx.check(t && *t == 0x102035u, "the tint resolver gets the absolute position");
-    ctx.check(!r::tintOf("gf_test:ui_untinted_block", 0, 0, 0), "no tint for others"); // (U1 tints vanilla grass in TF biomes)
+    ctx.check(!r::tintOf("gf_test:ui_untinted_block", 0, 0, 0), "no tint for others"); // (U1 tints vanilla grass in upstream biomes)
     ctx.info("tracked block positions: " + std::to_string(r::trackedBlockCount()));
     ctx.check(r::unregisterBlockRenderer("gf_test:ui_test_block") && !r::hasBlockRenderer("gf_test:ui_test_block"), "block renderer removed");
     ctx.check(cl::tint::unregisterBlock("gf_test:ui_test_block") && !r::tintOf("gf_test:ui_test_block", 0, 0, 0), "tint removed");
@@ -172,7 +172,7 @@ GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
     ctx.check(!r::unregisterItemRenderer("gf_test:ui_test_item"), "only once");
 
     // a tint that builds on the game's colours: the game's foliage reaches the function; without a
-    // world there is none (TF then takes its colour without a world)
+    // world there is none (upstream then takes its colour without a world)
     struct Colours final : cl::tint::GameColors {
         std::optional<unsigned> foliage() const override { return 0x48B518u; }
         std::optional<unsigned> grass() const override { return 0x91BD59u; }
@@ -224,7 +224,7 @@ GF_REGISTER_SELFTEST("ui.client_name_tags", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(r::nameTagRule(type).has_value() == saved.has_value(), "the player type's rule from before the test is back");
 });
 
-// Armour hiding (TF's emperor's cloth): stacks a hideArmor function accepts are hidden until the
+// Armour hiding (upstream's emperor's cloth): stacks a hideArmor function accepts are hidden until the
 // function is removed by its handle. The worn armour pass itself is checked by the client scenario
 // (ui fixture head step).
 GF_REGISTER_SELFTEST("ui.client_armor", [](Context& ctx) {
@@ -325,40 +325,40 @@ GF_REGISTER_SELFTEST("ui.client_geo", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
-    // the 29 TF particle ids are declared; factories run instead of the data-driven particle
+    // the 29 upstream particle ids are declared; factories run instead of the data-driven particle
     auto decl = cl::particles::declared();
-    ctx.check(decl.size() == 29, "29 TF particle ids declared");
-    ctx.check(std::any_of(decl.begin(), decl.end(), [](auto const& d) { return d.first == "twilightforest:firefly"; }), "firefly is declared");
+    ctx.check(decl.size() == 29, "29 upstream particle ids declared");
+    ctx.check(std::any_of(decl.begin(), decl.end(), [](auto const& d) { return d.first == "gloamingforest:firefly"; }), "firefly is declared");
     static int spawned = 0;
     spawned            = 0;
     cl::particles::registerNative("gf_test:ui_test_particle", [](Vec3 const&, Vec3 const& v, Json const& p) { spawned += 1 + static_cast<int>(v.y) + p.value("n", 0); });
     ctx.check(cl::particles::spawn("gf_test:ui_test_particle", {0, 0, 0}, {0, 2, 0}, {{"n", 4}}) && spawned == 7, "the factory got position, velocity and params");
-    ctx.check(!cl::particles::spawn("twilightforest:not_a_particle", {}, {}), "no factory: the caller spawns the data-driven particle");
+    ctx.check(!cl::particles::spawn("gloamingforest:not_a_particle", {}, {}), "no factory: the caller spawns the data-driven particle");
     ctx.check(cl::particles::unregisterNative("gf_test:ui_test_particle") && !cl::particles::spawn("gf_test:ui_test_particle", {}, {}), "the factory is removed");
 
     // sky providers per dimension
     constexpr int kDim = 9999;
     ctx.check(cl::sky::providerOf(kDim) == nullptr, "no provider yet");
     cl::sky::setProvider(kDim, {.fog = [](std::string const& biome) -> std::optional<cl::sky::FogSpec> {
-                              if (biome == "twilightforest:spooky_forest") return cl::sky::FogSpec{{1, 0, 0}, 0, 8};
+                              if (biome == "gloamingforest:spooky_forest") return cl::sky::FogSpec{{1, 0, 0}, 0, 8};
                               return std::nullopt;
                           }});
     auto p = cl::sky::providerOf(kDim);
-    ctx.check(p && p->fog && p->fog("twilightforest:spooky_forest")->end == 8 && !p->fog("plains"), "the fog provider answers per biome");
+    ctx.check(p && p->fog && p->fog("gloamingforest:spooky_forest")->end == 8 && !p->fog("plains"), "the fog provider answers per biome");
     cl::sky::clearProvider(kDim);
     ctx.check(cl::sky::providerOf(kDim) == nullptr, "providers can be removed");
 
     // maps: icons and extra decorations (gf_test ids, removed again)
     cl::maps::setIcon("gf_test:ui_test_icon", "textures/gui/ui/fixture_geo");
     ctx.check(cl::maps::iconOf("gf_test:ui_test_icon") == "textures/gui/ui/fixture_geo", "map icon registered");
-    ctx.check(cl::maps::iconOf("twilightforest:unknown").empty(), "unknown icon");
+    ctx.check(cl::maps::iconOf("gloamingforest:unknown").empty(), "unknown icon");
     constexpr std::int64_t kMap = -987654321;
     cl::maps::setDecorations(kMap, {{.type = "gf_test:ui_test_icon", .x = 10, .z = -20, .rotation = 4, .name = "n"}});
     auto decs = cl::maps::decorationsOf(kMap);
     ctx.check(decs.size() == 1 && decs[0].x == 10 && decs[0].z == -20 && decs[0].rotation == 4, "decorations kept per map");
     cl::maps::setDecorations(kMap, {});
     ctx.check(cl::maps::decorationsOf(kMap).empty(), "an empty list removes them");
-    // TF's decoration renderers: a conquered icon (red X) and the player icon on top
+    // upstream's decoration renderers: a conquered icon (red X) and the player icon on top
     cl::maps::setDecorations(
         kMap,
         {{.type = "gf_test:ui_test_icon", .x = 0, .z = 0, .rotation = 0, .name = ""}, {.type = "minecraft:player", .x = 2, .z = 2, .rotation = 8, .name = ""}},
@@ -370,10 +370,10 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     ctx.check(cl::maps::stylesOf(kMap).size() == 1 && cl::maps::stylesOf(kMap)[0].topmost, "the player icon on top");
     cl::maps::setDecorations(kMap, {});
     ctx.check(cl::maps::stylesOf(kMap).empty(), "styles go with the decorations");
-    // item frames: Java's showOnItemFrame (false for the vanilla player markers, true for TF's icons),
+    // item frames: Java's showOnItemFrame (false for the vanilla player markers, true for upstream's icons),
     // or the style's own onFrame
     ctx.check(!cl::maps::showOnItemFrame("minecraft:player") && !cl::maps::showOnItemFrame("minecraft:0") && !cl::maps::showOnItemFrame("minecraft:player_off_map"), "the player markers are not drawn on item frames");
-    ctx.check(cl::maps::showOnItemFrame("minecraft:red_x") && cl::maps::showOnItemFrame("twilightforest:lich_tower") && cl::maps::showOnItemFrame("minecraft:frame"), "TF's icons, the red X and the frame marker are");
+    ctx.check(cl::maps::showOnItemFrame("minecraft:red_x") && cl::maps::showOnItemFrame("gloamingforest:lich_tower") && cl::maps::showOnItemFrame("minecraft:frame"), "upstream's icons, the red X and the frame marker are");
     ctx.check(!cl::maps::hasDecorations(kMap) && !cl::maps::decorated(kMap), "no decorations: none reported");
     cl::maps::setDecorations(kMap, {{.type = "minecraft:player", .x = 0, .z = 0, .rotation = 0, .name = ""}, {.type = "gf_test:ui_test_icon", .x = 0, .z = 0, .rotation = 0, .name = ""}}, {{}, {.onFrame = false}});
     auto snap = cl::maps::decorated(kMap);
@@ -388,7 +388,7 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     auto player = cl::maps::iconFor("minecraft:player"), x = cl::maps::iconFor("minecraft:red_x"), byIndex = cl::maps::iconFor("minecraft:4");
     ctx.check(player && player->texture == "textures/map/map_icons" && player->u0 == 0 && player->v0 == 0 && player->u1 == .25f, "the player icon is the atlas's first cell");
     ctx.check(x && byIndex && x->u0 == 0 && x->v0 == .25f && byIndex->v0 == .25f && x->v1 == .5f, "the red X is cell 4, by name and by index");
-    ctx.check(!cl::maps::iconFor("minecraft:16") && !cl::maps::iconFor("twilightforest:unknown"), "no icon for others");
+    ctx.check(!cl::maps::iconFor("minecraft:16") && !cl::maps::iconFor("gloamingforest:unknown"), "no icon for others");
     ctx.check(cl::maps::removeIcon("gf_test:ui_test_icon") && cl::maps::iconOf("gf_test:ui_test_icon").empty(), "icon removed");
     ctx.check(!cl::maps::view(-123456789).has_value(), "an unknown map has no view");
 

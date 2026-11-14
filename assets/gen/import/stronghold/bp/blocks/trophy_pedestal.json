@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:trophy_pedestal",
+      "identifier": "gloamingforest:trophy_pedestal",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:active": [false, true]
+        "gloamingforest:active": [false, true]
       }
     },
     "components": {
@@ -17,7 +17,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.trophy_pedestal",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_pedestal_top",
@@ -56,9 +56,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:active')",
+        "condition": "!q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.trophy_pedestal",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_pedestal_top",
@@ -96,9 +96,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal_active",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.trophy_pedestal_active",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_pedestal_top",
@@ -172,7 +172,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
           "minecraft:destructible_by_mining": {
             "seconds_to_destroy": 2

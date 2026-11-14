@@ -2,19 +2,19 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:kobold",
+      "identifier": "gloamingforest:kobold",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/kobold"
+        "default": "textures/gloamingforest/entity/kobold"
       },
       "geometry": {
-        "default": "geometry.twilightforest.kobold"
+        "default": "geometry.gloamingforest.kobold"
       },
       "animations": {
-        "setup": "animation.twilightforest.kobold.base",
-        "jaw": "animation.twilightforest.kobold.jaw"
+        "setup": "animation.gloamingforest.kobold.base",
+        "jaw": "animation.gloamingforest.kobold.jaw"
       },
       "scripts": {
         "animate": [

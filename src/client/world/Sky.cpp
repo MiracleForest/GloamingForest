@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFParticleType.java
-//   src/main/java/twilightforest/config/TFClientConfig.java
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFParticleType.java
+//   src/main/java/gloamingforest/config/TFClientConfig.java
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -17,14 +17,14 @@
 //   dimension; nullopt hides the clouds (ViewRenderData::mDrawClouds);
 // - weather: drawn in the world pass; when a provider draws it, the frame skips the vanilla weather
 //   pass (ViewRenderData::mDrawWeather) and LevelRendererPlayer::tickRain (splashes, rain sounds);
-//   the rain and lightning levels are left alone, as TF's DimensionSpecialEffects;
-// - music: MusicManager::getSituationalMusic (TF's setMusicInDimension);
-// - particles: native factories for TF's 29 particle ids (TFParticleType), run instead of the
+//   the rain and lightning levels are left alone, as upstream's DimensionSpecialEffects;
+// - music: MusicManager::getSituationalMusic (upstream's setMusicInDimension);
+// - particles: native factories for upstream's 29 particle ids (TFParticleType), run instead of the
 //   data-driven particle when the client spawns that effect: gf::fx::particle's companion message
 //   (F10's fx.particle handler asks spawnFromFx through gf::fx::client::setNativeSink), the server's
 //   SpawnParticleEffectPacket (LegacyClientNetworkHandler::handle) and effects the client level
 //   adds itself (Level::addParticleEffect), with the effect's molang variables;
-// - maps: the client's MapItemSavedData as a MapView, TF's decoration icons (drawn by Render.cpp);
+// - maps: the client's MapItemSavedData as a MapView, upstream's decoration icons (drawn by Render.cpp);
 // - camera: LocalPlayer::getFieldOfViewModifier modifiers, the screen shake of
 //   ClientGameEvents (beanstalk rumbling: the local player's yaw / pitch jitter per tick, config
 //   "client".screenShakingEffect = TFClientConfig.screenShakingEffect).
@@ -218,44 +218,44 @@ void setProvider(MusicFn fn) {
 
 namespace particles {
 namespace {
-/// TF's particle types (TFParticleType), in registration order; `alwaysShow` is the
+/// upstream's particle types (TFParticleType), in registration order; `alwaysShow` is the
 /// SimpleParticleType(overrideLimiter) flag.
 struct Declared {
     char const* id;
     bool        alwaysShow;
 };
 constexpr Declared kDeclared[] = {
-    {"twilightforest:large_flame", false},
-    {"twilightforest:leaf_rune", false},
-    {"twilightforest:boss_tear", false},
-    {"twilightforest:ghast_trap", false},
-    {"twilightforest:protection", true},
-    {"twilightforest:snow", false},
-    {"twilightforest:snow_warning", false},
-    {"twilightforest:extended_snow_warning", false},
-    {"twilightforest:snow_guardian", false},
-    {"twilightforest:ice_beam", false},
-    {"twilightforest:annihilate", false},
-    {"twilightforest:perfect_dodge", false},
-    {"twilightforest:double_jump", true},
-    {"twilightforest:huge_smoke", false},
-    {"twilightforest:firefly", false},
-    {"twilightforest:wandering_firefly", false},
-    {"twilightforest:particle_spawner_firefly", false},
-    {"twilightforest:fallen_leaf", false},
-    {"twilightforest:dim_flame", false},
-    {"twilightforest:ominous_flame", false},
-    {"twilightforest:sorting_particle", false},
-    {"twilightforest:transformation_particle", false},
-    {"twilightforest:log_core_particle", false},
-    {"twilightforest:cloud_puff", false},
-    {"twilightforest:magic_effect", false},
-    {"twilightforest:angry_lich", false},
-    {"twilightforest:twilight_orb", false},
-    {"twilightforest:shield_break", false},
-    {"twilightforest:drying_rack", false},
+    {"gloamingforest:large_flame", false},
+    {"gloamingforest:leaf_rune", false},
+    {"gloamingforest:boss_tear", false},
+    {"gloamingforest:ghast_trap", false},
+    {"gloamingforest:protection", true},
+    {"gloamingforest:snow", false},
+    {"gloamingforest:snow_warning", false},
+    {"gloamingforest:extended_snow_warning", false},
+    {"gloamingforest:snow_guardian", false},
+    {"gloamingforest:ice_beam", false},
+    {"gloamingforest:annihilate", false},
+    {"gloamingforest:perfect_dodge", false},
+    {"gloamingforest:double_jump", true},
+    {"gloamingforest:huge_smoke", false},
+    {"gloamingforest:firefly", false},
+    {"gloamingforest:wandering_firefly", false},
+    {"gloamingforest:particle_spawner_firefly", false},
+    {"gloamingforest:fallen_leaf", false},
+    {"gloamingforest:dim_flame", false},
+    {"gloamingforest:ominous_flame", false},
+    {"gloamingforest:sorting_particle", false},
+    {"gloamingforest:transformation_particle", false},
+    {"gloamingforest:log_core_particle", false},
+    {"gloamingforest:cloud_puff", false},
+    {"gloamingforest:magic_effect", false},
+    {"gloamingforest:angry_lich", false},
+    {"gloamingforest:gloaming_orb", false},
+    {"gloamingforest:shield_break", false},
+    {"gloamingforest:drying_rack", false},
 };
-static_assert(std::size(kDeclared) == 29, "TF 4.8 registers 29 particle types");
+static_assert(std::size(kDeclared) == 29, "upstream 4.8 registers 29 particle types");
 
 /// The factories as an immutable snapshot: the particle hook (every particle the game spawns)
 /// reads it without a lock.
@@ -289,7 +289,7 @@ void registerNative(std::string const& particleId, Factory factory) {
     if (!isDeclared(particleId) && !particleId.starts_with("gf_test:")) {
         auto&           f = factories();
         std::lock_guard lock(f.write);
-        if (!f.warned[particleId]) log().warn("particles: {} is not a TF particle id", particleId);
+        if (!f.warned[particleId]) log().warn("particles: {} is not an upstream particle id", particleId);
         f.warned[particleId] = true;
     }
     edit([&](FactoryMap& m) { m[particleId] = std::move(factory); });

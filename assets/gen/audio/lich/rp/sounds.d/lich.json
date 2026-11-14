@@ -1,52 +1,52 @@
 {
-  "entity.twilightforest.death_tome.ambient": {
+  "entity.gloamingforest.death_tome.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.death_tome.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.death_tome.ambient",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/mob/tome/idle1"
+        "name": "sounds/gloamingforest/lich/mob/tome/idle1"
       },
       {
-        "name": "sounds/twilightforest/lich/mob/tome/idle2"
+        "name": "sounds/gloamingforest/lich/mob/tome/idle2"
       }
     ]
   },
-  "entity.twilightforest.death_tome.death": {
+  "entity.gloamingforest.death_tome.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.death_tome.death",
+    "subtitle": "subtitles.gloamingforest.entity.death_tome.death",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/mob/tome/death"
+        "name": "sounds/gloamingforest/lich/mob/tome/death"
       }
     ]
   },
-  "entity.twilightforest.death_tome.hurt": {
+  "entity.gloamingforest.death_tome.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.death_tome.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.death_tome.hurt",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/mob/tome/hurt1"
+        "name": "sounds/gloamingforest/lich/mob/tome/hurt1"
       },
       {
-        "name": "sounds/twilightforest/lich/mob/tome/hurt2"
+        "name": "sounds/gloamingforest/lich/mob/tome/hurt2"
       },
       {
-        "name": "sounds/twilightforest/lich/mob/tome/hurt3"
+        "name": "sounds/gloamingforest/lich/mob/tome/hurt3"
       }
     ]
   },
-  "entity.twilightforest.lich_clone.hurt": {
+  "entity.gloamingforest.lich_clone.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich_clone.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.lich_clone.hurt",
     "sounds": [
       {
         "name": "sounds/random/fizz"
       }
     ]
   },
-  "entity.twilightforest.lich.ambient": {
+  "entity.gloamingforest.lich.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.lich.ambient",
     "sounds": [
       {
         "name": "sounds/mob/blaze/breathe1"
@@ -62,18 +62,18 @@
       }
     ]
   },
-  "entity.twilightforest.lich.death": {
+  "entity.gloamingforest.lich.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich.death",
+    "subtitle": "subtitles.gloamingforest.entity.lich.death",
     "sounds": [
       {
         "name": "sounds/mob/blaze/death"
       }
     ]
   },
-  "entity.twilightforest.lich.hurt": {
+  "entity.gloamingforest.lich.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.lich.hurt",
     "sounds": [
       {
         "name": "sounds/mob/blaze/hit1"
@@ -89,39 +89,39 @@
       }
     ]
   },
-  "entity.twilightforest.lich.pop_mob": {
+  "entity.gloamingforest.lich.pop_mob": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich.pop_mob",
+    "subtitle": "subtitles.gloamingforest.entity.lich.pop_mob",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/random/scepter/drain1"
+        "name": "sounds/gloamingforest/lich/random/scepter/drain1"
       },
       {
-        "name": "sounds/twilightforest/lich/random/scepter/drain2"
+        "name": "sounds/gloamingforest/lich/random/scepter/drain2"
       },
       {
-        "name": "sounds/twilightforest/lich/random/scepter/drain3"
+        "name": "sounds/gloamingforest/lich/random/scepter/drain3"
       }
     ]
   },
-  "entity.twilightforest.lich.shoot": {
+  "entity.gloamingforest.lich.shoot": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.lich.shoot",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/random/scepter/twilight_use1"
+        "name": "sounds/gloamingforest/lich/random/scepter/gloaming_use1"
       },
       {
-        "name": "sounds/twilightforest/lich/random/scepter/twilight_use2"
+        "name": "sounds/gloamingforest/lich/random/scepter/gloaming_use2"
       },
       {
-        "name": "sounds/twilightforest/lich/random/scepter/twilight_use3"
+        "name": "sounds/gloamingforest/lich/random/scepter/gloaming_use3"
       }
     ]
   },
-  "entity.twilightforest.lich.teleport": {
+  "entity.gloamingforest.lich.teleport": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.lich.teleport",
+    "subtitle": "subtitles.gloamingforest.entity.lich.teleport",
     "sounds": [
       {
         "name": "sounds/mob/endermen/portal"
@@ -131,9 +131,9 @@
       }
     ]
   },
-  "entity.twilightforest.minion.ambient": {
+  "entity.gloamingforest.minion.ambient": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minion.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.minion.ambient",
     "sounds": [
       {
         "name": "sounds/mob/zombie/say1"
@@ -146,18 +146,18 @@
       }
     ]
   },
-  "entity.twilightforest.minion.death": {
+  "entity.gloamingforest.minion.death": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minion.death",
+    "subtitle": "subtitles.gloamingforest.entity.minion.death",
     "sounds": [
       {
         "name": "sounds/mob/zombie/death"
       }
     ]
   },
-  "entity.twilightforest.minion.hurt": {
+  "entity.gloamingforest.minion.hurt": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minion.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.minion.hurt",
     "sounds": [
       {
         "name": "sounds/mob/zombie/hurt1"
@@ -167,7 +167,7 @@
       }
     ]
   },
-  "entity.twilightforest.minion.step": {
+  "entity.gloamingforest.minion.step": {
     "category": "hostile",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
@@ -188,12 +188,12 @@
       }
     ]
   },
-  "entity.twilightforest.minion.summon": {
+  "entity.gloamingforest.minion.summon": {
     "category": "hostile",
-    "subtitle": "subtitles.twilightforest.entity.minion.summon",
+    "subtitle": "subtitles.gloamingforest.entity.minion.summon",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/random/scepter/zombie"
+        "name": "sounds/gloamingforest/lich/random/scepter/zombie"
       }
     ]
   }

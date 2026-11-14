@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.boat.paddles": {
+    "animation.gloamingforest.boat.paddles": {
       "loop": true,
       "bones": {
         "left_paddle": {

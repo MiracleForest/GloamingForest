@@ -154,8 +154,8 @@ $script:CommandErrorRegex = 'Syntax error:|Unknown command|is not a valid comman
 # The command line for a selftest run. The glob is quoted because '*' and '.' are not valid in an
 # unquoted command argument.
 function Format-SelfTestCommand([string]$Glob) {
-    if (-not $Glob) { return 'twilightforest selftest' }
-    return "twilightforest selftest `"$($Glob -replace '"', '')`""
+    if (-not $Glob) { return 'gloamingforest selftest' }
+    return "gloamingforest selftest `"$($Glob -replace '"', '')`""
 }
 
 # Parse the selftest lines out of a block of log lines (the lines logged after the command was
@@ -251,7 +251,7 @@ $script:TransportBanner = @(
 # The lines of $Lines that fail a run: ERR / FTL lines (the three regexes above) except the transport
 # banner, and except the console's own echo of a command's error reply: BDS prints the error output
 # of a command run on its console as "ERR [Server] <reply>" right after the command, and scenarios run
-# failing commands on purpose (a refused /twilightforest locate). The mod logs a command error first as
+# failing commands on purpose (a refused /gloamingforest locate). The mod logs a command error first as
 # "[GloamingForest] Command error: <msgId> [params]" and, when the server language prints it otherwise (a
 # translated vanilla reply, parameters filled in), "Command error text: <text>" (src/mod/Commands.cpp),
 # but the same reply only once per
@@ -298,7 +298,7 @@ function Select-ErrorLines([string[]]$Lines) {
 #   Send-SelfTestCommand <cmd>, Get-LogMark, Get-ServerLog [-Since], Wait-LogLine
 # ---------------------------------------------------------------------------------------
 
-# Run 'twilightforest selftest "<glob>"' (no glob = all tests) and wait for SELFTEST DONE. Returns
+# Run 'gloamingforest selftest "<glob>"' (no glob = all tests) and wait for SELFTEST DONE. Returns
 # { Glob, Done, Pass, Fail, Passed[], Failed[{Name,Reason}], Results[], Ok, Problems[] }.
 # The result is also recorded: run.ps1 fails the run if any selftest failed, did not finish or
 # (unless -AllowEmpty) matched no test. It does not throw on test failures.

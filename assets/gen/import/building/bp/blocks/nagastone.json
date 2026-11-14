@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:nagastone",
+      "identifier": "gloamingforest:nagastone",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:variant": [
+        "gloamingforest:variant": [
           "solid",
           "north_down",
           "south_down",
@@ -66,7 +66,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:variant') == 'axis_x'",
+        "condition": "q.block_state('gloamingforest:variant') == 'axis_x'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -107,7 +107,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'axis_y'",
+        "condition": "q.block_state('gloamingforest:variant') == 'axis_y'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -148,7 +148,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'axis_z'",
+        "condition": "q.block_state('gloamingforest:variant') == 'axis_z'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -189,7 +189,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'east_down'",
+        "condition": "q.block_state('gloamingforest:variant') == 'east_down'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -230,7 +230,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'east_up'",
+        "condition": "q.block_state('gloamingforest:variant') == 'east_up'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -271,7 +271,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'north_down'",
+        "condition": "q.block_state('gloamingforest:variant') == 'north_down'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -312,7 +312,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'north_up'",
+        "condition": "q.block_state('gloamingforest:variant') == 'north_up'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -353,7 +353,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'solid'",
+        "condition": "q.block_state('gloamingforest:variant') == 'solid'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -394,7 +394,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'south_down'",
+        "condition": "q.block_state('gloamingforest:variant') == 'south_down'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -435,7 +435,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'south_up'",
+        "condition": "q.block_state('gloamingforest:variant') == 'south_up'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -476,7 +476,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'west_down'",
+        "condition": "q.block_state('gloamingforest:variant') == 'west_down'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -517,7 +517,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:variant') == 'west_up'",
+        "condition": "q.block_state('gloamingforest:variant') == 'west_up'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

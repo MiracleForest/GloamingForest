@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:tanned_leather",
+      "identifier": "gloamingforest:tanned_leather",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:tanned_leather.name"
+        "value": "item.gloamingforest:tanned_leather.name"
       }
     }
   }

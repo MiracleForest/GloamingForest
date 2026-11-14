@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/knightmetal_axe"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", "#X", " X"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:knightmetal_ingot"
+      },
+      "X": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:knightmetal_ingot"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:knightmetal_axe"
+    }
+  }
+}

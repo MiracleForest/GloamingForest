@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Real-path selftests of U11 (prefix "tgear.real_", testPos dx 1190..1199): the client e2e presses TF's
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Real-path selftests of U11 (prefix "tgear.real_", testPos dx 1190..1199): the client e2e presses upstream's
 // keys between "arm" (dresses every real player in Travellers' Gear: goggles with item display holding a
 // compass, a clock and a moon dial, red thread vision; a vest; a belt; red thread on a wall next to the
 // player) and "check" (reads what the keys did: the belt's storage swapped with the hotbar). On a server
@@ -66,7 +66,7 @@ GF_REGISTER_SELFTEST("tgear.real_arm", [](Context& ctx) {
                 break;
             }
         }
-        for (auto s : {map, make("minecraft:compass"), make("minecraft:clock"), make("twilightforest:moon_dial")}) {
+        for (auto s : {map, make("minecraft:compass"), make("minecraft:clock"), make("gloamingforest:moon_dial")}) {
             ItemStack replaced;
             if (!items::isEmpty(s)) tg::displayInsert(goggles, s, replaced);
         }

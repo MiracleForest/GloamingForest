@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/features/FeatureLogic.java
-//   src/main/java/twilightforest/util/features/FeaturePlacers.java
-//   src/main/java/twilightforest/util/features/FeatureUtil.java
-//   src/main/java/twilightforest/util/iterators/VoxelBresenhamIterator.java
-//   src/main/java/twilightforest/util/RootPlacer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java
+//   src/main/java/gloamingforest/util/features/FeaturePlacers.java
+//   src/main/java/gloamingforest/util/features/FeatureUtil.java
+//   src/main/java/gloamingforest/util/iterators/VoxelBresenhamIterator.java
+//   src/main/java/gloamingforest/util/RootPlacer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U3 trees: the feature helpers TF's tree features, placers and decorators share (FeatureLogic,
+// U3 trees: the feature helpers upstream's tree features, placers and decorators share (FeatureLogic,
 // FeaturePlacers, FeatureUtil, VoxelBresenhamIterator), over a worldgen::Region. Every helper draws
 // from the given random source in Java's order. Thread-safe (features run on worker threads).
 

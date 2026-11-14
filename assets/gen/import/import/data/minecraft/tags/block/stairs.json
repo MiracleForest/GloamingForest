@@ -1,16 +1,16 @@
 {
   "values": [
-    "twilightforest:castle_brick_stairs",
-    "twilightforest:worn_castle_brick_stairs",
-    "twilightforest:cracked_castle_brick_stairs",
-    "twilightforest:mossy_castle_brick_stairs",
-    "twilightforest:encased_castle_brick_stairs",
-    "twilightforest:bold_castle_brick_stairs",
-    "twilightforest:nagastone_stairs_left",
-    "twilightforest:nagastone_stairs_right",
-    "twilightforest:mossy_nagastone_stairs_left",
-    "twilightforest:mossy_nagastone_stairs_right",
-    "twilightforest:cracked_nagastone_stairs_left",
-    "twilightforest:cracked_nagastone_stairs_right"
+    "gloamingforest:castle_brick_stairs",
+    "gloamingforest:worn_castle_brick_stairs",
+    "gloamingforest:cracked_castle_brick_stairs",
+    "gloamingforest:mossy_castle_brick_stairs",
+    "gloamingforest:encased_castle_brick_stairs",
+    "gloamingforest:bold_castle_brick_stairs",
+    "gloamingforest:nagastone_stairs_left",
+    "gloamingforest:nagastone_stairs_right",
+    "gloamingforest:mossy_nagastone_stairs_left",
+    "gloamingforest:mossy_nagastone_stairs_right",
+    "gloamingforest:cracked_nagastone_stairs_left",
+    "gloamingforest:cracked_nagastone_stairs_right"
   ]
 }

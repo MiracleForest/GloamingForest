@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U25 (stronghold): the unit's module: the knight stronghold structure, the trophy pedestal and the
 // stronghold shield, the Knight Phantoms with their thrown weapons, the goblins and the helmet crab.
 #include "feature/stronghold/Blocks.h"

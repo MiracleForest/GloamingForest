@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of U30's pure mob and WIP-text rules (src/core/finalcastle/Mobs.h), translated from The
-// Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
+// the upstream 4.8 source (commit 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
 #include <cmath>
@@ -22,7 +22,7 @@ TEST(FinalCastleRovingCube, SymbolNeedsAllSixNeighbours) {
     auto          loaded = [](IPos) { return true; };
     auto          empty  = [&](IPos p) { return !wires.contains(key(p)); };
     auto          wire   = [&](IPos p) { return wires.contains(key(p)); };
-    // the "8 redstone dust around a blank square" ring of TF's comment: never a symbol
+    // the "8 redstone dust around a blank square" ring of upstream's comment: never a symbol
     for (int dx = -1; dx <= 1; dx++)
         for (int dz = -1; dz <= 1; dz++)
             if (dx || dz) wires.insert({c.x + dx, c.y, c.z + dz});

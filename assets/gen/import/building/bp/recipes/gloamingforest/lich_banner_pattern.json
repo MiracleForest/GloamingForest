@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:lich_banner_pattern"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:paper"
+      },
+      {
+        "item": "gloamingforest:lich_trophy"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:lich_trophy"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:lich_banner_pattern"
+    }
+  }
+}

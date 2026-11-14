@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:bowl"
+    },
+    {
+      "item": "gloamingforest:raspberry"
+    },
+    {
+      "item": "gloamingforest:blueberry"
+    },
+    {
+      "item": "gloamingforest:blackberry"
+    },
+    {
+      "item": "gloamingforest:maloberry"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:berry_medley"
+  }
+}

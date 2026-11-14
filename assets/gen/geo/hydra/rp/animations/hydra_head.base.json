@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.hydra_head.base": {
+    "animation.gloamingforest.hydra_head.base": {
       "loop": true,
       "bones": {
         "head": {

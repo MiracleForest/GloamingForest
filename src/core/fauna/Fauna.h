@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/Bird.java
-//   src/main/java/twilightforest/entity/passive/FlyingBird.java
-//   src/main/java/twilightforest/entity/passive/Bighorn.java
-//   src/main/java/twilightforest/entity/passive/DwarfRabbit.java
-//   src/main/java/twilightforest/entity/passive/TinyBirdVariant.java
-//   src/main/java/twilightforest/entity/passive/DwarfRabbitVariant.java
-//   src/main/java/twilightforest/entity/monster/Kobold.java
-//   src/main/java/twilightforest/entity/monster/MosquitoSwarm.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/Bird.java
+//   src/main/java/gloamingforest/entity/passive/FlyingBird.java
+//   src/main/java/gloamingforest/entity/passive/Bighorn.java
+//   src/main/java/gloamingforest/entity/passive/DwarfRabbit.java
+//   src/main/java/gloamingforest/entity/passive/TinyBirdVariant.java
+//   src/main/java/gloamingforest/entity/passive/DwarfRabbitVariant.java
+//   src/main/java/gloamingforest/entity/monster/Kobold.java
+//   src/main/java/gloamingforest/entity/monster/MosquitoSwarm.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U16's pure rules (no game types): the numbers and random draws of TF's passive and ambient
+// U16's pure rules (no game types): the numbers and random draws of upstream's passive and ambient
 // fauna, shared by src/feature/fauna and gtested in tests/fauna.
 
 #include <array>
@@ -58,7 +58,7 @@ inline constexpr int kBrown    = 12;
 // ---- variants (TinyBirdVariant / DwarfRabbitVariant registries) -------------------------------
 
 struct Variant {
-    std::string              id;       ///< "twilightforest:blue"
+    std::string              id;       ///< "gloamingforest:blue"
     std::string              texture;  ///< the variant's texture
     bool                     anyBiome = true; ///< no "biomes" field
     std::vector<std::string> biomes;   ///< biome ids ("#tag" entries resolved by the caller)

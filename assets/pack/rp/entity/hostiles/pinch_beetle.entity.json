@@ -2,22 +2,22 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:pinch_beetle",
+      "identifier": "gloamingforest:pinch_beetle",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/pinchbeetle"
+        "default": "textures/gloamingforest/entity/pinchbeetle"
       },
       "geometry": {
-        "default": "geometry.twilightforest.pinch_beetle"
+        "default": "geometry.gloamingforest.pinch_beetle"
       },
       "render_controllers": [
         "controller.render.default"
       ],
       "animations": {
-        "base": "animation.twilightforest.pinch_beetle.base",
-        "pincers_open": "animation.twilightforest.pinch_beetle.pincers_open"
+        "base": "animation.gloamingforest.pinch_beetle.base",
+        "pincers_open": "animation.gloamingforest.pinch_beetle.pincers_open"
       },
       "scripts": {
         "animate": [

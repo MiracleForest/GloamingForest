@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/CinderFurnaceBlock.java
-//   src/main/java/twilightforest/block/entity/CinderFurnaceBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/CinderFurnaceBlock.java
+//   src/main/java/gloamingforest/block/entity/CinderFurnaceBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U30 (finalcastle): the cinder furnace (a work-in-progress block of TF 4.8: hidden from the creative
+// U30 (finalcastle): the cinder furnace (a work-in-progress block of upstream 4.8: hidden from the creative
 // tab, no recipe). Its block entity is emulated: the three slots (0 input, 1 fuel, 2 result) are the
 // inventory contract's (F10) native container of the block (the BP declares minecraft:block_entity),
 // which hoppers reach (F11's hopper lookup); the furnace fields (lit time, cooking progress) are block
-// data, ticked every server tick while the block is tracked. Right-clicking opens nothing (TF's
-// openContainer is empty). Smelting uses TF's minecraft:smelting data recipes (F9) and else the
+// data, ticked every server tick while the block is tracked. Right-clicking opens nothing (upstream's
+// openContainer is empty). Smelting uses upstream's minecraft:smelting data recipes (F9) and else the
 // game's furnace recipes (cooking time 200); cinder logs in the 3 x 3 x 3 around the furnace speed
 // it up and multiply its output, and while it burns it turns logs around it into cinder logs.
 //
-// Deviations: TF multiplies the recipe's shared result stack (its count grows with every smelt); the
+// Deviations: upstream multiplies the recipe's shared result stack (its count grows with every smelt); the
 // result here is a copy. Hoppers see one plain container (no furnace faces: they fill and empty any
 // slot). The client-side crackle / smoke / flame of animateTick (FurnaceBlock's vanilla copy) are
 // sent by the server while the furnace burns, at the rate Java's ClientLevel#animateTick samples the
@@ -56,8 +56,8 @@ namespace items = gf::game::items;
 namespace {
 
 constexpr char kDataKey[]          = "cinder_furnace";
-constexpr char kLit[]              = "twilightforest:lit";
-constexpr char kFacing[]           = "twilightforest:facing";
+constexpr char kLit[]              = "gloamingforest:lit";
+constexpr char kFacing[]           = "gloamingforest:facing";
 constexpr int  kSmeltLogFactor     = 10;
 constexpr int  kDefaultCookingTime = 200;
 /// ClientLevel#animateTick's chance to pick a given block in a tick: 667 picks in the 32^3 cube
@@ -115,7 +115,7 @@ bool ingredientMatches(recipes::Ingredient const& in, std::string const& itemId)
     return !in.tag.empty() && tags::has(tags::Registry::Item, in.tag, itemId);
 }
 
-/// RecipeManager#getRecipeFor(SMELTING, input): TF's data recipes, then the game's furnace recipes.
+/// RecipeManager#getRecipeFor(SMELTING, input): upstream's data recipes, then the game's furnace recipes.
 std::optional<Smelt> recipeFor(ItemStack const& input) {
     if (items::isEmpty(input)) return std::nullopt;
     auto id = items::idOf(input);
@@ -156,7 +156,7 @@ bool canMultiply(ItemStack const& input) {
 /// The pillar axis of a log ("x" / "y" / "z"; "" without one).
 std::string axisOfLog(Block const& b) {
     auto a = textState(b, "pillar_axis");
-    if (a.empty()) a = textState(b, "twilightforest:axis");
+    if (a.empty()) a = textState(b, "gloamingforest:axis");
     return a;
 }
 
@@ -218,7 +218,7 @@ struct Furnace {
         // withPropertiesOf: the axis carries over
         Json s    = Json::object();
         auto axis = axisOfLog(nearby);
-        if (axis == "x" || axis == "y" || axis == "z") s["twilightforest:axis"] = axis;
+        if (axis == "x" || axis == "y" || axis == "z") s["gloamingforest:axis"] = axis;
         set(region, at, id::CinderLog, s);
         // LevelEvent.PARTICLES_MOBBLOCK_SPAWN twice, then the fire's ambient sound
         levelEvent(region, 2004, center(at));
@@ -287,9 +287,9 @@ struct Furnace {
                 }
             }
             if (recipe && burning() && canBurn(*recipe)) {
-                // TF: cook faster
+                // upstream: cook faster
                 st.cookingProgress += cinderMultiplier(region, pos, 2);
-                if (st.cookingProgress >= st.cookingTotalTime) { // TF: >= since it may step by more than 1
+                if (st.cookingProgress >= st.cookingTotalTime) { // upstream: >= since it may step by more than 1
                     st.cookingProgress  = 0;
                     st.cookingTotalTime = recipe->cookingTime;
                     smeltItem(*recipe);
@@ -308,7 +308,7 @@ struct Furnace {
             changed = true;
             setStates(region, pos, {{kLit, burning()}});
         }
-        // TF: occasionally cinderize nearby logs
+        // upstream: occasionally cinderize nearby logs
         if (burning() && st.litTime % 5 == 0) cinderize();
         if (burning()) animate();
         if (changed) setFurnaceState(gpos, st);
@@ -432,7 +432,7 @@ void installCinderFurnace() {
         setStates(*region, game::blockPos(c.pos), {{kFacing, k2d[static_cast<std::size_t>(towards & 3)]}});
         track(*region, game::blockPos(c.pos));
     });
-    // useWithoutItem -> openContainer, which is empty in TF 4.8: the click is taken, nothing opens
+    // useWithoutItem -> openContainer, which is empty in upstream 4.8: the click is taken, nothing opens
     ia::onUseOn({.block = id::CinderFurnace}, [](ia::UseOnContext const& c) {
         if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
         if (auto* region = game::regionOf(c.pos.dim)) track(*region, game::blockPos(c.pos));

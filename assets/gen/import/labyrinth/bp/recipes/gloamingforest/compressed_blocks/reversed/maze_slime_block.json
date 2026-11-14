@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:compressed_blocks/reversed/maze_slime_block"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:maze_slime_block"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:maze_slime_block"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:maze_slime_ball",
+      "count": 9
+    }
+  }
+}

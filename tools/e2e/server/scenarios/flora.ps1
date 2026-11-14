@@ -1,4 +1,4 @@
-# Flora (U6): TF's small plants, berry bushes, critters and jars. The selftests grow and pick the
+# Flora (U6): upstream's small plants, berry bushes, critters and jars. The selftests grow and pick the
 # bushes (random ticks with scripted draws, bone meal, the harvest into the inventory, dark tower
 # bushes dying on nylium, oreberry thorns), harvest torchberries (stat), grow root strands, strip a
 # liveroot block, layer fallen leaves, pop unsupported plants, break a huge lily pad as a whole,
@@ -17,10 +17,10 @@ foreach ($t in 'flora.bush_growth', 'flora.bush_harvest', 'flora.torchberries', 
     if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "SELFTEST PASS $([regex]::Escape($t))$" -Quiet)) { throw "$t did not pass" }
 }
 # the features contract knows every flora feature type (no unknown-id warnings)
-$unknown = @(Get-ServerLog -Since $mark | Select-String -Pattern 'unknown feature type twilightforest:(berry_bush|enchanted_forest_vines|fallen_leaves|huge_lily_pad|huge_water_lily|underground_plants|underground_plants_in_structure|oreberry_bushes)' | ForEach-Object { $_.Line.Trim() })
+$unknown = @(Get-ServerLog -Since $mark | Select-String -Pattern 'unknown feature type gloamingforest:(berry_bush|enchanted_forest_vines|fallen_leaves|huge_lily_pad|huge_water_lily|underground_plants|underground_plants_in_structure|oreberry_bushes)' | ForEach-Object { $_.Line.Trim() })
 if ($unknown.Count -gt 0) { throw "unknown flora feature types: $($unknown -join ' | ')" }
 # the user-visible actions logged one line each
-foreach ($p in 'flora: \S+ picked twilightforest:raspberry_bush', 'flora: \S+ harvested torchberries', 'flora: a firefly was squished', 'flora: \S+ caught a firefly in a mason jar') {
+foreach ($p in 'flora: \S+ picked gloamingforest:raspberry_bush', 'flora: \S+ harvested torchberries', 'flora: a firefly was squished', 'flora: \S+ caught a firefly in a mason jar') {
     if (-not (Get-ServerLog -Since $mark | Select-String -Pattern $p -Quiet)) { throw "no log line '$p'" }
 }
 Write-Step "every flora selftest passed ($($r.Pass))"

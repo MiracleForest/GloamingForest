@@ -1,0 +1,35 @@
+{
+  "parent": "gloamingforest:magic_map",
+  "criteria": {
+    "maze_map": {
+      "conditions": {
+        "recipe_id": "gloamingforest:maze_map"
+      },
+      "trigger": "minecraft:recipe_crafted"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.maze_map.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.filled_maze_map"
+        }
+      ]
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:filled_maze_map"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.maze_map"
+    }
+  },
+  "requirements": [
+    [
+      "maze_map"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

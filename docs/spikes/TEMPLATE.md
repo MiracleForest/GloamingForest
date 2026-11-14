@@ -13,7 +13,7 @@ What has to be true on Bedrock for the unit's design to work, stated so the answ
 
 ## Why it matters
 
-The TF behaviour that depends on the answer and the units that consume it.
+The upstream behaviour that depends on the answer and the units that consume it.
 
 ## What was tried
 

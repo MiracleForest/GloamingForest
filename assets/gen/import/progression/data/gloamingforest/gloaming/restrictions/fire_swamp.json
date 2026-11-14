@@ -1,0 +1,12 @@
+{
+  "advancements": [
+    "gloamingforest:progress_labyrinth"
+  ],
+  "enforcement": "gloamingforest:fire",
+  "locked_biome_toast": {
+    "count": 1,
+    "id": "gloamingforest:meef_stroganoff"
+  },
+  "multiplier": 8.0,
+  "structure_key": "gloamingforest:hydra_lair"
+}

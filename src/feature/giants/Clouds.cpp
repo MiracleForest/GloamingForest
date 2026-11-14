@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/CloudBlock.java
-//   src/main/java/twilightforest/block/WispyCloudBlock.java
-//   src/main/java/twilightforest/asmhooks/BlockHooks.java (isRainingAt)
-//   src/main/java/twilightforest/client/event/CloudEvents.java (the vanilla clients' fallback)
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/CloudBlock.java
+//   src/main/java/gloamingforest/block/WispyCloudBlock.java
+//   src/main/java/gloamingforest/asmhooks/BlockHooks.java (isRainingAt)
+//   src/main/java/gloamingforest/client/event/CloudEvents.java (the vanilla clients' fallback)
 //   net/minecraft/world/level/block/CauldronBlock.java, LayeredCauldronBlock.java (handlePrecipitation)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Cloud blocks. Fall damage on a cloud is 10 %; landing, walking and running on a cloud make
-// cloud puffs (twilightforest:cloud_puff); the fluffy, rainy and snowy clouds' random ticks rain
+// cloud puffs (gloamingforest:cloud_puff); the fluffy, rainy and snowy clouds' random ticks rain
 // or snow on the first opaque block below them (cauldrons fill, snow layers grow, and, as Bedrock
 // has no isRainingAt hook, the farmland moistens and fire goes out there: the listed deviation of
 // docs/spec/giants.md 2.3), and an entity under a raining cloud is wet (its fire goes out, an
@@ -229,7 +229,7 @@ void vanillaWeatherTick() {
         if (ticks % 10 == 0) cols = collectPrecipitationColumns(region, at, distance, 8);
         if (cols.empty()) return true;
         auto& r = random();
-        // a few drops a tick (TF draws sheets; the splashes are up to 100 a tick within 10 blocks)
+        // a few drops a tick (upstream draws sheets; the splashes are up to 100 a tick within 10 blocks)
         for (int i = 0; i < 4; ++i) {
             auto const& c = cols[static_cast<std::size_t>(r.nextInt(static_cast<int>(cols.size())))];
             float x = c.cloud.x + r.nextFloat(), z = c.cloud.z + r.nextFloat();

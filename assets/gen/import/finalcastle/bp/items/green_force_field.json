@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:green_force_field",
+      "identifier": "gloamingforest:green_force_field",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:green_force_field.name"
+        "value": "tile.gloamingforest:green_force_field.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:green_force_field",
+        "block": "gloamingforest:green_force_field",
         "replace_block_item": true
       }
     }

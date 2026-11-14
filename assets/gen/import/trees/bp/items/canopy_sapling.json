@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:canopy_sapling",
+      "identifier": "gloamingforest:canopy_sapling",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:canopy_sapling.name"
+        "value": "tile.gloamingforest:canopy_sapling.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:canopy_sapling",
+        "block": "gloamingforest:canopy_sapling",
         "replace_block_item": true
       }
     }

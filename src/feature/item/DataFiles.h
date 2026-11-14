@@ -6,7 +6,7 @@
 // (assets/data/<kind>/<unit>.json -> data/gf/<kind>/<unit>.json) and the fixture data
 // (assets/test/data/** -> data/gf_test/**, development builds).
 //
-// Loaded on the server thread at mod enable and again on `/twilightforest reload` (config::onReload);
+// Loaded on the server thread at mod enable and again on `/gloamingforest reload` (config::onReload);
 // `onReload` listeners rebuild their caches then.
 
 #include <filesystem>
@@ -27,7 +27,7 @@ void                                setRoot(std::filesystem::path dir);
 [[nodiscard]] bool rootOverridden();
 
 struct File {
-    std::string           ns;   ///< "twilightforest"
+    std::string           ns;   ///< "gloamingforest"
     std::string           rel;  ///< the path below `<ns>/<dir>/`, '/'-separated, without ".json"
     std::filesystem::path path; ///< the file
     /// "<ns>:<rel>"
@@ -42,7 +42,7 @@ struct File {
 [[nodiscard]] nlohmann::json read(std::filesystem::path const& file);
 
 /// Called after the data was (re)loaded: mod enable (in order of registration) and
-/// `/twilightforest reload`.
+/// `/gloamingforest reload`.
 void onReload(std::function<void()> fn);
 /// Runs every reload listener (the module does it; selftests may too).
 void reloadAll();

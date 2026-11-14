@@ -143,7 +143,7 @@ the server exits non-zero or has to be killed.
 A scenario is `server/scenarios/<name>.ps1` or `client/scenarios/<name>.ps1` (rule R3:
 `<unit>.ps1`, plus optional `<unit>.prelaunch.ps1` / `<unit>.restore.ps1`, and for the client's
 remote modes `<unit>.host-prelaunch.ps1`, run on the BDS host: see Client modes). Put the feature logic in
-**selftests inside the mod** (`/twilightforest selftest "<unit>.*"`) and use the scenario to start
+**selftests inside the mod** (`/gloamingforest selftest "<unit>.*"`) and use the scenario to start
 them; the client scenario adds what only a real client shows: screens, keys, screenshots.
 
 ```powershell
@@ -160,7 +160,7 @@ Save-Screenshot 'canopy-tree' | Out-Null      # -> client/out/trees/canopy-tree.
 
 | Helper | Server | Client | What it does |
 |---|:-:|:-:|---|
-| `Invoke-SelfTest 'glob' [-TimeoutSeconds 600] [-AllowEmpty]` | x | x | Sends `twilightforest selftest "<glob>"` (console on the server, chat on the client), waits for `SELFTEST DONE` and returns `{Pass, Fail, Passed[], Failed[], Results[], Ok, Problems[]}`. It does not throw; the run fails at the end if any call was not OK. |
+| `Invoke-SelfTest 'glob' [-TimeoutSeconds 600] [-AllowEmpty]` | x | x | Sends `gloamingforest selftest "<glob>"` (console on the server, chat on the client), waits for `SELFTEST DONE` and returns `{Pass, Fail, Passed[], Failed[], Results[], Ok, Problems[]}`. It does not throw; the run fails at the end if any call was not OK. |
 | `Wait-LogLine 'regex' [timeoutSec] [-Since $mark]` | x | x | Returns the matching line; throws on timeout or if the server/game exits. |
 | `Get-LogMark` / `Get-ServerLog [-Since $mark]` | x | x | Log position / log lines of this run (client: `Get-LeviLog`). |
 | `Send-Console 'cmd'` | x | | One line to the server's stdin, no leading `/`. |
@@ -190,7 +190,7 @@ SELFTEST FAIL <name>: <reason>
 SELFTEST DONE pass=<N> fail=<M>
 ```
 
-The glob is sent quoted (`twilightforest selftest "core.*"`): `*` is not valid in an unquoted
+The glob is sent quoted (`gloamingforest selftest "core.*"`): `*` is not valid in an unquoted
 command argument. Lines may appear twice (logger and command output); the harness de-duplicates.
 
 ## Reading results
@@ -198,8 +198,8 @@ command argument. Lines may appear twice (logger and command output); the harnes
 - Console output ends with `PASSED`, `FAILED:` and the reasons, or `NOT RUN`.
 - `server.log` (`server-2.log` after a `Restart-Server`) / `client.log`: this run only.
 - `selftest.json`: every `Invoke-SelfTest` result.
-- Screenshots are the evidence for UI: open every PNG and compare it with TF's textures and GUI
-  images in the local TF checkout (`%LOCALAPPDATA%\gf-tf`).
+- Screenshots are the evidence for UI: open every PNG and compare it with upstream's textures and GUI
+  images in the local upstream checkout (`%LOCALAPPDATA%\gf-upstream\view`).
 
 ## Pitfalls
 

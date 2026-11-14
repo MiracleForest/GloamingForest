@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:boar",
+      "identifier": "gloamingforest:boar",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/wildboar"
+        "default": "textures/gloamingforest/entity/wildboar"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.boar"

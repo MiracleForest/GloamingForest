@@ -59,7 +59,7 @@ void unregisterType(std::string const& effectId);
 /// (its amplifier, its remaining time and the particle visibility of `spec`), not a vanilla one.
 [[nodiscard]] bool carrierIsOurs(Actor const& actor, Spec const& spec, Active const& active);
 /// The resource pack texture of a custom effect's icon (ext::setIcon, else
-/// "textures/<namespace>/mob_effect/<path>", where F1 imports TF's textures/mob_effect/*.png).
+/// "textures/<namespace>/mob_effect/<path>", where F1 imports upstream's textures/mob_effect/*.png).
 [[nodiscard]] std::string iconOf(std::string const& effectId);
 
 } // namespace gf::effects::internal

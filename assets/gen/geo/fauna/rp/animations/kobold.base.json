@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.kobold.base": {
+    "animation.gloamingforest.kobold.base": {
       "loop": true,
       "bones": {
         "head": {

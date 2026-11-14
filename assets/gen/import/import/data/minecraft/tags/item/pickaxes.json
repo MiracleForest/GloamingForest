@@ -1,10 +1,10 @@
 {
   "values": [
-    "twilightforest:ironwood_pickaxe",
-    "twilightforest:steeleaf_pickaxe",
-    "twilightforest:knightmetal_pickaxe",
-    "twilightforest:mazebreaker_pickaxe",
-    "twilightforest:fiery_pickaxe",
-    "twilightforest:giant_pickaxe"
+    "gloamingforest:ironwood_pickaxe",
+    "gloamingforest:steeleaf_pickaxe",
+    "gloamingforest:knightmetal_pickaxe",
+    "gloamingforest:mazebreaker_pickaxe",
+    "gloamingforest:fiery_pickaxe",
+    "gloamingforest:giant_pickaxe"
   ]
 }

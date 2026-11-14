@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/ChiseledCanopyShelfBlock.java
-//   src/main/java/twilightforest/block/entity/bookshelf/ChiseledCanopyShelfBlockEntity.java
-//   src/main/java/twilightforest/block/entity/bookshelf/BookshelfSpawner.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/ChiseledCanopyShelfBlock.java
+//   src/main/java/gloamingforest/block/entity/bookshelf/ChiseledCanopyShelfBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/bookshelf/BookshelfSpawner.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U22 (lichdecor): twilightforest:chiseled_canopy_bookshelf. Vanilla's ChiseledBookShelfBlock (six
+// U22 (lichdecor): gloamingforest:chiseled_canopy_bookshelf. Vanilla's ChiseledBookShelfBlock (six
 // book slots chosen by the hit position on the front face, #minecraft:bookshelf_books, comparator
-// output = last interacted slot + 1) over BlockData, plus TF's Death Tome spawner (state `spawner`):
-// interaction fails, a BookshelfSpawner spawns twilightforest:death_tome from the filled slots while
+// output = last interacted slot + 1) over BlockData, plus upstream's Death Tome spawner (state `spawner`):
+// interaction fails, a BookshelfSpawner spawns gloamingforest:death_tome from the filled slots while
 // a player (creative included) is within 8 blocks, a spawn egg sets the entity, burning spawns every
 // book as a burning tome, breaking it plays the Death Tome's death sound with poof particles.
 //
@@ -68,8 +68,8 @@ namespace bd    = gf::blockdata;
 namespace ia    = gf::interactions;
 namespace items = gf::game::items;
 
-constexpr char kShelf[]  = "twilightforest:chiseled_canopy_bookshelf";
-constexpr char kTome[]   = "twilightforest:death_tome";
+constexpr char kShelf[]  = "gloamingforest:chiseled_canopy_bookshelf";
+constexpr char kTome[]   = "gloamingforest:death_tome";
 constexpr char kDbKey[]  = "gf:lichdecor:shelves";
 
 // BookshelfSpawner's fields (no NBT variants reach a GloamingForest shelf)
@@ -434,7 +434,7 @@ private:
             auto* region = game::regionOf(c.pos.dim);
             if (!region) return;
             BlockPos pos = game::blockPos(c.pos);
-            playAt(*region, pos, "entity.twilightforest.death_tome.death", 1.0F, 1.0F);
+            playAt(*region, pos, "entity.gloamingforest.death_tome.death", 1.0F, 1.0F);
             for (int i = 0; i < 20; ++i)
                 particle(*region, "minecraft:poof", Vec3{pos.x + 0.5F, (float)pos.y, pos.z + 0.5F},
                          Vec3{0.15F * randomFloat(-1.0F, 1.0F), 0.15F * randomFloat(-1.0F, 1.0F), 0.15F * randomFloat(-1.0F, 1.0F)});
@@ -452,7 +452,7 @@ private:
                 bool empty = true;
                 for (int i = 0; i < 6; ++i) empty = empty && items::isEmpty(bookAt(doc, i));
                 if (empty) return ia::Result::Consume;
-                playAt(*region, pos, "block.twilightforest.chiseled_bookshelf.convert", 0.35F, 0.6F + randomFloat() * 0.4F);
+                playAt(*region, pos, "block.gloamingforest.chiseled_bookshelf.convert", 0.35F, 0.6F + randomFloat() * 0.4F);
                 Json sp           = doc.value("spawner", Json::object());
                 sp["entity"]      = entity;
                 doc["spawner"]    = sp;

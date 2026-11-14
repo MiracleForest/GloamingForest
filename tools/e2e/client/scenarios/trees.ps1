@@ -7,7 +7,7 @@
 # remote-vanilla: trees.vanilla_probe on the host (leaves of transformation over an active timewood
 # clock ticking wheat); the host sends the leaf runes to the vanilla client itself, and the time core's
 # particles come as resource pack effects (the content log must stay clean of Molang errors).
-# Compare with TF's textures (textures/block/*leaves*, *sapling*, *_log_core*) and TF's tree shapes.
+# Compare with upstream's textures (textures/block/*leaves*, *sapling*, *_log_core*) and upstream's tree shapes.
 # Screenshots: out/trees*/{tree-<n>-<name>,brown-cap-top,blocks,blocks-close,mushroom-blocks,cores,cores-particles,particles-<n>,sorting-<n>,transformed-cell,runes,leaf-items,leaf-items-hardened,vanilla-probe,selftest}.png
 Save-Screenshot 'hud' | Out-Null
 if ($script:Mode -eq 'local') {
@@ -36,7 +36,7 @@ if ($script:Mode -eq 'local') {
         Save-Screenshot ('tree-{0:d2}-{1}' -f $n, $name) | Out-Null
     }
     if ($brown) {
-        # the brown cap from straight above (TF: brown_mushroom_block top skin on the cap's top)
+        # the brown cap from straight above (upstream: brown_mushroom_block top skin on the cap's top)
         Invoke-Teleport "/tp @s $($brown[0] + 0.5) $($brown[1] + 24) $($brown[2] + 0.5) 0 90"
         Start-Sleep -Seconds 3
         Save-Screenshot 'brown-cap-top' | Out-Null
@@ -113,14 +113,14 @@ if ($script:Mode -eq 'local') {
     Invoke-Chat '/gamemode creative'
     Invoke-Chat '/clear @s'
     $i = 0
-    foreach ($leaf in 'twilight_oak_leaves', 'canopy_leaves', 'mangrove_leaves', 'dark_leaves', 'rainbow_oak_leaves', 'time_leaves', 'transformation_leaves', 'mining_leaves', 'sorting_leaves') {
-        Invoke-Chat "/replaceitem entity @s slot.hotbar $i twilightforest:$leaf"
+    foreach ($leaf in 'gloaming_oak_leaves', 'canopy_leaves', 'mangrove_leaves', 'dark_leaves', 'rainbow_oak_leaves', 'time_leaves', 'transformation_leaves', 'mining_leaves', 'sorting_leaves') {
+        Invoke-Chat "/replaceitem entity @s slot.hotbar $i gloamingforest:$leaf"
         $i++
     }
     Invoke-Teleport "/tp @s $($px + 0.5) $($py + 1) $($pz + 12) 180 -60"
     Start-Sleep -Seconds 2
     Save-Screenshot 'leaf-items' | Out-Null
-    Invoke-Chat '/replaceitem entity @s slot.hotbar 0 twilightforest:hardened_dark_leaves'
+    Invoke-Chat '/replaceitem entity @s slot.hotbar 0 gloamingforest:hardened_dark_leaves'
     Start-Sleep -Seconds 1
     Save-Screenshot 'leaf-items-hardened' | Out-Null
     Invoke-Chat '/clear @s'

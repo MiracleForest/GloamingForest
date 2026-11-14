@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/SkullChestBlock.java
-//   src/main/java/twilightforest/block/entity/SkullChestBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/SkullChestBlock.java
+//   src/main/java/gloamingforest/block/entity/SkullChestBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U22 (lichdecor): twilightforest:skull_chest. The 45-slot container itself (storage, screen, open /
+// U22 (lichdecor): gloamingforest:skull_chest. The 45-slot container itself (storage, screen, open /
 // close sounds at the first / last opener, comparator, contents spilling) is F10's data-declared
 // chest-like container (assets/data/containers/lichdecor.json, 5 rows). This file adds:
 //   - the owner lock (SkullChestBlockEntity#canOpen): only the owner or permission level 3 opens
-//     it; the others hear block.twilightforest.skull_chest.locked (0.5, 0.5) and see the red action
-//     bar message "block.twilightforest.skull_chest.locked" with the owner's name;
+//     it; the others hear block.gloamingforest.skull_chest.locked (0.5, 0.5) and see the red action
+//     bar message "block.gloamingforest.skull_chest.locked" with the owner's name;
 //   - a chest filled by a solid block (multilogged obsidian / stone / basalt) does not open;
 //   - SkullChestBlock#playerWillDestroy: survival breaks drop the chest (named after the owner) and
 //     the logged solid block;
@@ -52,7 +52,7 @@ namespace bd    = gf::blockdata;
 namespace ia    = gf::interactions;
 namespace items = gf::game::items;
 
-constexpr char kChest[] = "twilightforest:skull_chest";
+constexpr char kChest[] = "gloamingforest:skull_chest";
 
 Json ownerOf(BlockSource& region, BlockPos const& pos) {
     if (auto const* d = bd::get(region, pos, kDataKey); d && d->is_object() && d->contains("owner")) return (*d)["owner"];
@@ -79,8 +79,8 @@ void actionBar(Player& player, std::string const& text) {
 
 /// SkullChestBlockEntity#displayLockedInfo.
 void displayLockedInfo(Player& player, Json const& owner) {
-    gf::fx::soundTo(player, "block.twilightforest.skull_chest.locked", 0.5F, 0.5F);
-    actionBar(player, std::string("\xC2\xA7") + "c" + trFor(player, "block.twilightforest.skull_chest.locked", "This chest is locked by %s", owner.value("name", std::string())));
+    gf::fx::soundTo(player, "block.gloamingforest.skull_chest.locked", 0.5F, 0.5F);
+    actionBar(player, std::string("\xC2\xA7") + "c" + trFor(player, "block.gloamingforest.skull_chest.locked", "This chest is locked by %s", owner.value("name", std::string())));
 }
 
 bool solidLogged(Block const& block) {
@@ -117,7 +117,7 @@ public:
         ia::onDestroy({.block = kChest}, [](ia::DestroyContext const& c) {
             if (c.player.isCreative() || !doBlockDrops()) return ia::Result::Pass;
             std::string logged = loggedBlockItem(c.block);
-            // the chest has no custom name on Bedrock (TF names only the item entity of a
+            // the chest has no custom name on Bedrock (upstream names only the item entity of a
             // custom-named chest): the plain item
             ia::nextTick([gp = c.pos, logged] {
                 auto* r = game::regionOf(gp.dim);

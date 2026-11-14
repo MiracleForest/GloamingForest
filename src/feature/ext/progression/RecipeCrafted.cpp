@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Extension of contract "progression" by U14 (rule R18; to be folded into F10's events or F9's
 // crafting hooks by A8): the vanilla trigger minecraft:recipe_crafted, which neither F10 nor F9
@@ -9,8 +9,8 @@
 //     progression::trigger(player, "minecraft:recipe_crafted", {"recipe_id": "<the BP recipe id>"})
 //
 // with the identifier of the BP recipe the client crafted (F1 splits a Java recipe with tag
-// ingredients into numbered layouts, "twilightforest:equipment/travellers_belt_3"; the criteria
-// engine counts every layout as the Java recipe). TF's craft_travellers_gear, maze_map,
+// ingredients into numbered layouts, "gloamingforest:equipment/travellers_belt_3"; the criteria
+// engine counts every layout as the Java recipe). upstream's craft_travellers_gear, maze_map,
 // naga_armors and ore_map criteria use it.
 //
 // R8: F9 already hooks CraftHandlerCrafting::$_handleCraftAction (feature/recipes/Recipes.cpp) and

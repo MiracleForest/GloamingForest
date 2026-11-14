@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:drying",
+  "filter_time": 6000,
+  "input": {
+    "item": "gloamingforest:treated_leather"
+  },
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:tanned_leather"
+  }
+}

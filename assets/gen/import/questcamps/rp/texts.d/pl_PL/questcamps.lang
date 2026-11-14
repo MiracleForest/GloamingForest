@@ -1,7 +1,7 @@
-entity.twilightforest.quest_ram=Poszukiwawczy Tryk
-entity.twilightforest:quest_ram.name=Poszukiwawczy Tryk
-item.spawn_egg.entity.twilightforest:quest_ram.name=Jajo przyzywające Poszukiwawczego Tryka
-item.twilightforest.quest_ram_spawn_egg=Jajo przyzywające Poszukiwawczego Tryka
-subtitles.twilightforest.entity.quest_ram.ambient=Poszukiwawczy Tryk beczy
-subtitles.twilightforest.entity.quest_ram.death=Poszukiwawczy Tryk umiera
-subtitles.twilightforest.entity.quest_ram.hurt=Poszukiwawczy Tryk zostaje zraniony
+entity.gloamingforest.quest_ram=Poszukiwawczy Tryk
+entity.gloamingforest:quest_ram.name=Poszukiwawczy Tryk
+item.gloamingforest.quest_ram_spawn_egg=Jajo przyzywające Poszukiwawczego Tryka
+item.spawn_egg.entity.gloamingforest:quest_ram.name=Jajo przyzywające Poszukiwawczego Tryka
+subtitles.gloamingforest.entity.quest_ram.ambient=Poszukiwawczy Tryk beczy
+subtitles.gloamingforest.entity.quest_ram.death=Poszukiwawczy Tryk umiera
+subtitles.gloamingforest.entity.quest_ram.hurt=Poszukiwawczy Tryk zostaje zraniony

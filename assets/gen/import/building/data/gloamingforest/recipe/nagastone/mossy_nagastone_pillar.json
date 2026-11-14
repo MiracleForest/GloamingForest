@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    [
+      {
+        "item": "minecraft:vine"
+      },
+      {
+        "item": "minecraft:moss_block"
+      }
+    ],
+    {
+      "item": "gloamingforest:nagastone_pillar"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:mossy_nagastone_pillar"
+  }
+}

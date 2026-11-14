@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/generated/resources/data/twilightforest/dimension_type/twilight_forest_type.json
-//   src/main/java/twilightforest/init/TFDimensionData.java (twilightDimType)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/generated/resources/data/gloamingforest/dimension_type/gloaming_forest_type.json
+//   src/main/java/gloamingforest/init/TFDimensionData.java (gloamingDimType)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -27,9 +27,9 @@ namespace gf::world::ext {
 
 namespace {
 
-DimensionTypeValues makeTwilight() {
+DimensionTypeValues makeGloaming() {
     DimensionTypeValues v;
-    v.id                          = "twilightforest:twilight_forest_type";
+    v.id                          = "gloamingforest:gloaming_forest_type";
     v.fixedTime                   = 13000;
     v.hasSkylight                 = true;
     v.hasCeiling                  = false;
@@ -42,7 +42,7 @@ DimensionTypeValues makeTwilight() {
     v.height                      = 32 + 256;
     v.logicalHeight               = 32 + 256;
     v.infiniburn                  = "#minecraft:infiniburn_overworld";
-    v.effects                     = "twilightforest:renderer";
+    v.effects                     = "gloamingforest:renderer";
     v.ambientLight                = 0.01f;
     v.piglinSafe                  = false;
     v.hasRaids                    = false;
@@ -108,8 +108,8 @@ DimensionTypeValues makeEnd() {
 
 } // namespace
 
-DimensionTypeValues const& twilightType() {
-    static DimensionTypeValues const v = makeTwilight();
+DimensionTypeValues const& gloamingType() {
+    static DimensionTypeValues const v = makeGloaming();
     return v;
 }
 
@@ -117,12 +117,12 @@ DimensionTypeValues const& dimensionType(int dim) {
     static DimensionTypeValues const overworld = makeOverworld(), nether = makeNether(), end = makeEnd();
     if (dim == 1) return nether;
     if (dim == 2) return end;
-    if (dim > 2 && world::isTwilight(DimensionType(dim))) return twilightType();
+    if (dim > 2 && world::isGloaming(DimensionType(dim))) return gloamingType();
     return overworld;
 }
 
 DimensionTypeValues const& dimensionType(Dimension const& dimension) {
-    if (world::isTwilight(dimension)) return twilightType(); // by identifier: any thread
+    if (world::isGloaming(dimension)) return gloamingType(); // by identifier: any thread
     return dimensionType(static_cast<int>(dimension.getDimensionId()));
 }
 
@@ -157,7 +157,7 @@ std::pair<float, float> weatherOf(Dimension const& dimension) {
 int skyDarken(BlockSource& region) {
     auto const& dimension = region.getDimension();
     auto [rain, thunder]  = weatherOf(dimension);
-    // the dimension's time of day (a fixed one for the Twilight Forest)
+    // the dimension's time of day (a fixed one for the Gloaming Forest)
     return skyDarken(dimension.getTimeOfDay(region.getLevel().getTime(), 0.0f), rain, thunder);
 }
 

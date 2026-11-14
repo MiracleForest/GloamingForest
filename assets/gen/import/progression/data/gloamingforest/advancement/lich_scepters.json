@@ -1,0 +1,47 @@
+{
+  "parent": "gloamingforest:progress_lich",
+  "criteria": {
+    "scepters": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:lifedrain_scepter"
+          },
+          {
+            "items": "gloamingforest:gloaming_scepter"
+          },
+          {
+            "items": "gloamingforest:zombie_scepter"
+          },
+          {
+            "items": "gloamingforest:fortification_scepter"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.lich_scepters.desc"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:zombie_scepter"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.lich_scepters"
+    }
+  },
+  "requirements": [
+    [
+      "scepters"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  },
+  "sends_telemetry_event": true
+}

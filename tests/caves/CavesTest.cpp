@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // gtests of U27's game-independent maths (src/core/caves): the yeti cave terraformer, the troll
 // cave hollowing distance, the cloud castle's procedural cloud, the falling ice damage and the
 // raw brightness the trollsteinn faces read.

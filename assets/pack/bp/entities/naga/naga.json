@@ -2,18 +2,18 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:naga",
+      "identifier": "gloamingforest:naga",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:dazed": { "type": "bool", "default": false, "client_sync": true },
-        "twilightforest:charging": { "type": "bool", "default": false, "client_sync": true },
-        "twilightforest:stunless": { "type": "bool", "default": false, "client_sync": true }
+        "gloamingforest:dazed": { "type": "bool", "default": false, "client_sync": true },
+        "gloamingforest:charging": { "type": "bool", "default": false, "client_sync": true },
+        "gloamingforest:stunless": { "type": "bool", "default": false, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "naga", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "naga", "monster", "mob"] },
       "minecraft:collision_box": { "width": 2.0, "height": 3.0 },
       "minecraft:health": { "value": 120, "max": 120 },
       "minecraft:attack": { "damage": 5 },

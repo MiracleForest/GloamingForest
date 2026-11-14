@@ -1,0 +1,11 @@
+{
+  "placement": {
+    "type": "gloamingforest:landmark_grid"
+  },
+  "structures": [
+    {
+      "structure": "gloamingforest:aurora_palace",
+      "weight": 1
+    }
+  ]
+}

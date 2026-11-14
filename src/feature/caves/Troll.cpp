@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/monster/Troll.java
-//   src/main/java/twilightforest/entity/projectile/ThrownBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/monster/Troll.java
+//   src/main/java/gloamingforest/entity/projectile/ThrownBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -10,7 +10,7 @@
 // target) are the BP's behaviours; the combat goal (melee without a rock, ranged with one), the
 // player target with the rock's follow range boost, the rock pick-up and the berry ripening on death
 // are native. The rock the troll holds is drawn on its own model (the RP's rock render controller,
-// property twilightforest:rock) instead of a riding ThrownBlock entity: the same picture on every
+// property gloamingforest:rock) instead of a riding ThrownBlock entity: the same picture on every
 // client without an actor the projectile kit would fly.
 #include "feature/caves/Caves.h"
 
@@ -49,8 +49,8 @@ constexpr char kRockKey[]     = "caves:rock";          ///< Troll RockState (a B
 constexpr char kCooldownKey[] = "caves:rock_cooldown"; ///< Troll RockCooldown
 constexpr char kBlockKey[]    = "caves:block";         ///< ThrownBlock BlockState
 
-/// The rock blocks the RP draws (#minecraft:base_stone_overworld), as twilightforest:rock /
-/// twilightforest:block values (0: none / stone for a block outside the list).
+/// The rock blocks the RP draws (#minecraft:base_stone_overworld), as gloamingforest:rock /
+/// gloamingforest:block values (0: none / stone for a block outside the list).
 constexpr char const* kRockBlocks[] = {"minecraft:stone", "minecraft:granite", "minecraft:diorite", "minecraft:andesite", "minecraft:tuff", "minecraft:deepslate"};
 
 int rockIndex(std::string const& id) {
@@ -81,7 +81,7 @@ void setCooldown(Actor& troll, int v) { gf::entity::data(troll, kCooldownKey) = 
 void setRock(Actor& troll, std::string const& blockId) {
     if (blockId.empty()) gf::entity::data(troll, kRockKey) = nullptr;
     else gf::entity::data(troll, kRockKey) = blockId;
-    gf::entity::setProperty(troll, "twilightforest:rock", blockId.empty() ? 0 : rockIndex(blockId) + 1);
+    gf::entity::setProperty(troll, "gloamingforest:rock", blockId.empty() ? 0 : rockIndex(blockId) + 1);
 }
 
 /// Level#clip(OUTLINE) from `from` to `to`: the first block with a shape on the way.
@@ -125,7 +125,7 @@ void tryTakeRock(Mob& troll) {
     }
     if (!rock.empty()) {
         setRock(troll, rock);
-        gf::fx::sound(troll.getDimension(), "entity.twilightforest.troll.grab_rock", troll.getFeetPos());
+        gf::fx::sound(troll.getDimension(), "entity.gloamingforest.troll.grab_rock", troll.getFeetPos());
         gf::log().info("caves: troll grabbed a rock ({})", rock);
     }
 }
@@ -144,10 +144,10 @@ void throwRock(Mob& troll, Actor& target) {
     Vec3   dir{static_cast<float>(d0), static_cast<float>(d1 + d3 * 0.2), static_cast<float>(d2)};
     if (auto* blocc = gf::projectile::shoot(troll, kThrownBlock, dir, 1.6F, static_cast<float>(4 - difficultyId()), nlohmann::json{{"block", rock}})) {
         gf::entity::data(*blocc, kBlockKey) = rock;
-        gf::entity::setProperty(*blocc, "twilightforest:block", rockIndex(rock));
+        gf::entity::setProperty(*blocc, "gloamingforest:block", rockIndex(rock));
     }
     auto& random = fe::randomOf(troll);
-    gf::fx::sound(troll.getDimension(), "entity.twilightforest.troll.throw_rock", from, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 0.8F));
+    gf::fx::sound(troll.getDimension(), "entity.gloamingforest.troll.throw_rock", from, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 0.8F));
     setRock(troll, "");
     setCooldown(troll, 300 + random.nextInt(100));
     gf::log().info("caves: troll threw a rock");
@@ -248,7 +248,7 @@ void installTroll() {
         if (!troll) return;
         (void)cooldown(self); // this.rockCooldown = 300 + nextInt(100)
         auto rock = rockOf(self);
-        gf::entity::setProperty(self, "twilightforest:rock", rock.empty() ? 0 : rockIndex(rock) + 1);
+        gf::entity::setProperty(self, "gloamingforest:rock", rock.empty() ? 0 : rockIndex(rock) + 1);
         gf::entity::addGoal(*troll, 4, std::make_shared<TrollCombatGoal>(*troll));
         // NearestAttackableTargetGoal(Player, true): follow range 16, + 8 while holding a rock
         gf::entity::addTargetGoal(*troll, 2, std::make_shared<NearestPlayerTargetGoal>(*troll, [](Mob& m) { return rockOf(m).empty() ? 16.0 : 24.0; }));
@@ -274,7 +274,7 @@ void installTroll() {
     spec.onHitEntity = [](Actor& p, Actor& target) {
         // a living non-troll target: 6 thrown_block damage (no attacker), else the block flies on
         if (!fe::asMob(target) || target.getTypeName() == kTroll) return false;
-        gf::combat::hurt(target, 6.0f, "twilightforest:thrown_block");
+        gf::combat::hurt(target, 6.0f, "gloamingforest:thrown_block");
         gf::fx::particle(p.getDimension(), "minecraft:block", p.getFeetPos(), Vec3{}, 20, nlohmann::json{{"block", thrownBlockState(p)}});
         gf::log().info("caves: a thrown block hit {}", target.getTypeName());
         return true;

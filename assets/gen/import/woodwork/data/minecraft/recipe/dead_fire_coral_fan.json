@@ -1,5 +1,5 @@
 {
-  "type": "twilightforest:drying",
+  "type": "gloamingforest:drying",
   "filter_time": 40,
   "input": {
     "item": "minecraft:fire_coral_fan"

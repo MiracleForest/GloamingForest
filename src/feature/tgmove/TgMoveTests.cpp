@@ -95,9 +95,9 @@ GF_REGISTER_SELFTEST("tgmove.modifiers", [](Context& ctx) -> ll::coro::CoroTask<
     unequipAll(p);
     for (auto m : {Mod::DoubleJump, Mod::SideStep, Mod::GradualGlide, Mod::HighJump, Mod::StepUp, Mod::SwiftSwim})
         ctx.check(!tm::active(p, m), std::string(tm::modId(m)) + " is off without gear");
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step", "twilightforest:gradual_glide"});
-    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:water_walk", "twilightforest:slimy_soles"});
-    equip(p, 1, "twilightforest:travellers_vest", {});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump", "gloamingforest:side_step", "gloamingforest:gradual_glide"});
+    equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:water_walk", "gloamingforest:slimy_soles"});
+    equip(p, 1, "gloamingforest:travellers_vest", {});
     for (auto m : {Mod::DoubleJump, Mod::SideStep, Mod::GradualGlide, Mod::HighJump, Mod::StepUp, Mod::WaterWalk, Mod::SlimySoles, Mod::SwiftSwim})
         ctx.check(tm::active(p, m), std::string(tm::modId(m)) + " is active");
     ctx.check(!tm::active(p, Mod::Unrestrained), "unrestrained was not added");
@@ -119,7 +119,7 @@ GF_REGISTER_SELFTEST("tgmove.double_jump", [](Context& ctx) -> ll::coro::CoroTas
     auto g = ctx.testPos(1212, 2);
     co_await place(ctx, g);
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump"});
     co_await ctx.ticks(3);
     auto& p1 = ctx.player();
     ctx.require(tm::stateOf(p1).hasDoubleJump, "has_double_jump is set on the ground");
@@ -163,7 +163,7 @@ GF_REGISTER_SELFTEST("tgmove.validator", [](Context& ctx) -> ll::coro::CoroTask<
     co_await ctx.flatArea(1220, 8);
     co_await place(ctx, ctx.testPos(1222, 2));
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump", "gloamingforest:side_step"});
     tm::forceValidator(true);
     std::vector<tg::Abuse> got;
     for (int i = 0; i < 6; ++i) got.push_back(tm::handleAbuse(p, false));
@@ -201,7 +201,7 @@ GF_REGISTER_SELFTEST("tgmove.packet_before_move", [](Context& ctx) -> ll::coro::
     auto g = ctx.testPos(1224, 3);
     co_await place(ctx, g);
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump"});
     tm::forceValidator(true);
     gf::net::setTestCompanion(p, true);
     co_await ctx.ticks(2);
@@ -228,7 +228,7 @@ GF_REGISTER_SELFTEST("tgmove.sidestep", [](Context& ctx) -> ll::coro::CoroTask<>
     co_await ctx.flatArea(1230, 8);
     co_await place(ctx, ctx.testPos(1232, 2));
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:side_step"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:side_step"});
     co_await ctx.ticks(2);
     auto& p1 = ctx.player();
     const_cast<Vec2&>(p1.getRotation()) = Vec2{0, 0};
@@ -261,7 +261,7 @@ GF_REGISTER_SELFTEST("tgmove.glide", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto g = ctx.testPos(1242, 2);
     co_await place(ctx, g);
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:gradual_glide"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:gradual_glide"});
     p.teleport(at(g, 12), DimensionType(g.dim));
     co_await ctx.ticks(2);
     auto& p1 = ctx.player();
@@ -276,7 +276,7 @@ GF_REGISTER_SELFTEST("tgmove.glide", [](Context& ctx) -> ll::coro::CoroTask<> {
     tm::tickPlayer(p1);
     ctx.check(!tm::stateOf(p1).gliding, "is_gradually_gliding is cleared without the modifier");
     // vanilla fallback: sneaking in the air = Slow Falling
-    equip(p1, 2, "twilightforest:travellers_wings", {"twilightforest:gradual_glide"});
+    equip(p1, 2, "gloamingforest:travellers_wings", {"gloamingforest:gradual_glide"});
     p1.teleport(at(g, 24), DimensionType(g.dim));
     co_await ctx.ticks(4);
     auto& p1b = ctx.player();
@@ -303,7 +303,7 @@ GF_REGISTER_SELFTEST("tgmove.step_up", [](Context& ctx) -> ll::coro::CoroTask<> 
     auto  step = p.getEntityContext().tryGetComponent<MaxAutoStepComponent>();
     ctx.require(step.has_value(), "the player has a max auto step");
     float base = step->mValue;
-    equip(p, 3, "twilightforest:travellers_boots", {});
+    equip(p, 3, "gloamingforest:travellers_boots", {});
     tm::tickPlayer(p);
     ctx.check(std::abs(p.getEntityContext().tryGetComponent<MaxAutoStepComponent>()->mValue - (base + 0.5f)) < 1e-4, "boots: step height +0.5");
     p.setSneaking(true);
@@ -320,7 +320,7 @@ GF_REGISTER_SELFTEST("tgmove.slimy_soles", [](Context& ctx) -> ll::coro::CoroTas
     co_await ctx.flatArea(1260, 8);
     co_await place(ctx, ctx.testPos(1262, 2));
     auto& p = ctx.player();
-    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:slimy_soles"});
+    equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:slimy_soles"});
     auto& st  = tm::stateOf(p);
     st.fallVy = -1.0;
     float dmg = 4;
@@ -346,7 +346,7 @@ GF_REGISTER_SELFTEST("tgmove.unrestrained", [](Context& ctx) -> ll::coro::CoroTa
     co_await ctx.flatArea(1270, 8);
     co_await place(ctx, ctx.testPos(1272, 2));
     auto& p = ctx.player();
-    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+    equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
     tm::tickPlayer(p);
     auto imm = p.getEntityContext().tryGetComponent<BlockMovementSlowdownImmunityComponent>();
     ctx.check(imm.has_value() && imm->mBlocks->size() == 3, "immune to the slowdown of cobweb, berry bush and powder snow");
@@ -365,7 +365,7 @@ GF_REGISTER_SELFTEST("tgmove.straight_ahead", [](Context& ctx) -> ll::coro::Coro
         return a.mPtr ? a.mPtr->mCurrentValue : 0.0f;
     };
     float base = speed();
-    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:straight_ahead"});
+    equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:straight_ahead"});
     auto input = [&](float forward) {
         if (auto in = p.getEntityContext().tryGetComponent<MoveInputComponent>()) in->mMove->y = forward;
     };
@@ -374,7 +374,7 @@ GF_REGISTER_SELFTEST("tgmove.straight_ahead", [](Context& ctx) -> ll::coro::Coro
     tm::tickPlayer(p);
     ctx.check(std::abs(speed() - base * 1.4f) < 1e-3f, "x1.4 with the forward key: " + num(speed()) + " of " + num(base));
     input(0.0f);
-    p.lerpMotion(Vec3{0, 0, 0.3f}); // still moving forward, the key released (TF: forwardImpulse only)
+    p.lerpMotion(Vec3{0, 0, 0.3f}); // still moving forward, the key released (upstream: forwardImpulse only)
     tm::tickPlayer(p);
     ctx.check(std::abs(speed() - base) < 1e-4f, "forward momentum without the key: normal speed");
     input(-1.0f);
@@ -392,7 +392,7 @@ GF_REGISTER_SELFTEST("tgmove.wings_state", [](Context& ctx) -> ll::coro::CoroTas
     auto& p = ctx.player();
     gf::net::setTestCompanion(p, true);
     (void)gf::net::takeTestMessages(p);
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:side_step"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:side_step"});
     co_await ctx.ticks(2);
     auto& p1 = ctx.player();
     ctx.require(tm::tryPerformSidestep(p1, false), "a sidestep");
@@ -417,7 +417,7 @@ GF_REGISTER_SELFTEST("tgmove.aquatic_agility", [](Context& ctx) -> ll::coro::Cor
     auto  br = p.getEntityContext().tryGetComponent<BreathableComponent>();
     ctx.require(br.has_value(), "the player breathes");
     short saved = br->mAirSupply;
-    equip(p, 0, "twilightforest:travellers_goggles", {"twilightforest:aquatic_agility"});
+    equip(p, 0, "gloamingforest:travellers_goggles", {"gloamingforest:aquatic_agility"});
     int kept = 0;
     for (int i = 0; i < 400; ++i) {
         tm::stateOf(p).lastAir = 200;
@@ -441,7 +441,7 @@ GF_REGISTER_SELFTEST("tgmove.effects", [](Context& ctx) -> ll::coro::CoroTask<> 
     MobEffectInstance potion(8u, EffectDuration{600});
     potion.mAmplifier = 0;
     p.addEffect(potion);
-    equip(p, 2, "twilightforest:travellers_wings", {});
+    equip(p, 2, "gloamingforest:travellers_wings", {});
     tm::tickPlayer(p);
     auto const* e = p.getEffect(8u);
     ctx.check(e && e->mAmplifier == tg::kHighJumpAmplifier, "Jump Boost II over a weaker potion: amplifier " + std::to_string(e ? e->mAmplifier : -1));
@@ -455,7 +455,7 @@ GF_REGISTER_SELFTEST("tgmove.effects", [](Context& ctx) -> ll::coro::CoroTask<> 
     MobEffectInstance strong(8u, EffectDuration{600});
     strong.mAmplifier = 3;
     p.addEffect(strong);
-    equip(p, 2, "twilightforest:travellers_wings", {});
+    equip(p, 2, "gloamingforest:travellers_wings", {});
     tm::tickPlayer(p);
     e = p.getEffect(8u);
     ctx.check(e && e->mAmplifier == 3, "a stronger potion stays");
@@ -481,7 +481,7 @@ GF_REGISTER_SELFTEST("tgmove.restore", [](Context& ctx) -> ll::coro::CoroTask<> 
     tm::tickPlayer(p);
     int depthBefore = depth();
     // swift swim: Depth Strider III with the vest, the level before once it is off
-    equip(p, 1, "twilightforest:travellers_vest", {});
+    equip(p, 1, "gloamingforest:travellers_vest", {});
     tm::tickPlayer(p);
     ctx.check(depth() == tg::kSwiftSwimDepthStrider, "the vest: Depth Strider III (" + std::to_string(depth()) + ")");
     unequipAll(p);
@@ -490,7 +490,7 @@ GF_REGISTER_SELFTEST("tgmove.restore", [](Context& ctx) -> ll::coro::CoroTask<> 
     // step up: forgetting the state (tests, respawn) never adds the +0.5 twice
     auto step = [&] { return ectx.tryGetComponent<MaxAutoStepComponent>()->mValue; };
     float base = step();
-    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+    equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
     for (int i = 0; i < 3; ++i) {
         tm::tickPlayer(p);
         tm::forget(p);
@@ -515,11 +515,11 @@ GF_REGISTER_SELFTEST("tgmove.safe_fall_slimy", [](Context& ctx) -> ll::coro::Cor
     co_await ctx.flatArea(1220, 8);
     co_await place(ctx, ctx.testPos(1223, 1));
     auto& p = ctx.player();
-    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:slimy_soles"});
+    equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:slimy_soles"});
     auto& st    = tm::stateOf(p);
     st.safeFall = true; // after a double jump
     st.fallVy   = -0.8;
-    float a     = 2; // TF: no damage within the +2 safe fall, so no bounce either
+    float a     = 2; // upstream: no damage within the +2 safe fall, so no bounce either
     ctx.check(!tm::onFall(p, a) && st.slimy.bounceVelocity == 0, "a 2 damage landing after a double jump: harmless, no bounce");
     float b = 4;
     ctx.check(!tm::onFall(p, b) && st.slimy.bounceVelocity > 0, "a 4 damage landing after a double jump: the bounce");
@@ -533,7 +533,7 @@ GF_REGISTER_SELFTEST("tgmove.creative_fly", [](Context& ctx) -> ll::coro::CoroTa
     auto g = ctx.testPos(1233, 1);
     co_await place(ctx, g);
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump"});
     co_await ctx.ticks(2);
     auto& p1 = ctx.player();
     p1.teleport(at(g, 6), DimensionType(g.dim));
@@ -575,8 +575,8 @@ GF_REGISTER_SELFTEST("tgmove.mobs", [](Context& ctx) -> ll::coro::CoroTask<> {
     a->addTag(tm::kLeashOverrideTag);
     b->addTag(tm::kLeashOverrideTag);
     {
-        auto wings = *gf::game::items::make("twilightforest:travellers_wings", 1);
-        gf::game::items::setData(wings, "gear", {{"twilightforest:gradual_glide", 1}});
+        auto wings = *gf::game::items::make("gloamingforest:travellers_wings", 1);
+        gf::game::items::setData(wings, "gear", {{"gloamingforest:gradual_glide", 1}});
         a->setArmor(Slot::Legs, wings);
     }
     ctx.check(tm::activeOn(*a, Mod::GradualGlide) && tm::activeOn(*a, Mod::HighJump), "a mob's wings: gradual glide and high jump");
@@ -614,7 +614,7 @@ GF_REGISTER_SELFTEST("tgmove.aquatic_mining", [](Context& ctx) -> ll::coro::Coro
     ctx.require(stone != nullptr, "stone");
     unequipAll(p1);
     float without = p1.getDestroyProgress(*stone);
-    equip(p1, 0, "twilightforest:travellers_goggles", {"twilightforest:aquatic_agility"});
+    equip(p1, 0, "gloamingforest:travellers_goggles", {"gloamingforest:aquatic_agility"});
     float with = p1.getDestroyProgress(*stone);
     ctx.check(without > 0 && std::abs(with / without - 5.0f) < 1e-3f, "submerged mining speed x5: " + num(with) + " / " + num(without));
     unequipAll(p1);
@@ -625,7 +625,7 @@ GF_REGISTER_SELFTEST("tgmove.armor_time", [](Context& ctx) -> ll::coro::CoroTask
     co_await ctx.flatArea(1260, 8);
     co_await place(ctx, ctx.testPos(1263, 1));
     auto& p = ctx.player();
-    equip(p, 1, "twilightforest:travellers_vest", {});
+    equip(p, 1, "gloamingforest:travellers_vest", {});
     auto& slot = gf::entity::data(p, tm::kLastDamageArmorTimeKey);
     slot       = nullptr;
     gf::combat::hurt(p, 1.0f, "minecraft:fall");
@@ -657,10 +657,10 @@ GF_REGISTER_SELFTEST("tgmove.unrestrained_blocks", [](Context& ctx) -> ll::coro:
         floor(block);
         auto& p = ctx.player();
         unequipAll(p);
-        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        if (boots) equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
         p.teleport(at(g, 0.0f), DimensionType(g.dim));
         tm::forget(p);
-        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        if (boots) equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
         co_await ctx.ticks(8);
         auto& q     = ctx.player();
         float start = q.getFeetPos().x;
@@ -683,7 +683,7 @@ GF_REGISTER_SELFTEST("tgmove.unrestrained_blocks", [](Context& ctx) -> ll::coro:
         unequipAll(p);
         p.teleport(at(g, 0.0f), DimensionType(g.dim));
         tm::forget(p);
-        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        if (boots) equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
         co_await ctx.ticks(8);
         auto& q     = ctx.player();
         float start = q.getFeetPos().x;
@@ -720,7 +720,7 @@ GF_REGISTER_SELFTEST("tgmove.unrestrained_blocks", [](Context& ctx) -> ll::coro:
         unequipAll(p);
         p.teleport(at(g, 0.0f), DimensionType(g.dim));
         tm::forget(p);
-        equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
         co_await ctx.ticks(10);
         float lo = 1e9f, hi = -1e9f;
         for (int i = 0; i < 20; ++i) {
@@ -747,7 +747,7 @@ GF_REGISTER_SELFTEST("tgmove.unrestrained_blocks", [](Context& ctx) -> ll::coro:
         unequipAll(p);
         p.teleport(at(g, 0.0f), DimensionType(g.dim));
         tm::forget(p);
-        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        if (boots) equip(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:unrestrained"});
         co_await ctx.ticks(10);
         auto& q     = ctx.player();
         float start = q.getFeetPos().y, top = start;
@@ -773,7 +773,7 @@ GF_REGISTER_SELFTEST("tgmove.agile_restore", [](Context& ctx) -> ll::coro::CoroT
     co_await ctx.flatArea(1280, 8);
     co_await place(ctx, ctx.testPos(1284, 3));
     auto& p = ctx.player();
-    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:agile_ranger"});
+    equip(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:agile_ranger"});
     ctx.give("minecraft:arrow", 16);
     if (auto bow = gf::game::items::make("minecraft:bow", 1); bow && p.isSimulated()) {
         auto& sp = static_cast<SimulatedPlayer&>(p);
@@ -894,7 +894,7 @@ GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
                 if (LeashableUtility::getPreset(*a, *leash, &holder).mSoftDistance >= 6.0f) ++freed;
     ctx.check(freed == 3, "the marked pigs' leash pulls only beyond 6 blocks (" + std::to_string(freed) + " of 3)");
     ctx.info("marked " + std::to_string(markedFar) + " / unmarked " + std::to_string(plainFar) + " pigs stayed more than 3 blocks away");
-    // TF: a marked mob within 6 blocks is not pathed to its holder; it may wander there by itself, so
+    // upstream: a marked mob within 6 blocks is not pathed to its holder; it may wander there by itself, so
     // the distances are reported, and the paths checked above
     if (auto* a = lv->fetchEntity(loose, false)) {
         ctx.check(!a->hasTag(tm::kLeashOverrideTag), "the marker is dropped from a mob that is not leashed when it joins");
@@ -909,7 +909,7 @@ GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
 });
 // The client e2e scenario's helpers. They act only on real players that carry the entity tag
 // kE2eTag, which only the scenario adds (/tag @s add gf_e2e.tgmove): a selftest run on a live
-// server (`/twilightforest selftest`, the full run) changes nobody. Armour they replace goes to
+// server (`/gloamingforest selftest`, the full run) changes nobody. Armour they replace goes to
 // the player's inventory (or is dropped), never destroyed.
 constexpr char kE2eTag[] = "gf_e2e.tgmove";
 
@@ -942,9 +942,9 @@ void equipKeeping(Player& p, int slot, std::string const& itemId, std::vector<st
 // high jump), the vest (built-in swift swim), the boots (water walk, unrestrained, built-in step up).
 GF_REGISTER_SELFTEST("tgmove.e2e.equip", [](Context& ctx) -> ll::coro::CoroTask<> {
     int n = forE2ePlayers([](Player& p) {
-        equipKeeping(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step", "twilightforest:gradual_glide", "twilightforest:agile_ranger"});
-        equipKeeping(p, 1, "twilightforest:travellers_vest", {});
-        equipKeeping(p, 3, "twilightforest:travellers_boots", {"twilightforest:water_walk", "twilightforest:unrestrained"});
+        equipKeeping(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump", "gloamingforest:side_step", "gloamingforest:gradual_glide", "gloamingforest:agile_ranger"});
+        equipKeeping(p, 1, "gloamingforest:travellers_vest", {});
+        equipKeeping(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:water_walk", "gloamingforest:unrestrained"});
         tm::forget(p);
     });
     ctx.info("equipped " + std::to_string(n) + " players");
@@ -955,10 +955,10 @@ GF_REGISTER_SELFTEST("tgmove.e2e.equip", [](Context& ctx) -> ll::coro::CoroTask<
 // slot), and with straight ahead.
 GF_REGISTER_SELFTEST("tgmove.e2e.plain", [](Context& ctx) -> ll::coro::CoroTask<> {
     int n = forE2ePlayers([](Player& p) {
-        equipKeeping(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step", "twilightforest:gradual_glide"});
+        equipKeeping(p, 2, "gloamingforest:travellers_wings", {"gloamingforest:double_jump", "gloamingforest:side_step", "gloamingforest:gradual_glide"});
         auto vest = p.getArmor(Slot::Torso);
-        if (gf::game::items::idOf(vest) == "twilightforest:travellers_vest") p.setArmor(Slot::Torso, ItemStack::EMPTY_ITEM());
-        equipKeeping(p, 3, "twilightforest:travellers_boots", {"twilightforest:water_walk", "twilightforest:straight_ahead"});
+        if (gf::game::items::idOf(vest) == "gloamingforest:travellers_vest") p.setArmor(Slot::Torso, ItemStack::EMPTY_ITEM());
+        equipKeeping(p, 3, "gloamingforest:travellers_boots", {"gloamingforest:water_walk", "gloamingforest:straight_ahead"});
         tm::forget(p);
     });
     ctx.info("equipped " + std::to_string(n) + " players");

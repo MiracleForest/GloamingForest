@@ -2,22 +2,22 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:winter_wolf",
+      "identifier": "gloamingforest:winter_wolf",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:aggressive": {
+        "gloamingforest:aggressive": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:has_target": {
+        "gloamingforest:has_target": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:breathing": {
+        "gloamingforest:breathing": {
           "type": "bool",
           "default": false,
           "client_sync": true
@@ -40,7 +40,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "winter_wolf",
           "tf_hostile_wolf",
           "monster",

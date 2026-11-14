@@ -1,5 +1,5 @@
 {
-  "about": "U26 darktower: refinements of the baseline (tools/sounds/baseline/darktower.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The Ghast Trap is a carminite machine (GhastTrapBlockEntity plays its sounds at pitch 4, which Java clamps to 2): it buzzes with an electric hum and sparks over its whirr, warms up with a rising whirr and a hum that speeds up, and shuts off with a falling whirr and dying sparks. The Sliding Trap's block grinds along with a low stick-slip creak over a stone scrape.",
+  "about": "U26 darktower: refinements of the baseline (tools/sounds/baseline/darktower.json). Original sound designs; upstream's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay upstream's. The Ghast Trap is a carminite machine (GhastTrapBlockEntity plays its sounds at pitch 4, which Java clamps to 2): it buzzes with an electric hum and sparks over its whirr, warms up with a rising whirr and a hum that speeds up, and shuts off with a falling whirr and dying sparks. The Sliding Trap's block grinds along with a low stick-slip creak over a stone scrape.",
   "patches": {
     "ghast_trap/buzz": {
       "params": {"f0": 300, "f1": 600, "len": 0.6, "hum": 110, "wob": 18},

@@ -2,7 +2,7 @@
   "format_version": "1.16.100",
   "minecraft:fog_settings": {
     "description": {
-      "identifier": "twilightforest:oak_savannah"
+      "identifier": "gloamingforest:oak_savannah"
     },
     "distance": {
       "air": {

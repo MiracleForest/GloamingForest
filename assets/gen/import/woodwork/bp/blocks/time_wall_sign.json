@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:time_wall_sign",
+      "identifier": "gloamingforest:time_wall_sign",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east"]
+        "gloamingforest:facing": ["north", "south", "west", "east"]
       }
     },
     "components": {

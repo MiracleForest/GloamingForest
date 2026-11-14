@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.helmet_crab.base": {
+    "animation.gloamingforest.helmet_crab.base": {
       "loop": true,
       "bones": {
         "body": {

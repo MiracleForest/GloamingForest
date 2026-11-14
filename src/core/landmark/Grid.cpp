@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/landmarks/LegacyLandmarkPlacements.java
-//   src/main/java/twilightforest/util/iterators/XZQuadrantIterator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/landmarks/LegacyLandmarkPlacements.java
+//   src/main/java/gloamingforest/util/iterators/XZQuadrantIterator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/landmark/Grid.h"
@@ -86,18 +86,18 @@ ColumnXZ biomeSampleColumn(int chunkX, int chunkZ) {
 }
 
 std::vector<std::pair<std::string, std::string>> const& biomeLandmarks() {
-    // BIOME_2_STRUCTURES (DENSE_MUSHROOM_FOREST -> MUSHROOM_TOWER is commented out in TF)
+    // BIOME_2_STRUCTURES (DENSE_MUSHROOM_FOREST -> MUSHROOM_TOWER is commented out in upstream)
     static std::vector<std::pair<std::string, std::string>> const rows = {
-        {"twilightforest:enchanted_forest", "twilightforest:quest_grove"},
-        {"twilightforest:lake", "twilightforest:quest_island"},
-        {"twilightforest:swamp", "twilightforest:labyrinth"},
-        {"twilightforest:fire_swamp", "twilightforest:hydra_lair"},
-        {"twilightforest:dark_forest", "twilightforest:knight_stronghold"},
-        {"twilightforest:dark_forest_center", "twilightforest:dark_tower"},
-        {"twilightforest:snowy_forest", "twilightforest:yeti_cave"},
-        {"twilightforest:glacier", "twilightforest:aurora_palace"},
-        {"twilightforest:highlands", "twilightforest:troll_cave"},
-        {"twilightforest:final_plateau", "twilightforest:final_castle"},
+        {"gloamingforest:enchanted_forest", "gloamingforest:quest_grove"},
+        {"gloamingforest:lake", "gloamingforest:quest_island"},
+        {"gloamingforest:swamp", "gloamingforest:labyrinth"},
+        {"gloamingforest:fire_swamp", "gloamingforest:hydra_lair"},
+        {"gloamingforest:dark_forest", "gloamingforest:knight_stronghold"},
+        {"gloamingforest:dark_forest_center", "gloamingforest:dark_tower"},
+        {"gloamingforest:snowy_forest", "gloamingforest:yeti_cave"},
+        {"gloamingforest:glacier", "gloamingforest:aurora_palace"},
+        {"gloamingforest:highlands", "gloamingforest:troll_cave"},
+        {"gloamingforest:final_plateau", "gloamingforest:final_castle"},
     };
     return rows;
 }
@@ -110,12 +110,12 @@ std::string biomeLandmark(std::string const& biomeId) {
 
 std::vector<std::pair<std::string, int>> const& varietyLandmarks() {
     static std::vector<std::pair<std::string, int>> const list = {
-        {"twilightforest:small_hollow_hill", 6},
-        {"twilightforest:medium_hollow_hill", 3},
-        {"twilightforest:large_hollow_hill", 1},
-        {"twilightforest:hedge_maze", 2},
-        {"twilightforest:naga_courtyard", 2},
-        {"twilightforest:lich_tower", 2},
+        {"gloamingforest:small_hollow_hill", 6},
+        {"gloamingforest:medium_hollow_hill", 3},
+        {"gloamingforest:large_hollow_hill", 1},
+        {"gloamingforest:hedge_maze", 2},
+        {"gloamingforest:naga_courtyard", 2},
+        {"gloamingforest:lich_tower", 2},
     };
     return list;
 }
@@ -171,8 +171,8 @@ std::vector<ColumnXZ> centerScanner(int blockX, int blockZ, int gridSearchRadius
 }
 
 bool isUnimplementedKey(std::string const& key) {
-    return key == "twilightforest:quest_island" || key == "twilightforest:druid_grove" || key == "twilightforest:floating_ruins"
-        || key == "twilightforest:world_tree";
+    return key == "gloamingforest:quest_island" || key == "gloamingforest:druid_grove" || key == "gloamingforest:floating_ruins"
+        || key == "gloamingforest:world_tree";
 }
 
 } // namespace gf::core::landmark

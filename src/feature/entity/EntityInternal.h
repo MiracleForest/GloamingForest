@@ -33,7 +33,7 @@ namespace gf::feature::entity {
 using Json = nlohmann::json;
 
 /// Minecraft's LegacyRandomSource (java.util.Random's LCG): the random source of a mob's goals, so
-/// the goal code consumes random numbers the way TF does (seedable for deterministic selftests).
+/// the goal code consumes random numbers the way upstream does (seedable for deterministic selftests).
 /// It is the W0 contract's gf::core::jrand::LegacyRandom (F5); entity.java_random checks it against
 /// Java's values and an independent copy of java.util.Random.
 using JavaRandom = core::jrand::LegacyRandom;
@@ -140,7 +140,7 @@ struct InternalHooks {
     std::function<bool(Actor const& actor)>                                           save;
     /// Right before the state's data is written into the actor's save tag.
     std::function<void(Actor const& actor, ActorState& state)>                        persist;
-    /// false: the actor never goes through a portal (Entity#canUsePortal: BaseTFBoss, TF's parts).
+    /// false: the actor never goes through a portal (Entity#canUsePortal: BaseTFBoss, upstream's parts).
     std::function<bool(Actor const& actor)>                                           usePortal;
 };
 void addInternalHooks(InternalHooks hooks);
@@ -149,7 +149,7 @@ void addInternalHooks(InternalHooks hooks);
 void invalidateInterest();
 
 /// Whether an actor may go through a portal (canChangeDimensionsUsingPortal of Actor, Mob and
-/// FallingBlockActor, which the engine's portals and the Twilight portal ask): false when its type
+/// FallingBlockActor, which the engine's portals and the Gloaming portal ask): false when its type
 /// is marked (ext::setCanUsePortal) or an internal hook's usePortal says so. Players always may.
 [[nodiscard]] bool portalAllowed(Actor const& actor);
 /// Counts the portal queries (portalAllowed) of the actor `uid` from now on (0: none).
@@ -167,7 +167,7 @@ void removeLater(std::int64_t uid);
 /// Whether Java has a block entity where Bedrock has this block actor (not for flower pots, note
 /// blocks, cauldrons, pistons, ...).
 [[nodiscard]] bool javaHasBlockEntity(BlockActor const& be);
-/// Whether a twilightforest: block has a block entity in Java (TFBlockEntities' valid blocks, TF's
+/// Whether a gloamingforest: block has a block entity in Java (TFBlockEntities' valid blocks, upstream's
 /// chests and signs): Bedrock's custom blocks have none (gf::entity::ext::BreakRule::SpareBlockEntities).
 [[nodiscard]] bool hasJavaBlockEntity(std::string_view blockId);
 /// Whether the actor is removed on Peaceful right now (Monster#shouldDespawnInPeaceful; queued with
@@ -265,7 +265,7 @@ enum class PathType {
 /// WalkNodeEvaluator#getPathTypeFromState / #getPathTypeStatic.
 [[nodiscard]] PathType pathTypeFromState(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] PathType pathTypeStatic(BlockSource& region, BlockPos const& pos);
-/// PathType#getMalus (the defaults; TF's mobs set no others for these goals).
+/// PathType#getMalus (the defaults; upstream's mobs set no others for these goals).
 [[nodiscard]] float pathMalus(PathType type);
 /// GoalUtils#hasMalus.
 [[nodiscard]] bool hasMalus(BlockSource& region, BlockPos const& pos);

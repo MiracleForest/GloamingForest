@@ -2,12 +2,12 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:hydra",
+      "identifier": "gloamingforest:hydra",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:red": {
+        "gloamingforest:red": {
           "type": "bool",
           "default": false,
           "client_sync": true
@@ -17,7 +17,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "hydra",
           "monster",
           "mob"

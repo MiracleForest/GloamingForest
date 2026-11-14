@@ -6,11 +6,11 @@
 # 1. out/provisions/e115.png: the 16 cake states, with the frosted overlay (freezing vignette) and, with
 #    the client mod, the frosted icon in the HUD effect list and IceLayer's ice cubes on the frosted III
 #    pig 5 blocks ahead (provisions.frosted; "provisions: ice cubes drawn" in the client log);
-# 2. out/provisions/inventory.png: the inventory with every food, stale bread and disc icon (TF's textures),
+# 2. out/provisions/inventory.png: the inventory with every food, stale bread and disc icon (upstream's textures),
 #    names coloured by rarity (uncommon hydra chop / stroganoff, rare discs);
-# 3. a disc in a jukebox: out/provisions/jukebox.png (the "now playing" line names TF's song key);
-# 4. local / remote-mod: /twilightforest tp: the music provider picks twilightforest:twilight_forest
-#    ("music: provider chose twilightforest:twilight_forest" in the client log), out/provisions/dimension.png.
+# 3. a disc in a jukebox: out/provisions/jukebox.png (the "now playing" line names upstream's song key);
+# 4. local / remote-mod: /gloamingforest tp: the music provider picks gloamingforest:gloaming_forest
+#    ("music: provider chose gloamingforest:gloaming_forest" in the client log), out/provisions/dimension.png.
 # remote-vanilla: steps 1-3 (the client only has the server's packs; no HUD icon, no provider).
 $script:IsLocal = $script:Mode -eq 'local'
 $hostPrefix = if ($script:IsLocal) { '' } else { '\[host\].*' }
@@ -36,18 +36,18 @@ Save-Screenshot 'inventory' | Out-Null
 Close-Screen
 
 Invoke-Chat '/setblock 20 -60 24 jukebox'
-Invoke-Chat '/replaceitem block 20 -60 24 slot.container 0 twilightforest:music_disc_radiance'
+Invoke-Chat '/replaceitem block 20 -60 24 slot.container 0 gloamingforest:music_disc_radiance'
 Start-Sleep -Seconds 2
 Save-Screenshot 'jukebox' | Out-Null
 Invoke-Chat '/setblock 20 -60 24 air'
 
 if ($script:Mode -ne 'remote-vanilla') {
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest tp'
+    Invoke-Chat '/gloamingforest tp'
     Start-Sleep -Seconds 8
     Wait-HudReady | Out-Null
-    try { Wait-LogLine 'music: provider chose twilightforest:twilight_forest' 90 -Since $mark | Out-Null }
-    catch { throw 'the Twilight Forest music was not chosen in the dimension' }
+    try { Wait-LogLine 'music: provider chose gloamingforest:gloaming_forest' 90 -Since $mark | Out-Null }
+    catch { throw 'the Gloaming Forest music was not chosen in the dimension' }
     Save-Screenshot 'dimension' | Out-Null
 }
 

@@ -15,12 +15,12 @@
 
 namespace gf::tags::internal {
 
-/// The registry directories that have tag files ("block", "item", "worldgen/biome", "twilight", ...).
+/// The registry directories that have tag files ("block", "item", "worldgen/biome", "gloaming", ...).
 [[nodiscard]] std::vector<std::string> registryDirs();
 /// The tags of one directory.
 [[nodiscard]] std::vector<std::string> tagsOf(std::string const& dir);
 /// Membership / members by directory name: a `tags::Registry` directory answers as has / members
-/// (bridge included); TF's own registries ("twilight": wood palettes, ...) have no vanilla bridge.
+/// (bridge included); upstream's own registries ("gloaming": wood palettes, ...) have no vanilla bridge.
 [[nodiscard]] bool                     hasIn(std::string const& dir, std::string const& tag, std::string const& id);
 [[nodiscard]] std::vector<std::string> membersIn(std::string const& dir, std::string const& tag);
 /// The data members of a tag (nested data tags flattened, the data's Java ids renamed to Bedrock's;

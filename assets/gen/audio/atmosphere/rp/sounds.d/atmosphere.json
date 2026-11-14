@@ -1,7 +1,7 @@
 {
-  "environment.twilightforest.acid_rain": {
+  "environment.gloamingforest.acid_rain": {
     "category": "player",
-    "subtitle": "subtitles.twilightforest.environment.acid_rain",
+    "subtitle": "subtitles.gloamingforest.environment.acid_rain",
     "sounds": [
       {
         "name": "sounds/random/fizz"

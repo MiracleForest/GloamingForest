@@ -1,52 +1,52 @@
 {
-  "twilightforest:block.twilightforest.jet.active": {
+  "gloamingforest:block.gloamingforest.jet.active": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.jet.active",
+    "subtitle": "subtitles.gloamingforest.block.jet.active",
     "sounds": [
       {
         "event": "entity.ghast.shoot"
       }
     ]
   },
-  "twilightforest:block.twilightforest.jet.pop": {
+  "gloamingforest:block.gloamingforest.jet.pop": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.jet.pop",
+    "subtitle": "subtitles.gloamingforest.block.jet.pop",
     "sounds": [
       {
         "event": "block.lava.pop"
       }
     ]
   },
-  "twilightforest:block.twilightforest.jet.start": {
+  "gloamingforest:block.gloamingforest.jet.start": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.jet.start",
+    "subtitle": "subtitles.gloamingforest.block.jet.start",
     "sounds": [
       {
         "event": "block.comparator.click"
       }
     ]
   },
-  "twilightforest:block.twilightforest.smoker.start": {
+  "gloamingforest:block.gloamingforest.smoker.start": {
     "category": "block",
-    "subtitle": "subtitles.twilightforest.block.smoker.start",
+    "subtitle": "subtitles.gloamingforest.block.smoker.start",
     "sounds": [
       {
         "event": "block.comparator.click"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.death": {
+  "gloamingforest:entity.gloamingforest.hydra.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.death",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.death",
     "sounds": [
       {
         "file": "mob/hydra/death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.growl": {
+  "gloamingforest:entity.gloamingforest.hydra.growl": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.growl",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.growl",
     "sounds": [
       {
         "file": "mob/hydra/growl1"
@@ -59,9 +59,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.hurt": {
+  "gloamingforest:entity.gloamingforest.hydra.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.hurt",
     "sounds": [
       {
         "file": "mob/hydra/hurt1"
@@ -77,9 +77,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.roar": {
+  "gloamingforest:entity.gloamingforest.hydra.roar": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.roar",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.roar",
     "sounds": [
       {
         "file": "mob/hydra/roar1"
@@ -89,27 +89,27 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.shoot": {
+  "gloamingforest:entity.gloamingforest.hydra.shoot": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.shoot",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.shoot",
     "sounds": [
       {
         "event": "entity.ghast.shoot"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.shoot_fire": {
+  "gloamingforest:entity.gloamingforest.hydra.shoot_fire": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.shoot_fire",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.shoot_fire",
     "sounds": [
       {
         "event": "entity.ghast.shoot"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.hydra.warn": {
+  "gloamingforest:entity.gloamingforest.hydra.warn": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.hydra.warn",
+    "subtitle": "subtitles.gloamingforest.entity.hydra.warn",
     "sounds": [
       {
         "file": "mob/hydra/warn"

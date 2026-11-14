@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U24 (hydra): the Java-side world helpers the Hydra, its mortar and the jets need (Entity#is,
@@ -41,7 +41,7 @@ using JavaRandom = core::jrand::LegacyRandom;
 [[nodiscard]] std::uint64_t currentTick();
 
 /// Damage type tags of Minecraft 1.21.1 that Bedrock has no data for: vanilla's own members plus
-/// the tag data (TF's members and the units' fragments). Unit-local until F10 / A8 expose vanilla
+/// the tag data (upstream's members and the units' fragments). Unit-local until F10 / A8 expose vanilla
 /// damage-type tag membership (routed).
 [[nodiscard]] bool isFireDamage(std::string const& type);
 [[nodiscard]] bool isProjectileDamage(std::string const& type);

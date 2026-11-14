@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/util/StructureHints.java
-//   src/main/java/twilightforest/world/components/structures/util/ProgressionStructure.java
-//   src/main/java/twilightforest/asmhooks/ItemHooks.java
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/util/StructureHints.java
+//   src/main/java/gloamingforest/world/components/structures/util/ProgressionStructure.java
+//   src/main/java/gloamingforest/asmhooks/ItemHooks.java
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The hint system: a locked landmark sends a kobold carrying a written book about it, and the book
 // always drops when the kobold dies (setDropChance(MAINHAND, PRESERVE_ITEM_DROP_CHANCE_THRESHOLD)).
-// TF keeps the book's title, author and pages as translation keys and translates them on each
-// reader's client (twilightforest:translatable_book, ModifyWrittenBookName, translateBookAuthor).
+// upstream keeps the book's title, author and pages as translation keys and translates them on each
+// reader's client (gloamingforest:translatable_book, ModifyWrittenBookName, translateBookAuthor).
 // Bedrock books hold plain text, so the book is written in the language of the player it is made
 // for (gf::trFor) and keeps the keys in its item data (translatable_book): whoever picks it up or
 // opens it gets it written again in their own language.
@@ -59,13 +59,13 @@ namespace {
 namespace ia = gf::interactions;
 using DropSlot = SharedTypes::Legacy::SlotWithDropChance;
 
-constexpr char kBookPrefix[]     = "twilightforest.book.";
+constexpr char kBookPrefix[]     = "gloamingforest.book.";
 constexpr char kTranslatable[]   = "translatable_book";
 /// Mob.PRESERVE_ITEM_DROP_CHANCE_THRESHOLD: a drop chance above 1 always drops, undamaged.
 constexpr float kPreserveDrop    = 2.0f;
 /// Mob.DEFAULT_EQUIPMENT_DROP_CHANCE (the other slots of a drop chance table made here).
 constexpr float kDefaultDrop     = 0.085f;
-/// The hint mob's box for the spawn checks (TF's kobold: 0.8 x 0.9 blocks).
+/// The hint mob's box for the spawn checks (upstream's kobold: 0.8 x 0.9 blocks).
 constexpr float kHintHalfWidth   = 0.4f;
 constexpr float kHintHeight      = 0.9f;
 
@@ -89,7 +89,7 @@ std::string text(Player const* player, std::string const& key, std::string_view 
 /// minecarts) overlaps the box.
 bool isUnobstructed(BlockSource& region, AABB const& box) {
     for (Actor* a : region.fetchEntities(nullptr, box, true, false)) {
-        if (!a || !a->isAlive() || a->getTypeName() == "twilightforest:protection_box") continue;
+        if (!a || !a->isAlive() || a->getTypeName() == "gloamingforest:protection_box") continue;
         bool blocks = a->hasCategory(ActorCategory::Mob) || a->hasCategory(ActorCategory::Boat) || a->hasCategory(ActorCategory::Minecart);
         if (blocks && a->getAABB().intersects(box)) return false;
     }
@@ -265,7 +265,7 @@ bool trySpawnHintMonster(Info const& info, Player& player, int x, int y, int z) 
 
 void installHints() {
     auto& s = hints();
-    // whoever picks a hint book up gets it in their own language (TF translates on each client)
+    // whoever picks a hint book up gets it in their own language (upstream translates on each client)
     s.pickup = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerPickUpItemEvent>([](ll::event::PlayerPickUpItemEvent& e) {
         auto& stack = e.itemActor().item();
         if (game::items::idOf(stack) == "minecraft:written_book") (void)retranslateBook(stack, e.self());

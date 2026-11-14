@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/config/TFClientConfig.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/config/TFClientConfig.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U15 (atmosphere), client mod: the editor of TFClientConfig's auroraBiomes list ("Aurora Shader
-// Biomes", config.twilightforest.aurora_biomes; NeoForge's list screen behind its "Edit Biomes"
+// Biomes", config.gloamingforest.aurora_biomes; NeoForge's list screen behind its "Edit Biomes"
 // button, .button; the explanation of .tooltip). One text box per biome id, a remove button per
 // row, an add button and Done: the list goes to the client's own config/atmosphere.json (a client
 // joined to a remote server edits its own copy) and applies at once. Opened as the screen type
@@ -89,7 +89,7 @@ public:
     static constexpr float kWidth = 260, kHeight = 196, kRow = 20, kListTop = 52;
     static constexpr int   kRows  = 6;
 
-    AuroraBiomesScreen() : Screen(ctr("config.twilightforest.aurora_biomes", "Aurora Shader Biomes"), kWidth, kHeight), mBiomes(auroraBiomesConfigured()) {}
+    AuroraBiomesScreen() : Screen(ctr("config.gloamingforest.aurora_biomes", "Aurora Shader Biomes"), kWidth, kHeight), mBiomes(auroraBiomesConfigured()) {}
 
     void init() override { rebuild(); }
     /// Widgets are rebuilt between frames, never from inside one of their own callbacks.
@@ -101,7 +101,7 @@ public:
     }
 
     void renderExtra(sc::Canvas& c, float, float) override {
-        auto lines = wrap(c, ctr("config.twilightforest.aurora_biomes.tooltip", "Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect."), kWidth - 16);
+        auto lines = wrap(c, ctr("config.gloamingforest.aurora_biomes.tooltip", "Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect."), kWidth - 16);
         float y = 18;
         for (auto const& l : lines) {
             c.text(8, y, l, sc::color::kTextDark, sc::Align::Left, false);
@@ -138,7 +138,7 @@ private:
             float y     = kListTop + row * kRow;
             auto& field = add<sc::TextField>(sc::Rect{8, y, kWidth - 60, 16}, mBiomes[i]);
             field.maxLength = 128;
-            field.placeholder = "twilightforest:glacier";
+            field.placeholder = "gloamingforest:glacier";
             field.onChange    = [this, i](std::string const& t) {
                 if (i < mBiomes.size()) mBiomes[i] = t;
             };
@@ -158,7 +158,7 @@ private:
             mDirty = true;
         });
         add<TextButton>(sc::Rect{92, bottom, 76, 16}, ctr("gf.atmosphere.aurora_biomes.reset", "Reset"), [this] {
-            mBiomes = {"twilightforest:glacier"};
+            mBiomes = {"gloamingforest:glacier"};
             mScroll = 0;
             mDirty = true;
         });

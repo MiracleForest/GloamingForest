@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/custom/TravellersModifiersManager.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorItem.java
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorBeltItem.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/custom/TravellersModifiersManager.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorItem.java
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorBeltItem.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The Travellers' Gear part of contract "data" (F9): the query side of TF's travellers_modifiers
-// registry (data/twilightforest/twilight/travellers_modifiers/*.json, 24 entries: type component /
+// The Travellers' Gear part of contract "data" (F9): the query side of upstream's travellers_modifiers
+// registry (data/gloamingforest/gloaming/travellers_modifiers/*.json, 24 entries: type component /
 // attribute / builtin / transferable_component, equipment_slots head / chest / legs / feet / armor).
 // A gear stack keeps its added modifiers in its user data ("gf:gear" {id: level}); the built-in
 // ones come with the item as on Java (TravellersArmorItem's default components: the goggles' zoom,
@@ -41,7 +41,7 @@ using Json     = nlohmann::json;
 constexpr char kDataKey[] = "gear"; ///< "gf:gear" in the user data
 
 struct Modifier {
-    std::string type;   ///< "twilightforest:component", "twilightforest:builtin", ...
+    std::string type;   ///< "gloamingforest:component", "gloamingforest:builtin", ...
     std::string group;  ///< "head", "chest", "legs", "feet", "armor"
     std::string component;
     bool        builtin = false;
@@ -57,16 +57,16 @@ Store& store() {
     return s;
 }
 
-std::string fullId(std::string const& id) { return id.find(':') == std::string::npos ? "twilightforest:" + id : id; }
+std::string fullId(std::string const& id) { return id.find(':') == std::string::npos ? "gloamingforest:" + id : id; }
 
-/// The built-in modifiers of TF's gear items (their default data components).
+/// The built-in modifiers of upstream's gear items (their default data components).
 std::vector<std::string> const& builtinsOf(std::string const& itemId) {
     static std::map<std::string, std::vector<std::string>> const table{
-        {"twilightforest:travellers_goggles", {"twilightforest:zoom"}},
-        {"twilightforest:travellers_vest", {"twilightforest:swift_swim"}},
-        {"twilightforest:travellers_wings", {"twilightforest:high_jump"}},
-        {"twilightforest:travellers_boots", {"twilightforest:step_up"}},
-        {"twilightforest:travellers_belt", {"twilightforest:swap_hotbar_ability"}},
+        {"gloamingforest:travellers_goggles", {"gloamingforest:zoom"}},
+        {"gloamingforest:travellers_vest", {"gloamingforest:swift_swim"}},
+        {"gloamingforest:travellers_wings", {"gloamingforest:high_jump"}},
+        {"gloamingforest:travellers_boots", {"gloamingforest:step_up"}},
+        {"gloamingforest:travellers_belt", {"gloamingforest:swap_hotbar_ability"}},
     };
     static std::vector<std::string> const none;
     auto                                  it = table.find(itemId);
@@ -77,7 +77,7 @@ void load() {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     s.modifiers.clear();
-    for (auto const& f : data::list("twilight/travellers_modifiers")) {
+    for (auto const& f : data::list("gloaming/travellers_modifiers")) {
         auto doc = data::read(f.path);
         if (!doc.is_object()) continue;
         Modifier m;
@@ -87,7 +87,7 @@ void load() {
             if (it->is_string()) m.component = it->get<std::string>();
             else if (it->is_object() && !it->empty()) m.component = it->begin().key();
         }
-        m.builtin              = m.type == "twilightforest:builtin" || doc.value("builtin_modifier", false);
+        m.builtin              = m.type == "gloamingforest:builtin" || doc.value("builtin_modifier", false);
         s.modifiers[f.id()]    = std::move(m);
     }
     log().info("gear: {} travellers modifiers loaded", s.modifiers.size());
@@ -176,7 +176,7 @@ namespace internal {
 void registerModifier(std::string const& id, std::string const& group, bool builtin) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
-    s.modifiers[fullId(id)] = Modifier{"twilightforest:component", group, {}, builtin};
+    s.modifiers[fullId(id)] = Modifier{"gloamingforest:component", group, {}, builtin};
 }
 
 void unregisterModifier(std::string const& id) {

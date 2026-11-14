@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/OminousCandleBlock.java
-//   src/main/java/twilightforest/block/entity/OminousCandleBlockEntity.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/OminousCandleBlock.java
+//   src/main/java/gloamingforest/block/entity/OminousCandleBlockEntity.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -12,7 +12,7 @@
 // client-side animate ticks. Drops are the imported loot tables (the vanilla candle x count).
 //
 // Bedrock: the vanilla candle's `candles` state is the count minus one (0..3); the ominous
-// candle's twilightforest:candles is the count (1..4).
+// candle's gloamingforest:candles is the count (1..4).
 
 #include <algorithm>
 #include <cmath>
@@ -96,12 +96,12 @@ std::vector<AnimateFlame> animateFlames(Block const& block, BlockPos const& pos,
                                                {{0.44F, 0.56F}, {0.625F, 0.56F}, {0.375F, 0.375F}, {0.56F, 0.375F}}};
         int n = std::clamp(intStateOr(block, "candles", 1), 0, 4);
         for (int i = 0; i < n; ++i)
-            out.push_back({Vec3{kXz[n][i][0], static_cast<float>(ominousCandleY(gameTime, pos, i + 1) + 0.5), kXz[n][i][1]}, "twilightforest:ominous_flame", true});
+            out.push_back({Vec3{kXz[n][i][0], static_cast<float>(ominousCandleY(gameTime, pos, i + 1) + 0.5), kXz[n][i][1]}, "gloamingforest:ominous_flame", true});
         return out;
     }
     auto lighting = lightingOf(block);
     if (!lighting || *lighting == Lighting::None) return out;
-    char const* particle = *lighting == Lighting::Dim ? "twilightforest:dim_flame" : *lighting == Lighting::Ominous ? "twilightforest:ominous_flame" : "minecraft:small_flame";
+    char const* particle = *lighting == Lighting::Dim ? "gloamingforest:dim_flame" : *lighting == Lighting::Ominous ? "gloamingforest:ominous_flame" : "minecraft:small_flame";
     bool        smoke    = *lighting == Lighting::Normal;
     std::vector<Vec3> offsets;
     if (id == kCandelabra) offsets = candelabraFlameOffsets(block);

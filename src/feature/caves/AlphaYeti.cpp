@@ -1,11 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/boss/AlphaYeti.java
-//   src/main/java/twilightforest/entity/ai/goal/YetiRampageGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/YetiTiredGoal.java
-//   src/main/java/twilightforest/block/entity/spawner/AlphaYetiSpawnerBlockEntity.java
-//   src/main/java/twilightforest/util/EntityUtil.java (canDestroyBlock)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/boss/AlphaYeti.java
+//   src/main/java/gloamingforest/entity/ai/goal/YetiRampageGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/YetiTiredGoal.java
+//   src/main/java/gloamingforest/block/entity/spawner/AlphaYetiSpawnerBlockEntity.java
+//   src/main/java/gloamingforest/util/EntityUtil.java (canDestroyBlock)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -14,7 +14,7 @@
 // the ground pound when it lands from a jump or drop, blocks broken around it), then 100 tired ticks in which it is
 // vulnerable; grabs and throws its target like the yeti. Float, stroll, look and the hurt-by
 // target are BP behaviours; the rampage's snow ring and the tired splash are the RP's particle
-// emitters driven by the twilightforest:rampaging / twilightforest:tired properties.
+// emitters driven by the gloamingforest:rampaging / gloamingforest:tired properties.
 #include "feature/caves/Caves.h"
 
 #include <cmath>
@@ -61,7 +61,7 @@ namespace gf::feature::caves {
 namespace {
 
 /// The per-yeti server state (RAMPAGE_FLAG / TIRED_FLAG mirror the properties; canRampage and the
-/// collision counter are plain fields in TF, not saved).
+/// collision counter are plain fields in upstream, not saved).
 struct AlphaState {
     bool         canRampage = false;
     bool         rampaging  = false;
@@ -93,7 +93,7 @@ bool mobGriefing() {
 
 void setRampaging(Actor& yeti, bool rampaging) {
     stateOf(yeti).rampaging = rampaging;
-    gf::entity::setProperty(yeti, "twilightforest:rampaging", rampaging);
+    gf::entity::setProperty(yeti, "gloamingforest:rampaging", rampaging);
 }
 
 /// AlphaYeti#setTired: also clears canRampage.
@@ -101,10 +101,10 @@ void setTired(Actor& yeti, bool tired) {
     auto& s      = stateOf(yeti);
     s.tired      = tired;
     s.canRampage = false;
-    gf::entity::setProperty(yeti, "twilightforest:tired", tired);
+    gf::entity::setProperty(yeti, "gloamingforest:tired", tired);
 }
 
-/// #minecraft:is_projectile (vanilla 1.21.1 members, plus what gf::tags adds: TF's own types).
+/// #minecraft:is_projectile (vanilla 1.21.1 members, plus what gf::tags adds: upstream's own types).
 bool isProjectileDamage(std::string const& type) {
     static char const* const kVanilla[] = {"minecraft:arrow",   "minecraft:trident",       "minecraft:mob_projectile", "minecraft:unattributed_fireball",
                                            "minecraft:fireball", "minecraft:wither_skull", "minecraft:thrown",          "minecraft:wind_charge"};
@@ -116,7 +116,7 @@ bool isProjectileDamage(std::string const& type) {
 /// The ice sound (vol 1, pitch 1 / (r x 0.4 + 0.8)).
 void iceSound(Mob& yeti) {
     auto& r = fe::randomOf(yeti);
-    gf::fx::sound(yeti.getDimension(), "entity.twilightforest.alpha_yeti.ice", yeti.getFeetPos(), 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
+    gf::fx::sound(yeti.getDimension(), "entity.gloamingforest.alpha_yeti.ice", yeti.getFeetPos(), 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
 }
 
 /// `be instanceof Container` of Java's block entities (BaseContainerBlockEntity, the
@@ -145,7 +145,7 @@ bool isContainer(BlockActor const& be) {
 }
 
 /// EntityUtil#canDestroyBlock (hardness 0..50, not air, no Container block entity: signs, banners,
-/// beds, skulls and spawners are destroyed like in TF; TF's custom containers have no block actor
+/// beds, skulls and spawners are destroyed like in upstream; upstream's custom containers have no block actor
 /// here, gf::inventory knows them).
 bool canDestroyBlock(BlockSource& region, BlockPos const& pos) {
     Block const& b = region.getBlock(pos);
@@ -242,7 +242,7 @@ public:
         if (!m) return;
         mobs::stopNavigation(*m); // MOVE: the BP stroll stays off it
         if (++mTimer % 10 == 0)
-            gf::fx::sound(m->getDimension(), "entity.twilightforest.alpha_yeti.pant", m->getFeetPos(), 4.0F, 0.5F + fe::randomOf(*m).nextFloat() * 0.5F);
+            gf::fx::sound(m->getDimension(), "entity.gloamingforest.alpha_yeti.pant", m->getFeetPos(), 4.0F, 0.5F + fe::randomOf(*m).nextFloat() * 0.5F);
     }
 
 private:
@@ -269,7 +269,7 @@ public:
         auto* m  = mobOf(mUid);
         if (!m) return;
         setRampaging(*m, true);
-        gf::fx::sound(m->getDimension(), "entity.twilightforest.alpha_yeti.roar", m->getFeetPos(), 4.0F, 0.5F + fe::randomOf(*m).nextFloat() * 0.5F);
+        gf::fx::sound(m->getDimension(), "entity.gloamingforest.alpha_yeti.roar", m->getFeetPos(), 4.0F, 0.5F + fe::randomOf(*m).nextFloat() * 0.5F);
         gf::log().info("caves: alpha yeti rampages");
     }
     void tick() override {
@@ -297,7 +297,7 @@ public:
         if (mCurrent % 20 == 0) {
             float  x     = 0.5F + r.nextFloat() * 0.5F;
             float  y     = 0.5F + r.nextFloat() * 0.3F;
-            float  angle = r.nextFloat() * 360.0F; // Vec3#yRot takes radians: TF's degrees used as radians
+            float  angle = r.nextFloat() * 360.0F; // Vec3#yRot takes radians: upstream's degrees used as radians
             float  c = std::cos(angle), s = std::sin(angle);
             Vec3   vec{x * c, y, -x * s};
             float  speed = 0.4F + r.nextFloat() * 0.3F;
@@ -346,8 +346,8 @@ void installAlphaYeti() {
         auto* yeti = fe::asMob(self);
         if (!yeti) return;
         auto& s = stateOf(self);
-        gf::entity::setProperty(self, "twilightforest:rampaging", s.rampaging);
-        gf::entity::setProperty(self, "twilightforest:tired", s.tired);
+        gf::entity::setProperty(self, "gloamingforest:rampaging", s.rampaging);
+        gf::entity::setProperty(self, "gloamingforest:tired", s.tired);
         gf::entity::addGoal(*yeti, 1, std::make_shared<YetiTiredGoal>(*yeti, 100));
         gf::entity::addGoal(*yeti, 3, std::make_shared<YetiRampageGoal>(*yeti, 10, 180));
         struct AlphaRanged final : RangedAttackGoal {
@@ -378,7 +378,7 @@ void installAlphaYeti() {
         auto* t   = mobs::target(*yeti);
         auto  tid = t ? fe::uidOf(*t) : 0;
         if (tid != 0 && tid != s.lastTarget)
-            gf::fx::sound(yeti->getDimension(), "entity.twilightforest.alpha_yeti.alert", yeti->getFeetPos(), 4.0F, 0.5F + fe::randomOf(*yeti).nextFloat() * 0.5F);
+            gf::fx::sound(yeti->getDimension(), "entity.gloamingforest.alpha_yeti.alert", yeti->getFeetPos(), 4.0F, 0.5F + fe::randomOf(*yeti).nextFloat() * 0.5F);
         s.lastTarget = tid;
         // customServerAiStep: collisions while rampaging
         auto& ctx = yeti->getEntityContext();
@@ -424,12 +424,12 @@ void installAlphaYeti() {
     gf::boss::registerBoss({
         .entityId        = kAlphaYeti,
         .homeStructure   = kYetiCave,
-        .lootTable       = "twilightforest:entities/alpha_yeti",
-        .deathChestBlock = "twilightforest:canopy_chest",
+        .lootTable       = "gloamingforest:entities/alpha_yeti",
+        .deathChestBlock = "gloamingforest:canopy_chest",
         .bar             = {.rgb = 0xB4F0F0},
     });
     gf::boss::ext::setHomeRadius(kAlphaYeti, 30);
-    gf::boss::registerSpawner({.blockId = "twilightforest:alpha_yeti_boss_spawner", .entityId = kAlphaYeti, .range = 9, .particle = "minecraft:falling_water"});
+    gf::boss::registerSpawner({.blockId = "gloamingforest:alpha_yeti_boss_spawner", .entityId = kAlphaYeti, .range = 9, .particle = "minecraft:falling_water"});
     gf::spawn::registerPlacement(kAlphaYeti, gf::spawn::PlacementRule::OnGround);
 }
 

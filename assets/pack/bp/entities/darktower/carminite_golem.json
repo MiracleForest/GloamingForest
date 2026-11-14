@@ -2,16 +2,16 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:carminite_golem",
+      "identifier": "gloamingforest:carminite_golem",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:attack_timer": { "type": "int", "range": [0, 10], "default": 0, "client_sync": true }
+        "gloamingforest:attack_timer": { "type": "int", "range": [0, 10], "default": 0, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "carminite_golem", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "carminite_golem", "monster", "mob"] },
       "minecraft:collision_box": { "width": 1.4, "height": 2.9 },
       "minecraft:health": { "value": 40, "max": 40 },
       "minecraft:attack": { "damage": 9 },

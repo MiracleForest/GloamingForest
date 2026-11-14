@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:cicada",
+      "identifier": "gloamingforest:cicada",
       "menu_category": {
         "category": "construction"
       }
@@ -14,10 +14,10 @@
         }
       },
       "minecraft:display_name": {
-        "value": "tile.twilightforest:cicada.name"
+        "value": "tile.gloamingforest:cicada.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:cicada",
+        "block": "gloamingforest:cicada",
         "replace_block_item": true
       },
       "minecraft:wearable": {

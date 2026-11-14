@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_planks_1"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:stripped_sorting_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_log"
+      },
+      {
+        "item": "gloamingforest:sorting_wood"
+      },
+      {
+        "item": "gloamingforest:stripped_sorting_log"
+      },
+      {
+        "item": "gloamingforest:stripped_sorting_wood"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_planks",
+      "count": 4
+    }
+  }
+}

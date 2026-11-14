@@ -2,21 +2,21 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:slider",
+      "identifier": "gloamingforest:slider",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/block/slider_v"
+        "default": "textures/gloamingforest/block/slider_v"
       },
       "geometry": {
-        "default": "geometry.twilightforest.darktower.slide_block"
+        "default": "geometry.gloamingforest.darktower.slide_block"
       },
       "render_controllers": [
         "controller.render.default"
       ],
       "animations": {
-        "spin": "animation.twilightforest.slider.spin"
+        "spin": "animation.gloamingforest.slider.spin"
       },
       "scripts": {
         "animate": [

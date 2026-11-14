@@ -1,6 +1,6 @@
-entity.twilightforest.ice_arrow=Flecha de Hielo
-entity.twilightforest.moonworm_shot=Gusano Lunar
-entity.twilightforest:ice_arrow.name=Flecha de Hielo
-entity.twilightforest:moonworm_shot.name=Gusano Lunar
-item.twilightforest.ice_sword=Espada de Hielo
-item.twilightforest:ice_sword.name=Espada de Hielo
+entity.gloamingforest.ice_arrow=Flecha de Hielo
+entity.gloamingforest.moonworm_shot=Gusano Lunar
+entity.gloamingforest:ice_arrow.name=Flecha de Hielo
+entity.gloamingforest:moonworm_shot.name=Gusano Lunar
+item.gloamingforest.ice_sword=Espada de Hielo
+item.gloamingforest:ice_sword.name=Espada de Hielo

@@ -1,0 +1,1 @@
+execute in gloamingforest:gloaming_forest run tp @p ~ ~ ~

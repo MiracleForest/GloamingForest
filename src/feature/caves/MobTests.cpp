@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Selftests of U27's blocks and mobs (rule R12: "caves.*", testPos dx 2700..2799): trollsteinn
 // faces by light and its comparator output, the trollber harvest, the unripe trollber ripening,
@@ -102,7 +102,7 @@ GF_REGISTER_SELFTEST("caves.trollsteinn_light", [](Context& ctx) -> ll::coro::Co
     trollsteinnRandomTick(*region, bp(base));
     auto const& b    = region->getBlock(bp(base));
     auto        st   = game::statesOf(b);
-    auto        lit  = [&](char const* f) { return st[std::string("twilightforest:") + f] == "1" || st[std::string("twilightforest:") + f] == "true"; };
+    auto        lit  = [&](char const* f) { return st[std::string("gloamingforest:") + f] == "1" || st[std::string("gloamingforest:") + f] == "true"; };
     ctx.check(lit("east"), "the face next to the glowstone is lit (light 15 > 7)");
     ctx.check(!lit("west") && !lit("down") && !lit("north"), "the faces against stone are dark");
     int up = maxLocalRawBrightness(*region, bp(at(base, 0, 1, 0)));
@@ -190,7 +190,7 @@ GF_REGISTER_SELFTEST("caves.troll_rock", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.check(!trollHasRock(*t), "the rock is gone from the troll");
     auto blocks = around(base, kThrownBlock, 4.0f);
     ctx.check(!blocks.empty() && thrownBlockState(*blocks.front()) == "minecraft:granite", "a thrown block carrying granite");
-    // (the throw has TF's spread, 4 - difficulty, and the pig may step aside: up to three throws)
+    // (the throw has upstream's spread, 4 - difficulty, and the pig may step aside: up to three throws)
     bool hit = false;
     for (int attempt = 0; attempt < 3 && !hit; attempt++) {
         if (attempt > 0) {

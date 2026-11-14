@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:feature/well/fancy_well_bottom",
+  "id": "gloamingforest:feature/well/fancy_well_bottom",
   "size": [7, 12, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},

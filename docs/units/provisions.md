@@ -6,7 +6,7 @@ Behaviour spec: [docs/spec/provisions.md](../spec/provisions.md). Code: `src/fea
 
 ## Audit round 1
 
-Checked against TF 4.8: `RechargeScepterEffect` (renewal), the stale bread (`CustomDamageSwordItem`,
+Checked against upstream 4.8: `RechargeScepterEffect` (renewal), the stale bread (`CustomDamageSwordItem`,
 `Tiers.WOOD`), `Experiment115Block` (use, sneak use, eating).
 
 Fixed:
@@ -17,14 +17,14 @@ Fixed:
   `minecraft:potion_contents` potion, matched by Bedrock's potion aux value) and Java item ids are mapped to
   Bedrock's. Any other potion is still no ingredient. Selftest `provisions.enchantments` (zombie scepter part).
 - **Stale bread.** Tiers.WOOD's enchantability 15 (sword enchantments) and repair: the BP item now has
-  `minecraft:enchantable` and `minecraft:repairable` with TF's `#minecraft:planks` (vanilla planks of
-  1.21.1, TF's eight planks and `#twilightforest:towerwood`), and two stale breads combine. Selftest
+  `minecraft:enchantable` and `minecraft:repairable` with upstream's `#minecraft:planks` (vanilla planks of
+  1.21.1, upstream's eight planks and `#gloamingforest:towerwood`), and two stale breads combine. Selftest
   `provisions.stale_bread`.
 
 Verified, nothing to change:
 
 - Renewal's crafting remainders: Java gives a remainder only for a stack still non-empty after the shrink
-  (`hasCraftingRemainingItem` of an emptied stack is false). TF's ingredients (golden apple, fermented
+  (`hasCraftingRemainingItem` of an emptied stack is false). Upstream's ingredients (golden apple, fermented
   spider eye, ender pearls, rotten flesh, potions of Strength that stack to 1) have no remainder, so none
   is ever given.
 - Experiment 115's sneak use (`core::provisions::e115Action`, gtested): with empty hands a non-regenerating
@@ -46,14 +46,14 @@ Fixed:
   draws IceLayer's cubes: Java's seeded `java.util.Random` (id * id * 3121 + id * 45238971, the runtime id as
   Java's network id), int(height / 0.4) + amplifier + 2 half-block cubes in LivingEntityRenderer's model space
   (body yaw, the flip, -1.501), the death tome's offset, not on the local player in first person. The cube is
-  `geometry.twilightforest.provisions.ice_cube` with the game's ice texture through `drawGeo` (alpha-tested, not
+  `geometry.gloamingforest.provisions.ice_cube` with the game's ice texture through `drawGeo` (alpha-tested, not
   translucent as Java's translucentMovingBlock; the random tumble uses drawGeo's y-x-z order). Selftest
   `provisions.frosted_sync`; the client scenario frosts a showcase pig (not run this round).
-- **Experiment 115 icons** (client mod): the `think` variant (`twilightforest:e115_variant`, the advancement icon of
+- **Experiment 115 icons** (client mod): the `think` variant (`gloamingforest:e115_variant`, the advancement icon of
   `experiment_115_115`) shows `item/think115` through U11's icon layers (`tf_provisions_think115`).
 
 Open:
 
-- The `full` variant (TF: the block model `experiment115_8_8_regenerating` as the item) keeps the item icon: slot
+- The `full` variant (upstream: the block model `experiment115_8_8_regenerating` as the item) keeps the item icon: slot
   icons are item atlas sprites and F12's GUI item renderer does not run for slots on 1.26.51.
 - Vanilla clients get neither (no companion data, no icon layers).

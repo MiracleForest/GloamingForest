@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:ominous_blue_candle",
+      "identifier": "gloamingforest:ominous_blue_candle",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:candles": [
+        "gloamingforest:candles": [
           0,
           1,
           2,
@@ -25,12 +25,12 @@
       },
       "minecraft:map_color": "#334cb2",
       "minecraft:geometry": {
-        "identifier": "geometry.twilightforest.lichdecor.ominous_candles",
+        "identifier": "geometry.gloamingforest.lichdecor.ominous_candles",
         "bone_visibility": {
-          "candles_1": "q.block_state('twilightforest:candles') == 1",
-          "candles_2": "q.block_state('twilightforest:candles') == 2",
-          "candles_3": "q.block_state('twilightforest:candles') == 3",
-          "candles_4": "q.block_state('twilightforest:candles') == 4"
+          "candles_1": "q.block_state('gloamingforest:candles') == 1",
+          "candles_2": "q.block_state('gloamingforest:candles') == 2",
+          "candles_3": "q.block_state('gloamingforest:candles') == 3",
+          "candles_4": "q.block_state('gloamingforest:candles') == 4"
         }
       },
       "minecraft:material_instances": {
@@ -71,7 +71,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:candles') == 2",
+        "condition": "q.block_state('gloamingforest:candles') == 2",
         "components": {
           "minecraft:collision_box": {
             "origin": [
@@ -100,7 +100,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 3",
+        "condition": "q.block_state('gloamingforest:candles') == 3",
         "components": {
           "minecraft:collision_box": {
             "origin": [
@@ -129,7 +129,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:collision_box": {
             "origin": [
@@ -158,25 +158,25 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 1",
+        "condition": "q.block_state('gloamingforest:candles') == 1",
         "components": {
           "minecraft:light_emission": 2
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 2",
+        "condition": "q.block_state('gloamingforest:candles') == 2",
         "components": {
           "minecraft:light_emission": 4
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 3",
+        "condition": "q.block_state('gloamingforest:candles') == 3",
         "components": {
           "minecraft:light_emission": 6
         }
       },
       {
-        "condition": "q.block_state('twilightforest:candles') == 4",
+        "condition": "q.block_state('gloamingforest:candles') == 4",
         "components": {
           "minecraft:light_emission": 8
         }

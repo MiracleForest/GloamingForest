@@ -1,8 +1,8 @@
-# GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-# Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-#   src/main/java/twilightforest/block/TrophyWallBlock.java (getDescriptionId: the trophy item's)
-#   src/main/java/twilightforest/init/TFBannerPatterns.java (block.minecraft.banner.twilightforest.*)
-# Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+# GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+# Translated from the upstream 4.8 source (commit 9e40a757):
+#   src/main/java/gloamingforest/block/TrophyWallBlock.java (getDescriptionId: the trophy item's)
+#   src/main/java/gloamingforest/init/TFBannerPatterns.java (block.minecraft.banner.gloamingforest.*)
+# Copyright (c) the upstream authors (see NOTICE).
 # Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 # of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #
@@ -10,9 +10,9 @@
 # manual layer over F1's per-key):
 # - the wall trophies' block names are their trophy's name (TrophyWallBlock#getDescriptionId returns
 #   the standing trophy's), in every locale F1 wrote building texts for;
-# - Bedrock's banner layer lines item.banner.<pattern>.<colour> of TF's nine patterns (Bedrock names a
-#   banner layer by the pattern's name, banners.py's tf_<boss>) from TF's
-#   block.minecraft.banner.twilightforest.<asset>.<colour> (F9's imported lang), en_US where a locale
+# - Bedrock's banner layer lines item.banner.<pattern>.<colour> of upstream's nine patterns (Bedrock names a
+#   banner layer by the pattern's name, banners.py's tf_<boss>) from upstream's
+#   block.minecraft.banner.gloamingforest.<asset>.<colour> (F9's imported lang), en_US where a locale
 #   has none.
 #
 #   python tools/structures/building/texts.py           # writes the files
@@ -28,7 +28,7 @@ F9_LANG = os.path.join(ROOT, "assets", "gen", "import", "item", "lang")
 OUT = os.path.join(ROOT, "assets", "pack", "rp", "texts.d")
 
 BOSSES = ["naga", "lich", "hydra", "ur_ghast", "knight_phantom", "snow_queen", "minoshroom", "alpha_yeti", "quest_ram"]
-# TF's banner_pattern asset ids per Bedrock pattern name (Banners.cpp)
+# upstream's banner_pattern asset ids per Bedrock pattern name (Banners.cpp)
 PATTERNS = {"tf_" + b: b for b in BOSSES}
 # Java DyeColor -> Bedrock's colour suffix of item.banner.* keys
 COLORS = {"white": "white", "orange": "orange", "magenta": "magenta", "light_blue": "lightBlue", "yellow": "yellow",
@@ -64,12 +64,12 @@ def outputs():
         tf = read_json(os.path.join(F9_LANG, locale, "item.json"))
         lines = []
         for b in BOSSES:
-            name = gen.get("tile.twilightforest:%s_trophy.name" % b)
+            name = gen.get("tile.gloamingforest:%s_trophy.name" % b)
             if name:
-                lines.append("tile.twilightforest:%s_wall_trophy.name=%s" % (b, name))
+                lines.append("tile.gloamingforest:%s_wall_trophy.name=%s" % (b, name))
         for pattern, asset in PATTERNS.items():
             for java, bedrock in COLORS.items():
-                key = "block.minecraft.banner.twilightforest.%s.%s" % (asset, java)
+                key = "block.minecraft.banner.gloamingforest.%s.%s" % (asset, java)
                 text = tf.get(key) or english.get(key)
                 if text:
                     lines.append("item.banner.%s.%s=%s" % (pattern, bedrock, text))

@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/DryingRackBlock.java
-//   src/main/java/twilightforest/block/entity/DryingRackBlockEntity.java
-//   src/main/java/twilightforest/item/recipe/DryingRecipe.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/DryingRackBlock.java
+//   src/main/java/gloamingforest/block/entity/DryingRackBlockEntity.java
+//   src/main/java/gloamingforest/item/recipe/DryingRecipe.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -13,7 +13,7 @@
 // gf:woodwork:racks) so they dry every server tick while their chunk is loaded, as Java's block
 // entity ticker does. The water of a waterlogged rack is Bedrock's liquid layer: the rack's tick
 // sees it come or go (Java's onRemove on the WATERLOGGED state change drops the item). Recipes
-// are the `twilightforest:drying` recipes F9 loads (DryingRecipe: input, result, filter_time).
+// are the `gloamingforest:drying` recipes F9 loads (DryingRecipe: input, result, filter_time).
 // Automation (hoppers, the structure kit's loot fill) goes through the inventory contract's
 // handler: one slot, inserts one item into an empty rack, refuses extraction while drying
 // (DryingRackHandler).
@@ -221,7 +221,7 @@ void dryingParticle(Player& player, BlockPos const& pos, int face) {
     double x = pos.x + 0.5 + (step[0] == 0 ? u(rng()) : step[0] * kOffset);
     double y = pos.y + 0.5 + (step[1] == 0 ? u(rng()) : step[1] * kOffset);
     double z = pos.z + 0.5 + (step[2] == 0 ? u(rng()) : step[2] * kOffset);
-    woodwork_ext::particles::particleTo(player, "twilightforest:drying_rack", Vec3{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)});
+    woodwork_ext::particles::particleTo(player, "gloamingforest:drying_rack", Vec3{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)});
 }
 
 /// DryingRackBlock#animateTick runs on each client only when ClientLevel#animateTick's random
@@ -242,7 +242,7 @@ void animateTick(BlockSource& region, BlockPos const& pos) {
         int  dz   = pos.z - static_cast<int>(std::floor(feet.z));
         double chance = woodwork_ext::particles::animateTickChance(dx, dy, dz) / 5.0; // random.nextInt(5) == 0
         if (chance <= 0.0 || u01(rng()) >= chance) return true;
-        if (face == -2) face = faceOf(stateOf(region.getBlock(pos), "twilightforest:facing"));
+        if (face == -2) face = faceOf(stateOf(region.getBlock(pos), "gloamingforest:facing"));
         dryingParticle(player, pos, face < 0 ? 2 : face);
         return true;
     });
@@ -319,7 +319,7 @@ void onPlace(ia::PlaceContext const& c) {
     BlockPos     pos   = game::blockPos(c.pos);
     Block const& block = region->getBlock(pos);
     if (!isRackId(idOf(block))) return;
-    if (auto const* b = withStates(block, {{"twilightforest:facing", faceName(lookFace(c.player))}}); b && b != &block) game::setBlock(*region, pos, *b);
+    if (auto const* b = withStates(block, {{"gloamingforest:facing", faceName(lookFace(c.player))}}); b && b != &block) game::setBlock(*region, pos, *b);
     RackState r;
     r.waterlogged = waterSourceAt(*region, pos);
     store(*region, pos, r);
@@ -342,14 +342,14 @@ ia::Result onUseOn(ia::UseOnContext const& c) {
         setTheItem(region, pos, r, one);
         consumeOne(c.player, c.item);
         store(region, pos, r);
-        playSound(region, pos, "block.twilightforest.drying_rack.add_item", 1.0f, 0.75f + randomFloat() * 0.5f);
+        playSound(region, pos, "block.gloamingforest.drying_rack.add_item", 1.0f, 0.75f + randomFloat() * 0.5f);
         log().info("woodwork: {} put {} on the drying rack at {} {} {}", c.player.getRealName(), game::items::idOf(one), pos.x, pos.y, pos.z);
     } else {
         ItemStack item = r.item;
         setTheItem(region, pos, r, ItemStack{});
         store(region, pos, r);
         giveOrDrop(c.player, item);
-        playSound(region, pos, "block.twilightforest.drying_rack.remove_item", 0.75f, 0.75f + randomFloat() * 0.5f);
+        playSound(region, pos, "block.gloamingforest.drying_rack.remove_item", 0.75f, 0.75f + randomFloat() * 0.5f);
         log().info("woodwork: {} took {} from the drying rack at {} {} {}", c.player.getRealName(), game::items::idOf(item), pos.x, pos.y, pos.z);
     }
     notify(c.pos);
@@ -397,7 +397,7 @@ inventory::Handler handler() {
     // rolled stack overwrites the rack's (getRandomItemsRaw's consumer `this.stack = lootStack`), so
     // the LAST stack stays, whole. Java sets the field directly, not through setTheItem: the timers
     // keep their values (a fresh rack: total_dry_time 0), so a dryable item turns into its result on
-    // the rack's next tick (dry_time 1 >= 0), as in TF.
+    // the rack's next tick (dry_time 1 >= 0), as in upstream.
     h.setLootTable = [](GlobalPos const& pos, std::string const& tableId, std::int64_t seed) {
         auto* region = regionFor(pos);
         if (!region) return;
@@ -439,7 +439,7 @@ inventory::Handler handler() {
 recipes::CraftingRecipe const* recipeFor(ItemStack const& item) {
     if (game::items::isEmpty(item)) return nullptr;
     auto id = game::items::idOf(item);
-    return recipes::findFirst("twilightforest:drying", [&](recipes::CraftingRecipe const& r) {
+    return recipes::findFirst("gloamingforest:drying", [&](recipes::CraftingRecipe const& r) {
         return !r.ingredients.empty() && accepts(r.ingredients.front(), id);
     });
 }

@@ -1,12 +1,12 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/gallery/fence_roof_odd",
+  "id": "gloamingforest:lich_tower/gallery/fence_roof_odd",
   "size": [9, 4, 13],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:stone_bricks"},
-    {"Name":"twilightforest:canopy_fence"},
+    {"Name":"gloamingforest:canopy_fence"},
     {"Name":"minecraft:air"}
   ],
   "blocks": [

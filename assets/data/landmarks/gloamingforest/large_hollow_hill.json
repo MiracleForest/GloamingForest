@@ -1,0 +1,140 @@
+{
+  "key": "gloamingforest:large_hollow_hill",
+  "source": "src/generated/resources/data/gloamingforest/worldgen/structure/large_hollow_hill.json",
+  "structure": {
+    "biomes": "#gloamingforest:valid_hollow_hill_biomes",
+    "controlled_spawns": {
+      "ambient_spawns": [],
+      "labelled_monster_spawns": {
+        "0": [
+          {
+            "maxCount": 4,
+            "minCount": 2,
+            "type": "gloamingforest:redcap",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:redcap_sapper",
+            "weight": 2
+          },
+          {
+            "maxCount": 3,
+            "minCount": 2,
+            "type": "minecraft:skeleton",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "minecraft:cave_spider",
+            "weight": 10
+          },
+          {
+            "maxCount": 1,
+            "minCount": 1,
+            "type": "minecraft:creeper",
+            "weight": 10
+          },
+          {
+            "maxCount": 1,
+            "minCount": 1,
+            "type": "minecraft:enderman",
+            "weight": 1
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:wraith",
+            "weight": 2
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:fire_beetle",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:slime_beetle",
+            "weight": 10
+          },
+          {
+            "maxCount": 2,
+            "minCount": 1,
+            "type": "gloamingforest:pinch_beetle",
+            "weight": 10
+          },
+          {
+            "maxCount": 1,
+            "minCount": 1,
+            "type": "minecraft:witch",
+            "weight": 1
+          }
+        ]
+      },
+      "water_spawns": []
+    },
+    "decoration_clearance": {
+      "adjust_structure_elevation": false,
+      "allow_biome_surface_decorations": true,
+      "allow_biome_underground_decorations": false,
+      "allow_biome_vegetation": true,
+      "chunk_clearance_radius": 3
+    },
+    "hill_size": 3,
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "speleothem_config": "gloamingforest:large_hollow_hill",
+    "step": "surface_structures",
+    "structure_icon": "gloamingforest:large_hollow_hill",
+    "type": "gloamingforest:hollow_hill"
+  },
+  "structure_set": {
+    "id": "gloamingforest:large_hollow_hill",
+    "placement": {
+      "structure_grid_lock": "gloamingforest:large_hollow_hill",
+      "type": "gloamingforest:landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "gloamingforest:large_hollow_hill",
+        "weight": 1
+      }
+    ]
+  }
+}

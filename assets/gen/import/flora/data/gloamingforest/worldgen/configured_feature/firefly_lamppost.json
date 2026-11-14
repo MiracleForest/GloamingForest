@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:lampposts",
+  "config": {
+    "state": {
+      "Name": "gloamingforest:firefly_jar",
+      "Properties": {
+        "waterlogged": "false"
+      }
+    }
+  }
+}

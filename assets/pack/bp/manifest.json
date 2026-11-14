@@ -2,7 +2,7 @@
   "format_version": 2,
   "header": {
     "name": "GloamingForest BP",
-    "description": "The Twilight Forest for Bedrock (GloamingForest): blocks, items, entities, recipes, loot and world data",
+    "description": "The Gloaming Forest for Bedrock (GloamingForest): blocks, items, entities, recipes, loot and world data",
     "uuid": "033ac20b-1a31-4ed9-b2fc-2016acd3ee2e",
     "version": "${version}",
     "min_engine_version": [1, 21, 40]

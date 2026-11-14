@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.squirrel.base": {
+    "animation.gloamingforest.squirrel.base": {
       "loop": true,
       "bones": {
         "head": {

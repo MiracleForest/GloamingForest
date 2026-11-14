@@ -1,6 +1,6 @@
-// GloamingForest import tool (contract "import", unit F1): TF's textures (CC BY-NC-SA 4.0) copied into
+// GloamingForest import tool (contract "import", unit F1): upstream's textures (CC BY-NC-SA 4.0) copied into
 // the resource pack, atlas fragments (terrain / item / flipbook) per owning unit, references to the
-// vanilla textures TF models reuse, and the generated chest-boat textures (TextureGeneratorReloadListener).
+// vanilla textures upstream models reuse, and the generated chest-boat textures (TextureGeneratorReloadListener).
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,16 +11,16 @@ namespace GfImport
 {
     public sealed partial class Ctx
     {
-        // texture id ("twilightforest:block/x") -> owners that use it, and the atlases it is used in
+        // texture id ("gloamingforest:block/x") -> owners that use it, and the atlases it is used in
         public readonly Dictionary<string, SortedSet<string>> TexUsers = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         public readonly Dictionary<string, SortedSet<string>> TexAtlases = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         public readonly SortedSet<string> MissingTextures = new SortedSet<string>(StringComparer.Ordinal);
         Dictionary<string, string> tfTextureFiles;
         readonly Dictionary<string, bool> alphaCache = new Dictionary<string, bool>(StringComparer.Ordinal);
 
-        public string TexturesDir { get { return Path.Combine(MainRes, "assets", "twilightforest", "textures"); } }
+        public string TexturesDir { get { return Path.Combine(MainRes, "assets", "gloamingforest", "textures"); } }
 
-        /// <summary>TF texture id -> file (textures/<path>.png).</summary>
+        /// <summary>upstream texture id -> file (textures/<path>.png).</summary>
         public Dictionary<string, string> TfTextures
         {
             get
@@ -29,7 +29,7 @@ namespace GfImport
                 {
                     tfTextureFiles = new Dictionary<string, string>(StringComparer.Ordinal);
                     foreach (var rel in Files(TexturesDir, "*.png"))
-                        tfTextureFiles["twilightforest:" + StripExt(rel)] = Path.Combine(TexturesDir, rel);
+                        tfTextureFiles["gloamingforest:" + StripExt(rel)] = Path.Combine(TexturesDir, rel);
                 }
                 return tfTextureFiles;
             }
@@ -40,7 +40,7 @@ namespace GfImport
         {
             int c = texId.IndexOf(':');
             string ns = texId.Substring(0, c), path = texId.Substring(c + 1);
-            return (ns == "twilightforest" ? "tf_" : "tf_vanilla_") + path.Replace('/', '_');
+            return (ns == "gloamingforest" ? "tf_" : "tf_vanilla_") + path.Replace('/', '_');
         }
 
         /// <summary>The resource pack path (no extension) of a texture id.</summary>
@@ -48,7 +48,7 @@ namespace GfImport
         {
             int c = texId.IndexOf(':');
             string ns = texId.Substring(0, c), path = texId.Substring(c + 1);
-            if (ns == "twilightforest") return "textures/twilightforest/" + path;
+            if (ns == "gloamingforest") return "textures/gloamingforest/" + path;
             string v;
             return VanillaTextures.TryGetValue(path, out v) ? v : null;
         }
@@ -58,12 +58,12 @@ namespace GfImport
         {
             if (texId == null) return null;
             if (!texId.Contains(":")) texId = "minecraft:" + texId;
-            if (texId.StartsWith("twilightforest:", StringComparison.Ordinal) && !TfTextures.ContainsKey(texId))
+            if (texId.StartsWith("gloamingforest:", StringComparison.Ordinal) && !TfTextures.ContainsKey(texId))
             {
                 MissingTextures.Add(texId);
                 return null;
             }
-            if (!texId.StartsWith("twilightforest:", StringComparison.Ordinal) && TexPath(texId) == null)
+            if (!texId.StartsWith("gloamingforest:", StringComparison.Ordinal) && TexPath(texId) == null)
             {
                 MissingTextures.Add(texId);
                 return null;
@@ -76,7 +76,7 @@ namespace GfImport
             return TexKey(texId);
         }
 
-        /// <summary>Whether a TF texture has any transparent pixel (decides alpha_test for opaque-looking models).</summary>
+        /// <summary>Whether an upstream texture has any transparent pixel (decides alpha_test for opaque-looking models).</summary>
         public bool HasAlpha(string texId)
         {
             bool r;
@@ -108,15 +108,15 @@ namespace GfImport
             foreach (var kv in TfTextures.OrderBy(k => k.Key, StringComparer.Ordinal))
             {
                 string texId = kv.Key, file = kv.Value;
-                string rel = texId.Substring("twilightforest:".Length);
+                string rel = texId.Substring("gloamingforest:".Length);
                 string owner = TextureOwner(texId);
                 byte[] bytes;
                 if (!generated.TryGetValue(texId, out bytes)) bytes = File.ReadAllBytes(file);
-                Emit("textures", owner, "rp/textures/twilightforest/" + rel + ".png", bytes);
+                Emit("textures", owner, "rp/textures/gloamingforest/" + rel + ".png", bytes);
                 SortedSet<string> atlases;
                 TexAtlases.TryGetValue(texId, out atlases);
                 string key = TexKey(texId);
-                var entry = J.Obj().Set("textures", "textures/twilightforest/" + rel);
+                var entry = J.Obj().Set("textures", "textures/gloamingforest/" + rel);
                 if (atlases != null && atlases.Contains("terrain")) Fragment("textures", owner, "rp/terrain_texture.d/import-" + NameOf(owner) + ".json", key, entry);
                 if (atlases != null && atlases.Contains("item")) Fragment("textures", owner, "rp/item_texture.d/import-" + NameOf(owner) + ".json", key, entry);
                 // animated block textures: Java .png.mcmeta -> Bedrock flipbook
@@ -126,7 +126,7 @@ namespace GfImport
                     var m = ReadJson(meta)["animation"];
                     if (m != null)
                     {
-                        var fb = J.Obj().Set("flipbook_texture", "textures/twilightforest/" + rel).Set("atlas_tile", key);
+                        var fb = J.Obj().Set("flipbook_texture", "textures/gloamingforest/" + rel).Set("atlas_tile", key);
                         fb.Set("ticks_per_frame", m["frametime"] != null ? m["frametime"].AsLong(1) : 1);
                         if (m["frames"] != null)
                         {
@@ -142,8 +142,8 @@ namespace GfImport
                     }
                 }
             }
-            // vanilla textures reused by TF models: atlas keys pointing at the game's own files
-            foreach (var texId in TexUsers.Keys.Where(t => !t.StartsWith("twilightforest:", StringComparison.Ordinal)).OrderBy(x => x, StringComparer.Ordinal))
+            // vanilla textures reused by upstream models: atlas keys pointing at the game's own files
+            foreach (var texId in TexUsers.Keys.Where(t => !t.StartsWith("gloamingforest:", StringComparison.Ordinal)).OrderBy(x => x, StringComparer.Ordinal))
             {
                 string owner = TextureOwner(texId);
                 var entry = J.Obj().Set("textures", TexPath(texId));
@@ -182,7 +182,7 @@ namespace GfImport
                 if (byFolder.TryGetValue(parts[1], out cands))
                     foreach (var cand in cands)
                     {
-                        var o = ItemOwner("twilightforest:" + cand);
+                        var o = ItemOwner("gloamingforest:" + cand);
                         if (o != null) return o;
                     }
             }
@@ -190,20 +190,20 @@ namespace GfImport
             {
                 foreach (var cand in new[] { parts[1], name, StripSuffixes(name) })
                 {
-                    var o = OwnerOf("entity", "twilightforest:" + cand);
+                    var o = OwnerOf("entity", "gloamingforest:" + cand);
                     if (o != null) return o;
                 }
             }
             foreach (var cand in new[] { name, StripSuffixes(name) })
             {
-                var o = ItemOwner("twilightforest:" + cand);
+                var o = ItemOwner("gloamingforest:" + cand);
                 if (o != null) return o;
             }
             // variants of an item / block texture: ender_bow_pulling_0 -> ender_bow, mining_log_top -> mining_log
             for (string cand = name; cand.Contains("_"); )
             {
                 cand = cand.Substring(0, cand.LastIndexOf('_'));
-                var o = ItemOwner("twilightforest:" + cand);
+                var o = ItemOwner("gloamingforest:" + cand);
                 if (o != null) return o;
             }
             return ImportUnit;
@@ -219,21 +219,21 @@ namespace GfImport
         // ---- chest boats ------------------------------------------------------------------------------
 
         /// <summary>
-        /// TF's TextureGeneratorReloadListener copies the chest region (x 0..48, y 58..96 of a 128-wide
-        /// texture) of the vanilla oak chest boat into TF's chest boat textures when that region is
+        /// upstream's TextureGeneratorReloadListener copies the chest region (x 0..48, y 58..96 of a 128-wide
+        /// texture) of the vanilla oak chest boat into upstream's chest boat textures when that region is
         /// empty. The vanilla texture is Mojang's (not redistributable), so the region is painted from
-        /// TF's own twilight oak chest texture instead: each face of the boat's chest boxes (lid 12x4x12
+        /// upstream's own gloaming oak chest texture instead: each face of the boat's chest boxes (lid 12x4x12
         /// at uv 0,59, bottom 12x8x12 at uv 0,76, lock 2x2x1 at uv 0,59) is sampled from the matching
         /// face of the chest model boxes (lid 14x5x14 at 0,0, bottom 14x10x14 at 0,19, lock 2x4x1 at 0,0).
         /// </summary>
         Dictionary<string, byte[]> ChestBoatTextures()
         {
             var res = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-            string chestId = "twilightforest:entity/chest/twilight/single";
+            string chestId = "gloamingforest:entity/chest/gloaming/single";
             string chestFile;
             if (!TfTextures.TryGetValue(chestId, out chestFile)) { Warn("chest boats: " + chestId + " missing"); return res; }
             var chest = Png.Decode(File.ReadAllBytes(chestFile));
-            foreach (var kv in TfTextures.Where(k => k.Key.StartsWith("twilightforest:entity/chest_boat/", StringComparison.Ordinal)).OrderBy(k => k.Key, StringComparer.Ordinal))
+            foreach (var kv in TfTextures.Where(k => k.Key.StartsWith("gloamingforest:entity/chest_boat/", StringComparison.Ordinal)).OrderBy(k => k.Key, StringComparer.Ordinal))
             {
                 var img = Png.Decode(File.ReadAllBytes(kv.Value));
                 int scale = img.W / 128;
@@ -288,7 +288,7 @@ namespace GfImport
 
         // ---- vanilla textures --------------------------------------------------------------------------
 
-        /// <summary>Java vanilla texture paths TF models use -> the game's own Bedrock texture paths (never copied).</summary>
+        /// <summary>Java vanilla texture paths upstream models use -> the game's own Bedrock texture paths (never copied).</summary>
         public static readonly Dictionary<string, string> VanillaTextures = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             { "block/oak_planks", "textures/blocks/planks_oak" },

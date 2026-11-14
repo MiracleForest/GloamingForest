@@ -2,32 +2,32 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:pink_force_field",
+      "identifier": "gloamingforest:pink_force_field",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:down": [
+        "gloamingforest:down": [
           false,
           true
         ],
-        "twilightforest:east": [
+        "gloamingforest:east": [
           false,
           true
         ],
-        "twilightforest:north": [
+        "gloamingforest:north": [
           false,
           true
         ],
-        "twilightforest:south": [
+        "gloamingforest:south": [
           false,
           true
         ],
-        "twilightforest:up": [
+        "gloamingforest:up": [
           false,
           true
         ],
-        "twilightforest:west": [
+        "gloamingforest:west": [
           false,
           true
         ]
@@ -41,54 +41,54 @@
       "minecraft:geometry": {
         "identifier": "geometry.gf_finalcastle.force_field",
         "bone_visibility": {
-          "e0_west_on": "((q.block_state('twilightforest:west')))",
-          "e1_west_off": "(!((q.block_state('twilightforest:west'))))",
-          "e2_east_on": "((q.block_state('twilightforest:east')))",
-          "e3_east_off": "(!((q.block_state('twilightforest:east'))))",
-          "e4_down_on": "((q.block_state('twilightforest:down')))",
-          "e5_down_off": "(!((q.block_state('twilightforest:down'))))",
-          "e6_up_on": "((q.block_state('twilightforest:up')))",
-          "e7_up_off": "(!((q.block_state('twilightforest:up'))))",
-          "e8_north_on": "((q.block_state('twilightforest:north')))",
-          "e9_north_off": "(!((q.block_state('twilightforest:north'))))",
-          "e10_south_on": "((q.block_state('twilightforest:south')))",
-          "e11_south_off": "(!((q.block_state('twilightforest:south'))))",
-          "e12_down_west_on": "((q.block_state('twilightforest:down'))) && ((q.block_state('twilightforest:west'))) && ((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:west')))",
-          "e13_down_west_off": "((q.block_state('twilightforest:down'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:west'))))",
-          "e14_down_west_off": "((q.block_state('twilightforest:west'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:west'))))",
-          "e15_down_east_on": "((q.block_state('twilightforest:down'))) && ((q.block_state('twilightforest:east'))) && ((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:east')))",
-          "e16_down_east_off": "((q.block_state('twilightforest:down'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:east'))))",
-          "e17_down_east_off": "((q.block_state('twilightforest:east'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:east'))))",
-          "e18_down_north_on": "((q.block_state('twilightforest:down'))) && ((q.block_state('twilightforest:north'))) && ((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:north')))",
-          "e19_down_north_off": "((q.block_state('twilightforest:down'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:north'))))",
-          "e20_down_north_off": "((q.block_state('twilightforest:north'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:north'))))",
-          "e21_down_south_on": "((q.block_state('twilightforest:down'))) && ((q.block_state('twilightforest:south'))) && ((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:south')))",
-          "e22_down_south_off": "((q.block_state('twilightforest:down'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:south'))))",
-          "e23_down_south_off": "((q.block_state('twilightforest:south'))) && (!((q.block_state('twilightforest:down')) && (q.block_state('twilightforest:south'))))",
-          "e24_up_west_on": "((q.block_state('twilightforest:up'))) && ((q.block_state('twilightforest:west'))) && ((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:west')))",
-          "e25_up_west_off": "((q.block_state('twilightforest:up'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:west'))))",
-          "e26_up_west_off": "((q.block_state('twilightforest:west'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:west'))))",
-          "e27_up_east_on": "((q.block_state('twilightforest:up'))) && ((q.block_state('twilightforest:east'))) && ((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:east')))",
-          "e28_up_east_off": "((q.block_state('twilightforest:up'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:east'))))",
-          "e29_up_east_off": "((q.block_state('twilightforest:east'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:east'))))",
-          "e30_up_north_on": "((q.block_state('twilightforest:up'))) && ((q.block_state('twilightforest:north'))) && ((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')))",
-          "e31_up_north_off": "((q.block_state('twilightforest:up'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north'))))",
-          "e32_up_north_off": "((q.block_state('twilightforest:north'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north'))))",
-          "e33_up_south_on": "((q.block_state('twilightforest:up'))) && ((q.block_state('twilightforest:south'))) && ((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:south')))",
-          "e34_up_south_off": "((q.block_state('twilightforest:up'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:south'))))",
-          "e35_up_south_off": "((q.block_state('twilightforest:south'))) && (!((q.block_state('twilightforest:up')) && (q.block_state('twilightforest:south'))))",
-          "e36_north_west_on": "((q.block_state('twilightforest:north'))) && ((q.block_state('twilightforest:west'))) && ((q.block_state('twilightforest:north')) && (q.block_state('twilightforest:west')))",
-          "e37_north_west_off": "((q.block_state('twilightforest:north'))) && (!((q.block_state('twilightforest:north')) && (q.block_state('twilightforest:west'))))",
-          "e38_north_west_off": "((q.block_state('twilightforest:west'))) && (!((q.block_state('twilightforest:north')) && (q.block_state('twilightforest:west'))))",
-          "e39_north_east_on": "((q.block_state('twilightforest:north'))) && ((q.block_state('twilightforest:east'))) && ((q.block_state('twilightforest:north')) && (q.block_state('twilightforest:east')))",
-          "e40_north_east_off": "((q.block_state('twilightforest:north'))) && (!((q.block_state('twilightforest:north')) && (q.block_state('twilightforest:east'))))",
-          "e41_north_east_off": "((q.block_state('twilightforest:east'))) && (!((q.block_state('twilightforest:north')) && (q.block_state('twilightforest:east'))))",
-          "e42_south_west_on": "((q.block_state('twilightforest:south'))) && ((q.block_state('twilightforest:west'))) && ((q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')))",
-          "e43_south_west_off": "((q.block_state('twilightforest:south'))) && (!((q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west'))))",
-          "e44_south_west_off": "((q.block_state('twilightforest:west'))) && (!((q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west'))))",
-          "e45_south_east_on": "((q.block_state('twilightforest:south'))) && ((q.block_state('twilightforest:east'))) && ((q.block_state('twilightforest:south')) && (q.block_state('twilightforest:east')))",
-          "e46_south_east_off": "((q.block_state('twilightforest:south'))) && (!((q.block_state('twilightforest:south')) && (q.block_state('twilightforest:east'))))",
-          "e47_south_east_off": "((q.block_state('twilightforest:east'))) && (!((q.block_state('twilightforest:south')) && (q.block_state('twilightforest:east'))))"
+          "e0_west_on": "((q.block_state('gloamingforest:west')))",
+          "e1_west_off": "(!((q.block_state('gloamingforest:west'))))",
+          "e2_east_on": "((q.block_state('gloamingforest:east')))",
+          "e3_east_off": "(!((q.block_state('gloamingforest:east'))))",
+          "e4_down_on": "((q.block_state('gloamingforest:down')))",
+          "e5_down_off": "(!((q.block_state('gloamingforest:down'))))",
+          "e6_up_on": "((q.block_state('gloamingforest:up')))",
+          "e7_up_off": "(!((q.block_state('gloamingforest:up'))))",
+          "e8_north_on": "((q.block_state('gloamingforest:north')))",
+          "e9_north_off": "(!((q.block_state('gloamingforest:north'))))",
+          "e10_south_on": "((q.block_state('gloamingforest:south')))",
+          "e11_south_off": "(!((q.block_state('gloamingforest:south'))))",
+          "e12_down_west_on": "((q.block_state('gloamingforest:down'))) && ((q.block_state('gloamingforest:west'))) && ((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:west')))",
+          "e13_down_west_off": "((q.block_state('gloamingforest:down'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:west'))))",
+          "e14_down_west_off": "((q.block_state('gloamingforest:west'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:west'))))",
+          "e15_down_east_on": "((q.block_state('gloamingforest:down'))) && ((q.block_state('gloamingforest:east'))) && ((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:east')))",
+          "e16_down_east_off": "((q.block_state('gloamingforest:down'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:east'))))",
+          "e17_down_east_off": "((q.block_state('gloamingforest:east'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:east'))))",
+          "e18_down_north_on": "((q.block_state('gloamingforest:down'))) && ((q.block_state('gloamingforest:north'))) && ((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:north')))",
+          "e19_down_north_off": "((q.block_state('gloamingforest:down'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:north'))))",
+          "e20_down_north_off": "((q.block_state('gloamingforest:north'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:north'))))",
+          "e21_down_south_on": "((q.block_state('gloamingforest:down'))) && ((q.block_state('gloamingforest:south'))) && ((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:south')))",
+          "e22_down_south_off": "((q.block_state('gloamingforest:down'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:south'))))",
+          "e23_down_south_off": "((q.block_state('gloamingforest:south'))) && (!((q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:south'))))",
+          "e24_up_west_on": "((q.block_state('gloamingforest:up'))) && ((q.block_state('gloamingforest:west'))) && ((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:west')))",
+          "e25_up_west_off": "((q.block_state('gloamingforest:up'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:west'))))",
+          "e26_up_west_off": "((q.block_state('gloamingforest:west'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:west'))))",
+          "e27_up_east_on": "((q.block_state('gloamingforest:up'))) && ((q.block_state('gloamingforest:east'))) && ((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:east')))",
+          "e28_up_east_off": "((q.block_state('gloamingforest:up'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:east'))))",
+          "e29_up_east_off": "((q.block_state('gloamingforest:east'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:east'))))",
+          "e30_up_north_on": "((q.block_state('gloamingforest:up'))) && ((q.block_state('gloamingforest:north'))) && ((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')))",
+          "e31_up_north_off": "((q.block_state('gloamingforest:up'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north'))))",
+          "e32_up_north_off": "((q.block_state('gloamingforest:north'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north'))))",
+          "e33_up_south_on": "((q.block_state('gloamingforest:up'))) && ((q.block_state('gloamingforest:south'))) && ((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:south')))",
+          "e34_up_south_off": "((q.block_state('gloamingforest:up'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:south'))))",
+          "e35_up_south_off": "((q.block_state('gloamingforest:south'))) && (!((q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:south'))))",
+          "e36_north_west_on": "((q.block_state('gloamingforest:north'))) && ((q.block_state('gloamingforest:west'))) && ((q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:west')))",
+          "e37_north_west_off": "((q.block_state('gloamingforest:north'))) && (!((q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:west'))))",
+          "e38_north_west_off": "((q.block_state('gloamingforest:west'))) && (!((q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:west'))))",
+          "e39_north_east_on": "((q.block_state('gloamingforest:north'))) && ((q.block_state('gloamingforest:east'))) && ((q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:east')))",
+          "e40_north_east_off": "((q.block_state('gloamingforest:north'))) && (!((q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:east'))))",
+          "e41_north_east_off": "((q.block_state('gloamingforest:east'))) && (!((q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:east'))))",
+          "e42_south_west_on": "((q.block_state('gloamingforest:south'))) && ((q.block_state('gloamingforest:west'))) && ((q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')))",
+          "e43_south_west_off": "((q.block_state('gloamingforest:south'))) && (!((q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west'))))",
+          "e44_south_west_off": "((q.block_state('gloamingforest:west'))) && (!((q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west'))))",
+          "e45_south_east_on": "((q.block_state('gloamingforest:south'))) && ((q.block_state('gloamingforest:east'))) && ((q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:east')))",
+          "e46_south_east_off": "((q.block_state('gloamingforest:south'))) && (!((q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:east'))))",
+          "e47_south_east_off": "((q.block_state('gloamingforest:east'))) && (!((q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:east'))))"
         }
       },
       "minecraft:material_instances": {
@@ -114,7 +114,7 @@
     },
     "permutations": [
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": {
             "origin": [
@@ -143,7 +143,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -186,7 +186,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -229,7 +229,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -284,7 +284,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -327,7 +327,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -394,7 +394,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -461,7 +461,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -552,7 +552,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -595,7 +595,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -662,7 +662,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -729,7 +729,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -820,7 +820,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -875,7 +875,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -966,7 +966,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1057,7 +1057,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1184,7 +1184,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1227,7 +1227,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1294,7 +1294,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1361,7 +1361,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1452,7 +1452,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1519,7 +1519,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1622,7 +1622,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1725,7 +1725,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1864,7 +1864,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -1931,7 +1931,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2034,7 +2034,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2137,7 +2137,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2276,7 +2276,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2367,7 +2367,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2506,7 +2506,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2645,7 +2645,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (!q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2832,7 +2832,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2875,7 +2875,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -2931,73 +2931,6 @@
             "origin": [
               -1,
               0,
-              -1
-            ],
-            "size": [
-              9,
-              9,
-              2
-            ]
-          }
-        }
-      },
-      {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
-        "components": {
-          "minecraft:collision_box": [
-            {
-              "origin": [
-                -1,
-                7,
-                -1
-              ],
-              "size": [
-                2,
-                2,
-                2
-              ]
-            },
-            {
-              "origin": [
-                -1,
-                9,
-                -1
-              ],
-              "size": [
-                2,
-                7,
-                2
-              ]
-            },
-            {
-              "origin": [
-                1,
-                7,
-                -1
-              ],
-              "size": [
-                7,
-                2,
-                2
-              ]
-            },
-            {
-              "origin": [
-                1,
-                9,
-                -1
-              ],
-              "size": [
-                7,
-                7,
-                2
-              ]
-            }
-          ],
-          "minecraft:selection_box": {
-            "origin": [
-              -1,
-              7,
               -1
             ],
             "size": [
@@ -3009,7 +2942,74 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -1,
+                7,
+                -1
+              ],
+              "size": [
+                2,
+                2,
+                2
+              ]
+            },
+            {
+              "origin": [
+                -1,
+                9,
+                -1
+              ],
+              "size": [
+                2,
+                7,
+                2
+              ]
+            },
+            {
+              "origin": [
+                1,
+                7,
+                -1
+              ],
+              "size": [
+                7,
+                2,
+                2
+              ]
+            },
+            {
+              "origin": [
+                1,
+                9,
+                -1
+              ],
+              "size": [
+                7,
+                7,
+                2
+              ]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [
+              -1,
+              7,
+              -1
+            ],
+            "size": [
+              9,
+              9,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3100,7 +3100,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3167,7 +3167,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3270,7 +3270,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3373,7 +3373,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3512,7 +3512,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3579,7 +3579,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3682,7 +3682,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3785,7 +3785,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -3924,7 +3924,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4015,7 +4015,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4154,7 +4154,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4293,7 +4293,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (!q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4480,7 +4480,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4535,7 +4535,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4626,7 +4626,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4717,7 +4717,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4844,7 +4844,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -4935,7 +4935,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5074,7 +5074,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5213,7 +5213,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (!q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5400,7 +5400,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5491,7 +5491,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5630,7 +5630,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5769,7 +5769,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (!q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -5956,7 +5956,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -6083,7 +6083,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (!q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -6270,7 +6270,7 @@
         }
       },
       {
-        "condition": "(!q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(!q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {
@@ -6457,7 +6457,7 @@
         }
       },
       {
-        "condition": "(q.block_state('twilightforest:down')) && (q.block_state('twilightforest:up')) && (q.block_state('twilightforest:north')) && (q.block_state('twilightforest:south')) && (q.block_state('twilightforest:west')) && (q.block_state('twilightforest:east'))",
+        "condition": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:east'))",
         "components": {
           "minecraft:collision_box": [
             {

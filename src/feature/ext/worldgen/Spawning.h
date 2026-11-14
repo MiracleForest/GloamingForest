@@ -2,7 +2,7 @@
 
 // Contract extension of "spawn" (F5, rule R18; to be folded into Spawn.h by A8).
 //
-// TF's landmark controlled spawns (EntityEvents#gatherPotentialSpawns, structureSpecialSpawns) and
+// upstream's landmark controlled spawns (EntityEvents#gatherPotentialSpawns, structureSpecialSpawns) and
 // the structures' spawn overrides reach the spawners through gf::spawn::onSpecialSpawn: F6 answers
 // them from its starts (the pieces' SpawnIndexProvider indices, landmark::Generator::spawnIndex for
 // a landmark's own lookup, such as the hollow hills' HollowHillStructure#canSpawnMob dome).
@@ -10,7 +10,7 @@
 // The spawners (NaturalSpawner#spawnCategoryForPosition and #spawnMobsForChunkGeneration) also
 // ask the entity type and the mob for answers the placement rule does not give:
 // - the heightmap of SpawnPlacements#getHeightmapType (MOTION_BLOCKING_NO_LEAVES unless set, as
-//   Java's default and every TF registration),
+//   Java's default and every upstream registration),
 // - the entity's size (EntityType#getSpawnAABB), Mob#getMaxSpawnClusterSize (4),
 //   Mob#isMaxGroupSizeReached (false), Mob#checkSpawnRules and Mob#checkSpawnObstruction
 //   (EventHooks#checkSpawnPosition). The defaults are Java's base classes:
@@ -27,10 +27,10 @@
 //     During chunk generation the entity part never refuses (Java's WorldGenRegion#getEntities is
 //     empty), so the default there is the liquid check alone.
 //   Brightness during chunk generation is estimated from the blocks above (Bedrock lights chunks
-//   after decoration). Entity units register their overrides (TF's ghasts, golems, kobolds,
+//   after decoration). Entity units register their overrides (upstream's ghasts, golems, kobolds,
 //   penguins, giant miners, ...).
 //
-//     gf::spawn::ext::registerSpawnBehaviour("twilightforest:kobold", {.maxClusterSize = 6});
+//     gf::spawn::ext::registerSpawnBehaviour("gloamingforest:kobold", {.maxClusterSize = 6});
 //     gf::spawn::ext::registerSpawnBehaviour("minecraft:drowned", {.walkTarget = WalkTarget::Monster, .obstruction = Obstruction::EntitiesOnly});
 
 #include <functional>

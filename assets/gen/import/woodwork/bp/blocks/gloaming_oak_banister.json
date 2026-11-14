@@ -1,0 +1,921 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "gloamingforest:gloaming_oak_banister",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "gloamingforest:extended": [false, true],
+        "gloamingforest:facing": ["north", "south", "west", "east"],
+        "gloamingforest:shape": ["tall", "short", "connected"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 15
+      },
+      "minecraft:tags": ["minecraft:is_axe_item_destructible"],
+      "minecraft:map_color": "#8f7748",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_gloaming_oak_0",
+          "render_method": "opaque"
+        },
+        "texture": {
+          "texture": "tf_block_wood_planks_gloaming_oak_0",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 180, 0]
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [-8, 12, 4],
+          "size": [16, 4, 4]
+        },
+        {
+          "origin": [2.5, 0, 5],
+          "size": [3, 16, 3]
+        },
+        {
+          "origin": [-5.5, 0, 5],
+          "size": [3, 16, 3]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [-8, 0, 4],
+        "size": [16, 16, 4]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 5],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 4, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 4, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 4, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [-8, 12, 4],
+              "size": [16, 4, 4]
+            },
+            {
+              "origin": [2.5, 0, 5],
+              "size": [3, 16, 3]
+            },
+            {
+              "origin": [-5.5, 0, 5],
+              "size": [3, 16, 3]
+            }
+          ],
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      }
+    ]
+  }
+}

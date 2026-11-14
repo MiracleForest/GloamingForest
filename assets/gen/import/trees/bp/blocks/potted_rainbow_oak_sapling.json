@@ -2,7 +2,7 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:potted_rainbow_oak_sapling",
+      "identifier": "gloamingforest:potted_rainbow_oak_sapling",
       "menu_category": {
         "category": "none"
       }

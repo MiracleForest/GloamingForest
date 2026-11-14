@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/inventory/UncraftingMenu.java
-//   src/main/java/twilightforest/inventory/UncraftingContainer.java
-//   src/main/java/twilightforest/inventory/UncraftingInputContainer.java
-//   src/main/java/twilightforest/inventory/slot/UncraftingSlot.java
-//   src/main/java/twilightforest/inventory/slot/UncraftingResultSlot.java
-//   src/main/java/twilightforest/network/UncraftingGuiPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/inventory/UncraftingMenu.java
+//   src/main/java/gloamingforest/inventory/UncraftingContainer.java
+//   src/main/java/gloamingforest/inventory/UncraftingInputContainer.java
+//   src/main/java/gloamingforest/inventory/slot/UncraftingSlot.java
+//   src/main/java/gloamingforest/inventory/slot/UncraftingResultSlot.java
+//   src/main/java/gloamingforest/network/UncraftingGuiPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -52,10 +52,10 @@ namespace cu    = core::uncraftmaps;
 using recipes::CraftingRecipe;
 using recipes::Ingredient;
 
-constexpr char kBannedUncraftables[]   = "twilightforest:banned_uncraftables";
-constexpr char kBannedIngredients[]    = "twilightforest:banned_uncrafting_ingredients";
-constexpr char kIgnoresCost[]          = "twilightforest:uncrafting_ignores_cost";
-constexpr char kUncraftingType[]       = "twilightforest:uncrafting";
+constexpr char kBannedUncraftables[]   = "gloamingforest:banned_uncraftables";
+constexpr char kBannedIngredients[]    = "gloamingforest:banned_uncrafting_ingredients";
+constexpr char kIgnoresCost[]          = "gloamingforest:uncrafting_ignores_cost";
+constexpr char kUncraftingType[]       = "gloamingforest:uncrafting";
 
 bool      isEmpty(ItemStack const& s) { return items::isEmpty(s); }
 int       count(ItemStack const& s) { return items::countOf(s); }
@@ -445,7 +445,7 @@ void Menu::slotsChanged(Changed which) {
             mS.uncraftingCost = 0;
             mS.recraftingCost = calculateRecraftingCost();
         }
-        // (otherwise TF leaves chooseRecipe's result of the combined grid in the result slot)
+        // (otherwise upstream leaves chooseRecipe's result of the combined grid in the result slot)
     }
 }
 
@@ -514,7 +514,7 @@ void Menu::uncraftingTaken() {
         if (!isEmpty(s) && !mS.marked[i]) set(kSlotAssembly + static_cast<int>(i), s);
     }
     if (!isEmpty(mS.input)) {
-        progression::trigger(mPlayer, "twilightforest:uncraft_item", {{"item", items::idOf(mS.input)}, {"stack", items::toJson(mS.input)}});
+        progression::trigger(mPlayer, "gloamingforest:uncraft_item", {{"item", items::idOf(mS.input)}, {"stack", items::toJson(mS.input)}});
         // DataComponents.CONTAINER: a shulker box's contents go back to the player
         if (auto const* tag = items::userData(mS.input); tag && tag->contains("Items")) {
             auto const& list = (*tag)["Items"];
@@ -817,7 +817,7 @@ Json menuData(Player& player, MenuState& s) {
     }
     auto const& c = config();
     return {
-        {"title", trFor(player, "container.twilightforest.uncrafting_table", "Uncrafting Table")},
+        {"title", trFor(player, "container.gloamingforest.uncrafting_table", "Uncrafting Table")},
         {"input", j(s.input)},
         {"result", j(s.result)},
         {"uncrafting", uncrafting},

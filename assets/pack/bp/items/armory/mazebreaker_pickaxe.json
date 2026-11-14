@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:mazebreaker_pickaxe",
+      "identifier": "gloamingforest:mazebreaker_pickaxe",
       "menu_category": {
         "category": "equipment"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:mazebreaker_pickaxe.name"
+        "value": "item.gloamingforest:mazebreaker_pickaxe.name"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:durability": {
@@ -28,131 +28,131 @@
         "use_efficiency": true,
         "destroy_speeds": [
           {
-            "block": "twilightforest:mazestone",
+            "block": "gloamingforest:mazestone",
             "speed": 128
           },
           {
-            "block": "twilightforest:mazestone_brick",
+            "block": "gloamingforest:mazestone_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:cracked_mazestone",
+            "block": "gloamingforest:cracked_mazestone",
             "speed": 128
           },
           {
-            "block": "twilightforest:mossy_mazestone",
+            "block": "gloamingforest:mossy_mazestone",
             "speed": 128
           },
           {
-            "block": "twilightforest:cut_mazestone",
+            "block": "gloamingforest:cut_mazestone",
             "speed": 128
           },
           {
-            "block": "twilightforest:decorative_mazestone",
+            "block": "gloamingforest:decorative_mazestone",
             "speed": 128
           },
           {
-            "block": "twilightforest:mazestone_mosaic",
+            "block": "gloamingforest:mazestone_mosaic",
             "speed": 128
           },
           {
-            "block": "twilightforest:mazestone_border",
+            "block": "gloamingforest:mazestone_border",
             "speed": 128
           },
           {
-            "block": "twilightforest:castle_brick",
+            "block": "gloamingforest:castle_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:worn_castle_brick",
+            "block": "gloamingforest:worn_castle_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:cracked_castle_brick",
+            "block": "gloamingforest:cracked_castle_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:mossy_castle_brick",
+            "block": "gloamingforest:mossy_castle_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:castle_roof_tile",
+            "block": "gloamingforest:castle_roof_tile",
             "speed": 128
           },
           {
-            "block": "twilightforest:thick_castle_brick",
+            "block": "gloamingforest:thick_castle_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:bold_castle_brick_tile",
+            "block": "gloamingforest:bold_castle_brick_tile",
             "speed": 128
           },
           {
-            "block": "twilightforest:bold_castle_brick_pillar",
+            "block": "gloamingforest:bold_castle_brick_pillar",
             "speed": 128
           },
           {
-            "block": "twilightforest:encased_castle_brick_tile",
+            "block": "gloamingforest:encased_castle_brick_tile",
             "speed": 128
           },
           {
-            "block": "twilightforest:encased_castle_brick_pillar",
+            "block": "gloamingforest:encased_castle_brick_pillar",
             "speed": 128
           },
           {
-            "block": "twilightforest:castle_brick_stairs",
+            "block": "gloamingforest:castle_brick_stairs",
             "speed": 128
           },
           {
-            "block": "twilightforest:worn_castle_brick_stairs",
+            "block": "gloamingforest:worn_castle_brick_stairs",
             "speed": 128
           },
           {
-            "block": "twilightforest:cracked_castle_brick_stairs",
+            "block": "gloamingforest:cracked_castle_brick_stairs",
             "speed": 128
           },
           {
-            "block": "twilightforest:mossy_castle_brick_stairs",
+            "block": "gloamingforest:mossy_castle_brick_stairs",
             "speed": 128
           },
           {
-            "block": "twilightforest:encased_castle_brick_stairs",
+            "block": "gloamingforest:encased_castle_brick_stairs",
             "speed": 128
           },
           {
-            "block": "twilightforest:bold_castle_brick_stairs",
+            "block": "gloamingforest:bold_castle_brick_stairs",
             "speed": 128
           },
           {
-            "block": "twilightforest:pink_castle_rune_brick",
+            "block": "gloamingforest:pink_castle_rune_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:yellow_castle_rune_brick",
+            "block": "gloamingforest:yellow_castle_rune_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:blue_castle_rune_brick",
+            "block": "gloamingforest:blue_castle_rune_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:violet_castle_rune_brick",
+            "block": "gloamingforest:violet_castle_rune_brick",
             "speed": 128
           },
           {
-            "block": "twilightforest:pink_castle_door",
+            "block": "gloamingforest:pink_castle_door",
             "speed": 128
           },
           {
-            "block": "twilightforest:yellow_castle_door",
+            "block": "gloamingforest:yellow_castle_door",
             "speed": 128
           },
           {
-            "block": "twilightforest:blue_castle_door",
+            "block": "gloamingforest:blue_castle_door",
             "speed": 128
           },
           {
-            "block": "twilightforest:violet_castle_door",
+            "block": "gloamingforest:violet_castle_door",
             "speed": 128
           },
           {

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U8 (weapons) selftests (weapons.*, testPos dx 800..899, rule R12).
 
 #include <algorithm>
@@ -108,12 +108,12 @@ GF_REGISTER_SELFTEST("weapons.items", [](Context& ctx) {
     for (auto const& r : rows) {
         auto s = game::items::make(r.id);
         ctx.require(s.has_value(), std::string("item ") + r.id + " exists");
-        ctx.check(maxDamage(*s) == r.durability, std::string(r.id) + " durability " + std::to_string(maxDamage(*s)) + " (TF " + std::to_string(r.durability) + ")");
+        ctx.check(maxDamage(*s) == r.durability, std::string(r.id) + " durability " + std::to_string(maxDamage(*s)) + " (upstream " + std::to_string(r.durability) + ")");
         ctx.check(s->getMaxStackSize() == r.stack, std::string(r.id) + " stacks to " + std::to_string(s->getMaxStackSize()));
         ctx.check(gf::item::ext::rarityOf(r.id) == r.rarity, std::string(r.id) + " rarity");
     }
-    ctx.check(gf::datamaps::get("twilightforest:crumble_horn", "minecraft:stone") != nullptr, "the crumble_horn data map has stone");
-    ctx.check(gf::datamaps::get("twilightforest:transformation_powder", "minecraft:pig") != nullptr, "the transformation_powder data map has the pig");
+    ctx.check(gf::datamaps::get("gloamingforest:crumble_horn", "minecraft:stone") != nullptr, "the crumble_horn data map has stone");
+    ctx.check(gf::datamaps::get("gloamingforest:transformation_powder", "minecraft:pig") != nullptr, "the transformation_powder data map has the pig");
 });
 
 // The moonworm queen repair recipe (MoonwormQueenRepairRecipe).
@@ -162,10 +162,10 @@ GF_REGISTER_SELFTEST("weapons.crumble_horn", [](Context& ctx) -> ll::coro::CoroT
             }
     auto horn = game::items::make(kCrumbleHorn);
     ctx.require(horn.has_value(), "a crumble horn");
-    long long statBefore = gf::stats::value(player, "twilightforest:blocks_crumbled");
+    long long statBefore = gf::stats::value(player, "gloamingforest:blocks_crumbled");
     int       n          = crumbleAround(player, *horn, 1234);
     ctx.check(n > 0 && n < filled, "the horn crumbled " + std::to_string(n) + " of " + std::to_string(filled) + " (chance 0.2)");
-    ctx.check(gf::stats::value(player, "twilightforest:blocks_crumbled") - statBefore == n, "blocks_crumbled counts each");
+    ctx.check(gf::stats::value(player, "gloamingforest:blocks_crumbled") - statBefore == n, "blocks_crumbled counts each");
     ctx.check(horn->getDamageValue() == n, "one durability per crumble: " + std::to_string(horn->getDamageValue()));
     int cracked = 0, gravel = 0, bad = 0;
     for (int x = c.x - 2; x <= c.x + 2; ++x)
@@ -197,7 +197,7 @@ GF_REGISTER_SELFTEST("weapons.transformation_powder", [](Context& ctx) -> ll::co
     auto uid = transform(*pig, &*powder, true);
     ctx.check(uid != 0, "the pig transformed");
     auto* boar = world::actorById(uid);
-    ctx.check(boar && boar->getTypeName() == "twilightforest:boar", "into twilightforest:boar (" + (boar ? boar->getTypeName() : std::string("none")) + ")");
+    ctx.check(boar && boar->getTypeName() == "gloamingforest:boar", "into gloamingforest:boar (" + (boar ? boar->getTypeName() : std::string("none")) + ")");
     ctx.check(powder->mCount == 2, "one powder used");
     co_await ctx.ticks(2);
     if (auto* b = world::actorById(uid)) {
@@ -280,18 +280,18 @@ GF_REGISTER_SELFTEST("weapons.lamp", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto  eye    = eyeOf(player);
     auto  look   = lookOf(player);
     auto  c      = cw::containing({eye.x + look.x * 2.0, eye.y + look.y * 2.0, eye.z + look.z * 2.0});
-    bool  thorns = ctx.setBlock(core::GlobalPos{at.dim, c.x + 2, c.y, c.z}, "twilightforest:brown_thorns");
-    ctx.setBlock(core::GlobalPos{at.dim, c.x + 3, c.y, c.z + 1}, "twilightforest:green_thorns");
-    ctx.setBlock(core::GlobalPos{at.dim, c.x + 6, c.y, c.z}, "twilightforest:brown_thorns"); // out of range
+    bool  thorns = ctx.setBlock(core::GlobalPos{at.dim, c.x + 2, c.y, c.z}, "gloamingforest:brown_thorns");
+    ctx.setBlock(core::GlobalPos{at.dim, c.x + 3, c.y, c.z + 1}, "gloamingforest:green_thorns");
+    ctx.setBlock(core::GlobalPos{at.dim, c.x + 6, c.y, c.z}, "gloamingforest:brown_thorns"); // out of range
     auto* pig = spawnMob(core::GlobalPos{at.dim, c.x + 1, at.y, c.z}, "minecraft:pig");
     lampBurn(ctx.player());
     auto* region = ctx.region();
     if (thorns) {
-        ctx.check(game::blockIdAt(*region, BlockPos{c.x + 2, c.y, c.z}) == "twilightforest:burnt_thorns", "brown thorns burnt");
-        ctx.check(game::blockIdAt(*region, BlockPos{c.x + 3, c.y, c.z + 1}) == "twilightforest:burnt_thorns", "green thorns burnt");
-        ctx.check(game::blockIdAt(*region, BlockPos{c.x + 6, c.y, c.z}) == "twilightforest:brown_thorns", "thorns 6 away stay");
+        ctx.check(game::blockIdAt(*region, BlockPos{c.x + 2, c.y, c.z}) == "gloamingforest:burnt_thorns", "brown thorns burnt");
+        ctx.check(game::blockIdAt(*region, BlockPos{c.x + 3, c.y, c.z + 1}) == "gloamingforest:burnt_thorns", "green thorns burnt");
+        ctx.check(game::blockIdAt(*region, BlockPos{c.x + 6, c.y, c.z}) == "gloamingforest:brown_thorns", "thorns 6 away stay");
     } else {
-        ctx.info("twilightforest:brown_thorns is not placeable here (U30's block)");
+        ctx.info("gloamingforest:brown_thorns is not placeable here (U30's block)");
     }
     ctx.check(pig && pig->isOnFire(), "the pig is on fire");
     if (pig) pig->remove();
@@ -401,7 +401,7 @@ GF_REGISTER_SELFTEST("weapons.bow_punch", [](Context& ctx) -> ll::coro::CoroTask
         if (e && e->getTypeName() == "minecraft:arrow") e->remove();
 });
 
-// The ore magnet takes Unbreaking and Mending books (TF: #minecraft:enchantable/durability), never
+// The ore magnet takes Unbreaking and Mending books (upstream: #minecraft:enchantable/durability), never
 // the enchanting table's other tool enchantments.
 GF_REGISTER_SELFTEST("weapons.ore_magnet_enchants", [](Context& ctx) {
     auto magnet = game::items::make(kOreMagnet);
@@ -515,7 +515,7 @@ GF_REGISTER_SELFTEST("weapons.chain_and_cube", [](Context& ctx) -> ll::coro::Cor
     ctx.player().getInventory().setItem(slot, ItemStack::EMPTY_ITEM());
 });
 
-// The knightmetal shield blocks in front and parries TF projectiles in its first 40 ticks; the
+// The knightmetal shield blocks in front and parries upstream projectiles in its first 40 ticks; the
 // feather fan's flag stops the next fall damage.
 GF_REGISTER_SELFTEST("weapons.shield_and_fan", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.flatArea(890, 10);
@@ -540,7 +540,7 @@ GF_REGISTER_SELFTEST("weapons.shield_and_fan", [](Context& ctx) -> ll::coro::Cor
     bool hurt   = gf::combat::hurt(p, 6.0F, "minecraft:mob_attack", zombie, zombie);
     ctx.check(!hurt && gShieldBlocks == blocks + 1, "the shield blocked the golem");
     ctx.check(p.getCarriedItem().getDamageValue() - dmg0 == 7, "the shield took 1 + floor(6): " + std::to_string(p.getCarriedItem().getDamageValue() - dmg0));
-    // a TF projectile in the parry window
+    // an upstream projectile in the parry window
     Actor* shot = gf::projectile::shoot(*zombie, kIceArrow, Vec3{-1, 0, 0}, 1.0F, 0.0F);
     ctx.require(shot != nullptr, "an ice arrow from the zombie");
     int parries = gParries;

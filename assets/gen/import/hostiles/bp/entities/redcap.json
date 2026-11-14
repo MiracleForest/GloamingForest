@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:redcap",
+      "identifier": "gloamingforest:redcap",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "redcap", "monster", "mob"]
+        "family": ["gloamingforest", "redcap", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.9,

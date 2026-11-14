@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:penguin",
+      "identifier": "gloamingforest:penguin",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "penguin", "creature", "mob"]
+        "family": ["gloamingforest", "penguin", "creature", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.5,

@@ -5,7 +5,7 @@
   "size": [5, 4, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},
-    {"Name":"twilightforest:hedge"}
+    {"Name":"gloamingforest:hedge"}
   ],
   "blocks": [
     [0, 5], [1, 15], [0, 10], [1, 15], [0, 10], [1, 15], [0, 30]

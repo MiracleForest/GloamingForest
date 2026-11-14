@@ -1,14 +1,14 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:loyal_zombie": {
+      "gloamingforest:loyal_zombie": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.loyal_zombie.ambient",
-          "hurt": "entity.twilightforest.loyal_zombie.hurt",
-          "death": "entity.twilightforest.loyal_zombie.death",
-          "step": { "sound": "entity.twilightforest.loyal_zombie.step", "volume": 0.15, "pitch": 1.0 }
+          "ambient": "entity.gloamingforest.loyal_zombie.ambient",
+          "hurt": "entity.gloamingforest.loyal_zombie.hurt",
+          "death": "entity.gloamingforest.loyal_zombie.death",
+          "step": { "sound": "entity.gloamingforest.loyal_zombie.step", "volume": 0.15, "pitch": 1.0 }
         }
       }
     }

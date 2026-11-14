@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/TwilightWandItem.java
-//   src/main/java/twilightforest/item/LifedrainScepterItem.java
-//   src/main/java/twilightforest/item/ZombieWandItem.java
-//   src/main/java/twilightforest/item/FortificationWandItem.java
-//   src/main/java/twilightforest/item/ExanimateEssenceItem.java
-//   src/main/java/twilightforest/enchantment/RechargeScepterEffect.java
-//   src/main/java/twilightforest/util/TFItemStackUtils.java
-//   src/main/java/twilightforest/dispenser/DamageableStackDispenseBehavior.java
-//   src/main/java/twilightforest/dispenser/TFDispenserBehaviors.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/GloamingWandItem.java
+//   src/main/java/gloamingforest/item/LifedrainScepterItem.java
+//   src/main/java/gloamingforest/item/ZombieWandItem.java
+//   src/main/java/gloamingforest/item/FortificationWandItem.java
+//   src/main/java/gloamingforest/item/ExanimateEssenceItem.java
+//   src/main/java/gloamingforest/enchantment/RechargeScepterEffect.java
+//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+//   src/main/java/gloamingforest/dispenser/DamageableStackDispenseBehavior.java
+//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The four scepters (durability = charges; a depleted scepter refuses to work outside creative and
 // never breaks), their renewal recharge (U10's enchantment, by id), the mystic crown's bonuses, the
-// twilight scepter's dispenser behaviour and the exanimate essence.
+// gloaming scepter's dispenser behaviour and the exanimate essence.
 //
 // The lifedrain scepter is used over time (BP minecraft:use_modifiers, BOW animation); its red beam
-// is drawn from the server for every client with twilightforest:magic_effect particles (the
-// effect's colour key: a downward velocity is red, TF's makeRedMagicTrail; upward is the twilight
+// is drawn from the server for every client with gloamingforest:magic_effect particles (the
+// effect's colour key: a downward velocity is red, upstream's makeRedMagicTrail; upward is the gloaming
 // scepter's teal), from the hand position of LifedrainScepterItem#getPlayerHandPos's third-person
 // branch.
 #include <cfloat>
@@ -72,7 +72,7 @@ namespace items = game::items;
 
 namespace {
 
-constexpr char kRenewal[] = "twilightforest:renewal";
+constexpr char kRenewal[] = "gloamingforest:renewal";
 
 int maxDamage(ItemStack const& stack) {
     auto const* item = stack.mItem.get();
@@ -138,7 +138,7 @@ void redTrail(Player& player, Vec3 const& target) {
         double k = i / (distance * 3);
         Vec3   p{static_cast<float>(hand.x - dx * k), static_cast<float>(hand.y - dy * k), static_cast<float>(hand.z - dz * k)};
         // colour (1.0, 0.5, 0.5): the effect reads a downward velocity as red
-        particle(player, "twilightforest:magic_effect", p, Vec3{0.0F, -1e-4F, 0.0F});
+        particle(player, "gloamingforest:magic_effect", p, Vec3{0.0F, -1e-4F, 0.0F});
     }
 }
 
@@ -178,10 +178,10 @@ void spawnAnim(Actor& mob) {
 /// The scepter tooltip line (appendHoverText).
 void scepterTooltip(ItemStack const& stack, std::vector<std::string>& lines, Player const* viewer) {
     auto n = std::to_string(charges(stack));
-    lines.push_back("§7" + (viewer ? trFor(*viewer, "item.twilightforest.scepter.desc", "%s charges left", n) : tr("item.twilightforest.scepter.desc", "%s charges left", n)));
+    lines.push_back("§7" + (viewer ? trFor(*viewer, "item.gloamingforest.scepter.desc", "%s charges left", n) : tr("item.gloamingforest.scepter.desc", "%s charges left", n)));
 }
 
-/// Whether the crown spares a charge (5 % for the twilight and lifedrain scepters).
+/// Whether the crown spares a charge (5 % for the gloaming and lifedrain scepters).
 bool spendCharge(Player& player) { return !creative(player) && (!wearsCrown(player) || levelRandom().nextFloat() > 0.05F); }
 
 } // namespace
@@ -311,14 +311,14 @@ void lifedrainTick(Player& player, ItemStack& stack, int count) {
     if (!target || !isLiving(*target) || target->getTypeName() == "minecraft:armor_stand") return;
     if (target->isAlive()) {
         redTrail(player, target->getEyePos());
-        playSound(player, "item.twilightforest.life_scepter.drain", 1.0F, 1.0F);
+        playSound(player, "item.gloamingforest.life_scepter.drain", 1.0F, 1.0F);
     }
     std::int64_t tid = uidOf(*target);
-    if (gf::combat::hurt(*target, 1.0F, "twilightforest:lifedrain", &player)) {
+    if (gf::combat::hurt(*target, 1.0F, "gloamingforest:lifedrain", &player)) {
         target = actorById(tid);
         if (!target) return;
         if (target->getHealth() <= 1 && !gf::tags::has(gf::tags::Registry::EntityType, "c:bosses", target->getTypeName())) {
-            if (!gf::tags::has(gf::tags::Registry::EntityType, "twilightforest:lifedrain_drops_no_flesh", target->getTypeName())) {
+            if (!gf::tags::has(gf::tags::Registry::EntityType, "gloamingforest:lifedrain_drops_no_flesh", target->getTypeName())) {
                 gf::loot::LootContext ctx;
                 ctx.region     = &target->getDimensionBlockSource();
                 ctx.origin     = target->getEyePos();
@@ -326,16 +326,16 @@ void lifedrainTick(Player& player, ItemStack& stack, int count) {
                 ctx.player     = &player;
                 ctx.attacker   = &player;
                 ctx.direct     = &player;
-                ctx.damageType = "twilightforest:lifedrain";
-                for (auto& s : gf::loot::roll("twilightforest:items/lifedrain_scepter_kill_bonus", ctx))
+                ctx.damageType = "gloamingforest:lifedrain";
+                for (auto& s : gf::loot::roll("gloamingforest:items/lifedrain_scepter_kill_bonus", ctx))
                     if (!items::isEmpty(s)) player.getLevel().getSpawner().spawnItem(*ctx.region, s, nullptr, target->getPosition(), 0);
                 animateTargetShatter(*target);
             }
             if (!target->isPlayer()) spawnAnim(*target);
             if (target->isAlive()) {
-                if (target->isPlayer()) gf::combat::hurt(*target, FLT_MAX, "twilightforest:lifedrain", &player);
+                if (target->isPlayer()) gf::combat::hurt(*target, FLT_MAX, "gloamingforest:lifedrain", &player);
                 else {
-                    gf::combat::hurt(*target, FLT_MAX, "twilightforest:lifedrain", &player);
+                    gf::combat::hurt(*target, FLT_MAX, "gloamingforest:lifedrain", &player);
                     if (auto* again = actorById(tid)) again->remove(); // die + discard: no death animation
                 }
             }
@@ -372,22 +372,22 @@ Mob* summonLoyalZombie(Player& player, ItemStack& stack) {
     addEffect(*zombie, "strength", 1200, 1);
     if (wearsCrown(player) && levelRandom().nextFloat() <= 0.1F) setLoyalZombieBaby(*zombie, true);
     if (!creative(player)) hurtButDontBreak(stack, 1);
-    playSound(*zombie, "item.twilightforest.zombie_scepter.use", 1.0F, 1.0F);
+    playSound(*zombie, "item.gloamingforest.zombie_scepter.use", 1.0F, 1.0F);
     log().info("artifacts: {} summoned a loyal zombie", player.getRealName());
     return zombie;
 }
 
 Actor* shootWandBolt(Actor& shooter, float inaccuracy) {
-    // TwilightWandBolt(level, thrower): shootFromRotation(xRot, yRot, 0, 1.5, inaccuracy)
+    // GloamingWandBolt(level, thrower): shootFromRotation(xRot, yRot, 0, 1.5, inaccuracy)
     return gf::projectile::shoot(shooter, kWandBolt, viewVector(shooter), 1.5F, inaccuracy);
 }
 
 void registerScepters() {
-    // ---- the twilight scepter
-    gf::item::registerItem(kTwilightScepter, {
+    // ---- the gloaming scepter
+    gf::item::registerItem(kGloamingScepter, {
         .use = [](Player& player, ItemStack& stack) {
             if (depleted(stack) && !creative(player)) return gf::item::Result::Fail;
-            playSound(player, "item.twilightforest.twilight_scepter.use", 1.0F, soundPitch(player));
+            playSound(player, "item.gloamingforest.gloaming_scepter.use", 1.0F, soundPitch(player));
             shootWandBolt(player);
             if (spendCharge(player)) hurtButDontBreak(stack, 1);
             return gf::item::Result::Success;
@@ -395,7 +395,7 @@ void registerScepters() {
         .inventoryTick = [](ItemStack& stack, Player& player, int, bool selected) { renewalTick(stack, player, selected); },
     });
     // DamageableStackDispenseBehavior (inaccuracy 6, speed 1.1, the use sound)
-    gf::item::registerDispense(kTwilightScepter, [](BlockSource& region, BlockPos const& pos, int facing, ItemStack& stack) {
+    gf::item::registerDispense(kGloamingScepter, [](BlockSource& region, BlockPos const& pos, int facing, ItemStack& stack) {
         if (stack.getDamageValue() + 1 > maxDamage(stack)) return false;
         // FacingID: 0 down, 1 up, 2 north, 3 south, 4 west, 5 east
         static constexpr int dx[6] = {0, 0, 0, 0, -1, 1}, dy[6] = {-1, 1, 0, 0, 0, 0}, dz[6] = {0, 0, -1, 1, 0, 0};
@@ -421,7 +421,7 @@ void registerScepters() {
         gf::projectile::ext::setVelocity(*bolt, Vec3{static_cast<float>((dx[f] / len + r.triangle(0, sprd)) * 1.1), static_cast<float>(((dy[f] + 0.1) / len + r.triangle(0, sprd)) * 1.1),
                                                      static_cast<float>((dz[f] / len + r.triangle(0, sprd)) * 1.1)});
         hurtButDontBreak(stack, 1);
-        gf::fx::sound(bolt->getDimension(), "item.twilightforest.twilight_scepter.use", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, 1.0F, 1.0F);
+        gf::fx::sound(bolt->getDimension(), "item.gloamingforest.gloaming_scepter.use", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, 1.0F, 1.0F);
         return true;
     });
     // ---- the lifedrain scepter (used over time: BP use_modifiers, 72000 ticks)
@@ -450,14 +450,14 @@ void registerScepters() {
             if (gf::item::cooldownLeft(player, kFortificationScepter) > 0) return gf::item::Result::Fail;
             setShields(player, 5, true);
             if (!creative(player)) hurtButDontBreak(stack, 1);
-            playSound(player, "entity.twilightforest.fortification_shield.add", 1.0F, soundPitch(player));
+            playSound(player, "entity.gloamingforest.fortification_shield.add", 1.0F, soundPitch(player));
             if (!player.isCreative()) gf::item::cooldown(player, kFortificationScepter, 1200);
             log().info("artifacts: {} raised 5 fortification shields", player.getRealName());
             return gf::item::Result::Success;
         },
         .inventoryTick = [](ItemStack& stack, Player& player, int, bool selected) { renewalTick(stack, player, selected); },
     });
-    for (char const* id : {kTwilightScepter, kLifedrainScepter, kZombieScepter, kFortificationScepter}) gf::item::addTooltip(id, scepterTooltip);
+    for (char const* id : {kGloamingScepter, kLifedrainScepter, kZombieScepter, kFortificationScepter}) gf::item::addTooltip(id, scepterTooltip);
 
     // ---- the exanimate essence (ExanimateEssenceItem#useOn)
     ia::onUseOn({.item = kEssence}, [](ia::UseOnContext const& c) {
@@ -471,13 +471,13 @@ void registerScepters() {
         std::string const& id = c.blockId;
         bool candle = id == "minecraft:candle" || (id.starts_with("minecraft:") && id.ends_with("_candle"));
         if (candle && game::intState(c.block, "lit").value_or(0) != 0) {
-            std::string ominous = id == "minecraft:candle" ? "twilightforest:ominous_candle" : "twilightforest:ominous_" + id.substr(10);
+            std::string ominous = id == "minecraft:candle" ? "gloamingforest:ominous_candle" : "gloamingforest:ominous_" + id.substr(10);
             int         candles = game::intState(c.block, "candles").value_or(0) + 1;
-            if (auto const* b = game::blockWithStates(ominous, Json{{"twilightforest:candles", candles}})) {
-                gf::fx::sound(c.player.getDimension(), "block.twilightforest.ominous_fire", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, 1.5F, pitch);
+            if (auto const* b = game::blockWithStates(ominous, Json{{"gloamingforest:candles", candles}})) {
+                gf::fx::sound(c.player.getDimension(), "block.gloamingforest.ominous_fire", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F}, 1.5F, pitch);
                 game::setBlock(*region, pos, *b);
                 for (int j = 0; j < 5 * candles; ++j)
-                    particle(c.player, "twilightforest:ominous_flame", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F},
+                    particle(c.player, "gloamingforest:ominous_flame", Vec3{pos.x + 0.5F, pos.y + 0.5F, pos.z + 0.5F},
                              Vec3{static_cast<float>((r.nextDouble() - 0.5) * 0.05), 0.015F, static_cast<float>((r.nextDouble() - 0.5) * 0.05)});
                 flag = true;
             }
@@ -493,8 +493,8 @@ void registerScepters() {
             sturdy      = sturdy && shape.max.y >= 0.999F + below.y && shape.max.x - shape.min.x >= 0.999F && shape.max.z - shape.min.z >= 0.999F;
             bool dry    = !region->getLiquidBlock(at).isAir() ? false : true;
             if (game::replaceable(*region, at) && sturdy && dry) {
-                if (auto const* fire = game::blockWithStates("twilightforest:ominous_fire", Json::object())) {
-                    gf::fx::sound(c.player.getDimension(), "block.twilightforest.ominous_fire", Vec3{at.x + 0.5F, at.y + 0.5F, at.z + 0.5F}, 1.5F, pitch);
+                if (auto const* fire = game::blockWithStates("gloamingforest:ominous_fire", Json::object())) {
+                    gf::fx::sound(c.player.getDimension(), "block.gloamingforest.ominous_fire", Vec3{at.x + 0.5F, at.y + 0.5F, at.z + 0.5F}, 1.5F, pitch);
                     game::setBlock(*region, at, *fire);
                     flag = true;
                 }

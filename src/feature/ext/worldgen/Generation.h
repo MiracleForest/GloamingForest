@@ -6,25 +6,25 @@
 //   FeatureSorter turns into the feature seed indices of every placed feature. U1 sets it with
 //   its biome list; without it the imported biome ids are used in alphabetical order.
 // - The generator itself, for a dimension backend that does not go through the game's
-//   CustomDimension (F4, spike S1): createGenerator(dimension) returns the Twilight generator.
+//   CustomDimension (F4, spike S1): createGenerator(dimension) returns the Gloaming generator.
 // - Statistics for timing budgets and selftests, and an in-memory run of the whole pipeline.
 // - The stage order as Java runs it, which differs from the stage comment of Worldgen.h:
 //     loadChunk:  Biomes -> Starts -> Noise -> Surface -> Blanket -> Carvers
 //     decoration: for each GenerationStep.Decoration step 0..10: the structure steps of that step
 //                 (the plain Pieces steps at SurfaceStructures), then the step's placed features;
 //                 then Features -> LargeWriter -> Spawns
-//   * Blanket runs at surface time, right after the surface provider and the Surface steps: TF
+//   * Blanket runs at surface time, right after the surface provider and the Surface steps: upstream
 //     injects ChunkBlanketProcessors#chunkBlanketing after ChunkGenerator#buildSurface in
 //     ChunkStatusTasks#generateSurface (tf-asm ChunkStatusTaskTransformer), so the canopy and the
 //     glacier see the bare ground (WORLD_SURFACE_WG) and every carver and feature sees them.
 //     blanketContext() gives the blanket the WorldGenRegion random of that step (fork() it per
-//     processor that applies, as TF does) and the biomes in the chunk's sections.
+//     processor that applies, as upstream does) and the biomes in the chunk's sections.
 //   * Structures: Java's applyBiomeDecoration places, at each step, the structures of that step
 //     before the step's features, each after worldgenrandom.setFeatureSeed(decorationSeed, index,
 //     step), where `index` counts EVERY structure of the step in Java's structure registry
 //     (Minecraft's own structures included, in registry order: structuresByStep(), structureSlot()).
 //     - A plain Stage::Pieces step keeps Worldgen.h's meaning: it runs ONCE per chunk, at
-//       SurfaceStructures (the step of most TF landmarks), before that step's features.
+//       SurfaceStructures (the step of most upstream landmarks), before that step's features.
 //     - addStructureStep() (opt in) runs at EVERY decoration step 0..10: it places only the
 //       structures whose step is decorationContext()->step, each with structureRandomOf(id)
 //       (= structureRandom(structureSlot(id)->index)). At SurfaceStructures the plain Pieces steps
@@ -41,7 +41,7 @@
 //   (grass and water colours, precipitation, snow, the client) see Java's borders; the raw quarts
 //   come from the biome source (and the chunk's distinct raw biomes are kept for the decoration).
 //
-//     gf::worldgen::ext::setPossibleBiomes({"twilightforest:forest", "twilightforest:dense_forest", ...});
+//     gf::worldgen::ext::setPossibleBiomes({"gloamingforest:forest", "gloamingforest:dense_forest", ...});
 //     gf::worldgen::ext::addStructureStep("landmark.pieces", 0, [](auto& chunk, auto& region) {
 //         auto const& d = *gf::worldgen::ext::decorationContext();
 //         for (auto const& id : gf::worldgen::ext::structuresByStep()[d.step])
@@ -85,9 +85,9 @@ void setPossibleBiomes(std::vector<std::string> biomeIds);
 /// The configured carvers of a biome ("air" step).
 [[nodiscard]] std::vector<std::string> biomeCarvers(std::string const& biomeId);
 
-/// The Twilight Forest generator for `dimension` (nullptr when not possible); the game owns it.
+/// The Gloaming Forest generator for `dimension` (nullptr when not possible); the game owns it.
 [[nodiscard]] std::unique_ptr<WorldGenerator> createGenerator(Dimension& dimension);
-/// Whether the generator of the Twilight Forest is installed in the running level.
+/// Whether the generator of the Gloaming Forest is installed in the running level.
 [[nodiscard]] bool generatorActive();
 
 /// What a BlanketFn gets besides (Chunk, Region) (ChunkBlanketProcessors#chunkBlanketing).
@@ -109,7 +109,7 @@ struct DecorationContext {
     std::int64_t decorationSeed = 0;     ///< WorldgenRandom#setDecorationSeed(seed, minBlockX, minBlockZ)
     /// A Xoroshiro WorldgenRandom set by setFeatureSeed(decorationSeed, index, step): the random of
     /// the index-th structure of this step. `index` counts every structure of the step in Java's
-    /// structure registry, Minecraft's own included (structureSlot), not only TF's.
+    /// structure registry, Minecraft's own included (structureSlot), not only upstream's.
     [[nodiscard]] std::unique_ptr<core::jrand::WorldgenRandom> structureRandom(int index) const;
     /// structureRandom(structureSlot(structureId)->index); nullptr when the structure is unknown or
     /// belongs to another step.
@@ -125,7 +125,7 @@ struct DecorationContext {
 void addStructureStep(std::string const& id, int order, ChunkFn fn);
 
 /// Java's structure registry grouped by GenerationStep.Decoration ([step] -> structure ids in
-/// registry order): Minecraft 1.21.1's 34 structures and TF 4.8's 21 built in, plus any other
+/// registry order): Minecraft 1.21.1's 34 structures and upstream 4.8's 21 built in, plus any other
 /// <mod>/data/<ns>/worldgen/structure JSON, ordered as RegistryDataLoader loads them (the file
 /// paths "worldgen/structure/<path>.json" sorted, then the namespaces).
 [[nodiscard]] std::vector<std::vector<std::string>> structuresByStep();

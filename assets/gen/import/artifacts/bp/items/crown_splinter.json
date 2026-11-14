@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:crown_splinter",
+      "identifier": "gloamingforest:crown_splinter",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:crown_splinter.name"
+        "value": "item.gloamingforest:crown_splinter.name"
       }
     }
   }

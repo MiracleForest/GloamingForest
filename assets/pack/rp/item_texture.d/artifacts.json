@@ -1,8 +1,8 @@
 {
-  "tf_artifacts_brittle_potion_flask": {"textures": "textures/twilightforest/item/brittle_potion_flask"},
-  "tf_artifacts_greater_potion_flask": {"textures": "textures/twilightforest/item/greater_potion_flask"},
-  "tf_artifacts_brittle_flask_0_1": {"textures": "textures/twilightforest/item/brittle_potion_flask_splintered"},
-  "tf_artifacts_brittle_flask_0_2": {"textures": "textures/twilightforest/item/brittle_potion_flask_damaged"},
+  "tf_artifacts_brittle_potion_flask": {"textures": "textures/gloamingforest/item/brittle_potion_flask"},
+  "tf_artifacts_greater_potion_flask": {"textures": "textures/gloamingforest/item/greater_potion_flask"},
+  "tf_artifacts_brittle_flask_0_1": {"textures": "textures/gloamingforest/item/brittle_potion_flask_splintered"},
+  "tf_artifacts_brittle_flask_0_2": {"textures": "textures/gloamingforest/item/brittle_potion_flask_damaged"},
   "tf_artifacts_brittle_flask_1_0_33ebff": {"textures": "textures/items/artifacts/tf-derived/brittle_flask_1_0_33ebff"},
   "tf_artifacts_brittle_flask_1_0_385dc6": {"textures": "textures/items/artifacts/tf-derived/brittle_flask_1_0_385dc6"},
   "tf_artifacts_brittle_flask_1_0_484d48": {"textures": "textures/items/artifacts/tf-derived/brittle_flask_1_0_484d48"},

@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U2 (terrain) gtests: the world preset choice and the chunk records it reads (core/terrain/WorldPreset.h).
 #include <gtest/gtest.h>
 
@@ -100,7 +100,7 @@ TEST(TerrainWorldPreset, StoredChoiceWins) {
             }
 }
 
-TEST(TerrainWorldPreset, AGeneratedTwilightForestStaysTwilight) {
+TEST(TerrainWorldPreset, AGeneratedGloamingForestStaysGloaming) {
     for (int provisional : {-1, 0, 1}) {
         auto c = wp::choosePreset(std::nullopt, true, provisional, true);
         EXPECT_FALSE(c.skylight);

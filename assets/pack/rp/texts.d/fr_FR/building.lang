@@ -1,8 +1,8 @@
-tile.twilightforest:naga_wall_trophy.name=Trophée de Nâga
-tile.twilightforest:lich_wall_trophy.name=Trophée de Liche
-tile.twilightforest:hydra_wall_trophy.name=Trophée d'Hydre
-tile.twilightforest:ur_ghast_wall_trophy.name=Trophée d'Ur-Ghast
-tile.twilightforest:snow_queen_wall_trophy.name=Trophée de la Reine des Neiges
+tile.gloamingforest:naga_wall_trophy.name=Trophée de Nâga
+tile.gloamingforest:lich_wall_trophy.name=Trophée de Liche
+tile.gloamingforest:hydra_wall_trophy.name=Trophée d'Hydre
+tile.gloamingforest:ur_ghast_wall_trophy.name=Trophée d'Ur-Ghast
+tile.gloamingforest:snow_queen_wall_trophy.name=Trophée de la Reine des Neiges
 item.banner.tf_naga.white=White Naga Scales
 item.banner.tf_naga.orange=Orange Naga Scales
 item.banner.tf_naga.magenta=Magenta Naga Scales

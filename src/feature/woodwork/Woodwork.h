@@ -3,11 +3,11 @@
 // Unit U4 (woodwork): wood sets and wooden furniture. Internal declarations shared by the unit's
 // files (no other unit includes this header, rule R2).
 //
-// The eight TF wood sets (logs, planks, stairs, doors, signs, chests, ...) are F11 family data
+// The eight upstream wood sets (logs, planks, stairs, doors, signs, chests, ...) are F11 family data
 // (assets/gen/import/woodwork/data/gf/families/woodwork.json); this unit adds the blocks Java gives
 // their own classes: BanisterBlock, DryingRackBlock (+ DryingRackBlockEntity, DryingRecipe), the
 // hollow logs (HorizontalHollowLogBlock, VerticalHollowLogBlock, ClimbableHollowLogBlock,
-// HollowLogItem) and the TF boat types.
+// HollowLogItem) and the upstream boat types.
 
 #include <array>
 #include <map>
@@ -34,10 +34,10 @@ namespace gf::feature::woodwork {
 using Json = nlohmann::json;
 using core::GlobalPos;
 
-inline constexpr char kNs[] = "twilightforest:";
+inline constexpr char kNs[] = "gloamingforest:";
 
-/// TF's eight woods (TFWoodTypes), in TFBlocks order.
-inline constexpr std::array<std::string_view, 8> kTfWoods{"twilight_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
+/// upstream's eight woods (TFWoodTypes), in TFBlocks order.
+inline constexpr std::array<std::string_view, 8> kTfWoods{"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
 /// The vanilla woods of the banisters and drying racks (TFBlocks: "vangrove" is vanilla mangrove).
 inline constexpr std::array<std::string_view, 11> kVanillaFurnitureWoods{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "crimson", "warped", "vangrove", "bamboo", "cherry"};
 /// The vanilla woods of the hollow logs (no bamboo); crimson / warped are stems.
@@ -50,10 +50,10 @@ inline constexpr std::array<std::string_view, 10> kVanillaHollowWoods{"oak", "sp
 /// One wood's hollow log blocks and their item (HollowLogItem).
 struct HollowLog {
     std::string wood;       ///< "oak", "crimson", ...
-    std::string item;       ///< twilightforest:hollow_oak_log / hollow_crimson_stem
-    std::string horizontal; ///< twilightforest:hollow_oak_log_horizontal
-    std::string vertical;   ///< twilightforest:hollow_oak_log_vertical
-    std::string climbable;  ///< twilightforest:hollow_oak_log_climbable
+    std::string item;       ///< gloamingforest:hollow_oak_log / hollow_crimson_stem
+    std::string horizontal; ///< gloamingforest:hollow_oak_log_horizontal
+    std::string vertical;   ///< gloamingforest:hollow_oak_log_vertical
+    std::string climbable;  ///< gloamingforest:hollow_oak_log_climbable
 };
 [[nodiscard]] std::vector<HollowLog> const& hollowLogs();
 /// The hollow log set a block or item id belongs to (nullptr: none).
@@ -72,12 +72,12 @@ struct HollowLog {
 /// The horizontal FacingID a player looks along (Java's getHorizontalDirection / getDirection).
 [[nodiscard]] int lookFace(Actor const& actor);
 
-/// The value text of block state `name` ("twilightforest:shape") of `block` ("" when absent).
+/// The value text of block state `name` ("gloamingforest:shape") of `block` ("" when absent).
 [[nodiscard]] std::string stateOf(Block const& block, std::string const& name);
-/// `block` with `changes` ({"twilightforest:shape": "short", "twilightforest:extended": true})
+/// `block` with `changes` ({"gloamingforest:shape": "short", "gloamingforest:extended": true})
 /// applied to its current states (nullptr: unknown state or value).
 [[nodiscard]] Block const* withStates(Block const& block, Json const& changes);
-/// The id of `block` ("minecraft:air", "twilightforest:oak_banister").
+/// The id of `block` ("minecraft:air", "gloamingforest:oak_banister").
 [[nodiscard]] std::string idOf(Block const& block);
 
 /// Whether the liquid layer at `pos` holds water (Java getFluidState().getType() == WATER: a source).
@@ -132,7 +132,7 @@ void uninstallFuel();
 [[nodiscard]] std::optional<int> javaFuelTicks(std::string const& itemId);
 void uninstallBookshelves();
 
-/// The TF bookshelves (#minecraft:enchantment_power_provider) an enchanting table at `table` counts.
+/// The upstream bookshelves (#minecraft:enchantment_power_provider) an enchanting table at `table` counts.
 [[nodiscard]] std::vector<BlockPos> tfBookshelvesAround(BlockSource& region, BlockPos const& table);
 
 } // namespace gf::feature::woodwork

@@ -1,8 +1,8 @@
-entity.twilightforest.fire_beetle=Żarożuk
-entity.twilightforest.hostile_wolf=Wrogi wilk
-entity.twilightforest.king_spider=Król pająk
-entity.twilightforest.winter_wolf=Wilk polarny
-entity.twilightforest:fire_beetle.name=Żarożuk
-entity.twilightforest:hostile_wolf.name=Wrogi wilk
-entity.twilightforest:king_spider.name=Król pająk
-entity.twilightforest:winter_wolf.name=Wilk polarny
+entity.gloamingforest.fire_beetle=Żarożuk
+entity.gloamingforest.hostile_wolf=Wrogi wilk
+entity.gloamingforest.king_spider=Król pająk
+entity.gloamingforest.winter_wolf=Wilk polarny
+entity.gloamingforest:fire_beetle.name=Żarożuk
+entity.gloamingforest:hostile_wolf.name=Wrogi wilk
+entity.gloamingforest:king_spider.name=Król pająk
+entity.gloamingforest:winter_wolf.name=Wilk polarny

@@ -1,7 +1,7 @@
 // The effect part of contract "enchant+effects" (F9; spike S6).
 //
 // Bedrock's mob effects are a closed enum (MobEffectIds, the 38 vanilla clients know), so a custom
-// effect (TF's frosted) is native state of the actor with a vanilla *carrier* effect that clients
+// effect (upstream's frosted) is native state of the actor with a vanilla *carrier* effect that clients
 // see and that does the vanilla part of the work on their side (frosted: Slowness of the same
 // amplifier, particles hidden: the client predicts the slower movement itself).
 //

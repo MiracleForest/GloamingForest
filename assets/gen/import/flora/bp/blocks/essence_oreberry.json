@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:essence_oreberry",
+      "identifier": "gloamingforest:essence_oreberry",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:age": [0, 1, 2, 3],
-        "twilightforest:layers": [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        "gloamingforest:age": [0, 1, 2, 3],
+        "gloamingforest:layers": [0, 1, 2, 3, 4, 5, 6, 7, 8]
       }
     },
     "components": {
@@ -18,7 +18,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_0",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_0",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_essence_oreberry",
@@ -41,9 +41,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -65,9 +65,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -93,9 +93,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -121,9 +121,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -149,9 +149,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -173,9 +173,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -197,9 +197,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -221,9 +221,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -245,9 +245,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_small_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_small_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -263,9 +263,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -287,9 +287,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -315,9 +315,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -343,9 +343,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -371,9 +371,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -399,9 +399,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -427,9 +427,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -451,9 +451,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -475,9 +475,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -493,9 +493,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -517,9 +517,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -542,9 +542,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -567,9 +567,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -592,9 +592,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -617,9 +617,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -642,9 +642,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -667,9 +667,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_large_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_large_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry",
@@ -692,7 +692,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 8",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -733,9 +733,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 0",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_0",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_0",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -757,9 +757,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 1",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_1",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_1",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -782,9 +782,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 2",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_2",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_2",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -807,9 +807,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 3",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_3",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_3",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -832,9 +832,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 4",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_4",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_4",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -857,9 +857,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 5",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_5",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_5",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -882,9 +882,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 6",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_6",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_6",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -907,9 +907,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 7",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.essence_oreberry_grown_7",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.essence_oreberry_grown_7",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_essence_oreberry_ripe",
@@ -932,7 +932,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 8",
+        "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 8",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

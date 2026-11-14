@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:snow_guardian",
+      "identifier": "gloamingforest:snow_guardian",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "snow_guardian", "monster", "mob"]
+        "family": ["gloamingforest", "snow_guardian", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

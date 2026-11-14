@@ -1,13 +1,13 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/registration/biomes/BiomeHelper.java
-//   src/main/java/twilightforest/init/TFBiomes.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/registration/biomes/BiomeHelper.java
+//   src/main/java/gloamingforest/init/TFBiomes.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The natural spawn tables of the 22 biomes (BiomeHelper's MobSpawnSettings builders, assigned per
-// biome as TF's biome data pack does). The selftest biomes.spawn_tables checks them against the
+// biome as upstream's biome data pack does). The selftest biomes.spawn_tables checks them against the
 // imported biome JSON entry for entry.
 
 #include "feature/biomes/Biomes.h"
@@ -54,7 +54,7 @@ constexpr float kDefaultProbability = 0.1f;
 BiomeSpawns none() { return Builder{}.probability(kDefaultProbability).s; }
 
 BiomeSpawns penguinSpawning() {
-    return Builder{}.probability(0.15f).add("creature", "twilightforest:penguin", 10, 2, 4).s;
+    return Builder{}.probability(0.15f).add("creature", "gloamingforest:penguin", 10, 2, 4).s;
 }
 
 BiomeSpawns darkForestSpawning() {
@@ -66,14 +66,14 @@ BiomeSpawns darkForestSpawning() {
         .charge("minecraft:zombie", 0.7, 0.15)
         .add("monster", "minecraft:skeleton", 5, 1, 2)
         .charge("minecraft:skeleton", 0.8, 0.15)
-        .add("monster", "twilightforest:mist_wolf", 5, 1, 1)
-        .charge("twilightforest:mist_wolf", 0.75, 0.2)
-        .add("monster", "twilightforest:skeleton_druid", 5, 1, 1)
-        .charge("twilightforest:skeleton_druid", 0.8, 0.2)
-        .add("monster", "twilightforest:king_spider", 1, 1, 1)
-        .charge("twilightforest:king_spider", 0.85, 0.25)
-        .add("monster", "twilightforest:kobold", 10, 1, 3)
-        .charge("twilightforest:kobold", 0.7, 0.15)
+        .add("monster", "gloamingforest:mist_wolf", 5, 1, 1)
+        .charge("gloamingforest:mist_wolf", 0.75, 0.2)
+        .add("monster", "gloamingforest:skeleton_druid", 5, 1, 1)
+        .charge("gloamingforest:skeleton_druid", 0.8, 0.2)
+        .add("monster", "gloamingforest:king_spider", 1, 1, 1)
+        .charge("gloamingforest:king_spider", 0.85, 0.25)
+        .add("monster", "gloamingforest:kobold", 10, 1, 3)
+        .charge("gloamingforest:kobold", 0.7, 0.15)
         .add("monster", "minecraft:witch", 2, 1, 1)
         .charge("minecraft:witch", 0.75, 0.15)
         .s;
@@ -82,22 +82,22 @@ BiomeSpawns darkForestSpawning() {
 BiomeSpawns snowForestSpawning() {
     return Builder{}
         .probability(0.05f)
-        .add("monster", "twilightforest:winter_wolf", 5, 1, 1)
-        .charge("twilightforest:winter_wolf", 0.6, 0.15)
-        .add("monster", "twilightforest:yeti", 5, 1, 1)
-        .charge("twilightforest:yeti", 0.6, 0.15)
+        .add("monster", "gloamingforest:winter_wolf", 5, 1, 1)
+        .charge("gloamingforest:winter_wolf", 0.6, 0.15)
+        .add("monster", "gloamingforest:yeti", 5, 1, 1)
+        .charge("gloamingforest:yeti", 0.6, 0.15)
         .s;
 }
 
-BiomeSpawns ravenSpawning() { return Builder{}.probability(0.3f).add("creature", "twilightforest:raven", 10, 4, 4).s; }
+BiomeSpawns ravenSpawning() { return Builder{}.probability(0.3f).add("creature", "gloamingforest:raven", 10, 4, 4).s; }
 
 BiomeSpawns swampSpawning() {
     return Builder{}
         .probability(kDefaultProbability)
         .add("monster", "minecraft:zombie", 10, 1, 2)
         .charge("minecraft:zombie", 0.7, 0.15)
-        .add("monster", "twilightforest:mosquito_swarm", 10, 1, 1)
-        .charge("twilightforest:mosquito_swarm", 0.7, 0.15)
+        .add("monster", "gloamingforest:mosquito_swarm", 10, 1, 1)
+        .charge("gloamingforest:mosquito_swarm", 0.7, 0.15)
         .s;
 }
 
@@ -108,8 +108,8 @@ BiomeSpawns spookSpawning() {
         .charge("minecraft:spider", 0.75, 0.25)
         .add("monster", "minecraft:skeleton", 20, 1, 2)
         .charge("minecraft:skeleton", 0.85, 0.25)
-        .add("monster", "twilightforest:skeleton_druid", 5, 1, 1)
-        .charge("twilightforest:skeleton_druid", 0.95, 0.25)
+        .add("monster", "gloamingforest:skeleton_druid", 5, 1, 1)
+        .charge("gloamingforest:skeleton_druid", 0.95, 0.25)
         .add("ambient", "minecraft:bat", 20, 2, 4)
         .s;
 }
@@ -117,15 +117,15 @@ BiomeSpawns spookSpawning() {
 BiomeSpawns defaultMobSpawning() {
     return Builder{}
         .probability(0.15f)
-        .add("creature", "twilightforest:bighorn_sheep", 12, 4, 4)
-        .add("creature", "twilightforest:boar", 10, 4, 4)
+        .add("creature", "gloamingforest:bighorn_sheep", 12, 4, 4)
+        .add("creature", "gloamingforest:boar", 10, 4, 4)
         .add("creature", "minecraft:chicken", 10, 4, 4)
-        .add("creature", "twilightforest:deer", 15, 4, 5)
+        .add("creature", "gloamingforest:deer", 15, 4, 5)
         .add("creature", "minecraft:wolf", 5, 4, 4)
-        .add("creature", "twilightforest:tiny_bird", 15, 4, 8)
-        .add("creature", "twilightforest:squirrel", 10, 2, 4)
-        .add("creature", "twilightforest:dwarf_rabbit", 10, 4, 5)
-        .add("creature", "twilightforest:raven", 10, 1, 2)
+        .add("creature", "gloamingforest:tiny_bird", 15, 4, 8)
+        .add("creature", "gloamingforest:squirrel", 10, 2, 4)
+        .add("creature", "gloamingforest:dwarf_rabbit", 10, 4, 5)
+        .add("creature", "gloamingforest:raven", 10, 1, 2)
         .s;
 }
 
@@ -144,8 +144,8 @@ BiomeSpawns undergroundMobSpawning() {
         .charge("minecraft:slime", 0.2, 0.15)
         .add("monster", "minecraft:enderman", 1, 1, 2)
         .charge("minecraft:enderman", 0.4, 0.15)
-        .add("monster", "twilightforest:kobold", 10, 1, 3)
-        .charge("twilightforest:kobold", 0.2, 0.15)
+        .add("monster", "gloamingforest:kobold", 10, 1, 3)
+        .charge("gloamingforest:kobold", 0.2, 0.15)
         .add("ambient", "minecraft:bat", 10, 1, 1)
         .s;
 }
@@ -154,28 +154,28 @@ BiomeSpawns undergroundMobSpawning() {
 
 BiomeSpawns spawnsOf(std::string const& id) {
     static std::map<std::string, BiomeSpawns (*)()> const table = {
-        {"twilightforest:clearing", defaultMobSpawning},
-        {"twilightforest:dark_forest", darkForestSpawning},
-        {"twilightforest:dark_forest_center", none},
-        {"twilightforest:dense_forest", defaultMobSpawning},
-        {"twilightforest:dense_mushroom_forest", defaultMobSpawning},
-        {"twilightforest:enchanted_forest", defaultMobSpawning},
-        {"twilightforest:final_plateau", ravenSpawning},
-        {"twilightforest:fire_swamp", none},
-        {"twilightforest:firefly_forest", defaultMobSpawning},
-        {"twilightforest:forest", defaultMobSpawning},
-        {"twilightforest:glacier", penguinSpawning},
-        {"twilightforest:highlands", defaultMobSpawning},
-        {"twilightforest:highlands_underground", undergroundMobSpawning},
-        {"twilightforest:lake", defaultMobSpawning},
-        {"twilightforest:mushroom_forest", defaultMobSpawning},
-        {"twilightforest:oak_savannah", defaultMobSpawning},
-        {"twilightforest:snowy_forest", snowForestSpawning},
-        {"twilightforest:spooky_forest", spookSpawning},
-        {"twilightforest:stream", defaultMobSpawning},
-        {"twilightforest:swamp", swampSpawning},
-        {"twilightforest:thornlands", none},
-        {"twilightforest:underground", undergroundMobSpawning},
+        {"gloamingforest:clearing", defaultMobSpawning},
+        {"gloamingforest:dark_forest", darkForestSpawning},
+        {"gloamingforest:dark_forest_center", none},
+        {"gloamingforest:dense_forest", defaultMobSpawning},
+        {"gloamingforest:dense_mushroom_forest", defaultMobSpawning},
+        {"gloamingforest:enchanted_forest", defaultMobSpawning},
+        {"gloamingforest:final_plateau", ravenSpawning},
+        {"gloamingforest:fire_swamp", none},
+        {"gloamingforest:firefly_forest", defaultMobSpawning},
+        {"gloamingforest:forest", defaultMobSpawning},
+        {"gloamingforest:glacier", penguinSpawning},
+        {"gloamingforest:highlands", defaultMobSpawning},
+        {"gloamingforest:highlands_underground", undergroundMobSpawning},
+        {"gloamingforest:lake", defaultMobSpawning},
+        {"gloamingforest:mushroom_forest", defaultMobSpawning},
+        {"gloamingforest:oak_savannah", defaultMobSpawning},
+        {"gloamingforest:snowy_forest", snowForestSpawning},
+        {"gloamingforest:spooky_forest", spookSpawning},
+        {"gloamingforest:stream", defaultMobSpawning},
+        {"gloamingforest:swamp", swampSpawning},
+        {"gloamingforest:thornlands", none},
+        {"gloamingforest:underground", undergroundMobSpawning},
     };
     auto it = table.find(id);
     return it == table.end() ? none() : it->second();
@@ -191,7 +191,7 @@ namespace {
 std::atomic<bool>          gVanillaSpawnsOn{true};
 std::atomic<std::uint64_t> gVanillaSpawnsLetThrough{0};
 
-/// The vanilla mobs of TF's tables (chicken, wolf, enderman, zombie, skeleton, spider, creeper,
+/// The vanilla mobs of upstream's tables (chicken, wolf, enderman, zombie, skeleton, spider, creeper,
 /// slime, witch, bat).
 std::set<std::string> const& vanillaIds() {
     static auto const ids = [] {
@@ -209,19 +209,19 @@ std::set<std::string> const& vanillaIds() {
 void registerVanillaSpawns() {
     // F5's spawn::spawnMob passes Spawner::spawnMob(..., naturalSpawn = true, ...) for natural and
     // chunk-generation spawns, and Bedrock then refuses a vanilla mob whose own spawn rules do not
-    // allow it there (their biome filters need vanilla biome tags, which TF's biomes do not have:
-    // with them, Bedrock's own spawner would place vanilla mobs in the Twilight Forest, which TF
+    // allow it there (their biome filters need vanilla biome tags, which upstream's biomes do not have:
+    // with them, Bedrock's own spawner would place vanilla mobs in the Gloaming Forest, which upstream
     // does not). F5 has already checked Java's rules for the position, so a natural spawn of a
-    // vanilla mob of TF's tables in the Twilight Forest goes through as a non-natural one.
+    // vanilla mob of upstream's tables in the Gloaming Forest goes through as a non-natural one.
     static ll::event::ListenerPtr listener = ll::event::EventBus::getInstance().emplaceListener<ll::event::SpawningMobEvent>([](ll::event::SpawningMobEvent& ev) {
         if (!gVanillaSpawnsOn.load(std::memory_order_relaxed) || !ev.naturalSpawn()) return;
-        auto twilight = world::twilight();
-        if (!twilight || ev.blockSource().getDimensionId() != *twilight) return;
+        auto gloaming = world::gloaming();
+        if (!gloaming || ev.blockSource().getDimensionId() != *gloaming) return;
         std::string const& id = ev.identifier().mCanonicalName->getString();
         if (!vanillaIds().contains(id)) return;
         ev.naturalSpawn() = false;
         if (gVanillaSpawnsLetThrough.fetch_add(1, std::memory_order_relaxed) == 0)
-            gf::log().info("biomes: the natural spawn of {} in the Twilight Forest goes through without Bedrock's own spawn rules", id);
+            gf::log().info("biomes: the natural spawn of {} in the Gloaming Forest goes through without Bedrock's own spawn rules", id);
     });
 }
 

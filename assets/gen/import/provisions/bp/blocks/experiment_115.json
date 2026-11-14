@@ -2,13 +2,13 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:experiment_115",
+      "identifier": "gloamingforest:experiment_115",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       },
       "states": {
-        "twilightforest:omnomnom": [0, 1, 2, 3, 4, 5, 6, 7],
-        "twilightforest:regenerate": [false, true]
+        "gloamingforest:omnomnom": [0, 1, 2, 3, 4, 5, 6, 7],
+        "gloamingforest:regenerate": [false, true]
       }
     },
     "components": {
@@ -18,7 +18,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 2.5
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_8_8",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_8_8",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_experiment115_experiment115_bottom",
@@ -53,9 +53,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 0 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 0 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_8_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_8_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -89,9 +89,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 0 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 0 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_8_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_8_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -125,9 +125,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 1 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 1 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_7_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_7_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -165,9 +165,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 1 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 1 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_7_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_7_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -205,9 +205,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 2 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 2 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_6_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_6_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -245,9 +245,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 2 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 2 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_6_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_6_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -285,9 +285,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 3 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 3 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_5_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_5_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -325,9 +325,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 3 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 3 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_5_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_5_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -365,9 +365,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 4 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 4 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_4_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_4_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -405,9 +405,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 4 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 4 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_4_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_4_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -445,9 +445,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 5 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 5 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_3_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_3_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -485,9 +485,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 5 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 5 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_3_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_3_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -525,9 +525,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 6 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 6 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_2_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_2_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -565,9 +565,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 6 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 6 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_2_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_2_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -605,9 +605,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 7 && !q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 7 && !q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_1_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_1_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",
@@ -645,9 +645,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:omnomnom') == 7 && q.block_state('twilightforest:regenerate')",
+        "condition": "q.block_state('gloamingforest:omnomnom') == 7 && q.block_state('gloamingforest:regenerate')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_1_8",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.experiment115_1_8",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_experiment115_experiment115_bottom",

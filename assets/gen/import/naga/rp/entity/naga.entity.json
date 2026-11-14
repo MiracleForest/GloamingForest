@@ -2,26 +2,26 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:naga",
+      "identifier": "gloamingforest:naga",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/nagahead",
-        "charging": "textures/twilightforest/entity/nagahead_charging",
-        "dazed": "textures/twilightforest/entity/nagahead_dazed"
+        "default": "textures/gloamingforest/entity/nagahead",
+        "charging": "textures/gloamingforest/entity/nagahead_charging",
+        "dazed": "textures/gloamingforest/entity/nagahead_dazed"
       },
       "geometry": {
-        "default": "geometry.twilightforest.naga_upright"
+        "default": "geometry.gloamingforest.naga_upright"
       },
       "scripts": {
         "scale": "2.01",
         "animate": ["pose"]
       },
       "animations": {
-        "pose": "animation.twilightforest.naga.pose"
+        "pose": "animation.gloamingforest.naga.pose"
       },
-      "render_controllers": ["controller.render.twilightforest.naga"],
+      "render_controllers": ["controller.render.gloamingforest.naga"],
       "spawn_egg": {
         "base_color": "#a4d316",
         "overlay_color": "#1b380b"

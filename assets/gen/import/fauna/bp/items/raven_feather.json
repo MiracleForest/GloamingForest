@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:raven_feather",
+      "identifier": "gloamingforest:raven_feather",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:raven_feather.name"
+        "value": "item.gloamingforest:raven_feather.name"
       },
       "minecraft:tags": {
         "tags": ["c:feathers"]

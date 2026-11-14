@@ -1,5 +1,5 @@
 {
-  "about": "U11 tgear: refinements of the baseline (tools/sounds/baseline/tgear.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The Traveller's Gear moves are light and airy: the double jump is an upward whoosh with a soft push and a faint sparkle, the perfect dodge a fast falling swish with a bright ting, the side step a quick swish with a light footfall, and the recharged side step a small pop and a clear ding.",
+  "about": "U11 tgear: refinements of the baseline (tools/sounds/baseline/tgear.json). Original sound designs; upstream's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay upstream's. The Traveller's Gear moves are light and airy: the double jump is an upward whoosh with a soft push and a faint sparkle, the perfect dodge a fast falling swish with a bright ting, the side step a quick swish with a light footfall, and the recharged side step a small pop and a clear ding.",
   "patches": {
     "travellers/double_jump": {
       "params": {},

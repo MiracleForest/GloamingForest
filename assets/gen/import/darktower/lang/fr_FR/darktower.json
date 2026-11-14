@@ -1,14 +1,14 @@
 {
-  "block.twilightforest.carminite_builder": "Constructeur carminite",
-  "block.twilightforest.carminite_reactor": "Réacteur carminite",
-  "block.twilightforest.ghast_trap": "Piège à Ghast",
-  "block.twilightforest.locked_vanishing_block": "Bloc de disparition verrouillé",
-  "block.twilightforest.reappearing_block": "Bloc de réapparition",
-  "block.twilightforest.slider": "Piège à glissière",
-  "block.twilightforest.vanishing_block": "Bloc de disparition",
-  "entity.twilightforest.carminite_broodling": "Carminite couveuse",
-  "entity.twilightforest.carminite_golem": "Golem Carminite",
-  "entity.twilightforest.towerwood_borer": "Foreur de la Towerwood",
-  "item.twilightforest.borer_essence": "Essence de foreur",
-  "item.twilightforest.tower_key": "Clé de la tour"
+  "block.gloamingforest.carminite_builder": "Constructeur carminite",
+  "block.gloamingforest.carminite_reactor": "Réacteur carminite",
+  "block.gloamingforest.ghast_trap": "Piège à Ghast",
+  "block.gloamingforest.locked_vanishing_block": "Bloc de disparition verrouillé",
+  "block.gloamingforest.reappearing_block": "Bloc de réapparition",
+  "block.gloamingforest.slider": "Piège à glissière",
+  "block.gloamingforest.vanishing_block": "Bloc de disparition",
+  "entity.gloamingforest.carminite_broodling": "Carminite couveuse",
+  "entity.gloamingforest.carminite_golem": "Golem Carminite",
+  "entity.gloamingforest.towerwood_borer": "Foreur de la Towerwood",
+  "item.gloamingforest.borer_essence": "Essence de foreur",
+  "item.gloamingforest.tower_key": "Clé de la tour"
 }

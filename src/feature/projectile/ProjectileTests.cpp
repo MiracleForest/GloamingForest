@@ -246,7 +246,7 @@ GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(shooter != nullptr, "the shooter is still there");
     p = gp::shoot(*shooter, kFixture, Vec3{0.0f, -1.0f, 0.0f}, 0.5f, 0.0f);
     ctx.require(p != nullptr, "a bouncing projectile");
-    ctx.check(!p->hasCategory(ActorCategory::Mob), "a TF projectile is no mob (Java: no LivingEntity)");
+    ctx.check(!p->hasCategory(ActorCategory::Mob), "an upstream projectile is no mob (Java: no LivingEntity)");
     pid = fe::uidOf(*p);
     for (int i = 0; i < 30 && hits().face < 0; ++i) co_await ctx.ticks(1);
     hits().bounce = false;

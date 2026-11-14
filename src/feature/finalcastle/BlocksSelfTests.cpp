@@ -135,7 +135,7 @@ std::vector<std::pair<std::int64_t, float>>& thornHits() {
     if (!registered) {
         registered = true;
         combat::onDealt(combat::priority::Lowest, [](combat::DamageInfo const& d) {
-            if (d.type == "twilightforest:thorns") thornHits().emplace_back(d.victim.getOrCreateUniqueID().rawID, d.amount);
+            if (d.type == "gloamingforest:thorns") thornHits().emplace_back(d.victim.getOrCreateUniqueID().rawID, d.amount);
         });
     }
     return v;
@@ -157,7 +157,7 @@ public:
             if (!mRegion.getBlock(BlockPos{x, y, z}).isAir()) return y + 1;
         return minY();
     }
-    std::string  biome(BlockPos const&) const override { return "twilightforest:thornlands"; }
+    std::string  biome(BlockPos const&) const override { return "gloamingforest:thornlands"; }
     std::int64_t seed() const override { return 0; }
     int          dimension() const override { return static_cast<int>(mRegion.getDimensionId()); }
 
@@ -180,29 +180,29 @@ GF_REGISTER_SELFTEST("finalcastle.door_use_chain", [](Context& ctx) -> ll::coro:
     co_await ctx.ticks(2);
     ctx.check(hasCollision(ctx, a), "a solid door has collision");
     ctx.check(click(ctx, a) == ia::Result::Consume, "a click on a solid door is taken");
-    ctx.check(flag(ctx, a, "twilightforest:active"), "the clicked door is active");
+    ctx.check(flag(ctx, a, "gloamingforest:active"), "the clicked door is active");
     ctx.check(click(ctx, a) == ia::Result::Pass, "a click on an active door fails (the item would be used)");
     int vanishedAt = -1;
     for (int t = 1; t <= 8 && vanishedAt < 0; ++t) {
         co_await ctx.ticks(1);
-        if (flag(ctx, a, "twilightforest:vanish")) vanishedAt = t;
+        if (flag(ctx, a, "gloamingforest:vanish")) vanishedAt = t;
     }
     ctx.check(vanishedAt >= 2 && vanishedAt <= 7, "the door vanishes 2..6 ticks after the click (" + std::to_string(vanishedAt) + ")");
-    ctx.check(!flag(ctx, a, "twilightforest:active"), "a vanished door is inactive");
+    ctx.check(!flag(ctx, a, "gloamingforest:active"), "a vanished door is inactive");
     ctx.check(!hasCollision(ctx, a), "a vanished door has no collision");
     co_await ctx.ticks(20);
-    ctx.check(flag(ctx, a.offset(1, 0, 0), "twilightforest:vanish"), "the neighbour door vanished too (chain)");
-    ctx.check(flag(ctx, a.offset(2, 0, 0), "twilightforest:vanish"), "the door two blocks away vanished too");
-    ctx.check(flag(ctx, a.offset(0, 1, 0), "twilightforest:vanish"), "doors of other colours join the chain");
+    ctx.check(flag(ctx, a.offset(1, 0, 0), "gloamingforest:vanish"), "the neighbour door vanished too (chain)");
+    ctx.check(flag(ctx, a.offset(2, 0, 0), "gloamingforest:vanish"), "the door two blocks away vanished too");
+    ctx.check(flag(ctx, a.offset(0, 1, 0), "gloamingforest:vanish"), "doors of other colours join the chain");
     // 80 ticks after vanishing: active again (still vanished), then solid 2..6 ticks later
     co_await ctx.ticks(80 - 20 - 1);
-    ctx.check(flag(ctx, a, "twilightforest:vanish"), "still vanished before 80 ticks");
+    ctx.check(flag(ctx, a, "gloamingforest:vanish"), "still vanished before 80 ticks");
     co_await ctx.ticks(9);
-    ctx.check(!flag(ctx, a, "twilightforest:vanish"), "the door reappeared within 80 + 2..6 ticks");
+    ctx.check(!flag(ctx, a, "gloamingforest:vanish"), "the door reappeared within 80 + 2..6 ticks");
     ctx.check(hasCollision(ctx, a), "the reappeared door is solid");
     co_await ctx.ticks(30);
     for (int i = 0; i < 3; ++i) {
-        ctx.check(!flag(ctx, a.offset(i, 0, 0), "twilightforest:vanish") && !flag(ctx, a.offset(i, 0, 0), "twilightforest:active"),
+        ctx.check(!flag(ctx, a.offset(i, 0, 0), "gloamingforest:vanish") && !flag(ctx, a.offset(i, 0, 0), "gloamingforest:active"),
                   "door " + std::to_string(i) + " is solid and inactive again");
     }
 });
@@ -217,7 +217,7 @@ GF_REGISTER_SELFTEST("finalcastle.door_redstone", [](Context& ctx) -> ll::coro::
     int vanishedAt = -1;
     for (int t = 1; t <= 10 && vanishedAt < 0; ++t) {
         co_await ctx.ticks(1);
-        if (flag(ctx, a, "twilightforest:vanish")) vanishedAt = t;
+        if (flag(ctx, a, "gloamingforest:vanish")) vanishedAt = t;
     }
     ctx.check(vanishedAt > 0, "a powered door vanishes (" + std::to_string(vanishedAt) + " ticks)");
 });
@@ -238,26 +238,26 @@ GF_REGISTER_SELFTEST("finalcastle.force_field", [](Context& ctx) -> ll::coro::Co
     auto sneak = fieldPlacement(*r, bp(f), Up, true);
     ctx.check(sneak[Down] && !sneak[Up], "sneaking leaves the clicked direction off");
     placed(ctx, f, a, Up);
-    ctx.check(flag(ctx, f, "twilightforest:down") && flag(ctx, f, "twilightforest:up") && !flag(ctx, f, "twilightforest:north"), "the placement handler sets the connections");
+    ctx.check(flag(ctx, f, "gloamingforest:down") && flag(ctx, f, "gloamingforest:up") && !flag(ctx, f, "gloamingforest:north"), "the placement handler sets the connections");
     // updateShape only adds: a sturdy neighbour connects, removing it keeps the connection
     ctx.require(ctx.setBlock(f.offset(1, 0, 0), "minecraft:stone"), "stone east");
     co_await ctx.ticks(3);
-    ctx.check(flag(ctx, f, "twilightforest:east"), "a sturdy neighbour connects");
+    ctx.check(flag(ctx, f, "gloamingforest:east"), "a sturdy neighbour connects");
     ctx.require(ctx.setBlock(f.offset(1, 0, 0), "minecraft:air"), "stone removed");
     co_await ctx.ticks(3);
-    ctx.check(flag(ctx, f, "twilightforest:east"), "the connection stays (updateShape never clears one)");
+    ctx.check(flag(ctx, f, "gloamingforest:east"), "the connection stays (updateShape never clears one)");
     // leaves are an exception for connection
     ctx.require(ctx.setBlock(f.offset(-1, 0, 0), "minecraft:oak_leaves"), "leaves west");
     co_await ctx.ticks(3);
-    ctx.check(!flag(ctx, f, "twilightforest:west"), "leaves do not connect");
+    ctx.check(!flag(ctx, f, "gloamingforest:west"), "leaves do not connect");
     // three connections already (down, up, east): a further sturdy neighbour is refused, a field of
     // the same colour is not
     ctx.require(ctx.setBlock(f.offset(0, 0, -1), "minecraft:stone"), "stone north");
     co_await ctx.ticks(3);
-    ctx.check(!flag(ctx, f, "twilightforest:north"), "three connections refuse a fourth sturdy neighbour");
+    ctx.check(!flag(ctx, f, "gloamingforest:north"), "three connections refuse a fourth sturdy neighbour");
     ctx.require(ctx.setBlock(f.offset(0, 0, 1), id::VioletField), "a field south");
     co_await ctx.ticks(3);
-    ctx.check(flag(ctx, f, "twilightforest:south"), "a field of the same colour always connects");
+    ctx.check(flag(ctx, f, "gloamingforest:south"), "a field of the same colour always connects");
     r = ctx.region();
     // unbreakable: not destructible by mining
     ctx.check(r->getBlock(bp(f)).getBlockType().getDestroySpeed() < 0.0f, "force fields are unbreakable");
@@ -268,8 +268,8 @@ GF_REGISTER_SELFTEST("finalcastle.thorns_damage", [](Context& ctx) -> ll::coro::
     auto box = co_await ctx.flatArea(3015, 5, 6);
     (void)box;
     auto a = ctx.testPos(3016, 2);
-    ctx.require(ctx.setBlock(a, id::BrownThorns, {{"twilightforest:axis", "y"}}), "thorns");
-    ctx.require(ctx.setBlock(a.offset(2, 0, 0), id::GreenThorns, {{"twilightforest:axis", "y"}}), "green thorns");
+    ctx.require(ctx.setBlock(a, id::BrownThorns, {{"gloamingforest:axis", "y"}}), "thorns");
+    ctx.require(ctx.setBlock(a.offset(2, 0, 0), id::GreenThorns, {{"gloamingforest:axis", "y"}}), "green thorns");
     ctx.require(co_await ctx.ensureLoaded(a), "test area loaded");
     (void)thornHits();
     thornHits().clear();
@@ -302,7 +302,7 @@ GF_REGISTER_SELFTEST("finalcastle.thorns_burst", [](Context& ctx) -> ll::coro::C
     ctx.player().setPlayerGameType(GameType::Survival);
     int greens = 0;
     for (int attempt = 0; attempt < 8 && greens == 0; ++attempt) {
-        ctx.require(ctx.setBlock(a, id::BrownThorns, {{"twilightforest:axis", "y"}}), "thorns");
+        ctx.require(ctx.setBlock(a, id::BrownThorns, {{"gloamingforest:axis", "y"}}), "thorns");
         ctx.check(breakBlock(ctx, a) == ia::Result::Deny, "a survival player cannot break thorns");
         co_await ctx.ticks(2);
         ctx.check(ctx.blockAt(a) == id::BrownThorns, "the thorns stay");
@@ -314,7 +314,7 @@ GF_REGISTER_SELFTEST("finalcastle.thorns_burst", [](Context& ctx) -> ll::coro::C
                     ++greens;
                     // the green thorns lie along their direction
                     int axis = dx != 0 ? 0 : (dy != 0 ? 1 : 2);
-                    ctx.check(text(ctx, p, "twilightforest:axis") == axisName(axis), "burst thorns take the axis of their direction");
+                    ctx.check(text(ctx, p, "gloamingforest:axis") == axisName(axis), "burst thorns take the axis of their direction");
                     ctx.cleanupBlock(p);
                 }
     }
@@ -332,25 +332,25 @@ GF_REGISTER_SELFTEST("finalcastle.thorns_connect", [](Context& ctx) -> ll::coro:
     ctx.require(ctx.setBlock(a.offset(-1, 0, 0), "minecraft:stone"), "stone west");
     ctx.require(ctx.setBlock(a, id::BrownThorns), "thorns");
     placed(ctx, a, a.offset(0, -1, 0), Up);
-    ctx.check(text(ctx, a, "twilightforest:axis") == "y", "placed on a top face: axis y");
-    ctx.check(flag(ctx, a, "twilightforest:north"), "connects to thorn leaves");
-    ctx.check(!flag(ctx, a, "twilightforest:west"), "does not connect to stone");
+    ctx.check(text(ctx, a, "gloamingforest:axis") == "y", "placed on a top face: axis y");
+    ctx.check(flag(ctx, a, "gloamingforest:north"), "connects to thorn leaves");
+    ctx.check(!flag(ctx, a, "gloamingforest:west"), "does not connect to stone");
     ctx.require(ctx.setBlock(a.offset(1, 0, 0), id::GreenThorns), "green thorns east");
     co_await ctx.ticks(3);
-    ctx.check(flag(ctx, a, "twilightforest:east"), "a thorns neighbour connects (updateShape)");
+    ctx.check(flag(ctx, a, "gloamingforest:east"), "a thorns neighbour connects (updateShape)");
     ctx.require(ctx.setBlock(a.offset(1, 0, 0), "minecraft:air"), "green thorns removed");
     co_await ctx.ticks(3);
-    ctx.check(flag(ctx, a, "twilightforest:east"), "an air neighbour keeps the connection");
+    ctx.check(flag(ctx, a, "gloamingforest:east"), "an air neighbour keeps the connection");
     ctx.require(ctx.setBlock(a.offset(1, 0, 0), "minecraft:stone"), "stone east");
     co_await ctx.ticks(3);
-    ctx.check(!flag(ctx, a, "twilightforest:east"), "a stone neighbour clears it");
+    ctx.check(!flag(ctx, a, "gloamingforest:east"), "a stone neighbour clears it");
 });
 
 // burnt thorns dissolve when a living entity walks into them
 GF_REGISTER_SELFTEST("finalcastle.burnt_thorns", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto a = ctx.testPos(3030, 2);
-    ctx.require(ctx.setBlock(a, id::BurntThorns, {{"twilightforest:axis", "y"}}), "burnt thorns");
-    ctx.require(ctx.setBlock(a.offset(2, 0, 0), id::BurntThorns, {{"twilightforest:axis", "y"}}), "burnt thorns (item test)");
+    ctx.require(ctx.setBlock(a, id::BurntThorns, {{"gloamingforest:axis", "y"}}), "burnt thorns");
+    ctx.require(ctx.setBlock(a.offset(2, 0, 0), id::BurntThorns, {{"gloamingforest:axis", "y"}}), "burnt thorns (item test)");
     ctx.require(co_await ctx.ensureLoaded(a), "test area loaded");
     auto* item = dropItem(ctx, "minecraft:dirt", a.offset(2, 0, 0));
     auto* pig  = spawn(ctx, "minecraft:pig", a);
@@ -370,7 +370,7 @@ GF_REGISTER_SELFTEST("finalcastle.thorn_rose", [](Context& ctx) -> ll::coro::Cor
     ctx.require(co_await ctx.ensureLoaded(a), "test area loaded");
     ctx.require(ctx.setBlock(a, "minecraft:stone"), "stone");
     auto rose = a.offset(0, 1, 0);
-    ctx.require(ctx.setBlock(rose, id::ThornRose, {{"twilightforest:facing", "up"}}), "rose on the stone");
+    ctx.require(ctx.setBlock(rose, id::ThornRose, {{"gloamingforest:facing", "up"}}), "rose on the stone");
     auto* r = ctx.region();
     ctx.check(roseCanSurvive(*r, bp(rose), Up), "a rose survives on a sturdy face behind it");
     ctx.check(!roseCanSurvive(*r, bp(rose), North), "facing north it has air behind it");
@@ -415,7 +415,7 @@ GF_REGISTER_SELFTEST("finalcastle.cinder_furnace", [](Context& ctx) -> ll::coro:
     h->set(f, 0, *logs);
     h->set(f, 1, *coal);
     co_await ctx.ticks(3);
-    ctx.check(flag(ctx, f, "twilightforest:lit"), "the furnace lights");
+    ctx.check(flag(ctx, f, "gloamingforest:lit"), "the furnace lights");
     auto st = furnaceState(f);
     ctx.check(st.litTime > 0 && st.cookingProgress >= 10, "it burns and cooks 10 per tick (" + std::to_string(st.cookingProgress) + ")");
     co_await ctx.ticks(25);
@@ -472,18 +472,18 @@ GF_REGISTER_SELFTEST("finalcastle.thorn_feature", [](Context& ctx) -> ll::coro::
     core::jrand::LegacyRandom rand(1234);
     int placedAny = 0;
     for (int attempt = 0; attempt < 4 && placedAny == 0; ++attempt) {
-        ctx.check(features::place("twilightforest:thorns", live, bp(origin), rand), "the configured feature places");
+        ctx.check(features::place("gloamingforest:thorns", live, bp(origin), rand), "the configured feature places");
         for (int x = box.minX; x <= box.maxX; ++x)
             for (int y = box.minY; y <= box.maxY; ++y)
                 for (int z = box.minZ; z <= box.maxZ; ++z)
                     if (r->getBlock(BlockPos{x, y, z}).getTypeName() == id::BrownThorns) ++placedAny;
     }
     ctx.check(placedAny >= 2, "brown thorns grew (" + std::to_string(placedAny) + ")");
-    ctx.check(ctx.blockAt(origin) == id::BrownThorns && text(ctx, origin, "twilightforest:axis") == "y", "the first stalk goes up from the origin");
+    ctx.check(ctx.blockAt(origin) == id::BrownThorns && text(ctx, origin, "gloamingforest:axis") == "y", "the first stalk goes up from the origin");
     // above the cloud line nothing grows
     auto high = core::GlobalPos{ctx.dimension(), origin.x, 200, origin.z};
     LiveRegion highRegion(*r, bp(high));
-    (void)features::place("twilightforest:thorns", highRegion, bp(high), rand);
+    (void)features::place("gloamingforest:thorns", highRegion, bp(high), rand);
     ctx.check(ctx.blockAt(high) == "minecraft:air", "no thorns above sea level + 150");
     // leave nothing behind outside the flat area, even when the check failed (R12)
     for (int x = high.x - 8; x <= high.x + 8; ++x)

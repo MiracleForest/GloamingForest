@@ -2,7 +2,7 @@
   "format_version": "1.20.10",
   "minecraft:recipe_shaped": {
     "description": {
-      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_boots/water_walk_modifier"
+      "identifier": "gloamingforest:add_modifier_to_travellers_gear/travellers_boots/water_walk_modifier"
     },
     "tags": [
       "crafting_table"
@@ -13,22 +13,22 @@
     ],
     "key": {
       "B": {
-        "item": "twilightforest:travellers_boots"
+        "item": "gloamingforest:travellers_boots"
       },
       "L": {
         "item": "minecraft:waterlily"
       },
       "S": {
-        "item": "twilightforest:maze_slime_ball"
+        "item": "gloamingforest:maze_slime_ball"
       }
     },
     "unlock": [
       {
-        "item": "twilightforest:travellers_boots"
+        "item": "gloamingforest:travellers_boots"
       }
     ],
     "result": {
-      "item": "twilightforest:travellers_boots"
+      "item": "gloamingforest:travellers_boots"
     }
   }
 }

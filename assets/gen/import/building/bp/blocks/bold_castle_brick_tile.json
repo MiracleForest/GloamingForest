@@ -2,9 +2,9 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:bold_castle_brick_tile",
+      "identifier": "gloamingforest:bold_castle_brick_tile",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       }
     },
     "components": {

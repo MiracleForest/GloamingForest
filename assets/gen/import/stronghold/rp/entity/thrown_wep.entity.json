@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:thrown_wep",
+      "identifier": "gloamingforest:thrown_wep",
       "materials": {
         "default": "entity_alphatest"
       },

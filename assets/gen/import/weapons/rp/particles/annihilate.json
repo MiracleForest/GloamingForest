@@ -2,10 +2,10 @@
   "format_version": "1.10.0",
   "particle_effect": {
     "description": {
-      "identifier": "twilightforest:annihilate",
+      "identifier": "gloamingforest:annihilate",
       "basic_render_parameters": {
         "material": "particles_alpha",
-        "texture": "textures/twilightforest/particle/annihilate_particle"
+        "texture": "textures/gloamingforest/particle/annihilate_particle"
       }
     },
     "components": {

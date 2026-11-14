@@ -2,7 +2,7 @@
   "format_version": "1.21.110",
   "minecraft:biome": {
     "description": {
-      "identifier": "twilightforest:highlands_underground"
+      "identifier": "gloamingforest:highlands_underground"
     },
     "components": {
       "minecraft:climate": {

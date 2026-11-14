@@ -1,0 +1,21 @@
+{
+  "values": [
+    "minecraft:redstone_lamp",
+    "minecraft:tnt",
+    "minecraft:water",
+    "gloamingforest:antibuilder",
+    "gloamingforest:carminite_builder",
+    "gloamingforest:built_block",
+    "gloamingforest:reactor_debris",
+    "gloamingforest:carminite_reactor",
+    "gloamingforest:reappearing_block",
+    "gloamingforest:ghast_trap",
+    "gloamingforest:fake_diamond",
+    "gloamingforest:fake_gold",
+    "#gloamingforest:common_protections",
+    {
+      "id": "gravestone:gravestone",
+      "required": false
+    }
+  ]
+}

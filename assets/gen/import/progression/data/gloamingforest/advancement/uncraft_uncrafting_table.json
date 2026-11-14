@@ -1,0 +1,32 @@
+{
+  "parent": "gloamingforest:root",
+  "criteria": {
+    "uncraft_table": {
+      "conditions": {
+        "item": {
+          "items": "gloamingforest:uncrafting_table"
+        }
+      },
+      "trigger": "gloamingforest:uncraft_item"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.uncraft_uncrafting_table.desc"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:uncrafting_table"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.uncraft_uncrafting_table"
+    }
+  },
+  "requirements": [
+    [
+      "uncraft_table"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

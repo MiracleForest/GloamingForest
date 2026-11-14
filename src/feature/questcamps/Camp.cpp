@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/CampStructure.java
-//   src/main/java/twilightforest/world/components/structures/camp/CampPieces.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/CampStructure.java
+//   src/main/java/gloamingforest/world/components/structures/camp/CampPieces.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Camps (docs/spec/questcamps.md 3): a random point of the start chunk at the terrain height
 // (adjustForTerrain 12, 3), a campfire start from pool camp/structure_start turned to a random
-// direction, then the jigsaw expansion of TwilightJigsawPiece (tents, main paths, paths, decos,
+// direction, then the jigsaw expansion of GloamingJigsawPiece (tents, main paths, paths, decos,
 // racks). F6 places the sites (avoid_landmark_grid, spacing 18, separation 14); the pieces with the
 // pool entry's BEARD_BOX beard the terrain to their boxes.
 
@@ -30,7 +30,7 @@ namespace st = gf::structure;
 
 namespace {
 
-constexpr char kStartPool[] = "twilightforest:camp/structure_start";
+constexpr char kStartPool[] = "gloamingforest:camp/structure_start";
 
 std::pair<int, int> startChunk(gf::landmark::Start const& start) {
     if (start.data.contains("chunk") && start.data["chunk"].is_array() && start.data["chunk"].size() == 2)

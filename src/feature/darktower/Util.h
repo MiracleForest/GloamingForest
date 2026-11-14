@@ -31,34 +31,34 @@ namespace gf::feature::darktower {
 using Json = nlohmann::json;
 using core::GlobalPos;
 
-inline constexpr char kNs[] = "twilightforest:";
+inline constexpr char kNs[] = "gloamingforest:";
 
 // ---- ids -------------------------------------------------------------------------------------------
 namespace id {
-inline constexpr char ReappearingBlock[]  = "twilightforest:reappearing_block";
-inline constexpr char VanishingBlock[]    = "twilightforest:vanishing_block";
-inline constexpr char UnbreakableVanish[] = "twilightforest:unbreakable_vanishing_block";
-inline constexpr char LockedVanish[]      = "twilightforest:locked_vanishing_block";
-inline constexpr char Builder[]           = "twilightforest:carminite_builder";
-inline constexpr char BuiltBlock[]        = "twilightforest:built_block";
-inline constexpr char Antibuilder[]       = "twilightforest:antibuilder";
-inline constexpr char Antibuilt[]         = "twilightforest:antibuilt_block";
-inline constexpr char Reactor[]           = "twilightforest:carminite_reactor";
-inline constexpr char ReactorDebris[]     = "twilightforest:reactor_debris";
-inline constexpr char FakeGold[]          = "twilightforest:fake_gold";
-inline constexpr char FakeDiamond[]       = "twilightforest:fake_diamond";
-inline constexpr char Slider[]            = "twilightforest:slider";
-inline constexpr char GhastTrap[]         = "twilightforest:ghast_trap";
-inline constexpr char InfestedTowerwood[] = "twilightforest:infested_towerwood";
-inline constexpr char Towerwood[]         = "twilightforest:towerwood";
-inline constexpr char TowerKey[]          = "twilightforest:tower_key";
-inline constexpr char UrGhast[]           = "twilightforest:ur_ghast";
-inline constexpr char Ghastguard[]        = "twilightforest:carminite_ghastguard";
-inline constexpr char Ghastling[]         = "twilightforest:carminite_ghastling";
-inline constexpr char Golem[]             = "twilightforest:carminite_golem";
-inline constexpr char Broodling[]         = "twilightforest:carminite_broodling";
-inline constexpr char Borer[]             = "twilightforest:towerwood_borer";
-inline constexpr char SlideEntity[]       = "twilightforest:slider";
+inline constexpr char ReappearingBlock[]  = "gloamingforest:reappearing_block";
+inline constexpr char VanishingBlock[]    = "gloamingforest:vanishing_block";
+inline constexpr char UnbreakableVanish[] = "gloamingforest:unbreakable_vanishing_block";
+inline constexpr char LockedVanish[]      = "gloamingforest:locked_vanishing_block";
+inline constexpr char Builder[]           = "gloamingforest:carminite_builder";
+inline constexpr char BuiltBlock[]        = "gloamingforest:built_block";
+inline constexpr char Antibuilder[]       = "gloamingforest:antibuilder";
+inline constexpr char Antibuilt[]         = "gloamingforest:antibuilt_block";
+inline constexpr char Reactor[]           = "gloamingforest:carminite_reactor";
+inline constexpr char ReactorDebris[]     = "gloamingforest:reactor_debris";
+inline constexpr char FakeGold[]          = "gloamingforest:fake_gold";
+inline constexpr char FakeDiamond[]       = "gloamingforest:fake_diamond";
+inline constexpr char Slider[]            = "gloamingforest:slider";
+inline constexpr char GhastTrap[]         = "gloamingforest:ghast_trap";
+inline constexpr char InfestedTowerwood[] = "gloamingforest:infested_towerwood";
+inline constexpr char Towerwood[]         = "gloamingforest:towerwood";
+inline constexpr char TowerKey[]          = "gloamingforest:tower_key";
+inline constexpr char UrGhast[]           = "gloamingforest:ur_ghast";
+inline constexpr char Ghastguard[]        = "gloamingforest:carminite_ghastguard";
+inline constexpr char Ghastling[]         = "gloamingforest:carminite_ghastling";
+inline constexpr char Golem[]             = "gloamingforest:carminite_golem";
+inline constexpr char Broodling[]         = "gloamingforest:carminite_broodling";
+inline constexpr char Borer[]             = "gloamingforest:towerwood_borer";
+inline constexpr char SlideEntity[]       = "gloamingforest:slider";
 } // namespace id
 
 // ---- level ---------------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ void soundAt(BlockSource& region, Vec3 const& pos, char const* event, float volu
 void particle(BlockSource& region, char const* id, Vec3 const& pos, Vec3 const& velocity = {}, int count = 1, Json const& params = {});
 /// DustParticleOptions.REDSTONE at a position.
 void redstoneDust(BlockSource& region, Vec3 const& pos);
-/// RedstoneOreBlock#spawnParticles (TF's sparkle) around an active device.
+/// RedstoneOreBlock#spawnParticles (upstream's sparkle) around an active device.
 void sparkle(BlockSource& region, BlockPos const& pos);
 /// The chance that ClientLevel#animateTick picks the block at `pos` in one tick for the nearest
 /// player (667 random positions within 16 blocks, 667 within 32: about 2.1 % within 16, 0.24 %

@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/naga_leggings"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "# #", "# #"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:naga_scale"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:naga_scale"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:naga_leggings"
+    }
+  }
+}

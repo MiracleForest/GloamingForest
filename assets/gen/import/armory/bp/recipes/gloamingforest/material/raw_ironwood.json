@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:material/raw_ironwood"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:liveroot"
+      },
+      {
+        "item": "minecraft:raw_iron"
+      },
+      {
+        "item": "minecraft:gold_nugget"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:liveroot"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:raw_ironwood",
+      "count": 2
+    }
+  }
+}

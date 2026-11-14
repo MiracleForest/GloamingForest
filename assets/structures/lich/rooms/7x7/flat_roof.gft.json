@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/7x7/flat_roof",
+  "id": "gloamingforest:lich_tower/7x7/flat_roof",
   "size": [9, 2, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},

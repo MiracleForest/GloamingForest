@@ -1,8 +1,8 @@
 {
   "values": [
-    "#twilightforest:common_protections",
-    "twilightforest:liveroot_block",
-    "twilightforest:mangrove_root",
-    "twilightforest:sinister_spawner"
+    "#gloamingforest:common_protections",
+    "gloamingforest:liveroot_block",
+    "gloamingforest:mangrove_root",
+    "gloamingforest:sinister_spawner"
   ]
 }

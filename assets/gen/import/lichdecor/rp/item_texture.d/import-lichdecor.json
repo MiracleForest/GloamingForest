@@ -1,8 +1,8 @@
 {
   "tf_item_magic_painting": {
-    "textures": "textures/twilightforest/item/magic_painting"
+    "textures": "textures/gloamingforest/item/magic_painting"
   },
   "tf_item_wrought_iron_bar": {
-    "textures": "textures/twilightforest/item/wrought_iron_bar"
+    "textures": "textures/gloamingforest/item/wrought_iron_bar"
   }
 }

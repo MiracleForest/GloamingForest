@@ -1,7 +1,7 @@
 {
-  "twilightforest:entity.twilightforest.naga.hiss": {
+  "gloamingforest:entity.gloamingforest.naga.hiss": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.naga.hiss",
+    "subtitle": "subtitles.gloamingforest.entity.naga.hiss",
     "sounds": [
       {
         "file": "mob/naga/hiss1"
@@ -14,9 +14,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.naga.hurt": {
+  "gloamingforest:entity.gloamingforest.naga.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.naga.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.naga.hurt",
     "sounds": [
       {
         "file": "mob/naga/hurt1"
@@ -29,9 +29,9 @@
       }
     ]
   },
-  "twilightforest:entity.twilightforest.naga.rattle": {
+  "gloamingforest:entity.gloamingforest.naga.rattle": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.naga.rattle",
+    "subtitle": "subtitles.gloamingforest.entity.naga.rattle",
     "sounds": [
       {
         "file": "mob/naga/rattle1"

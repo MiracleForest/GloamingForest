@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:ore_map"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:maze_map"
+      },
+      {
+        "item": "minecraft:diamond_block"
+      },
+      {
+        "item": "minecraft:gold_block"
+      },
+      {
+        "item": "minecraft:iron_block"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:maze_map"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:ore_map"
+    }
+  }
+}

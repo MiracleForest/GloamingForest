@@ -1,0 +1,11 @@
+{
+  "type": "gloamingforest:lampposts",
+  "config": {
+    "state": {
+      "Name": "gloamingforest:cicada_jar",
+      "Properties": {
+        "waterlogged": "false"
+      }
+    }
+  }
+}

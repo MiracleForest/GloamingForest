@@ -43,14 +43,14 @@
   "data": [
     { "from": "assets/data", "to": "data/gf", "comment": "unit data: assets/data/<kind>/<unit>.json" },
     { "from": "assets/test/data", "to": "data/gf_test", "test": true },
-    { "from": "assets/structures", "to": "structures/twilightforest" },
+    { "from": "assets/structures", "to": "structures/gloamingforest" },
     { "from": "assets/test/structures", "to": "structures/gf_test", "test": true }
   ],
   "tags": { "fragments": "assets/tags", "comment": "assets/tags/<registry>/<namespace>/<path>.d/<unit>.json -> data/<namespace>/tags/<registry>/<path>.json (union of 'values', over the imported tag)" },
   "checks": {
     "integerStates": true,
     "permutationBudget": { "perBlock": 65536, "total": 4000000 },
-    "danglingNamespaces": ["twilightforest"],
+    "danglingNamespaces": ["gloamingforest"],
     "knownIds": "tools/import/known-ids.json",
     "owners": "docs/spec/owners.tsv",
     "ownedRoots": ["assets/pack", "assets/gen", "assets/data", "assets/lang", "assets/tags", "assets/structures", "assets/test"],

@@ -1,12 +1,12 @@
 {
   "values": [
-    "twilightforest:twilight_oak_trapdoor",
-    "twilightforest:canopy_trapdoor",
-    "twilightforest:mangrove_trapdoor",
-    "twilightforest:dark_trapdoor",
-    "twilightforest:time_trapdoor",
-    "twilightforest:transformation_trapdoor",
-    "twilightforest:mining_trapdoor",
-    "twilightforest:sorting_trapdoor"
+    "gloamingforest:gloaming_oak_trapdoor",
+    "gloamingforest:canopy_trapdoor",
+    "gloamingforest:mangrove_trapdoor",
+    "gloamingforest:dark_trapdoor",
+    "gloamingforest:time_trapdoor",
+    "gloamingforest:transformation_trapdoor",
+    "gloamingforest:mining_trapdoor",
+    "gloamingforest:sorting_trapdoor"
   ]
 }

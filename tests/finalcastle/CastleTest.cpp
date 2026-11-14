@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Tests of U30's pure castle maths (src/core/finalcastle/Castle.h), translated from The Twilight
-// Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later): the rune mural bitmap, the
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Tests of U30's pure castle maths (src/core/finalcastle/Castle.h), translated from The Gloaming
+// Forest 4.8 (upstream commit 9e40a757, LGPL-2.1-or-later): the rune mural bitmap, the
 // decoRNG seeds, the bridge arch and the destroy areas.
 #include <gtest/gtest.h>
 
@@ -104,7 +104,7 @@ TEST(FinalCastleDestroyArea, BoxAndIntersection) {
     EXPECT_LE(a.box.minX, tower.maxX - 2);
     EXPECT_TRUE(a.isEntirelyAbove(79));
     EXPECT_FALSE(a.isEntirelyAbove(80));
-    // TF's argument order: intersects(minX = o.maxX + 1, minZ = o.minX - 1, maxX = o.maxZ + 1, maxZ = o.minZ - 1)
+    // upstream's argument order: intersects(minX = o.maxX + 1, minZ = o.minX - 1, maxX = o.maxZ + 1, maxZ = o.minZ - 1)
     DestroyArea b = a;
     b.box         = gf::core::BlockBox{0, 0, 0, 4, 10, 4};
     DestroyArea c = a;

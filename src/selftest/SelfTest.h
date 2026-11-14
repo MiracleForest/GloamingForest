@@ -1,11 +1,11 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/selftest/SelfTest.h), LGPL-3.0-or-later.
 #pragma once
 
-// Contract "selftest" (W0a): in-game tests, run with `/twilightforest selftest ["glob"]`.
+// Contract "selftest" (W0a): in-game tests, run with `/gloamingforest selftest ["glob"]`.
 //
 //     GF_REGISTER_SELFTEST("trees.canopy_sapling", [](gf::selftest::Context& ctx) -> ll::coro::CoroTask<> {
 //         auto box = co_await ctx.flatArea(300, 16);           // dx 300..399 belong to U3 (rule R12)
-//         ctx.require(ctx.setBlock(ctx.testPos(300), "twilightforest:canopy_sapling"), "sapling placed");
+//         ctx.require(ctx.setBlock(ctx.testPos(300), "gloamingforest:canopy_sapling"), "sapling placed");
 //         co_await ctx.ticks(5);
 //         ctx.check(ctx.snapshotVolume(box) == "0123456789abcdef", "the tree matches the golden hash");
 //     });
@@ -125,7 +125,7 @@ public:
     [[nodiscard]] SimulatedPlayer& spawnPlayer(std::string const& name = {});
 
     // ---- world --------------------------------------------------------------------------------
-    /// The dimension the test works in (0 = overworld until `inTwilight()` succeeded).
+    /// The dimension the test works in (0 = overworld until `inGloaming()` succeeded).
     [[nodiscard]] int dimension() const { return mDim; }
     /// A free test position for `dx` (rule R12 ranges) at the surface of the test area:
     /// x = spawn + 5 + dx % 100, and one z row per hundred of dx (U1..U30 rows 1..30, F0..F16 rows
@@ -145,10 +145,10 @@ public:
     /// 'full' run only because tests run one at a time and each flat area is restored, so never
     /// leave blocks behind outside dz 0..4 of your own row.
     [[nodiscard]] ll::coro::CoroTask<core::BlockBox> flatArea(int dx, int size, int height = 32);
-    /// Moves the test into the Twilight Forest dimension (gf::world, feature/dimension/World.h):
+    /// Moves the test into the Gloaming Forest dimension (gf::world, feature/dimension/World.h):
     /// the player is sent there and later testPos / flatArea positions are in it. False when the
     /// dimension is not available (then the test should `require` it).
-    [[nodiscard]] ll::coro::CoroTask<bool> inTwilight();
+    [[nodiscard]] ll::coro::CoroTask<bool> inGloaming();
     /// Sets a block by id with states ({"name": int | bool | "text"}; restored to air after the
     /// test). False when the id or a state is unknown.
     bool setBlock(core::GlobalPos const& pos, std::string const& id, nlohmann::json const& states = nlohmann::json::object());
@@ -200,7 +200,7 @@ private:
     std::vector<std::pair<std::string, int>> mTickingAreas; ///< (name, dimension)
     std::unique_ptr<BossEventCapture>      mBossCapture;
     int                                    mDim = 0;
-    core::GlobalPos                        mOrigin{}; ///< inTwilight(): the dimension's test origin
+    core::GlobalPos                        mOrigin{}; ///< inGloaming(): the dimension's test origin
     bool                                   mHasOrigin = false;
 };
 

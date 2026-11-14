@@ -1,21 +1,21 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/resources/data/twilightforest/function/tp_twilight.mcfunction
-//   src/main/resources/data/twilightforest/function/tp_overworld.mcfunction
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/resources/data/gloamingforest/function/tp_gloaming.mcfunction
+//   src/main/resources/data/gloamingforest/function/tp_overworld.mcfunction
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TF's data pack functions twilightforest:tp_twilight / tp_overworld are
-//     execute in twilightforest:twilight_forest run tp @p ~ ~ ~
+// upstream's data pack functions gloamingforest:tp_gloaming / tp_overworld are
+//     execute in gloamingforest:gloaming_forest run tp @p ~ ~ ~
 //     execute in minecraft:overworld run tp @p ~ ~ ~
 // Java's `execute in` moves the execution position into the other dimension scaled by
 // DimensionType#getTeleportationScale (CommandSourceStack#withLevel: X and Z times
 // from.coordinateScale / to.coordinateScale, so (100, y, 100) in the overworld is (800, y, 800) in
-// the Twilight Forest, scale 0.125, and back). Bedrock's `execute in` keeps the position as it is.
-// TF's /twilightforest has no subcommand for this, so the command tree stays TF's: the behavior
-// pack functions twilightforest/dimension/tp_twilight / tp_overworld run the vanilla command
-// `scriptevent twilightforest:tp_twilight` / `...:tp_overworld`, and this file runs them with Java's
+// the Gloaming Forest, scale 0.125, and back). Bedrock's `execute in` keeps the position as it is.
+// upstream's /gloamingforest has no subcommand for this, so the command tree stays upstream's: the behavior
+// pack functions gloamingforest/dimension/tp_gloaming / tp_overworld run the vanilla command
+// `scriptevent gloamingforest:tp_gloaming` / `...:tp_overworld`, and this file runs them with Java's
 // semantics: the execution position scaled into the destination, the nearest living player
 // (@p: every player, nearest to that position) teleported there with its rotation (TeleportCommand
 // without a rotation argument).
@@ -50,17 +50,17 @@ namespace gf::feature::dimension {
 
 namespace {
 
-constexpr char kTpTwilight[]  = "twilightforest:tp_twilight";
-constexpr char kTpOverworld[] = "twilightforest:tp_overworld";
+constexpr char kTpGloaming[]  = "gloamingforest:tp_gloaming";
+constexpr char kTpOverworld[] = "gloamingforest:tp_overworld";
 
 std::string fixed2(double v) { return std::format("{:.2f}", v); }
 
 } // namespace
 
-std::optional<FunctionTeleport> runTpFunction(int srcDim, Vec3 const& source, bool toTwilight) {
+std::optional<FunctionTeleport> runTpFunction(int srcDim, Vec3 const& source, bool toGloaming) {
     auto level = ll::service::getLevel();
     if (!level) return std::nullopt;
-    int dest = toTwilight ? twilightId() : 0;
+    int dest = toGloaming ? gloamingId() : 0;
     if (dest < 0) return std::nullopt;
     // CommandSourceStack#withLevel: the same level keeps the position, another one scales X and Z
     Vec3 pos = source;
@@ -89,11 +89,11 @@ std::optional<FunctionTeleport> runTpFunction(int srcDim, Vec3 const& source, bo
 namespace {
 
 /// The function's teleport, as `tp @p ~ ~ ~` runs it in the destination.
-void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toTwilight) {
+void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toGloaming) {
     // Java runs functions at permission level 2
     if (!commands::isAdmin(commandOrigin)) return output.error("You need operator permission.");
     auto* dimension = commandOrigin.getDimension();
-    auto  missing   = [&] { output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable.")); };
+    auto  missing   = [&] { output.error(tr("commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable.")); };
     if (!dimension) return missing();
     // the source position: the origin's (`execute ... at / positioned` set it); a player's own
     // origin reports its eyes, Java's source is the player's position (its feet)
@@ -101,7 +101,7 @@ void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toTwi
     auto* entity = commandOrigin.getEntity();
     Vec3  source = type == CommandOriginType::Player && entity ? entity->getFeetPos() : commandOrigin.getWorldPosition();
     int   src    = static_cast<int>(dimension->getDimensionId());
-    auto  tp     = runTpFunction(src, source, toTwilight);
+    auto  tp     = runTpFunction(src, source, toGloaming);
     if (!tp) return missing();
     auto* target = playerById(tp->player);
     if (!target) return output.error("commands.generic.noTargetMatch"); // "No player was found"
@@ -114,7 +114,7 @@ void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toTwi
     auto  name = target->getRealName();
     log().info(
         "dimension: function {} (origin type {}) moves {} from {} {:.1f} {:.1f} {:.1f} to {} {:.1f} {:.1f} {:.1f}",
-        toTwilight ? kTpTwilight : kTpOverworld,
+        toGloaming ? kTpGloaming : kTpOverworld,
         static_cast<int>(type),
         name,
         dimensionName(src),
@@ -150,7 +150,7 @@ void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toTwi
 } // namespace
 
 LL_TYPE_INSTANCE_HOOK(
-    TwilightFunctionHook,
+    GloamingFunctionHook,
     ll::memory::HookPriority::Normal,
     ScriptEventCommand,
     &ScriptEventCommand::$execute,
@@ -159,14 +159,14 @@ LL_TYPE_INSTANCE_HOOK(
     CommandOutput&       output
 ) {
     std::string const& id = mMessageId;
-    if (id == kTpTwilight || id == kTpOverworld) return runTp(commandOrigin, output, id == kTpTwilight);
+    if (id == kTpGloaming || id == kTpOverworld) return runTp(commandOrigin, output, id == kTpGloaming);
     origin(commandOrigin, output);
 }
 
 class FunctionsModule {
 public:
-    void install() { TwilightFunctionHook::hook(); }
-    void uninstall() { TwilightFunctionHook::unhook(); }
+    void install() { GloamingFunctionHook::hook(); }
+    void uninstall() { GloamingFunctionHook::unhook(); }
 };
 
 } // namespace gf::feature::dimension

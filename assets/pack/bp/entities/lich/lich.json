@@ -2,19 +2,19 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:lich",
+      "identifier": "gloamingforest:lich",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:phase": { "type": "int", "range": [1, 3], "default": 1, "client_sync": true },
-        "twilightforest:shield": { "type": "int", "range": [0, 6], "default": 6, "client_sync": true },
-        "twilightforest:clone": { "type": "bool", "default": false, "client_sync": true },
-        "twilightforest:death_time": { "type": "int", "range": [0, 295], "default": 0, "client_sync": true }
+        "gloamingforest:phase": { "type": "int", "range": [1, 3], "default": 1, "client_sync": true },
+        "gloamingforest:shield": { "type": "int", "range": [0, 6], "default": 6, "client_sync": true },
+        "gloamingforest:clone": { "type": "bool", "default": false, "client_sync": true },
+        "gloamingforest:death_time": { "type": "int", "range": [0, 295], "default": 0, "client_sync": true }
       }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "lich", "skeleton", "undead", "monster", "mob"] },
+      "minecraft:type_family": { "family": ["gloamingforest", "lich", "skeleton", "undead", "monster", "mob"] },
       "minecraft:collision_box": { "width": 0.8, "height": 2.5 },
       "minecraft:health": { "value": 100, "max": 100 },
       "minecraft:attack": { "damage": 3 },
@@ -35,7 +35,7 @@
         "value": 8.0,
         "range": 16.0,
         "event_name": "undefined",
-        "event_names": [ { "event_name": "ambient", "condition": "!query.property('twilightforest:clone')" } ]
+        "event_names": [ { "event_name": "ambient", "condition": "!query.property('gloamingforest:clone')" } ]
       }
     }
   }

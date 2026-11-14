@@ -1,0 +1,11 @@
+{
+  "placement": {
+    "type": "gloamingforest:landmark_grid"
+  },
+  "structures": [
+    {
+      "structure": "gloamingforest:labyrinth",
+      "weight": 1
+    }
+  ]
+}

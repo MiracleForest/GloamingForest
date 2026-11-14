@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/BinaryRotatedBlock.java
-//   src/main/java/twilightforest/init/TFBlocks.java (TERRORCOTTA_*)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/BinaryRotatedBlock.java
+//   src/main/java/gloamingforest/init/TFBlocks.java (TERRORCOTTA_*)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -33,12 +33,12 @@ public:
         static bool once = false;
         if (once) return;
         once = true;
-        ia::onPlace({.block = "twilightforest:terrorcotta_curves"}, [](ia::PlaceContext const& c) {
+        ia::onPlace({.block = "gloamingforest:terrorcotta_curves"}, [](ia::PlaceContext const& c) {
             auto* region = game::regionOf(c.pos.dim);
             if (!region) return;
             setStates(*region, game::blockPos(c.pos), c.block, Json{{"facing", faceName(oppositeFace(lookFace(c.player)))}});
         });
-        ia::onPlace({.block = "twilightforest:terrorcotta_lines"}, [](ia::PlaceContext const& c) {
+        ia::onPlace({.block = "gloamingforest:terrorcotta_lines"}, [](ia::PlaceContext const& c) {
             auto* region = game::regionOf(c.pos.dim);
             if (!region) return;
             int look = lookFace(c.player);

@@ -1,8 +1,8 @@
 {
-  "entity.twilightforest.raven": "Kruk",
-  "entity.twilightforest.squirrel": "Wiewiórka",
-  "entity.twilightforest.tiny_bird": "Mały ptaszek",
-  "subtitles.twilightforest.entity.parrot.imitate.death_tome": "Papuga naśladuje dźwięki Księgi",
-  "subtitles.twilightforest.entity.parrot.imitate.hydra": "Papuga ryczy",
-  "subtitles.twilightforest.entity.parrot.imitate.naga": "Papuga grzechocze"
+  "entity.gloamingforest.raven": "Kruk",
+  "entity.gloamingforest.squirrel": "Wiewiórka",
+  "entity.gloamingforest.tiny_bird": "Mały ptaszek",
+  "subtitles.gloamingforest.entity.parrot.imitate.death_tome": "Papuga naśladuje dźwięki Księgi",
+  "subtitles.gloamingforest.entity.parrot.imitate.hydra": "Papuga ryczy",
+  "subtitles.gloamingforest.entity.parrot.imitate.naga": "Papuga grzechocze"
 }

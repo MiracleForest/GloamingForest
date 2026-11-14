@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/EntityEvents.java (alertPlayerCastleIsWIP, resetFlaskLogic)
-//   src/main/java/twilightforest/components/entity/PotionFlaskTrackingAttachment.java (resetDoses)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/EntityEvents.java (alertPlayerCastleIsWIP, resetFlaskLogic)
+//   src/main/java/gloamingforest/components/entity/PotionFlaskTrackingAttachment.java (resetDoses)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// What earning one of TF's advancements shows, as Java's PlayerAdvancements#award does for an
+// What earning one of upstream's advancements shows, as Java's PlayerAdvancements#award does for an
 // advancement with a display: the rewards (experience), the advancement toast (show_toast: the
 // client mod draws Java's toast, "progression.toast"; vanilla clients get the game's toast, text
 // only: the type's toast name yellow, pink for challenges, as AdvancementToast's -256 / -30465),
 // the chat announcement to every player (announce_to_chat; "<player> has made the advancement
 // [<title>]", reached the goal, completed the challenge; the title in AdvancementType#getChatColor,
-// green, dark purple for challenges), and TF's progression_end message
+// green, dark purple for challenges), and upstream's progression_end message
 // (EntityEvents#alertPlayerCastleIsWIP). Bedrock's chat has no click events, so the Discord link's
 // URL is written out after its blue, underlined text.
 //
@@ -22,21 +22,21 @@
 // resource pack): the client mod plays it when its toast appears, as AdvancementToast does; for
 // vanilla clients the server plays it to the player with their toast (fx::soundTo).
 //
-// EntityEvents#resetFlaskLogic: earning an advancement with a twilightforest:drink_from_flask
-// criterion resets the player's flask dose tracking (TF's attachment twilightforest:flask_doses,
+// EntityEvents#resetFlaskLogic: earning an advancement with a gloamingforest:drink_from_flask
+// criterion resets the player's flask dose tracking (upstream's attachment gloamingforest:flask_doses,
 // PotionFlaskTrackingAttachment#resetDoses: doses_drank 0, no last_used_potion). The tracking is
 // U9's (the attachment and drink_from_flask are U9's in owners.tsv), so U14 does not write it
-// (R2): it fires the trigger twilightforest:flask_doses_reset ({"advancement": id}) on the
+// (R2): it fires the trigger gloamingforest:flask_doses_reset ({"advancement": id}) on the
 // trigger bus, and U9 resets its tracking in progression::onTrigger of that id (the hand-off is
 // documented in docs/units/progression.md, "Flask doses"; the trigger row is F0's).
 //
 // Java's announceAdvancements gamerule (PlayerAdvancements#award announces only while it is
-// true) is GloamingForest's bool gamerule announceAdvancements (default true, /twilightforest
+// true) is GloamingForest's bool gamerule announceAdvancements (default true, /gloamingforest
 // gamerule announceAdvancements false): Bedrock's /gamerule has no such rule.
 //
-// The advancement screen ("progression.advancements"): the client mod's native tree (TF's tab
+// The advancement screen ("progression.advancements"): the client mod's native tree (upstream's tab
 // with the mazestone background, redrawn frames), opened with the advancements key (L) or
-// /twilightforest advancements; vanilla clients get a form list with a detail form per advancement.
+// /gloamingforest advancements; vanilla clients get a form list with a detail form per advancement.
 
 #include <algorithm>
 #include <atomic>
@@ -82,8 +82,8 @@ inline constexpr char kScreen[]      = "progression.advancements";
 inline constexpr char kToastChannel[] = "progression.toast";
 inline constexpr char kOpenChannel[]  = "progression.open";
 inline constexpr char kDiscordUrl[]   = "https://discord.experiment115.com/";
-inline constexpr char kFlaskTrigger[] = "twilightforest:drink_from_flask";
-inline constexpr char kFlaskReset[]   = "twilightforest:flask_doses_reset"; ///< for the tracking's owner (U9)
+inline constexpr char kFlaskTrigger[] = "gloamingforest:drink_from_flask";
+inline constexpr char kFlaskReset[]   = "gloamingforest:flask_doses_reset"; ///< for the tracking's owner (U9)
 inline constexpr char kAnnounceRule[] = "announceAdvancements";            ///< Java's GameRules.RULE_ANNOUNCE_ADVANCEMENTS
 
 namespace {
@@ -187,11 +187,11 @@ void onEarned(Player& player, std::string const& id) {
         if (adv->announceToChat && gamerules::getBool(kAnnounceRule)) announce(player, *adv);
     }
     log().info("progression: {} earned {} ({})", player.getRealName(), id, frameName(adv->frame));
-    if (id == "twilightforest:progression_end") {
-        auto link = "§9§n" + trFor(player, "gui.twilightforest.progression_end.discord", "Discord Server") + "§r (" + kDiscordUrl + ")";
+    if (id == "gloamingforest:progression_end") {
+        auto link = "§9§n" + trFor(player, "gui.gloamingforest.progression_end.discord", "Discord Server") + "§r (" + kDiscordUrl + ")";
         player.sendMessage(trFor(
             player,
-            "gui.twilightforest.progression_end.message",
+            "gui.gloamingforest.progression_end.message",
             "This is the end of progression for now. The Final Castle that awaits on the plateau is still unfinished and a work in progress. If you would like to keep up with the mod's development you can join our %s.",
             link
         ));
@@ -215,7 +215,7 @@ void listForm(Player& player) {
         if (!done && n.value("groups", 0) > 1) text += "§8 (" + std::to_string(n.value("met", 0)) + "/" + std::to_string(n.value("groups", 0)) + ")";
         buttons.push_back({text, "", [id](Player& p) { detailForm(p, id); }});
     }
-    auto tabTitle = textFor(player, data["tab"].value("title", Json("Twilight Forest")));
+    auto tabTitle = textFor(player, data["tab"].value("title", Json("Gloaming Forest")));
     ui::form(player, trFor(player, "gui.advancements", "Advancements"), tabTitle, std::move(buttons));
     log().info("progression: advancement form shown to {} ({} entries)", player.getRealName(), data["nodes"].size());
 }
@@ -240,7 +240,7 @@ public:
         registered = true;
         gamerules::registerBool(kAnnounceRule, true);
         pr::onGranted([](Player& p, std::string const& id) {
-            if (id.starts_with("twilightforest:")) onEarned(p, id);
+            if (id.starts_with("gloamingforest:")) onEarned(p, id);
         });
         screens::registerType({
             .id     = kScreen,
@@ -273,7 +273,7 @@ void setAnnounceSink(std::function<void(Player&, Advancement const&)> sink) { gA
 GF_REGISTER_MODULE(gf::feature::progression_content::PresentationModule);
 GF_REGISTER_CONFIG("progression", gf::feature::progression_content::ProgressionConfig);
 
-// /twilightforest advancements: the advancement screen (GloamingForest addition: Bedrock has no
+// /gloamingforest advancements: the advancement screen (GloamingForest addition: Bedrock has no
 // advancements key for vanilla clients)
 GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     cmd.overload().text("advancements").execute([](CommandOrigin const& o, CommandOutput& out) {

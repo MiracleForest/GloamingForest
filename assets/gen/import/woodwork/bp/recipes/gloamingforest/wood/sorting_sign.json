@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_sign"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "###", " - "],
+    "key": {
+      "#": {
+        "item": "gloamingforest:sorting_planks"
+      },
+      "-": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_sign",
+      "count": 3
+    }
+  }
+}

@@ -2,18 +2,18 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:hydra_mortar",
+      "identifier": "gloamingforest:hydra_mortar",
       "materials": {
         "default": "entity_alphablend"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/hydramortar"
+        "default": "textures/gloamingforest/entity/hydramortar"
       },
       "geometry": {
-        "default": "geometry.twilightforest.hydra_mortar"
+        "default": "geometry.gloamingforest.hydra_mortar"
       },
       "render_controllers": [
-        "controller.render.twilightforest.hydra_mortar"
+        "controller.render.gloamingforest.hydra_mortar"
       ]
     }
   }

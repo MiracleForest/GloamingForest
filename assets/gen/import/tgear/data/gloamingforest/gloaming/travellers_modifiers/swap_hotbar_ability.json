@@ -1,0 +1,5 @@
+{
+  "type": "gloamingforest:builtin",
+  "component": "gloamingforest:swap_hotbar_ability",
+  "equipment_slots": "legs"
+}

@@ -1,7 +1,7 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// U2 (terrain) gtests: the beardifier as TF 4.8 runs it on NeoForge (core/terrain/Beard.h):
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// U2 (terrain) gtests: the beardifier as upstream 4.8 runs it on NeoForge (core/terrain/Beard.h):
 // Beardifier#compute's Rigid arithmetic with the ground level delta, and the per-piece
-// PieceBeardifierModifier answers of TF's piece types.
+// PieceBeardifierModifier answers of upstream's piece types.
 #include <gtest/gtest.h>
 
 #include <cmath>
@@ -55,7 +55,7 @@ TEST(TerrainBeard, RigidMatchesBeardifierArithmetic) {
     // ground at minY + 2 is still filled, with delta 0 it is the piece's own floor
     EXPECT_GT(beard::rigidDensity({box, TerrainAdjustment::BeardBox, 3}, 4, 12, 3), 0.0);
     EXPECT_EQ(beard::rigidDensity({box, TerrainAdjustment::BeardBox, 0}, 4, 12, 3), javaRigid(box, TerrainAdjustment::BeardBox, 0, 4, 12, 3));
-    // the sum keeps no clamp (Beardifier has none, unlike TF's BoxDensityFunction)
+    // the sum keeps no clamp (Beardifier has none, unlike upstream's BoxDensityFunction)
     std::vector<beard::Rigid> many(8, beard::Rigid{box, TerrainAdjustment::Bury, 0});
     EXPECT_DOUBLE_EQ(beard::beardifierDensity(many, 4, 10, 3), 8.0);
 }
@@ -71,8 +71,8 @@ TEST(TerrainBeard, TfPieceTypes) {
     BlockBox box{0, 0, 0, 10, 10, 10};
     auto     pb = [&](char const* id, json tag = json::object()) { return beard::tfPieceBeard(id, box, tag); };
     // TFStructureComponentOld: NONE (the labyrinth's maze, the dark tower's wings, hollow hills)
-    for (char const* id : {"twilightforest:TFMMaze", "twilightforest:TFMMR", "twilightforest:TFDTWin", "twilightforest:TFDTMai", "twilightforest:TFHill", "twilightforest:TFITMai",
-                           "twilightforest:TFFCMain", "twilightforest:TFSAC", "twilightforest:TFSUCo"}) {
+    for (char const* id : {"gloamingforest:TFMMaze", "gloamingforest:TFMMR", "gloamingforest:TFDTWin", "gloamingforest:TFDTMai", "gloamingforest:TFHill", "gloamingforest:TFITMai",
+                           "gloamingforest:TFFCMain", "gloamingforest:TFSAC", "gloamingforest:TFSUCo"}) {
         auto p = pb(id);
         ASSERT_TRUE(p) << id;
         EXPECT_TRUE(p->modifier) << id;
@@ -86,34 +86,34 @@ TEST(TerrainBeard, TfPieceTypes) {
         EXPECT_EQ(p->groundLevelDelta, delta) << id;
         EXPECT_EQ(p->box, box) << id;
     };
-    check("twilightforest:TFHedge", TerrainAdjustment::BeardBox, 0);
-    check("twilightforest:TFDTEnt", TerrainAdjustment::BeardBox, 1); // a TowerWingComponent: delta 1
-    check("twilightforest:TFLTMai", TerrainAdjustment::BeardBox, 1);
-    check("twilightforest:TFNCTe", TerrainAdjustment::BeardBox, 3);
-    check("twilightforest:TFNCHe", TerrainAdjustment::BeardBox, 3);
-    check("twilightforest:TFSSH", TerrainAdjustment::Bury, 0);
-    check("twilightforest:TFSShield", TerrainAdjustment::Bury, 0);
-    check("twilightforest:TFTCMai", TerrainAdjustment::Bury, 0);
-    check("twilightforest:TFTCGard", TerrainAdjustment::Bury, 0);
-    check("twilightforest:TFFCDunR31", TerrainAdjustment::Bury, 0);
-    check("twilightforest:TFFCDunEx", TerrainAdjustment::Bury, 0);
-    check("twilightforest:TFLTCTBase", TerrainAdjustment::BeardBox, 1);
-    check("twilightforest:TFLTFence", TerrainAdjustment::BeardBox, 2);
-    check("twilightforest:TFLTCTSeg", TerrainAdjustment::None, 0);
-    check("twilightforest:TFLTTBeard", TerrainAdjustment::BeardBox, 4, {{"gen_ground", 1}});
-    check("twilightforest:TFLTTBeard", TerrainAdjustment::None, 4, {{"gen_ground", false}});
-    check("twilightforest:TFLTPath", TerrainAdjustment::BeardBox, 0, {{"dirt_mix", true}});
-    check("twilightforest:TFLTPath", TerrainAdjustment::None, 0);
-    check("twilightforest:TFJigsawTemplate", TerrainAdjustment::BeardBox, 1, {{"terrain_adaptation", "BEARD_BOX"}, {"ground_offset", 1}});
-    check("twilightforest:tfjigsawtemplate", TerrainAdjustment::None, 0);
+    check("gloamingforest:TFHedge", TerrainAdjustment::BeardBox, 0);
+    check("gloamingforest:TFDTEnt", TerrainAdjustment::BeardBox, 1); // a TowerWingComponent: delta 1
+    check("gloamingforest:TFLTMai", TerrainAdjustment::BeardBox, 1);
+    check("gloamingforest:TFNCTe", TerrainAdjustment::BeardBox, 3);
+    check("gloamingforest:TFNCHe", TerrainAdjustment::BeardBox, 3);
+    check("gloamingforest:TFSSH", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:TFSShield", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:TFTCMai", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:TFTCGard", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:TFFCDunR31", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:TFFCDunEx", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:TFLTCTBase", TerrainAdjustment::BeardBox, 1);
+    check("gloamingforest:TFLTFence", TerrainAdjustment::BeardBox, 2);
+    check("gloamingforest:TFLTCTSeg", TerrainAdjustment::None, 0);
+    check("gloamingforest:TFLTTBeard", TerrainAdjustment::BeardBox, 4, {{"gen_ground", 1}});
+    check("gloamingforest:TFLTTBeard", TerrainAdjustment::None, 4, {{"gen_ground", false}});
+    check("gloamingforest:TFLTPath", TerrainAdjustment::BeardBox, 0, {{"dirt_mix", true}});
+    check("gloamingforest:TFLTPath", TerrainAdjustment::None, 0);
+    check("gloamingforest:TFJigsawTemplate", TerrainAdjustment::BeardBox, 1, {{"terrain_adaptation", "BEARD_BOX"}, {"ground_offset", 1}});
+    check("gloamingforest:tfjigsawtemplate", TerrainAdjustment::None, 0);
     // plain pieces take the structure's adaptation
-    for (char const* id : {"twilightforest:TFQuest1", "twilightforest:TFFallenTrunk", "twilightforest:TFHTTr", "twilightforest:TFNCMn", "twilightforest:TFNCWl", "twilightforest:TFCloud"}) {
+    for (char const* id : {"gloamingforest:TFQuest1", "gloamingforest:TFFallenTrunk", "gloamingforest:TFHTTr", "gloamingforest:TFNCMn", "gloamingforest:TFNCWl", "gloamingforest:TFCloud"}) {
         auto p = pb(id);
         ASSERT_TRUE(p) << id;
         EXPECT_FALSE(p->modifier) << id;
     }
     EXPECT_FALSE(pb("gf_test:anything"));
-    EXPECT_FALSE(pb("twilightforest:not_a_piece"));
+    EXPECT_FALSE(pb("gloamingforest:not_a_piece"));
     EXPECT_FALSE(pb(""));
 }
 

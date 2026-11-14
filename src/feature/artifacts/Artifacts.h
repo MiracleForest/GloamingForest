@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U9 (artifacts): scepters, charms, keepsake casket, fortification shields, potion flasks, ore
 // meter and the other artifacts (docs/spec/artifacts.md). Shared declarations of the unit's .cpp
 // files; not a contract (rule R2: other units use the ids, tags and triggers only).
@@ -33,34 +33,34 @@ using Random = core::jrand::LegacyRandom;
 
 // ---- ids ---------------------------------------------------------------------------------------------
 
-inline constexpr char kTwilightScepter[]      = "twilightforest:twilight_scepter";
-inline constexpr char kLifedrainScepter[]     = "twilightforest:lifedrain_scepter";
-inline constexpr char kZombieScepter[]        = "twilightforest:zombie_scepter";
-inline constexpr char kFortificationScepter[] = "twilightforest:fortification_scepter";
-inline constexpr char kEssence[]              = "twilightforest:exanimate_essence";
-inline constexpr char kWandBolt[]             = "twilightforest:wand_bolt";
-inline constexpr char kLoyalZombie[]          = "twilightforest:loyal_zombie";
-inline constexpr char kCharmEffect[]          = "twilightforest:charm_effect";
-inline constexpr char kLife1[]                = "twilightforest:charm_of_life_1";
-inline constexpr char kLife2[]                = "twilightforest:charm_of_life_2";
-inline constexpr char kKeeping1[]             = "twilightforest:charm_of_keeping_1";
-inline constexpr char kKeeping2[]             = "twilightforest:charm_of_keeping_2";
-inline constexpr char kKeeping3[]             = "twilightforest:charm_of_keeping_3";
-inline constexpr char kCasket[]               = "twilightforest:keepsake_casket";
-inline constexpr char kSkullChest[]           = "twilightforest:skull_chest";
-inline constexpr char kBrittleFlask[]         = "twilightforest:brittle_potion_flask";
-inline constexpr char kGreaterFlask[]         = "twilightforest:greater_potion_flask";
-inline constexpr char kOreMeter[]             = "twilightforest:ore_meter";
-inline constexpr char kMoonDial[]             = "twilightforest:moon_dial";
-inline constexpr char kPocketWatch[]          = "twilightforest:pocket_watch";
-inline constexpr char kEmperorsCloth[]        = "twilightforest:emperors_cloth";
-inline constexpr char kMysticCrown[]          = "twilightforest:mystic_crown";
-inline constexpr char kCrownSplinter[]        = "twilightforest:crown_splinter";
-inline constexpr char kFourLeafClover[]       = "twilightforest:four_leaf_clover";
+inline constexpr char kGloamingScepter[]      = "gloamingforest:gloaming_scepter";
+inline constexpr char kLifedrainScepter[]     = "gloamingforest:lifedrain_scepter";
+inline constexpr char kZombieScepter[]        = "gloamingforest:zombie_scepter";
+inline constexpr char kFortificationScepter[] = "gloamingforest:fortification_scepter";
+inline constexpr char kEssence[]              = "gloamingforest:exanimate_essence";
+inline constexpr char kWandBolt[]             = "gloamingforest:wand_bolt";
+inline constexpr char kLoyalZombie[]          = "gloamingforest:loyal_zombie";
+inline constexpr char kCharmEffect[]          = "gloamingforest:charm_effect";
+inline constexpr char kLife1[]                = "gloamingforest:charm_of_life_1";
+inline constexpr char kLife2[]                = "gloamingforest:charm_of_life_2";
+inline constexpr char kKeeping1[]             = "gloamingforest:charm_of_keeping_1";
+inline constexpr char kKeeping2[]             = "gloamingforest:charm_of_keeping_2";
+inline constexpr char kKeeping3[]             = "gloamingforest:charm_of_keeping_3";
+inline constexpr char kCasket[]               = "gloamingforest:keepsake_casket";
+inline constexpr char kSkullChest[]           = "gloamingforest:skull_chest";
+inline constexpr char kBrittleFlask[]         = "gloamingforest:brittle_potion_flask";
+inline constexpr char kGreaterFlask[]         = "gloamingforest:greater_potion_flask";
+inline constexpr char kOreMeter[]             = "gloamingforest:ore_meter";
+inline constexpr char kMoonDial[]             = "gloamingforest:moon_dial";
+inline constexpr char kPocketWatch[]          = "gloamingforest:pocket_watch";
+inline constexpr char kEmperorsCloth[]        = "gloamingforest:emperors_cloth";
+inline constexpr char kMysticCrown[]          = "gloamingforest:mystic_crown";
+inline constexpr char kCrownSplinter[]        = "gloamingforest:crown_splinter";
+inline constexpr char kFourLeafClover[]       = "gloamingforest:four_leaf_clover";
 
-/// Item data keys (TF's data components).
+/// Item data keys (upstream's data components).
 inline constexpr char kDataCasketDamage[] = "casket_damage";
-inline constexpr char kDataCloth[]        = "twilightforest:emperors_cloth"; ///< TF's component id (U7's no-template smithing writes the same key)
+inline constexpr char kDataCloth[]        = "gloamingforest:emperors_cloth"; ///< upstream's component id (U7's no-template smithing writes the same key)
 inline constexpr char kDataClothLegacy[]  = "emperors_cloth";                ///< written before audit round 2; read and washed off
 inline constexpr char kDataFlask[]        = "flask_contents";
 inline constexpr char kDataOreData[]      = "ore_data";
@@ -152,14 +152,14 @@ void applyRecharge(ItemStack& scepter, Player& player);
 void lifedrainTick(Player& player, ItemStack& stack, int count);
 /// The zombie scepter's summon: the loyal zombie, or nullptr.
 Mob* summonLoyalZombie(Player& player, ItemStack& stack);
-/// Fires a wand bolt from `shooter` (TwilightWandBolt(level, thrower)); nullptr on failure.
+/// Fires a wand bolt from `shooter` (GloamingWandBolt(level, thrower)); nullptr on failure.
 Actor* shootWandBolt(Actor& shooter, float inaccuracy = 1.0f);
 void   registerScepters();
 
 // ---- wand bolt (WandBolt.cpp) / loyal zombie (LoyalZombie.cpp) ------------------------------------------
 
 void registerWandBolt();
-/// TwilightWandBolt#hurt: re-shot along `by`'s look, the direct living entity its new owner.
+/// GloamingWandBolt#hurt: re-shot along `by`'s look, the direct living entity its new owner.
 void reflectWandBolt(Actor& bolt, Actor& by, Actor* direct);
 [[nodiscard]] Actor* boltOwner(Actor const& bolt);
 void                 setBoltOwner(Actor const& bolt, Actor* owner);
@@ -229,7 +229,7 @@ void registerMisc();
 /// Whether an item carries the emperor's cloth (TFDataComponents.EMPEROR_CLOTH).
 [[nodiscard]] bool hasCloth(ItemStack const& stack);
 void registerRecipes();
-/// The scepter repair recipes (twilightforest:scepter_repair) as loaded: scepter, ingredients, durability.
+/// The scepter repair recipes (gloamingforest:scepter_repair) as loaded: scepter, ingredients, durability.
 struct IngredientAlt {
     std::string item; ///< Bedrock item id ("" with a tag)
     std::string tag;  ///< item tag ("" with an item)

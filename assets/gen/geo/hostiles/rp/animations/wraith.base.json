@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.wraith.base": {
+    "animation.gloamingforest.wraith.base": {
       "loop": true,
       "bones": {
         "leftArm": {

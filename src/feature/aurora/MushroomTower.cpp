@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerWingComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerMainComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerMainBridgeComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/TowerRoofMushroomComponent.java
-//   src/main/java/twilightforest/world/components/structures/mushroomtower/MushroomTowerDecorator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerWingComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerMainComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerMainBridgeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/TowerRoofMushroomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/mushroomtower/MushroomTowerDecorator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "feature/aurora/MushroomTower.h"
@@ -39,11 +39,11 @@ using structure::bases::TowerWing;
 
 namespace {
 
-constexpr char kWing[]       = "twilightforest:TFMTWin";
-constexpr char kMain[]       = "twilightforest:TFMTMai";
-constexpr char kBridge[]     = "twilightforest:TFMTBri";
-constexpr char kMainBridge[] = "twilightforest:TFMTMB";
-constexpr char kRoof[]       = "twilightforest:TFMTRoofMush";
+constexpr char kWing[]       = "gloamingforest:TFMTWin";
+constexpr char kMain[]       = "gloamingforest:TFMTMai";
+constexpr char kBridge[]     = "gloamingforest:TFMTBri";
+constexpr char kMainBridge[] = "gloamingforest:TFMTMB";
+constexpr char kRoof[]       = "gloamingforest:TFMTRoofMush";
 
 struct MushroomTowerDecoratorImpl final : Decorator {
     [[nodiscard]] std::string decoString() const override { return "DecoMushroomTower"; }
@@ -81,7 +81,7 @@ std::unique_ptr<Decorator> mushroomTowerDecorator() {
 
 MushroomTowerWing::MushroomTowerWing(std::string typeId, int index, int x, int y, int z, int pSize, int pHeight, Orientation direction)
 : TowerWing(std::move(typeId), index, x, y, z, pSize, pHeight, direction) {
-    // TF copies the parent's decorator in addChildren; every piece of the tower has the same one
+    // upstream copies the parent's decorator in addChildren; every piece of the tower has the same one
     deco = mushroomTowerDecorator();
 }
 

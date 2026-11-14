@@ -1,8 +1,8 @@
 {
   "commands.tffeature.usage": "/%s <信息 | 重新激活 | 征服 | 中心>",
-  "misc.twilightforest.advancement_hidden": "<隱藏進度>",
-  "misc.twilightforest.advancement_required": "前置進度：",
-  "misc.twilightforest.core_disabled": "%s已被配置禁用",
-  "misc.twilightforest.firefly_spawner_radius": "螢火粒子半徑：%s個方塊",
-  "misc.twilightforest.pedestal_ineligible": "你還不夠格。"
+  "misc.gloamingforest.advancement_hidden": "<隱藏進度>",
+  "misc.gloamingforest.advancement_required": "前置進度：",
+  "misc.gloamingforest.core_disabled": "%s已被配置禁用",
+  "misc.gloamingforest.firefly_spawner_radius": "螢火粒子半徑：%s個方塊",
+  "misc.gloamingforest.pedestal_ineligible": "你還不夠格。"
 }

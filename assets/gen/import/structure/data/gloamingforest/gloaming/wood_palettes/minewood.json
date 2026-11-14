@@ -1,0 +1,10 @@
+{
+  "banister": "gloamingforest:mining_banister",
+  "button": "gloamingforest:mining_button",
+  "fence": "gloamingforest:mining_fence",
+  "gate": "gloamingforest:mining_fence_gate",
+  "planks": "gloamingforest:mining_planks",
+  "plate": "gloamingforest:mining_pressure_plate",
+  "slab": "gloamingforest:mining_slab",
+  "stairs": "gloamingforest:mining_stairs"
+}

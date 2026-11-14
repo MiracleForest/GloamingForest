@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * The GloamingForest oracle dumper: a server-side NeoForge mod that adds
  * {@code /gforacle dump <kind> <file>} (operators / RCON only). tools/oracle/run.ps1 drives it over
- * RCON on a local dedicated server running The Twilight Forest and writes the derived facts it
+ * RCON on a local dedicated server running The Gloaming Forest and writes the derived facts it
  * dumps (never assets) to tests/golden.
  */
 @Mod(OracleMod.MOD_ID)

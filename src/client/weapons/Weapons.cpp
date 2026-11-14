@@ -1,12 +1,12 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java (updateBowFOV)
-//   src/main/java/twilightforest/client/renderer/entity/BlockChainRenderer.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java (updateBowFOV)
+//   src/main/java/gloamingforest/client/renderer/entity/BlockChainRenderer.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Client build only (U8 weapons): the FOV zoom of TF's four bows while drawn (Bedrock zooms only
+// Client build only (U8 weapons): the FOV zoom of upstream's four bows while drawn (Bedrock zooms only
 // for its own bow) and the chain links from the thrower's eye to a flying block and chain (the
 // ball itself is the RP entity's geometry; vanilla clients see the ball only).
 
@@ -37,7 +37,7 @@ namespace gf::client::weapons {
 namespace {
 
 bool isTfBow(std::string const& id) {
-    return id == "twilightforest:triple_bow" || id == "twilightforest:ender_bow" || id == "twilightforest:ice_bow" || id == "twilightforest:seeker_bow";
+    return id == "gloamingforest:triple_bow" || id == "gloamingforest:ender_bow" || id == "gloamingforest:ice_bow" || id == "gloamingforest:seeker_bow";
 }
 
 float bowFov(float fov) {
@@ -75,7 +75,7 @@ void drawChain(render::RenderContext& ctx, Actor& chain, float) {
     for (int i = 1; i < links; ++i) {
         double k = -(links - i) * perLink;
         Vec3   at{static_cast<float>(base.x + xyz.x + n.x * k), static_cast<float>(base.y + xyz.y + n.y * k), static_cast<float>(base.z + xyz.z + n.z * k)};
-        render::drawGeo(ctx, "geometry.twilightforest.chain", "textures/twilightforest/entity/block_and_chain", {.translation = at});
+        render::drawGeo(ctx, "geometry.gloamingforest.chain", "textures/gloamingforest/entity/block_and_chain", {.translation = at});
     }
 }
 
@@ -86,7 +86,7 @@ public:
         if (once) return;
         once = true;
         gf::client::camera::addFovModifier(bowFov);
-        render::registerEntityRenderer("twilightforest:chain_block", drawChain);
+        render::registerEntityRenderer("gloamingforest:chain_block", drawChain);
     }
     void uninstall() {}
 };

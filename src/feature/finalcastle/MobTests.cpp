@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // U30 (finalcastle) selftests of the mobs part (rule R12: "finalcastle.*", testPos dx 3060..3089,
 // dz 0..4): F13's goldens (tests/golden/mobs.json) of the adherent, harbinger cube, roving cube and
 // plateau boss; the adherent's RangedAttackGoal shooting at a player; the roving cube's symbol rule
-// (TF's six-neighbour check) and CubeCenterOnSymbolGoal; the plateau boss in F8's boss kit and the
+// (upstream's six-neighbour check) and CubeCenterOnSymbolGoal; the plateau boss in F8's boss kit and the
 // final boss spawner that never spawns; the gazebo's WIP texts placed by the template marker
 // handler and punched away; progression_end granted once.
 #include <algorithm>
@@ -109,7 +109,7 @@ bool near(float a, float b, float eps = 0.011f) { return std::abs(a - b) < eps; 
 
 } // namespace
 
-// F13's goldens (tests/golden/mobs.json, TF 4.8 with its default config): max health, the box,
+// F13's goldens (tests/golden/mobs.json, upstream 4.8 with its default config): max health, the box,
 // movement speed, follow range, attack damage, fire immunity and the eye height of the four mobs
 GF_REGISTER_SELFTEST("finalcastle.mob_goldens", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
@@ -166,14 +166,14 @@ GF_REGISTER_SELFTEST("finalcastle.adherent_shoots", [](Context& ctx) -> ll::coro
         boltSeen = !around(pos, id::NatureBolt, 12).empty();
     }
     ctx.check(adherentShotsForTest() > before, "the adherent shot at its target within 200 ticks");
-    if (boltSeen) ctx.info("a twilightforest:nature_bolt flew");
-    else ctx.info("no twilightforest:nature_bolt seen (U17's projectile may not be registered)");
+    if (boltSeen) ctx.info("a gloamingforest:nature_bolt flew");
+    else ctx.info("no gloamingforest:nature_bolt seen (U17's projectile may not be registered)");
     ctx.player().setPlayerGameType(GameType::Creative);
     discardAround(pos, 14);
 });
 
 // RovingCube: CubeMoveToRedstoneSymbolsGoal's symbol is an air block with redstone wire on all six
-// sides (TF's check), so the flat ring of eight dust it was meant for never counts; then
+// sides (upstream's check), so the flat ring of eight dust it was meant for never counts; then
 // CubeCenterOnSymbolGoal walks a cube near a known symbol to its centre
 GF_REGISTER_SELFTEST("finalcastle.roving_cube_symbol", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
@@ -187,7 +187,7 @@ GF_REGISTER_SELFTEST("finalcastle.roving_cube_symbol", [](Context& ctx) -> ll::c
             ctx.setBlock(at(c, dx, -1, dz), "minecraft:stone");
             if (dx || dz) ctx.setBlock(at(c, dx, 0, dz), "minecraft:redstone_wire");
         }
-    ctx.check(!isRedstoneSymbol(*region, game::blockPos(c)), "a flat ring of eight dust is no symbol (TF checks all six sides)");
+    ctx.check(!isRedstoneSymbol(*region, game::blockPos(c)), "a flat ring of eight dust is no symbol (upstream checks all six sides)");
     // wire below and above as well (the upper wire is checked in the same tick, before it can pop off)
     ctx.setBlock(at(c, 0, -2, 0), "minecraft:stone");
     ctx.setBlock(at(c, 0, -1, 0), "minecraft:redstone_wire");
@@ -233,7 +233,7 @@ GF_REGISTER_SELFTEST("finalcastle.final_boss_spawner", [](Context& ctx) -> ll::c
     ctx.require(rule.has_value(), "the final boss spawner is registered");
     ctx.check(rule->entityId == id::PlateauBoss, "it names the plateau boss (" + rule->entityId + ")");
     ctx.check(rule->range == 9, "its range is 9 (" + std::to_string(rule->range) + ")");
-    ctx.check(rule->particle == id::Annihilate, "its particle is twilightforest:annihilate (" + rule->particle + ")");
+    ctx.check(rule->particle == id::Annihilate, "its particle is gloamingforest:annihilate (" + rule->particle + ")");
     ctx.require(ctx.setBlock(pos, id::BossSpawner), "the spawner is placed");
     ctx.player().setPlayerGameType(GameType::Survival);
     ctx.player().teleportTo(Vec3{pos.x + 3.5f, float(pos.y), pos.z + 0.5f}, true, 0, 1, false);
@@ -285,7 +285,7 @@ GF_REGISTER_SELFTEST("finalcastle.wip_texts", [](Context& ctx) -> ll::coro::Coro
     ctx.check(near(pb.max.x - pb.min.x, 2.0f, 0.02f) && near(pb.max.y - pb.min.y, 3.6f, 0.02f),
               "the punch box is 2.0 x 3.6 (" + std::to_string(pb.max.x - pb.min.x) + " x " + std::to_string(pb.max.y - pb.min.y) + ")");
     ctx.check(near(pb.min.y, pos.y - 0.3f, 0.02f) && near((pb.min.x + pb.max.x) / 2, pos.x + 0.5f, 0.02f), "the punch box starts 0.3 below the block, centred on it");
-    // a line outside the box is not TF's to remove
+    // a line outside the box is not upstream's to remove
     auto spawnOutside = [&]() -> Actor* {
         auto owner = region->getLevel().getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(std::string(id::WipText)), nullptr,
                                                                              Vec3{pos.x + 3.5f, pos.y + 1.0f, pos.z + 0.5f}, Vec2{0.0f, 0.0f});
@@ -318,26 +318,26 @@ GF_REGISTER_SELFTEST("finalcastle.progression_end_once", [](Context& ctx) -> ll:
     if (!registered) {
         registered = true;
         gf::progression::onGranted([](Player& p, std::string const& adv) {
-            if (adv == "twilightforest:progression_end") granted[p.getOrCreateUniqueID().rawID]++;
+            if (adv == "gloamingforest:progression_end") granted[p.getOrCreateUniqueID().rawID]++;
         });
     }
     auto& sp  = ctx.spawnPlayer("fc_progression_end");
     auto  uid = sp.getOrCreateUniqueID().rawID;
     granted.erase(uid);
-    gf::progression::revoke(sp, "twilightforest:progression_end");
+    gf::progression::revoke(sp, "gloamingforest:progression_end");
     co_await ctx.ticks(1);
     auto* p = fe::playerById(uid);
     ctx.require(p != nullptr, "the player");
-    ctx.require(!gf::progression::has(*p, "twilightforest:progression_end"), "progression_end is not earned yet");
-    gf::progression::grant(*p, "twilightforest:progression_end");
+    ctx.require(!gf::progression::has(*p, "gloamingforest:progression_end"), "progression_end is not earned yet");
+    gf::progression::grant(*p, "gloamingforest:progression_end");
     co_await ctx.ticks(1);
     p = fe::playerById(uid);
     ctx.require(p != nullptr, "the player");
-    ctx.check(gf::progression::has(*p, "twilightforest:progression_end"), "progression_end is earned");
-    gf::progression::grant(*p, "twilightforest:progression_end");
+    ctx.check(gf::progression::has(*p, "gloamingforest:progression_end"), "progression_end is earned");
+    gf::progression::grant(*p, "gloamingforest:progression_end");
     co_await ctx.ticks(1);
     ctx.check(granted[uid] == 1, "earned once, so the WIP message goes out once (" + std::to_string(granted[uid]) + " grants)");
-    if (auto* q = fe::playerById(uid)) gf::progression::revoke(*q, "twilightforest:progression_end");
+    if (auto* q = fe::playerById(uid)) gf::progression::revoke(*q, "gloamingforest:progression_end");
 });
 
 } // namespace gf::feature::finalcastle::mobs::tests

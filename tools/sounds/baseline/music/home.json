@@ -1,5 +1,5 @@
 {
-  "about": "Baseline placeholder for TF's 'home' (215 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/home.json.",
+  "about": "Baseline placeholder for upstream's 'home' (215 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/home.json.",
   "rate": 22050,
   "quality": 0.25,
   "seed": 41,

@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/trees/CanopyMushroomFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/BrownCanopyMushroomFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/RedCanopyMushroomFeature.java
-//   src/main/java/twilightforest/util/features/FeatureLogic.java (mushroom block states)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/trees/CanopyMushroomFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/BrownCanopyMushroomFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/RedCanopyMushroomFeature.java
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java (mushroom block states)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U3 trees: TF's canopy mushrooms (AbstractHugeMushroomFeature subclasses with a branching stem and
+// U3 trees: upstream's canopy mushrooms (AbstractHugeMushroomFeature subclasses with a branching stem and
 // four red cap shapes). Java's huge mushroom blocks have six face booleans; Bedrock's have
 // huge_mushroom_bits (0 pores .. 9 cap corners, 10 stem, 14 all cap, 15 all stem): the faces map to
 // the closest value (feature/ext/trees/HugeMushrooms.h, which also registers Minecraft's own huge
-// brown / red mushroom feature types: the features contract does not have them and TF's
+// brown / red mushroom feature types: the features contract does not have them and upstream's
 // vanilla_mushrooms selector, this unit's, places them).
 #include "feature/trees/Trees.h"
 
@@ -213,7 +213,7 @@ struct Canopy : Mushroom {
         if (d == Dir::Up || d == Dir::Down) return false;
         BlockPos bug = rel(pos, d);
         if (!replaceable(bug)) return false;
-        if (auto const* f = kit::javaBlock("twilightforest:firefly", Json{{"facing", dirName(d)}})) c.region.setBlock(bug, *f, 3);
+        if (auto const* f = kit::javaBlock("gloamingforest:firefly", Json{{"facing", dirName(d)}})) c.region.setBlock(bug, *f, 3);
         return true;
     }
 
@@ -274,11 +274,11 @@ struct Canopy : Mushroom {
 
 void registerMushrooms() {
     using gf::features::registerType;
-    registerType("twilightforest:canopy_brown_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Brown).place(); });
-    registerType("twilightforest:canopy_red_vanilla_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Vanilla).place(); });
-    registerType("twilightforest:canopy_red_smooth_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Smooth).place(); });
-    registerType("twilightforest:canopy_red_spheroid_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Spheroid).place(); });
-    registerType("twilightforest:canopy_red_flat_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Flat).place(); });
+    registerType("gloamingforest:canopy_brown_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Brown).place(); });
+    registerType("gloamingforest:canopy_red_vanilla_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Vanilla).place(); });
+    registerType("gloamingforest:canopy_red_smooth_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Smooth).place(); });
+    registerType("gloamingforest:canopy_red_spheroid_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Spheroid).place(); });
+    registerType("gloamingforest:canopy_red_flat_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Flat).place(); });
     gf::trees_ext::registerVanillaHugeMushrooms();
 }
 

@@ -1,17 +1,17 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
-// Contract "structure" / "template": GloamingForest templates (rule R19). TF's .nbt templates are
+// Contract "structure" / "template": GloamingForest templates (rule R19). upstream's .nbt templates are
 // All Rights Reserved and never read; every template is an original .gft.json with the id of the
-// TF template it stands in for. Placement follows vanilla StructureTemplate#placeInWorld:
+// upstream template it stands in for. Placement follows vanilla StructureTemplate#placeInWorld:
 // processors see every block (original and current info) in the order Java keeps a loaded
 // template's blocks (TemplateOrder.cpp: full blocks, other shapes, block entities; each by y, x,
 // z), the result is mirrored and rotated about the pivot, clipped to the settings' box, then block
 // entity markers (each randomizable container drawing its LootTableSeed first) and entities
 // follow. A placement shares one random between its blocks when the settings carry a seed or the
-// caller gives one (feature/ext/structure/SharedRandom.h: TF's template features).
+// caller gives one (feature/ext/structure/SharedRandom.h: upstream's template features).
 //
 // Format (format "gloamingforest:template", format_version 1):
-//   id        "twilightforest:lich_tower/root/foyer"
+//   id        "gloamingforest:lich_tower/root/foyer"
 //   size      [x, y, z]
 //   palette   [{"Name": java id, "Properties": {java property: value}}, ...]
 //             minecraft:structure_void entries are not placed (vanilla templates omit them); a
@@ -19,7 +19,7 @@
 //             processors see it (a minecraft:structure_block), nothing is placed
 //   blocks    run-length [[palette index, count], ...] over y, then z, then x (x fastest)
 //   markers   [{"pos": [x, y, z], "marker": name, "data": {...}}]
-//             "data": a TF data marker, label in data.metadata (TwilightTemplateStructurePiece
+//             "data": an upstream data marker, label in data.metadata (GloamingTemplateStructurePiece
 //             #handleDataMarker); any other name is block entity data of the block at pos, run
 //             after placement by the handler registered under that name ("loot" {table},
 //             "spawner" {entity, Delay, ...}, "sign" {lines}, "block_entity" {...}).
@@ -213,7 +213,7 @@ std::unique_ptr<Parsed> parse(Template const& t) {
                     auto idx = p->cells[static_cast<std::size_t>(p->index(x, y, z))];
                     if (idx >= p->paletteJson.size()) continue;
                     auto name = p->paletteJson[idx].value("Name", std::string{});
-                    if ((name == "minecraft:spawner" || name == "twilightforest:sinister_spawner") && !withData.contains({x, y, z}))
+                    if ((name == "minecraft:spawner" || name == "gloamingforest:sinister_spawner") && !withData.contains({x, y, z}))
                         p->markers.push_back(Marker{BlockPos{x, y, z}, "spawner", Json::object()});
                 }
     }
@@ -780,7 +780,7 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             if (isPainting) {
                 // a hanging painting: the block it covers (bp) and its facing ("facing" as
                 // Direction#get2DDataValue or a name) turned with the placement (HangingEntity#rotate,
-                // then #mirror), its variant hung through TF's spot check
+                // then #mirror), its variant hung through upstream's spot check
                 Orientation dir = Orientation::South;
                 if (e.data.contains("facing") && e.data["facing"].is_number_integer()) dir = from2D(e.data["facing"].get<int>());
                 else dir = blocks::parseDirection(e.data.value("facing", e.data.value("direction", std::string("south")))).value_or(Orientation::South);
@@ -832,11 +832,11 @@ bool place(std::string const& id, Region& region, BlockPos const& origin, Templa
     pl.pivotPos = origin;
     pl.settings = settings;
     // a seed: StructurePlaceSettings#setRandom(RandomSource.create(seed)), the same random passed
-    // to placeInWorld (as TF's template features pass theirs)
+    // to placeInWorld (as upstream's template features pass theirs)
     JavaRandom random(settings.seed != 0 ? settings.seed : pure::mthGetSeed(origin.x, origin.y, origin.z));
     if (settings.seed != 0) pl.sharedRandom = &random;
     if (!placeInWorld(*t, region, pl, random)) return false;
-    // TF data markers (StructureTemplate#filterBlocks after the placement): a handler registered
+    // upstream data markers (StructureTemplate#filterBlocks after the placement): a handler registered
     // under the label gets them (features handle their own)
     for (auto const& [pos, label] : filterDataMarkers(*t, pl))
         if (auto const* fn = markerFor(label)) (*fn)(region, pos, label, Json::object(), random);

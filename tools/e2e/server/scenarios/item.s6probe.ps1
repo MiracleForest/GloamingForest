@@ -1,8 +1,8 @@
 # F9 (item), spike S6: the throw-away probe content of the item scenarios' prelaunch steps (server
 # and the client's local mode; dot-sourced, not a scenario of its own). Nothing of it ships:
 # - <mod>/s6-trim-probe.flag: the run registers the fixture trim material iron_darker at load
-#   (src/feature/item/SpikeTests.cpp), as U7 registers TF's;
-# - behavior_packs/GloamingForest_S6_Probe_BP: a data-driven disc gf_s6:disc as TF's discs (U10)
+#   (src/feature/item/SpikeTests.cpp), as U7 registers upstream's;
+# - behavior_packs/GloamingForest_S6_Probe_BP: a data-driven disc gf_s6:disc as upstream's discs (U10)
 #   need it: minecraft:record without "sound_event" (the BP parser binds it to the LevelSoundEvent
 #   enum and refuses a custom name: the spike's first probe), its song a named sound of
 #   gf::item::ext::setRecordSound: item.spike_record_sounds plays it in a jukebox.

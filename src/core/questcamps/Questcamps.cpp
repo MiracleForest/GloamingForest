@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/QuestRam.java
-//   src/main/java/twilightforest/client/model/entity/QuestRamModel.java
-//   src/main/java/twilightforest/world/components/feature/templates/TemplateFeature.java
-//   src/main/java/twilightforest/world/components/feature/templates/GraveyardFeature.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/QuestRam.java
+//   src/main/java/gloamingforest/client/model/entity/QuestRamModel.java
+//   src/main/java/gloamingforest/world/components/feature/templates/TemplateFeature.java
+//   src/main/java/gloamingforest/world/components/feature/templates/GraveyardFeature.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/questcamps/Questcamps.h"

@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:aurora_pillar",
+      "identifier": "gloamingforest:aurora_pillar",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"]
+        "gloamingforest:axis": ["y", "x", "z"]
       }
     },
     "components": {
@@ -70,7 +70,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:axis') == 'x'",
+        "condition": "q.block_state('gloamingforest:axis') == 'x'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -111,7 +111,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'y'",
+        "condition": "q.block_state('gloamingforest:axis') == 'y'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -152,7 +152,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:axis') == 'z'",
+        "condition": "q.block_state('gloamingforest:axis') == 'z'",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

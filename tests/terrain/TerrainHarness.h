@@ -1,5 +1,5 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// U2 (terrain) gtests: the imported TF data (noise settings, density functions, the biome grid,
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// U2 (terrain) gtests: the imported upstream data (noise settings, density functions, the biome grid,
 // the blanket processors) and the F13 goldens, wired into core/terrain's generator the way the
 // game wires them (src/feature/terrain/Terrain.cpp).
 #pragma once
@@ -28,14 +28,14 @@ using nlohmann::json;
 using namespace gf::core::terrain;
 
 inline fs::path repo() { return golden::goldenDir().parent_path().parent_path(); }
-inline fs::path imported(std::string const& unit) { return repo() / "assets/gen/import" / unit / "data/twilightforest"; }
+inline fs::path imported(std::string const& unit) { return repo() / "assets/gen/import" / unit / "data/gloamingforest"; }
 
-/// Resolves twilightforest:<path> density functions from the imported data.
+/// Resolves gloamingforest:<path> density functions from the imported data.
 inline Density::Resolver densityResolver() {
     Density::Resolver r;
     r.density = [](std::string const& id) -> std::optional<json> {
         auto colon = id.find(':');
-        if (id.compare(0, colon, "twilightforest") != 0) return std::nullopt;
+        if (id.compare(0, colon, "gloamingforest") != 0) return std::nullopt;
         auto file = imported("terrain") / "worldgen/density_function" / (id.substr(colon + 1) + ".json");
         if (!fs::exists(file)) return std::nullopt;
         return golden::readJson(file);
@@ -44,7 +44,7 @@ inline Density::Resolver densityResolver() {
 }
 
 inline TerrainGrid const& terrainGrid() {
-    static TerrainGrid const g = TerrainGrid::fromJson(golden::readJson(imported("biomes") / "twilight/biome_terrain_data/biome_grid.json"));
+    static TerrainGrid const g = TerrainGrid::fromJson(golden::readJson(imported("biomes") / "gloaming/biome_terrain_data/biome_grid.json"));
     return g;
 }
 
@@ -119,7 +119,7 @@ struct World {
     }
 };
 
-inline std::unique_ptr<World> loadWorld(std::int64_t seed, std::string const& settingsName = "twilight_noise_gen", bool transposed = false) {
+inline std::unique_ptr<World> loadWorld(std::int64_t seed, std::string const& settingsName = "gloaming_noise_gen", bool transposed = false) {
     auto w      = std::make_unique<World>();
     w->seed     = seed;
     w->zoomSeed = core::biome::obfuscateSeed(seed);
@@ -132,7 +132,7 @@ inline std::unique_ptr<World> loadWorld(std::int64_t seed, std::string const& se
     json settings = golden::readJson(imported("terrain") / "worldgen/noise_settings" / (settingsName + ".json"));
     w->gen        = Generator::create(settings, seed, densityResolver(), w->table, &w->error);
     for (char const* id : {"dark_forest_canopy", "snowy_forest_glacier"})
-        w->blankets.add(std::string("twilightforest:") + id, golden::readJson(imported("terrain") / "twilight/chunk_blanket_processors" / (std::string(id) + ".json")), w->table);
+        w->blankets.add(std::string("gloamingforest:") + id, golden::readJson(imported("terrain") / "gloaming/chunk_blanket_processors" / (std::string(id) + ".json")), w->table);
     return w;
 }
 

@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:falling_ice",
+      "identifier": "gloamingforest:falling_ice",
       "materials": { "default": "entity_alphablend" },
       "textures": {
         "packed_ice": "textures/blocks/ice_packed",
@@ -10,10 +10,10 @@
         "blue_ice": "textures/blocks/blue_ice",
         "frosted_ice": "textures/blocks/frosted_ice_0"
       },
-      "geometry": { "default": "geometry.twilightforest.caves_block" },
-      "render_controllers": ["controller.render.twilightforest.falling_ice"],
+      "geometry": { "default": "geometry.gloamingforest.caves_block" },
+      "render_controllers": ["controller.render.gloamingforest.falling_ice"],
       "particle_effects": { "trail": "gloamingforest:caves_ice_trail" },
-      "animations": { "trail": "animation.twilightforest.falling_ice.trail" },
+      "animations": { "trail": "animation.gloamingforest.falling_ice.trail" },
       "scripts": { "animate": ["trail"] }
     }
   }

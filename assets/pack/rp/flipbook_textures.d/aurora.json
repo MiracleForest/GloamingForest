@@ -1,6 +1,6 @@
 [
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_1",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_1",
     "atlas_tile": "tf_block_aurora_block_1",
     "ticks_per_frame": 4,
     "frames": [
@@ -38,7 +38,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_2",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_2",
     "atlas_tile": "tf_block_aurora_block_2",
     "ticks_per_frame": 4,
     "frames": [
@@ -76,7 +76,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_3",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_3",
     "atlas_tile": "tf_block_aurora_block_3",
     "ticks_per_frame": 4,
     "frames": [
@@ -114,7 +114,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_4",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_4",
     "atlas_tile": "tf_block_aurora_block_4",
     "ticks_per_frame": 4,
     "frames": [
@@ -152,7 +152,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_5",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_5",
     "atlas_tile": "tf_block_aurora_block_5",
     "ticks_per_frame": 4,
     "frames": [
@@ -190,7 +190,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_6",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_6",
     "atlas_tile": "tf_block_aurora_block_6",
     "ticks_per_frame": 4,
     "frames": [
@@ -228,7 +228,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_7",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_7",
     "atlas_tile": "tf_block_aurora_block_7",
     "ticks_per_frame": 4,
     "frames": [
@@ -266,7 +266,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_8",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_8",
     "atlas_tile": "tf_block_aurora_block_8",
     "ticks_per_frame": 4,
     "frames": [
@@ -304,7 +304,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_9",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_9",
     "atlas_tile": "tf_block_aurora_block_9",
     "ticks_per_frame": 4,
     "frames": [
@@ -342,7 +342,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_10",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_10",
     "atlas_tile": "tf_block_aurora_block_10",
     "ticks_per_frame": 4,
     "frames": [
@@ -380,7 +380,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_11",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_11",
     "atlas_tile": "tf_block_aurora_block_11",
     "ticks_per_frame": 4,
     "frames": [
@@ -418,7 +418,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_12",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_12",
     "atlas_tile": "tf_block_aurora_block_12",
     "ticks_per_frame": 4,
     "frames": [
@@ -456,7 +456,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_13",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_13",
     "atlas_tile": "tf_block_aurora_block_13",
     "ticks_per_frame": 4,
     "frames": [
@@ -494,7 +494,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_14",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_14",
     "atlas_tile": "tf_block_aurora_block_14",
     "ticks_per_frame": 4,
     "frames": [
@@ -532,7 +532,7 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/twilightforest/block/aurora_block_15",
+    "flipbook_texture": "textures/gloamingforest/block/aurora_block_15",
     "atlas_tile": "tf_block_aurora_block_15",
     "ticks_per_frame": 4,
     "frames": [

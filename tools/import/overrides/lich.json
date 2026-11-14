@@ -5,7 +5,7 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:death_tome",
+          "identifier": "gloamingforest:death_tome",
           "materials": {
             "default": "entity_alphatest"
           },
@@ -13,7 +13,7 @@
             "default": "textures/entity/enchanting_table_book"
           },
           "geometry": {
-            "default": "geometry.twilightforest.death_tome"
+            "default": "geometry.gloamingforest.death_tome"
           },
           "scripts": {
             "animate": [
@@ -40,12 +40,12 @@
             ]
           },
           "animations": {
-            "base": "animation.twilightforest.death_tome.base",
-            "lectern": "animation.twilightforest.death_tome.lectern",
-            "flip": "animation.twilightforest.death_tome.flip"
+            "base": "animation.gloamingforest.death_tome.base",
+            "lectern": "animation.gloamingforest.death_tome.lectern",
+            "flip": "animation.gloamingforest.death_tome.flip"
           },
           "render_controllers": [
-            "controller.render.twilightforest.death_tome"
+            "controller.render.gloamingforest.death_tome"
           ],
           "spawn_egg": {
             "base_color": "#774e22",
@@ -59,12 +59,12 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:lich_bolt",
+          "identifier": "gloamingforest:lich_bolt",
           "materials": {
             "default": "snowball"
           },
           "textures": {
-            "default": "textures/twilightforest/particle/twilight_orb"
+            "default": "textures/gloamingforest/particle/gloaming_orb"
           },
           "geometry": {
             "default": "geometry.item_sprite"
@@ -88,7 +88,7 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:lich_bomb",
+          "identifier": "gloamingforest:lich_bomb",
           "materials": {
             "default": "snowball"
           },
@@ -125,7 +125,7 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:lich_minion",
+          "identifier": "gloamingforest:lich_minion",
           "materials": {
             "default": "zombie"
           },
@@ -133,7 +133,7 @@
             "default": "textures/entity/zombie/zombie"
           },
           "geometry": {
-            "default": "geometry.twilightforest.lich_minion"
+            "default": "geometry.gloamingforest.lich_minion"
           },
           "scripts": {
             "initialize": [
@@ -157,10 +157,10 @@
             "move": "animation.humanoid.move",
             "attack_bare_hand": "animation.zombie.attack_bare_hand",
             "bob": "animation.humanoid.bob",
-            "base": "animation.twilightforest.lich_minion.base"
+            "base": "animation.gloamingforest.lich_minion.base"
           },
           "render_controllers": [
-            "controller.render.twilightforest.lich_minion"
+            "controller.render.gloamingforest.lich_minion"
           ],
           "enable_attachables": true
         }
@@ -171,26 +171,26 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:lich",
+          "identifier": "gloamingforest:lich",
           "materials": {
             "default": "entity_alphatest",
             "clone": "entity_alphablend",
             "eyes": "entity_emissive_alpha"
           },
           "textures": {
-            "default": "textures/twilightforest/entity/twilightlich64",
-            "clone": "textures/twilightforest/lich/tf-derived/twilightlich64_clone",
-            "eyes": "textures/twilightforest/entity/twilightlich64_eyes"
+            "default": "textures/gloamingforest/entity/gloaminglich64",
+            "clone": "textures/gloamingforest/lich/tf-derived/gloaminglich64_clone",
+            "eyes": "textures/gloamingforest/entity/gloaminglich64_eyes"
           },
           "geometry": {
-            "default": "geometry.twilightforest.lich"
+            "default": "geometry.gloamingforest.lich"
           },
           "scripts": {
             "scale": "1.125",
             "pre_animation": [
-              "variable.death_time = query.property('twilightforest:death_time');",
+              "variable.death_time = query.property('gloamingforest:death_time');",
               "variable.dying = variable.death_time > 0;",
-              "variable.phase = query.property('twilightforest:phase');",
+              "variable.phase = query.property('gloamingforest:phase');",
               "variable.has_item = query.is_item_equipped(0);",
               "variable.limb = query.modified_move_speed * 0.75;"
             ],
@@ -206,20 +206,20 @@
           "animations": {
             "base_pose": "animation.humanoid.base_pose",
             "look_at_target": "animation.humanoid.look_at_target.default",
-            "legs": "animation.twilightforest.lich.legs",
-            "arms": "animation.twilightforest.lich.arms",
-            "death": "animation.twilightforest.lich.death",
-            "shake": "animation.twilightforest.lich.shake"
+            "legs": "animation.gloamingforest.lich.legs",
+            "arms": "animation.gloamingforest.lich.arms",
+            "death": "animation.gloamingforest.lich.death",
+            "shake": "animation.gloamingforest.lich.shake"
           },
           "render_controllers": [
             {
-              "controller.render.twilightforest.lich": "!query.property('twilightforest:clone')"
+              "controller.render.gloamingforest.lich": "!query.property('gloamingforest:clone')"
             },
             {
-              "controller.render.twilightforest.lich_clone": "query.property('twilightforest:clone')"
+              "controller.render.gloamingforest.lich_clone": "query.property('gloamingforest:clone')"
             },
             {
-              "controller.render.twilightforest.lich_clone_eyes": "query.property('twilightforest:clone')"
+              "controller.render.gloamingforest.lich_clone_eyes": "query.property('gloamingforest:clone')"
             }
           ],
           "enable_attachables": true,
@@ -235,7 +235,7 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:rising_zombie",
+          "identifier": "gloamingforest:rising_zombie",
           "materials": {
             "default": "zombie"
           },
@@ -243,11 +243,11 @@
             "default": "textures/entity/zombie/zombie"
           },
           "geometry": {
-            "default": "geometry.twilightforest.rising_zombie"
+            "default": "geometry.gloamingforest.rising_zombie"
           },
           "scripts": {
             "pre_animation": [
-              "variable.rise_t = query.property('twilightforest:rising_ticks');",
+              "variable.rise_t = query.property('gloamingforest:rising_ticks');",
               "variable.rise_a = (80 - math.min(80, variable.rise_t)) / 80;",
               "variable.rise_b = (40 - math.min(40, math.max(0, variable.rise_t - 80))) / 40;",
               "variable.rise_angle = 120 * variable.rise_a - 30 * variable.rise_b;",
@@ -263,11 +263,11 @@
           "animations": {
             "humanoid_base_pose": "animation.humanoid.base_pose",
             "zombie_arms": "animation.zombie.attack_bare_hand",
-            "base": "animation.twilightforest.rising_zombie.base",
-            "rise": "animation.twilightforest.rising_zombie.rise"
+            "base": "animation.gloamingforest.rising_zombie.base",
+            "rise": "animation.gloamingforest.rising_zombie.rise"
           },
           "render_controllers": [
-            "controller.render.twilightforest.rising_zombie"
+            "controller.render.gloamingforest.rising_zombie"
           ]
         }
       }
@@ -277,7 +277,7 @@
         "op": "replace",
         "path": "/minecraft:client_entity/description",
         "value": {
-          "identifier": "twilightforest:tome_bolt",
+          "identifier": "gloamingforest:tome_bolt",
           "materials": {
             "default": "snowball"
           },
@@ -307,7 +307,7 @@
         "op": "replace",
         "value": {
           "description": {
-            "identifier": "twilightforest:angry_lich",
+            "identifier": "gloamingforest:angry_lich",
             "basic_render_parameters": {
               "material": "particles_alpha",
               "texture": "textures/particle/particles"

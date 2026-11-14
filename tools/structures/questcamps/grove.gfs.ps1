@@ -8,7 +8,7 @@
 
 $size = 27
 $c    = 13
-$t    = New-Gft -Id 'twilightforest:quest_grove' -Size $size, 10, $size
+$t    = New-Gft -Id 'gloamingforest:quest_grove' -Size $size, 10, $size
 $leaves = @{ Name = 'minecraft:oak_leaves'; Properties = @{ persistent = 'true'; distance = '1'; waterlogged = 'false' } }
 
 for ($x = 0; $x -lt $size; $x++) {

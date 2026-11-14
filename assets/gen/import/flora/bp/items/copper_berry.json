@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:copper_berry",
+      "identifier": "gloamingforest:copper_berry",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:copper_berry.name"
+        "value": "item.gloamingforest:copper_berry.name"
       }
     }
   }

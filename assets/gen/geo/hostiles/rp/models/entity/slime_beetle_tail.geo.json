@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.slime_beetle_tail",
+        "identifier": "geometry.gloamingforest.slime_beetle_tail",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 4,

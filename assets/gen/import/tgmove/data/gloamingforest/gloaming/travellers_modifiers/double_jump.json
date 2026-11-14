@@ -1,0 +1,12 @@
+{
+  "type": "gloamingforest:component",
+  "component": {
+    "gloamingforest:double_jump": {}
+  },
+  "description": [
+    {
+      "translate": "travellers_gear.modifier.gloamingforest.double_jump.description"
+    }
+  ],
+  "equipment_slots": "legs"
+}

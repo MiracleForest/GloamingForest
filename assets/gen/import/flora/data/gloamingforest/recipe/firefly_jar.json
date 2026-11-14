@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "gloamingforest:firefly"
+    },
+    {
+      "item": "gloamingforest:mason_jar"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "gloamingforest:firefly_jar"
+  }
+}

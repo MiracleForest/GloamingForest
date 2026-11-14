@@ -1,10 +1,10 @@
 // U1 `biomes`, client build selftests (dx 100-199, rule R12).
 //
-//   biomes.grass_tint  (client mod only, spec section 10) TF's position-dependent grass and foliage
+//   biomes.grass_tint  (client mod only, spec section 10) upstream's position-dependent grass and foliage
 //                      colours of the spooky forest, dark forest centre and enchanted forest, as the
 //                      tints compute them from a world's stored biomes and from F12's registry;
 //                      the forest's colour-map colours, the snowy forest's white leaves (without
-//                      Bedrock's seasons map), TF's water colours from the game's water policy
+//                      Bedrock's seasons map), upstream's water colours from the game's water policy
 //                      (the drawn water is measured by the client scenario's pool screenshots).
 
 #ifdef GF_CLIENT
@@ -77,15 +77,15 @@ std::optional<BlockPos> inside(std::string const& biome) {
 } // namespace
 
 GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask<> {
-    ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
+    ctx.require(co_await ctx.inGloaming(), "in the Gloaming Forest");
     FixedColors const plain(0x79C05A, 0x59AE30); // a forest-like game colour: never a marker
     struct Case {
         char const* biome;
         unsigned    staticGrass, staticFoliage; ///< the client biome file's colours
     } const cases[] = {
-        {"twilightforest:spooky_forest", 0xC45123, 0xFF8501},
-        {"twilightforest:dark_forest_center", 0x554114, 0xE94E14},
-        {"twilightforest:enchanted_forest", 0x00FF80, 0x00FF80},
+        {"gloamingforest:spooky_forest", 0xC45123, 0xFF8501},
+        {"gloamingforest:dark_forest_center", 0x554114, 0xE94E14},
+        {"gloamingforest:enchanted_forest", 0x00FF80, 0x00FF80},
     };
     for (auto const& c : cases) {
         // every surface biome lies within 4096 blocks of the origin (biomes.survey finds them all)
@@ -94,7 +94,7 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
         ctx.require(co_await ctx.ensureLoaded(gp), std::string(c.biome) + " chunk loaded");
         auto* region = ctx.region();
-        ctx.require(region != nullptr, "the Twilight Forest block source");
+        ctx.require(region != nullptr, "the Gloaming Forest block source");
         int y = at->y;
         // the stored biomes of the blend (5x5 at the default radius) are this biome
         bool uniform = true;
@@ -111,21 +111,21 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         // from the world's biomes (what the vanilla tint hook passes: the tessellated block source),
         // whatever the game's colour is
         unsigned g = grassAt(region, *at, plain), f = foliageAt(region, *at, plain);
-        ctx.check(g == eg, std::format("{} grass from the stored biomes: #{:06X} (TF #{:06X})", c.biome, g, eg));
-        ctx.check(f == ef, std::format("{} foliage from the stored biomes: #{:06X} (TF #{:06X})", c.biome, f, ef));
+        ctx.check(g == eg, std::format("{} grass from the stored biomes: #{:06X} (upstream #{:06X})", c.biome, g, eg));
+        ctx.check(f == ef, std::format("{} foliage from the stored biomes: #{:06X} (upstream #{:06X})", c.biome, f, ef));
         // without a block source: recognised by the game's static colour, through F12's registry
         FixedColors const marker(c.staticGrass, c.staticFoliage);
         auto              rg = render::tintOf("minecraft:grass_block", at->x, y, at->z, marker);
         auto              rf = render::tintOf("minecraft:oak_leaves", at->x, y, at->z, marker);
-        ctx.check(rg && *rg == eg, std::format("{} grass block through the tint registry: #{:06X} (TF #{:06X})", c.biome, rg.value_or(0), eg));
-        ctx.check(rf && *rf == ef, std::format("{} oak leaves through the tint registry: #{:06X} (TF #{:06X})", c.biome, rf.value_or(0), ef));
+        ctx.check(rg && *rg == eg, std::format("{} grass block through the tint registry: #{:06X} (upstream #{:06X})", c.biome, rg.value_or(0), eg));
+        ctx.check(rf && *rf == ef, std::format("{} oak leaves through the tint registry: #{:06X} (upstream #{:06X})", c.biome, rf.value_or(0), ef));
         ctx.info(std::format("{} at {} {}: grass #{:06X}, foliage #{:06X}", c.biome, at->x, at->z, eg, ef));
     }
-    // TF's known values: the dark forest centre's leaves are always #E94E14 (BiomeColorAlgorithms:
-    // (noise + 1) / 2 is never below -0.1), the spooky forest's grass is a blend of TF's red and green
+    // upstream's known values: the dark forest centre's leaves are always #E94E14 (BiomeColorAlgorithms:
+    // (noise + 1) / 2 is never below -0.1), the spooky forest's grass is a blend of upstream's red and green
     ctx.check(colors::darkForestCenterFoliage(123.0, -456.0) == 0xE94E14, "the dark forest centre's foliage is #E94E14");
     // a biome without a modifier: its own colour-map colour in every column (not the game's colour)
-    std::optional<BlockPos> forestAt = inside("twilightforest:forest");
+    std::optional<BlockPos> forestAt = inside("gloamingforest:forest");
     ctx.require(forestAt.has_value(), "the forest is found within 4096 blocks");
     {
         core::GlobalPos gp{ctx.dimension(), forestAt->x, forestAt->y, forestAt->z};
@@ -134,17 +134,17 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         ctx.check(g == 0x8DB870, std::format("the forest's grass is its colour-map colour #8DB870 (#{:06X})", g));
         ctx.check(f == 0x71A74D, std::format("the forest's foliage is its colour-map colour #71A74D (#{:06X})", f));
     }
-    // the snowy forest: TF's white grass and leaves; the leaves are drawn without Bedrock's seasons
+    // the snowy forest: upstream's white grass and leaves; the leaves are drawn without Bedrock's seasons
     // map (as in the forest), so the white tint is a colour there
     {
-        auto at = inside("twilightforest:snowy_forest");
+        auto at = inside("gloamingforest:snowy_forest");
         ctx.require(at.has_value(), "the snowy forest is found within 4096 blocks");
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
         ctx.require(co_await ctx.ensureLoaded(gp), "the snowy forest chunk loaded");
         auto*    region = ctx.region();
         unsigned f = foliageAt(region, *at, plain), g = grassAt(region, *at, plain);
-        ctx.check(g == 0xFFFFFF, std::format("the snowy forest's grass is TF's white (#{:06X})", g));
-        ctx.check(f == 0xFFFFFF, std::format("the snowy forest's leaves are TF's white (#{:06X})", f));
+        ctx.check(g == 0xFFFFFF, std::format("the snowy forest's grass is upstream's white (#{:06X})", g));
+        ctx.check(f == 0xFFFFFF, std::format("the snowy forest's leaves are upstream's white (#{:06X})", f));
         Block const* leaves = game::blockWith("minecraft:oak_leaves");
         ctx.require(leaves != nullptr, "oak leaves");
         ctx.check(!leaves->getBlockType().isSeasonTinted(*leaves, *region, *at), "oak leaves in the snowy forest are not season tinted");
@@ -152,12 +152,12 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         auto forest = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *forestAt));
         ctx.check(snowy == forest, std::format("oak leaves draw in the forest's render layer in the snowy forest ({} / {})", snowy, forest));
     }
-    // TF's water colours (BiomeSpecialEffects#waterColor) from the policy the client's water mesh is
+    // upstream's water colours (BiomeSpecialEffects#waterColor) from the policy the client's water mesh is
     // tessellated with: the hook sits on the object the game uses. Whether the drawn water shows them
     // is measured on the screenshots by the client scenario (its pools), not here.
     Block const* water = game::blockWith("minecraft:water");
     ctx.require(water != nullptr, "the water block");
-    for (char const* biome : {"twilightforest:fire_swamp", "twilightforest:swamp", "twilightforest:spooky_forest", "twilightforest:dense_forest", "twilightforest:forest"}) {
+    for (char const* biome : {"gloamingforest:fire_swamp", "gloamingforest:swamp", "gloamingforest:spooky_forest", "gloamingforest:dense_forest", "gloamingforest:forest"}) {
         auto at = inside(biome);
         ctx.require(at.has_value(), std::string(biome) + " is found within 4096 blocks");
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
@@ -166,13 +166,13 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         mce::Color c      = BiomeColorSampling::getTessellationPolicy(TintMethod::Water).get(*water, region, *at, nullptr);
         unsigned   got    = (static_cast<unsigned>(c.r * 255.f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.f + 0.5f) << 8) | static_cast<unsigned>(c.b * 255.f + 0.5f);
         unsigned   want   = static_cast<unsigned>(*colors::water(biome));
-        ctx.check(got == want, std::format("{}: the water policy gives #{:06X} (TF #{:06X})", biome, got, want));
+        ctx.check(got == want, std::format("{}: the water policy gives #{:06X} (upstream #{:06X})", biome, got, want));
     }
     // the client level's own biomes: which environment attributes the client biome files gave them
-    // (a TF biome against a vanilla one), and the water colour the client was sent
+    // (an upstream biome against a vanilla one), and the water colour the client was sent
     if (auto* player = client::currentPlayer()) {
         auto& reg = player->getLevel().getBiomeRegistry();
-        for (char const* id : {"twilightforest:fire_swamp", "twilightforest:forest", "minecraft:swampland", "minecraft:plains"}) {
+        for (char const* id : {"gloamingforest:fire_swamp", "gloamingforest:forest", "minecraft:swampland", "minecraft:plains"}) {
             auto const* b = reg.lookupByName(id);
             if (!b) {
                 ctx.info(std::format("client biome {}: not in the client's registry", id));
@@ -184,7 +184,7 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         }
     }
     // the client draws the world: the vanilla tint hook applied the registry to vanilla blocks
-    // (the client may not have drawn a TF chunk yet: the e2e scenario checks the hook's log lines)
+    // (the client may not have drawn an upstream chunk yet: the e2e scenario checks the hook's log lines)
     ctx.info(std::format("the vanilla tint hook applied {} tints so far", gf::biomes::ext::vanillaTintsApplied()));
 });
 

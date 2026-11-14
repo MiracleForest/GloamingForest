@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.redcap_inner.base": {
+    "animation.gloamingforest.redcap_inner.base": {
       "loop": true,
       "bones": {
         "head": {

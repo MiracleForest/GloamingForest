@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:wood/sorting_banister"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---", "| |"],
+    "key": {
+      "-": {
+        "item": "gloamingforest:sorting_slab"
+      },
+      "|": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:sorting_slab"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:sorting_banister",
+      "count": 3
+    }
+  }
+}

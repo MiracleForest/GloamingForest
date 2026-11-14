@@ -20,19 +20,19 @@ namespace gf::feature::lichdecor::light {
 
 namespace ia = gf::interactions;
 
-inline constexpr char kCandelabra[]  = "twilightforest:candelabra";
-inline constexpr char kBrazier[]     = "twilightforest:brazier";
-inline constexpr char kOminousFire[] = "twilightforest:ominous_fire";
-inline constexpr char kEssence[]     = "twilightforest:exanimate_essence";
-inline constexpr char kOminousFireDamage[] = "twilightforest:ominous_fire";
+inline constexpr char kCandelabra[]  = "gloamingforest:candelabra";
+inline constexpr char kBrazier[]     = "gloamingforest:brazier";
+inline constexpr char kOminousFire[] = "gloamingforest:ominous_fire";
+inline constexpr char kEssence[]     = "gloamingforest:exanimate_essence";
+inline constexpr char kOminousFireDamage[] = "gloamingforest:ominous_fire";
 
-// ---- TF's CandleColors (AbstractSkullCandleBlock.CandleColors: the saved int) ----------------------
+// ---- upstream's CandleColors (AbstractSkullCandleBlock.CandleColors: the saved int) ----------------------
 
-/// The vanilla candle id of TF's CandleColors value 0..16 (0 plain, 1 white, 2 light gray, 3 gray,
+/// The vanilla candle id of upstream's CandleColors value 0..16 (0 plain, 1 white, 2 light gray, 3 gray,
 /// 4 black, 5 red, 6 orange, 7 yellow, 8 green, 9 lime, 10 blue, 11 cyan, 12 light blue, 13 purple,
 /// 14 magenta, 15 pink, 16 brown).
 [[nodiscard]] std::string candleOfTfColor(int value);
-/// TF's CandleColors value of a vanilla candle id (-1: not a vanilla candle).
+/// upstream's CandleColors value of a vanilla candle id (-1: not a vanilla candle).
 [[nodiscard]] int tfColorOfCandle(std::string_view vanillaCandleId);
 
 // ---- shared item / player helpers -------------------------------------------------------------------
@@ -43,7 +43,7 @@ inline constexpr char kOminousFireDamage[] = "twilightforest:ominous_fire";
 void useFirestarter(Player& player, ItemStack const& held, std::string const& itemId);
 /// Player#getAbilities().mayBuild: not in adventure / spectator mode.
 [[nodiscard]] bool mayBuild(Player const& player);
-/// The creative rule of TF's candle removal: in creative the item is added only if the inventory
+/// The creative rule of upstream's candle removal: in creative the item is added only if the inventory
 /// does not already hold one; otherwise added or dropped.
 void giveCandleBack(Player& player, std::string const& candleId);
 /// The silk touch level of a tool stack (0: none).
@@ -96,7 +96,7 @@ struct SkullCandleKind {
 // ---- animateTick (the client mod's flames, src/client/lichdecor) --------------------------------------
 
 /// One flame of a block's animateTick: its position inside the block and the flame particle
-/// (minecraft:small_flame, twilightforest:dim_flame, twilightforest:ominous_flame).
+/// (minecraft:small_flame, gloamingforest:dim_flame, gloamingforest:ominous_flame).
 struct AnimateFlame {
     Vec3        offset;
     char const* particle = "";

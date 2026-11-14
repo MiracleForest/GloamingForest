@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/landmarks/LegacyLandmarkPlacements.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainColumn.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/landmarks/LegacyLandmarkPlacements.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainColumn.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Golden tests of the Java oracle (unit F13). tests/golden holds facts dumped from TF 4.8 running
+// Golden tests of the Java oracle (unit F13). tests/golden holds facts dumped from upstream 4.8 running
 // on a NeoForge 1.21.1 server (tools/oracle/run.ps1); these tests
-//   - check the manifest (every file listed, unchanged since it was generated, from the pinned TF),
+//   - check the manifest (every file listed, unchanged since it was generated, from the pinned upstream),
 //   - check every file's structure and internal consistency,
 //   - recompute what is small enough to recompute independently: Minecraft's random sources
 //     (java.util.Random LCG, Xoroshiro128++, WorldgenRandom seeding, Mth#getSeed,
-//     String#hashCode), TF's landmark grid (getNearestCenterXZ, chunkHasLandmarkCenter,
-//     manhattanDistanceFromLandmarkCenter, pickVarietyLandmark, pickLandmarkForChunk) and TF's
+//     String#hashCode), upstream's landmark grid (getNearestCenterXZ, chunkHasLandmarkCenter,
+//     manhattanDistanceFromLandmarkCenter, pickVarietyLandmark, pickLandmarkForChunk) and upstream's
 //     biome column layers (TerrainColumn#getBiome) - so the goldens are checked against the
 //     algorithms, and the reference code below documents them for the units that port them
 //     (F5 jrand, F6 landmark, U1 biomes).
@@ -369,7 +369,7 @@ void checkBetweenInclusive(Rng& r, json const& e) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// TF's LegacyLandmarkPlacements (translated)
+// upstream's LegacyLandmarkPlacements (translated)
 
 struct Center {
     std::int32_t x, z;
@@ -409,8 +409,8 @@ std::string pickVariety(std::int64_t seed, std::int32_t chunkX, std::int32_t chu
     chunkZ = javaRound(static_cast<float>(chunkZ) / 16.0F) * 16;
     std::int32_t ox = std::abs(((chunkX + 64) >> 4) % 8);
     std::int32_t oz = std::abs(((chunkZ + 64) >> 4) % 8);
-    if ((ox == 4 && oz == 5) || (ox == 4 && oz == 3)) return "twilightforest:lich_tower";
-    if ((ox == 5 && oz == 4) || (ox == 3 && oz == 4)) return "twilightforest:naga_courtyard";
+    if ((ox == 4 && oz == 5) || (ox == 4 && oz == 3)) return "gloamingforest:lich_tower";
+    if ((ox == 5 && oz == 4) || (ox == 3 && oz == 4)) return "gloamingforest:naga_courtyard";
     int total = 0;
     for (auto const& w : weights) total += w.second;
     Legacy       random(add(add(seed, mul(chunkX, 25117LL)), mul(chunkZ, 151121LL)));
@@ -419,22 +419,22 @@ std::string pickVariety(std::int64_t seed, std::int32_t chunkX, std::int32_t chu
         pick -= w.second;
         if (pick < 0) return w.first;
     }
-    return "twilightforest:small_hollow_hill";
+    return "gloamingforest:small_hollow_hill";
 }
 
 // LegacyLandmarkPlacements.BIOME_2_STRUCTURES
 std::map<std::string, std::string> const& biomeLandmarks() {
     static std::map<std::string, std::string> const m = {
-        {"twilightforest:enchanted_forest", "twilightforest:quest_grove"},
-        {"twilightforest:lake", "twilightforest:quest_island"},
-        {"twilightforest:swamp", "twilightforest:labyrinth"},
-        {"twilightforest:fire_swamp", "twilightforest:hydra_lair"},
-        {"twilightforest:dark_forest", "twilightforest:knight_stronghold"},
-        {"twilightforest:dark_forest_center", "twilightforest:dark_tower"},
-        {"twilightforest:snowy_forest", "twilightforest:yeti_cave"},
-        {"twilightforest:glacier", "twilightforest:aurora_palace"},
-        {"twilightforest:highlands", "twilightforest:troll_cave"},
-        {"twilightforest:final_plateau", "twilightforest:final_castle"},
+        {"gloamingforest:enchanted_forest", "gloamingforest:quest_grove"},
+        {"gloamingforest:lake", "gloamingforest:quest_island"},
+        {"gloamingforest:swamp", "gloamingforest:labyrinth"},
+        {"gloamingforest:fire_swamp", "gloamingforest:hydra_lair"},
+        {"gloamingforest:dark_forest", "gloamingforest:knight_stronghold"},
+        {"gloamingforest:dark_forest_center", "gloamingforest:dark_tower"},
+        {"gloamingforest:snowy_forest", "gloamingforest:yeti_cave"},
+        {"gloamingforest:glacier", "gloamingforest:aurora_palace"},
+        {"gloamingforest:highlands", "gloamingforest:troll_cave"},
+        {"gloamingforest:final_plateau", "gloamingforest:final_castle"},
     };
     return m;
 }
@@ -482,7 +482,7 @@ TEST(OracleGolden, ManifestListsEveryFileUnchanged) {
     REQUIRE_GOLDENS();
     json const& m = manifest();
     EXPECT_EQ(m.value("format", 0), 1);
-    EXPECT_EQ(m.at("source").value("twilightforest", ""), kTfVersion);
+    EXPECT_EQ(m.at("source").value("gloamingforest", ""), kTfVersion);
     EXPECT_EQ(m.at("source").value("commit", ""), kTfCommit);
     EXPECT_EQ(m.at("source").value("minecraft", ""), "1.21.1");
 
@@ -501,7 +501,7 @@ TEST(OracleGolden, ManifestListsEveryFileUnchanged) {
         ASSERT_TRUE(g.is_object()) << rel;
         EXPECT_EQ(g.value("format", 0), 1) << rel;
         EXPECT_EQ(g.value("kind", ""), e.value("kind", "?")) << rel;
-        EXPECT_EQ(g.at("source").value("twilightforest", ""), kTfVersion) << rel;
+        EXPECT_EQ(g.at("source").value("gloamingforest", ""), kTfVersion) << rel;
         EXPECT_EQ(g.at("source").value("commit", ""), kTfCommit) << rel;
         if (e.contains("seed")) EXPECT_EQ(g.at("seed").get<std::int64_t>(), e.at("seed").get<std::int64_t>()) << rel;
     }
@@ -1151,8 +1151,8 @@ TEST(OracleGolden, RecipesCoverTfRecipes) {
             EXPECT_GE(r.at("experience").get<double>(), 0.0) << id;
             EXPECT_EQ(r.at("data").at("cookingtime"), r.at("cookingTime")) << id;
         }
-        if (r.at("serializer") == "twilightforest:drying") EXPECT_GT(r.at("data").at("filter_time").get<int>(), 0) << id;
-        if (r.at("result").is_null() && r.at("type") != "twilightforest:uncrafting") {
+        if (r.at("serializer") == "gloamingforest:drying") EXPECT_GT(r.at("data").at("filter_time").get<int>(), 0) << id;
+        if (r.at("result").is_null() && r.at("type") != "gloamingforest:uncrafting") {
             // a recipe whose result is code: crafted by its probe or by the probes of spec.json
             if (r.contains("probe")) {
                 ++modifiers;
@@ -1202,7 +1202,7 @@ TEST(OracleGolden, UncraftingOptionsAreWellFormed) {
     json const& g     = golden("uncrafting.json");
     json const& items = g.at("items");
     ASSERT_FALSE(items.empty());
-    // every UNCRAFTING_STUFFS value of TF's config
+    // every UNCRAFTING_STUFFS value of upstream's config
     for (char const* key : {"uncraftingXpCostMultiplier", "repairingXpCostMultiplier", "allowShapelessUncrafting", "disableIngredientSwitching",
                             "disableUncraftingRecipes", "reverseRecipeBlacklist", "blacklistedUncraftingModIds", "flipUncraftingModIdList",
                             "disableUncraftingOnly", "disableEntireTable"}) {
@@ -1211,7 +1211,7 @@ TEST(OracleGolden, UncraftingOptionsAreWellFormed) {
     int const maxCycles = g.at("maxCycles");
     int       tf        = 0;
     for (auto const& [id, options] : items.items()) {
-        if (id.starts_with("twilightforest:")) ++tf;
+        if (id.starts_with("gloamingforest:")) ++tf;
         EXPECT_LE(options.size(), std::size_t(maxCycles)) << id;
         for (json const& o : options) {
             markedCells(o.at("grid"), id);

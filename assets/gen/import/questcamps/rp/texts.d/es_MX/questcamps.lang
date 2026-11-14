@@ -1,4 +1,4 @@
-entity.twilightforest.quest_ram=Carnero de la Búsqueda
-entity.twilightforest:quest_ram.name=Carnero de la Búsqueda
-item.spawn_egg.entity.twilightforest:quest_ram.name=Generar Carnero de la Búsqueda
-item.twilightforest.quest_ram_spawn_egg=Generar Carnero de la Búsqueda
+entity.gloamingforest.quest_ram=Carnero de la Búsqueda
+entity.gloamingforest:quest_ram.name=Carnero de la Búsqueda
+item.gloamingforest.quest_ram_spawn_egg=Generar Carnero de la Búsqueda
+item.spawn_egg.entity.gloamingforest:quest_ram.name=Generar Carnero de la Búsqueda

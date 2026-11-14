@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:magic_painting",
+      "identifier": "gloamingforest:magic_painting",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "magic_painting"]
+        "family": ["gloamingforest", "magic_painting"]
       },
       "minecraft:collision_box": {
         "width": 0.5,

@@ -4,7 +4,7 @@
 // feature/inventory/Inventory.h by A8).
 //
 // Stacks of a native container still in block data: a container block that got
-// minecraft:block_entity after stacks were stored for it (TF's chests before tools/families wrote
+// minecraft:block_entity after stacks were stored for it (upstream's chests before tools/families wrote
 // them in format 1.26.50, spike S7) has a native container (the block actor's) and its old stacks in
 // the BlockData backend's layout ("inventory": {"items": [...]}). Until they move, the contract
 // reads both: a read shows each waiting stack where a move would put it (its own slot when that is

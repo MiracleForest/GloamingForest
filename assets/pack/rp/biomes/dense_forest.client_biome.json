@@ -2,7 +2,7 @@
   "format_version": "1.21.120",
   "minecraft:client_biome": {
     "description": {
-      "identifier": "twilightforest:dense_forest"
+      "identifier": "gloamingforest:dense_forest"
     },
     "components": {
       "minecraft:sky_color": {
@@ -21,7 +21,7 @@
         "atmosphere_identifier": "gloamingforest:dense_forest_atmospherics"
       },
       "minecraft:biome_music": {
-        "music_definition": "twilightforest:dense_forest"
+        "music_definition": "gloamingforest:dense_forest"
       },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",

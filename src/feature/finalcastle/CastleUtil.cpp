@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/finalcastle/StructureTFDecoratorCastle.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/finalcastle/StructureTFDecoratorCastle.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -28,13 +28,13 @@ std::unique_ptr<Decorator> castleDecorator() {
     auto def       = ::gf::structure::bases::defaultDecorator();
     d->platformState = def->platformState; // TFStructureDecorator's defaults the castle keeps
     d->floorState    = def->floorState;
-    d->blockState    = &J("twilightforest:castle_brick");
+    d->blockState    = &J("gloamingforest:castle_brick");
     d->accentState   = &J("minecraft:chiseled_quartz_block");
-    d->roofState     = &J("twilightforest:castle_roof_tile");
-    d->pillarState   = &J("twilightforest:bold_castle_brick_pillar");
+    d->roofState     = &J("gloamingforest:castle_roof_tile");
+    d->pillarState   = &J("gloamingforest:bold_castle_brick_pillar");
     d->fenceState    = &J("minecraft:oak_fence");
     d->stairState    = &J("minecraft:quartz_stairs");
-    d->randomBlocks  = ::gf::structure::selectors::get("twilightforest:castle");
+    d->randomBlocks  = ::gf::structure::selectors::get("gloamingforest:castle");
     return d;
 }
 

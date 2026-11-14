@@ -1,6 +1,6 @@
-// GloamingForest import tool (contract "import", unit F1): TF's lang files (CC BY-NC-SA 4.0): en_us (2061
+// GloamingForest import tool (contract "import", unit F1): upstream's lang files (CC BY-NC-SA 4.0): en_us (2061
 // keys) and the translations, for the 29 Bedrock locales, split by key owner into the mod's lang JSON
-// (gf::tr) and resource-pack texts (block / item / entity names, and every TF key for rawtext).
+// (gf::tr) and resource-pack texts (block / item / entity names, and every upstream key for rawtext).
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +22,7 @@ namespace GfImport
                 foreach (var k in merges["localeAliases"].Keys) LocaleAliases[k] = merges["localeAliases"][k].AsString();
         }
 
-        /// <summary>The Bedrock locale of a TF lang file name ("de_de" -> "de_DE"), or null.</summary>
+        /// <summary>The Bedrock locale of an upstream lang file name ("de_de" -> "de_DE"), or null.</summary>
         string BedrockLocale(string tfName)
         {
             var p = tfName.Split('_');
@@ -42,13 +42,13 @@ namespace GfImport
         public void ImportLang()
         {
             if (BedrockLocales.Count == 0) LoadLocales();
-            var en = ReadJson(Path.Combine(GenRes, "assets", "twilightforest", "lang", "en_us.json"));
+            var en = ReadJson(Path.Combine(GenRes, "assets", "gloamingforest", "lang", "en_us.json"));
             var enMap = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var k in en.Keys) enMap[k] = en[k].AsString() ?? en[k].ToCompact();
-            // locale -> key -> text (TF's own file for that locale; the closest one wins for shared Bedrock locales)
+            // locale -> key -> text (upstream's own file for that locale; the closest one wins for shared Bedrock locales)
             var byLocale = new SortedDictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
             byLocale["en_US"] = enMap;
-            string langDir = Path.Combine(MainRes, "assets", "twilightforest", "lang");
+            string langDir = Path.Combine(MainRes, "assets", "gloamingforest", "lang");
             var files = Files(langDir, "*.json").OrderBy(f => f, StringComparer.Ordinal).ToList();
             foreach (var rel in files)
             {
@@ -65,34 +65,34 @@ namespace GfImport
             }
 
             // owners of the Bedrock name keys
-            var nameKeys = new List<Tuple<string, string, string>>(); // bedrock key, TF key, owner
+            var nameKeys = new List<Tuple<string, string, string>>(); // bedrock key, upstream key, owner
             foreach (var bi in BlockInfos.Values)
-                nameKeys.Add(Tuple.Create("tile.twilightforest:" + bi.Id + ".name", "block.twilightforest." + bi.Id, bi.Owner));
+                nameKeys.Add(Tuple.Create("tile.gloamingforest:" + bi.Id + ".name", "block.gloamingforest." + bi.Id, bi.Owner));
             foreach (var full in Ids("item"))
             {
                 string id = full.Substring(15);
                 if (BlockInfos.ContainsKey(id)) continue; // the tile key names it
-                nameKeys.Add(Tuple.Create("item." + full + ".name", "item.twilightforest." + id, OwnerOf("item", full)));
+                nameKeys.Add(Tuple.Create("item." + full + ".name", "item.gloamingforest." + id, OwnerOf("item", full)));
             }
             foreach (var full in Ids("entity"))
             {
                 string id = full.Substring(15);
-                nameKeys.Add(Tuple.Create("entity." + full + ".name", "entity.twilightforest." + id, OwnerOf("entity", full)));
+                nameKeys.Add(Tuple.Create("entity." + full + ".name", "entity.gloamingforest." + id, OwnerOf("entity", full)));
             }
             foreach (var full in Ids("spawn_egg"))
             {
                 string id = full.Substring(15);
-                string ent = "twilightforest:" + id.Substring(0, id.Length - "_spawn_egg".Length);
-                nameKeys.Add(Tuple.Create("item.spawn_egg.entity." + ent + ".name", "item.twilightforest." + id, OwnerOf("spawn_egg", full)));
+                string ent = "gloamingforest:" + id.Substring(0, id.Length - "_spawn_egg".Length);
+                nameKeys.Add(Tuple.Create("item.spawn_egg.entity." + ent + ".name", "item.gloamingforest." + id, OwnerOf("spawn_egg", full)));
             }
-            // creative group titles: the catalog shows the group name ("twilightforest:<title key>") through the texts
+            // creative group titles: the catalog shows the group name ("gloamingforest:<title key>") through the texts
             foreach (var tab in Tabs)
-                if (tab.TitleKey != null) nameKeys.Add(Tuple.Create("twilightforest:" + tab.TitleKey, tab.TitleKey, OwnerOf("lang", tab.TitleKey) ?? ImportUnit));
+                if (tab.TitleKey != null) nameKeys.Add(Tuple.Create("gloamingforest:" + tab.TitleKey, tab.TitleKey, OwnerOf("lang", tab.TitleKey) ?? ImportUnit));
 
             foreach (var loc in byLocale.Keys)
             {
                 var map = byLocale[loc];
-                // mod lang JSON: the TF keys this locale translates
+                // mod lang JSON: the upstream keys this locale translates
                 var perUnitJson = new SortedDictionary<string, J>(StringComparer.Ordinal);
                 var perUnitLang = new SortedDictionary<string, SortedDictionary<string, string>>(StringComparer.Ordinal);
                 Action<string, string, string> addText = (owner, key, value) =>
@@ -119,7 +119,7 @@ namespace GfImport
                         text = nk.Item2 == null ? null : HumanName(nk.Item2);
                         if (text == null) continue;
                     }
-                    if (nk.Item1 == tfKey) continue; // already written as the TF key itself
+                    if (nk.Item1 == tfKey) continue; // already written as the upstream key itself
                     addText(nk.Item3 ?? ImportUnit, nk.Item1, LangValue(text));
                 }
                 foreach (var kv in perUnitJson) EmitJson("lang", kv.Key, "lang/" + loc + "/" + NameOf(kv.Key) + ".json", kv.Value);
@@ -132,7 +132,7 @@ namespace GfImport
             }
         }
 
-        /// <summary>"block.twilightforest.naga_stone" -> "Naga Stone" (for the few ids TF's en_us does not name).</summary>
+        /// <summary>"block.gloamingforest.naga_stone" -> "Naga Stone" (for the few ids upstream's en_us does not name).</summary>
         static string HumanName(string key)
         {
             string id = key.Substring(key.LastIndexOf('.') + 1);

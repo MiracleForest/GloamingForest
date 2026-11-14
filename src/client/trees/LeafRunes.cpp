@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/TransformationLeavesBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/TransformationLeavesBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U3 trees on the client (client mod): the leaves of transformation shed leaf runes. Java's client
 // runs ClientLevel#animateTick every tick around the local player (667 samples at radius 16 and 667
 // at radius 32, each axis nextInt(r) - nextInt(r)); a sampled TransformationLeavesBlock spawns one
-// twilightforest:leaf_rune below its bottom face (ParticleUtils.spawnParticlesOnBlockFace, DOWN,
+// gloamingforest:leaf_rune below its bottom face (ParticleUtils.spawnParticlesOnBlockFace, DOWN,
 // spread 0.5). This is that loop, on the local player's tick, drawing the resource pack effect in
 // the client level only. The server does it only for players without the client mod
 // (src/feature/trees/Leaves.cpp).
@@ -36,8 +36,8 @@ namespace gf::client::trees {
 
 namespace {
 
-constexpr char kLeaves[] = "twilightforest:transformation_leaves";
-constexpr char kRune[]   = "twilightforest:leaf_rune";
+constexpr char kLeaves[] = "gloamingforest:transformation_leaves";
+constexpr char kRune[]   = "gloamingforest:leaf_rune";
 
 std::mt19937& rng() {
     static std::mt19937 r{std::random_device{}()};

@@ -2,12 +2,12 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:blockchain_goblin",
+      "identifier": "gloamingforest:blockchain_goblin",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:chain_length": {
+        "gloamingforest:chain_length": {
           "type": "int",
           "range": [
             0,
@@ -16,7 +16,7 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:chain_pos": {
+        "gloamingforest:chain_pos": {
           "type": "int",
           "range": [
             0,
@@ -25,7 +25,7 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:throw_length": {
+        "gloamingforest:throw_length": {
           "type": "int",
           "range": [
             0,
@@ -34,7 +34,7 @@
           "default": 0,
           "client_sync": true
         },
-        "twilightforest:throwing": {
+        "gloamingforest:throwing": {
           "type": "bool",
           "default": false,
           "client_sync": true
@@ -44,7 +44,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "blockchain_goblin",
           "monster",
           "mob"

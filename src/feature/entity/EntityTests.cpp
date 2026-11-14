@@ -1,6 +1,6 @@
 // Selftests of F8's "entity" contract (rule R12: prefix entity.*, dx 5800..5899) and the spike S4
 // probes: behaviour dispatch, persisted data, entity properties read back through Molang, the
-// goal selector and TF's goals at work, the pathfinding block rules of the random positions,
+// goal selector and upstream's goals at work, the pathfinding block rules of the random positions,
 // linked multipart parts (follow, damage routed to the parent, never saved) and the hostile mount.
 // Fixtures: gf_test:boss (behaviour and boss only while a FixtureScope lives) and gf_test:boss_part
 // (assets/test), vanilla mobs.
@@ -177,7 +177,7 @@ private:
 };
 } // namespace
 
-// java.util.Random parity (the goals consume random numbers as TF does): JavaRandom is F5's
+// java.util.Random parity (the goals consume random numbers as upstream does): JavaRandom is F5's
 // gf::core::jrand::LegacyRandom; it must give Java's values and agree with an independent copy
 GF_REGISTER_SELFTEST("entity.java_random", [](Context& ctx) {
     static_assert(std::is_same_v<JavaRandom, core::jrand::LegacyRandom>, "the goals use the W0 contract's LegacyRandom");
@@ -375,7 +375,7 @@ GF_REGISTER_SELFTEST("entity.goals", [](Context& ctx) -> ll::coro::CoroTask<> {
         ctx.check(move->starts == 2, "it starts again when the flag is back");
     }
     if (auto* m = mobById(uid)) ctx.check(controlFlagsDisabled(*m) == 0, "no passenger: no disabled flags (Mob#updateControlFlags)");
-    // TF's shared goals and their Java flags
+    // upstream's shared goals and their Java flags
     if (auto* m = mobById(uid)) {
         using G = ge::Goal;
         ctx.check(ge::goals::charge(*m, {})->flags == (G::Move | G::Look), "ChargeAttackGoal: MOVE, LOOK");
@@ -812,7 +812,7 @@ GF_REGISTER_SELFTEST("entity.multipart_in_tick", [](Context& ctx) -> ll::coro::C
 
 // Spike S4, custom hit test: Bedrock's HitboxComponent (minecraft:custom_hit_test) keeps extra
 // pick boxes on one actor (the hoglin declares one), moved with it by the engine. A pick on such a
-// box reaches the server as a hit on the actor itself, without telling which box: TF's
+// box reaches the server as a hit on the actor itself, without telling which box: upstream's
 // attackEntityFromPart needs the part, so the parts stay linked actors (their own pick boxes).
 GF_REGISTER_SELFTEST("entity.spike_hitbox", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
@@ -1081,15 +1081,15 @@ GF_REGISTER_SELFTEST("entity.persist_read", [](Context& ctx) -> ll::coro::CoroTa
 });
 
 
-// Monster#shouldDespawnInPeaceful through the kit: every non-boss TF monster is marked, bosses and
+// Monster#shouldDespawnInPeaceful through the kit: every non-boss upstream monster is marked, bosses and
 // the loyal zombie are not; a marked type is removed at its first tick on Peaceful (no death) and
 // kept on Easy
 GF_REGISTER_SELFTEST("entity.peaceful", [](Context& ctx) -> ll::coro::CoroTask<> {
-    for (auto const* id : {"twilightforest:redcap", "twilightforest:hostile_wolf", "twilightforest:carminite_ghastguard",
-                           "twilightforest:kobold", "twilightforest:yeti", "twilightforest:wraith"})
+    for (auto const* id : {"gloamingforest:redcap", "gloamingforest:hostile_wolf", "gloamingforest:carminite_ghastguard",
+                           "gloamingforest:kobold", "gloamingforest:yeti", "gloamingforest:wraith"})
         ctx.check(ge::ext::despawnsInPeaceful(id), std::string(id) + " leaves on Peaceful");
-    for (auto const* id : {"twilightforest:naga", "twilightforest:alpha_yeti", "twilightforest:loyal_zombie", "twilightforest:boar",
-                           "twilightforest:penguin"})
+    for (auto const* id : {"gloamingforest:naga", "gloamingforest:alpha_yeti", "gloamingforest:loyal_zombie", "gloamingforest:boar",
+                           "gloamingforest:penguin"})
         ctx.check(!ge::ext::despawnsInPeaceful(id), std::string(id) + " stays on Peaceful (boss kit / not a monster)");
     struct Unmark {
         ~Unmark() { ge::ext::setDespawnInPeaceful("gf_test:boss", false); }
@@ -1133,8 +1133,8 @@ GF_REGISTER_SELFTEST("entity.block_breaking", [](Context& ctx) -> ll::coro::Coro
     auto chest   = place(1, "minecraft:chest");
     auto sign    = place(2, "minecraft:standing_sign");
     auto bedrock = place(3, "minecraft:bedrock");
-    auto tfChest = place(4, "twilightforest:twilight_oak_chest");
-    auto jar     = place(5, "twilightforest:firefly_jar");
+    auto tfChest = place(4, "gloamingforest:gloaming_oak_chest");
+    auto jar     = place(5, "gloamingforest:firefly_jar");
     BlockPos air{stone.x, stone.y + 1, stone.z};
     using R = ge::ext::BreakRule;
     ctx.check(ge::ext::canDestroyBlock(*region, stone, R::SpareContainers), "stone breaks");
@@ -1143,7 +1143,7 @@ GF_REGISTER_SELFTEST("entity.block_breaking", [](Context& ctx) -> ll::coro::Coro
     ctx.check(!ge::ext::canDestroyBlock(*region, chest, R::SpareContainers), "a container is spared");
     ctx.check(ge::ext::canDestroyBlock(*region, sign, R::SpareContainers), "a sign breaks (not a Container)");
     ctx.check(!ge::ext::canDestroyBlock(*region, sign, R::SpareBlockEntities), "the charge spares a sign (a block entity)");
-    ctx.check(!ge::ext::canDestroyBlock(*region, tfChest, R::SpareContainers), "a TF chest is spared (gf::inventory container)");
+    ctx.check(!ge::ext::canDestroyBlock(*region, tfChest, R::SpareContainers), "an upstream chest is spared (gf::inventory container)");
     ctx.check(ge::ext::canDestroyBlock(*region, jar, R::SpareContainers), "a firefly jar breaks for the hydra (no Container)");
     ctx.check(!ge::ext::canDestroyBlock(*region, jar, R::SpareBlockEntities), "the charge spares a firefly jar (Java block entity)");
     int broken = ge::ext::destroyBlocks(*region, stone, BlockPos{jar.x, jar.y, jar.z}, R::SpareBlockEntities, false);
@@ -1153,7 +1153,7 @@ GF_REGISTER_SELFTEST("entity.block_breaking", [](Context& ctx) -> ll::coro::Coro
     broken = ge::ext::destroyBlocks(*region, stone, BlockPos{jar.x, jar.y, jar.z}, R::SpareContainers, false);
     ctx.check(broken == 2, "the hydra's rule breaks the sign and the jar (" + std::to_string(broken) + ")");
     ctx.check(ctx.blockAt(at.offset(1, 0, 0)) == "minecraft:chest", "the chest stays");
-    ctx.check(ctx.blockAt(at.offset(4, 0, 0)) == "twilightforest:twilight_oak_chest", "the TF chest stays");
+    ctx.check(ctx.blockAt(at.offset(4, 0, 0)) == "gloamingforest:gloaming_oak_chest", "the upstream chest stays");
     (void)box;
 });
 

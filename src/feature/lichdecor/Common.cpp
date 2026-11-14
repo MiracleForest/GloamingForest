@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/LightableBlock.java
-//   src/main/java/twilightforest/enums/extensions/TFCandleColors.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/LightableBlock.java
+//   src/main/java/gloamingforest/enums/extensions/TFCandleColors.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -48,7 +48,7 @@ std::mt19937& rng() {
 
 std::string prefixed(std::string_view name) {
     if (name.find(':') != std::string_view::npos) return std::string(name);
-    return "twilightforest:" + std::string(name);
+    return "gloamingforest:" + std::string(name);
 }
 
 } // namespace
@@ -228,8 +228,8 @@ int candleColorOf(std::string_view id) {
 }
 
 std::string ominousCandle(int color) {
-    if (color <= 0 || color > 16) return "twilightforest:ominous_candle";
-    return "twilightforest:ominous_" + std::string(candleColors()[color]) + "_candle";
+    if (color <= 0 || color > 16) return "gloamingforest:ominous_candle";
+    return "gloamingforest:ominous_" + std::string(candleColors()[color]) + "_candle";
 }
 
 int ominousColorOf(std::string_view id) {

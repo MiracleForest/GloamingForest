@@ -1,31 +1,31 @@
 {
   "entity_sounds": {
     "entities": {
-      "twilightforest:troll": {
+      "gloamingforest:troll": {
         "volume": 1.0,
         "pitch": [0.8, 1.2],
         "events": {
-          "ambient": "entity.twilightforest.troll.ambient",
-          "hurt": "entity.twilightforest.troll.hurt",
-          "death": "entity.twilightforest.troll.death"
+          "ambient": "entity.gloamingforest.troll.ambient",
+          "hurt": "entity.gloamingforest.troll.hurt",
+          "death": "entity.gloamingforest.troll.death"
         }
       },
-      "twilightforest:yeti": {
+      "gloamingforest:yeti": {
         "volume": 1.0,
         "pitch": [1.35, 1.75],
         "events": {
-          "ambient": "entity.twilightforest.yeti.growl",
-          "hurt": "entity.twilightforest.yeti.hurt",
-          "death": "entity.twilightforest.yeti.death"
+          "ambient": "entity.gloamingforest.yeti.growl",
+          "hurt": "entity.gloamingforest.yeti.hurt",
+          "death": "entity.gloamingforest.yeti.death"
         }
       },
-      "twilightforest:alpha_yeti": {
+      "gloamingforest:alpha_yeti": {
         "volume": 4.0,
         "pitch": [0.5, 1.0],
         "events": {
-          "ambient": "entity.twilightforest.alpha_yeti.growl",
-          "hurt": "entity.twilightforest.alpha_yeti.hurt",
-          "death": "entity.twilightforest.alpha_yeti.death"
+          "ambient": "entity.gloamingforest.alpha_yeti.growl",
+          "hurt": "entity.gloamingforest.alpha_yeti.hurt",
+          "death": "entity.gloamingforest.alpha_yeti.death"
         }
       }
     }

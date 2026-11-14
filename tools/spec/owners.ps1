@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  Generates docs/spec/owners.tsv: the owner of every id of every kind of The Twilight Forest 4.8,
+  Generates docs/spec/owners.tsv: the owner of every id of every kind of the upstream 4.8,
   plus the paths, channels, config keys, selftest ranges and scenarios of every unit.
 
 .DESCRIPTION
-  Contract "owners" (F0). Reads the TF registries from the shared local checkout
-  (tools/tf/fetch.ps1, rule R24) and partitions every id with the rules of
+  Contract "owners" (F0). Reads the upstream registries from the shared local checkout
+  (tools/upstream/fetch.ps1, rule R24) and partitions every id with the rules of
   tools/spec/owners.rules.json, which encode the content fields of the unit records
   (docs/spec/units.json). Columns (tab-separated, sorted by kind then id):
 
@@ -14,9 +14,9 @@
   - kind: block, block_item, item, spawn_egg, entity, biome, structure, structure_set, ...,
     lang (en_us keys), config_section, config_key, net, subcommand, function, gamerule, stat,
     attribute, keybind, registry, registry_entry, selftest, selftest_dx, worlddb, e2e, path, stub;
-    plus the kinds of the ids outside TF's namespace a unit declares (units.<u>.ids in the rules,
-    e.g. mod_entity, and lang keys that are not TF's, e.g. F11's container.chest).
-  - id-or-glob: TF ids with their namespace ("twilightforest:naga_stone"); globs for path, net,
+    plus the kinds of the ids outside upstream's namespace a unit declares (units.<u>.ids in the rules,
+    e.g. mod_entity, and lang keys that are not upstream's, e.g. F11's container.chest).
+  - id-or-glob: upstream ids with their namespace ("gloamingforest:naga_stone"); globs for path, net,
     selftest and worlddb rows; declared ids as written ("gloamingforest:sign_text", "sign.edit").
   - owner: a unit id (F0..F16, U1..U30, A8).
   - mode: gen (produced by a tool: import, models, synth; regenerate, never hand-edit) or manual.
@@ -38,13 +38,13 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3.0
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
-if (-not $TfDir) { $TfDir = if ($env:GF_TF_HOME) { $env:GF_TF_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-tf' } }
+if (-not $TfDir) { $TfDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
 if (-not $Out) { $Out = Join-Path $root 'docs/spec/owners.tsv' }
 $unclaimedFile = Join-Path (Split-Path $Out) 'owners-unclaimed.txt'
-if (-not (Test-Path (Join-Path $TfDir 'src/main/java/twilightforest'))) {
-    throw "TF checkout not found at $TfDir (run: pwsh tools/tf/fetch.ps1)"
+if (-not (Test-Path (Join-Path $TfDir 'src/main/java/gloamingforest'))) {
+    throw "upstream checkout not found at $TfDir (run: pwsh tools/upstream/fetch.ps1)"
 }
-$JavaDir = Join-Path $TfDir 'src/main/java/twilightforest'
+$JavaDir = Join-Path $TfDir 'src/main/java/gloamingforest'
 $GenRes = Join-Path $TfDir 'src/generated/resources'
 $MainRes = Join-Path $TfDir 'src/main/resources'
 $rules = Get-Content (Join-Path $PSScriptRoot 'owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
@@ -141,7 +141,7 @@ function Owner-Of([string]$kind, [string]$id) {
 # blocks, items, block items, entities, spawn eggs
 Add-Ids block (Get-JavaIds 'init/TFBlocks.java' 'DeferredBlock<[^=;]*>\s+\w+\s*=\s*[\w.]+\(\s*"([a-z0-9_]+)"')
 Add-Ids item (Get-JavaIds 'init/TFItems.java' 'DeferredItem<[^=;]*>\s+\w+\s*=\s*[\w.]+\(\s*"([a-z0-9_]+)"')
-$itemModels = @(Get-DataIds (Join-Path $GenRes 'assets/twilightforest/models/item')) + @(Get-DataIds (Join-Path $MainRes 'assets/twilightforest/models/item'))
+$itemModels = @(Get-DataIds (Join-Path $GenRes 'assets/gloamingforest/models/item')) + @(Get-DataIds (Join-Path $MainRes 'assets/gloamingforest/models/item'))
 $blockItems = @($ids['block'] | Where-Object { $itemModels -contains $_ -and -not $ids['item'].Contains($_) })
 Add-Ids block_item $blockItems
 $entityNames = @{}
@@ -162,37 +162,37 @@ Add-Ids spawn_egg $eggs
 # worldgen and data
 Add-Ids biome (Get-JavaIds 'init/TFBiomes.java')
 Add-Ids structure (Get-JavaIds 'init/TFStructures.java')
-Add-Ids structure_set (Get-DataIds (Join-Path $GenRes 'data/twilightforest/worldgen/structure_set'))
-Add-Ids configured_feature (Get-DataIds (Join-Path $GenRes 'data/twilightforest/worldgen/configured_feature'))
-Add-Ids placed_feature (Get-DataIds (Join-Path $GenRes 'data/twilightforest/worldgen/placed_feature'))
-Add-Ids configured_carver (Get-DataIds (Join-Path $GenRes 'data/twilightforest/worldgen/configured_carver'))
-Add-Ids density_function (Get-DataIds (Join-Path $GenRes 'data/twilightforest/worldgen/density_function'))
-Add-Ids noise_settings (Get-DataIds (Join-Path $GenRes 'data/twilightforest/worldgen/noise_settings'))
-Add-Ids dimension (Get-DataIds (Join-Path $GenRes 'data/twilightforest/dimension'))
-Add-Ids dimension_type (Get-DataIds (Join-Path $GenRes 'data/twilightforest/dimension_type'))
-Add-Ids loot_table (Get-DataIds (Join-Path $GenRes 'data/twilightforest/loot_table'))
-Add-Ids damage_type (Get-DataIds (Join-Path $GenRes 'data/twilightforest/damage_type'))
-Add-Ids enchantment (Get-DataIds (Join-Path $GenRes 'data/twilightforest/enchantment'))
-Add-Ids banner_pattern (Get-DataIds (Join-Path $GenRes 'data/twilightforest/banner_pattern'))
-Add-Ids jukebox_song (Get-DataIds (Join-Path $GenRes 'data/twilightforest/jukebox_song'))
-Add-Ids trim_material (Get-DataIds (Join-Path $GenRes 'data/twilightforest/trim_material'))
-Add-Ids function (Get-DataIds (Join-Path $MainRes 'data/twilightforest/function') '*.mcfunction') manual
+Add-Ids structure_set (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/structure_set'))
+Add-Ids configured_feature (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/configured_feature'))
+Add-Ids placed_feature (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/placed_feature'))
+Add-Ids configured_carver (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/configured_carver'))
+Add-Ids density_function (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/density_function'))
+Add-Ids noise_settings (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/noise_settings'))
+Add-Ids dimension (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/dimension'))
+Add-Ids dimension_type (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/dimension_type'))
+Add-Ids loot_table (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/loot_table'))
+Add-Ids damage_type (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/damage_type'))
+Add-Ids enchantment (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/enchantment'))
+Add-Ids banner_pattern (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/banner_pattern'))
+Add-Ids jukebox_song (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/jukebox_song'))
+Add-Ids trim_material (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/trim_material'))
+Add-Ids function (Get-DataIds (Join-Path $MainRes 'data/gloamingforest/function') '*.mcfunction') manual
 Add-Ids particle (Get-JavaIds 'init/TFParticleType.java')
 $soundText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFSounds.java')) # GHAST_TRAP_ACTIVE is commented out: 328 events
 $sounds = @([regex]::Matches($soundText, 'createEvent\("([^"]+)"\)') | ForEach-Object { $_.Groups[1].Value })
-$soundsJson = Get-Content (Join-Path $GenRes 'assets/twilightforest/sounds.json') -Raw | ConvertFrom-Json -AsHashtable
+$soundsJson = Get-Content (Join-Path $GenRes 'assets/gloamingforest/sounds.json') -Raw | ConvertFrom-Json -AsHashtable
 Add-Ids sound_event (@($sounds) + @($soundsJson.Keys) | Sort-Object -Unique)
 
 # recipes and advancements
 $recipeFiles = @{}
-foreach ($ns in 'twilightforest', 'minecraft') {
+foreach ($ns in 'gloamingforest', 'minecraft') {
     $dir = Join-Path $GenRes "data/$ns/recipe"
     foreach ($r in Get-DataIds $dir) { $recipeFiles["${ns}:$r"] = Join-Path $dir "$r.json" }
     $mdir = Join-Path $MainRes "data/$ns/recipe"
     foreach ($r in Get-DataIds $mdir) { $recipeFiles["${ns}:$r"] = Join-Path $mdir "$r.json" }
 }
 Add-Ids recipe @($recipeFiles.Keys | Sort-Object)
-$advancements = @(Get-DataIds (Join-Path $GenRes 'data/twilightforest/advancement') | ForEach-Object { "twilightforest:$_" }) +
+$advancements = @(Get-DataIds (Join-Path $GenRes 'data/gloamingforest/advancement') | ForEach-Object { "gloamingforest:$_" }) +
     @(Get-DataIds (Join-Path $GenRes 'data/minecraft/advancement') | ForEach-Object { "minecraft:$_" })
 Add-Ids advancement $advancements
 
@@ -214,16 +214,16 @@ Add-Ids loot_number_provider @([regex]::Matches($lootText, 'NUMBERS\.register\("
 $pieceText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFStructurePieceTypes.java'))
 $pieceClass = @{}
 # registerPieceType(<one or more string literals joined by +>, <Class>::<method reference>): the
-# revamped Lich Tower registers "TFLT" + "TFoy", ..., TFJigsawTemplate TwilightJigsawPiece::defaultDeserialize
+# revamped Lich Tower registers "TFLT" + "TFoy", ..., TFJigsawTemplate GloamingJigsawPiece::defaultDeserialize
 foreach ($m in [regex]::Matches($pieceText, 'registerPieceType\(((?:"[A-Za-z0-9_]+"\s*\+\s*)*"[A-Za-z0-9_]+"),\s*(\w+)::\w+')) {
     $name = ([regex]::Matches($m.Groups[1].Value, '"([A-Za-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) -join ''
     $pieceClass[$name] = $m.Groups[2].Value
 }
 Add-Ids structure_piece_type @($pieceClass.Keys | Sort-Object) manual
 
-# /twilightforest subcommands (R14): the literal paths TF registers below its root command
+# /gloamingforest subcommands (R14): the literal paths upstream registers below its root command
 # (command/TFCommand.java and the command classes it chains), arguments left out: "sinister_spawner",
-# "sinister_spawner add_particle", "shield set" (/twilightforest shield <target> set <amount>). A
+# "sinister_spawner add_particle", "shield set" (/gloamingforest shield <target> set <amount>). A
 # command class's first Commands.literal is its own literal, the others are its children; a branch
 # (`x = Commands.literal("structure_util").then(a.register())...`) holds the literals of its classes.
 $cmdDir = Join-Path $JavaDir 'command'
@@ -266,7 +266,7 @@ function Get-CommandPaths([string]$field, [string]$prefix) {
     else { throw "$($file): register() does not return a Commands.literal or a builder variable of one; owners.ps1 cannot tell the class's own literal" }
     # A literal inside another child literal's chain (a.then(b.then(literal("c")))), directly or
     # through a builder variable (b = literal("b"); ... .then(b.then(c))), is a deeper path: fail
-    # instead of writing a wrong row (a TF bump that nests literals needs a real tree walk here).
+    # instead of writing a wrong row (an upstream bump that nests literals needs a real tree walk here).
     for ($j = 0; $j -lt $ms.Count; $j++) {
         for ($i = 0; $i -lt $ms.Count; $i++) {
             if ($i -ne $j -and $i -ne $own -and $j -ne $own -and $ms[$i].Index -lt $ms[$j].Index -and $ms[$j].Index -lt (Get-ChainEnd $text ($ms[$i].Index + $ms[$i].Length))) {
@@ -285,8 +285,8 @@ $cmdBranches = @{}
 foreach ($m in [regex]::Matches($cmdText, '(\w+)\s*=\s*Commands\.literal\("([a-z0-9_]+)"\)((?:\s*\.then\(\w+\.register\([^)]*\)\))+)\s*;')) {
     $cmdBranches[$m.Groups[1].Value] = @{ literal = $m.Groups[2].Value; fields = @([regex]::Matches($m.Groups[3].Value, '\.then\((\w+)\.register') | ForEach-Object { $_.Groups[1].Value }) }
 }
-$cmdRoot = [regex]::Match($cmdText, 'Commands\.literal\("twilightforest"\)(.*?);', 'Singleline')
-if (-not $cmdRoot.Success) { throw 'TFCommand.java: no Commands.literal("twilightforest") chain' }
+$cmdRoot = [regex]::Match($cmdText, 'Commands\.literal\("gloamingforest"\)(.*?);', 'Singleline')
+if (-not $cmdRoot.Success) { throw 'TFCommand.java: no Commands.literal("gloamingforest") chain' }
 $subcommands = [Collections.Generic.List[string]]::new()
 foreach ($m in [regex]::Matches($cmdRoot.Groups[1].Value, '\.then\((\w+)(\.register\([^)]*\))?\)')) {
     $ref = $m.Groups[1].Value
@@ -300,9 +300,9 @@ foreach ($m in [regex]::Matches($cmdRoot.Groups[1].Value, '\.then\((\w+)(\.regis
 Add-Ids subcommand $subcommands manual
 $tfSubcommands = [Collections.Generic.HashSet[string]]::new([string[]]@($subcommands))
 
-# data maps, tags, twilight/* registries
+# data maps, tags, gloaming/* registries
 $dataMaps = @()
-foreach ($ns in 'twilightforest', 'neoforge') {
+foreach ($ns in 'gloamingforest', 'neoforge') {
     $dataMaps += @(Get-DataIds (Join-Path $GenRes "data/$ns/data_maps") | ForEach-Object { "${ns}:" + ($_ -replace '^.*/', '') })
 }
 Add-Ids data_map ($dataMaps | Sort-Object -Unique)
@@ -321,8 +321,8 @@ foreach ($nsDir in Get-ChildItem (Join-Path $GenRes 'data') -Directory) {
 Add-Ids tag $tags
 $registries = [Collections.Generic.List[string]]::new()
 $registryEntries = [Collections.Generic.List[string]]::new()
-foreach ($ns in 'twilightforest', 'minecraft') {
-    $tw = Join-Path $GenRes "data/$ns/twilight"
+foreach ($ns in 'gloamingforest', 'minecraft') {
+    $tw = Join-Path $GenRes "data/$ns/gloaming"
     if (-not (Test-Path $tw)) { continue }
     foreach ($reg in Get-ChildItem $tw -Directory) {
         $registries.Add($reg.Name)
@@ -333,7 +333,7 @@ foreach ($f in Get-ChildItem (Join-Path $JavaDir 'init/custom') -Filter '*.java'
     $t = Read-Text $f.FullName
     foreach ($m in [regex]::Matches($t, 'ResourceKey\.createRegistryKey\([^"]*"([a-z0-9_/]+)"\)|registryKey\("([a-z0-9_/]+)"\)')) {
         $n = if ($m.Groups[1].Success) { $m.Groups[1].Value } else { $m.Groups[2].Value }
-        $registries.Add(($n -replace '^twilight/', ''))
+        $registries.Add(($n -replace '^gloaming/', ''))
     }
 }
 Add-Ids registry ($registries | Sort-Object -Unique)
@@ -362,7 +362,7 @@ foreach ($pair in @(@('common', 'config/TFCommonConfig.java'), @('client', 'conf
 Add-Ids config_key @($configKeys.Keys) manual
 
 # en_us lang keys
-$lang = Get-Content (Join-Path $GenRes 'assets/twilightforest/lang/en_us.json') -Raw | ConvertFrom-Json -AsHashtable
+$lang = Get-Content (Join-Path $GenRes 'assets/gloamingforest/lang/en_us.json') -Raw | ConvertFrom-Json -AsHashtable
 Add-Ids lang @($lang.Keys | Sort-Object)
 
 # ---- ownership --------------------------------------------------------------------------------------
@@ -376,7 +376,7 @@ foreach ($k in 'block', 'item', 'entity', 'biome', 'structure', 'particle', 'sou
     'noise_settings', 'dimension', 'dimension_type', 'function') {
     if ($ids.Contains($k)) { Resolve-Rules $k $IdRules[$k] }
 }
-# TF's /twilightforest literals (units.<u>.gfSubcommands below adds GloamingForest's own)
+# upstream's /gloamingforest literals (units.<u>.gfSubcommands below adds GloamingForest's own)
 Resolve-Rules 'subcommand' $IdRules['subcommand']
 # map decorations, structure sets and structure types follow their structure
 $byStructure = { param($ref, $id) Owner-Of 'structure' $id }
@@ -423,7 +423,7 @@ foreach ($id in $ids['loot_table']) {
 
 # recipes: custom types follow the serializer (R4), vanilla types the output item
 function Get-ItemOwner([string]$full) {
-    if ($full -notmatch '^twilightforest:(.+)$') { return $null }
+    if ($full -notmatch '^gloamingforest:(.+)$') { return $null }
     $p = $Matches[1]
     foreach ($k in 'item', 'block_item', 'block', 'spawn_egg') { $o = Owner-Of $k $p; if ($o) { return $o } }
     return $null
@@ -433,14 +433,14 @@ foreach ($id in $ids['recipe']) {
     $type = [string]$doc['type']
     $o = $null
     foreach ($r in $rules.recipeRules) { if ((Get-GlobRegex $r[0]).IsMatch($id)) { $o = $r[1]; break } }
-    if (-not $o -and $type -match '^twilightforest:(.+)$') { $o = Owner-Of recipe_serializer $Matches[1]; if (-not $o) { $o = Owner-Of recipe_serializer ($Matches[1] + '_recipe') } }
+    if (-not $o -and $type -match '^gloamingforest:(.+)$') { $o = Owner-Of recipe_serializer $Matches[1]; if (-not $o) { $o = Owner-Of recipe_serializer ($Matches[1] + '_recipe') } }
     if (-not $o) {
         $res = $doc['result']
         $resultId = if ($res -is [string]) { $res } elseif ($res -is [hashtable]) { if ($res['id']) { $res['id'] } else { $res['item'] } } else { $null }
         if ($resultId) { $o = Get-ItemOwner ([string]$resultId) }
     }
     if (-not $o) {
-        foreach ($m in [regex]::Matches((Get-Content $recipeFiles[$id] -Raw), '"(twilightforest:[a-z0-9_/]+)"')) { $o = Get-ItemOwner $m.Groups[1].Value; if ($o) { break } }
+        foreach ($m in [regex]::Matches((Get-Content $recipeFiles[$id] -Raw), '"(gloamingforest:[a-z0-9_/]+)"')) { $o = Get-ItemOwner $m.Groups[1].Value; if ($o) { break } }
     }
     if ($o) { Set-Owner recipe $id $o } else { $unclaimed.Add("recipe`t$id") }
 }
@@ -449,24 +449,24 @@ foreach ($id in $ids['advancement']) {
     $o = $null
     if ($id -match '^(\w+):recipes/(?:[^/]+/)?(.+)$') {
         $o = Owner-Of recipe "$($Matches[1]):$($Matches[2])"
-        if (-not $o) { $o = Owner-Of recipe "twilightforest:$($Matches[2])" }
+        if (-not $o) { $o = Owner-Of recipe "gloamingforest:$($Matches[2])" }
         if (-not $o) { $o = 'F1'; $notes.Add("advancement $id unlocks an unknown recipe; owned by F1 (import)") }
     } else { $o = 'U14' }
     Set-Owner advancement $id $o
 }
 
-# tags: TF namespace by the tag rules, other namespaces are imported member lists (F1, R6)
+# tags: upstream namespace by the tag rules, other namespaces are imported member lists (F1, R6)
 foreach ($id in $ids['tag']) {
     $parts = $id.Split(':', 3)  # registry, namespace, path
     $o = $null
-    if ($parts[1] -ne 'twilightforest') { $o = 'F1' }
+    if ($parts[1] -ne 'gloamingforest') { $o = 'F1' }
     else {
         $probe = "$($parts[0]):$($parts[2])"
         foreach ($r in $rules.tagRules) { if ((Get-GlobRegex $r[0]).IsMatch($probe)) { $o = $r[1]; break } }
     }
     if ($o) { Set-Owner tag $id $o } else { $unclaimed.Add("tag`t$id") }
 }
-# twilight/* registries and their entries
+# gloaming/* registries and their entries
 Resolve-Rules 'registry' $rules.registryRules
 foreach ($id in $ids['registry_entry']) {
     $parts = $id.Split(':', 3)  # registry, namespace, path
@@ -572,43 +572,43 @@ foreach ($u in $rules.units.Keys) {
     foreach ($w in $prefixes) { Set-Owner worlddb "$w*" $u }
     if ($unit.ContainsKey('net')) { foreach ($c in $unit.net) { Set-Owner net $c $u } }
     if ($unit.ContainsKey('config')) { foreach ($c in $unit.config) { Set-Owner config_section $c $u } }
-    # GloamingForest's own /twilightforest subcommands (not TF literals: those go through ids.subcommand)
-    if ($unit.ContainsKey('subcommands')) { Write-Host "[owners] $u has 'subcommands': TF's literals are owned by ids.subcommand, GloamingForest additions go to 'gfSubcommands'" -ForegroundColor Red; exit 1 }
+    # GloamingForest's own /gloamingforest subcommands (not upstream literals: those go through ids.subcommand)
+    if ($unit.ContainsKey('subcommands')) { Write-Host "[owners] $u has 'subcommands': upstream's literals are owned by ids.subcommand, GloamingForest additions go to 'gfSubcommands'" -ForegroundColor Red; exit 1 }
     if ($unit.ContainsKey('gfSubcommands')) {
         foreach ($c in $unit.gfSubcommands) {
-            $problem = if ($tfSubcommands.Contains($c)) { "is TF's literal (owned through ids.subcommand)" }
+            $problem = if ($tfSubcommands.Contains($c)) { "is upstream's literal (owned through ids.subcommand)" }
                 elseif (($o = Owner-Of subcommand $c) -and $o -ne $u) { "is $o's already" }
             if ($problem) { Write-Host "[owners] $u gfSubcommands: '$c' $problem" -ForegroundColor Red; exit 1 }
             Set-Owner subcommand $c $u
         }
     }
     if ($unit.ContainsKey('e2e')) { foreach ($c in $unit.e2e) { Set-Owner e2e $c $u } }
-    # ids outside TF's namespace that a unit declares itself: {kind: [entry]}, an entry being the full
-    # id ("<ns>:<path>", mode gen) or {id, mode: gen|manual}. TF's own ids go through the rule tables.
+    # ids outside upstream's namespace that a unit declares itself: {kind: [entry]}, an entry being the full
+    # id ("<ns>:<path>", mode gen) or {id, mode: gen|manual}. upstream's own ids go through the rule tables.
     if ($unit.ContainsKey('ids')) {
         foreach ($k in $unit.ids.Keys) {
             foreach ($e in $unit.ids[$k]) {
                 $i = if ($e -is [Collections.IDictionary]) { [string]$e['id'] } else { [string]$e }
                 $m = if ($e -is [Collections.IDictionary] -and $e.Contains('mode')) { [string]$e['mode'] } else { 'gen' }
-                # lang: a translation key outside TF's en_us (e.g. a vanilla UI string a unit defines in
+                # lang: a translation key outside upstream's en_us (e.g. a vanilla UI string a unit defines in
                 # assets/lang/<locale>/<u>.json); gamerule: a rule name (GloamingForest's own rules, e.g.
-                # U14's announceAdvancements, have no namespace like TF's); trigger: a full id, and a
-                # twilightforest: one that TF does not define (a GloamingForest trigger on TF's bus, e.g.
-                # U14's flask_doses_reset); every other kind: a full id outside TF's namespace
+                # U14's announceAdvancements, have no namespace like upstream's); trigger: a full id, and a
+                # gloamingforest: one that upstream does not define (a GloamingForest trigger on upstream's bus, e.g.
+                # U14's flask_doses_reset); every other kind: a full id outside upstream's namespace
                 $bare = $k -eq 'gamerule' -and $i -match '^[A-Za-z][A-Za-z0-9_]*$'
-                # TF's triggers are kept by their path (the namespace is added when the rows are written):
-                # a twilightforest: trigger is declared by its path too, so TF's own and other units' collide
-                $tfTrigger = $k -eq 'trigger' -and $i -match '^twilightforest:([a-z0-9_./-]+)$'
+                # upstream's triggers are kept by their path (the namespace is added when the rows are written):
+                # a gloamingforest: trigger is declared by its path too, so upstream's own and other units' collide
+                $tfTrigger = $k -eq 'trigger' -and $i -match '^gloamingforest:([a-z0-9_./-]+)$'
                 if ($tfTrigger) { $i = $Matches[1] }
                 $declaredBy = $null
                 foreach ($d in $declared) { if ($d[0] -eq $k -and $d[1] -eq $i) { $declaredBy = $d; break } }
                 $tfOwn = ($bare -or $tfTrigger) -and $ids.Contains($k) -and $ids[$k].Contains($i) -and -not $declaredBy
                 $problem = if ($k -eq 'lang' -and $i -notmatch '^[A-Za-z0-9_.-]+$') { "is not a translation key ([A-Za-z0-9_.-]+)" }
-                    elseif ($k -eq 'lang' -and $lang.ContainsKey($i)) { "is a TF en_us key: the lang rules own it" }
+                    elseif ($k -eq 'lang' -and $lang.ContainsKey($i)) { "is an upstream en_us key: the lang rules own it" }
                     elseif ($k -ne 'lang' -and -not $bare -and -not $tfTrigger -and $i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
                     elseif ($declaredBy) { "is declared by $($declaredBy[2]) already" }
-                    elseif ($tfOwn) { "is TF's: the rule tables own TF ids" }
-                    elseif (-not $tfTrigger -and $i.StartsWith('twilightforest:')) { "is TF's: the rule tables own TF ids" }
+                    elseif ($tfOwn) { "is upstream's: the rule tables own upstream ids" }
+                    elseif (-not $tfTrigger -and $ids.Contains($k) -and $ids[$k].Contains($i)) { "is upstream's: the rule tables own upstream ids" }
                     elseif ($m -notin 'gen', 'manual') { "has mode '$m' (gen or manual)" }
                     elseif ($other = @($owner.Keys | Where-Object { $owner[$_].ContainsKey($i) -and $owner[$_][$i] -ne $u } | Select-Object -First 1)) { "is owned by $($owner[$other[0]][$i]) already ($($other[0]))" }
                 if ($problem) { Write-Host "[owners] $u ids.${k}: '$i' $problem" -ForegroundColor Red; exit 1 }
@@ -647,7 +647,7 @@ foreach ($kind in $ids.Keys) {
     $mode = if ($modes.ContainsKey($kind)) { $modes[$kind] } else { 'gen' }
     foreach ($id in $ids[$kind]) {
         if (-not $owner[$kind].ContainsKey($id)) { continue }
-        $full = if ($nsKinds -contains $kind) { if ($id.Contains(':')) { $id } else { "twilightforest:$id" } } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
+        $full = if ($nsKinds -contains $kind) { if ($id.Contains(':')) { $id } else { "gloamingforest:$id" } } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
         $m = if ($idModes.ContainsKey($kind) -and $idModes[$kind].ContainsKey($id)) { $idModes[$kind][$id] } else { $mode }
         $lines.Add("$kind`t$full`t$($owner[$kind][$id])`t$m")
     }
@@ -663,7 +663,7 @@ foreach ($p in $pathRows) {
     $pathOwners[$p.id] = $p.owner
 }
 $header = @(
-    '# docs/spec/owners.tsv: generated by tools/spec/owners.ps1 from TF 4.8 (9e40a75721c716b2fdf80c16d1058fe718825e9f) and tools/spec/owners.rules.json. Do not edit.',
+    '# docs/spec/owners.tsv: generated by tools/spec/owners.ps1 from upstream 4.8 (9e40a75721c716b2fdf80c16d1058fe718825e9f) and tools/spec/owners.rules.json. Do not edit.',
     "kind`tid`towner`tmode"
 )
 $text = (($header + $sorted) -join "`n") + "`n"

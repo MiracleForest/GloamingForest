@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFBlocks.java (canopy_bookshelf)
-//   src/main/java/twilightforest/data/tags/BlockTagGenerator.java (#minecraft:enchantment_power_provider)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFBlocks.java (canopy_bookshelf)
+//   src/main/java/gloamingforest/data/tags/BlockTagGenerator.java (#minecraft:enchantment_power_provider)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -10,7 +10,7 @@
 // counts every block of #minecraft:enchantment_power_provider at BOOKSHELF_OFFSETS (x, z in -2..2
 // on the ring, y 0..1) whose block halfway to the table is #minecraft:enchantment_power_transmitter
 // (replaceable). Bedrock's table counts its own bookshelves only (EnchantUtils::getBookCasePositions):
-// the TF members of the tag are added to that list, which the game counts for the enchantment
+// the upstream members of the tag are added to that list, which the game counts for the enchantment
 // costs and draws the table's glyph particles from.
 
 #include <algorithm>
@@ -31,14 +31,14 @@ namespace gf::feature::woodwork {
 
 namespace {
 
-/// A TF block of #minecraft:enchantment_power_provider (the vanilla ones are the game's own).
+/// An upstream block of #minecraft:enchantment_power_provider (the vanilla ones are the game's own).
 bool tfPowerProvider(std::string const& id) {
     return id.starts_with(kNs) && tags::has(tags::Registry::Block, "minecraft:enchantment_power_provider", id);
 }
 
 } // namespace
 
-/// The TF bookshelves around a table at `table` (Java's isValidBookShelf), as block positions.
+/// The upstream bookshelves around a table at `table` (Java's isValidBookShelf), as block positions.
 std::vector<BlockPos> tfBookshelvesAround(BlockSource& region, BlockPos const& table) {
     std::vector<BlockPos> out;
     for (int y = 0; y <= 1; ++y) {
@@ -60,7 +60,7 @@ std::vector<BlockPos> tfBookshelvesAround(BlockSource& region, BlockPos const& t
 
 namespace gf::feature::woodwork {
 
-// the game's table counts the TF bookshelves through the enchantment power extension
+// the game's table counts the upstream bookshelves through the enchantment power extension
 // (src/feature/ext/woodwork/EnchantPower.h: EnchantUtils::getBookCasePositions)
 void installBookshelves() {
     woodwork_ext::enchantpower::setProvider([](BlockSource& region, BlockPos const& table) { return tfBookshelvesAround(region, table); });

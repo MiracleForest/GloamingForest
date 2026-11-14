@@ -1,7 +1,7 @@
 #pragma once
 
 // Java-parity chunk density filling (net.minecraft.world.level.levelgen.NoiseChunk of 1.21.1,
-// without aquifers, ore veins and blending, which The Twilight Forest disables). Pure C++ (gf-core).
+// without aquifers, ore veins and blending, which The Gloaming Forest disables). Pure C++ (gf-core).
 //
 // Density::compute evaluates a density function at one point, where the NoiseChunk markers
 // (interpolated, flat_cache, cache_2d, cache_once, cache_all_in_cell) pass through, like Java's
@@ -12,7 +12,7 @@
 //     auto nc = gf::core::noise::NoiseChunk::fromJson(finalDensity, seed, resolver, {.minY = -32, .height = 256});
 //     std::vector<double> d = nc->fill(chunkX, chunkZ);   // index ((y - minY) * 16 + z) * 16 + x
 //
-// U2 (terrain) builds the TF terrain on it; a compiled NoiseChunk is immutable and thread-safe.
+// U2 (terrain) builds the upstream terrain on it; a compiled NoiseChunk is immutable and thread-safe.
 
 #include <cstdint>
 #include <memory>

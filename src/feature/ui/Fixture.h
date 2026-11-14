@@ -21,7 +21,7 @@ namespace gf::ui::fixture {
 
 /// The tag that opts a real player into the fixture's real-player steps (`/tag @s add gf_ui_fixture`).
 /// The client scenario adds it after its `ui.*` run and removes it at the end; the `ui.*` and full
-/// runs never touch an untagged player (rule R12), so `/twilightforest selftest` in a world with
+/// runs never touch an untagged player (rule R12), so `/gloamingforest selftest` in a world with
 /// real players leaves their position, inventory and screens alone.
 inline constexpr char kPlayerTag[] = "gf_ui_fixture";
 
@@ -54,7 +54,7 @@ void setHead(Player& player, ItemStack const& stack);
 /// remembered first (once until restorePlayers).
 void setArmorPiece(Player& player, int slot, ItemStack const& stack);
 /// The item data key (game::items::setData) of the armour the client fixture hides on its wearer
-/// (render::hideArmor; TF's emperor's cloth): the head step dresses the players in a chestplate with
+/// (render::hideArmor; upstream's emperor's cloth): the head step dresses the players in a chestplate with
 /// it and boots without it.
 inline constexpr char kHiddenArmorData[] = "gf_ui_hidden_armor";
 /// Puts every remembered player that is in the level back (helmet, armour, every remembered slot, position

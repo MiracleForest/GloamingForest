@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/block/CandelabraBlock.java
-//   src/main/java/twilightforest/block/entity/CandelabraBlockEntity.java
-//   src/main/java/twilightforest/components/item/CandelabraData.java
-//   src/main/java/twilightforest/block/LightableBlock.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/block/CandelabraBlock.java
+//   src/main/java/gloamingforest/block/entity/CandelabraBlockEntity.java
+//   src/main/java/gloamingforest/components/item/CandelabraData.java
+//   src/main/java/gloamingforest/block/LightableBlock.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U22 (lichdecor): the candelabra. The block entity's three candle slots live in BlockData
 // ({"candles": [candle block id | null] x 3}); the has_candle_N states mirror them. The item keeps
-// them as item data twilightforest:candelabra_data (a list of up to 3 ids, "minecraft:air" for an
+// them as item data gloamingforest:candelabra_data (a list of up to 3 ids, "minecraft:air" for an
 // empty slot, as CandelabraData's ordered list).
 //
 // Bedrock notes: the block has no waterlogged state (Bedrock's liquid layer stands in): a
@@ -56,7 +56,7 @@ namespace {
 
 namespace ext = gf::feature::ext::lichdecor;
 
-constexpr char kDataComponent[] = "twilightforest:candelabra_data";
+constexpr char kDataComponent[] = "gloamingforest:candelabra_data";
 constexpr char kDimKey[]        = "gf:lichdecor:dim_candelabras";
 
 int facingOf(Block const& b) {
@@ -287,16 +287,16 @@ ia::Result onUse(ia::UseOnContext const& c) {
         if (!c.firstEvent) return ia::Result::Consume;
         setLighting(*region, pos, Lighting::Dim);
         consumeOne(c.player, c.item);
-        playSound(*region, centre(pos), "block.twilightforest.candelabra.light", 1.0F, pickPitch());
-        eruptFlames(*region, pos, "twilightforest:dim_flame", filledOffsets(region->getBlock(pos)));
+        playSound(*region, centre(pos), "block.gloamingforest.candelabra.light", 1.0F, pickPitch());
+        eruptFlames(*region, pos, "gloamingforest:dim_flame", filledOffsets(region->getBlock(pos)));
         return ia::Result::Consume;
     }
-    bool scepter = !c.itemId.empty() && gf::tags::has(gf::tags::Registry::Item, "twilightforest:scepters", c.itemId);
+    bool scepter = !c.itemId.empty() && gf::tags::has(gf::tags::Registry::Item, "gloamingforest:scepters", c.itemId);
     if ((scepter || c.itemId == kEssence) && l == Lighting::Normal) {
         if (!c.firstEvent) return ia::Result::Consume;
         setLighting(*region, pos, Lighting::Ominous);
-        playSound(*region, centre(pos), "block.twilightforest.candelabra.ominous", 1.0F, pickPitch());
-        eruptFlames(*region, pos, "twilightforest:ominous_flame", filledOffsets(region->getBlock(pos)));
+        playSound(*region, centre(pos), "block.gloamingforest.candelabra.ominous", 1.0F, pickPitch());
+        eruptFlames(*region, pos, "gloamingforest:ominous_flame", filledOffsets(region->getBlock(pos)));
         return ia::Result::Consume;
     }
     // LightableBlock#tryLightCandles
@@ -378,7 +378,7 @@ void registerCandelabra() {
 
     // CandelabraBlock#getDrops: the candles drop separately, or under silk touch stay in the item
     gf::loot::addGlobalModifier("gf:lichdecor/candelabra_drops", [](std::vector<ItemStack>& loot, gf::loot::LootContext const& ctx, std::string const& tableId) {
-        if (tableId != "twilightforest:blocks/candelabra" || !ctx.region) return;
+        if (tableId != "gloamingforest:blocks/candelabra" || !ctx.region) return;
         auto base = std::find_if(loot.begin(), loot.end(), [](ItemStack const& s) { return game::items::idOf(s) == kCandelabra; });
         if (base == loot.end()) return;
         BlockPos pos{static_cast<int>(std::floor(ctx.origin.x)), static_cast<int>(std::floor(ctx.origin.y)), static_cast<int>(std::floor(ctx.origin.z))};

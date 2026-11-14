@@ -1,13 +1,14 @@
 # AGENTS.md
 
-GloamingForest is an unofficial port of **The Twilight Forest 4.8** (TeamTwilight/twilightforest,
-branch `1.21.1`, commit `9e40a75721c716b2fdf80c16d1058fe718825e9f`, MC 1.21.1) to Minecraft: Bedrock
-Edition, written as a LeviLamina native mod. It targets MC **1.26.51** / LeviLamina **26.51.7**,
+GloamingForest brings the Gloaming Forest to Minecraft: Bedrock Edition as a LeviLamina native mod. Its
+behaviour reference is the upstream Java source pinned in NOTICE (version 4.8, branch `1.21.1`, commit
+`9e40a75721c716b2fdf80c16d1058fe718825e9f`, MC 1.21.1), read through the upstream view
+(`tools/upstream/fetch.ps1`), which presents it under this project's names. It targets MC **1.26.51** / LeviLamina **26.51.7**,
 builds with xmake + clang-cl on Windows x64, and runs on **both** the dedicated server (BDS) and the
 client (local worlds through LeviLauncher): one code base, two builds (`--target_type=server|client`)
 per LeviLamina line (`--levilamina`, default 26.51.7; `GF_LL_VERSION` is 2651 for 26.51 in source guards).
 
-The bar: with the client mod installed, every feature, interaction and screen matches TF. Vanilla
+The bar: with the client mod installed, every feature, interaction and screen matches upstream. Vanilla
 Bedrock clients joining a BDS are best effort (fallbacks: forms, DDUI, lore, carriers, vanilla
 icons). The foundation is adapted from [Levitate](https://github.com/LiteLDev/Levitate) v0.1.0.
 
@@ -20,28 +21,28 @@ and the contract headers before you code. The plan's unit records are in
 
 | What | Licence | How GloamingForest uses it |
 |---|---|---|
-| TF code (Java) | LGPL-2.1-or-later | May be **translated** to C++ (keep the attribution header below). Behaviour reference for everything. |
-| TF textures, models, blockstates, lang | CC BY-NC-SA 4.0 | Reused **only through `tools/import`** (F1) into `assets/gen/import/**`; attribution in [NOTICE](NOTICE) and [assets/LICENSE](assets/LICENSE). A hand-made file derived from one (an edited texture, model, blockstate or text overriding the generated one, R3) stays CC BY-NC-SA 4.0 (ShareAlike): put it under a `tf-derived/` directory of your pack folder (`assets/pack/rp/textures/blocks/<unit>/tf-derived/x.png`) with a `tf-derived/SOURCES.json` mapping each file name to the TF file(s) it derives from (`{"x.png": "src/main/resources/assets/twilightforest/textures/block/x.png"}`). Assemble fails without the entry and lists the files in the pack's `tf-derived-sources.txt` next to `LICENSE-ASSETS.txt`. |
-| TF sounds, music (229 `.ogg`) and structure templates (274 `.nbt`) | **All Rights Reserved** | Never opened, decoded or copied. Sounds come from the synth toolkit (`tools/sounds`, F3), templates are original `.gft` designs (`tools/structures`, F7). The TF checkout excludes them; `tools/ci/arr-guard.ps1` rejects matching blobs. |
+| Upstream code (Java) | LGPL-2.1-or-later | May be **translated** to C++ (keep the attribution header below). Behaviour reference for everything. |
+| Upstream textures, models, blockstates, lang | CC BY-NC-SA 4.0 | Reused **only through `tools/import`** (F1) into `assets/gen/import/**`; attribution in [NOTICE](NOTICE) and [assets/LICENSE](assets/LICENSE). A hand-made file derived from one (an edited texture, model, blockstate or text overriding the generated one, R3) stays CC BY-NC-SA 4.0 (ShareAlike): put it under a `tf-derived/` directory of your pack folder (`assets/pack/rp/textures/blocks/<unit>/tf-derived/x.png`) with a `tf-derived/SOURCES.json` mapping each file name to the upstream file(s) it derives from (`{"x.png": "src/main/resources/assets/gloamingforest/textures/block/x.png"}`). Assemble fails without the entry and lists the files in the pack's `tf-derived-sources.txt` next to `LICENSE-ASSETS.txt`. |
+| Upstream sounds, music (229 `.ogg`) and structure templates (274 `.nbt`) | **All Rights Reserved** | Never opened, decoded or copied. Sounds come from the synth toolkit (`tools/sounds`, F3), templates are original `.gft` designs (`tools/structures`, F7). The upstream checkout excludes them; `tools/ci/arr-guard.ps1` rejects matching blobs. |
 | Levitate v0.1.0 | LGPL-3.0-or-later | The foundation; adapted files say so in their first line. |
 | MoreDimensions | LGPL-3.0-or-later | Reference for the custom dimension (spike S1). |
 | GloamingForest | LGPL-3.0-or-later | [COPYING.LESSER](COPYING.LESSER), [COPYING](COPYING). |
 
-Read TF **only** from the shared local checkout (rule R24):
+Read upstream **only** from the shared local checkout (rule R24):
 
 ```powershell
-pwsh tools/tf/fetch.ps1            # -> %LOCALAPPDATA%\gf-tf (read-only, sparse, no .ogg/.nbt, sha verified)
+pwsh tools/upstream/fetch.ps1            # -> %LOCALAPPDATA%\gf-upstream\view (read-only, sparse, no .ogg/.nbt, sha verified)
 ```
 
-### Attribution header for translated TF code
+### Attribution header for translated upstream code
 
-Every source file that translates TF code starts with this header (one `//` line per TF file):
+Every source file that translates upstream code starts with this header (one `//` line per upstream file):
 
 ```cpp
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/<path>/<File>.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/<path>/<File>.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 ```
@@ -69,12 +70,12 @@ attribution to code, commits or PRs.
 | `assets/lang/<locale>/<unit>.json` | Mod strings (`tr` / `ctr`), merged into `lang/<locale>.json` for the 29 Bedrock locales. |
 | `assets/data/<kind>/<unit>.json` | Unit data (families, containers, landmarks, ...) -> `<mod>/data/gf/<kind>/`. |
 | `assets/tags/<registry>/<ns>/<path>.d/<unit>.json` | Union fragments adding tag members (rule R6). |
-| `assets/structures/<unit>/**` | Original `.gft.json` templates -> `<mod>/structures/twilightforest/`. |
+| `assets/structures/<unit>/**` | Original `.gft.json` templates -> `<mod>/structures/gloamingforest/`. |
 | `assets/test/` | The `gf_test:*` fixture packs and data (development builds only). |
 | `tools/build.ps1` | The only build entry point (throttle slot, both target types, gtest). |
 | `tools/lib/Throttle.psm1` | Machine-wide build / BDS / client slots. |
 | `tools/xmake/assemble.lua`, `merges.json` | Post-build assembly and checks (`tools/assemble.ps1 -Check` without building). |
-| `tools/tf/fetch.ps1` | The shared TF checkout. |
+| `tools/upstream/fetch.ps1` | The shared upstream checkout. |
 | `tools/spec/owners.ps1` + `owners.rules.json` | Generates `docs/spec/owners.tsv`. |
 | `tools/ci/` | `ownership.ps1`, `arr-guard.ps1` (+ `arr-blobs.txt`). |
 | `tools/e2e/` | Server and client harnesses ([tools/e2e/README.md](tools/e2e/README.md)). |
@@ -90,30 +91,30 @@ Output: `bin/<target_type>/GloamingForest/` with `GloamingForest.dll`, `manifest
 
 These are the cross-unit rules of the plan, verbatim. Every unit follows all of them.
 
-- R1 Ids: every id is TF's own twilightforest:<path> and exists from W0 (F1 skeleton). docs/spec/owners.tsv lists the owner of every id of every kind; a unit edits only files of ids it owns. Block-state names/values are frozen in docs/spec/blockstates.md; later changes may only add.
+- R1 Ids: every id is upstream's own gloamingforest:<path> and exists from W0 (F1 skeleton). docs/spec/owners.tsv lists the owner of every id of every kind; a unit edits only files of ids it owns. Block-state names/values are frozen in docs/spec/blockstates.md; later changes may only add.
 - R2 Cross-unit references are strings only (block/item/entity/loot/feature/structure/sound/particle/tag ids). No W1 unit includes another W1 unit's headers; integration goes only through W0 contracts and the trigger bus.
 - R3 Owned paths per unit <u>: src/feature/<u>/**, src/client/<u>/** (#ifdef GF_CLIENT), src/core/<u>/** + tests/<u>/**, assets/pack/{bp,rp}/**/<u>/**, every *.d/<u>.json fragment and texts.d/<locale>/<u>.lang, assets/data/<kind>/<u>.json, assets/structures/<u>/**, assets/lang/<locale>/<u>.json, tools/{import/overrides,sounds/recipes}/<u>.json, tools/structures/<u>/**, tools/e2e/{server,client}/scenarios/<u>*.ps1, docs/units/<u>.md. assets/gen/{import,geo,audio}/<u>/** may only be regenerated by the tools (-Unit <u>), never hand-edited; a manual file with the same id overrides the generated one.
 - R4 Recipes: vanilla-type recipes (crafting, smelting, stonecutting, smithing) belong to the owner of the output item; custom-type recipes belong to the machine/type owner (drying U4, uncrafting U13, travellers U11, map cloning U13, casket/scepter/essence/emperors cloth U9, moonworm queen U8, no_template_smithing U7).
 - R5 Loot: block loot to the block owner, entity loot to the entity owner, chest loot to the unit that places the chest; shared tables (useless, just_bones, suspicious_stew, items/*) are W0 (F10).
-- R6 Tags live with the member: TF tag JSON is imported W0 data; a unit adds members only through union fragments assets/tags/<registry>/<tag>.d/<u>.json. Behaviour on another unit's blocks is attached only by tag matchers (e.g. mazestone tag for the mazebreaker rule, thorns tag for the lamp of cinders).
+- R6 Tags live with the member: upstream tag JSON is imported W0 data; a unit adds members only through union fragments assets/tags/<registry>/<tag>.d/<u>.json. Behaviour on another unit's blocks is attached only by tag matchers (e.g. mazestone tag for the mazebreaker rule, thorns tag for the lamp of cinders).
 - R7 Data maps belong to their consumer (crumble_horn and transformation_powder U8, ore_map_color and magic_map_color U13, ominous_fire U22, parrot_imitations U16); compostables/furnace_fuels rows follow the item owner.
 - R8 One hook per engine event, owned by W0: no unit hooks GameMode, interact/use/destroy events, Mob::hurt, die, dropAllItems, block ticks, LocalPlayer movement, LevelRenderer or sky/fog functions directly; register with interactions, blockevents, combat, death, loot, entity, client.* instead.
-- R9 Translation keys belong to the feature owner (import partitions the 2061 en_us keys; book keys F6, death messages F10); others use tr(key, 'English fallback'). Duplicate keys in any merged fragment fail the build; the 29 Bedrock locales are generated from TF's lang files.
-- R10 Sound events and particles: each event/particle has exactly one owner in owners.tsv and is played/emitted by id through fx (a missing one is silent). Owners refine audio only through tools/sounds/recipes/<u>.json; nobody opens TF .ogg or .nbt (the shared checkout excludes them; CI arr-guard rejects matching hashes).
-- R11 Licensing: translated TF code keeps the LGPL attribution header naming the TF source file; textures/models/lang only via tools/import (CC BY-NC-SA 4.0, attribution in assets/LICENSE and NOTICE); sounds, music and structure templates are original (synth toolkit, template DSL) and may follow TF's footprint, slots, spawners, chests and loot from the spec and the LGPL template definitions.
+- R9 Translation keys belong to the feature owner (import partitions the 2061 en_us keys; book keys F6, death messages F10); others use tr(key, 'English fallback'). Duplicate keys in any merged fragment fail the build; the 29 Bedrock locales are generated from upstream's lang files.
+- R10 Sound events and particles: each event/particle has exactly one owner in owners.tsv and is played/emitted by id through fx (a missing one is silent). Owners refine audio only through tools/sounds/recipes/<u>.json; nobody opens upstream .ogg or .nbt (the shared checkout excludes them; CI arr-guard rejects matching hashes).
+- R11 Licensing: translated upstream code keeps the LGPL attribution header naming the upstream source file; textures/models/lang only via tools/import (CC BY-NC-SA 4.0, attribution in assets/LICENSE and NOTICE); sounds, music and structure templates are original (synth toolkit, template DSL) and may follow upstream's footprint, slots, spawners, chests and loot from the spec and the LGPL template definitions.
 - R12 Selftests: prefix <u>.*; unit U<n> owns testPos dx 100n..100n+99, W0b unit F<k> owns 5000+100k..5000+100k+99, W2 9000+; tests depend only on W0 plus the unit itself (progression::grant, landmark::forceStart, skeleton ids, fixtures) and must pass inside the 'full' run.
-- R13 Config: one GF_REGISTER_CONFIG section per unit named after it; every TF config key (TFCommonConfig ~35, TFClientConfig ~21) is mapped to exactly one section in docs/spec/config.md; shared values (boss drop chests, multiplayer adjuster, portal) live in W0 sections.
-- R14 Commands and functions: every /twilightforest subcommand and datapack function has one owner in owners.tsv, spelled as TF's literal (tp F4, center/info/conquer (+ reactivate)/genbook F6, structure_util F7, map_locator/biomepng U13, shield U9, sinister_spawner U22, travellers_gear U11); GloamingForest additions: selftest/stubs/config/reload F0, locate/place/generatebook (an alias of genbook) F6, gamerule F10, structure_util place/capture/jigsaw/templates/piece/outline/pending_probe/scale_probe F7 (docs/spec/README.md, Subcommands).
+- R13 Config: one GF_REGISTER_CONFIG section per unit named after it; every upstream config key (TFCommonConfig ~35, TFClientConfig ~21) is mapped to exactly one section in docs/spec/config.md; shared values (boss drop chests, multiplayer adjuster, portal) live in W0 sections.
+- R14 Commands and functions: every /gloamingforest subcommand and datapack function has one owner in owners.tsv, spelled as upstream's literal (tp F4, center/info/conquer (+ reactivate)/genbook F6, structure_util F7, map_locator/biomepng U13, shield U9, sinister_spawner U22, travellers_gear U11); GloamingForest additions: selftest/stubs/config/reload F0, locate/place/generatebook (an alias of genbook) F6, gamerule F10, structure_util place/capture/jigsaw/templates/piece/outline/pending_probe/scale_probe F7 (docs/spec/README.md, Subcommands).
 - R15 Net: channels are <u>.<name>, one client handler per channel; server-to-client data goes only over the companion protocol; vanilla clients must never receive companion packets.
 - R16 World data keys gf:<u>:...; never keep Player* or block pointers across ticks; defer world edits from cancelled interactions to the next tick.
-- R17 Unknown ids at runtime are skipped with one warning per id; assemble fails on dangling twilightforest: references in BP/data; W2 runs a registered-but-unimplemented report.
+- R17 Unknown ids at runtime are skipped with one warning per id; assemble fails on dangling gloamingforest: references in BP/data; W2 runs a registered-but-unimplemented report.
 - R18 W0 headers are immutable in W1. A needed extension goes into src/feature/ext/<u>/ (new files only), is called out in the PR, and is folded by A8 in W2b.
 - R19 Structures: procedural pieces are translated exactly; template-backed pieces use original .gft templates validated by tools/structures/build.ps1 -Check against the imported template definitions; every structure has a golden volume hash selftest reviewed once with screenshots.
 - R20 Bosses and trophies: boss lifecycle, bar, death chest, conquest and generic spawner come from the F8 boss kit; U5 owns all trophy/spawner/banner-pattern/miniature blocks; each boss unit registers boss::registerSpawner for its spawner block id and drops trophies through its loot table.
-- R21 Advancements: U14 owns all 45 advancement JSONs and their criteria; units fire their TF triggers by string (progression::trigger) and never award advancements directly; recipe unlocks are generated into recipe JSON by F1.
+- R21 Advancements: U14 owns all 45 advancement JSONs and their criteria; units fire their upstream triggers by string (progression::trigger) and never award advancements directly; recipe unlocks are generated into recipe JSON by F1.
 - R22 Both builds must pass (pwsh tools/build.ps1 -Target all -Tests) and the unit's server + client e2e scenario must pass before the PR; every e2e also runs the remote-vanilla variant when the unit has a vanilla fallback.
 - R23 Builds and e2e only through tools/build.ps1 and tools/e2e/*/run.ps1, which take Throttle slots; never run xmake or BDS directly outside a slot.
-- R24 Read TF only from the shared local checkout (tools/tf/fetch.ps1), not through the GitHub API (rate limits).
+- R24 Read upstream only from the shared local checkout (tools/upstream/fetch.ps1), not through the GitHub API (rate limits).
 - R25 PR title 'U<n>: <imperative summary>'; tools/ci/ownership.ps1 -Unit <u> must pass (the diff touches only owned paths plus src/feature/ext/<u>/).
 
 ## Contracts
@@ -121,27 +122,27 @@ These are the cross-unit rules of the plan, verbatim. Every unit follows all of 
 Every W0 contract is a documented header (or a tool entry point) written by F0 with a neutral
 stub (`GF_STUB`, `src/core/Stub.h`: the first call logs `<name>: not implemented (contract stub)`).
 The W0b unit that owns the contract replaces the stub `.cpp` (or the tool script); the header stays
-F0's and is immutable from W1 on (R18). `/twilightforest stubs` lists the stubs a world called.
+F0's and is immutable from W1 on (R18). `/gloamingforest stubs` lists the stubs a world called.
 
 | Contract | Owner | Header / entry point | API |
 |---|---|---|---|
-| mod | F0 (W0a) | `src/mod/{Module,Config,Commands,I18n,Log}.h, src/selftest/SelfTest.h, src/client/Client.h, src/core/Holiday.h` | GF_REGISTER_MODULE(T) / GF_REGISTER_MODULE_ORDERED(T,n); GF_REGISTER_CONFIG("<u>", T) -> config/<u>.json, gf::config::get<T>(), /twilightforest config; GF_REGISTER_SUBCOMMAND(fn) under /twilightforest (aliases /tf, /tffeature); GF_REGISTER_SELFTEST("<u>.<case>", fn); gf::tr(key, fallback, args...), gf::trFor(player, ...), gf::client::ctr(...); gf::log(); gf::core::holiday::isHalloweenWeek(). |
+| mod | F0 (W0a) | `src/mod/{Module,Config,Commands,I18n,Log}.h, src/selftest/SelfTest.h, src/client/Client.h, src/core/Holiday.h` | GF_REGISTER_MODULE(T) / GF_REGISTER_MODULE_ORDERED(T,n); GF_REGISTER_CONFIG("<u>", T) -> config/<u>.json, gf::config::get<T>(), /gloamingforest config; GF_REGISTER_SUBCOMMAND(fn) under /gloamingforest; GF_REGISTER_SELFTEST("<u>.<case>", fn); gf::tr(key, fallback, args...), gf::trFor(player, ...), gf::client::ctr(...); gf::log(); gf::core::holiday::isHalloweenWeek(). |
 | db+net | F0 (W0a) | `src/game/WorldDb.h, src/feature/net/Net.h` | gf::game::db::{get,put,erase}("gf:<u>:..."), db::onWorldReady/onWorldSave/onWorldClosed; gf::net::send(Player&, "<u>.<name>", json), net::on(channel, fn), net::onCompanionJoined(fn), net::isCompanion(Player const&), net::client::on(channel, fn). |
 | interactions | F0 (W0a) | `src/feature/common/Interactions.h` | interactions::onUseOn/onUse/onDestroy/onStartDestroy/onPlace/onUnusedUseOn/onDestroyed/onInteract/onAttack(Match{block\|item\|entity id or Match::tag(id)}, fn, priority) -> Pass\|Consume\|Deny (first non-Pass by priority wins; F6 protection at Highest); nextTick(fn); mutableItem(ctx.item). |
 | blockdata+redstone | F0 (W0a) | `src/feature/common/{BlockData,Redstone}.h` | blockdata::get/set(region, pos, key, json), onRotate(key, fn); redstone::power(region, pos) 0..15, watch(pos, fn), registerEmitter(blockId, fn), registerAnalog(blockId, fn -> optional<int>). |
-| selftest | F0 (W0a) | `src/selftest/SelfTest.h (fixtures: assets/test)` | ctx.player(), spawnPlayer(), testPos(dx), flatArea(dx, size), inTwilight(), setBlock(pos, id, states), cleanupBlock, give(id, n), co_await ticks(n), co_await ensureLoaded(pos), check/require/fail/info, captureBossEvent(), snapshotVolume(box) -> hash; selftest::runServerCommand(command, dim, CommandPermissionLevel) -> {ok, successCount, messages}; fixture ids gf_test:* in assets/test. |
-| assemble | F0 (W0a) | `tools/xmake/{assemble.lua,merges.json}, tools/assemble.ps1 -Check` | tools/xmake/merges.json entries {glob, out, wrapper, mode: object\|union\|lang\|categories}; layers assets/gen/{import,geo,audio}/** then assets/pack/** (manual wins per id; duplicates inside a layer fail); rp/sounds.json.d/<u>.json -> sounds.json merged per id of block_sounds, entity_sounds.entities, individual_event_sounds.events, individual_named_sounds.sounds, interactive_sounds.{block_sounds,entity_sounds.entities} (any other key fails); checks: integer block states, permutation budget, dangling twilightforest: references (tag/tags/generates_on values are tags: a recipe's are item tags, generates_on and matching_block_tag/tag_match are block tags, others any registry; an item's minecraft:tags and a Bedrock recipe's station tags are not references, and the minecraft:tags of BP items count as item tags; tools/import/known-ids.json ids known by kind, its tfDangling references are warnings), every pack file has an owner, a lang key with an owners.tsv row only in its owner's assets/lang/<locale>/<u>.json (R9), ARR hash guard; lang -> 29 Bedrock locales. |
+| selftest | F0 (W0a) | `src/selftest/SelfTest.h (fixtures: assets/test)` | ctx.player(), spawnPlayer(), testPos(dx), flatArea(dx, size), inGloaming(), setBlock(pos, id, states), cleanupBlock, give(id, n), co_await ticks(n), co_await ensureLoaded(pos), check/require/fail/info, captureBossEvent(), snapshotVolume(box) -> hash; selftest::runServerCommand(command, dim, CommandPermissionLevel) -> {ok, successCount, messages}; fixture ids gf_test:* in assets/test. |
+| assemble | F0 (W0a) | `tools/xmake/{assemble.lua,merges.json}, tools/assemble.ps1 -Check` | tools/xmake/merges.json entries {glob, out, wrapper, mode: object\|union\|lang\|categories}; layers assets/gen/{import,geo,audio}/** then assets/pack/** (manual wins per id; duplicates inside a layer fail); rp/sounds.json.d/<u>.json -> sounds.json merged per id of block_sounds, entity_sounds.entities, individual_event_sounds.events, individual_named_sounds.sounds, interactive_sounds.{block_sounds,entity_sounds.entities} (any other key fails); checks: integer block states, permutation budget, dangling gloamingforest: references (tag/tags/generates_on values are tags: a recipe's are item tags, generates_on and matching_block_tag/tag_match are block tags, others any registry; an item's minecraft:tags and a Bedrock recipe's station tags are not references, and the minecraft:tags of BP items count as item tags; tools/import/known-ids.json ids known by kind, its tfDangling references are warnings), every pack file has an owner, a lang key with an owners.tsv row only in its owner's assets/lang/<locale>/<u>.json (R9), ARR hash guard; lang -> 29 Bedrock locales. |
 | owners | F0 (W0a) | `docs/spec/owners.tsv, tools/spec/owners.ps1, tools/ci/ownership.ps1` | docs/spec/owners.tsv columns kind, id-or-glob, owner, mode(gen\|manual); generated by tools/spec/owners.ps1 (-Check in CI); tools/ci/ownership.ps1 -Unit <u> [-Base <ref>, default origin/main, main without a remote] fails if the diff touches unowned paths. |
 | import | F1 | `tools/import/run.ps1` | pwsh tools/import/run.ps1 -Kinds textures,models,blockstates,lang,tags,loot,recipes,advancements,worldgen,datamaps,registries,particles,sounds,skeleton,catalog,families [-Unit <u>] [-Check]; overrides tools/import/overrides/<u>.json (drop, rename, JSON-pointer patch); output assets/gen/import/<u>/**; docs/spec/blockstates.md. |
 | geo | F2 | `tools/models/{convert,attachable}.ps1` | pwsh tools/models/convert.ps1 -Java <ModelClass> [-Unit <u>] -> assets/gen/geo/<u>/{models/entity/<id>.geo.json, bones/<id>.json, animations/<id>.base.json}; tools/models/attachable.ps1 -Item <id> for armor/gear/trophy heads. |
-| synth | F3 | `tools/sounds/synth.ps1` | pwsh tools/sounds/synth.ps1 -Unit <u> [-Check]: tools/sounds/recipes/<u>.json {event: {category, subtitle, variants:[{patch, params, seed, volume, pitch}]}} -> assets/gen/audio/<u>/sounds/**.ogg + sound_definitions fragment; tools/sounds/music/<track>.json (tracker) -> .ogg; never reads TF audio. |
-| template | F7 | `tools/structures/build.ps1` | Template file assets/structures/<u>/<path>.gft.json {size, palette, blocks (RLE), markers, jigsaw connectors, entities}; pwsh tools/structures/build.ps1 -Unit <u> builds *.gfs.ps1 DSL scripts and -Check validates against the 205 imported template definitions; /tf structure_util place <template_id> [rotation] [mirror] (at your feet). |
-| world | F4 | `src/feature/dimension/World.h` | gf::world::{twilight(), isTwilight(Dimension const&), teleport(Player&, DimensionType, Vec3, float yaw), coordinateScale(), fixedTime()}; gf::portal::{tryActivate(BlockSource&, BlockPos), onTeleported(fn), destinationFor(Player const&)}; gamerules playersTfPortalDefaultDelay / playersTfPortalCreativeDelay. |
+| synth | F3 | `tools/sounds/synth.ps1` | pwsh tools/sounds/synth.ps1 -Unit <u> [-Check]: tools/sounds/recipes/<u>.json {event: {category, subtitle, variants:[{patch, params, seed, volume, pitch}]}} -> assets/gen/audio/<u>/sounds/**.ogg + sound_definitions fragment; tools/sounds/music/<track>.json (tracker) -> .ogg; never reads upstream audio. |
+| template | F7 | `tools/structures/build.ps1` | Template file assets/structures/<u>/<path>.gft.json {size, palette, blocks (RLE), markers, jigsaw connectors, entities}; pwsh tools/structures/build.ps1 -Unit <u> builds *.gfs.ps1 DSL scripts and -Check validates against the 205 imported template definitions; /gloamingforest structure_util place <template_id> [rotation] [mirror] (at your feet). |
+| world | F4 | `src/feature/dimension/World.h` | gf::world::{gloaming(), isGloaming(Dimension const&), teleport(Player&, DimensionType, Vec3, float yaw), coordinateScale(), fixedTime()}; gf::portal::{tryActivate(BlockSource&, BlockPos), onTeleported(fn), destinationFor(Player const&)}; gamerules playersTfPortalDefaultDelay / playersTfPortalCreativeDelay. |
 | worldgen | F5 | `src/feature/worldgen/Worldgen.h, src/core/jrand/JRand.h, src/core/noise/Noise.h` | gf::worldgen::{setBiomeSource(BiomeSourceFn), biomeAt(BlockPos), mainBiomeAt(int bx, int bz), setTerrain(TerrainProvider), setSurface(SurfaceProvider), registerCarver(id, CarverFn), registerBlanket(id, BlanketFn), addStage(Stage, id, order, ChunkFn), seed()}; gf::core::jrand / gf::core::noise (Xoroshiro128++, LegacyRandom, WorldgenRandom, Perlin/Simplex/Normal noise, density evaluator). |
 | features | F5 | `src/feature/features/Features.h` | gf::features::{registerType(id, FeatureFn), registerPlacement(id, PlacementFn), registerTrunkPlacer/registerFoliagePlacer/registerTreeDecorator/registerRootPlacer/registerStateProvider(id, fn), place(id, WorldGenRegion&, BlockPos, Random&) -> bool, placeJson(json, ...), LargeWriter (cross-chunk queue)}; built-in vanilla types + weighted_list, avoid_landmark, chunk_center. |
 | spawn | F5 | `src/feature/spawn/Spawn.h` | gf::spawn::{registerPlacement(entityId, PlacementRule, PredicateFn = {}), spawnMob(BlockSource&, entityId, Vec3, SpawnReason, InitFn = {}) -> Actor*, setBiomeSpawns(biomeId, Table), onSpecialSpawn(fn)}; controlled spawns read from landmark descriptors. |
 | landmark | F6 | `src/core/landmark/Landmark.h, src/feature/landmark/Landmark.h` | gf::core::landmark::{nearestCenter(cx, cz), chunkHasCenter(cx, cz), pickVariety(seed, cx, cz), pickForChunk(seed, cx, cz, BiomeAtFn)} (pure); gf::landmark::{descriptor(key), registerGenerator(key, Generator{layout, terraform?, spawnIndex?, pieceProtected?}), startAt(dim, pos), startsIntersecting(dim, ChunkPos), isConquered(Start const&), setConquered(dim, pos, key, bool) (fires structure_cleared), isProtectedFor(Player const&, pos), trySpawnHint(Player&, Start const&, pos), generateAt(key, BlockSource&, pos), forceStart(key, GlobalPos), enforcedProgression(), addTerraformer(key, fn), decorationAllowed(ChunkPos, DecoKind)}. |
-| structure | F7 | `src/feature/structure/Structure.h`, `src/feature/structure/bases/{Component,ComponentOld,TemplatePieces,Maze,HollowHill,Tower}.h` | gf::structure::Piece {bbox, orientation, mirror, placeBlock(x, y, z, state-by-name), getBlock, fill, fillAir, randomFill(selector), placeChest(blockId, tableId), placeSpawner(entityId), placeTemplate(id, origin, Settings)}; registerPieceType(id, Factory); bases TFMaze, HollowHillComponent, TowerWing family (16 classes), TFStructureComponentOld/Template, TwilightTemplate/DoubleTemplate/Jigsaw pieces; templates::{get, place}; registerProcessor(id, fn); registerMarkerHandler(id, fn); palettes::apply; selectors::get(id); jigsaw::assemble(pool, origin, depth, rng); speleothems::place(region, pos, configId, rng, hanging). |
+| structure | F7 | `src/feature/structure/Structure.h`, `src/feature/structure/bases/{Component,ComponentOld,TemplatePieces,Maze,HollowHill,Tower}.h` | gf::structure::Piece {bbox, orientation, mirror, placeBlock(x, y, z, state-by-name), getBlock, fill, fillAir, randomFill(selector), placeChest(blockId, tableId), placeSpawner(entityId), placeTemplate(id, origin, Settings)}; registerPieceType(id, Factory); bases TFMaze, HollowHillComponent, TowerWing family (16 classes), TFStructureComponentOld/Template, GloamingTemplate/DoubleTemplate/Jigsaw pieces; templates::{get, place}; registerProcessor(id, fn); registerMarkerHandler(id, fn); palettes::apply; selectors::get(id); jigsaw::assemble(pool, origin, depth, rng); speleothems::place(region, pos, configId, rng, hanging). |
 | entity | F8 | `src/feature/entity/Entity.h` | gf::entity::{registerType(id, Behaviour{onSpawn, tick, aiStep, hurt, die, save, load, interact}), data(Actor&, key) -> json&, sync(Actor&, key), setProperty(Actor&, name, value), addGoal(Mob&, prio, Goal), addTargetGoal(...), goals::{charge, breath, flockToSameKind, panicOnFlockDeath, avoidAny, goHome, alwaysWatchTarget, randomLookIfBored, simplifiedAttack}, setMoveControl(Mob&, kind\|fn), setHome(Mob&, GlobalPos, radius), home(Mob const&), addPart(Mob&, partId, size, offsetFn) -> PartHandle, mount::{grab(Mob&, Player&), throwRider(Mob&, Vec3)}, addTargetFilter(fn), seedForTest(Actor&, seed)}. |
 | projectile | F8 | `src/feature/projectile/Projectile.h` | gf::projectile::{registerType(id, Spec{gravity, drag, onHitEntity, onHitBlock, tick}), shoot(Actor& shooter, id, Vec3 dir, speed, inaccuracy, json init = {}) -> Actor*, addSteering(SteeringFn)}. |
 | boss | F8 | `src/feature/boss/Boss.h` | gf::boss::{registerBoss(BossSpec{entityId, homeStructure, lootTable, deathChestBlock, bar{rgb, darken, fog}, deathTicks}), registerSpawner(SpawnerSpec{blockId, entityId, range = 9, particle, spawnFn}), bar(Mob&), setMinion(Actor&, bool), isMinion(Actor const&), participants(Mob const&), trophyVariant(blockId) -> {sound, volume, pitch, particle, comparator}}; config section 'bosses'. |
@@ -154,11 +155,11 @@ F0's and is immutable from W1 on (R18). `/twilightforest stubs` lists the stubs 
 | loot | F10 | `src/feature/loot/Loot.h` | gf::loot::{roll(tableId, LootContext const&) -> vector<ItemStack>, registerFunction(id, fn), registerCondition(id, fn), addGlobalModifier(id, fn), placeContainer(BlockSource&, pos, blockId, facing, tableId, seed), onEntityDrops(fn)}. |
 | inventory | F10 | `src/feature/inventory/Inventory.h` | gf::inventory::{registerBlock(blockId, Handler{slots, get, set, insert, extract, setLootTable, open}), find(BlockSource&, pos) -> optional<Handler>, openChestLike(Player&, GlobalPos, rows, titleKey)}; data-declared containers assets/data/containers/<u>.json; backend chosen by spike S3. |
 | progression | F10 | `src/feature/progression/Progression.h` | gf::progression::{has(Player const&, adv), grant, revoke, done, trigger(Player&, triggerId, json = {}), onTrigger(triggerId, fn), onGranted(fn), showMissing(Player&, adv), events::{onInventoryChanged, onKilled, onConsumed, onDimensionChanged, onBiomeEntered, onTick}}; progression::client::{has(adv), enforced(), biomeLocked(BiomeId)}. |
-| rules+fx | F10 | `src/feature/gamerules/GameRules.h, src/feature/fx/Fx.h` | gf::gamerules::{registerBool/registerInt(id, default), get, set} (+ /tf gamerule; tfEnforcedProgression, portal delays); gf::fx::{particle(Dimension&, id, Vec3 pos, Vec3 vel = {}, count = 1, json params = {}), sound(Dimension&, event, Vec3, vol, pitch), soundTo(Player&, event, vol, pitch)}. |
+| rules+fx | F10 | `src/feature/gamerules/GameRules.h, src/feature/fx/Fx.h` | gf::gamerules::{registerBool/registerInt(id, default), get, set} (+ /gloamingforest gamerule; tfEnforcedProgression, portal delays); gf::fx::{particle(Dimension&, id, Vec3 pos, Vec3 vel = {}, count = 1, json params = {}), sound(Dimension&, event, Vec3, vol, pitch), soundTo(Player&, event, vol, pitch)}. |
 | families+blockevents | F11 | `src/feature/families/{BlockEvents,Signs}.h` | assets/data/families/<u>.json [{id, family: stairs\|slab\|fence\|fence_gate\|wall\|door\|trapdoor\|button\|pressure_plate\|pane\|pillar\|log\|wood\|leaves\|sapling\|potted\|sign\|hanging_sign\|chest\|trapped_chest\|horizontal\|directional\|waterloggable\|snowloggable\|climbable\|lightable\|connected_texture, params}] -> BP JSON at assemble when no manual file; gf::blockevents::{onRandomTick, onNeighborChanged, onEntityInside, onSteppedOn, onProjectileHit, onPlaced, onRemoved}(id or tag, fn); gf::signs::{text(pos), setText(pos, lines)}. |
-| client.ui | F12 | `src/client/ui/Ui.h, src/feature/ui/Ui.h` | gf::client::screen::registerScreen(type, Factory) (ContainerScreen base, TF GUI skin); hud::addLayer(id, order, DrawFn); toast::show(ToastSpec{iconItem, titleKey, bodyKey, ms}); tooltip::add(itemId, fn); server side gf::ui::{form(...), ddui(...), containerTitleSkin(titleKey, skinId)} for vanilla clients. |
+| client.ui | F12 | `src/client/ui/Ui.h, src/feature/ui/Ui.h` | gf::client::screen::registerScreen(type, Factory) (ContainerScreen base, upstream GUI skin); hud::addLayer(id, order, DrawFn); toast::show(ToastSpec{iconItem, titleKey, bodyKey, ms}); tooltip::add(itemId, fn); server side gf::ui::{form(...), ddui(...), containerTitleSkin(titleKey, skinId)} for vanilla clients. |
 | client.render | F12 | `src/client/render/Render.h` | gf::client::render::{registerBlockRenderer(blockId, fn, Flags{throughWalls}), registerItemRenderer(itemId, fn, Contexts), registerEntityRenderer(entityId, fn), onWorld(fn), Lines, drawGeo(ctx, geoId, texture, Transform)}; tint::registerBlock(blockId, fn(BlockPos) -> rgb); bar colours from item::setBar. |
-| client.world | F12 | `src/client/world/Sky.h` | gf::client::sky::setProvider(dim, SkyProvider{sky, stars, fog(biome), clouds, weather}); music::setProvider(fn); particles::registerNative(id, Factory) (29 TF ids pre-declared); maps::{view(MapId) -> MapView{pixels, decorations}, setIcon(decoType, texture)}; camera::{addFovModifier(fn), shake(intensity, ticks)}. |
+| client.world | F12 | `src/client/world/Sky.h` | gf::client::sky::setProvider(dim, SkyProvider{sky, stars, fog(biome), clouds, weather}); music::setProvider(fn); particles::registerNative(id, Factory) (29 upstream ids pre-declared); maps::{view(MapId) -> MapView{pixels, decorations}, setIcon(decoType, texture)}; camera::{addFovModifier(fn), shake(intensity, ticks)}. |
 | client.input+movement | F12 | `src/client/input/Input.h, src/feature/movement/Movement.h` | gf::client::keys::{registerKey(id, defaultKey, category, onPress, onRelease), down(id)}; gf::client::movement::onLocalTick(prio, fn(MoveState&)); server gf::movement::{onInputEdge(fn(Player&, Edge)), applyMotion(Player&, Vec3), validate(id, fn)} for vanilla fallbacks and anti-desync. |
 
 ### Registration macros
@@ -166,15 +167,15 @@ F0's and is immutable from W1 on (R18). `/twilightforest stubs` lists the stubs 
 | Macro | Header | Purpose |
 |---|---|---|
 | `GF_REGISTER_MODULE(T)` / `GF_REGISTER_MODULE_ORDERED(T, order)` | `mod/Module.h` | `T` has `install()` / `uninstall()` (+ optional `load()` at mod load, + optional `static T& get()`). W0 services use negative `ModuleOrder`s; units use the default 0. |
-| `GF_REGISTER_CONFIG("<unit>", T)` | `mod/Config.h` | Reflectable struct with `int version`; file `config/<unit>.json`; `gf::config::get<T>()`; edited with `/twilightforest config`. One section per unit (R13, [docs/spec/config.md](docs/spec/config.md)). |
-| `GF_REGISTER_SUBCOMMAND(fn)` | `mod/Commands.h` | Adds overloads to `/twilightforest` (aliases `/tf`, `/tffeature`). `commands::playerOf`, `commands::isAdmin`. One owner per subcommand, spelled as TF's literal (R14; `subcommand` rows of owners.tsv). |
+| `GF_REGISTER_CONFIG("<unit>", T)` | `mod/Config.h` | Reflectable struct with `int version`; file `config/<unit>.json`; `gf::config::get<T>()`; edited with `/gloamingforest config`. One section per unit (R13, [docs/spec/config.md](docs/spec/config.md)). |
+| `GF_REGISTER_SUBCOMMAND(fn)` | `mod/Commands.h` | Adds overloads to `/gloamingforest`. `commands::playerOf`, `commands::isAdmin`. One owner per subcommand, spelled as upstream's literal (R14; `subcommand` rows of owners.tsv). |
 | `GF_REGISTER_SELFTEST("<unit>.<case>", fn)` | `selftest/SelfTest.h` | `fn(Context&)` or `ll::coro::CoroTask<>(Context&)`. |
 
 Registrations live in `.cpp` files linked directly into the DLL, so they are never stripped.
 
 ### Using the foundation
 
-- **Ids** are TF's own: `twilightforest:<path>`. Fixture ids for W0b selftests: `gf_test:*`
+- **Ids** are upstream's own: `gloamingforest:<path>`. Fixture ids for W0b selftests: `gf_test:*`
   (`gf_test:fixture_block` with integer state `gf_test:level` 0..3 and `gf_test:lit`,
   `gf_test:fixture_item`, the entities `gf_test:boss` + `gf_test:boss_part` (3 parts by property),
   the loot tables `gf_test:chests/fixture_chest` and `gf_test:entities/boss`, the recipes
@@ -186,18 +187,18 @@ Registrations live in `.cpp` files linked directly into the DLL, so they are nev
 - **Strings** (`mod/I18n.h`, `client/Client.h`): `gf::tr("key", "English fallback", args...)`,
   `gf::trFor(player, ...)`, client `gf::client::ctr(...)`; placeholders `{}`, `{0}`, `%s`, `%1$s`.
   Keys belong to the feature owner (R9); others pass the English fallback without defining the key.
-  Block / item names come from the RP `texts` (imported from TF).
+  Block / item names come from the RP `texts` (imported from upstream).
 - **Logging**: `gf::log()` (`mod/Log.h`). No per-tick logging; one line per user-visible action that
   e2e scenarios can wait for.
 - **Selftests** (`selftest/SelfTest.h`): `ctx.player()` (SimulatedPlayer), `spawnPlayer()`,
   `testPos(dx)` (your dx range, R12), `co_await flatArea(dx, size)` (a cleared flat area, restored
-  afterwards), `co_await inTwilight()` (move the test into the Twilight Forest), `setBlock(pos, id,
+  afterwards), `co_await inGloaming()` (move the test into the Gloaming Forest), `setBlock(pos, id,
   {{"state", value}})`, `cleanupBlock`, `give(id, n)`, `co_await ticks(n)`, `co_await ensureLoaded(pos)`,
   `captureBossEvent()` (records BossEventPackets), `snapshotVolume(box)` (golden volume hash),
   `check / require / fail / info`. `gf::selftest::runServerCommand(command, dim = 0, permission =
   CommandPermissionLevel::Owner)` runs a command as the server in a dimension at a permission level
   and returns `{ok, successCount, messages}` (`if (r)`; `r.messages` for the report; its errors are not logged): use it
-  instead of a copy of your own. `/twilightforest selftest` and the server scenario `full` run every
+  instead of a copy of your own. `/gloamingforest selftest` and the server scenario `full` run every
   unit's tests together: keep yours passing there. Rows are 5 blocks apart in z: keep `testPos(dx, dz)`
   within dz 0..4 and leave no blocks behind outside it (a larger `flatArea` reaches into the next
   units' rows and is safe only because it is restored). A flat area is at most
@@ -208,7 +209,7 @@ Registrations live in `.cpp` files linked directly into the DLL, so they are nev
   / baseUseItem / $destroyBlock / $startDestroyBlock / $interact / $attack` or the LeviLamina
   interact / use / destroy events. Register `interactions::onUseOn({.block = id, .item = id}, fn,
   priority)`, `onUse`, `onDestroy`, `onStartDestroy`, `onPlace`, `onUnusedUseOn`, `onDestroyed`,
-  `onInteract`, `onAttack`, `onAttacked`; `Match::tag("twilightforest:mazestone")` matches by block
+  `onInteract`, `onAttack`, `onAttacked`; `Match::tag("gloamingforest:mazestone")` matches by block
   (entity) tag, `Match::itemTagged(tag)` by item tag. Handlers return `Pass` / `Consume` / `Deny`; the
   first non-`Pass` by priority wins; landmark protection (F6) is `priority::Highest`. `nextTick(fn)`
   defers a world edit; `mutableItem(ctx.item)` is the hand slot. Bedrock repeats use-on while the
@@ -228,7 +229,7 @@ Registrations live in `.cpp` files linked directly into the DLL, so they are nev
   handler per channel.
 - **Screens** (`feature/common/Screens.h`, `client/screen/base/Screen.h`, F12's `client/ui/Ui.h`): a
   screen type has native data / actions for companions and a form for vanilla players.
-- **Config screen**: `/twilightforest config [section]` edits every config section in game
+- **Config screen**: `/gloamingforest config [section]` edits every config section in game
   (operators only); keep config fields plain reflectable values.
 
 ## Build, test, run
@@ -252,8 +253,8 @@ pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla]   # every cl
 
 - `tools/build.ps1 -KeepGoing`: after a failed compile, every other out-of-date file is checked too
   (syntax only, xmake's own command lines, `-ErrorLimit` per file), so one slot wait shows all errors.
-- `tools/ci/unimplemented.ps1` lists the TF blocks, items and entities whose TF class is TF's own and
-  that nothing in GloamingForest handles (no `twilightforest:<path>` / `<path>` literal in `src/`
+- `tools/ci/unimplemented.ps1` lists the upstream blocks, items and entities whose upstream class is upstream's own and
+  that nothing in GloamingForest handles (no `gloamingforest:<path>` / `<path>` literal in `src/`
   outside selftests, no family / container entry, no hand-made BP definition, no tag the code
   names); `docs/spec/not-ported.md` and `tools/ci/unimplemented-reviewed.json` (id -> reason) account
   for the rest. The header of the script has the exact rules.
@@ -272,9 +273,9 @@ pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla]   # every cl
 - A release bumps `version` in both `lip.toml` and `manifest.json` to the tag without its `v`
   (e.g. `0.1.0-beta.1` for `v0.1.0-beta.1`) and adds its `CHANGELOG.md` section; the release workflow
   fails when either version differs from the tag.
-- In game: `/twilightforest selftest ["glob"]` (op or console; quote globs). Output lines:
+- In game: `/gloamingforest selftest ["glob"]` (op or console; quote globs). Output lines:
   `SELFTEST PASS <name>`, `SELFTEST FAIL <name>: <reason>`, `SELFTEST DONE pass=<N> fail=<M>`.
-  `/twilightforest stubs` lists the contract stubs that were called.
+  `/gloamingforest stubs` lists the contract stubs that were called.
 - Log contract: `GloamingForest enabled` on enable; `GloamingForest world ready` when a world is
   available.
 - clang-cl must be on PATH (`C:\Program Files\LLVM\bin`). LeviLamina headers:
@@ -331,7 +332,7 @@ owned path.
 | F1 | `import` | W0b | Import tool and content skeleton (S7) | 5100-5199 |
 | F2 | `models` | W0b | Java model converter and geometry import | 5200-5299 |
 | F3 | `synth` | W0b | Sound synthesis toolkit and baseline audio | 5300-5399 |
-| F4 | `dimension` | W0b | Dimension, time, teleport and Twilight portal (S1) | 5400-5499 |
+| F4 | `dimension` | W0b | Dimension, time, teleport and Gloaming portal (S1) | 5400-5499 |
 | F5 | `worldgen` | W0b | Generator pipeline, features, spawn, Java-parity core (S2) | 5500-5599 |
 | F6 | `landmark` | W0b | Landmarks: grid, placement, descriptors, conquest, protection, hints | 5600-5699 |
 | F7 | `structure` | W0b | Structure kit, template toolkit and shared piece libraries | 5700-5799 |
@@ -381,20 +382,20 @@ owned path.
 Each unit is implemented by one worker in its own worktree (branch per unit), following
 [docs/spec/worker.md](docs/spec/worker.md). The worker gets:
 
-- **Goal:** the user's instruction, quoted verbatim: 基于LeviLamina，制作Minecraft Java版模组Twilight Forest的基岩版复刻。要求支持客户端和服务端；所有特性和交互和界面必须完全一致，没有任何缺失。可以借助 LiteLDev/BeDD 来调试。
-  Plus the decisions: TF 4.8 at `9e40a757`; reuse the CC BY-NC-SA assets and regenerate the All Rights
+- **Goal:** the user's instruction, quoted verbatim: 基于LeviLamina，制作Minecraft Java版模组Gloaming Forest的基岩版复刻。要求支持客户端和服务端；所有特性和交互和界面必须完全一致，没有任何缺失。可以借助 LiteLDev/BeDD 来调试。
+  Plus the decisions: upstream 4.8 at `9e40a757`; reuse the CC BY-NC-SA assets and regenerate the All Rights
   Reserved ones; vanilla clients best effort; client-mod parity first.
 - **Its unit record**, verbatim from [docs/spec/units.json](docs/spec/units.json) (id, title, paths,
   content, description, contracts, e2e, size).
 - **Conventions:** read AGENTS.md, docs/spec/README.md, its `docs/spec/<unit>.md` and the contract
   headers before coding; follow R1-R25. Reference: Levitate on GitHub; LeviLamina headers (check them
-  before guessing a signature; never call MCNAPI); TF source only from `%LOCALAPPDATA%\gf-tf`; never
-  open TF `.ogg` or `.nbt` files; no Claude or AI attribution in commits or PRs.
+  before guessing a signature; never call MCNAPI); upstream source only from `%LOCALAPPDATA%\gf-upstream\view`; never
+  open upstream `.ogg` or `.nbt` files; no Claude or AI attribution in commits or PRs.
 - **The e2e recipe** ([docs/spec/e2e.md](docs/spec/e2e.md)): refresh PATH; `git config --global
   core.longpaths true`; `pwsh tools/build.ps1 -Target all -Tests` then `xmake run -P . gf-tests`;
   `tools/e2e/server/run.ps1 -Scenario <u>` (exit 0 with `SELFTEST DONE ... fail=0`, no ERR / FTL /
   content-log errors; exit 2 is NOT RUN: retry); `tools/e2e/client/run.ps1 -Scenario <u> -Mode local`
-  (open every screenshot and compare it with TF's textures and GUIs), plus `-Mode remote-vanilla`
+  (open every screenshot and compare it with upstream's textures and GUIs), plus `-Mode remote-vanilla`
   when the unit has a vanilla fallback; `tools/ci/ownership.ps1 -Unit <u>` and
   `tools/ci/arr-guard.ps1`. F0 runs the `smoke` scenarios; the spec units F14-F16 skip e2e and run
   the doc lint.

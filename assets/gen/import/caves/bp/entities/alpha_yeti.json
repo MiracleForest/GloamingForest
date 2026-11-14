@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:alpha_yeti",
+      "identifier": "gloamingforest:alpha_yeti",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "alpha_yeti", "monster", "mob"]
+        "family": ["gloamingforest", "alpha_yeti", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 3.8,

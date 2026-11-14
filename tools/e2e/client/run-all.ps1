@@ -163,7 +163,7 @@ function Write-Summary($rows, [bool]$final) {
         $md.Add("| $($r.Scenario) | $($r.Mode) | $($r.Result) | $($r.Attempts) | $time | $($r.Selftests) | $($r.Warnings) | $shots | $failure |")
     }
     $md.Add('')
-    $md.Add("Logs: ``$([IO.Path]::GetRelativePath($root, $runDir).Replace('\', '/'))/<scenario>[-<mode>]-<attempt>.log``. Open every screenshot and compare it with TF's textures and GUIs.")
+    $md.Add("Logs: ``$([IO.Path]::GetRelativePath($root, $runDir).Replace('\', '/'))/<scenario>[-<mode>]-<attempt>.log``. Open every screenshot and compare it with upstream's textures and GUIs.")
     $text = $md -join "`n"
     Set-Content -Path (Join-Path $runDir 'summary.md') -Value $text -Encoding UTF8
     Set-Content -Path (Join-Path $outRoot 'run-all/summary.md') -Value $text -Encoding UTF8

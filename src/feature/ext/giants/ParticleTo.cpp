@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // U29 giants: gf::fx::giants_ext::vanillaParticleTo (see ParticleTo.h).
 #include "feature/ext/giants/ParticleTo.h"
 

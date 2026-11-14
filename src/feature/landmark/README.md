@@ -9,23 +9,23 @@ structure units (U18-U30) and the other W0 units' tests need to know beyond the 
 
 ## Hollow hills: monsters spawn in the dome only (U18)
 
-TF: `EntityEvents#gatherPotentialSpawns` asks `HollowHillStructure#canSpawnMob(pos,
+Upstream: `EntityEvents#gatherPotentialSpawns` asks `HollowHillStructure#canSpawnMob(pos,
 start.getBoundingBox())` after the conquered check and before the piece lookup; outside the half
 dome of the start box it answers `null`, so the hill's spawn override applies (an empty `full` list
 for every category: no monsters there at all).
 
 GloamingForest: **F6 applies it**, keyed on the structure type exactly like Java's `instanceof`:
-every start whose descriptor has `type` `twilightforest:hollow_hill` (the small, medium and large
+every start whose descriptor has `type` `gloamingforest:hollow_hill` (the small, medium and large
 hollow hills) gets `gf::core::landmark::hollowHillCanSpawnMob(start.box, x, y, z)`
 (`src/core/landmark/Spawning.h`, gtested) in `gf::landmark::ext::potentialSpawns`, before the spawn
 index. U18 registers **no hook** for it. What U18's generator must do:
 
-- `registerGenerator("twilightforest:{small,medium,large}_hollow_hill", {.layout = ...})` with the
-  layout adding TF's `HollowHillComponent` (built on F7's `structure::bases::HollowHill`, a
-  `bases::Component`) with TF's box: the start box (`Start::box`, the union of the pieces;
+- `registerGenerator("gloamingforest:{small,medium,large}_hollow_hill", {.layout = ...})` with the
+  layout adding upstream's `HollowHillComponent` (built on F7's `structure::bases::HollowHill`, a
+  `bases::Component`) with upstream's box: the start box (`Start::box`, the union of the pieces;
   terrain adaptation none) is what the dome is cut from, as Java's `start.getBoundingBox()`.
 - Leave `Generator::spawnIndex` unset: the default lookup is `EntityEvents#getSpawnListIndexAt`, the
-  highest `bases::Component::getSpawnIndex()` (TF's `spawnListIndex`, 0 for the hill) of the pieces
+  highest `bases::Component::getSpawnIndex()` (upstream's `spawnListIndex`, 0 for the hill) of the pieces
   holding the position. A `spawnIndex` replaces that lookup (it is for landmarks that pick the list
   themselves, such as the dark tower's floors); returning -1 means "no list here" (the override,
   else the biome's list).
@@ -55,7 +55,7 @@ Saving a piece (the world DB, `startAt`, `startPieces`) never races its `postPro
 waits for it: each `postProcess` call holds that piece's own lock (one per piece, recursive), and
 `placeInChunk` snapshots the piece's `save()` before and after it. A save only try-locks: while a
 `postProcess` runs on another thread it takes the snapshot from before it, and `flushRecords` writes
-that start again on the next flush, so fields a piece sets in `postProcess` (TF's chest and spawner
+that start again on the next flush, so fields a piece sets in `postProcess` (upstream's chest and spawner
 flags) are saved whole and the server thread never waits for a worldgen thread. One piece's
 `postProcess` runs on one thread at a time (its fields are not thread-safe). A `postProcess` must not
 wait for another thread's piece while it runs.
@@ -91,7 +91,7 @@ from another unit.
 
 The task text of W0d asked for a `"piece"` spawn override on `gf_test:landmark_fixture`. It is on
 `gf_test:landmark_fixture_open` instead: a ControlledSpawns start (the locked fixture) answers every
-non-monster category itself and its monster lists come from `Generator::spawnIndex`, as TF's
+non-monster category itself and its monster lists come from `Generator::spawnIndex`, as upstream's
 `EntityEvents#gatherPotentialSpawns` does, so a monster override there would apply where the spawn
 index gives no list: the shell's ground floor, which F5's `worldgen.landmark_rules` expects to have
 none. Tests of `structureSpecialSpawns`' override path use the open fixture.
@@ -103,18 +103,18 @@ shell around the center (x and z within 3, y up to +6) and a 7x1x3 oak porch in 
 
 | Key | Lock | Spawns |
 |---|---|---|
-| `gf_test:landmark_fixture` | `twilightforest:progress_naga` (the shell is protected, the porch not); hint book `lichtower` | ControlledSpawns: monster list `1` (skeleton 4 2-3, spider 1 1-2) on the shell's upper floor (y >= center + 4), list `0` (zombie 1 1-1) on the porch, no list on the shell's ground floor or beside it (`Generator::spawnIndex`); empty ambient and water lists; no creatures in the chunks it reaches |
+| `gf_test:landmark_fixture` | `gloamingforest:progress_naga` (the shell is protected, the porch not); hint book `lichtower` | ControlledSpawns: monster list `1` (skeleton 4 2-3, spider 1 1-2) on the shell's upper floor (y >= center + 4), list `0` (zombie 1 1-1) on the porch, no list on the shell's ground floor or beside it (`Generator::spawnIndex`); empty ambient and water lists; no creatures in the chunks it reaches |
 | `gf_test:landmark_fixture_open` | none (conquerable, protects nothing) | spawn overrides: `monster` `piece` (witch 3 1-1, creeper 7 2-4) in the shell and the porch, `ambient` `full` (empty) in the whole box |
 
 ## Audit round 1
 
-Checked: TF's StructureStart overrides of the start box (only
+Checked: upstream's StructureStart overrides of the start box (only
 `KnightStrongholdStructure.KnightStructureStart#getBoundingBox` changes it) and the
 `landmark.starts` selftest next to real starts.
 
 Fixed:
 
-- Start box clamp: a start of a structure of type `twilightforest:knight_stronghold` ends one
+- Start box clamp: a start of a structure of type `gloamingforest:knight_stronghold` ends one
   below its generation point (`min(maxY, stub y - 1)`, after Structure#adjustBoundingBox), as
   KnightStructureStart does (descriptor trait `topBelowStart`). Generators can add their own rule
   with `landmark::ext::setStartBoxAdjuster(key, fn)` (`ext::clampBoxTop` helps).

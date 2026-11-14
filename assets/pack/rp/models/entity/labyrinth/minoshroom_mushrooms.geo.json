@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.minoshroom.mushrooms",
+        "identifier": "geometry.gloamingforest.minoshroom.mushrooms",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

@@ -1,7 +1,7 @@
 {
-  "entity.twilightforest.naga": "Naga",
-  "item.twilightforest.naga_spawn_egg": "Ovo gerador de Naga",
-  "subtitles.twilightforest.entity.naga.hiss": "Naga sibila",
-  "subtitles.twilightforest.entity.naga.hurt": "Naga ferida",
-  "subtitles.twilightforest.entity.naga.rattle": "Naga chocalha"
+  "entity.gloamingforest.naga": "Naga",
+  "item.gloamingforest.naga_spawn_egg": "Ovo gerador de Naga",
+  "subtitles.gloamingforest.entity.naga.hiss": "Naga sibila",
+  "subtitles.gloamingforest.entity.naga.hurt": "Naga ferida",
+  "subtitles.gloamingforest.entity.naga.rattle": "Naga chocalha"
 }

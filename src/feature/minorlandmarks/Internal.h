@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 #pragma once
 
 // U18 (minorlandmarks) internals: the minor landmarks (hollow hills, hedge maze, hollow trees,
-// fallen trunks), the hedge block and TF's decorative feature types. Shared by the unit's files
+// fallen trunks), the hedge block and upstream's decorative feature types. Shared by the unit's files
 // only (rule R2: no other unit includes it).
 
 #include <cstdint>
@@ -32,23 +32,23 @@ using st::RandomSource;
 using st::Region;
 
 // ---- ids ---------------------------------------------------------------------------------------------
-inline constexpr char kHedge[]            = "twilightforest:hedge";
-inline constexpr char kSmallHill[]        = "twilightforest:small_hollow_hill";
-inline constexpr char kMediumHill[]       = "twilightforest:medium_hollow_hill";
-inline constexpr char kLargeHill[]        = "twilightforest:large_hollow_hill";
-inline constexpr char kHedgeMaze[]        = "twilightforest:hedge_maze";
-inline constexpr char kHollowTree[]       = "twilightforest:hollow_tree";
-inline constexpr char kSwampHollowTree[]  = "twilightforest:swamp_hollow_tree";
-inline constexpr char kFallenTrunk[]      = "twilightforest:fallen_trunk";
-inline constexpr char kTFHill[]           = "twilightforest:TFHill";
-inline constexpr char kTFHedge[]          = "twilightforest:TFHedge";
-inline constexpr char kTFFallenTrunk[]    = "twilightforest:TFFallenTrunk";
-inline constexpr char kTFHTTr[]           = "twilightforest:TFHTTr";
-inline constexpr char kTFHTLB[]           = "twilightforest:TFHTLB";
-inline constexpr char kTFHTMB[]           = "twilightforest:TFHTMB";
-inline constexpr char kTFHTSB[]           = "twilightforest:TFHTSB";
-inline constexpr char kTFHTRo[]           = "twilightforest:TFHTRo";
-inline constexpr char kTFHTLD[]           = "twilightforest:TFHTLD";
+inline constexpr char kHedge[]            = "gloamingforest:hedge";
+inline constexpr char kSmallHill[]        = "gloamingforest:small_hollow_hill";
+inline constexpr char kMediumHill[]       = "gloamingforest:medium_hollow_hill";
+inline constexpr char kLargeHill[]        = "gloamingforest:large_hollow_hill";
+inline constexpr char kHedgeMaze[]        = "gloamingforest:hedge_maze";
+inline constexpr char kHollowTree[]       = "gloamingforest:hollow_tree";
+inline constexpr char kSwampHollowTree[]  = "gloamingforest:swamp_hollow_tree";
+inline constexpr char kFallenTrunk[]      = "gloamingforest:fallen_trunk";
+inline constexpr char kTFHill[]           = "gloamingforest:TFHill";
+inline constexpr char kTFHedge[]          = "gloamingforest:TFHedge";
+inline constexpr char kTFFallenTrunk[]    = "gloamingforest:TFFallenTrunk";
+inline constexpr char kTFHTTr[]           = "gloamingforest:TFHTTr";
+inline constexpr char kTFHTLB[]           = "gloamingforest:TFHTLB";
+inline constexpr char kTFHTMB[]           = "gloamingforest:TFHTMB";
+inline constexpr char kTFHTSB[]           = "gloamingforest:TFHTSB";
+inline constexpr char kTFHTRo[]           = "gloamingforest:TFHTRo";
+inline constexpr char kTFHTLD[]           = "gloamingforest:TFHTLD";
 
 // ---- helpers (Helpers.cpp) -----------------------------------------------------------------------------
 /// StructurePiece#setOrientation of a vanilla piece (mirror / rotation from the facing).
@@ -75,10 +75,10 @@ void placeContainerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, 
                       std::string const& tableId, std::int64_t seed);
 /// A spawner for `entityId` at a world position inside `sbb`.
 void placeSpawnerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, std::string const& entityId);
-/// Whether `entityId` is one TF's HedgeBlock spares (Spider and its subclasses).
+/// Whether `entityId` is one upstream's HedgeBlock spares (Spider and its subclasses).
 [[nodiscard]] bool isSpiderType(std::string const& entityId);
 /// Whether a hollow tree / fallen trunk start centred at (x, z) in start chunk (chunkX, chunkZ) is a
-/// natural one (findGenerationPoint) rather than a placed one (the sapling, /twilightforest place,
+/// natural one (findGenerationPoint) rather than a placed one (the sapling, /gloamingforest place,
 /// selftests: generateFromSapling / the center kept). The start's data `forced` flag decides when
 /// the landmark kit records it; otherwise the center does: a natural start arrives at its chunk's
 /// corner or +7 (a new start) or at the point findGenerationPoint found, (foundX, foundZ) (a start
@@ -86,9 +86,9 @@ void placeSpawnerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, st
 [[nodiscard]] bool naturalStart(Json const& startData, int chunkX, int chunkZ, int x, int z, int foundX, int foundZ);
 
 // ---- pieces ------------------------------------------------------------------------------------------
-/// HedgeMazeComponent ("twilightforest:TFHedge") at (x, y, z) (HedgeMazeStructure: start + (1, 4, 1)).
+/// HedgeMazeComponent ("gloamingforest:TFHedge") at (x, y, z) (HedgeMazeStructure: start + (1, 4, 1)).
 [[nodiscard]] std::unique_ptr<st::Piece> makeHedgeMaze(int genDepth, int x, int y, int z);
-/// HollowHillComponent ("twilightforest:TFHill") for HollowHillStructure#getFirstPiece.
+/// HollowHillComponent ("gloamingforest:TFHill") for HollowHillStructure#getFirstPiece.
 [[nodiscard]] std::unique_ptr<st::Piece> makeHollowHill(int hillSize, int x, int y, int z, std::string const& speleothemConfig);
 
 /// HollowTreeStructure's configuration (the structure JSON's providers, loot, monster).
@@ -96,10 +96,10 @@ struct HollowTreeConfig {
     Json        height, radius;
     Json        log, wood, root, leaves, vine, bug;
     Json        dungeonWood, dungeonAir, dungeonLootBlock;
-    std::string dungeonLootTable = "twilightforest:tree_cache";
-    std::string dungeonMonster   = "twilightforest:swarm_spider";
+    std::string dungeonLootTable = "gloamingforest:tree_cache";
+    std::string dungeonMonster   = "gloamingforest:swarm_spider";
     bool        allowInWater     = false;
-    /// From the imported structure JSON (TF's defaults for missing fields).
+    /// From the imported structure JSON (upstream's defaults for missing fields).
     [[nodiscard]] static HollowTreeConfig fromJson(Json const& structure);
     [[nodiscard]] static HollowTreeConfig defaults();
 };
@@ -111,7 +111,7 @@ struct HollowTreeConfig {
 /// FallenTrunkStructure's configuration.
 struct FallenTrunkConfig {
     Json        length, bigTrunkLength, log;
-    std::string chestLootTable = "twilightforest:fallen_trunk_loot";
+    std::string chestLootTable = "gloamingforest:fallen_trunk_loot";
     [[nodiscard]] static FallenTrunkConfig fromJson(Json const& structure);
 };
 /// FallenTrunkPiece + its two utility pieces.

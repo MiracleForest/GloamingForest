@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:lich_minion",
+      "identifier": "gloamingforest:lich_minion",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "lich_minion", "monster", "mob"]
+        "family": ["gloamingforest", "lich_minion", "monster", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.6,

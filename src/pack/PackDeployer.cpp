@@ -9,11 +9,11 @@
 // - Resource packs, BDS: LeviLamina registers the packs in the repository but doesn't put them on
 //   the level stack that is sent to joining players. At load (before the world opens) we add
 //   them to `worlds/<level-name>/world_resource_packs.json`, and (optionally) mark them required,
-//   so vanilla clients get TF's textures, models and names too.
+//   so vanilla clients get upstream's textures, models and names too.
 // - Names, BDS: the server fills in item and block names itself (command feedback, forms) from
 //   its own localization, which has only the vanilla texts. At install we append the RP's merged
 //   `texts/<locale>.lang` to the server's current language, so those names resolve instead of
-//   showing `item.twilightforest:<id>.name`.
+//   showing `item.gloamingforest:<id>.name`.
 //
 // The packs are GloamingForest_RP / GloamingForest_BP and, in development builds, the gf_test
 // fixture packs GloamingForest_Test_RP / _BP (assets/test).

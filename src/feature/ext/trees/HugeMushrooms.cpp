@@ -1,6 +1,6 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Contract extension for U3 (rule R18), see HugeMushrooms.h. Minecraft 1.21.1's
-// AbstractHugeMushroomFeature, HugeBrownMushroomFeature and HugeRedMushroomFeature, which TF's
+// AbstractHugeMushroomFeature, HugeBrownMushroomFeature and HugeRedMushroomFeature, which upstream's
 // vanilla_mushrooms selector places.
 #include "feature/ext/trees/HugeMushrooms.h"
 

@@ -1,0 +1,47 @@
+{
+  "parent": "gloamingforest:gloaming_hunter",
+  "criteria": {
+    "focus": {
+      "conditions": {
+        "items": [
+          {
+            "items": "gloamingforest:magic_map_focus"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.magic_map_focus.desc",
+      "with": [
+        {
+          "translate": "item.gloamingforest.magic_map_focus"
+        },
+        {
+          "translate": "item.gloamingforest.raven_feather"
+        },
+        {
+          "translate": "item.minecraft.glowstone_dust"
+        },
+        {
+          "translate": "item.gloamingforest.torchberries"
+        }
+      ]
+    },
+    "icon": {
+      "count": 1,
+      "id": "gloamingforest:magic_map_focus"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.magic_map_focus"
+    }
+  },
+  "requirements": [
+    [
+      "focus"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

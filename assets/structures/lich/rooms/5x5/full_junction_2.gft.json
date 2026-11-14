@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/5x5/full_junction_2",
+  "id": "gloamingforest:lich_tower/5x5/full_junction_2",
   "size": [7, 7, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},

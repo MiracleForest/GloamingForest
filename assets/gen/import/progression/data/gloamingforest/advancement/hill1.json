@@ -1,0 +1,45 @@
+{
+  "parent": "gloamingforest:root",
+  "criteria": {
+    "redcap": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "gloamingforest:redcap",
+              "location": {
+                "structures": "gloamingforest:small_hollow_hill"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancement.gloamingforest.hill1.desc",
+      "with": [
+        {
+          "translate": "entity.gloamingforest.redcap"
+        }
+      ]
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:iron_boots"
+    },
+    "title": {
+      "translate": "advancement.gloamingforest.hill1"
+    }
+  },
+  "requirements": [
+    [
+      "redcap"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

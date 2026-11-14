@@ -1,11 +1,11 @@
 {
-  "block.twilightforest.stronghold_shield": "Escudo de la Fortaleza",
-  "block.twilightforest.trophy_pedestal": "Pedestal para Trofeos",
-  "entity.twilightforest.blockchain_goblin": "Generar Goblin de Bloques y Cadenas",
-  "entity.twilightforest.helmet_crab": "Cangrejo con Casco",
-  "entity.twilightforest.knight_phantom": "Caballero Fantasma",
-  "entity.twilightforest.thrown_wep": "Arma Arrojadiza",
-  "item.twilightforest.blockchain_goblin_spawn_egg": "Generar Goblin de Bloques y Cadenas",
-  "item.twilightforest.helmet_crab_spawn_egg": "Generar Cangrejo con Casco",
-  "item.twilightforest.knight_phantom_spawn_egg": "Generar Caballero Fantasma"
+  "block.gloamingforest.stronghold_shield": "Escudo de la Fortaleza",
+  "block.gloamingforest.trophy_pedestal": "Pedestal para Trofeos",
+  "entity.gloamingforest.blockchain_goblin": "Generar Goblin de Bloques y Cadenas",
+  "entity.gloamingforest.helmet_crab": "Cangrejo con Casco",
+  "entity.gloamingforest.knight_phantom": "Caballero Fantasma",
+  "entity.gloamingforest.thrown_wep": "Arma Arrojadiza",
+  "item.gloamingforest.blockchain_goblin_spawn_egg": "Generar Goblin de Bloques y Cadenas",
+  "item.gloamingforest.helmet_crab_spawn_egg": "Generar Cangrejo con Casco",
+  "item.gloamingforest.knight_phantom_spawn_egg": "Generar Caballero Fantasma"
 }

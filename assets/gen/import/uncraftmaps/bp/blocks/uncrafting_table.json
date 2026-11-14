@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:uncrafting_table",
+      "identifier": "gloamingforest:uncrafting_table",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:powered": [false, true]
+        "gloamingforest:powered": [false, true]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#ff0000",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.uncrafting_table",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.uncrafting_table",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_jungle_planks",
@@ -58,9 +58,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:powered')",
+        "condition": "!q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.uncrafting_table",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.uncrafting_table",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_jungle_planks",
@@ -100,9 +100,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:powered')",
+        "condition": "q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.uncrafting_table_glowing",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.uncrafting_table_glowing",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_jungle_planks",

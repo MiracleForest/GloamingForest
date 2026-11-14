@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/5x5/beard_chunks",
+  "id": "gloamingforest:lich_tower/5x5/beard_chunks",
   "size": [7, 3, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},

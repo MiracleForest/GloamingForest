@@ -2,7 +2,7 @@
   "format_version": "1.21.110",
   "minecraft:biome": {
     "description": {
-      "identifier": "twilightforest:underground"
+      "identifier": "gloamingforest:underground"
     },
     "components": {
       "minecraft:climate": {

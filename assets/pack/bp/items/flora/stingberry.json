@@ -2,7 +2,7 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:stingberry",
+      "identifier": "gloamingforest:stingberry",
       "menu_category": {
         "category": "items"
       }
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:stingberry.name"
+        "value": "item.gloamingforest:stingberry.name"
       },
       "minecraft:tags": {
         "tags": [

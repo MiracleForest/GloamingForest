@@ -17,7 +17,7 @@ class BlockSource;
 
 namespace gf::feature::boss {
 
-/// The player conditions and spawn logic of TF's spawner block entities: Default (any player in
+/// The player conditions and spawn logic of upstream's spawner block entities: Default (any player in
 /// range), AboveMinus4 (the nearest player above pos.y - 4: alpha yeti, ur-ghast, snow queen),
 /// AboveMinus2, BelowPlus4 (the nearest below pos.y + 4: minoshroom), Lich (above pos.y - 4, spawns
 /// on the floor below), KnightPhantoms (above pos.y - 2, six around the block), Never (final boss).
@@ -35,7 +35,7 @@ struct SpawnerRule {
     nlohmann::json particleParams;
 };
 
-/// Treats `type` as a member of twilightforest:multiplayer_inclusive_entities (fixtures).
+/// Treats `type` as a member of gloamingforest:multiplayer_inclusive_entities (fixtures).
 void markInclusiveForTest(std::string const& type);
 void unmarkInclusiveForTest(std::string const& type);
 /// The last death chest placed and the last conquest requested (selftests).

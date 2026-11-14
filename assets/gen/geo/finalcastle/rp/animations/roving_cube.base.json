@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.roving_cube.base": {
+    "animation.gloamingforest.roving_cube.base": {
       "loop": true,
       "bones": {
         "box_x": {

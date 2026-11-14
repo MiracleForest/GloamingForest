@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.mystic_crown_held",
+        "identifier": "geometry.gloamingforest.mystic_crown_held",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 3,

@@ -1,14 +1,14 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/3x3/water_well",
+  "id": "gloamingforest:lich_tower/3x3/water_well",
   "size": [3, 4, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},
     {"Name":"minecraft:cobblestone"},
     {"Name":"minecraft:water"},
-    {"Name":"twilightforest:canopy_fence"},
-    {"Name":"twilightforest:canopy_slab","Properties":{"type":"bottom"}},
+    {"Name":"gloamingforest:canopy_fence"},
+    {"Name":"gloamingforest:canopy_slab","Properties":{"type":"bottom"}},
     {"Name":"minecraft:chain"}
   ],
   "blocks": [

@@ -1,0 +1,45 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": [
+      {
+        "item": "gloamingforest:castle_brick"
+      },
+      {
+        "item": "gloamingforest:worn_castle_brick"
+      },
+      {
+        "item": "gloamingforest:cracked_castle_brick"
+      },
+      {
+        "item": "gloamingforest:mossy_castle_brick"
+      },
+      {
+        "item": "gloamingforest:thick_castle_brick"
+      }
+    ],
+    "H": [
+      {
+        "item": "gloamingforest:encased_castle_brick_pillar"
+      },
+      {
+        "item": "gloamingforest:encased_castle_brick_tile"
+      },
+      {
+        "item": "gloamingforest:bold_castle_brick_pillar"
+      },
+      {
+        "item": "gloamingforest:bold_castle_brick_tile"
+      }
+    ]
+  },
+  "pattern": [
+    "#H#",
+    "#H#"
+  ],
+  "result": {
+    "count": 6,
+    "id": "gloamingforest:encased_castle_brick_pillar"
+  }
+}

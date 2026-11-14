@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/data/tags/BlockTagGenerator.java
-//   src/main/java/twilightforest/data/tags/ItemTagGenerator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/data/tags/BlockTagGenerator.java
+//   src/main/java/gloamingforest/data/tags/ItemTagGenerator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The portal block and the tags the portal rules read. The tags come from the tag store
-// (gf::tags, F9, filled from TF's imported tag JSON); while it has no members for a tag the
-// members below are used: TF's own lists (BlockTagGenerator / ItemTagGenerator) and the vanilla
+// (gf::tags, F9, filled from upstream's imported tag JSON); while it has no members for a tag the
+// members below are used: upstream's own lists (BlockTagGenerator / ItemTagGenerator) and the vanilla
 // tags they include, with their Bedrock block ids.
 
 #include <algorithm>
@@ -33,11 +33,11 @@ namespace {
 std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() {
     static std::unordered_map<std::string, std::vector<std::string>> const tags = {
         // BlockTagGenerator: PORTAL_EDGE = farmland, dirt_path, #dirt
-        {"twilightforest:portal/edge", {"minecraft:farmland", "minecraft:dirt_path", "minecraft:grass_path", "#minecraft:dirt"}},
+        {"gloamingforest:portal/edge", {"minecraft:farmland", "minecraft:dirt_path", "minecraft:grass_path", "#minecraft:dirt"}},
         // PORTAL_POOL = water
-        {"twilightforest:portal/fluid", {"minecraft:water"}},
+        {"gloamingforest:portal/fluid", {"minecraft:water"}},
         // PORTAL_DECO
-        {"twilightforest:portal/decoration",
+        {"gloamingforest:portal/decoration",
          {"minecraft:bamboo",
           "minecraft:short_grass",
           "minecraft:tall_grass",
@@ -64,21 +64,21 @@ std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() 
           "minecraft:pink_petals",
           "minecraft:big_dripleaf",
           "minecraft:small_dripleaf_block",
-          "twilightforest:fiddlehead",
-          "twilightforest:moss_patch",
-          "twilightforest:mayapple",
-          "twilightforest:clover_patch",
-          "twilightforest:mushgloom",
-          "twilightforest:fallen_leaves",
-          "twilightforest:giant_leaves",
-          "twilightforest:steeleaf_block",
-          "twilightforest:hardened_dark_leaves",
+          "gloamingforest:fiddlehead",
+          "gloamingforest:moss_patch",
+          "gloamingforest:mayapple",
+          "gloamingforest:clover_patch",
+          "gloamingforest:mushgloom",
+          "gloamingforest:fallen_leaves",
+          "gloamingforest:giant_leaves",
+          "gloamingforest:steeleaf_block",
+          "gloamingforest:hardened_dark_leaves",
           "#minecraft:flowers",
           "#minecraft:leaves",
           "#minecraft:saplings",
           "#minecraft:crops"}},
         // GENERATED_PORTAL_DECO
-        {"twilightforest:portal/generated_decoration",
+        {"gloamingforest:portal/generated_decoration",
          {"minecraft:brown_mushroom",
           "minecraft:red_mushroom",
           "minecraft:short_grass",
@@ -93,13 +93,13 @@ std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() 
           "minecraft:pink_tulip",
           "minecraft:orange_tulip",
           "minecraft:red_tulip",
-          "twilightforest:mushgloom",
-          "twilightforest:mayapple",
-          "twilightforest:fiddlehead"}},
-        // vanilla tags (Java 1.21.1 members, Bedrock ids) with TF's own additions
-        // (BlockTagGenerator: UBEROUS_SOIL in #dirt, TF's saplings and leaves)
+          "gloamingforest:mushgloom",
+          "gloamingforest:mayapple",
+          "gloamingforest:fiddlehead"}},
+        // vanilla tags (Java 1.21.1 members, Bedrock ids) with upstream's own additions
+        // (BlockTagGenerator: UBEROUS_SOIL in #dirt, upstream's saplings and leaves)
         {"minecraft:dirt",
-         {"twilightforest:uberous_soil",
+         {"gloamingforest:uberous_soil",
           "minecraft:dirt",
           "minecraft:grass_block",
           "minecraft:podzol",
@@ -149,17 +149,17 @@ std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() 
           "minecraft:cherry_leaves",
           "minecraft:azalea_leaves",
           "minecraft:azalea_leaves_flowered",
-          "twilightforest:rainbow_oak_leaves",
-          "twilightforest:twilight_oak_leaves",
-          "twilightforest:canopy_leaves",
-          "twilightforest:mangrove_leaves",
-          "twilightforest:dark_leaves",
-          "twilightforest:time_leaves",
-          "twilightforest:transformation_leaves",
-          "twilightforest:mining_leaves",
-          "twilightforest:sorting_leaves",
-          "twilightforest:thorn_leaves",
-          "twilightforest:beanstalk_leaves"}},
+          "gloamingforest:rainbow_oak_leaves",
+          "gloamingforest:gloaming_oak_leaves",
+          "gloamingforest:canopy_leaves",
+          "gloamingforest:mangrove_leaves",
+          "gloamingforest:dark_leaves",
+          "gloamingforest:time_leaves",
+          "gloamingforest:transformation_leaves",
+          "gloamingforest:mining_leaves",
+          "gloamingforest:sorting_leaves",
+          "gloamingforest:thorn_leaves",
+          "gloamingforest:beanstalk_leaves"}},
         {"minecraft:saplings",
          {"minecraft:oak_sapling",
           "minecraft:spruce_sapling",
@@ -171,16 +171,16 @@ std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() 
           "minecraft:azalea",
           "minecraft:flowering_azalea",
           "minecraft:mangrove_propagule",
-          "twilightforest:twilight_oak_sapling",
-          "twilightforest:canopy_sapling",
-          "twilightforest:mangrove_sapling",
-          "twilightforest:darkwood_sapling",
-          "twilightforest:time_sapling",
-          "twilightforest:transformation_sapling",
-          "twilightforest:mining_sapling",
-          "twilightforest:sorting_sapling",
-          "twilightforest:hollow_oak_sapling",
-          "twilightforest:rainbow_oak_sapling"}},
+          "gloamingforest:gloaming_oak_sapling",
+          "gloamingforest:canopy_sapling",
+          "gloamingforest:mangrove_sapling",
+          "gloamingforest:darkwood_sapling",
+          "gloamingforest:time_sapling",
+          "gloamingforest:transformation_sapling",
+          "gloamingforest:mining_sapling",
+          "gloamingforest:sorting_sapling",
+          "gloamingforest:hollow_oak_sapling",
+          "gloamingforest:rainbow_oak_sapling"}},
         {"minecraft:crops",
          {"minecraft:wheat",
           "minecraft:carrots",
@@ -199,7 +199,7 @@ std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() 
           "minecraft:trial_spawner",
           "minecraft:vault"}},
         // ItemTagGenerator: PORTAL_ACTIVATOR = #c:gems/diamond
-        {"twilightforest:portal/activator", {"#c:gems/diamond"}},
+        {"gloamingforest:portal/activator", {"#c:gems/diamond"}},
         {"c:gems/diamond", {"minecraft:diamond"}},
     };
     return tags;

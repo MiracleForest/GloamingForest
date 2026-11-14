@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:loyal_zombie",
+      "identifier": "gloamingforest:loyal_zombie",
       "materials": { "default": "entity_alphatest" },
       "textures": { "default": "textures/entity/zombie/zombie" },
       "geometry": { "default": "geometry.zombie.v1.8" },
@@ -20,7 +20,7 @@
         "attack": "animation.zombie.attack_bare_hand",
         "bob": "animation.humanoid.bob"
       },
-      "render_controllers": ["controller.render.twilightforest.loyal_zombie"],
+      "render_controllers": ["controller.render.gloamingforest.loyal_zombie"],
       "enable_attachables": true
     }
   }

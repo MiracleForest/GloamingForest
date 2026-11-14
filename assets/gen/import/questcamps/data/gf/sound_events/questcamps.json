@@ -1,32 +1,32 @@
 {
-  "twilightforest:entity.twilightforest.quest_ram.ambient": {
+  "gloamingforest:entity.gloamingforest.quest_ram.ambient": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.quest_ram.ambient",
+    "subtitle": "subtitles.gloamingforest.entity.quest_ram.ambient",
     "sounds": [
       {
         "event": "entity.sheep.ambient"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.quest_ram.death": {
+  "gloamingforest:entity.gloamingforest.quest_ram.death": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.quest_ram.death",
+    "subtitle": "subtitles.gloamingforest.entity.quest_ram.death",
     "sounds": [
       {
         "event": "entity.sheep.death"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.quest_ram.hurt": {
+  "gloamingforest:entity.gloamingforest.quest_ram.hurt": {
     "category": "neutral",
-    "subtitle": "subtitles.twilightforest.entity.quest_ram.hurt",
+    "subtitle": "subtitles.gloamingforest.entity.quest_ram.hurt",
     "sounds": [
       {
         "event": "entity.sheep.hurt"
       }
     ]
   },
-  "twilightforest:entity.twilightforest.quest_ram.step": {
+  "gloamingforest:entity.gloamingforest.quest_ram.step": {
     "category": "neutral",
     "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [

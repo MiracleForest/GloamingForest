@@ -1,8 +1,8 @@
-block.twilightforest.encased_fire_jet=Lanzallamas revestido
-block.twilightforest.encased_smoker=Lanzahumo revestido
-block.twilightforest.fire_jet=Lanzallamas
-entity.twilightforest.hydra=Hidra
-entity.twilightforest:hydra.name=Hidra
-tile.twilightforest:encased_fire_jet.name=Lanzallamas revestido
-tile.twilightforest:encased_smoker.name=Lanzahumo revestido
-tile.twilightforest:fire_jet.name=Lanzallamas
+block.gloamingforest.encased_fire_jet=Lanzallamas revestido
+block.gloamingforest.encased_smoker=Lanzahumo revestido
+block.gloamingforest.fire_jet=Lanzallamas
+entity.gloamingforest.hydra=Hidra
+entity.gloamingforest:hydra.name=Hidra
+tile.gloamingforest:encased_fire_jet.name=Lanzallamas revestido
+tile.gloamingforest:encased_smoker.name=Lanzahumo revestido
+tile.gloamingforest:fire_jet.name=Lanzallamas

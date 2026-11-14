@@ -1,0 +1,36 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "jeed"
+    }
+  ],
+  "type": "jeed:effect_provider",
+  "effect": "gloamingforest:frosted",
+  "providers": [
+    {
+      "item": "gloamingforest:alpha_yeti_spawn_egg"
+    },
+    {
+      "item": "gloamingforest:ice_bomb"
+    },
+    {
+      "item": "gloamingforest:ice_bow"
+    },
+    {
+      "item": "gloamingforest:ice_sword"
+    },
+    {
+      "item": "gloamingforest:yeti_helmet"
+    },
+    {
+      "item": "gloamingforest:yeti_chestplate"
+    },
+    {
+      "item": "gloamingforest:yeti_leggings"
+    },
+    {
+      "item": "gloamingforest:yeti_boots"
+    }
+  ]
+}

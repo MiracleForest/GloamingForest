@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/BerryBushFeature.java
-//   src/main/java/twilightforest/world/components/feature/config/BerryBushConfig.java
-//   src/main/java/twilightforest/world/components/feature/EnchantedForestVinesFeature.java
-//   src/main/java/twilightforest/world/components/feature/FallenLeavesFeature.java
-//   src/main/java/twilightforest/world/components/feature/HugeLilypadFeature.java
-//   src/main/java/twilightforest/world/components/feature/HugeWaterLilyFeature.java
-//   src/main/java/twilightforest/world/components/feature/UndergroundPlantFeature.java
-//   src/main/java/twilightforest/util/WorldUtil.java (getRandomElementWithWeights)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/BerryBushFeature.java
+//   src/main/java/gloamingforest/world/components/feature/config/BerryBushConfig.java
+//   src/main/java/gloamingforest/world/components/feature/EnchantedForestVinesFeature.java
+//   src/main/java/gloamingforest/world/components/feature/FallenLeavesFeature.java
+//   src/main/java/gloamingforest/world/components/feature/HugeLilypadFeature.java
+//   src/main/java/gloamingforest/world/components/feature/HugeWaterLilyFeature.java
+//   src/main/java/gloamingforest/world/components/feature/UndergroundPlantFeature.java
+//   src/main/java/gloamingforest/util/WorldUtil.java (getRandomElementWithWeights)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U6 flora: TF's 8 flora feature types, registered by id so the imported configured / placed
+// U6 flora: upstream's 8 flora feature types, registered by id so the imported configured / placed
 // features (and U1's biome lists) resolve. Random draws follow Java's order.
 
 #include "feature/flora/Flora.h"
@@ -58,9 +58,9 @@ bool canSurvive(worldgen::Region& r, BlockPos const& p, Block const& b) {
 
 // ---- berry_bush ------------------------------------------------------------------------------------------
 
-/// Biome#shouldSnow for the bush features: TF's cold biomes (snowy forest, glacier).
+/// Biome#shouldSnow for the bush features: upstream's cold biomes (snowy forest, glacier).
 bool snowyBiome(std::string const& biome) {
-    return biome == "twilightforest:snowy_forest" || biome == "twilightforest:glacier" || biome.find("snow") != std::string::npos
+    return biome == "gloamingforest:snowy_forest" || biome == "gloamingforest:glacier" || biome.find("snow") != std::string::npos
         || biome.find("frozen") != std::string::npos;
 }
 
@@ -75,7 +75,7 @@ struct BerryBush {
     bool setBush(BlockPos const& pos, int age) {
         if (!inside(level, pos)) return false;
         Block const& replace = level.getBlock(pos);
-        if (!kit::hasTag(replace, "twilightforest:tf_berry_bushes_replace") || kit::hasTag(replace, "minecraft:features_cannot_replace") || kit::isFluid(replace))
+        if (!kit::hasTag(replace, "gloamingforest:tf_berry_bushes_replace") || kit::hasTag(replace, "minecraft:features_cannot_replace") || kit::isFluid(replace))
             return false;
         BlockPos     downPos = relative(pos, Down);
         Block const& below   = at(level, downPos);
@@ -159,13 +159,13 @@ bool enchantedForestVines(FeatureContext const& c) {
                                 std::max(r.height(worldgen::Heightmap::MotionBlocking, x, z - 1), r.height(worldgen::Heightmap::MotionBlocking, x, z + 1)));
             for (int y = -10; y <= maxY; ++y) {
                 BlockPos pos{x, y, z};
-                if (c.random.nextInt(7) > 0 || !isEmpty(r, pos) || r.biome(pos) != "twilightforest:enchanted_forest") continue;
+                if (c.random.nextInt(7) > 0 || !isEmpty(r, pos) || r.biome(pos) != "gloamingforest:enchanted_forest") continue;
                 Json properties = Json::object();
                 bool empty = true, isTree = true;
                 // Direction.values(): DOWN, UP, NORTH, SOUTH, WEST, EAST
                 for (int dir : {Down, Up, North, South, West, East}) {
                     BlockPos rel = relative(pos, dir);
-                    if (dir == Down || !acceptableNeighbour(r, rel, dir) || at(r, rel).getTypeName() == "twilightforest:rainbow_oak_leaves") continue;
+                    if (dir == Down || !acceptableNeighbour(r, rel, dir) || at(r, rel).getTypeName() == "gloamingforest:rainbow_oak_leaves") continue;
                     Block const& n = at(r, rel);
                     if (!(kit::hasTag(n, "minecraft:logs") || kit::isLeaves(n))) isTree = false;
                     properties[dirName(dir)] = "true";
@@ -310,8 +310,8 @@ bool undergroundPlants(FeatureContext const& c, int maxCount, bool inStructure) 
             continue;
         }
         Block const* state = configured;
-        if (state->getTypeName() == "twilightforest:trollvidr" && c.random.nextInt(10) == 0) {
-            if (auto const* unripe = kit::javaBlock("twilightforest:unripe_trollber")) state = unripe;
+        if (state->getTypeName() == "gloamingforest:trollvidr" && c.random.nextInt(10) == 0) {
+            if (auto const* unripe = kit::javaBlock("gloamingforest:unripe_trollber")) state = unripe;
         }
         if (!inside(r, pos) || !canSurvive(r, pos, *state)) continue;
         if (!inStructure && r.dimension() >= 0) {
@@ -327,14 +327,14 @@ bool undergroundPlants(FeatureContext const& c, int maxCount, bool inStructure) 
 } // namespace
 
 void registerFeatures() {
-    features::registerType("twilightforest:berry_bush", berryBush);
-    features::registerType("twilightforest:enchanted_forest_vines", enchantedForestVines);
-    features::registerType("twilightforest:fallen_leaves", fallenLeaves);
-    features::registerType("twilightforest:huge_lily_pad", hugeLilyPad);
-    features::registerType("twilightforest:huge_water_lily", hugeWaterLily);
-    features::registerType("twilightforest:underground_plants", [](FeatureContext const& c) { return undergroundPlants(c, 1 << 30, false); });
-    features::registerType("twilightforest:underground_plants_in_structure", [](FeatureContext const& c) { return undergroundPlants(c, 1 << 30, true); });
-    features::registerType("twilightforest:oreberry_bushes", [](FeatureContext const& c) { return undergroundPlants(c, 1, false); });
+    features::registerType("gloamingforest:berry_bush", berryBush);
+    features::registerType("gloamingforest:enchanted_forest_vines", enchantedForestVines);
+    features::registerType("gloamingforest:fallen_leaves", fallenLeaves);
+    features::registerType("gloamingforest:huge_lily_pad", hugeLilyPad);
+    features::registerType("gloamingforest:huge_water_lily", hugeWaterLily);
+    features::registerType("gloamingforest:underground_plants", [](FeatureContext const& c) { return undergroundPlants(c, 1 << 30, false); });
+    features::registerType("gloamingforest:underground_plants_in_structure", [](FeatureContext const& c) { return undergroundPlants(c, 1 << 30, true); });
+    features::registerType("gloamingforest:oreberry_bushes", [](FeatureContext const& c) { return undergroundPlants(c, 1, false); });
 }
 
 } // namespace gf::feature::flora

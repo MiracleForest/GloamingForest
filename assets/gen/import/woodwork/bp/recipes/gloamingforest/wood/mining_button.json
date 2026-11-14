@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "gloamingforest:wood/mining_button"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "gloamingforest:mining_planks"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "gloamingforest:mining_planks"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:mining_button"
+    }
+  }
+}

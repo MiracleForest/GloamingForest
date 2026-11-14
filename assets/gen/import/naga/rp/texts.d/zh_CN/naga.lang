@@ -1,7 +1,7 @@
-entity.twilightforest.naga=娜迦
-entity.twilightforest:naga.name=娜迦
-item.spawn_egg.entity.twilightforest:naga.name=娜迦刷怪蛋
-item.twilightforest.naga_spawn_egg=娜迦刷怪蛋
-subtitles.twilightforest.entity.naga.hiss=娜迦：嘶嘶
-subtitles.twilightforest.entity.naga.hurt=娜迦：嘶叫
-subtitles.twilightforest.entity.naga.rattle=娜迦：响尾
+entity.gloamingforest.naga=娜迦
+entity.gloamingforest:naga.name=娜迦
+item.gloamingforest.naga_spawn_egg=娜迦刷怪蛋
+item.spawn_egg.entity.gloamingforest:naga.name=娜迦刷怪蛋
+subtitles.gloamingforest.entity.naga.hiss=娜迦：嘶嘶
+subtitles.gloamingforest.entity.naga.hurt=娜迦：嘶叫
+subtitles.gloamingforest.entity.naga.rattle=娜迦：响尾

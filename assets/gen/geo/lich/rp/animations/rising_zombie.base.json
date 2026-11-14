@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "animation.twilightforest.rising_zombie.base": {
+    "animation.gloamingforest.rising_zombie.base": {
       "loop": true,
       "bones": {
         "head": {

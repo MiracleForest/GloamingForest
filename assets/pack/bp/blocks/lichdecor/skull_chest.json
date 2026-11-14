@@ -2,18 +2,18 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:skull_chest",
+      "identifier": "gloamingforest:skull_chest",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
           "east"
         ],
-        "twilightforest:multilogged": [
+        "gloamingforest:multilogged": [
           "air",
           "water",
           "lava",
@@ -32,7 +32,7 @@
         "minecraft:is_pickaxe_item_destructible"
       ],
       "minecraft:map_color": "#999999",
-      "minecraft:geometry": "geometry.twilightforest.lichdecor.skull_chest",
+      "minecraft:geometry": "geometry.gloamingforest.lichdecor.skull_chest",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_lichdecor_skull_chest",
@@ -67,9 +67,9 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'air'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'air'",
         "components": {
-          "minecraft:geometry": "geometry.twilightforest.lichdecor.skull_chest",
+          "minecraft:geometry": "geometry.gloamingforest.lichdecor.skull_chest",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_lichdecor_skull_chest",
@@ -103,9 +103,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'basalt'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'basalt'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_basalt_side",
@@ -147,9 +147,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'lava'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'lava'",
         "components": {
-          "minecraft:geometry": "geometry.twilightforest.lichdecor.skull_chest",
+          "minecraft:geometry": "geometry.gloamingforest.lichdecor.skull_chest",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_lichdecor_skull_chest",
@@ -183,9 +183,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'obsidian'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'obsidian'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_obsidian",
@@ -227,9 +227,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'stone'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'stone'",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_vanilla_block_stone",
@@ -271,9 +271,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'water'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'water'",
         "components": {
-          "minecraft:geometry": "geometry.twilightforest.lichdecor.skull_chest",
+          "minecraft:geometry": "geometry.gloamingforest.lichdecor.skull_chest",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_lichdecor_skull_chest",
@@ -307,13 +307,13 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:multilogged') == 'lava'",
+        "condition": "q.block_state('gloamingforest:multilogged') == 'lava'",
         "components": {
           "minecraft:light_emission": 15
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -325,7 +325,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -337,7 +337,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -349,7 +349,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:transformation": {
             "rotation": [

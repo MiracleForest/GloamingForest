@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/ToolEvents.java (damageNonMazebreakerToolsMore)
-//   src/main/java/twilightforest/block/MazeSlimeBlock.java
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/ToolEvents.java (damageNonMazebreakerToolsMore)
+//   src/main/java/gloamingforest/block/MazeSlimeBlock.java
 //   net/minecraft/world/level/block/SlimeBlock.java (fallOn, updateEntityAfterFallOn, stepOn: the
 //   vanilla behaviour MazeSlimeBlock inherits)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U23's block rules:
-//   - the mazebreaker rule: breaking a block of #twilightforest:mazebreaker_accelerated_mining (the
+//   - the mazebreaker rule: breaking a block of #gloamingforest:mazebreaker_accelerated_mining (the
 //     mazestone and castle blocks; U23 owns the tag) with any other damageable tool costs it 16
 //     extra durability (a tag matcher, rule R6);
 //   - the maze slime block: SlimeBlock's fall (no fall damage unless sneaking), bounce (the fall
@@ -100,7 +100,7 @@ bool suppressingBounce(Actor const& a) { return a.isPlayer() && a.isSneaking(); 
 // Companions slow themselves (src/client/labyrinth). The modifier is not saved with the player and
 // is read back from the attribute every tick (no cache that something else's modifier reset could
 // leave stale).
-constexpr char const* kSlowName = "twilightforest:maze_slime_step";
+constexpr char const* kSlowName = "gloamingforest:maze_slime_step";
 
 void setSlowed(Player& p, bool want) {
     auto  attr = p.getMutableAttribute(SharedAttributes::MOVEMENT_SPEED());

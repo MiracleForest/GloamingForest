@@ -16,12 +16,12 @@
 namespace gf::client::atmosphere {
 
 struct AtmosphereState {
-    bool        inTwilight = false;
+    bool        inGloaming = false;
     int         aurora = 0, lastAurora = 0;
     float       urGhastRain = 0;
     std::string cameraBiome;
     bool        nearLocked = false;
-    int         dimension  = -1; ///< the TF dimension the provider is set for (-1: none yet)
+    int         dimension  = -1; ///< the upstream dimension the provider is set for (-1: none yet)
     bool        auroraGrid = false;
     int         ticks      = 0; ///< client ticks counted by the unit (selftests wait on these)
 };
@@ -35,7 +35,7 @@ void setPreview(nlohmann::json const& msg);
 [[nodiscard]] std::optional<sky::FogSpec> fogNow();
 /// Whether the camera was in water, lava or powder snow at the last client tick (FogType not NONE).
 [[nodiscard]] bool cameraInFluidNow();
-/// Sets TF's sky provider for the Twilight Forest dimension (once it is known).
+/// Sets upstream's sky provider for the Gloaming Forest dimension (once it is known).
 void installProvider();
 /// TFConfig#getValidAuroraBiomes now: the config's biomes that parse and that the world knows (as
 /// Bedrock names them: vanilla ones without "minecraft:").

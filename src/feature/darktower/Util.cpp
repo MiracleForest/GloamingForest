@@ -72,7 +72,7 @@ std::string idAt(BlockSource& region, BlockPos const& pos) { return game::blockI
 
 bool boolState(Block const& block, char const* state) {
     // by the serialized value: an integer read is the value's position in the state's list, and
-    // some TF booleans are declared [true, false] (locked)
+    // some upstream booleans are declared [true, false] (locked)
     return textState(block, state) == "true";
 }
 

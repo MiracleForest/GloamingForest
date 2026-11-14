@@ -1,7 +1,7 @@
-// The Twilight Forest's WorldGenerator (F5, spike S2): a VoidGenerator subclass whose loadChunk
+// The Gloaming Forest's WorldGenerator (F5, spike S2): a VoidGenerator subclass whose loadChunk
 // runs the Biomes .. Carvers stages and whose decoration post-processing runs Features .. Spawns
 // over the 3x3 chunk neighbourhood. It replaces the generator of the game's custom dimension
-// "twilightforest:twilight_forest" (CustomDimension::createGenerator), whatever F4 registers it
+// "gloamingforest:gloaming_forest" (CustomDimension::createGenerator), whatever F4 registers it
 // with; ext::createGenerator hands it to another backend.
 #include <chrono>
 #include <shared_mutex>
@@ -37,7 +37,7 @@ namespace detail {
 
 namespace {
 
-std::atomic<int> gActive{0}; ///< live Twilight generators (server and client levels)
+std::atomic<int> gActive{0}; ///< live Gloaming generators (server and client levels)
 
 int minYOf(Dimension const& d) { return d.mHeightRange->mMin; }
 int maxYOf(Dimension const& d) { return d.mHeightRange->mMax; }
@@ -67,13 +67,13 @@ std::optional<std::pair<int, int>> centerOf(ChunkViewSource& view) {
     return std::nullopt;
 }
 
-class TwilightGenerator final : public VoidGenerator {
+class GloamingGenerator final : public VoidGenerator {
 public:
-    TwilightGenerator(Dimension& dimension, BiomeIdType defaultBiome) : VoidGenerator(dimension, defaultBiome), mDim(dimension) {
+    GloamingGenerator(Dimension& dimension, BiomeIdType defaultBiome) : VoidGenerator(dimension, defaultBiome), mDim(dimension) {
         ++gActive;
-        setTwilightHeight(minYOf(dimension), maxYOf(dimension));
+        setGloamingHeight(minYOf(dimension), maxYOf(dimension));
     }
-    ~TwilightGenerator() override { --gActive; }
+    ~GloamingGenerator() override { --gActive; }
 
     void loadChunk(LevelChunk& lc, bool) override {
         auto start = std::chrono::steady_clock::now();
@@ -129,7 +129,7 @@ private:
     Dimension& mDim;
 };
 
-bool isTwilightDimension(Dimension const& d) { return *d.mName == world::kDimensionId; }
+bool isGloamingDimension(Dimension const& d) { return *d.mName == world::kDimensionId; }
 
 } // namespace
 
@@ -139,8 +139,8 @@ namespace ext {
 
 std::unique_ptr<WorldGenerator> createGenerator(Dimension& dimension) {
     detail::setSeed(detail::currentSeed());
-    gf::log().info("worldgen: Twilight Forest generator created for {}", *dimension.mName);
-    return std::make_unique<detail::TwilightGenerator>(dimension, dimension.getDefaultBiomeId());
+    gf::log().info("worldgen: Gloaming Forest generator created for {}", *dimension.mName);
+    return std::make_unique<detail::GloamingGenerator>(dimension, dimension.getDefaultBiomeId());
 }
 
 bool generatorActive() { return detail::gActive.load() > 0; }
@@ -150,16 +150,16 @@ bool generatorActive() { return detail::gActive.load() > 0; }
 namespace detail {
 
 LL_TYPE_INSTANCE_HOOK(
-    TwilightGeneratorHook,
+    GloamingGeneratorHook,
     ll::memory::HookPriority::Normal,
     CustomDimension,
     &CustomDimension::$createGenerator,
     std::unique_ptr<WorldGenerator>,
     br::worldgen::StructureSetRegistry const& registry
 ) {
-    if (isTwilightDimension(*this)) {
-        gf::log().info("worldgen: Twilight Forest generator installed in custom dimension {}", *mName);
-        return std::make_unique<TwilightGenerator>(*this, *mDefaultBiome);
+    if (isGloamingDimension(*this)) {
+        gf::log().info("worldgen: Gloaming Forest generator installed in custom dimension {}", *mName);
+        return std::make_unique<GloamingGenerator>(*this, *mDefaultBiome);
     }
     return origin(registry);
 }
@@ -176,14 +176,14 @@ public:
         }
     }
     void uninstall() {
-        if (mHooked) TwilightGeneratorHook::unhook();
+        if (mHooked) GloamingGeneratorHook::unhook();
         mHooked = false;
     }
 
 private:
     void hook() {
         if (mHooked) return;
-        TwilightGeneratorHook::hook();
+        GloamingGeneratorHook::hook();
         mHooked = true;
     }
     bool mHooked = false;

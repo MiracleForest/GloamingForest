@@ -2,17 +2,17 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:red_thread",
+      "identifier": "gloamingforest:red_thread",
       "menu_category": {
-        "category": "items"
+        "category": "none"
       },
       "states": {
-        "twilightforest:down": [false, true],
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:up": [false, true],
-        "twilightforest:west": [false, true]
+        "gloamingforest:down": [false, true],
+        "gloamingforest:east": [false, true],
+        "gloamingforest:north": [false, true],
+        "gloamingforest:south": [false, true],
+        "gloamingforest:up": [false, true],
+        "gloamingforest:west": [false, true]
       }
     },
     "components": {

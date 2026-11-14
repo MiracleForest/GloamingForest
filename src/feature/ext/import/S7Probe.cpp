@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // Spike S7 follow-up (unit F1 "import", docs/spikes/S7.md): how a block JSON of each format_version declares block
 // tags in BDS 1.26.51. The probe blocks gf_s7:<form>_<format> come from the throw-away pack of

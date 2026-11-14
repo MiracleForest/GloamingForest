@@ -1,0 +1,14 @@
+{
+  "type": "gloamingforest:berry_bush",
+  "config": {
+    "bush": {
+      "Name": "gloamingforest:blackberry_bush",
+      "Properties": {
+        "age": "0",
+        "layers": "0"
+      }
+    },
+    "can_generate_snowy": true,
+    "generates_on": "gloamingforest:tf_berry_bushes_survive"
+  }
+}

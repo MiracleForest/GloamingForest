@@ -195,7 +195,7 @@ GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
     ctx.check(vanilla >= 1, "vanilla-model layers are listed");
     ctx.check(animations >= 1 && attachables >= 1, "base animations and attachables are listed");
     ctx.info("index: " + std::to_string(geometries) + " geometries, " + std::to_string(vanilla) + " vanilla layers, "
-             + std::to_string(animations) + " base animations, " + std::to_string(attachables) + " attachables (TF "
+             + std::to_string(animations) + " base animations, " + std::to_string(attachables) + " attachables (upstream "
              + str(idx, "tf", "?") + ")");
 });
 
@@ -288,8 +288,8 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
     std::set<std::string> controllers = definedIn("render_controllers", "render_controllers");
     controllers.insert({"controller.render.armor", "controller.render.item_default"}); // vanilla
     // the shared render controllers (F2's partition) must be there
-    auto rc = readJson(rpDir() / "render_controllers" / "twilightforest.models.render_controllers.json");
-    ctx.require(rc.has_value(), "render_controllers/twilightforest.models.render_controllers.json is in the pack");
+    auto rc = readJson(rpDir() / "render_controllers" / "gloamingforest.models.render_controllers.json");
+    ctx.require(rc.has_value(), "render_controllers/gloamingforest.models.render_controllers.json is in the pack");
     // every attachable of the pack by identifier
     std::map<std::string, std::string> byItem; // identifier -> pack-relative file
     {

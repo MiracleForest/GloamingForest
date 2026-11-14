@@ -2,27 +2,27 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:upper_goblin_knight",
+      "identifier": "gloamingforest:upper_goblin_knight",
       "is_spawnable": false,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:armor": {
+        "gloamingforest:armor": {
           "type": "bool",
           "default": true,
           "client_sync": true
         },
-        "twilightforest:shield": {
+        "gloamingforest:shield": {
           "type": "bool",
           "default": true,
           "client_sync": true
         },
-        "twilightforest:shield_disabled": {
+        "gloamingforest:shield_disabled": {
           "type": "bool",
           "default": false,
           "client_sync": true
         },
-        "twilightforest:spear_timer": {
+        "gloamingforest:spear_timer": {
           "type": "int",
           "range": [
             0,
@@ -36,7 +36,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "upper_goblin_knight",
           "goblin_knight",
           "monster",

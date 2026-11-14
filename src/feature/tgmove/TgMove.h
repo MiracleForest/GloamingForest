@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersGearLogic.java
-//   src/main/java/twilightforest/events/TravellersGearEvents.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersGearLogic.java
+//   src/main/java/gloamingforest/events/TravellersGearEvents.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -15,15 +15,15 @@
 // did not make is put back 2 ticks later). So both simulations of a player apply each modifier:
 // with the client mod the local player applies double jump, sidestep, glide, step up, water walk,
 // unrestrained, swift swim, agile ranger and straight ahead in gf::client::movement
-// (src/client/tgmove) and sends TF's packets as the channels tgmove.double_jump / sidestep /
+// (src/client/tgmove) and sends upstream's packets as the channels tgmove.double_jump / sidestep /
 // gradual_glide; the server pushes the double jump and the sidestep (SetActorMotionPacket), applies
 // the same glide, water walk, step height, slowdown immunity, Depth Strider, item use slowdown and
-// speed to its copy of the player, runs TF's anti-abuse validator on refused packets and keeps
+// speed to its copy of the player, runs upstream's anti-abuse validator on refused packets and keeps
 // what only the server has: Jump Boost II (high jump), the fall damage of a glide, the double
 // jump's safe fall +2, slimy soles' cancelled landing and bounce, the wing state
 // (tgmove.wings_state), the aquatic agility air and mining speed, and the movement food
 // exhaustion of efficient eater. Mobs wearing the gear glide, bounce, jump high, run straight
-// ahead and ignore block slowdowns as in TF (updateOtherModifiers runs for every LivingEntity).
+// ahead and ignore block slowdowns as in upstream (updateOtherModifiers runs for every LivingEntity).
 // Vanilla clients get the fallbacks of docs/spec/tgmove.md section 4 (jump in the air -> double
 // jump by motion packet, sneak in the air -> Slow Falling glide).
 
@@ -77,7 +77,7 @@ struct SavedEffect {
     bool      ambient   = false;
 };
 
-/// The server's per-entity state (TF's data attachments, by ActorUniqueID; never a pointer).
+/// The server's per-entity state (upstream's data attachments, by ActorUniqueID; never a pointer).
 struct PlayerState {
     bool                    hasDoubleJump = false;
     core::tgmove::Validator doubleJumpValidator;
@@ -118,7 +118,7 @@ struct PlayerState {
     float                      lastFood       = -1; ///< efficient eater: the food after the last tick
     float                      refundDebt     = 0;  ///< efficient eater: refund the exhaustion could not take yet (it wrapped)
     // unrestrained on the ground (BlockHooks): what the engine's last step left to put right
-    double                     unrRescale = 1.0;   ///< the friction / slowdown of the last step -> TF's 0.6
+    double                     unrRescale = 1.0;   ///< the friction / slowdown of the last step -> upstream's 0.6
     double                     unrVyPre   = 0;     ///< the y velocity the last step started with
     bool                       unrSlime   = false; ///< the last step was on a slime block
     bool                       unrHoney   = false; ///< the last step was on a honey block
@@ -151,7 +151,7 @@ bool performDoubleJump(Player& player, bool vanilla);
 bool tryPerformSidestep(Player& player, bool left);
 /// A refused companion packet (handleDoubleJumpAbuse / handleSidestepAbuse); the verdict.
 core::tgmove::Abuse handleAbuse(Player& player, bool sidestep);
-/// Whether the anti-abuse validator runs (TF: dedicated servers only; the client build's
+/// Whether the anti-abuse validator runs (upstream: dedicated servers only; the client build's
 /// integrated server skips it). Tests force it.
 [[nodiscard]] bool validatorEnabled();
 void               forceValidator(std::optional<bool> on);
@@ -198,12 +198,12 @@ bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bo
 /// (MoveInputComponent: x strafe, y forward); without it (mobs) the input acceleration is estimated
 /// from the last step. Client mod and server copy alike, before the engine's step.
 [[nodiscard]] Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool active, Vec3 v, bool onGround, bool steppingCarefully, Vec2 const* move);
-/// The velocity an input change makes in one engine step (Entity#moveRelative): TF changes the
+/// The velocity an input change makes in one engine step (Entity#moveRelative): upstream changes the
 /// input (straight ahead's strafe / 1.4, the glide's unsneaked input) where Bedrock reads it after
 /// any hook, so both simulations add the difference of the accelerations of `tfMove` and
 /// `engineMove` (x strafe, y forward) instead: on the ground speed x the block's friction factor,
 /// in the air the flying speed (0.02, 0.026 sprinting).
-/// `unrestrained`: the ground step's friction is TF's 0.6 (applyUnrestrained puts the engine's right),
+/// `unrestrained`: the ground step's friction is upstream's 0.6 (applyUnrestrained puts the engine's right),
 /// so the input change accelerates as on a block of friction 0.6.
 [[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting, bool unrestrained = false);
 /// Bedrock's item use slowdown of the input (measured: a held key's input is 0.122 long while a bow
@@ -243,10 +243,10 @@ inline constexpr int kPacketRetryTicks = 3;
 
 /// The entity data key (F8's gf::entity::data) where the server keeps last_damage_armor_time (the
 /// game time armour last took damage) for U11's auto repair, which reads it by this string.
-inline constexpr char kLastDamageArmorTimeKey[] = "twilightforest:last_damage_armor_time";
+inline constexpr char kLastDamageArmorTimeKey[] = "gloamingforest:last_damage_armor_time";
 /// The entity tag that marks a leashed mob as free of Java's stay-close pathing
 /// (leashed_pathfinder_override; U21 adds it by this string to the lich tower's fenced mobs).
-inline constexpr char kLeashOverrideTag[] = "twilightforest:leashed_pathfinder_override";
+inline constexpr char kLeashOverrideTag[] = "gloamingforest:leashed_pathfinder_override";
 
 /// Server game time (Level#getCurrentTick).
 [[nodiscard]] long long gameTime();

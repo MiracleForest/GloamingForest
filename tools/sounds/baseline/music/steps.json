@@ -1,5 +1,5 @@
 {
-  "about": "Baseline placeholder for TF's 'steps' (195 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/steps.json.",
+  "about": "Baseline placeholder for upstream's 'steps' (195 s), composed by tools/sounds/baseline/compose.ps1; U10 replaces it with tools/sounds/music/steps.json.",
   "rate": 22050,
   "quality": 0.25,
   "seed": 23,

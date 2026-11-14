@@ -2,12 +2,12 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:fire_beetle",
+      "identifier": "gloamingforest:fire_beetle",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:breathing": {
+        "gloamingforest:breathing": {
           "type": "bool",
           "default": false,
           "client_sync": true
@@ -30,7 +30,7 @@
     "components": {
       "minecraft:type_family": {
         "family": [
-          "twilightforest",
+          "gloamingforest",
           "fire_beetle",
           "arthropod",
           "monster",

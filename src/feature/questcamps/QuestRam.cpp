@@ -1,16 +1,16 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/passive/QuestRam.java
-//   src/main/java/twilightforest/entity/ai/goal/QuestRamEatWoolGoal.java
-//   src/main/java/twilightforest/entity/EnforcedHomePoint.java
-//   src/main/java/twilightforest/util/features/FeaturePlacers.java (placeEntity's restriction point)
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/passive/QuestRam.java
+//   src/main/java/gloamingforest/entity/ai/goal/QuestRamEatWoolGoal.java
+//   src/main/java/gloamingforest/entity/EnforcedHomePoint.java
+//   src/main/java/gloamingforest/util/features/FeaturePlacers.java (placeEntity's restriction point)
 //   net/minecraft/world/entity/ai/goal/TemptGoal.java (vanilla, with QuestRam#isItemTempting)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The Questing Ram. Its vanilla goals (float, panic 1.38, stroll, look around) are the BP's
-// behaviours (assets/pack/bp/entities/questcamps); what is TF's own is native: the 16-colour quest
+// behaviours (assets/pack/bp/entities/questcamps); what is upstream's own is native: the 16-colour quest
 // (ColorFlags / Rewarded, saved and synced), feeding by hand (Behaviour::interact) and by dropped
 // items (QuestRamEatWoolGoal, priority 2), the tempt goal for the colours it still needs (3), the
 // restriction point (AttemptToGoHomeGoal 1.25, priority 5, radius 13), the reward every 70..119
@@ -60,7 +60,7 @@ namespace mobs = gf::feature::entity::mobs;
 
 namespace {
 
-constexpr char kAmbient[] = "entity.twilightforest.quest_ram.ambient";
+constexpr char kAmbient[] = "entity.gloamingforest.quest_ram.ambient";
 constexpr char kHomesKey[] = "gf:questcamps:homes";
 constexpr int  kHomeRadius = 13;
 

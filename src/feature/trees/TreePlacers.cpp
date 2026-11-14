@@ -1,19 +1,19 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/BranchesConfig.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/BranchingTrunkPlacer.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/DangleFromTreeDecorator.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/LeafSpheroidFoliagePlacer.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/TreeCorePlacer.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/TreeRootsDecorator.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/TrunkRiser.java
-//   src/main/java/twilightforest/world/components/feature/trees/treeplacers/TrunkSideDecorator.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/BranchesConfig.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/BranchingTrunkPlacer.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/DangleFromTreeDecorator.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/LeafSpheroidFoliagePlacer.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/TreeCorePlacer.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/TreeRootsDecorator.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/TrunkRiser.java
+//   src/main/java/gloamingforest/world/components/feature/trees/treeplacers/TrunkSideDecorator.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U3 trees: TF's trunk placers, foliage placer and tree decorators (TFFeatureModifiers), registered
-// by id with the features contract (F5) so the minecraft:tree feature of TF's tree JSON uses them.
+// U3 trees: upstream's trunk placers, foliage placer and tree decorators (TFFeatureModifiers), registered
+// by id with the features contract (F5) so the minecraft:tree feature of upstream's tree JSON uses them.
 #include "feature/trees/Trees.h"
 
 #include <algorithm>
@@ -74,7 +74,7 @@ void addOnce(PosIndex& index, std::vector<BlockPos>& list, BlockPos const& p) {
 thread_local std::vector<BlockPos>* tDecorations = nullptr;
 
 /// TreeDecorator.Context#setBlock: the decoration setter (the features kit's, which records it for
-/// the minecraft:tree feature; TF's own tree features collect it in tDecorations).
+/// the minecraft:tree feature; upstream's own tree features collect it in tDecorations).
 void decorate(TreeContext& tree, BlockPos const& pos, Block const& block) {
     kit::setDecoration(tree, pos, block);
     if (tDecorations) tDecorations->push_back(pos);
@@ -179,7 +179,7 @@ std::vector<FoliageAttachment> trunkRiser(TreeContext& tree, int height, BlockPo
     auto const& inner  = member(config, "trunk_placer");
     std::string type   = inner.value("type", std::string());
     if (type.find(':') == std::string::npos) type = "minecraft:" + type;
-    if (type == "twilightforest:branching_trunk_placer") return branchingTrunk(tree, height, raised, inner);
+    if (type == "gloamingforest:branching_trunk_placer") return branchingTrunk(tree, height, raised, inner);
     if (type == "minecraft:straight_trunk_placer") {
         kit::setDirtAt(tree, below(raised));
         for (int i = 0; i < height; ++i) kit::placeLog(tree, above(raised, i));
@@ -313,7 +313,7 @@ void dangle(TreeContext& tree, Json const& config) {
     for (int attempt = 0; attempt < totalTries; ++attempt) {
         bool     cleared = false;
         BlockPos pos     = tree.leaves[static_cast<std::size_t>(tree.random.nextInt(leafTotal))];
-        // no rope where the trunk is (TF compares x with the first log's y)
+        // no rope where the trunk is (upstream compares x with the first log's y)
         if (pos.x == tree.logs[0].y && pos.z == tree.logs[0].z) return;
         int cordLength = baseLength + tree.random.nextInt(randomLen + 1);
         for (int r = 1; r <= cordLength; ++r) {
@@ -340,13 +340,13 @@ void dangle(TreeContext& tree, Json const& config) {
 } // namespace
 
 void registerTreePlacers() {
-    gf::features::registerTrunkPlacer("twilightforest:branching_trunk_placer", branchingTrunk);
-    gf::features::registerTrunkPlacer("twilightforest:trunk_mover_upper", trunkRiser);
-    gf::features::registerFoliagePlacer("twilightforest:spheroid_foliage_placer", spheroidFoliage);
-    gf::features::registerTreeDecorator("twilightforest:core_placer", corePlacer);
-    gf::features::registerTreeDecorator("twilightforest:trunkside_decorator", trunkSide);
-    gf::features::registerTreeDecorator("twilightforest:tree_roots", treeRoots);
-    gf::features::registerTreeDecorator("twilightforest:dangle_from_tree_decorator", dangle);
+    gf::features::registerTrunkPlacer("gloamingforest:branching_trunk_placer", branchingTrunk);
+    gf::features::registerTrunkPlacer("gloamingforest:trunk_mover_upper", trunkRiser);
+    gf::features::registerFoliagePlacer("gloamingforest:spheroid_foliage_placer", spheroidFoliage);
+    gf::features::registerTreeDecorator("gloamingforest:core_placer", corePlacer);
+    gf::features::registerTreeDecorator("gloamingforest:trunkside_decorator", trunkSide);
+    gf::features::registerTreeDecorator("gloamingforest:tree_roots", treeRoots);
+    gf::features::registerTreeDecorator("gloamingforest:dangle_from_tree_decorator", dangle);
 }
 
 void runDecorator(TreeContext& tree, Json const& decorator, std::vector<BlockPos>* decorations) {
@@ -356,15 +356,15 @@ void runDecorator(TreeContext& tree, Json const& decorator, std::vector<BlockPos
     } sink;
     tDecorations     = decorations;
     std::string type = decorator.value("type", std::string());
-    if (type == "twilightforest:core_placer") corePlacer(tree, decorator);
-    else if (type == "twilightforest:trunkside_decorator") trunkSide(tree, decorator);
-    else if (type == "twilightforest:tree_roots") treeRoots(tree, decorator);
-    else if (type == "twilightforest:dangle_from_tree_decorator") dangle(tree, decorator);
+    if (type == "gloamingforest:core_placer") corePlacer(tree, decorator);
+    else if (type == "gloamingforest:trunkside_decorator") trunkSide(tree, decorator);
+    else if (type == "gloamingforest:tree_roots") treeRoots(tree, decorator);
+    else if (type == "gloamingforest:dangle_from_tree_decorator") dangle(tree, decorator);
     else {
         static bool warned = false;
         if (!warned) {
             warned = true;
-            gf::log().warn("trees: TF tree features run only TF's decorators ({} skipped)", type);
+            gf::log().warn("trees: upstream tree features run only upstream's decorators ({} skipped)", type);
         }
     }
 }

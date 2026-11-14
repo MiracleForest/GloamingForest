@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 //
 // The order in which a template's blocks reach the processors and the world, as Minecraft 1.21.1's
 // StructureTemplate keeps them: StructureTemplate#loadPalette sorts every block of a loaded
@@ -7,23 +7,23 @@
 //   0  blocks without block entity data whose collision shape is a full block,
 //   1  every other block (partial and empty shapes: stairs, slabs, fences, plants, air, ...),
 //   2  blocks with block entity data (a template saves it for every block entity: chests, spawners,
-//      signs, ...; TF's DATA structure blocks are the kit's data markers, also on a structure_void
+//      signs, ...; upstream's DATA structure blocks are the kit's data markers, also on a structure_void
 //      cell).
 // The order matters wherever a placement shares one random source between its blocks
-// (StructurePlaceSettings#setRandom: TF's template features and the graveyard): every processor
+// (StructurePlaceSettings#setRandom: upstream's template features and the graveyard): every processor
 // that draws for a block moves the sequence for the blocks after it.
 //
 // The list is decided from the Java state the template names (the kit's templates name Java
-// states): vanilla 1.21.1 blocks by family below, TF 4.8 blocks by their classes
+// states): vanilla 1.21.1 blocks by family below, upstream 4.8 blocks by their classes
 // (docs/spec/blockstates.md: BaseEntityBlock and the vanilla block entity bases for list 2; the
-// vanilla families with partial shapes, the TF classes overriding the collision or outline shape
+// vanilla families with partial shapes, the upstream classes overriding the collision or outline shape
 // and the blocks TFBlocks registers with noCollission for list 1). The ids are frozen (rule R1), so
 // the tables do not go stale.
 // Blocks whose collision shape is full in one state and not in another are decided by the state
 // the template names (javaStateList): a double slab is full (SlabType.DOUBLE: Shapes.block()), an
 // extended piston or sticky piston is not (PistonBaseBlock: the base without its head), nor a
 // vanished castle door ("vanish") or reappearing block ("vanished": CastleDoorBlock and
-// VanishingBlock#getCollisionShape are empty then). No other vanilla 1.21.1 or TF 4.8 block changes
+// VanishingBlock#getCollisionShape are empty then). No other vanilla 1.21.1 or upstream 4.8 block changes
 // between a full and a partial collision shape with its state.
 #include "feature/structure/Internal.h"
 
@@ -41,7 +41,7 @@ namespace {
 
 using Set = std::unordered_set<std::string_view>;
 
-/// TF blocks with a block entity (BaseEntityBlock, ChestBlock, the sign blocks, AbstractFurnaceBlock,
+/// upstream blocks with a block entity (BaseEntityBlock, ChestBlock, the sign blocks, AbstractFurnaceBlock,
 /// ChiseledBookShelfBlock, EntityBlock such as RedThreadBlock), by path.
 Set const& tfEntities() {
     static Set const s{
@@ -72,15 +72,15 @@ Set const& tfEntities() {
         "time_drying_rack", "time_hanging_sign", "time_sign", "time_trapped_chest", "time_wall_hanging_sign",
         "time_wall_sign", "transformation_chest", "transformation_drying_rack", "transformation_hanging_sign",
         "transformation_sign", "transformation_trapped_chest", "transformation_wall_hanging_sign",
-        "transformation_wall_sign", "twilight_oak_chest", "twilight_oak_drying_rack", "twilight_oak_hanging_sign",
-        "twilight_oak_sign", "twilight_oak_trapped_chest", "twilight_oak_wall_hanging_sign", "twilight_wall_sign",
+        "transformation_wall_sign", "gloaming_oak_chest", "gloaming_oak_drying_rack", "gloaming_oak_hanging_sign",
+        "gloaming_oak_sign", "gloaming_oak_trapped_chest", "gloaming_oak_wall_hanging_sign", "gloaming_wall_sign",
         "ur_ghast_boss_spawner", "ur_ghast_trophy", "ur_ghast_wall_trophy", "vangrove_drying_rack",
         "warped_drying_rack", "wither_skeleton_skull_candle", "wither_skeleton_wall_skull_candle",
         "zombie_skull_candle", "zombie_wall_skull_candle"};
     return s;
 }
 
-/// TF blocks without a full collision block (vanilla families with partial shapes, TF's shape
+/// upstream blocks without a full collision block (vanilla families with partial shapes, upstream's shape
 /// overrides, noCollission), by path. Double slabs are full (javaStateList checks the state first).
 Set const& tfPartial() {
     static Set const s{
@@ -110,7 +110,7 @@ Set const& tfPartial() {
         "hollow_spruce_log_horizontal", "hollow_spruce_log_vertical", "hollow_time_log_climbable",
         "hollow_time_log_horizontal", "hollow_time_log_vertical", "hollow_transformation_log_climbable",
         "hollow_transformation_log_horizontal", "hollow_transformation_log_vertical",
-        "hollow_twilight_oak_log_climbable", "hollow_twilight_oak_log_horizontal", "hollow_twilight_oak_log_vertical",
+        "hollow_gloaming_oak_log_climbable", "hollow_gloaming_oak_log_horizontal", "hollow_gloaming_oak_log_vertical",
         "hollow_vangrove_log_climbable", "hollow_vangrove_log_horizontal", "hollow_vangrove_log_vertical",
         "hollow_warped_stem_climbable", "hollow_warped_stem_horizontal", "hollow_warped_stem_vertical", "huge_lily_pad",
         "huge_water_lily", "iron_ladder", "iron_oreberry", "jungle_banister", "knightmetal_block",
@@ -125,7 +125,7 @@ Set const& tfPartial() {
         "potted_dead_thorn", "potted_fiddlehead", "potted_green_thorn", "potted_hollow_oak_sapling",
         "potted_mangrove_sapling", "potted_mayapple", "potted_mining_sapling", "potted_mushgloom",
         "potted_rainbow_oak_sapling", "potted_sorting_sapling", "potted_thorn", "potted_time_sapling",
-        "potted_transformation_sapling", "potted_twilight_oak_sapling", "rainbow_oak_sapling", "raspberry_bush",
+        "potted_transformation_sapling", "potted_gloaming_oak_sapling", "rainbow_oak_sapling", "raspberry_bush",
         "root_strand", "rope", "skyberry_bush", "slider", "sorting_banister", "sorting_button",
         "sorting_door", "sorting_fence", "sorting_fence_gate", "sorting_pressure_plate", "sorting_sapling",
         "sorting_slab", "sorting_stairs", "sorting_trapdoor", "spruce_banister", "stingberry_bush", "thorn_rose",
@@ -133,10 +133,10 @@ Set const& tfPartial() {
         "time_sapling", "time_slab", "time_stairs", "time_trapdoor", "torchberry_plant", "transformation_banister",
         "transformation_button", "transformation_door", "transformation_fence", "transformation_fence_gate",
         "transformation_pressure_plate", "transformation_sapling", "transformation_slab", "transformation_stairs",
-        "transformation_trapdoor", "trollber", "trollvidr", "trophy_pedestal", "twilight_oak_banister",
-        "twilight_oak_button", "twilight_oak_door", "twilight_oak_fence", "twilight_oak_fence_gate",
-        "twilight_oak_pressure_plate", "twilight_oak_sapling", "twilight_oak_slab", "twilight_oak_stairs",
-        "twilight_oak_trapdoor", "twilight_portal", "twilight_portal_miniature_structure", "twisted_stone_pillar",
+        "transformation_trapdoor", "trollber", "trollvidr", "trophy_pedestal", "gloaming_oak_banister",
+        "gloaming_oak_button", "gloaming_oak_door", "gloaming_oak_fence", "gloaming_oak_fence_gate",
+        "gloaming_oak_pressure_plate", "gloaming_oak_sapling", "gloaming_oak_slab", "gloaming_oak_stairs",
+        "gloaming_oak_trapdoor", "gloaming_portal", "gloaming_portal_miniature_structure", "twisted_stone_pillar",
         "uberous_soil", "unripe_trollber", "vangrove_banister", "violet_force_field", "warped_banister", "wispy_cloud",
         "worn_castle_brick_stairs", "wrought_iron_fence"};
     return s;
@@ -216,7 +216,7 @@ std::optional<int> javaStateList(std::string_view ns, std::string_view path, Jso
     }
     if (ns == "minecraft" && (path == "piston" || path == "sticky_piston"))
         return hasProperty(javaState, "extended", "true") ? 1 : 0; // PistonBaseBlock: an extended piston keeps only its base
-    if (ns == "twilightforest") {
+    if (ns == "gloamingforest") {
         if (path.ends_with("_castle_door")) return hasProperty(javaState, "vanish", "true") ? 1 : 0;  // CastleDoorBlock
         if (path == "reappearing_block") return hasProperty(javaState, "vanished", "true") ? 1 : 0; // VanishingBlock
     }
@@ -233,7 +233,7 @@ int javaList(Json const& javaState) {
     std::string_view ns    = colon == std::string::npos ? std::string_view("minecraft") : std::string_view(name).substr(0, colon);
     std::string_view path  = colon == std::string::npos ? std::string_view(name) : std::string_view(name).substr(colon + 1);
     if (auto byState = javaStateList(ns, path, javaState)) return *byState;
-    if (ns == "twilightforest") {
+    if (ns == "gloamingforest") {
         if (tfEntities().contains(path)) return 2;
         return tfPartial().contains(path) ? 1 : 0;
     }
@@ -246,14 +246,14 @@ int javaList(Json const& javaState) {
 bool randomizableContainer(Block const& block) {
     // by the Bedrock id of the block the placement put there (StructureTemplate checks the block
     // entity of the placed state): vanilla 1.21.1's RandomizableContainer block entities (chests,
-    // barrels, hoppers, dispensers, droppers, shulker boxes, decorated pots, crafters) and TF's (its
+    // barrels, hoppers, dispensers, droppers, shulker boxes, decorated pots, crafters) and upstream's (its
     // wooden chests and trapped chests are vanilla ChestBlocks; SkullChestBlockEntity and the
     // keepsake casket's extend RandomizableContainerBlockEntity)
     auto const&      id    = blocks::id(block);
     auto             colon = id.find(':');
     std::string_view ns    = colon == std::string::npos ? std::string_view("minecraft") : std::string_view(id).substr(0, colon);
     std::string_view path  = colon == std::string::npos ? std::string_view(id) : std::string_view(id).substr(colon + 1);
-    if (ns == "twilightforest") return path.ends_with("_chest") || path == "keepsake_casket";
+    if (ns == "gloamingforest") return path.ends_with("_chest") || path == "keepsake_casket";
     if (ns != "minecraft") return false;
     static Set const vanilla{"chest", "trapped_chest", "barrel", "hopper", "dispenser", "dropper", "decorated_pot", "crafter"};
     return vanilla.contains(path) || path.ends_with("shulker_box");

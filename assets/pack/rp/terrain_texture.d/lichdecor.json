@@ -6,10 +6,10 @@
     "textures": "textures/blocks/candles/blue_candle_lit"
   },
   "tf_lichdecor_brazier": {
-    "textures": "textures/twilightforest/entity/brazier/brazier"
+    "textures": "textures/gloamingforest/entity/brazier/brazier"
   },
   "tf_lichdecor_brazier_lit": {
-    "textures": "textures/twilightforest/entity/brazier/brazier_lit"
+    "textures": "textures/gloamingforest/entity/brazier/brazier_lit"
   },
   "tf_lichdecor_brown_candle_lit": {
     "textures": "textures/blocks/candles/brown_candle_lit"
@@ -54,7 +54,7 @@
     "textures": "textures/blocks/candles/red_candle_lit"
   },
   "tf_lichdecor_skull_chest": {
-    "textures": "textures/twilightforest/entity/casket/skull_chest"
+    "textures": "textures/gloamingforest/entity/casket/skull_chest"
   },
   "tf_lichdecor_skull_creeper": {
     "textures": "textures/entity/creeper/creeper"

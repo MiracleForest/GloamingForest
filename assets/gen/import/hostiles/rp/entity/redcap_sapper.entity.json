@@ -2,12 +2,12 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:redcap_sapper",
+      "identifier": "gloamingforest:redcap_sapper",
       "materials": {
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/redcapsapper"
+        "default": "textures/gloamingforest/entity/redcapsapper"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.redcap_sapper"

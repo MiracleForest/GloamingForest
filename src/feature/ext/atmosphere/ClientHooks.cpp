@@ -1,20 +1,20 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/client/event/ClientGameEvents.java (killVignette, customizeSplashes)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/client/event/ClientGameEvents.java (killVignette, customizeSplashes)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U15 contract extension (rule R18: a new file, to be folded into F12's client.ui by A8). Client
 // build only. Two client UI events no W0 contract covers:
 // - killVignette: the HUD vignette (HudVignetteRenderer) is not drawn while the local player is in
-//   the Twilight Forest (Java sets Gui.vignetteBrightness to 0 there, which leaves the darkening
+//   the Gloaming Forest (Java sets Gui.vignetteBrightness to 0 there, which leaves the darkening
 //   vignette without effect). Java's vignette also carries the world border warning tint, which
 //   that leaves alone; Bedrock has no world border and its HudVignetteRenderer is the darkening
 //   vignette only (its state is mLastVignetteOpacity / mLastAB, no warning term), so skipping it
 //   is the same as zeroing the brightness term;
 // - customizeSplashes: on August 19 the title screen splash (SplashTextRenderer) reads "Happy
-//   <ordinal> birthday to the Twilight Forest!" (year - 2011, core/Holiday.h).
+//   <ordinal> birthday to the Gloaming Forest!" (year - 2011, core/Holiday.h).
 
 #ifdef GF_CLIENT
 
@@ -44,7 +44,7 @@ namespace gf::feature::ext::atmosphere {
 /// The birthday splash for today (empty on any other day).
 std::string birthdaySplash() {
     auto today = ::gf::core::holiday::today();
-    if (!::gf::core::holiday::isTwilightBirthday(today)) return {};
+    if (!::gf::core::holiday::isGloamingBirthday(today)) return {};
     std::time_t t = std::time(nullptr);
     std::tm     tm{};
     localtime_s(&tm, &t);
@@ -55,9 +55,9 @@ namespace {
 std::atomic<bool> gVignetteLogged{false};
 std::atomic<bool> gSplashLogged{false};
 
-bool inTwilight() {
+bool inGloaming() {
     auto* p = ::gf::client::currentPlayer();
-    return p && ::gf::world::isTwilight(p->getDimension());
+    return p && ::gf::world::isGloaming(p->getDimension());
 }
 } // namespace
 
@@ -79,10 +79,10 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     bool kill = false;
     try {
-        kill = ext::inTwilight();
+        kill = ext::inGloaming();
     } catch (...) {}
     if (kill) {
-        if (!ext::gVignetteLogged.exchange(true)) gf::log().info("atmosphere: vignette off in the Twilight Forest");
+        if (!ext::gVignetteLogged.exchange(true)) gf::log().info("atmosphere: vignette off in the Gloaming Forest");
         return;
     }
     origin(renderContext, client, owner, pass);

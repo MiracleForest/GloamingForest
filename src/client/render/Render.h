@@ -6,12 +6,12 @@
 // World-space rendering registries. Units never hook LevelRenderer or the actor renderers
 // (rule R8); they register by id:
 //
-//     gf::client::render::registerBlockRenderer("twilightforest:trophy_pedestal", drawPedestal);
+//     gf::client::render::registerBlockRenderer("gloamingforest:trophy_pedestal", drawPedestal);
 //     gf::client::render::onWorld([](auto& ctx, float partial) {
 //         gf::client::render::Lines lines(ctx);
 //         lines.box(lo, hi, 0xFFFF0000);
 //     });
-//     gf::client::tint::registerBlock("twilightforest:rainbow_oak_leaves", [](BlockPos const& p) { return rgbAt(p); });
+//     gf::client::tint::registerBlock("gloamingforest:rainbow_oak_leaves", [](BlockPos const& p) { return rgbAt(p); });
 //
 // Durability / dose bar colours come from gf::item::setBar (feature/item/Item.h).
 
@@ -77,13 +77,13 @@ struct Transform {
     Vec3 rotationDeg{};      ///< x, y, z (applied y, x, z)
     Vec3 scale{1.f, 1.f, 1.f};
 };
-/// Draws geometry `geoId` ("geometry.twilightforest.naga_trophy") with `texture` (resource pack path).
+/// Draws geometry `geoId` ("geometry.gloamingforest.naga_trophy") with `texture` (resource pack path).
 void drawGeo(RenderContext& ctx, std::string const& geoId, std::string const& texture, Transform const& transform);
 
 } // namespace gf::client::render
 
 namespace gf::client::tint {
-/// Position-dependent tint (0xRRGGBB) of a block (PositionalTintResolver; TF's leaf and grass colours).
+/// Position-dependent tint (0xRRGGBB) of a block (PositionalTintResolver; upstream's leaf and grass colours).
 using TintFn = std::function<unsigned(BlockPos const& pos)>;
 void registerBlock(std::string const& blockId, TintFn fn);
 } // namespace gf::client::tint

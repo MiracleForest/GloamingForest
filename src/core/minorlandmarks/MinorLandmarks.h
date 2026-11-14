@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/util/features/FeatureLogic.java
-//   src/main/java/twilightforest/util/iterators/VoxelBresenhamIterator.java
-//   src/main/java/twilightforest/world/components/structures/HedgeMazeComponent.java
-//   src/main/java/twilightforest/world/components/structures/type/HollowHillStructure.java
-//   src/main/java/twilightforest/world/components/structures/type/FallenTrunkStructure.java
-//   src/main/java/twilightforest/world/components/structures/fallentrunk/FallenTrunkPiece.java
-//   src/main/java/twilightforest/world/components/structures/fallentrunk/Hole.java
-//   src/main/java/twilightforest/world/components/structures/fallentrunk/TrunkUnderDensityFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/HollowHillFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/FocusedDensityFunction.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/TanhHillFunction.java
-//   src/main/java/twilightforest/world/components/feature/TFSmallLakeFeature.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java
+//   src/main/java/gloamingforest/util/iterators/VoxelBresenhamIterator.java
+//   src/main/java/gloamingforest/world/components/structures/HedgeMazeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/type/HollowHillStructure.java
+//   src/main/java/gloamingforest/world/components/structures/type/FallenTrunkStructure.java
+//   src/main/java/gloamingforest/world/components/structures/fallentrunk/FallenTrunkPiece.java
+//   src/main/java/gloamingforest/world/components/structures/fallentrunk/Hole.java
+//   src/main/java/gloamingforest/world/components/structures/fallentrunk/TrunkUnderDensityFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/HollowHillFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/FocusedDensityFunction.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TanhHillFunction.java
+//   src/main/java/gloamingforest/world/components/feature/TFSmallLakeFeature.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -55,7 +55,7 @@ struct Pos {
 [[nodiscard]] Pos translate(Pos const& pos, double distance, double angle, double tilt);
 /// The voxels VoxelBresenhamIterator yields from `from` to `to`, both included, in order.
 [[nodiscard]] std::vector<Pos> bresenham(Pos const& from, Pos const& to);
-/// The octagonal distance TF's trunks use: (int)(max(ax, az) + min(ax, az) * 0.5).
+/// The octagonal distance upstream's trunks use: (int)(max(ax, az) + min(ax, az) * 0.5).
 [[nodiscard]] constexpr int octagonalDist(int ax, int az) {
     int mx = ax > az ? ax : az, mn = ax > az ? az : ax;
     return static_cast<int>(mx + mn * 0.5);
@@ -130,7 +130,7 @@ public:
     /// Java's HashSet iteration order (the array Util.getRandom picks from).
     [[nodiscard]] std::vector<Pos> potentialMoundBases(bool rightSide) const;
     [[nodiscard]] std::vector<Pos> allowedMoundBases(bool rightSide) const;
-    /// Whether the hole generation hit TF's 1000 tries (Java logs an error).
+    /// Whether the hole generation hit upstream's 1000 tries (Java logs an error).
     [[nodiscard]] bool holeGaveUp() const { return mGaveUp; }
 
 private:

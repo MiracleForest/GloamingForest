@@ -1,9 +1,9 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U7 (armory.*, dx 700..799): the 59 items' numbers, the attack damage of the tools,
 // knightmetal's and the minotaur axes' bonuses, the fiery tools' fire, the fiery pickaxe's smelting,
 // the mazebreaker, the fiery / yeti set reactions, armour toughness, phantom armour kept on death,
 // arctic dye, the crafted default enchantments and the emperor's cloth no-template smithing.
-// Behaviour from TF 4.8 (see the headers of Module.cpp and core/armory/Armory.h).
+// Behaviour from upstream 4.8 (see the headers of Module.cpp and core/armory/Armory.h).
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -223,7 +223,7 @@ GF_REGISTER_SELFTEST("armory.items", [](Context& ctx) {
         auto const* item = s.mItem.get();
         ctx.check(item->getMaxDamage() == ca::toolTier(t.tier)->uses, std::string(t.id) + " durability " + std::to_string(item->getMaxDamage()));
         ctx.check(item->getEnchantValue() == ca::enchantability(t), std::string(t.id) + " enchantability " + std::to_string(item->getEnchantValue()));
-        ctx.info(std::string(t.id) + ": Bedrock attack damage " + std::to_string(item->getAttackDamage()) + " (TF " + fmt(ca::attackDamage(t)) + ")");
+        ctx.info(std::string(t.id) + ": Bedrock attack damage " + std::to_string(item->getAttackDamage()) + " (upstream " + fmt(ca::attackDamage(t)) + ")");
         ++count;
     }
     for (auto const& m : ca::materialItems()) {
@@ -231,8 +231,8 @@ GF_REGISTER_SELFTEST("armory.items", [](Context& ctx) {
         ++count;
     }
     ctx.check(count == 59, "59 items: " + std::to_string(count));
-    ctx.check(make("twilightforest:arctic_helmet").mItem->isDyeable(), "the arctic armour is dyeable");
-    ctx.check(!make("twilightforest:yeti_helmet").mItem->isDyeable(), "the yeti armour is not");
+    ctx.check(make("gloamingforest:arctic_helmet").mItem->isDyeable(), "the arctic armour is dyeable");
+    ctx.check(!make("gloamingforest:yeti_helmet").mItem->isDyeable(), "the yeti armour is not");
 });
 
 // ---- attack damage, knightmetal, minotaur axes --------------------------------------------------------
@@ -241,7 +241,7 @@ GF_REGISTER_SELFTEST("armory.attack_damage", [](Context& ctx) -> ll::coro::CoroT
     DifficultyScope normal(Difficulty::Normal);
     auto            box = co_await ctx.flatArea(700, 5);
     auto            at  = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY + 1, box.minZ + 2};
-    auto&           sp  = fighter(ctx, at, "armory_damage", "twilightforest:ironwood_sword");
+    auto&           sp  = fighter(ctx, at, "armory_damage", "gloamingforest:ironwood_sword");
     auto            spId = uidOf(sp);
     Remove          rm;
     struct Case {
@@ -249,8 +249,8 @@ GF_REGISTER_SELFTEST("armory.attack_damage", [](Context& ctx) -> ll::coro::CoroT
         float       expected;
     };
     // Java's attack damage (1 + tier + item) on a cow (no armour)
-    for (auto const& c : {Case{"twilightforest:ironwood_sword", 6.f}, Case{"twilightforest:steeleaf_shovel", 5.5f}, Case{"twilightforest:fiery_pickaxe", 6.f},
-                          Case{"twilightforest:steeleaf_axe", 10.f}, Case{"twilightforest:ironwood_hoe", 1.f}}) {
+    for (auto const& c : {Case{"gloamingforest:ironwood_sword", 6.f}, Case{"gloamingforest:steeleaf_shovel", 5.5f}, Case{"gloamingforest:fiery_pickaxe", 6.f},
+                          Case{"gloamingforest:steeleaf_axe", 10.f}, Case{"gloamingforest:ironwood_hoe", 1.f}}) {
         auto* cow = spawnAt(core::GlobalPos{at.dim, at.x + 2, at.y, at.z}, "minecraft:cow");
         ctx.require(cow != nullptr, "a cow");
         rm.uids.push_back(uidOf(*cow));
@@ -384,14 +384,14 @@ GF_REGISTER_SELFTEST("armory.fiery_tools", [](Context& ctx) -> ll::coro::CoroTas
 });
 
 GF_REGISTER_SELFTEST("armory.fiery_smelting", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // the modifier's smelting: vanilla's furnace recipes and TF's data recipes
-    std::vector<ItemStack> drops{make("minecraft:raw_iron", 2), make("twilightforest:raw_ironwood", 1), make("minecraft:dirt", 1),
-                                 make("twilightforest:armor_shard_cluster", 3)};
+    // the modifier's smelting: vanilla's furnace recipes and upstream's data recipes
+    std::vector<ItemStack> drops{make("minecraft:raw_iron", 2), make("gloamingforest:raw_ironwood", 1), make("minecraft:dirt", 1),
+                                 make("gloamingforest:armor_shard_cluster", 3)};
     float xp = smeltDrops(drops);
     ctx.check(items::idOf(drops[0]) == "minecraft:iron_ingot" && items::countOf(drops[0]) == 2, "raw iron x2 -> iron ingot x2: " + items::idOf(drops[0]));
-    ctx.check(items::idOf(drops[1]) == "twilightforest:ironwood_ingot", "raw ironwood -> ironwood ingot: " + items::idOf(drops[1]));
+    ctx.check(items::idOf(drops[1]) == "gloamingforest:ironwood_ingot", "raw ironwood -> ironwood ingot: " + items::idOf(drops[1]));
     ctx.check(items::idOf(drops[2]) == "minecraft:dirt", "dirt stays dirt");
-    ctx.check(items::idOf(drops[3]) == "twilightforest:knightmetal_ingot" && items::countOf(drops[3]) == 3, "armor shard cluster x3 -> knightmetal ingot x3");
+    ctx.check(items::idOf(drops[3]) == "gloamingforest:knightmetal_ingot" && items::countOf(drops[3]) == 3, "armor shard cluster x3 -> knightmetal ingot x3");
     ctx.check(xp >= 2.0f, "the recipes' XP (raw ironwood 1.0, knightmetal 1.0, raw iron): " + fmt(xp));
     // a real block broken with the fiery pickaxe
     auto box   = co_await ctx.flatArea(740, 5);
@@ -430,10 +430,10 @@ GF_REGISTER_SELFTEST("armory.fiery_smelting", [](Context& ctx) -> ll::coro::Coro
 // ---- mazebreaker ---------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("armory.mazebreaker", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto const* maze  = game::blockWith("twilightforest:mazestone");
+    auto const* maze  = game::blockWith("gloamingforest:mazestone");
     auto const* stone = game::blockWith("minecraft:stone");
     ctx.require(maze && stone, "mazestone and stone");
-    ctx.check(gf::tags::has(gf::tags::Registry::Block, ids::kMazebreakerTag, "twilightforest:mazestone"), "mazestone is accelerated");
+    ctx.check(gf::tags::has(gf::tags::Registry::Block, ids::kMazebreakerTag, "gloamingforest:mazestone"), "mazestone is accelerated");
 #ifdef LL_PLAT_S
     float fast = make(ids::kMazebreaker).getDestroySpeed(*maze);
     float slow = make(ids::kMazebreaker).getDestroySpeed(*stone);
@@ -445,7 +445,7 @@ GF_REGISTER_SELFTEST("armory.mazebreaker", [](Context& ctx) -> ll::coro::CoroTas
     // another tool breaking an accelerated block loses 16 more
     auto box   = co_await ctx.flatArea(750, 5);
     auto block = core::GlobalPos{ctx.dimension(), box.minX + 3, box.minY + 1, box.minZ + 2};
-    ctx.require(ctx.setBlock(block, "twilightforest:castle_brick"), "a castle brick");
+    ctx.require(ctx.setBlock(block, "gloamingforest:castle_brick"), "a castle brick");
     auto pick = make("minecraft:diamond_pickaxe");
     gf::enchant::set(pick, "minecraft:efficiency", 5);
     auto& sp   = fighter(ctx, core::GlobalPos{block.dim, block.x - 2, block.y, block.z}, "armory_mazer", "");
@@ -456,7 +456,7 @@ GF_REGISTER_SELFTEST("armory.mazebreaker", [](Context& ctx) -> ll::coro::CoroTas
     int broken = -1;
     for (int t = 1; t <= 400 && broken < 0; ++t) {
         co_await ctx.ticks(1);
-        if (ctx.blockAt(block) != "twilightforest:castle_brick") broken = t;
+        if (ctx.blockAt(block) != "gloamingforest:castle_brick") broken = t;
     }
     ctx.require(broken > 0, "the diamond pickaxe breaks the castle brick");
     co_await ctx.ticks(2);
@@ -491,8 +491,8 @@ GF_REGISTER_SELFTEST("armory.set_reactions", [](Context& ctx) -> ll::coro::CoroT
         if (p && a) combat::hurt(*p, 4.f, "minecraft:mob_attack", a, a);
     };
     // fiery: 2 pieces -> fireLevel 10; roll 9 < 10 ignites for 5 s, roll 10 does not
-    sp.setArmor(Slot::Head, make("twilightforest:fiery_helmet"));
-    sp.setArmor(Slot::Torso, make("twilightforest:fiery_chestplate"));
+    sp.setArmor(Slot::Head, make("gloamingforest:fiery_helmet"));
+    sp.setArmor(Slot::Torso, make("gloamingforest:fiery_chestplate"));
     ctx.check(countPieces(sp, "fiery") == 2, "two fiery pieces worn");
     auto c1 = cowAt(0);
     setFireReactRollForTest(9);
@@ -505,20 +505,20 @@ GF_REGISTER_SELFTEST("armory.set_reactions", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(mobById(c2) && !mobById(c2)->isOnFire(), "rand(25) = 10: it does not");
     // yeti: 4 pieces -> frosted for 25 ticks at amplifier 4
     if (auto* p = simById(spId)) {
-        p->setArmor(Slot::Head, make("twilightforest:yeti_helmet"));
-        p->setArmor(Slot::Torso, make("twilightforest:yeti_chestplate"));
-        p->setArmor(Slot::Legs, make("twilightforest:yeti_leggings"));
-        p->setArmor(Slot::Feet, make("twilightforest:yeti_boots"));
+        p->setArmor(Slot::Head, make("gloamingforest:yeti_helmet"));
+        p->setArmor(Slot::Torso, make("gloamingforest:yeti_chestplate"));
+        p->setArmor(Slot::Legs, make("gloamingforest:yeti_leggings"));
+        p->setArmor(Slot::Feet, make("gloamingforest:yeti_boots"));
     }
     auto c3 = cowAt(4);
-    // twilightforest:frosted is U10's effect: until it is registered the chill aura has nothing to give
+    // gloamingforest:frosted is U10's effect: until it is registered the chill aura has nothing to give
     bool frostedKnown = false;
     if (auto* m = mobById(c3)) {
         frostedKnown = gf::effects::apply(*m, ids::kFrosted, 1, 0);
         if (frostedKnown) gf::effects::remove(*m, ids::kFrosted);
     }
     if (!frostedKnown) {
-        ctx.info("twilightforest:frosted is not registered (U10): the yeti chill aura is not checked");
+        ctx.info("gloamingforest:frosted is not registered (U10): the yeti chill aura is not checked");
         co_return;
     }
     co_await ctx.ticks(12);
@@ -547,10 +547,10 @@ GF_REGISTER_SELFTEST("armory.toughness", [](Context& ctx) -> ll::coro::CoroTask<
     auto& sp   = fighter(ctx, at, "armory_tough", "");
     auto  spId = uidOf(sp);
     // full yeti: armour 20, toughness 12
-    sp.setArmor(Slot::Head, make("twilightforest:yeti_helmet"));
-    sp.setArmor(Slot::Torso, make("twilightforest:yeti_chestplate"));
-    sp.setArmor(Slot::Legs, make("twilightforest:yeti_leggings"));
-    sp.setArmor(Slot::Feet, make("twilightforest:yeti_boots"));
+    sp.setArmor(Slot::Head, make("gloamingforest:yeti_helmet"));
+    sp.setArmor(Slot::Torso, make("gloamingforest:yeti_chestplate"));
+    sp.setArmor(Slot::Legs, make("gloamingforest:yeti_leggings"));
+    sp.setArmor(Slot::Feet, make("gloamingforest:yeti_boots"));
     ctx.check(sp.getToughnessValue() == 12, "Mob::getToughnessValue adds the yeti toughness: " + std::to_string(sp.getToughnessValue()));
     ctx.check(sp.getArmorValue() == 20, "armour value 20: " + std::to_string(sp.getArmorValue()));
     co_await ctx.ticks(2);
@@ -575,14 +575,14 @@ GF_REGISTER_SELFTEST("armory.toughness", [](Context& ctx) -> ll::coro::CoroTask<
 GF_REGISTER_SELFTEST("armory.phantom_kept", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto pos = ctx.testPos(780);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
-    ctx.check(gf::tags::has(gf::tags::Registry::Item, "twilightforest:kept_on_death", "twilightforest:phantom_helmet"), "phantom helmet in #kept_on_death");
-    ctx.check(gf::tags::has(gf::tags::Registry::Item, "twilightforest:kept_on_death", "twilightforest:phantom_chestplate"), "phantom chestplate in #kept_on_death");
+    ctx.check(gf::tags::has(gf::tags::Registry::Item, "gloamingforest:kept_on_death", "gloamingforest:phantom_helmet"), "phantom helmet in #kept_on_death");
+    ctx.check(gf::tags::has(gf::tags::Registry::Item, "gloamingforest:kept_on_death", "gloamingforest:phantom_chestplate"), "phantom chestplate in #kept_on_death");
     auto& sp = ctx.spawnPlayer("armory_phantom");
     sp.teleport(Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f}, DimensionType(pos.dim));
     sp.setPlayerGameType(GameType::Survival);
     auto id = sp.getOrCreateUniqueID();
-    sp.setArmor(Slot::Head, make("twilightforest:phantom_helmet"));
-    sp.setArmor(Slot::Torso, make("twilightforest:phantom_chestplate"));
+    sp.setArmor(Slot::Head, make("gloamingforest:phantom_helmet"));
+    sp.setArmor(Slot::Torso, make("gloamingforest:phantom_chestplate"));
     sp.setArmor(Slot::Legs, make("minecraft:iron_leggings"));
     combat::hurt(sp, 1000.f, "minecraft:generic_kill");
     co_await ctx.ticks(4);
@@ -610,7 +610,7 @@ GF_REGISTER_SELFTEST("armory.phantom_kept", [](Context& ctx) -> ll::coro::CoroTa
 });
 
 GF_REGISTER_SELFTEST("armory.arctic_dye", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto helmet = make("twilightforest:arctic_helmet");
+    auto helmet = make("gloamingforest:arctic_helmet");
     auto* item  = helmet.mItem.get();
     ctx.require(item && item->isDyeable(), "arctic armour is dyeable");
     ctx.check(!item->hasCustomColor(helmet), "undyed");
@@ -632,7 +632,7 @@ GF_REGISTER_SELFTEST("armory.arctic_dye", [](Context& ctx) -> ll::coro::CoroTask
     auto* p = simById(spId);
     ctx.require(p != nullptr, "the dyer");
     auto const& held = p->getInventory().getItem(0);
-    ctx.check(items::idOf(held) == "twilightforest:arctic_helmet" && !held.mItem->hasCustomColor(held), "the cauldron washed the dye off");
+    ctx.check(items::idOf(held) == "gloamingforest:arctic_helmet" && !held.mItem->hasCustomColor(held), "the cauldron washed the dye off");
 });
 
 // ---- recipes ------------------------------------------------------------------------------------------------
@@ -665,18 +665,18 @@ GF_REGISTER_SELFTEST("armory.crafted_enchantments", [](Context& ctx) {
 GF_REGISTER_SELFTEST("armory.no_template_smithing", [](Context& ctx) {
     auto cloth = make(ids::kEmperorsCloth);
     ctx.require(!items::isEmpty(cloth), "the emperor's cloth");
-    auto chest = make("twilightforest:knightmetal_chestplate");
+    auto chest = make("gloamingforest:knightmetal_chestplate");
     auto out   = noTemplateSmithing(chest, cloth);
     ctx.require(out.has_value(), "knightmetal chestplate + cloth: a result");
-    ctx.check(items::idOf(*out) == "twilightforest:knightmetal_chestplate", "a copy of the base");
-    ctx.check(gf::item::getData(*out, "twilightforest:emperors_cloth").is_object(), "with twilightforest:emperors_cloth");
+    ctx.check(items::idOf(*out) == "gloamingforest:knightmetal_chestplate", "a copy of the base");
+    ctx.check(gf::item::getData(*out, "gloamingforest:emperors_cloth").is_object(), "with gloamingforest:emperors_cloth");
     ctx.check(!noTemplateSmithing(*out, cloth).has_value(), "refused when the base has it already");
     ctx.check(!noTemplateSmithing(make("minecraft:stick"), cloth).has_value(), "refused for a base outside #emperors_cloth_applicable");
     ctx.check(noTemplateSmithing(make("minecraft:iron_helmet"), cloth).has_value(), "a vanilla helmet takes it");
     ctx.check(noTemplateSmithing(make("minecraft:elytra"), cloth).has_value(), "the elytra takes it");
-    // no crafting-table copy: TF's own crafting recipe (U9's twilightforest:emperors_cloth_recipe) is the one
+    // no crafting-table copy: upstream's own crafting recipe (U9's gloamingforest:emperors_cloth_recipe) is the one
     ctx.check(!gf::recipes::internal::assembleSpecial(ids::kClothSmithing, gf::recipes::CraftingGrid{}).has_value(),
-              "no special crafting registered under twilightforest:emperors_cloth_smithing");
+              "no special crafting registered under gloamingforest:emperors_cloth_smithing");
 });
 
 } // namespace gf::feature::armory::tests

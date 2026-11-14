@@ -1,8 +1,8 @@
 # U21 (lich): placeholder rooms of the lich tower wings. The room templates (lich_tower/3x3 .. 9x9,
 # their roofs, beards and decor) are U22's; while one is missing the wing ends in a plain room of the
-# same size from here (twilightforest:lich_tower/placeholder/<size>), so the tower still assembles.
+# same size from here (gloamingforest:lich_tower/placeholder/<size>), so the tower still assembles.
 . (Join-Path $PSScriptRoot '../LichLib.ps1')
-$NS = 'twilightforest:lich_tower/'
+$NS = 'gloamingforest:lich_tower/'
 
 foreach ($n in 3, 5, 7, 9) {
     $w = $n + 2; $h = $n + 2; $c = [int]($w / 2) - ($(if ($w % 2 -eq 0) { 1 } else { 0 }))

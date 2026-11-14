@@ -2,18 +2,18 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:knight_phantom_wall_trophy",
+      "identifier": "gloamingforest:knight_phantom_wall_trophy",
       "menu_category": {
         "category": "none"
       },
       "states": {
-        "twilightforest:facing": [
+        "gloamingforest:facing": [
           "north",
           "south",
           "west",
           "east"
         ],
-        "twilightforest:powered": [
+        "gloamingforest:powered": [
           true,
           false
         ]
@@ -27,7 +27,7 @@
         "explosion_resistance": 0
       },
       "minecraft:light_dampening": 0,
-      "minecraft:geometry": "geometry.twilightforest.building.knight_phantom_wall_trophy",
+      "minecraft:geometry": "geometry.gloamingforest.building.knight_phantom_wall_trophy",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_building_phantomskeleton",
@@ -41,7 +41,7 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -77,7 +77,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -113,7 +113,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
           "minecraft:transformation": {
             "rotation": [
@@ -149,7 +149,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
           "minecraft:transformation": {
             "rotation": [

@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/3x3/taller_double",
+  "id": "gloamingforest:lich_tower/3x3/taller_double",
   "size": [5, 11, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -10,7 +10,7 @@
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:iron_bars"},
-    {"Name":"twilightforest:twilight_oak_planks"},
+    {"Name":"gloamingforest:gloaming_oak_planks"},
     {"Name":"minecraft:ladder","Properties":{"facing":"north"}}
   ],
   "blocks": [

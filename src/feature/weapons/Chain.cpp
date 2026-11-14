@@ -1,24 +1,24 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/ChainBlockItem.java
-//   src/main/java/twilightforest/entity/projectile/ChainBlock.java
-//   src/main/java/twilightforest/enchantment/SmashBlocksEffect.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/ChainBlockItem.java
+//   src/main/java/gloamingforest/entity/projectile/ChainBlock.java
+//   src/main/java/gloamingforest/enchantment/SmashBlocksEffect.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// twilightforest:block_and_chain and its projectile twilightforest:chain_block, a
+// gloamingforest:block_and_chain and its projectile gloamingforest:chain_block, a
 // ThrowableProjectile simulated by F8's projectile kit (gravity 0.05). The chain's own state
 // (the thrower's stack, returning, the saved bounce velocity, its tick count, blocks smashed)
 // lives in data(chain, "weapons:chain"); the owner and hand are synced for the client mod's chain
 // renderer. The stack the chain was thrown from is the one in the thrower's hand whose
-// twilightforest:thrown_projectile data names the chain (Java keeps a reference to it).
+// gloamingforest:thrown_projectile data names the chain (Java keeps a reference to it).
 //
 // Destruction (U10's enchantment) is read by id; its HIT_BLOCK effect, SmashBlocksEffect(max 12,
 // radius 1, immune #block_and_chain_never_breaks), runs here on the chain's block hits as Java's
 // EnchantmentHelper#onHitBlock does. Java reads the blocks smashed for the return durability cost
 // from the *owner's* SMASH_BLOCKS attachment, which only the chain ever writes: that cost never
-// applies in TF 4.8, and not here either.
+// applies in upstream 4.8, and not here either.
 
 #include "feature/weapons/Weapons.h"
 
@@ -107,7 +107,7 @@ void removeChain(Actor& chain) {
 /// Tiers#WOOD / STONE / IRON#createToolProperties(#mineable_with_block_and_chain)#isCorrectForDrops.
 bool correctForDrops(int destruction, std::string const& blockId) {
     using gf::tags::Registry;
-    if (!gf::tags::has(Registry::Block, "twilightforest:mineable_with_block_and_chain", blockId)) return false;
+    if (!gf::tags::has(Registry::Block, "gloamingforest:mineable_with_block_and_chain", blockId)) return false;
     auto needs = [&](char const* tag) { return gf::tags::has(Registry::Block, tag, blockId); };
     if (needs("minecraft:needs_diamond_tool") || needs("minecraft:incorrect_for_iron_tool")) return false;
     if (destruction <= 2 && (needs("minecraft:needs_iron_tool") || needs("minecraft:incorrect_for_stone_tool"))) return false;
@@ -119,9 +119,9 @@ bool correctForDrops(int destruction, std::string const& blockId) {
 /// Destruction).
 bool canBreakBlockAt(ItemStack const& stack, Block const& block) {
     auto id          = game::blockId(block);
-    int  destruction = gf::enchant::level(stack, "twilightforest:destruction");
+    int  destruction = gf::enchant::level(stack, "gloamingforest:destruction");
     if (destruction <= 0 || !correctForDrops(destruction, id)) return false;
-    return !gf::tags::has(gf::tags::Registry::Block, "twilightforest:block_and_chain_never_breaks", id);
+    return !gf::tags::has(gf::tags::Registry::Block, "gloamingforest:block_and_chain_never_breaks", id);
 }
 
 /// SmashBlocksEffect#apply (Destruction: max 12, radius 1).
@@ -147,7 +147,7 @@ void smash(Actor& chain, ItemStack const& stack, Player& player, Vec3 const& at)
 void bounce(Actor& chain, int face) {
     auto& st = stateOf(chain);
     if (!st.value("returning", false) && !st.value("hitEntity", false))
-        gf::fx::sound(chain.getDimension(), "item.twilightforest.block_and_chain.collide", chain.getPosition(), 0.125F, world::random().nextFloat());
+        gf::fx::sound(chain.getDimension(), "item.gloamingforest.block_and_chain.collide", chain.getPosition(), 0.125F, world::random().nextFloat());
     st["returning"] = true;
     auto v          = cw::chainBounce(savedVel(st), face);
     st["vel"]       = {v.x, v.y, v.z};
@@ -163,7 +163,7 @@ bool onHitEntity(Actor& chain, Actor& target) {
         // EnchantmentHelper#modifyDamage: Sharpness (and Destruction's -1.5 per level)
         int sharp = EnchantUtils::getEnchantLevel(Enchant::Type::Sharpness, stack);
         if (sharp > 0) damage += 1.0F + 0.5F * static_cast<float>(sharp - 1);
-        damage += -1.5F * static_cast<float>(gf::enchant::level(stack, "twilightforest:destruction"));
+        damage += -1.5F * static_cast<float>(gf::enchant::level(stack, "gloamingforest:destruction"));
     }
     // properly disable shields
     if (target.isPlayer()) {
@@ -178,8 +178,8 @@ bool onHitEntity(Actor& chain, Actor& target) {
             disableShield(p);
         }
     }
-    if (damage > 0.0F && gf::combat::hurt(target, damage, "twilightforest:spiked", owner, &chain)) {
-        gf::fx::sound(chain.getDimension(), "item.twilightforest.block_and_chain.hit", chain.getPosition(), 1.0F, world::random().nextFloat());
+    if (damage > 0.0F && gf::combat::hurt(target, damage, "gloamingforest:spiked", owner, &chain)) {
+        gf::fx::sound(chain.getDimension(), "item.gloamingforest.block_and_chain.hit", chain.getPosition(), 1.0F, world::random().nextFloat());
         st["hitEntity"] = true;
         st["returning"] = true;
         st["age"]       = st.value("age", 0) + 60;
@@ -198,7 +198,7 @@ bool onHitBlock(Actor& chain, BlockPos const& pos, int face) {
     if (!canBreakBlockAt(stack, block) || st.value("smashed", 0) >= 12) bounce(chain, face);
     // EnchantmentHelper#onHitBlock: Destruction's SmashBlocksEffect around the clamped hit point
     auto* owner = gf::projectile::ext::owner(chain);
-    if (owner && owner->isPlayer() && gf::enchant::level(stack, "twilightforest:destruction") > 0)
+    if (owner && owner->isPlayer() && gf::enchant::level(stack, "gloamingforest:destruction") > 0)
         smash(chain, stack, static_cast<Player&>(*owner), Vec3{pos.x + 0.0f, pos.y + 0.0f, pos.z + 0.5f});
     // the chain flies on (ThrowableProjectile keeps moving after onHitBlock): a hit that sets the
     // velocity flies on with it, one that does not rests at the hit point
@@ -248,7 +248,7 @@ std::int64_t throwChain(Player& player, ItemStack& stack) {
     auto thrown = gf::item::getData(stack, kThrownKey);
     if (thrown.is_number_integer() && world::actorById(thrown.get<std::int64_t>())) return 0;
     {
-        gf::fx::sound(player.getDimension(), "item.twilightforest.block_and_chain.fire", player.getFeetPos(), 0.5F, 1.0F / (world::random().nextFloat() * 0.4F + 1.2F));
+        gf::fx::sound(player.getDimension(), "item.gloamingforest.block_and_chain.fire", player.getFeetPos(), 0.5F, 1.0F / (world::random().nextFloat() * 0.4F + 1.2F));
         auto   look  = lookOf(player);
         bool   main  = game::items::idOf(player.getCarriedItem()) == kBlockAndChain;
         Actor* chain = gf::projectile::shoot(player, kChainBlock, look, 1.5F, 1.0F);
@@ -261,7 +261,7 @@ std::int64_t throwChain(Player& player, ItemStack& stack) {
         st["foil"]   = stack.isEnchanted();
         st["stack"]  = game::items::toJson(stack);
         gf::entity::sync(*chain, kKey);
-        gf::entity::setProperty(*chain, "twilightforest:foil", stack.isEnchanted());
+        gf::entity::setProperty(*chain, "gloamingforest:foil", stack.isEnchanted());
         gf::item::setData(stack, kThrownKey, world::uidOf(*chain));
         log().info("weapons: {} threw a block and chain", player.getRealName());
         return world::uidOf(*chain);

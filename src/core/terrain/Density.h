@@ -1,23 +1,23 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/chunkgenerators/TerrainDensityRouter.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/NoiseDensityRouter.java
-//   src/main/java/twilightforest/world/components/chunkgenerators/SqrtDensityFunction.java
-//   src/main/java/twilightforest/init/TFDensityFunctions.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainDensityRouter.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/NoiseDensityRouter.java
+//   src/main/java/gloamingforest/world/components/chunkgenerators/SqrtDensityFunction.java
+//   src/main/java/gloamingforest/init/TFDensityFunctions.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U2 (terrain): the Twilight Forest's density graph with Minecraft 1.21.1's NoiseChunk semantics
-// (pure C++, gf-core). F5's core/noise NoiseChunk cannot interpolate below a custom type (TF's
+// U2 (terrain): the Gloaming Forest's density graph with Minecraft 1.21.1's NoiseChunk semantics
+// (pure C++, gf-core). F5's core/noise NoiseChunk cannot interpolate below a custom type (upstream's
 // skylight terrain is sqrt(clamp(interpolated(...)))) and asks an std::function per block, so U2
 // compiles the noise settings' density JSON itself:
 //   - vanilla types: constant, add, mul, min, max, abs, square, cube, half_negative,
 //     quarter_negative, squeeze, clamp, y_clamped_gradient, noise, range_choice, the markers
 //     (interpolated, flat_cache, cache_2d, cache_once, cache_all_in_cell), blend_alpha (1),
 //     blend_offset / beardifier (0), blend_density (pass-through);
-//   - TF's types: biome_driven_terrain, biome_driven_noise (the column-cached routers of mapAll),
+//   - upstream's types: biome_driven_terrain, biome_driven_noise (the column-cached routers of mapAll),
 //     sqrt, focused, hollow_hill, coord_min, coord_max.
 // Noises come from the seed exactly as RandomState builds them (Xoroshiro positional factory,
 // fromHashOf(noise id), NormalNoise.create). A compiled graph is immutable and thread-safe.
@@ -44,7 +44,7 @@ namespace gf::core::terrain {
 
 /// BiomeDensitySource#sampleTerrain(blockX, blockZ) of the world being generated.
 using TerrainSampler = std::function<DensityData(int blockX, int blockZ)>;
-/// An extra density added to every block of a fill (the beardifier / TF's structure terraformers).
+/// An extra density added to every block of a fill (the beardifier / upstream's structure terraformers).
 using ExtraDensity = std::function<double(int x, int y, int z)>;
 
 class Density {
@@ -77,11 +77,11 @@ private:
     noise::NoiseShape            mShape;
 };
 
-/// The vanilla noise parameters TF's terrain and surface use (minecraft:ridge, surface,
+/// The vanilla noise parameters upstream's terrain and surface use (minecraft:ridge, surface,
 /// surface_secondary, ...): Minecraft 1.21.1's NoiseData values; nullopt for others.
 [[nodiscard]] std::optional<noise::NoiseParameters> vanillaNoise(std::string const& id);
 
-/// RandomState's positional factory of `seed` (Xoroshiro, TF's settings are not legacy).
+/// RandomState's positional factory of `seed` (Xoroshiro, upstream's settings are not legacy).
 [[nodiscard]] std::unique_ptr<jrand::PositionalRandomFactory> randomStateFactory(std::int64_t seed);
 /// RandomState#getOrCreateNoise(id): NormalNoise.create(factory.fromHashOf(id), params).
 [[nodiscard]] noise::NormalNoise randomStateNoise(std::int64_t seed, std::string const& id, noise::NoiseParameters const& params);

@@ -1,7 +1,7 @@
 {
   "format": 1,
   "kind": "rng",
-  "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
+  "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
   "note": "Each list starts from a fresh source built from 'seed' (or 'seedLo'/'seedHi'); floats are widened to double.",
   "legacy": [
     {
@@ -51,10 +51,10 @@
           {"name": "", "nextLong": 4804307197456638271, "nextInt16": 12},
           {"name": "a", "nextLong": 4749775225536258270, "nextInt16": 6},
           {"name": "minecraft:stone", "nextLong": 5235825029111073327, "nextInt16": 1},
-          {"name": "twilightforest:lich_tower", "nextLong": 2861593045244207194, "nextInt16": 7},
+          {"name": "example:lich_tower", "nextLong": -917162232125453256, "nextInt16": 1},
           {"name": "minecraft:offset", "nextLong": 444257796709329839, "nextInt16": 5},
-          {"name": "twilightforest:twilight_forest", "nextLong": -5931045442518842925, "nextInt16": 1},
-          {"name": "Twilight Forest", "nextLong": -5220045548665326571, "nextInt16": 14},
+          {"name": "example:dimension", "nextLong": -2193740998945093375, "nextInt16": 13},
+          {"name": "Example Forest", "nextLong": -1072877594452518702, "nextInt16": 1},
           {"name": "café 林", "nextLong": 4418042473268209186, "nextInt16": 11}
         ],
         "fromSeed": [
@@ -113,10 +113,10 @@
           {"name": "", "nextLong": 323091568684100223, "nextInt16": 12},
           {"name": "a", "nextLong": 374318569876144672, "nextInt16": 8},
           {"name": "minecraft:stone", "nextLong": 2269961647805382865, "nextInt16": 1},
-          {"name": "twilightforest:lich_tower", "nextLong": -893883263563874200, "nextInt16": 6},
+          {"name": "example:lich_tower", "nextLong": -3952154893618484489, "nextInt16": 1},
           {"name": "minecraft:offset", "nextLong": 5341538421183990941, "nextInt16": 0},
-          {"name": "twilightforest:twilight_forest", "nextLong": 2025386137114622720, "nextInt16": 3},
-          {"name": "Twilight Forest", "nextLong": 5336721607166328956, "nextInt16": 6},
+          {"name": "example:dimension", "nextLong": -4333888603213346033, "nextInt16": 13},
+          {"name": "Example Forest", "nextLong": -6728049165235602708, "nextInt16": 4},
           {"name": "café 林", "nextLong": 4681527620795732593, "nextInt16": 3}
         ],
         "fromSeed": [
@@ -175,10 +175,10 @@
           {"name": "", "nextLong": -9094092565204800176, "nextInt16": 0},
           {"name": "a", "nextLong": -9039560597579387471, "nextInt16": 6},
           {"name": "minecraft:stone", "nextLong": 2064798956895987022, "nextInt16": 14},
-          {"name": "twilightforest:lich_tower", "nextLong": 610778650852902450, "nextInt16": 10},
+          {"name": "example:lich_tower", "nextLong": -3259346445798608535, "nextInt16": 7},
           {"name": "minecraft:offset", "nextLong": 3108902083677997894, "nextInt16": 11},
-          {"name": "twilightforest:twilight_forest", "nextLong": -6497246379815025239, "nextInt16": 8},
-          {"name": "Twilight Forest", "nextLong": -2689457010270437338, "nextInt16": 4},
+          {"name": "example:dimension", "nextLong": -8250161394318909148, "nextInt16": 15},
+          {"name": "Example Forest", "nextLong": 7623384459295519550, "nextInt16": 4},
           {"name": "café 林", "nextLong": -5294387037979177020, "nextInt16": 7}
         ],
         "fromSeed": [
@@ -237,10 +237,10 @@
           {"name": "", "nextLong": 8761777683300016314, "nextInt16": 6},
           {"name": "a", "nextLong": 8922068628332820766, "nextInt16": 15},
           {"name": "minecraft:stone", "nextLong": 4940852206311001817, "nextInt16": 12},
-          {"name": "twilightforest:lich_tower", "nextLong": 3850867260391795837, "nextInt16": 8},
+          {"name": "example:lich_tower", "nextLong": -6263541496424854988, "nextInt16": 7},
           {"name": "minecraft:offset", "nextLong": -9098370526371932598, "nextInt16": 11},
-          {"name": "twilightforest:twilight_forest", "nextLong": -7238146487015267036, "nextInt16": 10},
-          {"name": "Twilight Forest", "nextLong": 5503756646877694969, "nextInt16": 8},
+          {"name": "example:dimension", "nextLong": -8589898531866754372, "nextInt16": 9},
+          {"name": "Example Forest", "nextLong": -2483176094754975406, "nextInt16": 2},
           {"name": "café 林", "nextLong": 5114132673130053419, "nextInt16": 2}
         ],
         "fromSeed": [
@@ -299,10 +299,10 @@
           {"name": "", "nextLong": -6591858243088018634, "nextInt16": 8},
           {"name": "a", "nextLong": -6748844217392487534, "nextInt16": 10},
           {"name": "minecraft:stone", "nextLong": -7486690419501693948, "nextInt16": 7},
-          {"name": "twilightforest:lich_tower", "nextLong": 2989352619934411174, "nextInt16": 9},
+          {"name": "example:lich_tower", "nextLong": 4838606503930303099, "nextInt16": 5},
           {"name": "minecraft:offset", "nextLong": -5688676046895634970, "nextInt16": 15},
-          {"name": "twilightforest:twilight_forest", "nextLong": -3541038720312972951, "nextInt16": 4},
-          {"name": "Twilight Forest", "nextLong": 4982547505510016386, "nextInt16": 0},
+          {"name": "example:dimension", "nextLong": -7491219944443442456, "nextInt16": 9},
+          {"name": "Example Forest", "nextLong": -2384495776074334853, "nextInt16": 8},
           {"name": "café 林", "nextLong": 6022168819637791049, "nextInt16": 11}
         ],
         "fromSeed": [
@@ -361,10 +361,10 @@
           {"name": "", "nextLong": 3029212596550442113, "nextInt16": 6},
           {"name": "a", "nextLong": 3186198575149878309, "nextInt16": 5},
           {"name": "minecraft:stone", "nextLong": -7903794319041660075, "nextInt16": 5},
-          {"name": "twilightforest:lich_tower", "nextLong": -3987339399567962, "nextInt16": 11},
+          {"name": "example:lich_tower", "nextLong": 236228365258782988, "nextInt16": 9},
           {"name": "minecraft:offset", "nextLong": 4426441662557131218, "nextInt16": 14},
-          {"name": "twilightforest:twilight_forest", "nextLong": -5871152275890835114, "nextInt16": 2},
-          {"name": "Twilight Forest", "nextLong": -4700073344394167015, "nextInt16": 15},
+          {"name": "example:dimension", "nextLong": 6884795813223254776, "nextInt16": 10},
+          {"name": "Example Forest", "nextLong": 8128488346594615385, "nextInt16": 11},
           {"name": "café 林", "nextLong": 4672529471370626320, "nextInt16": 11}
         ],
         "fromSeed": [
@@ -423,10 +423,10 @@
           {"name": "", "nextLong": -9094092565204800176, "nextInt16": 0},
           {"name": "a", "nextLong": -9039560597579387471, "nextInt16": 6},
           {"name": "minecraft:stone", "nextLong": 2064798956895987022, "nextInt16": 14},
-          {"name": "twilightforest:lich_tower", "nextLong": 610778650852902450, "nextInt16": 10},
+          {"name": "example:lich_tower", "nextLong": -3259346445798608535, "nextInt16": 7},
           {"name": "minecraft:offset", "nextLong": 3108902083677997894, "nextInt16": 11},
-          {"name": "twilightforest:twilight_forest", "nextLong": -6497246379815025239, "nextInt16": 8},
-          {"name": "Twilight Forest", "nextLong": -2689457010270437338, "nextInt16": 4},
+          {"name": "example:dimension", "nextLong": -8250161394318909148, "nextInt16": 15},
+          {"name": "Example Forest", "nextLong": 7623384459295519550, "nextInt16": 4},
           {"name": "café 林", "nextLong": -5294387037979177020, "nextInt16": 7}
         ],
         "fromSeed": [
@@ -485,10 +485,10 @@
           {"name": "", "nextLong": 4804307197456638271, "nextInt16": 12},
           {"name": "a", "nextLong": 4749775225536258270, "nextInt16": 6},
           {"name": "minecraft:stone", "nextLong": 5235825029111073327, "nextInt16": 1},
-          {"name": "twilightforest:lich_tower", "nextLong": 2861593045244207194, "nextInt16": 7},
+          {"name": "example:lich_tower", "nextLong": -917162232125453256, "nextInt16": 1},
           {"name": "minecraft:offset", "nextLong": 444257796709329839, "nextInt16": 5},
-          {"name": "twilightforest:twilight_forest", "nextLong": -5931045442518842925, "nextInt16": 1},
-          {"name": "Twilight Forest", "nextLong": -5220045548665326571, "nextInt16": 14},
+          {"name": "example:dimension", "nextLong": -2193740998945093375, "nextInt16": 13},
+          {"name": "Example Forest", "nextLong": -1072877594452518702, "nextInt16": 1},
           {"name": "café 林", "nextLong": 4418042473268209186, "nextInt16": 11}
         ],
         "fromSeed": [
@@ -544,10 +544,10 @@
           {"name": "", "nextLong": -6524695443434362284, "nextInt16": 6},
           {"name": "a", "nextLong": 4592209479108473009, "nextInt16": 11},
           {"name": "minecraft:stone", "nextLong": -769430096925848865, "nextInt16": 4},
-          {"name": "twilightforest:lich_tower", "nextLong": 7527724536009458884, "nextInt16": 0},
+          {"name": "example:lich_tower", "nextLong": -7588038677708001606, "nextInt16": 1},
           {"name": "minecraft:offset", "nextLong": 5613751443713371729, "nextInt16": 5},
-          {"name": "twilightforest:twilight_forest", "nextLong": 3834617677537637231, "nextInt16": 0},
-          {"name": "Twilight Forest", "nextLong": -5341268144281031481, "nextInt16": 10},
+          {"name": "example:dimension", "nextLong": 5277254103143839585, "nextInt16": 8},
+          {"name": "Example Forest", "nextLong": -1230449276444185142, "nextInt16": 9},
           {"name": "café 林", "nextLong": 3844095101297027840, "nextInt16": 15}
         ],
         "fromSeed": [
@@ -601,10 +601,10 @@
           {"name": "", "nextLong": 6758121364034525056, "nextInt16": 11},
           {"name": "a", "nextLong": -8700715391563482438, "nextInt16": 10},
           {"name": "minecraft:stone", "nextLong": 8913855291017205830, "nextInt16": 8},
-          {"name": "twilightforest:lich_tower", "nextLong": -7683768755742937615, "nextInt16": 4},
+          {"name": "example:lich_tower", "nextLong": 7674572904665537065, "nextInt16": 3},
           {"name": "minecraft:offset", "nextLong": 8440863695156005673, "nextInt16": 12},
-          {"name": "twilightforest:twilight_forest", "nextLong": 2090528690503697509, "nextInt16": 7},
-          {"name": "Twilight Forest", "nextLong": 1990674792915220697, "nextInt16": 11},
+          {"name": "example:dimension", "nextLong": 5935324463985788871, "nextInt16": 12},
+          {"name": "Example Forest", "nextLong": -4004107265226042641, "nextInt16": 11},
           {"name": "café 林", "nextLong": -4839461056043714932, "nextInt16": 13}
         ],
         "fromSeed": [
@@ -658,10 +658,10 @@
           {"name": "", "nextLong": 4747034069359563729, "nextInt16": 3},
           {"name": "a", "nextLong": 5251407115377397389, "nextInt16": 6},
           {"name": "minecraft:stone", "nextLong": -5423735887000239119, "nextInt16": 8},
-          {"name": "twilightforest:lich_tower", "nextLong": -4767848011588406832, "nextInt16": 12},
+          {"name": "example:lich_tower", "nextLong": 7305443960940961550, "nextInt16": 13},
           {"name": "minecraft:offset", "nextLong": -4922734375342829794, "nextInt16": 1},
-          {"name": "twilightforest:twilight_forest", "nextLong": 1340452093199243090, "nextInt16": 7},
-          {"name": "Twilight Forest", "nextLong": -5299176356410057277, "nextInt16": 3},
+          {"name": "example:dimension", "nextLong": 7966279494012638230, "nextInt16": 3},
+          {"name": "Example Forest", "nextLong": 7383642778796365790, "nextInt16": 5},
           {"name": "café 林", "nextLong": -7745195012074925643, "nextInt16": 2}
         ],
         "fromSeed": [
@@ -715,10 +715,10 @@
           {"name": "", "nextLong": -2770711327811348109, "nextInt16": 2},
           {"name": "a", "nextLong": -8123477683767706589, "nextInt16": 1},
           {"name": "minecraft:stone", "nextLong": -7045552184109056812, "nextInt16": 0},
-          {"name": "twilightforest:lich_tower", "nextLong": 2629520119575561953, "nextInt16": 13},
+          {"name": "example:lich_tower", "nextLong": -4735064398956613388, "nextInt16": 12},
           {"name": "minecraft:offset", "nextLong": 2458873966747037180, "nextInt16": 4},
-          {"name": "twilightforest:twilight_forest", "nextLong": -409607922472302924, "nextInt16": 13},
-          {"name": "Twilight Forest", "nextLong": -2479541562239153168, "nextInt16": 2},
+          {"name": "example:dimension", "nextLong": 8485734280510942067, "nextInt16": 4},
+          {"name": "Example Forest", "nextLong": -4646510801598172677, "nextInt16": 5},
           {"name": "café 林", "nextLong": -274173273249720749, "nextInt16": 5}
         ],
         "fromSeed": [
@@ -772,10 +772,10 @@
           {"name": "", "nextLong": -6348397302514530024, "nextInt16": 12},
           {"name": "a", "nextLong": -4821838057725524813, "nextInt16": 9},
           {"name": "minecraft:stone", "nextLong": -8507670770443475683, "nextInt16": 10},
-          {"name": "twilightforest:lich_tower", "nextLong": 8442134522654920469, "nextInt16": 15},
+          {"name": "example:lich_tower", "nextLong": -7759720799062263882, "nextInt16": 6},
           {"name": "minecraft:offset", "nextLong": -4145223881995702830, "nextInt16": 10},
-          {"name": "twilightforest:twilight_forest", "nextLong": -6654485115827546453, "nextInt16": 12},
-          {"name": "Twilight Forest", "nextLong": 2619042360461868027, "nextInt16": 12},
+          {"name": "example:dimension", "nextLong": -5467053845821410532, "nextInt16": 7},
+          {"name": "Example Forest", "nextLong": -307843991241950973, "nextInt16": 15},
           {"name": "café 林", "nextLong": 4409136644735444865, "nextInt16": 0}
         ],
         "fromSeed": [
@@ -829,10 +829,10 @@
           {"name": "", "nextLong": -7530964804890300995, "nextInt16": 4},
           {"name": "a", "nextLong": -3347245028060024216, "nextInt16": 13},
           {"name": "minecraft:stone", "nextLong": 8282310774746907927, "nextInt16": 4},
-          {"name": "twilightforest:lich_tower", "nextLong": 8683619658442295345, "nextInt16": 15},
+          {"name": "example:lich_tower", "nextLong": -6530259285064437571, "nextInt16": 0},
           {"name": "minecraft:offset", "nextLong": 3531334511640537273, "nextInt16": 6},
-          {"name": "twilightforest:twilight_forest", "nextLong": -7584351872149851400, "nextInt16": 4},
-          {"name": "Twilight Forest", "nextLong": 3808042570098288932, "nextInt16": 12},
+          {"name": "example:dimension", "nextLong": -7207047683649046220, "nextInt16": 7},
+          {"name": "Example Forest", "nextLong": 8078387098527117647, "nextInt16": 7},
           {"name": "café 林", "nextLong": 6128879495667511061, "nextInt16": 14}
         ],
         "fromSeed": [
@@ -886,10 +886,10 @@
           {"name": "", "nextLong": -8428024192258690782, "nextInt16": 5},
           {"name": "a", "nextLong": 8050960134321263280, "nextInt16": 14},
           {"name": "minecraft:stone", "nextLong": -8897271443105183737, "nextInt16": 10},
-          {"name": "twilightforest:lich_tower", "nextLong": 6771106924106988590, "nextInt16": 14},
+          {"name": "example:lich_tower", "nextLong": -7086523104339160540, "nextInt16": 15},
           {"name": "minecraft:offset", "nextLong": 829755688902777513, "nextInt16": 8},
-          {"name": "twilightforest:twilight_forest", "nextLong": -1529236060244609755, "nextInt16": 14},
-          {"name": "Twilight Forest", "nextLong": -1210880620363552703, "nextInt16": 13},
+          {"name": "example:dimension", "nextLong": -4667251772092934302, "nextInt16": 0},
+          {"name": "Example Forest", "nextLong": -5252175396474501880, "nextInt16": 7},
           {"name": "café 林", "nextLong": 6177431650933795974, "nextInt16": 7}
         ],
         "fromSeed": [
@@ -943,10 +943,10 @@
           {"name": "", "nextLong": -802721231877492114, "nextInt16": 12},
           {"name": "a", "nextLong": 3464503699947253676, "nextInt16": 10},
           {"name": "minecraft:stone", "nextLong": -3785321336128423335, "nextInt16": 12},
-          {"name": "twilightforest:lich_tower", "nextLong": -2025966013153068912, "nextInt16": 1},
+          {"name": "example:lich_tower", "nextLong": -983098460370284751, "nextInt16": 7},
           {"name": "minecraft:offset", "nextLong": -6016964524188412267, "nextInt16": 10},
-          {"name": "twilightforest:twilight_forest", "nextLong": 5557115491291017593, "nextInt16": 10},
-          {"name": "Twilight Forest", "nextLong": -6722297623094373023, "nextInt16": 11},
+          {"name": "example:dimension", "nextLong": 5829060712223754810, "nextInt16": 8},
+          {"name": "Example Forest", "nextLong": -1219605325198602654, "nextInt16": 15},
           {"name": "café 林", "nextLong": -1409189508435931153, "nextInt16": 1}
         ],
         "fromSeed": [
@@ -999,10 +999,10 @@
           {"name": "", "nextLong": 7307714843410076877, "nextInt16": 12},
           {"name": "a", "nextLong": -4915368730951495263, "nextInt16": 5},
           {"name": "minecraft:stone", "nextLong": -479236509179125525, "nextInt16": 3},
-          {"name": "twilightforest:lich_tower", "nextLong": -8114273116846976326, "nextInt16": 7},
+          {"name": "example:lich_tower", "nextLong": 8810809385305404812, "nextInt16": 8},
           {"name": "minecraft:offset", "nextLong": -5332874726344722398, "nextInt16": 14},
-          {"name": "twilightforest:twilight_forest", "nextLong": -3014348011164691509, "nextInt16": 1},
-          {"name": "Twilight Forest", "nextLong": 6435626073766213071, "nextInt16": 9},
+          {"name": "example:dimension", "nextLong": -3412236236310385778, "nextInt16": 6},
+          {"name": "Example Forest", "nextLong": 747481532839718116, "nextInt16": 15},
           {"name": "café 林", "nextLong": -5744005903196097851, "nextInt16": 13}
         ],
         "fromSeed": [
@@ -1055,10 +1055,10 @@
           {"name": "", "nextLong": -4574948983582741180, "nextInt16": 4},
           {"name": "a", "nextLong": -1550986720871828561, "nextInt16": 8},
           {"name": "minecraft:stone", "nextLong": 1019531374717410943, "nextInt16": 3},
-          {"name": "twilightforest:lich_tower", "nextLong": 1574143362356429010, "nextInt16": 8},
+          {"name": "example:lich_tower", "nextLong": -6932452555048746336, "nextInt16": 6},
           {"name": "minecraft:offset", "nextLong": 8116956626732376590, "nextInt16": 2},
-          {"name": "twilightforest:twilight_forest", "nextLong": -8050716972038690257, "nextInt16": 7},
-          {"name": "Twilight Forest", "nextLong": 5702739670664577248, "nextInt16": 8},
+          {"name": "example:dimension", "nextLong": 2619282566087485760, "nextInt16": 14},
+          {"name": "Example Forest", "nextLong": -3587443299304621608, "nextInt16": 14},
           {"name": "café 林", "nextLong": 1608070885787004061, "nextInt16": 7}
         ],
         "fromSeed": [
@@ -1111,10 +1111,10 @@
           {"name": "", "nextLong": 1964658193721164808, "nextInt16": 14},
           {"name": "a", "nextLong": 7322126357613355055, "nextInt16": 15},
           {"name": "minecraft:stone", "nextLong": -7279605280263231554, "nextInt16": 1},
-          {"name": "twilightforest:lich_tower", "nextLong": -7877933334998497306, "nextInt16": 5},
+          {"name": "example:lich_tower", "nextLong": 5557658620066132775, "nextInt16": 0},
           {"name": "minecraft:offset", "nextLong": -2526068348090786514, "nextInt16": 0},
-          {"name": "twilightforest:twilight_forest", "nextLong": -972134982663334033, "nextInt16": 5},
-          {"name": "Twilight Forest", "nextLong": -2639815474672463901, "nextInt16": 14},
+          {"name": "example:dimension", "nextLong": -8111246203938695615, "nextInt16": 10},
+          {"name": "Example Forest", "nextLong": 4736305734459016184, "nextInt16": 9},
           {"name": "café 林", "nextLong": -4981039320753248895, "nextInt16": 15}
         ],
         "fromSeed": [
@@ -1167,10 +1167,10 @@
           {"name": "", "nextLong": 7307714843410076877, "nextInt16": 12},
           {"name": "a", "nextLong": -4915368730951495263, "nextInt16": 5},
           {"name": "minecraft:stone", "nextLong": -479236509179125525, "nextInt16": 3},
-          {"name": "twilightforest:lich_tower", "nextLong": -8114273116846976326, "nextInt16": 7},
+          {"name": "example:lich_tower", "nextLong": 8810809385305404812, "nextInt16": 8},
           {"name": "minecraft:offset", "nextLong": -5332874726344722398, "nextInt16": 14},
-          {"name": "twilightforest:twilight_forest", "nextLong": -3014348011164691509, "nextInt16": 1},
-          {"name": "Twilight Forest", "nextLong": 6435626073766213071, "nextInt16": 9},
+          {"name": "example:dimension", "nextLong": -3412236236310385778, "nextInt16": 6},
+          {"name": "Example Forest", "nextLong": 747481532839718116, "nextInt16": 15},
           {"name": "café 林", "nextLong": -5744005903196097851, "nextInt16": 13}
         ],
         "fromSeed": [
@@ -1636,10 +1636,10 @@
     {"text": "", "hash": 0, "md5Lo": -3162216497309240828, "md5Hi": -1621285313438006658},
     {"text": "a", "hash": 97, "md5Lo": 919145239626757800, "md5Hi": 3585878926028121697},
     {"text": "minecraft:stone", "hash": -1133948840, "md5Lo": -2789336716176323013, "md5Hi": 7987751473417652941},
-    {"text": "twilightforest:lich_tower", "hash": -701048295, "md5Lo": 1907455277949358941, "md5Hi": -4881697522067144580},
+    {"text": "example:lich_tower", "hash": 2121416508, "md5Lo": 6173380019837185808, "md5Hi": -3163492436461531902},
     {"text": "minecraft:offset", "hash": -920384768, "md5Lo": 577895406318539652, "md5Hi": 4557074653038767061},
-    {"text": "twilightforest:twilight_forest", "hash": 2107855327, "md5Lo": -1720925106349831173, "md5Hi": -4107660438376853564},
-    {"text": "Twilight Forest", "hash": 1350727597, "md5Lo": 2051161464848468435, "md5Hi": -68248772339517491},
+    {"text": "example:dimension", "hash": 886367062, "md5Lo": 4042746926497127656, "md5Hi": 3320100663136649926},
+    {"text": "Example Forest", "hash": -2126159917, "md5Lo": -1783796244037129655, "md5Hi": 2345148865099722497},
     {"text": "café 林", "hash": -1367809704, "md5Lo": -5993743208250204122, "md5Hi": -474247193832449623}
   ],
   "mthGetSeed": [

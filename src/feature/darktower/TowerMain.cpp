@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/darktower/DarkTowerMainComponent.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/darktower/DarkTowerMainComponent.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include <algorithm>
@@ -90,11 +90,11 @@ Json const& vanillaTree(bool birch) {
 void noteGenerated(Region& region, Block const& block, BlockPos const& pos, BlockBox const& chunkBox) {
     if (region.dimension() < 0 || !chunkBox.contains(pos.x, pos.y, pos.z)) return; // scratch regions keep nothing
     auto const& id = ::gf::structure::blocks::id(block);
-    if (id == "twilightforest:antibuilder" || id == "twilightforest:carminite_builder" || id == "twilightforest:carminite_reactor" ||
-        id == "twilightforest:ghast_trap")
+    if (id == "gloamingforest:antibuilder" || id == "gloamingforest:carminite_builder" || id == "gloamingforest:carminite_reactor" ||
+        id == "gloamingforest:ghast_trap")
         runtime::queueGenerated(region.dimension(), pos, Json{{"k", "track"}});
     // the ghast trap POI exists from the structure's generation on (PoiManager, before the chunk ticks)
-    if (id == "twilightforest:ghast_trap") devices::indexGhastTrap(region.dimension(), pos, true);
+    if (id == "gloamingforest:ghast_trap") devices::indexGhastTrap(region.dimension(), pos, true);
 }
 
 } // namespace util
@@ -319,7 +319,7 @@ void Main::addThreeQuarterFloorsDecorateBoss(Region& region, BlockBox const& sbb
 }
 
 void Main::decorateMainFloor(Region& region, RandomSource& decoRNG, BlockBox const& sbb, Rotation rotation, int y, bool isBottom, bool isTop) {
-    // pick an appropriate decoration and use it (TF's fallthroughs kept)
+    // pick an appropriate decoration and use it (upstream's fallthroughs kept)
     if (isTop) {
         switch (decoRNG.nextInt(3)) {
         case 1: decorateBotanical(region, decoRNG, sbb, rotation, y); break;
@@ -461,7 +461,7 @@ void Main::decorateReappearingMaze(Region& region, RandomSource& decoRNG, BlockB
     maze.wallBlockState   = deco->blockState;
     maze.headBlockState   = deco->accentState;
     maze.pillarBlockState = deco->accentState;
-    maze.doorBlockState   = &J("twilightforest:reappearing_block");
+    maze.doorBlockState   = &J("gloamingforest:reappearing_block");
     maze.torchRarity      = 0;
     maze.tall             = 3;
     maze.head             = 1;
@@ -531,7 +531,7 @@ void Main::decorateUnbuilderMaze(Region& region, RandomSource& decoRNG, BlockBox
             }
         }
     // place unbuilders
-    Block const& antiBuilder = J("twilightforest:antibuilder");
+    Block const& antiBuilder = J("gloamingforest:antibuilder");
     setBlockStateRotated(region, antiBuilder, 15, y + 2, 7, rotation, sbb);
     setBlockStateRotated(region, antiBuilder, 11, y + 3, 7, rotation, sbb);
     setBlockStateRotated(region, antiBuilder, 15, y + 2, 13, rotation, sbb);
@@ -588,14 +588,14 @@ void Main::makeDispenserPillar(Region& region, int x, int y, int z, Orientation 
 }
 
 void Main::decorateBossSpawner(Region& region, BlockBox const& sbb, Rotation rotation, int y) {
-    setBlockStateRotated(region, J("twilightforest:ur_ghast_boss_spawner"), 9, y + 4, 9, rotation, sbb);
+    setBlockStateRotated(region, J("gloamingforest:ur_ghast_boss_spawner"), 9, y + 4, 9, rotation, sbb);
 }
 
 void Main::decorateExperiment(Region& region, BlockBox const& sbb, Rotation rotation, int y) {
     Block const& obsidian        = J("minecraft:obsidian");
     Block const& netherrack      = J("minecraft:netherrack");
     Block const& redstone        = J("minecraft:redstone_block");
-    Block const& inactiveReactor = J("twilightforest:carminite_reactor");
+    Block const& inactiveReactor = J("gloamingforest:carminite_reactor");
 
     // crafting area in corner - walls
     fillBlocksRotated(region, sbb, 17, y + 1, 1, 17, y + 4, 6, *deco->pillarState, rotation);
@@ -615,13 +615,13 @@ void Main::decorateExperiment(Region& region, BlockBox const& sbb, Rotation rota
     // workbench
     setBlockStateRotated(region, J("minecraft:crafting_table"), 14, y + 2, 4, rotation, sbb);
 
-    // recipes in frames (TF's order: row by row from the bottom)
-    static constexpr char const* kSouth[3][3] = {{"twilightforest:borer_essence", "minecraft:redstone", "twilightforest:borer_essence"},
+    // recipes in frames (upstream's order: row by row from the bottom)
+    static constexpr char const* kSouth[3][3] = {{"gloamingforest:borer_essence", "minecraft:redstone", "gloamingforest:borer_essence"},
                                                  {"minecraft:redstone", "minecraft:ghast_tear", "minecraft:redstone"},
-                                                 {"twilightforest:borer_essence", "minecraft:redstone", "twilightforest:borer_essence"}};
-    static constexpr char const* kWest[3][3]  = {{"twilightforest:encased_towerwood", "twilightforest:towerwood", "twilightforest:encased_towerwood"},
-                                                 {"twilightforest:towerwood", "twilightforest:carminite", "twilightforest:towerwood"},
-                                                 {"twilightforest:encased_towerwood", "twilightforest:towerwood", "twilightforest:encased_towerwood"}};
+                                                 {"gloamingforest:borer_essence", "minecraft:redstone", "gloamingforest:borer_essence"}};
+    static constexpr char const* kWest[3][3]  = {{"gloamingforest:encased_towerwood", "gloamingforest:towerwood", "gloamingforest:encased_towerwood"},
+                                                 {"gloamingforest:towerwood", "gloamingforest:carminite", "gloamingforest:towerwood"},
+                                                 {"gloamingforest:encased_towerwood", "gloamingforest:towerwood", "gloamingforest:encased_towerwood"}};
     for (int row = 0; row < 3; row++)
         for (int col = 0; col < 3; col++) placeItemFrameRotated(region, 13 + col, y + 2 + row, 1, rotation, Orientation::South, kSouth[row][col], sbb);
     for (int row = 0; row < 3; row++)
@@ -685,7 +685,7 @@ void Main::decorateExperiment(Region& region, BlockBox const& sbb, Rotation rota
 }
 
 void Main::makeWoodPillar(Region& region, int x, int y, int z, Rotation rotation, BlockBox const& sbb) {
-    Block const& log = J("twilightforest:dark_log");
+    Block const& log = J("gloamingforest:dark_log");
     for (int dy = 2; dy <= 4; dy++) setBlockStateRotated(region, log, x, y + dy, z, rotation, sbb);
 }
 
@@ -791,8 +791,8 @@ void Main::decorateNetherwart(Region& region, RandomSource& decoRNG, BlockBox co
     makePillarFrame(region, sbb, *deco, rotation, 12, y, 9, 4, 4, 7, true);
     fillBlocksRotated(region, sbb, 13, y + 1, 10, 14, y + 1, 14, J("minecraft:soul_sand"), rotation);
     // getNetherPlant: Util.getRandom(list, random)
-    static constexpr char const* plants[] = {"minecraft:nether_wart", "twilightforest:blightberry_bush", "twilightforest:duskberry_bush",
-                                             "twilightforest:skyberry_bush", "twilightforest:stingberry_bush"};
+    static constexpr char const* plants[] = {"minecraft:nether_wart", "gloamingforest:blightberry_bush", "gloamingforest:duskberry_bush",
+                                             "gloamingforest:skyberry_bush", "gloamingforest:stingberry_bush"};
     fillBlocksRotated(region, sbb, 13, y + 2, 10, 14, y + 2, 14, J(plants[decoRNG.nextInt(5)]), rotation);
     fillBlocksRotated(region, sbb, 13, y + 4, 10, 14, y + 4, 14, J("minecraft:soul_sand"), rotation);
     // blaze container
@@ -855,16 +855,16 @@ void Main::placeTreePlanter(Region& region, int treeNum, int x, int y, int z, Ro
     if (!sbb.contains(pos.x, pos.y, pos.z)) return;
     char const* treeGen = "minecraft:oak";
     switch (treeNum) {
-    case 1: treeGen = "twilightforest:tree/smaller_jungle_tree"; break; // made a custom one so it doesnt cut through the floor
+    case 1: treeGen = "gloamingforest:tree/smaller_jungle_tree"; break; // made a custom one so it doesnt cut through the floor
     case 2: treeGen = "minecraft:birch"; break;
-    case 3: treeGen = "twilightforest:tree/twilight_oak_tree"; break;
-    case 4: treeGen = "twilightforest:tree/rainbow_oak"; break;
+    case 3: treeGen = "gloamingforest:tree/gloaming_oak_tree"; break;
+    case 4: treeGen = "gloamingforest:tree/rainbow_oak"; break;
     default: break;
     }
     // grow a tree with world.getRandom() (the region's random). Vanilla's configured features
     // minecraft:oak / minecraft:birch (TreeFeatures.OAK / BIRCH: createStraightBlobTree(log, leaves,
     // 4 or 5, 2, 0, 2).ignoreVines()) go inline, the same data as the vanilla registry entries, so
-    // they grow whether or not the vanilla configured features are registered (F5 lists only TF's)
+    // they grow whether or not the vanilla configured features are registered (F5 lists only upstream's)
     Json const* inlineTree = nullptr;
     if (treeNum == 2 || treeNum == 0 || treeNum > 4) inlineTree = &vanillaTree(treeNum == 2);
     for (int i = 0; i < 100; i++) {
@@ -876,7 +876,7 @@ void Main::placeTreePlanter(Region& region, int treeNum, int x, int y, int z, Ro
 
 void Main::placeRandomPlant(Region& region, RandomSource& decoRNG, int x, int y, int z, Rotation rotation, BlockBox const& sbb) {
     // BuiltInRegistries.BLOCK.getTag(DARK_TOWER_ALLOWED_POTS).flatMap(tag -> tag.getRandomElement(decoRNG))
-    auto const                 pots = ::gf::tags::members(::gf::tags::Registry::Block, "twilightforest:dark_tower_allowed_pots");
+    auto const                 pots = ::gf::tags::members(::gf::tags::Registry::Block, "gloamingforest:dark_tower_allowed_pots");
     std::optional<std::string> optional;
     if (!pots.empty()) optional = pots[static_cast<std::size_t>(decoRNG.nextInt(static_cast<int>(pots.size())))];
     std::string plant = decoRNG.nextInt(10) != 0 && optional ? *optional : std::string{"minecraft:flower_pot"};
@@ -901,9 +901,9 @@ void Main::addTimberMaze(Region& region, RandomSource& rand, BlockBox const& sbb
 }
 
 void Main::makeTimberBeams(Region& region, RandomSource& rand, BlockBox const& sbb, Rotation rotation, int y, bool isBottom, bool isTop, int top) {
-    Block const& beamStateNS = J("twilightforest:twilight_oak_log", Json{{"axis", "z"}});
-    Block const& beamStateUD = J("twilightforest:twilight_oak_log", Json{{"axis", "y"}});
-    Block const& beamStateEW = J("twilightforest:twilight_oak_log", Json{{"axis", "x"}});
+    Block const& beamStateNS = J("gloamingforest:gloaming_oak_log", Json{{"axis", "z"}});
+    Block const& beamStateUD = J("gloamingforest:gloaming_oak_log", Json{{"axis", "y"}});
+    Block const& beamStateEW = J("gloamingforest:gloaming_oak_log", Json{{"axis", "x"}});
 
     // three beams going n/s
     for (int z = 1; z < size - 1; z++) {
@@ -968,7 +968,7 @@ void Main::makeTimberBeams(Region& region, RandomSource& rand, BlockBox const& s
 }
 
 void Main::makeMiniGhastSpawner(Region& region, int y, int sx, int sz, BlockBox const& sbb) {
-    setSpawner(region, sx, y + 2, sz, sbb, "twilightforest:carminite_ghastling", [](Json& spawner) {
+    setSpawner(region, sx, y + 2, sz, sbb, "gloamingforest:carminite_ghastling", [](Json& spawner) {
         spawner["SpawnRange"]        = 16;
         spawner["MaxNearbyEntities"] = 2;
         spawner["SpawnCount"]        = 1;
@@ -1007,7 +1007,7 @@ void Main::makeBuilderPlatforms(Region& region, RandomSource& rand, BlockBox con
         // reverter blocks
         int sx = pickFrom(rand, 5, 9, 13);
         int sz = (sx == 9) ? (rand.nextBoolean() ? 5 : 13) : 9;
-        setBlockStateRotated(region, J("twilightforest:antibuilder"), sx, y + 2, sz, rotation, sbb);
+        setBlockStateRotated(region, J("gloamingforest:antibuilder"), sx, y + 2, sz, rotation, sbb);
     } else {
         // lamp cluster
         int sx = rand.nextBoolean() ? 5 : 13;
@@ -1029,7 +1029,7 @@ void Main::addTopBuilderPlatform(Region& region, RandomSource& rand, int top, in
     setBlockStateRotated(region, *deco->fenceState, 5, top + 1, 10, rotation, sbb);
     setBlockStateRotated(region, *deco->fenceState, 7, top + 1, 10, rotation, sbb);
     // builder & lever
-    setBlockStateRotated(region, J("twilightforest:carminite_builder"), 7, top - spacing, 10, rotation, sbb);
+    setBlockStateRotated(region, J("gloamingforest:carminite_builder"), 7, top - spacing, 10, rotation, sbb);
     setBlockStateRotated(region, lever("floor", rand.nextBoolean() ? Orientation::East : Orientation::North, false), 7, top - spacing + 1, 11, rotation, sbb);
 }
 
@@ -1042,7 +1042,7 @@ void Main::makeBuilderPlatform(Region& region, RandomSource& rand, Rotation rota
     setBlockStateRotated(region, a, 2, y, z, rotation, sbb);
     setBlockStateRotated(region, a, 2, y, z + 1, rotation, sbb);
     // builder & lever
-    setBlockStateRotated(region, J("twilightforest:carminite_builder"), 2, y, hole ? z + 1 : z - 1, rotation, sbb);
+    setBlockStateRotated(region, J("gloamingforest:carminite_builder"), 2, y, hole ? z + 1 : z - 1, rotation, sbb);
     setBlockStateRotated(region, lever("floor", rand.nextBoolean() ? Orientation::East : Orientation::North, false), 2, y + 1, z, rotation, sbb);
 }
 

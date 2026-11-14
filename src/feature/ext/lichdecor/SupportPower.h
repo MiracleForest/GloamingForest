@@ -3,7 +3,7 @@
 // U22 (lichdecor) contract extension (rule R18, to be folded by A8): strong power from a custom
 // block into one neighbour, through the game's circuit graph.
 //
-// TF's DIM candelabra strongly powers its support block (CandelabraBlock#getDirectSignal). The
+// upstream's DIM candelabra strongly powers its support block (CandelabraBlock#getDirectSignal). The
 // redstone contract's registerEmitter only feeds gf::redstone::power() / signalFrom(); vanilla
 // mechanisms around the support never see it. This extension puts a DirectionalProducerComponent
 // on the custom block's position that connects only towards `towards`, so the support becomes a

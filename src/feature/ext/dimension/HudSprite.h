@@ -2,7 +2,7 @@
 
 // Contract extension of "client.ui" (rule R18: F4, new files only; folded into the contract by A8
 // in W2b). Client build only. The HUD canvas (client/screen/base/Screen.h) fills, frames and
-// writes text but draws no texture; TF's PortalOverlay blits the portal's animated sprite over the
+// writes text but draws no texture; upstream's PortalOverlay blits the portal's animated sprite over the
 // whole screen with an alpha (GuiGraphics#setColor(1, 1, 1, alpha) + blit). This draws a frame of
 // an animated block texture the way Bedrock lays it out (frames stacked top to bottom, square)
 // stretched over a rectangle of GUI pixels, with an alpha:

@@ -2,16 +2,16 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:reappearing_block",
+      "identifier": "gloamingforest:reappearing_block",
       "menu_category": {
         "category": "construction"
       },
       "states": {
-        "twilightforest:active": [
+        "gloamingforest:active": [
           false,
           true
         ],
-        "twilightforest:vanished": [
+        "gloamingforest:vanished": [
           false,
           true
         ]
@@ -29,7 +29,7 @@
       ],
       "minecraft:light_emission": 4,
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.reappearing_block",
+      "minecraft:geometry": "geometry.tf.gloamingforest.block.reappearing_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerdev_reappearing_off",
@@ -112,9 +112,9 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:active') && !q.block_state('twilightforest:vanished')",
+        "condition": "!q.block_state('gloamingforest:active') && !q.block_state('gloamingforest:vanished')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.reappearing_block",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.reappearing_block",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_reappearing_off",
@@ -198,9 +198,9 @@
         }
       },
       {
-        "condition": "!q.block_state('twilightforest:active') && q.block_state('twilightforest:vanished')",
+        "condition": "!q.block_state('gloamingforest:active') && q.block_state('gloamingforest:vanished')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.reappearing_block_vanished",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.reappearing_block_vanished",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_reappearing_trace_off",
@@ -227,9 +227,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active') && !q.block_state('twilightforest:vanished')",
+        "condition": "q.block_state('gloamingforest:active') && !q.block_state('gloamingforest:vanished')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.reappearing_block_active",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.reappearing_block_active",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_reappearing_on",
@@ -313,9 +313,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active') && q.block_state('twilightforest:vanished')",
+        "condition": "q.block_state('gloamingforest:active') && q.block_state('gloamingforest:vanished')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.reappearing_block_vanished_active",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.reappearing_block_vanished_active",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_towerdev_reappearing_trace_on",
@@ -342,7 +342,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:active')",
+        "condition": "q.block_state('gloamingforest:active')",
         "components": {
           "minecraft:destructible_by_explosion": {
             "explosion_resistance": 175

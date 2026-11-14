@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:terrorcotta_lines",
+      "identifier": "gloamingforest:terrorcotta_lines",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:rotated": [true, false]
+        "gloamingforest:rotated": [true, false]
       }
     },
     "components": {
@@ -53,7 +53,7 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:rotated')",
+        "condition": "!q.block_state('gloamingforest:rotated')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
@@ -91,7 +91,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:rotated')",
+        "condition": "q.block_state('gloamingforest:rotated')",
         "components": {
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {

@@ -1,4 +1,4 @@
-// U5 (building): a real loom craft with TF's naga banner pattern, through the server's own item stack
+// U5 (building): a real loom craft with upstream's naga banner pattern, through the server's own item stack
 // request handling (dx 575, rule R12).
 //
 // The test writes the bytes a Bedrock client sends for a loom craft (ItemStackRequestPacket: the
@@ -7,7 +7,7 @@
 // _read, ItemStackRequestPacketPayload::toRequestBatch) and hands the batch to the simulated
 // player's ItemStackNetManagerServer, as ServerNetworkHandler does for a client's packet. So the
 // server's validation runs as for a player: the loom screen opened by a use on a real loom block,
-// LoomMaterialContainerValidation for TF's pattern item (Banners.cpp's slot hook), CraftHandlerLoom
+// LoomMaterialContainerValidation for upstream's pattern item (Banners.cpp's slot hook), CraftHandlerLoom
 // with the tf_naga pattern (BannerPattern::matchesPatternItem, Banners.cpp's hook) and the
 // created-output take. A second craft asks for tf_lich with the naga pattern item: the server must
 // refuse it (Java's LoomMenu offers only the patterns of #pattern_item/<boss>).
@@ -252,7 +252,7 @@ SharedTypes::Legacy::ContainerType screenOf(Player& player) {
 }
 
 /// Requests (ids requestId, -2, -4) putting the banner and the dye from hotbar slots 0 and 1 into
-/// the loom's input and dye slots (and, when `withPattern`, TF's pattern item from slot 2 into the
+/// the loom's input and dye slots (and, when `withPattern`, upstream's pattern item from slot 2 into the
 /// pattern slot).
 std::string placeIntoLoom(Player& player, int requestId, bool withPattern) {
     auto& inv = player.getInventory();
@@ -347,11 +347,11 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         ctx.info("loom screen opened by " + opened);
     }
 
-    // the client's first request: the banner, the dye and TF's pattern item from the hotbar into the
+    // the client's first request: the banner, the dye and upstream's pattern item from the hotbar into the
     // loom's input, dye and pattern slots
     auto banner  = gf::game::items::make("minecraft:banner", 1, 15);
     auto dye     = gf::game::items::make("minecraft:red_dye", 1);
-    auto pattern = gf::game::items::make("twilightforest:naga_banner_pattern", 1);
+    auto pattern = gf::game::items::make("gloamingforest:naga_banner_pattern", 1);
     ctx.require(banner && dye && pattern, "a white banner, red dye and the naga banner pattern");
     {
         auto& sp  = ctx.player();
@@ -367,8 +367,8 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         auto& sp = ctx.player();
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) == "minecraft:banner", "the banner is in the loom (" + gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) + ")");
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomDye)) == "minecraft:red_dye", "the dye is in the loom");
-        ctx.require(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) == "twilightforest:naga_banner_pattern",
-                    "the server let TF's pattern item into the loom's pattern slot (" + gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) + ")");
+        ctx.require(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) == "gloamingforest:naga_banner_pattern",
+                    "the server let upstream's pattern item into the loom's pattern slot (" + gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) + ")");
     }
 
     // the craft: CraftLoom tf_naga, the banner and the dye consumed, the result to the cursor
@@ -382,7 +382,7 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         auto&       sp     = ctx.player();
         auto const& cursor = uiItem(sp, PlayerUISlot::CursorSelected);
         nagaCrafted        = hasPattern(cursor, "tf_naga");
-        ctx.check(nagaCrafted, "the server's loom made a banner with TF's naga pattern (" + gf::game::items::idOf(cursor) + ")");
+        ctx.check(nagaCrafted, "the server's loom made a banner with upstream's naga pattern (" + gf::game::items::idOf(cursor) + ")");
         if (nagaCrafted) {
             for (auto const& [pp, color] : BannerItem::getPatternAndColorPairsFromItemStack(cursor))
                 if (pp && *pp->mNameID == "tf_naga") ctx.check(static_cast<int>(color) == 1, "in the dye's colour, red (" + std::to_string(static_cast<int>(color)) + ")");
@@ -390,7 +390,7 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         }
         ctx.check(uiItem(sp, PlayerUISlot::LoomInput).isNull(), "the banner was used up");
         ctx.check(uiItem(sp, PlayerUISlot::LoomDye).isNull(), "the dye was used up");
-        ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) == "twilightforest:naga_banner_pattern", "the pattern item stays in the loom (LoomMenu keeps it)");
+        ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) == "gloamingforest:naga_banner_pattern", "the pattern item stays in the loom (LoomMenu keeps it)");
         sp.setPlayerUIItem(PlayerUISlot::CursorSelected, ItemStack::EMPTY_ITEM(), false);
     }
 

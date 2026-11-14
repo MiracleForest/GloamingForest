@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.snow_queen_trophy_held_left",
+        "identifier": "geometry.gloamingforest.snow_queen_trophy_held_left",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 3,

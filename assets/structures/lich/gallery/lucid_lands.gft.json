@@ -1,11 +1,11 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/gallery/lucid_lands",
+  "id": "gloamingforest:lich_tower/gallery/lucid_lands",
   "size": [9, 7, 13],
   "palette": [
     {"Name":"minecraft:structure_void"},
-    {"Name":"twilightforest:twilight_oak_planks"},
+    {"Name":"gloamingforest:gloaming_oak_planks"},
     {"Name":"minecraft:stone_bricks"},
     {"Name":"minecraft:air"},
     {"Name":"minecraft:lime_carpet"},

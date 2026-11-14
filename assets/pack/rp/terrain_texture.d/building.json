@@ -1,74 +1,74 @@
 {
   "tf_building_hydra4": {
-    "textures": "textures/twilightforest/entity/hydra4"
+    "textures": "textures/gloamingforest/entity/hydra4"
   },
   "tf_building_icon_cracked_towerwood": {
-    "textures": "textures/twilightforest/block/cracked_towerwood"
+    "textures": "textures/gloamingforest/block/cracked_towerwood"
   },
   "tf_building_icon_mossy_towerwood": {
-    "textures": "textures/twilightforest/block/mossy_towerwood"
+    "textures": "textures/gloamingforest/block/mossy_towerwood"
   },
   "tf_building_icon_towerwood": {
-    "textures": "textures/twilightforest/block/towerwood"
+    "textures": "textures/gloamingforest/block/towerwood"
   },
   "tf_building_minoshroomtaur": {
-    "textures": "textures/twilightforest/entity/minoshroomtaur"
+    "textures": "textures/gloamingforest/entity/minoshroomtaur"
   },
   "tf_building_nagahead": {
-    "textures": "textures/twilightforest/entity/nagahead"
+    "textures": "textures/gloamingforest/entity/nagahead"
   },
   "tf_building_phantom_layer_1": {
-    "textures": "textures/twilightforest/models/armor/phantom_layer_1"
+    "textures": "textures/gloamingforest/models/armor/phantom_layer_1"
   },
   "tf_building_phantomskeleton": {
-    "textures": "textures/twilightforest/entity/phantomskeleton"
+    "textures": "textures/gloamingforest/entity/phantomskeleton"
   },
   "tf_building_questram": {
-    "textures": "textures/twilightforest/entity/questram"
+    "textures": "textures/gloamingforest/entity/questram"
   },
   "tf_building_questram_lines": {
-    "textures": "textures/twilightforest/entity/questram_lines"
+    "textures": "textures/gloamingforest/entity/questram_lines"
   },
   "tf_building_rune_blue": {
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "path": "textures/gloamingforest/block/castleblock_magic_0",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "path": "textures/gloamingforest/block/castleblock_magic_1",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "path": "textures/gloamingforest/block/castleblock_magic_2",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "path": "textures/gloamingforest/block/castleblock_magic_3",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "path": "textures/gloamingforest/block/castleblock_magic_4",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "path": "textures/gloamingforest/block/castleblock_magic_5",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "path": "textures/gloamingforest/block/castleblock_magic_6",
           "tint_color": "#00ffff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "path": "textures/gloamingforest/block/castleblock_magic_7",
           "tint_color": "#00ffff",
           "weight": 1
         }
@@ -79,42 +79,42 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "path": "textures/gloamingforest/block/castleblock_magic_0",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "path": "textures/gloamingforest/block/castleblock_magic_1",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "path": "textures/gloamingforest/block/castleblock_magic_2",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "path": "textures/gloamingforest/block/castleblock_magic_3",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "path": "textures/gloamingforest/block/castleblock_magic_4",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "path": "textures/gloamingforest/block/castleblock_magic_5",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "path": "textures/gloamingforest/block/castleblock_magic_6",
           "tint_color": "#ff00ff",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "path": "textures/gloamingforest/block/castleblock_magic_7",
           "tint_color": "#ff00ff",
           "weight": 1
         }
@@ -125,42 +125,42 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "path": "textures/gloamingforest/block/castleblock_magic_0",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "path": "textures/gloamingforest/block/castleblock_magic_1",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "path": "textures/gloamingforest/block/castleblock_magic_2",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "path": "textures/gloamingforest/block/castleblock_magic_3",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "path": "textures/gloamingforest/block/castleblock_magic_4",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "path": "textures/gloamingforest/block/castleblock_magic_5",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "path": "textures/gloamingforest/block/castleblock_magic_6",
           "tint_color": "#4b0082",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "path": "textures/gloamingforest/block/castleblock_magic_7",
           "tint_color": "#4b0082",
           "weight": 1
         }
@@ -171,42 +171,42 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "path": "textures/gloamingforest/block/castleblock_magic_0",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "path": "textures/gloamingforest/block/castleblock_magic_1",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "path": "textures/gloamingforest/block/castleblock_magic_2",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "path": "textures/gloamingforest/block/castleblock_magic_3",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "path": "textures/gloamingforest/block/castleblock_magic_4",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "path": "textures/gloamingforest/block/castleblock_magic_5",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "path": "textures/gloamingforest/block/castleblock_magic_6",
           "tint_color": "#ffff00",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "path": "textures/gloamingforest/block/castleblock_magic_7",
           "tint_color": "#ffff00",
           "weight": 1
         }
@@ -214,19 +214,19 @@
     }
   },
   "tf_building_snowqueen": {
-    "textures": "textures/twilightforest/entity/snowqueen"
+    "textures": "textures/gloamingforest/entity/snowqueen"
   },
   "tf_building_towerboss": {
-    "textures": "textures/twilightforest/entity/towerboss"
+    "textures": "textures/gloamingforest/entity/towerboss"
   },
-  "tf_building_twilightlich64": {
-    "textures": "textures/twilightforest/entity/twilightlich64"
+  "tf_building_gloaminglich64": {
+    "textures": "textures/gloamingforest/entity/gloaminglich64"
   },
   "tf_building_var_carminite_block_bottom": {
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -246,11 +246,11 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -272,7 +272,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -292,11 +292,11 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -318,15 +318,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -354,7 +354,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         }
       ]
@@ -364,15 +364,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -400,7 +400,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         }
       ]
@@ -410,15 +410,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -430,7 +430,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -456,15 +456,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -476,7 +476,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -502,19 +502,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -548,19 +548,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -594,7 +594,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -606,7 +606,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -618,7 +618,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -640,7 +640,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -652,7 +652,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -664,7 +664,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -686,15 +686,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -702,7 +702,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
@@ -732,15 +732,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -748,7 +748,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
@@ -778,7 +778,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -798,11 +798,11 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -824,15 +824,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -860,7 +860,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         }
       ]
@@ -870,15 +870,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -890,7 +890,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -916,19 +916,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -962,7 +962,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -974,7 +974,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -986,7 +986,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -1008,15 +1008,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -1024,7 +1024,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/castle_roof_tile",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
@@ -1054,7 +1054,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1074,11 +1074,11 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1100,15 +1100,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1136,7 +1136,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         }
       ]
@@ -1146,15 +1146,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1166,7 +1166,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1192,19 +1192,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1238,7 +1238,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1250,7 +1250,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1262,7 +1262,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1284,15 +1284,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1300,7 +1300,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_deadrock",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1330,7 +1330,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_towerwood",
+          "path": "textures/gloamingforest/block/cracked_towerwood",
           "weight": 1
         },
         {
@@ -1338,7 +1338,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "path": "textures/gloamingforest/block/cracked_towerwood_alt",
           "weight": 1
         },
         {
@@ -1352,7 +1352,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_towerwood",
+          "path": "textures/gloamingforest/block/cracked_towerwood",
           "weight": 1
         },
         {
@@ -1360,7 +1360,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "path": "textures/gloamingforest/block/cracked_towerwood_alt",
           "weight": 1
         },
         {
@@ -1374,7 +1374,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_towerwood",
+          "path": "textures/gloamingforest/block/cracked_towerwood",
           "weight": 1
         },
         {
@@ -1382,7 +1382,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "path": "textures/gloamingforest/block/cracked_towerwood_alt",
           "weight": 1
         },
         {
@@ -1396,7 +1396,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_towerwood",
+          "path": "textures/gloamingforest/block/cracked_towerwood",
           "weight": 1
         },
         {
@@ -1404,7 +1404,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "path": "textures/gloamingforest/block/cracked_towerwood_alt",
           "weight": 1
         },
         {
@@ -1418,7 +1418,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_towerwood",
+          "path": "textures/gloamingforest/block/cracked_towerwood",
           "weight": 1
         },
         {
@@ -1426,7 +1426,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "path": "textures/gloamingforest/block/cracked_towerwood_alt",
           "weight": 1
         },
         {
@@ -1440,7 +1440,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/cracked_towerwood",
+          "path": "textures/gloamingforest/block/cracked_towerwood",
           "weight": 1
         },
         {
@@ -1448,7 +1448,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "path": "textures/gloamingforest/block/cracked_towerwood_alt",
           "weight": 1
         },
         {
@@ -1462,7 +1462,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
@@ -1484,19 +1484,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         }
       ]
@@ -1506,19 +1506,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         }
       ]
@@ -1528,19 +1528,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         }
       ]
@@ -1550,7 +1550,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
@@ -1572,19 +1572,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/deadrock",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         }
       ]
@@ -1612,7 +1612,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/mazestone",
+          "path": "textures/gloamingforest/block/mazestone",
           "weight": 1
         }
       ]
@@ -1664,7 +1664,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mazestone",
+          "path": "textures/gloamingforest/block/mazestone",
           "weight": 1
         },
         {
@@ -1678,7 +1678,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mossy_towerwood",
+          "path": "textures/gloamingforest/block/mossy_towerwood",
           "weight": 1
         },
         {
@@ -1692,7 +1692,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mossy_towerwood",
+          "path": "textures/gloamingforest/block/mossy_towerwood",
           "weight": 1
         },
         {
@@ -1706,7 +1706,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mossy_towerwood",
+          "path": "textures/gloamingforest/block/mossy_towerwood",
           "weight": 1
         },
         {
@@ -1720,7 +1720,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mossy_towerwood",
+          "path": "textures/gloamingforest/block/mossy_towerwood",
           "weight": 1
         },
         {
@@ -1734,7 +1734,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mossy_towerwood",
+          "path": "textures/gloamingforest/block/mossy_towerwood",
           "weight": 1
         },
         {
@@ -1748,7 +1748,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/mossy_towerwood",
+          "path": "textures/gloamingforest/block/mossy_towerwood",
           "weight": 1
         },
         {
@@ -1762,7 +1762,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1782,11 +1782,11 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1808,15 +1808,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1844,7 +1844,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         }
       ]
@@ -1854,15 +1854,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1874,7 +1874,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1900,19 +1900,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1946,7 +1946,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1958,7 +1958,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1970,7 +1970,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1992,15 +1992,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -2008,7 +2008,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/steeleaf_block",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -2038,7 +2038,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/towerwood",
+          "path": "textures/gloamingforest/block/towerwood",
           "weight": 1
         },
         {
@@ -2052,7 +2052,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/towerwood",
+          "path": "textures/gloamingforest/block/towerwood",
           "weight": 1
         },
         {
@@ -2066,7 +2066,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/towerwood",
+          "path": "textures/gloamingforest/block/towerwood",
           "weight": 1
         },
         {
@@ -2080,7 +2080,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/towerwood",
+          "path": "textures/gloamingforest/block/towerwood",
           "weight": 1
         },
         {
@@ -2094,7 +2094,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/towerwood",
+          "path": "textures/gloamingforest/block/towerwood",
           "weight": 1
         },
         {
@@ -2108,7 +2108,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/towerwood",
+          "path": "textures/gloamingforest/block/towerwood",
           "weight": 1
         },
         {
@@ -2122,7 +2122,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2142,11 +2142,11 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2168,15 +2168,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2204,7 +2204,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         }
       ]
@@ -2214,15 +2214,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2234,7 +2234,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2260,19 +2260,19 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2306,7 +2306,7 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2318,7 +2318,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2330,7 +2330,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2352,15 +2352,15 @@
     "textures": {
       "variations": [
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2368,7 +2368,7 @@
           "weight": 1
         },
         {
-          "path": "textures/twilightforest/block/weathered_deadrock",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2395,6 +2395,6 @@
     }
   },
   "tf_building_yetialpha": {
-    "textures": "textures/twilightforest/entity/yetialpha"
+    "textures": "textures/gloamingforest/entity/yetialpha"
   }
 }

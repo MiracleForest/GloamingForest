@@ -1,4 +1,4 @@
-block.twilightforest.twilight_portal=Portal del Bosque Crepuscular
-config.twilightforest.origin_dimension.tooltip=La dimensión desde la que siempre puedes viajar al Bosque Crepuscular, así como la dimensión a la que volverás. El valor predeterminado es el mundo exterior. (Dominio:RegName).
-dimension.twilightforest.twilight_forest=Bosque Crepuscular
-tile.twilightforest:twilight_portal.name=Portal del Bosque Crepuscular
+block.gloamingforest.gloaming_portal=Portal del Bosque Crepuscular
+config.gloamingforest.origin_dimension.tooltip=La dimensión desde la que siempre puedes viajar al Bosque Crepuscular, así como la dimensión a la que volverás. El valor predeterminado es el mundo exterior. (Dominio:RegName).
+dimension.gloamingforest.gloaming_forest=Bosque Crepuscular
+tile.gloamingforest:gloaming_portal.name=Portal del Bosque Crepuscular

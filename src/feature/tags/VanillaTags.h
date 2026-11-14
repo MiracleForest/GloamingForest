@@ -1,12 +1,12 @@
 #pragma once
 
-// The vanilla side of the tag runtime (F9). TF's data only *adds* members to vanilla tags
-// (`minecraft:logs` holds TF's logs, `replace: false`); the vanilla members themselves are
-// Mojang's data, which Bedrock does not have in that form. This bridge answers the vanilla tags TF
-// and its data reference (the 52 `#minecraft:` references of TF's data and the BlockTags / ItemTags
+// The vanilla side of the tag runtime (F9). upstream's data only *adds* members to vanilla tags
+// (`minecraft:logs` holds upstream's logs, `replace: false`); the vanilla members themselves are
+// Mojang's data, which Bedrock does not have in that form. This bridge answers the vanilla tags upstream
+// and its data reference (the 52 `#minecraft:` references of upstream's data and the BlockTags / ItemTags
 // / EntityTypeTags / FluidTags / BiomeTags of its code and the W0 runtimes, Minecraft 1.21.1's
 // structure tags) and the NeoForge common tags (`c:seeds`, `c:ores`, `c:rods/wooden`, ... with
-// NeoForge 21.1's vanilla members: TF's data adds only TF entries to them) for Bedrock ids, from
+// NeoForge 21.1's vanilla members: upstream's data adds only upstream entries to them) for Bedrock ids, from
 // Bedrock's own block and item tags (`log`, `minecraft:is_sword`,
 // `minecraft:is_pickaxe_item_destructible`, ...), the item's armour slot and durability, and id
 // lists / name patterns of the vanilla content. Pattern rules apply to `minecraft:` ids only;
@@ -14,9 +14,9 @@
 //
 // A rule is one vanilla tag file: its own members (the id list and the patterns) and the tags it
 // includes (Java's "#minecraft:..." entries). The tag runtime (Tags.cpp) walks the includes itself,
-// so an included tag brings its data members (TF's additions) as well as its rule.
+// so an included tag brings its data members (upstream's additions) as well as its rule.
 //
-// Policy: the vanilla members are exactly Java 1.21.1's (TF 4.8's Minecraft; NeoForge 21.1 for c:),
+// Policy: the vanilla members are exactly Java 1.21.1's (upstream 4.8's Minecraft; NeoForge 21.1 for c:),
 // spelled with Bedrock's ids (a Bedrock id that names the same block or item, legacy aliases
 // included). Bedrock content newer than 1.21.1 (pale oak, resin, the 1.21.5 plants, copper tools,
 // armour, chests, bars, chains, lanterns and golems with their waxed and oxidised variants, ...) is
@@ -30,7 +30,7 @@
 // holds pale_oak_log only where Bedrock's own log tags do (item.tags_java_1211_only logs which); #swords holds the
 // copper sword through minecraft:is_sword, while the armour tags, Java's id lists, hold no copper
 // armour). Bedrock wearables that are no armour in Java (carved pumpkins,
-// skulls, mob heads) are in no armour tag. TF's data members are added on top, as Java's tag loader
+// skulls, mob heads) are in no armour tag. upstream's data members are added on top, as Java's tag loader
 // does.
 
 #include <cstddef>

@@ -1,18 +1,18 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/type/HydraLairStructure.java
-//   src/main/java/twilightforest/world/components/structures/HydraLairComponent.java
-//   src/main/java/twilightforest/util/features/FeaturePlacers.java (replaceBlocksDome, processDomeColumn)
-//   src/main/java/twilightforest/world/components/feature/FireJetFeature.java
-//   src/main/java/twilightforest/util/features/FeatureUtil.java (isAreaSuitable)
-//   src/main/java/twilightforest/util/features/FeatureLogic.java (isBlockNotOk)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/type/HydraLairStructure.java
+//   src/main/java/gloamingforest/world/components/structures/HydraLairComponent.java
+//   src/main/java/gloamingforest/util/features/FeaturePlacers.java (replaceBlocksDome, processDomeColumn)
+//   src/main/java/gloamingforest/world/components/feature/FireJetFeature.java
+//   src/main/java/gloamingforest/util/features/FeatureUtil.java (isAreaSuitable)
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java (isBlockNotOk)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The hydra lair landmark: its generator for F6 (the one HydraLairComponent piece at
 // (x - 7, y, z - 7), hill size 2, and the structure terraformer), the piece itself (an exact
-// translation over F7's HollowHillComponent base, rule R19) and the twilightforest:fire_jet
+// translation over F7's HollowHillComponent base, rule R19) and the gloamingforest:fire_jet
 // feature type of the fire swamp's fire jets and smokers.
 
 #include "feature/hydra/Hydra.h"
@@ -47,9 +47,9 @@ using core::BlockBox;
 
 namespace {
 
-constexpr char kPieceType[]  = "twilightforest:TFHydra";
-constexpr char kSpeleothem[] = "twilightforest:hydra_lair";
-constexpr int  kTwilightSeaLevel = 0; ///< ChunkGenerator#getSeaLevel of the Twilight Forest
+constexpr char kPieceType[]  = "gloamingforest:TFHydra";
+constexpr char kSpeleothem[] = "gloamingforest:hydra_lair";
+constexpr int  kGloamingSeaLevel = 0; ///< ChunkGenerator#getSeaLevel of the Gloaming Forest
 
 Block const* javaBlock(char const* id) { return kit::javaBlock(id); }
 
@@ -129,7 +129,7 @@ void HydraLair::postProcess(Region& region, RandomSource& rand, BlockBox const& 
 
 void HydraLair::generateSpeleothems(Region& region, RandomSource& rand, BlockBox const& writeableBounds) {
     float    radiusSq = 0.9F * static_cast<float>(radius) * static_cast<float>(radius);
-    int      speleothemBase = bbox.minY - mBaseOffset; // the start's y: 0 in the Twilight Forest
+    int      speleothemBase = bbox.minY - mBaseOffset; // the start's y: 0 in the Gloaming Forest
     BlockPos locator  = getLocatorPosition();
     BlockPos exclusionCenter{locator.x - 16, locator.y, locator.z - 16};
     float    exclusionRadiusSq = 23 * 23;
@@ -141,7 +141,7 @@ void HydraLair::generateSpeleothems(Region& region, RandomSource& rand, BlockBox
         BlockPos dest{d.x, d.y, d.z};
         float    distSq = getDistSqFromCenter(locator, dest);
         if (distSq > rand.nextFloat() * 0.9F * radiusSq) continue;
-        // an absolute height (TF sets the lattice position's y, not a piece-relative one)
+        // an absolute height (upstream sets the lattice position's y, not a piece-relative one)
         dest.y = speleothemBase + core::mth::floorf(core::jrand::mthCos(std::sqrt(distSq) / static_cast<float>(hdiam) * 3.1415927F) * (static_cast<float>(hdiam) / 4.0F));
         ++gSpeleothemTries;
         if (rand.nextFloat() < ch::kStalactiteChance) generateSpeleothem(region, dest, writeableBounds, true);
@@ -159,7 +159,7 @@ namespace {
 
 /// FeatureLogic#isBlockNotOk.
 bool isBlockNotOk(Block const& b) {
-    return kit::isFluid(b) || isAnyOf(b, {"minecraft:bedrock", "twilightforest:hardened_dark_leaves"}) || kit::hasTag(b, "twilightforest:clouds")
+    return kit::isFluid(b) || isAnyOf(b, {"minecraft:bedrock", "gloamingforest:hardened_dark_leaves"}) || kit::hasTag(b, "gloamingforest:clouds")
         || kit::javaId(b).find("giant_") != std::string::npos; // GiantBlock (giant cobblestone, log, leaves, obsidian)
 }
 
@@ -186,8 +186,8 @@ bool isAreaSuitable(st::Region& region, BlockPos const& pos, int xWidth, int hei
 /// Level#canSeeSkyFromBelowWater in a generating region (sky by the WORLD_SURFACE_WG heightmap).
 bool canSeeSkyFromBelowWater(st::Region& region, BlockPos const& pos) {
     auto canSeeSky = [&](BlockPos const& p) { return p.y >= region.height(worldgen::Heightmap::WorldSurfaceWg, p.x, p.z); };
-    if (pos.y >= kTwilightSeaLevel) return canSeeSky(pos);
-    BlockPos sea{pos.x, kTwilightSeaLevel, pos.z};
+    if (pos.y >= kGloamingSeaLevel) return canSeeSky(pos);
+    BlockPos sea{pos.x, kGloamingSeaLevel, pos.z};
     if (!canSeeSky(sea)) return false;
     for (int y = sea.y - 1; y > pos.y; --y) {
         Block const& b = region.getBlock(BlockPos{pos.x, y, pos.z});
@@ -267,7 +267,7 @@ public:
         }
         return mClip.minY;
     }
-    [[nodiscard]] std::string biome(BlockPos const&) const override { return "twilightforest:fire_swamp"; }
+    [[nodiscard]] std::string biome(BlockPos const&) const override { return "gloamingforest:fire_swamp"; }
     [[nodiscard]] std::int64_t seed() const override { return mSeed; }
     [[nodiscard]] int dimension() const override { return static_cast<int>(mSource.getDimensionId()); }
 
@@ -284,7 +284,7 @@ BlockBox placeLairForTest(BlockSource& source, BlockBox const& clip, int x, int 
     HydraLair              lair(0, x - 7, y, z - 7);
     if (terraform) {
         // the hill the terrain pass makes before the piece (HydraLairStructure's terraformer added to
-        // a flat ground at the start's y, the Twilight Forest's sea level, translated to y): dirt
+        // a flat ground at the start's y, the Gloaming Forest's sea level, translated to y): dirt
         // where the density is positive, grass on top
         auto const* dirt  = javaBlock("minecraft:dirt");
         auto const* grass = javaBlock("minecraft:grass_block");
@@ -327,7 +327,7 @@ void installLair() {
                                                   },
                                               .terraform = [](gf::landmark::Start const& start, int x, int y, int z) { return ch::lairTerraformer(start.box, x, y, z); },
                                           });
-    gf::features::registerType("twilightforest:fire_jet", fireJetFeature);
+    gf::features::registerType("gloamingforest:fire_jet", fireJetFeature);
 }
 
 void uninstallLair() {}

@@ -1,25 +1,25 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/entity/ai/goal/ChargeAttackGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/BreathAttackGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/FlockToSameKindGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/PanicOnFlockDeathGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/AvoidAnyEntityGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/AttemptToGoHomeGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/AlwaysWatchTargetGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/RandomLookAroundIfBoredGoal.java
-//   src/main/java/twilightforest/entity/ai/goal/SimplifiedAttackGoal.java
-//   src/main/java/twilightforest/entity/ai/control/NoClipMoveControl.java
-//   src/main/java/twilightforest/entity/ITFCharger.java
-//   src/main/java/twilightforest/entity/IBreathAttacker.java
-//   src/main/java/twilightforest/entity/EnforcedHomePoint.java
-//   src/main/java/twilightforest/util/entities/EntityUtil.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/entity/ai/goal/ChargeAttackGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/BreathAttackGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/FlockToSameKindGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/PanicOnFlockDeathGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/AvoidAnyEntityGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/AttemptToGoHomeGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/AlwaysWatchTargetGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/RandomLookAroundIfBoredGoal.java
+//   src/main/java/gloamingforest/entity/ai/goal/SimplifiedAttackGoal.java
+//   src/main/java/gloamingforest/entity/ai/control/NoClipMoveControl.java
+//   src/main/java/gloamingforest/entity/ITFCharger.java
+//   src/main/java/gloamingforest/entity/IBreathAttacker.java
+//   src/main/java/gloamingforest/entity/EnforcedHomePoint.java
+//   src/main/java/gloamingforest/util/entities/EntityUtil.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The goal adapter of contract "entity": a Java GoalSelector per mob (goal and target selectors,
-// flags, priorities, interruption, every-other-tick updates) run from F8's tick hook, and TF's
+// flags, priorities, interruption, every-other-tick updates) run from F8's tick hook, and upstream's
 // shared goals. Goals drive the engine's own NavigationComponent, LookControlComponent and the
 // mob's motion; vanilla's RandomPos / GoalUtils helpers they need are translated here too.
 
@@ -475,7 +475,7 @@ float walkTargetValue(Mob& mob, BlockPos const& pos) {
 
 namespace {
 
-/// DefaultRandomPos#generateRandomPosTowardDirection (no restriction: TF's homes are goals).
+/// DefaultRandomPos#generateRandomPosTowardDirection (no restriction: upstream's homes are goals).
 std::optional<BlockPos> towardDirection(Mob& mob, BlockPos const& offset) {
     auto     m      = mob.getFeetPos();
     BlockPos pos    = containing(offset.x + m.x, offset.y + m.y, offset.z + m.z);
@@ -589,7 +589,7 @@ public:
         if (!t) return false;
         double distance = mobs::distanceSqr(*m, *t);
         // the minoshroom charges when the target is further away than the normal minotaur
-        double bonus = typeIs(*m, "twilightforest:minoshroom") ? 9.0 : 0.0;
+        double bonus = typeIs(*m, "gloamingforest:minoshroom") ? 9.0 : 0.0;
         if (distance < kMinRangeSq + bonus || distance > kMaxRangeSq + bonus) return false;
         if (!m->isOnGround()) return false;
         Vec3 chargePos = findChargePoint(*m, *t);
@@ -627,7 +627,7 @@ public:
         // attack the target when we get in range
         double w       = m->getAABB().max.x - m->getAABB().min.x;
         double tw      = t->getAABB().max.x - t->getAABB().min.x;
-        double rangeSq = typeIs(*m, "twilightforest:minoshroom") ? 5.0 : static_cast<float>(w * 2.0F * w * 2.0F) + tw;
+        double rangeSq = typeIs(*m, "gloamingforest:minoshroom") ? 5.0 : static_cast<float>(w * 2.0F * w * 2.0F) + tw;
         auto   tp      = t->getFeetPos();
         if (mobs::distanceSqr(*m, Vec3{tp.x, t->getAABB().min.y, tp.z}) <= rangeSq && !mHasAttacked) {
             mHasAttacked = true;
@@ -831,9 +831,9 @@ public:
     bool canUse() override {
         auto* m = mob();
         if (!m) return false;
-        if (typeIs(*m, "twilightforest:kobold")) {
+        if (typeIs(*m, "gloamingforest:kobold")) {
             auto const& held = m->getCarriedItem();
-            if (!game::items::isEmpty(held) && tags::has(tags::Registry::Item, "twilightforest:kobold_pacification_breads", game::items::idOf(held)))
+            if (!game::items::isEmpty(held) && tags::has(tags::Registry::Item, "gloamingforest:kobold_pacification_breads", game::items::idOf(held)))
                 return false;
         }
         if (randomOf(*m).nextInt(40) != 0) return false;
@@ -907,7 +907,7 @@ public:
         if (!m) return;
         mobs::moveTo(*m, mFlee, mSpeed);
         // panic flag for kobold animations
-        if (typeIs(*m, "twilightforest:kobold")) setFlag(*m, "entity:panicked", true);
+        if (typeIs(*m, "gloamingforest:kobold")) setFlag(*m, "entity:panicked", true);
     }
     bool canContinueToUse() override {
         auto* m = mob();
@@ -917,7 +917,7 @@ public:
     void stop() override {
         mFleeTimer -= 20;
         auto* m = mob();
-        if (m && typeIs(*m, "twilightforest:kobold")) setFlag(*m, "entity:panicked", false);
+        if (m && typeIs(*m, "gloamingforest:kobold")) setFlag(*m, "entity:panicked", false);
     }
 
 private:
@@ -954,7 +954,7 @@ public:
         }
         if (!first) return false;
         mAvoidTarget = uidOf(*first);
-        // TF's AvoidAnyEntityGoal: away from the mob's own position (sic)
+        // upstream's AvoidAnyEntityGoal: away from the mob's own position (sic)
         auto pos = mobs::randomPosAway(*m, 16, 7, m->getFeetPos());
         if (!pos) return false;
         if (mobs::distanceSqr(*first, *pos) < mobs::distanceSqr(*first, *m)) return false;

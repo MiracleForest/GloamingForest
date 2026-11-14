@@ -1,14 +1,14 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRuinsComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeMoundComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeUpperEntranceComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeEntranceShaftComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeRoomComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeDeadEndComponent.java
-//   src/main/java/twilightforest/world/components/structures/minotaurmaze/MazeCorridorComponent.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRuinsComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeMoundComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeUpperEntranceComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeEntranceShaftComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeRoomComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeDeadEndComponent.java
+//   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MazeCorridorComponent.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
@@ -36,44 +36,44 @@ using ::gf::structure::Rotation;
 using ::gf::structure::bases::ComponentOld;
 using ::gf::structure::bases::PieceList;
 
-inline constexpr char kLabyrinth[] = "twilightforest:labyrinth";
+inline constexpr char kLabyrinth[] = "gloamingforest:labyrinth";
 
-inline constexpr char kRuins[]         = "twilightforest:TFMMRuins";
-inline constexpr char kMound[]         = "twilightforest:TFMMMound";
-inline constexpr char kUpperEntrance[] = "twilightforest:TFMMUE";
-inline constexpr char kEntranceShaft[] = "twilightforest:TFMMES";
-inline constexpr char kMaze[]          = "twilightforest:TFMMaze";
-inline constexpr char kRoom[]          = "twilightforest:TFMMR";
-inline constexpr char kRoomExit[]      = "twilightforest:TFMMRE";
-inline constexpr char kRoomBoss[]      = "twilightforest:TFMMRB";
-inline constexpr char kRoomCollapse[]  = "twilightforest:TFMMRC";
-inline constexpr char kMushRoom[]      = "twilightforest:TFMMMR";
-inline constexpr char kRoomFountain[]  = "twilightforest:TFMMRF";
-inline constexpr char kRoomVault[]     = "twilightforest:TFMMRV";
-inline constexpr char kRoomSpawner[]   = "twilightforest:TFMMRSC";
-inline constexpr char kDeadEnd[]       = "twilightforest:TFMMDE";
-inline constexpr char kDeadEndChest[]  = "twilightforest:TFMMDEC";
-inline constexpr char kDeadEndTrap[]   = "twilightforest:TFMMDETrC";
-inline constexpr char kDeadEndTrip[]   = "twilightforest:TFMMDETC";
-inline constexpr char kDeadEndTorch[]  = "twilightforest:TFMMDET";
-inline constexpr char kDeadEndWater[]  = "twilightforest:TFMMDEF";
-inline constexpr char kDeadEndLava[]   = "twilightforest:TFMMDEFL";
-inline constexpr char kDeadEndPaint[]  = "twilightforest:TFMMDEP";
-inline constexpr char kDeadEndRoots[]  = "twilightforest:TFMMDER";
-inline constexpr char kDeadEndShroom[] = "twilightforest:TFMMDES";
-inline constexpr char kCorridor[]      = "twilightforest:TFMMC";
-inline constexpr char kCorridorIron[]  = "twilightforest:TFMMCIF";
-inline constexpr char kCorridorRoots[] = "twilightforest:TFMMCR";
-inline constexpr char kCorridorShroom[] = "twilightforest:TFMMCS";
+inline constexpr char kRuins[]         = "gloamingforest:TFMMRuins";
+inline constexpr char kMound[]         = "gloamingforest:TFMMMound";
+inline constexpr char kUpperEntrance[] = "gloamingforest:TFMMUE";
+inline constexpr char kEntranceShaft[] = "gloamingforest:TFMMES";
+inline constexpr char kMaze[]          = "gloamingforest:TFMMaze";
+inline constexpr char kRoom[]          = "gloamingforest:TFMMR";
+inline constexpr char kRoomExit[]      = "gloamingforest:TFMMRE";
+inline constexpr char kRoomBoss[]      = "gloamingforest:TFMMRB";
+inline constexpr char kRoomCollapse[]  = "gloamingforest:TFMMRC";
+inline constexpr char kMushRoom[]      = "gloamingforest:TFMMMR";
+inline constexpr char kRoomFountain[]  = "gloamingforest:TFMMRF";
+inline constexpr char kRoomVault[]     = "gloamingforest:TFMMRV";
+inline constexpr char kRoomSpawner[]   = "gloamingforest:TFMMRSC";
+inline constexpr char kDeadEnd[]       = "gloamingforest:TFMMDE";
+inline constexpr char kDeadEndChest[]  = "gloamingforest:TFMMDEC";
+inline constexpr char kDeadEndTrap[]   = "gloamingforest:TFMMDETrC";
+inline constexpr char kDeadEndTrip[]   = "gloamingforest:TFMMDETC";
+inline constexpr char kDeadEndTorch[]  = "gloamingforest:TFMMDET";
+inline constexpr char kDeadEndWater[]  = "gloamingforest:TFMMDEF";
+inline constexpr char kDeadEndLava[]   = "gloamingforest:TFMMDEFL";
+inline constexpr char kDeadEndPaint[]  = "gloamingforest:TFMMDEP";
+inline constexpr char kDeadEndRoots[]  = "gloamingforest:TFMMDER";
+inline constexpr char kDeadEndShroom[] = "gloamingforest:TFMMDES";
+inline constexpr char kCorridor[]      = "gloamingforest:TFMMC";
+inline constexpr char kCorridorIron[]  = "gloamingforest:TFMMCIF";
+inline constexpr char kCorridorRoots[] = "gloamingforest:TFMMCR";
+inline constexpr char kCorridorShroom[] = "gloamingforest:TFMMCS";
 
-inline constexpr char kLootDeadEnd[]  = "twilightforest:labyrinth_dead_end";
-inline constexpr char kLootRoom[]     = "twilightforest:labyrinth_room";
-inline constexpr char kLootVault[]    = "twilightforest:labyrinth_vault";
-inline constexpr char kLootJackpot[]  = "twilightforest:labyrinth_vault_jackpot";
-inline constexpr char kBossSpawner[]  = "twilightforest:minoshroom_boss_spawner";
-inline constexpr char kMinotaur[]     = "twilightforest:minotaur";
+inline constexpr char kLootDeadEnd[]  = "gloamingforest:labyrinth_dead_end";
+inline constexpr char kLootRoom[]     = "gloamingforest:labyrinth_room";
+inline constexpr char kLootVault[]    = "gloamingforest:labyrinth_vault";
+inline constexpr char kLootJackpot[]  = "gloamingforest:labyrinth_vault_jackpot";
+inline constexpr char kBossSpawner[]  = "gloamingforest:minoshroom_boss_spawner";
+inline constexpr char kMinotaur[]     = "gloamingforest:minotaur";
 
-/// TFDimensionData.SEALEVEL / the Twilight Forest generator's sea level.
+/// TFDimensionData.SEALEVEL / the Gloaming Forest generator's sea level.
 inline constexpr int kSeaLevel = 0;
 
 /// MazeRuinsComponent ("TFMMRuins"): the empty root piece; its children are the two maze levels,

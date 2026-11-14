@@ -1,0 +1,15 @@
+{
+  "type": "gloamingforest:attribute",
+  "attribute_modifiers": [
+    {
+      "type": "minecraft:generic.water_movement_efficiency",
+      "amount": 1.0,
+      "id": "gloamingforest:travellers_gear.vest_fast_swimming",
+      "operation": "add_value",
+      "slot": "chest"
+    }
+  ],
+  "builtin_modifier": true,
+  "component": "gloamingforest:swift_swim",
+  "equipment_slots": "chest"
+}

@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "twilightforest:rising_zombie",
+      "identifier": "gloamingforest:rising_zombie",
       "materials": {
         "default": "zombie"
       },
@@ -10,11 +10,11 @@
         "default": "textures/entity/zombie/zombie"
       },
       "geometry": {
-        "default": "geometry.twilightforest.rising_zombie"
+        "default": "geometry.gloamingforest.rising_zombie"
       },
       "scripts": {
         "pre_animation": [
-          "variable.rise_t = query.property('twilightforest:rising_ticks');",
+          "variable.rise_t = query.property('gloamingforest:rising_ticks');",
           "variable.rise_a = (80 - math.min(80, variable.rise_t)) / 80;",
           "variable.rise_b = (40 - math.min(40, math.max(0, variable.rise_t - 80))) / 40;",
           "variable.rise_angle = 120 * variable.rise_a - 30 * variable.rise_b;",
@@ -25,10 +25,10 @@
       "animations": {
         "humanoid_base_pose": "animation.humanoid.base_pose",
         "zombie_arms": "animation.zombie.attack_bare_hand",
-        "base": "animation.twilightforest.rising_zombie.base",
-        "rise": "animation.twilightforest.rising_zombie.rise"
+        "base": "animation.gloamingforest.rising_zombie.base",
+        "rise": "animation.gloamingforest.rising_zombie.rise"
       },
-      "render_controllers": ["controller.render.twilightforest.rising_zombie"]
+      "render_controllers": ["controller.render.gloamingforest.rising_zombie"]
     }
   }
 }

@@ -2,14 +2,14 @@
   "format_version": "1.21.40",
   "minecraft:entity": {
     "description": {
-      "identifier": "twilightforest:tiny_bird",
+      "identifier": "gloamingforest:tiny_bird",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "tiny_bird", "creature", "mob"]
+        "family": ["gloamingforest", "tiny_bird", "creature", "mob"]
       },
       "minecraft:collision_box": {
         "width": 0.3,

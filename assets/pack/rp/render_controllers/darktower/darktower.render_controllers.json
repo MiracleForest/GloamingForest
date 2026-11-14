@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "render_controllers": {
-    "controller.render.twilightforest.ur_ghast": {
+    "controller.render.gloamingforest.ur_ghast": {
       "arrays": {
         "textures": {
           "Array.skins": [
@@ -18,7 +18,7 @@
         }
       ],
       "textures": [
-        "Array.skins[(q.property('twilightforest:charging') || q.property('twilightforest:death_time') > 0 || q.property('twilightforest:attack_status') == 2) ? 2 : (q.property('twilightforest:attack_status') == 1 ? 1 : 0)]"
+        "Array.skins[(q.property('gloamingforest:charging') || q.property('gloamingforest:death_time') > 0 || q.property('gloamingforest:attack_status') == 2) ? 2 : (q.property('gloamingforest:attack_status') == 1 ? 1 : 0)]"
       ],
       "is_hurt_color": {
         "r": 1.0,
@@ -34,11 +34,11 @@
       },
       "part_visibility": [
         {
-          "*": "q.property('twilightforest:death_time') <= 30"
+          "*": "q.property('gloamingforest:death_time') <= 30"
         }
       ]
     },
-    "controller.render.twilightforest.carminite_ghast": {
+    "controller.render.gloamingforest.carminite_ghast": {
       "arrays": {
         "textures": {
           "Array.skins": [
@@ -55,7 +55,7 @@
         }
       ],
       "textures": [
-        "Array.skins[(q.property('twilightforest:charging') || !q.is_alive || q.property('twilightforest:attack_status') == 2) ? 2 : (q.property('twilightforest:attack_status') == 1 ? 1 : 0)]"
+        "Array.skins[(q.property('gloamingforest:charging') || !q.is_alive || q.property('gloamingforest:attack_status') == 2) ? 2 : (q.property('gloamingforest:attack_status') == 1 ? 1 : 0)]"
       ]
     }
   }

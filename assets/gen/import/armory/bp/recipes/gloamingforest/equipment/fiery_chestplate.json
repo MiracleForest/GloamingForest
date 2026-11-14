@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "gloamingforest:equipment/fiery_chestplate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["# #", "###", "###"],
+    "key": {
+      "#": {
+        "item": "gloamingforest:fiery_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "gloamingforest:fiery_ingot"
+      }
+    ],
+    "result": {
+      "item": "gloamingforest:fiery_chestplate"
+    }
+  }
+}

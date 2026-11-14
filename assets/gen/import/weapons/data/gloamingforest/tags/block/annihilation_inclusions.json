@@ -1,0 +1,22 @@
+{
+  "values": [
+    "minecraft:nether_portal",
+    "#gloamingforest:deadrock",
+    "gloamingforest:castle_brick",
+    "gloamingforest:thick_castle_brick",
+    "gloamingforest:mossy_castle_brick",
+    "gloamingforest:castle_roof_tile",
+    "gloamingforest:worn_castle_brick",
+    "gloamingforest:blue_castle_rune_brick",
+    "gloamingforest:violet_castle_rune_brick",
+    "gloamingforest:yellow_castle_rune_brick",
+    "gloamingforest:pink_castle_rune_brick",
+    "gloamingforest:pink_force_field",
+    "gloamingforest:orange_force_field",
+    "gloamingforest:green_force_field",
+    "gloamingforest:blue_force_field",
+    "gloamingforest:violet_force_field",
+    "gloamingforest:brown_thorns",
+    "gloamingforest:green_thorns"
+  ]
+}

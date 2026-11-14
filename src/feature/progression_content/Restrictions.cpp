@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/ProgressionEvents.java (performProtectionAndPortalChecks)
-//   src/main/java/twilightforest/util/Enforcement.java
-//   src/main/java/twilightforest/init/custom/Enforcements.java
-//   src/main/java/twilightforest/world/components/structures/util/StructureHints.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/events/ProgressionEvents.java (performProtectionAndPortalChecks)
+//   src/main/java/gloamingforest/util/Enforcement.java
+//   src/main/java/gloamingforest/init/custom/Enforcements.java
+//   src/main/java/gloamingforest/world/components/structures/util/StructureHints.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -86,12 +86,12 @@ void enforce(Player& player, cp::Restriction const& r, int tickCount) {
         player.setOnFire(static_cast<int>(r.multiplier), true);
         break;
     case cp::Enforcement::Frost:
-        effects::apply(player, "twilightforest:frosted", 100, static_cast<int>(r.multiplier));
+        effects::apply(player, "gloamingforest:frosted", 100, static_cast<int>(r.multiplier));
         break;
     case cp::Enforcement::AcidRain:
-        if (combat::hurt(player, r.multiplier, "twilightforest:acid_rain")) {
+        if (combat::hurt(player, r.multiplier, "gloamingforest:acid_rain")) {
             auto pos = player.getPosition();
-            fx::sound(player.getDimension(), "environment.twilightforest.acid_rain", pos, 1.0f, 1.0f);
+            fx::sound(player.getDimension(), "environment.gloamingforest.acid_rain", pos, 1.0f, 1.0f);
         }
         break;
     default: return;
@@ -100,7 +100,7 @@ void enforce(Player& player, cp::Restriction const& r, int tickCount) {
     es().counts[uuidOf(player)][r.enforcement]++;
 }
 
-/// The vanilla fallback of TF's client-side LockedBiomeToastHandler: the same countdown, kept per
+/// The vanilla fallback of upstream's client-side LockedBiomeToastHandler: the same countdown, kept per
 /// player on the server, and the game's toast (text only: ToastRequestPacket has no icon).
 void tickVanillaToast(Player& player, int tickCount) {
     if (tickCount % 5 != 0 || net::isCompanion(player)) return;
@@ -123,8 +123,8 @@ void tickVanillaToast(Player& player, int tickCount) {
     auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::ToastRequest);
     if (!packet) return;
     auto& pkt    = static_cast<ToastRequestPacket&>(*packet);
-    pkt.mTitle   = "§e" + trFor(player, "misc.twilightforest.biome_locked", "Biome Locked!");
-    pkt.mContent = trFor(player, "misc.twilightforest.biome_locked_2", "Check your advancements");
+    pkt.mTitle   = "§e" + trFor(player, "misc.gloamingforest.biome_locked", "Biome Locked!");
+    pkt.mContent = trFor(player, "misc.gloamingforest.biome_locked_2", "Check your advancements");
     pkt.sendTo(player);
     log().info("progression: locked biome toast for {} (vanilla)", player.getRealName());
 }

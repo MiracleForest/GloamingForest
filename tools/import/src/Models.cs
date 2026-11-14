@@ -1,4 +1,4 @@
-// GloamingForest import tool (contract "import", unit F1): Java block / item models (TF's generated
+// GloamingForest import tool (contract "import", unit F1): Java block / item models (upstream's generated
 // and hand-made models plus a built-in library of the vanilla parent shapes they extend) resolved to
 // elements and textures, and converted to Bedrock block geometry.
 using System;
@@ -27,7 +27,7 @@ namespace GfImport
 
     public sealed class Model
     {
-        public string Id;                      // "twilightforest:block/naga_stone"
+        public string Id;                      // "gloamingforest:block/naga_stone"
         public string ElementsFrom;            // the model (self or ancestor) whose elements are used
         public List<Element> Elements;         // null: no elements anywhere in the chain
         public Dictionary<string, string> Textures = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -36,7 +36,7 @@ namespace GfImport
         public bool BuiltinEntity, ItemGenerated;
         public List<string> Chain = new List<string>();
 
-        /// <summary>The final texture id of a "#var" reference ("twilightforest:block/x"), or null.</summary>
+        /// <summary>The final texture id of a "#var" reference ("gloamingforest:block/x"), or null.</summary>
         public string Resolve(string tex)
         {
             for (int guard = 0; tex != null && tex.StartsWith("#", StringComparison.Ordinal) && guard < 16; guard++)
@@ -82,9 +82,9 @@ namespace GfImport
             this.ctx = ctx;
             foreach (var res in new[] { ctx.GenRes, ctx.MainRes })
             {
-                string dir = Path.Combine(res, "assets", "twilightforest", "models");
+                string dir = Path.Combine(res, "assets", "gloamingforest", "models");
                 foreach (var rel in Ctx.Files(dir, "*.json"))
-                    Raw["twilightforest:" + Ctx.StripExt(rel)] = Ctx.ReadJson(Path.Combine(dir, rel));
+                    Raw["gloamingforest:" + Ctx.StripExt(rel)] = Ctx.ReadJson(Path.Combine(dir, rel));
             }
             Vanilla.Register(Raw);
         }
@@ -117,10 +117,10 @@ namespace GfImport
                 chain.Add(new KeyValuePair<string, J>(cur, j));
                 if (cur == "minecraft:item/generated" || cur == "minecraft:item/handheld") m.ItemGenerated = true;
                 string loader = j["loader"] != null ? j["loader"].AsString() : null;
-                // twilightforest:noise_varying picks one of its variant models per position: the first one stands for all
-                if (loader == "twilightforest:noise_varying" && j["variants"] != null && j["variants"].Count > 0) { cur = Norm(j["variants"].A[0].AsString()); continue; }
-                // twilightforest:patch draws a flat, randomly shaped patch of its texture on the ground: a 1-pixel layer
-                if (loader == "twilightforest:patch" && j["texture"] != null)
+                // gloamingforest:noise_varying picks one of its variant models per position: the first one stands for all
+                if (loader == "gloamingforest:noise_varying" && j["variants"] != null && j["variants"].Count > 0) { cur = Norm(j["variants"].A[0].AsString()); continue; }
+                // gloamingforest:patch draws a flat, randomly shaped patch of its texture on the ground: a 1-pixel layer
+                if (loader == "gloamingforest:patch" && j["texture"] != null)
                 {
                     chain.Add(new KeyValuePair<string, J>(cur + "#patch", J.Parse("{\"textures\": {\"texture\": \"" + j["texture"].AsString() + "\", \"particle\": \"#texture\"}, \"render_type\": \"minecraft:cutout\", \"elements\": [{\"from\": [0, 0, 0], \"to\": [16, 1, 16], \"faces\": {\"up\": {\"texture\": \"#texture\"}, \"down\": {\"texture\": \"#texture\"}}}]}")));
                     break;
@@ -348,7 +348,7 @@ namespace GfImport
         }
     }
 
-    /// <summary>The vanilla parent models TF extends, as plain shapes (Minecraft 1.21.1 geometry).</summary>
+    /// <summary>The vanilla parent models upstream extends, as plain shapes (Minecraft 1.21.1 geometry).</summary>
     public static class Vanilla
     {
         static J El(double fx, double fy, double fz, double tx, double ty, double tz, string faces, J rotation = null)

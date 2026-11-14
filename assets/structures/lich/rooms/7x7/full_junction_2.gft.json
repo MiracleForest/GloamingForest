@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:lich_tower/7x7/full_junction_2",
+  "id": "gloamingforest:lich_tower/7x7/full_junction_2",
   "size": [9, 9, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -10,8 +10,8 @@
     {"Name":"minecraft:chiseled_stone_bricks"},
     {"Name":"minecraft:polished_andesite"},
     {"Name":"minecraft:iron_bars"},
-    {"Name":"twilightforest:terrorcotta_arcs"},
-    {"Name":"twilightforest:terrorcotta_lines"}
+    {"Name":"gloamingforest:terrorcotta_arcs"},
+    {"Name":"gloamingforest:terrorcotta_lines"}
   ],
   "blocks": [
     [1, 20], [6, 1], [7, 1], [6, 1], [7, 1], [6, 1], [1, 4], [7, 1], [6, 1], [7, 1], [6, 1], [7, 1], [1, 4], [6, 1], [7, 1], [6, 1],

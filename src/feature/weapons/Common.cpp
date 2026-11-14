@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/enchantment/ApplyFrostedEffect.java
-//   src/main/java/twilightforest/util/TFItemStackUtils.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
+//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -123,7 +123,7 @@ float javaExplosionResistance(Block const& block) {
 
 bool isLiving(Actor& actor) {
     if (gf::entity::ext::parentOf(actor)) return false;
-    // TF's projectile entities are BP entities the engine files as mobs
+    // upstream's projectile entities are BP entities the engine files as mobs
     if (gf::projectile::ext::isProjectile(actor) || actor.hasFamily(HashedString("inanimate"))) return false;
     return actor.isPlayer() || actor.hasCategory(ActorCategory::Mob);
 }
@@ -152,7 +152,7 @@ void chillAura(Actor& victim, int duration, int amplifier, bool shouldHit) {
         if (id.starts_with("minecraft:leather_") || gf::tags::has(gf::tags::Registry::Item, "minecraft:freeze_immune_wearables", id)) return;
     }
     if (victim.isPlayer() && static_cast<Player&>(victim).isCreative()) return;
-    gf::effects::apply(victim, "twilightforest:frosted", duration, amplifier);
+    gf::effects::apply(victim, "gloamingforest:frosted", duration, amplifier);
 }
 
 namespace {

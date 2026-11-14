@@ -1,8 +1,8 @@
 {
-  "entity.twilightforest.bighorn_sheep": "Mouflon d'Amérique",
-  "entity.twilightforest.dwarf_rabbit": "Lapin nain",
-  "entity.twilightforest.mosquito_swarm": "Essaim de moustiques",
-  "entity.twilightforest.penguin": "Manchot",
-  "entity.twilightforest.tiny_bird": "Petit oiseau",
-  "item.twilightforest.raven_feather": "Plume de corbeau"
+  "entity.gloamingforest.bighorn_sheep": "Mouflon d'Amérique",
+  "entity.gloamingforest.dwarf_rabbit": "Lapin nain",
+  "entity.gloamingforest.mosquito_swarm": "Essaim de moustiques",
+  "entity.gloamingforest.penguin": "Manchot",
+  "entity.gloamingforest.tiny_bird": "Petit oiseau",
+  "item.gloamingforest.raven_feather": "Plume de corbeau"
 }

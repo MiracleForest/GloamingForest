@@ -1,9 +1,9 @@
 {
   "format": 1,
   "kind": "density",
-  "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209", "settings": "twilightforest:skylight_noise_gen"},
+  "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209", "settings": "gloamingforest:skylight_noise_gen"},
   "seed": 0,
-  "note": "points are block positions [x, y, z]; router.<name>.values[i] is DensityFunction#compute at points[i] (SinglePointContext: no interpolation, no blending); a function with min == max is listed as constant. terrain is BiomeDensitySource#sampleTerrain(x, z) (TF's biome depth/scale blend).",
+  "note": "points are block positions [x, y, z]; router.<name>.values[i] is DensityFunction#compute at points[i] (SinglePointContext: no interpolation, no blending); a function with min == max is listed as constant. terrain is BiomeDensitySource#sampleTerrain(x, z) (upstream's biome depth/scale blend).",
   "minY": -32,
   "maxY": 256,
   "points": [

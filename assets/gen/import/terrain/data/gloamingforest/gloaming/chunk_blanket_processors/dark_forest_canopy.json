@@ -1,0 +1,17 @@
+{
+  "type": "gloamingforest:canopy",
+  "avoid_structures": [
+    "gloamingforest:dark_tower"
+  ],
+  "biome_mask": [
+    "gloamingforest:dark_forest",
+    "gloamingforest:dark_forest_center"
+  ],
+  "block": {
+    "type": "minecraft:simple_state_provider",
+    "state": {
+      "Name": "gloamingforest:hardened_dark_leaves"
+    }
+  },
+  "height": 14
+}

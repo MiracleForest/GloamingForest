@@ -1,23 +1,23 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/feature/BlockSpikeFeature.java
-//   src/main/java/twilightforest/world/components/feature/DarkForestFeature.java
-//   src/main/java/twilightforest/world/components/feature/FallenHollowLogFeature.java
-//   src/main/java/twilightforest/world/components/feature/SmallFallenLogFeature.java
-//   src/main/java/twilightforest/world/components/feature/FoundationFeature.java
-//   src/main/java/twilightforest/world/components/feature/LampostFeature.java
-//   src/main/java/twilightforest/world/components/feature/MonolithFeature.java
-//   src/main/java/twilightforest/world/components/feature/CheckAbovePatchFeature.java
-//   src/main/java/twilightforest/world/components/feature/TFSmallLakeFeature.java
-//   src/main/java/twilightforest/world/components/feature/WebFeature.java
-//   src/main/java/twilightforest/world/components/feature/WoodRootFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/HollowStumpFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/HollowTreeFeature.java
-//   src/main/java/twilightforest/world/components/feature/trees/TFTreeFeature.java
-//   src/main/java/twilightforest/util/features/FeatureUtil.java
-//   src/main/java/twilightforest/util/features/FeaturePlacers.java
-//   src/main/java/twilightforest/util/features/FeatureLogic.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/feature/BlockSpikeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/DarkForestFeature.java
+//   src/main/java/gloamingforest/world/components/feature/FallenHollowLogFeature.java
+//   src/main/java/gloamingforest/world/components/feature/SmallFallenLogFeature.java
+//   src/main/java/gloamingforest/world/components/feature/FoundationFeature.java
+//   src/main/java/gloamingforest/world/components/feature/LampostFeature.java
+//   src/main/java/gloamingforest/world/components/feature/MonolithFeature.java
+//   src/main/java/gloamingforest/world/components/feature/CheckAbovePatchFeature.java
+//   src/main/java/gloamingforest/world/components/feature/TFSmallLakeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/WebFeature.java
+//   src/main/java/gloamingforest/world/components/feature/WoodRootFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/HollowStumpFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/HollowTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/TFTreeFeature.java
+//   src/main/java/gloamingforest/util/features/FeatureUtil.java
+//   src/main/java/gloamingforest/util/features/FeaturePlacers.java
+//   src/main/java/gloamingforest/util/features/FeatureLogic.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -51,8 +51,8 @@ BlockPos off(BlockPos const& p, int dx, int dy, int dz) { return BlockPos{p.x + 
 /// FeatureLogic#isBlockNotOk.
 bool isBlockNotOk(Block const& b) {
     auto const& id = st::blocks::id(b);
-    return st::blocks::isLiquid(b) || id == "minecraft:bedrock" || id.starts_with("twilightforest:giant_") || st::blocks::inTag(b, "twilightforest:clouds")
-        || id == "twilightforest:hardened_dark_leaves";
+    return st::blocks::isLiquid(b) || id == "minecraft:bedrock" || id.starts_with("gloamingforest:giant_") || st::blocks::inTag(b, "gloamingforest:clouds")
+        || id == "gloamingforest:hardened_dark_leaves";
 }
 
 /// BlockState#isSolidRender: an opaque full cube.
@@ -86,13 +86,13 @@ bool anyBelowMatch(BlockPos const& pos, int depth, std::function<bool(BlockPos c
     return false;
 }
 
-/// TF's RootPlacer: a placer and its root penetrability.
+/// upstream's RootPlacer: a placer and its root penetrability.
 struct RootPlacer {
     std::function<void(BlockPos const&, Block const&)> place;
     int                                                penetrability = 1;
 };
 
-bool rootShouldSkip(Region& w, BlockPos const& p) { return st::blocks::inTag(w.getBlock(p), "twilightforest:root_trace_skip"); }
+bool rootShouldSkip(Region& w, BlockPos const& p) { return st::blocks::inTag(w.getBlock(p), "gloamingforest:root_trace_skip"); }
 
 bool placeIfValidRootPos(Region& w, RootPlacer const& placer, RandomSource& random, BlockPos const& pos, Json const& provider) {
     if (!anyBelowMatch(pos, placer.penetrability - 1, [&](BlockPos const& b) { return !canRootGrowIn(w, b); })) {
@@ -141,7 +141,7 @@ bool makeSpike(Region& level, BlockPos const& startPos, int length, int dY, Rand
     if (!hang) {
         BlockPos     below      = off(startPos, 0, -2, 0);
         Block const& belowState = level.getBlock(below);
-        if (!st::blocks::inTag(belowState, "twilightforest:supports_stalagmites")
+        if (!st::blocks::inTag(belowState, "gloamingforest:supports_stalagmites")
             && (!st::blocks::worldGenReplaceable(belowState) || !(kit::blocksMotion(belowState) && !st::blocks::isPartial(belowState)) || isBlockNotOk(belowState)))
             return false;
     }
@@ -221,7 +221,7 @@ bool darkForest(FeatureContext const& ctx) {
     BlockPos pos      = ctx.origin;
     bool     foundDirt = false;
     if (pos.y <= 40) {
-        // the chunk generator's sea level (the Twilight Forest's 0 for an in-memory scratch region)
+        // the chunk generator's sea level (the Gloaming Forest's 0 for an in-memory scratch region)
         int seaLevel = reader.dimension() < 0 ? 0 : gf::landmark::ext::seaLevel(reader.dimension());
         for (int dy = pos.y; dy >= seaLevel; dy--) {
             Block const& s = reader.getBlock(BlockPos{pos.x, dy - 1, pos.z});
@@ -260,12 +260,12 @@ struct HollowLogBlocks {
     Block const* firefly;
 };
 HollowLogBlocks hollowLogBlocks() {
-    return {st::blocks::fromJava("twilightforest:moss_patch"),
-            st::blocks::fromJava("twilightforest:twilight_oak_leaves", Json{{"persistent", "true"}}),
-            st::blocks::fromJava("twilightforest:twilight_oak_log", Json{{"axis", "z"}}),
-            st::blocks::fromJava("twilightforest:twilight_oak_log", Json{{"axis", "x"}}),
+    return {st::blocks::fromJava("gloamingforest:moss_patch"),
+            st::blocks::fromJava("gloamingforest:gloaming_oak_leaves", Json{{"persistent", "true"}}),
+            st::blocks::fromJava("gloamingforest:gloaming_oak_log", Json{{"axis", "z"}}),
+            st::blocks::fromJava("gloamingforest:gloaming_oak_log", Json{{"axis", "x"}}),
             st::blocks::fromJava("minecraft:grass_block"),
-            st::blocks::fromJava("twilightforest:firefly")};
+            st::blocks::fromJava("gloamingforest:firefly")};
 }
 
 bool fallenHollowLog(FeatureContext const& ctx) {
@@ -365,7 +365,7 @@ bool smallFallenLog(FeatureContext const& ctx) {
     };
     auto mossOrSeagrass = [&](BlockPos const& p) -> Block const* {
         if (st::blocks::inTag(world.getBlock(off(p, 0, -2, 0)), "minecraft:snow")) return &st::blocks::air();
-        return st::blocks::is(world.getBlock(p), "minecraft:water") ? st::blocks::fromJava("minecraft:seagrass") : st::blocks::fromJava("twilightforest:moss_patch");
+        return st::blocks::is(world.getBlock(p), "minecraft:water") ? st::blocks::fromJava("minecraft:seagrass") : st::blocks::fromJava("gloamingforest:moss_patch");
     };
     auto hollowOrNormal = [&](Block const* hollow, Block const& normal) -> Block const& {
         bool roll = shouldMakeAllHollow || st::ext::worldRandom(world).nextInt(3) == 0;
@@ -475,7 +475,7 @@ bool foundation(FeatureContext const& ctx) {
         }
         std::int64_t seed = core::mth::ladd(core::mth::lmul(world.seed(), lootPos.x), lootPos.y) ^ lootPos.z;
         (void)sampleProvider(lc, rand, lootPos); // lootContainer.getState(rand, pos)
-        st::blockentities::container(world, lootPos, id, facing, c.value("loot_table", std::string("twilightforest:foundation_basement")), seed);
+        st::blockentities::container(world, lootPos, id, facing, c.value("loot_table", std::string("gloamingforest:foundation_basement")), seed);
     }
     return true;
 }
@@ -562,7 +562,7 @@ bool lampposts(FeatureContext const& ctx) {
         Block const& s = world.getBlock(off(pos, 0, dy, 0));
         if (!st::blocks::isAir(s) && !st::blocks::canBeReplaced(s)) return false;
     }
-    auto const* fence = st::blocks::fromJava("twilightforest:canopy_fence");
+    auto const* fence = st::blocks::fromJava("gloamingforest:canopy_fence");
     for (int dy = 0; dy < height; dy++)
         if (fence) world.setBlock(off(pos, 0, dy, 0), *fence, 2 | 16);
     static constexpr st::Rotation kRotations[] = {st::Rotation::None, st::Rotation::Clockwise90, st::Rotation::Clockwise180, st::Rotation::Counterclockwise90};
@@ -604,7 +604,7 @@ bool monolith(FeatureContext const& ctx) {
         d.y = world.height(worldgen::Heightmap::MotionBlockingNoLeaves, d.x, d.z);
         if (d.y > 0) {
             float yaw = rand.nextFloat() * 360.0F;
-            st::blockentities::entity(world, d.x + 0.5, d.y, d.z + 0.5, "twilightforest:raven", Json{{"Rotation", Json::array({yaw, 0.0F})}});
+            st::blockentities::entity(world, d.x + 0.5, d.y, d.z + 0.5, "gloamingforest:raven", Json{{"Rotation", Json::array({yaw, 0.0F})}});
         }
     }
     return true;
@@ -666,8 +666,8 @@ bool smallLake(FeatureContext const& ctx) {
             for (int y = 0; y < 8; y++) {
                 if (!shape[static_cast<std::size_t>((x * 16 + z) * 8 + y)]) continue;
                 BlockPos p = off(origin, x, y, z);
-                if (st::blocks::inTag(world.getBlock(p), "twilightforest:small_lakes_dont_replace")
-                    || st::blocks::inTag(world.getBlock(off(p, 0, 1, 0)), "twilightforest:small_lakes_dont_replace"))
+                if (st::blocks::inTag(world.getBlock(p), "gloamingforest:small_lakes_dont_replace")
+                    || st::blocks::inTag(world.getBlock(off(p, 0, 1, 0)), "gloamingforest:small_lakes_dont_replace"))
                     continue;
                 if (y >= 4) {
                     world.setBlock(p, caveAir, 2);
@@ -778,18 +778,18 @@ bool woodRoots(FeatureContext const& ctx) {
 
 void installFeatures() {
     namespace f = gf::features;
-    f::registerType("twilightforest:block_spike", [](FeatureContext const& c) { return placeStoneSpike(c.region, c.origin, c.random, false); });
-    f::registerType("twilightforest:dark_forest_placer", darkForest);
-    f::registerType("twilightforest:fallen_hollow_log", fallenHollowLog);
-    f::registerType("twilightforest:fallen_small_log", smallFallenLog);
-    f::registerType("twilightforest:foundation", foundation);
-    f::registerType("twilightforest:hollow_stump", hollowStump);
-    f::registerType("twilightforest:lampposts", lampposts);
-    f::registerType("twilightforest:monolith", monolith);
-    f::registerType("twilightforest:mycelium_blob", myceliumBlob);
-    f::registerType("twilightforest:small_lake", smallLake);
-    f::registerType("twilightforest:webs", webs);
-    f::registerType("twilightforest:wood_roots", woodRoots);
+    f::registerType("gloamingforest:block_spike", [](FeatureContext const& c) { return placeStoneSpike(c.region, c.origin, c.random, false); });
+    f::registerType("gloamingforest:dark_forest_placer", darkForest);
+    f::registerType("gloamingforest:fallen_hollow_log", fallenHollowLog);
+    f::registerType("gloamingforest:fallen_small_log", smallFallenLog);
+    f::registerType("gloamingforest:foundation", foundation);
+    f::registerType("gloamingforest:hollow_stump", hollowStump);
+    f::registerType("gloamingforest:lampposts", lampposts);
+    f::registerType("gloamingforest:monolith", monolith);
+    f::registerType("gloamingforest:mycelium_blob", myceliumBlob);
+    f::registerType("gloamingforest:small_lake", smallLake);
+    f::registerType("gloamingforest:webs", webs);
+    f::registerType("gloamingforest:wood_roots", woodRoots);
     gf::log().info("minorlandmarks: 12 feature types registered");
 }
 

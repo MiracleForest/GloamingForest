@@ -2,7 +2,7 @@
 #pragma once
 
 // Server side of the screen framework (W0a). Native screens are drawn by the client mod
-// (client/screen/base/Screen.h; TF's GUIs through client/ui/Ui.h), vanilla players get the form.
+// (client/screen/base/Screen.h; upstream's GUIs through client/ui/Ui.h), vanilla players get the form.
 //
 // Every screen has a native version (drawn by the client mod, src/client/screen/) and a form
 // fallback for vanilla clients. A unit registers a screen *type* once:

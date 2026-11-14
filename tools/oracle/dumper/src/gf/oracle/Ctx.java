@@ -1,4 +1,4 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
@@ -24,8 +24,8 @@ import java.util.Objects;
 /** One dump call: the server, the run spec (gf-oracle-spec.json next to the server) and helpers. */
 public final class Ctx {
 	public static final String SPEC_FILE = "gf-oracle-spec.json";
-	public static final ResourceKey<Level> TWILIGHT = ResourceKey.create(Registries.DIMENSION,
-		ResourceLocation.fromNamespaceAndPath("twilightforest", "twilight_forest"));
+	public static final ResourceKey<Level> GLOAMING = ResourceKey.create(Registries.DIMENSION,
+		ResourceLocation.fromNamespaceAndPath("gloamingforest", "gloaming_forest"));
 
 	public final MinecraftServer server;
 	public final String kind;
@@ -42,8 +42,8 @@ public final class Ctx {
 		return this.server.getWorldData().worldGenOptions().seed();
 	}
 
-	public ServerLevel twilight() {
-		return Objects.requireNonNull(this.server.getLevel(TWILIGHT), "the twilightforest:twilight_forest level is not loaded");
+	public ServerLevel gloaming() {
+		return Objects.requireNonNull(this.server.getLevel(GLOAMING), "the gloamingforest:gloaming_forest level is not loaded");
 	}
 
 	public ServerLevel overworld() {
@@ -96,7 +96,7 @@ public final class Ctx {
 		out.put("kind", this.kind);
 		Map<String, Object> source = Json.obj();
 		JsonObject s = getObj(this.spec, "source");
-		for (String k : new String[]{"twilightforest", "commit", "minecraft", "neoforge"}) {
+		for (String k : new String[]{"gloamingforest", "commit", "minecraft", "neoforge"}) {
 			JsonElement e = s.get(k);
 			source.put(k, e != null && e.isJsonPrimitive() ? e.getAsString() : null);
 		}

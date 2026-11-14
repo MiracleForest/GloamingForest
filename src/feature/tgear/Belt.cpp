@@ -1,8 +1,8 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/item/travellers_gear/TravellersArmorBeltItem.java
-//   src/main/java/twilightforest/network/SwapHotbarPacket.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorBeltItem.java
+//   src/main/java/gloamingforest/network/SwapHotbarPacket.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
@@ -57,7 +57,7 @@ bool trySwapHotbar(Player& player) {
         auto const& s = inv.getItem(i);
         hotbar[i].empty   = items::isEmpty(s);
         hotbar[i].allowed = canFitInsideContainers(s)
-                         && (hotbar[i].empty || !tags::has(tags::Registry::Item, "twilightforest:travellers_belt_blacklisted", items::idOf(s)));
+                         && (hotbar[i].empty || !tags::has(tags::Registry::Item, "gloamingforest:travellers_belt_blacklisted", items::idOf(s)));
         beltEmpty[i] = items::isEmpty(stored[i]);
     }
     auto plan = core::tgear::planHotbarSwap(hotbar, beltEmpty, active);
@@ -72,7 +72,7 @@ bool trySwapHotbar(Player& player) {
     player.setArmor(SharedTypes::Legacy::ArmorSlot::Legs, legs);
     player.sendInventory(false);
     if (plan.changed) {
-        fx::sound(player.getDimension(), "item.twilightforest.travellers_gear.swap_hotbar", player.getFeetPos(), 1.f, 1.f);
+        fx::sound(player.getDimension(), "item.gloamingforest.travellers_gear.swap_hotbar", player.getFeetPos(), 1.f, 1.f);
         log().info("tgear: {} swapped the hotbar", player.getRealName());
     }
     return plan.changed;

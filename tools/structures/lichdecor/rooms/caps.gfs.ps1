@@ -49,15 +49,15 @@ foreach ($n in 3, 5, 7, 9) {
     $ph = 2 * $c + 3
     $t = New-LichRoof $n 'pointed_roof' $ph
     for ($k = 0; $k -lt $c; $k++) {
-        Set-StairRing $t (2 * $k) $k 'twilightforest:canopy_stairs'
-        Set-SquareRing $t (2 * $k + 1) ($k + 1) 'twilightforest:canopy_planks'
+        Set-StairRing $t (2 * $k) $k 'gloamingforest:canopy_stairs'
+        Set-SquareRing $t (2 * $k + 1) ($k + 1) 'gloamingforest:canopy_planks'
     }
-    Set-GftBlock $t $c (2 * $c) $c 'twilightforest:canopy_planks'
-    Set-GftBlock $t $c (2 * $c + 1) $c 'twilightforest:twisted_stone_pillar'
-    Set-GftBlock $t $c (2 * $c + 2) $c 'twilightforest:wrought_iron_fence' @{ post = 'capped' }
+    Set-GftBlock $t $c (2 * $c) $c 'gloamingforest:canopy_planks'
+    Set-GftBlock $t $c (2 * $c + 1) $c 'gloamingforest:twisted_stone_pillar'
+    Set-GftBlock $t $c (2 * $c + 2) $c 'gloamingforest:wrought_iron_fence' @{ post = 'capped' }
     Save-Gft $t
 
-    # curved: a dome of twilight oak, slow at the eaves and steep at the top
+    # curved: a dome of gloaming oak, slow at the eaves and steep at the top
     $insets = [System.Collections.Generic.List[int]]::new()
     $insets.Add(0); $insets.Add(0)
     for ($k = 1; $k -le $c; $k++) { $insets.Add($k) }
@@ -65,25 +65,25 @@ foreach ($n in 3, 5, 7, 9) {
     for ($y = 0; $y -lt $insets.Count; $y++) {
         $k = $insets[$y]
         $next = if ($y + 1 -lt $insets.Count) { $insets[$y + 1] } else { $k + 1 }
-        if ($next -gt $k) { Set-StairRing $t $y $k 'twilightforest:twilight_oak_stairs' }
-        else { Set-SquareRing $t $y $k 'twilightforest:twilight_oak_planks' }
+        if ($next -gt $k) { Set-StairRing $t $y $k 'gloamingforest:gloaming_oak_stairs' }
+        else { Set-SquareRing $t $y $k 'gloamingforest:gloaming_oak_planks' }
     }
-    Set-GftBox $t 1 0 1 ($w - 2) 0 ($w - 2) 'twilightforest:twilight_oak_planks'
+    Set-GftBox $t 1 0 1 ($w - 2) 0 ($w - 2) 'gloamingforest:gloaming_oak_planks'
     Set-GftBlock $t $c $insets.Count $c 'minecraft:lantern'
     Save-Gft $t
 
     # fence: a railed terrace with iron posts at the corners and a brazier in the middle
     $t = New-LichRoof $n 'fence_roof' 3
     Set-GftBox $t 0 0 0 ($w - 1) 0 ($w - 1) $sb
-    Set-GftBox $t 1 0 1 ($w - 2) 0 ($w - 2) 'twilightforest:canopy_planks'
-    Set-SquareRing $t 1 0 'twilightforest:canopy_fence'
+    Set-GftBox $t 1 0 1 ($w - 2) 0 ($w - 2) 'gloamingforest:canopy_planks'
+    Set-SquareRing $t 1 0 'gloamingforest:canopy_fence'
     foreach ($p in @(@(0, 0), @(0, ($w - 1)), @(($w - 1), 0), @(($w - 1), ($w - 1)))) {
-        Set-GftBlock $t $p[0] 1 $p[1] 'twilightforest:wrought_iron_fence' @{ post = 'post' }
-        Set-GftBlock $t $p[0] 2 $p[1] 'twilightforest:wrought_iron_fence' @{ post = 'capped' }
+        Set-GftBlock $t $p[0] 1 $p[1] 'gloamingforest:wrought_iron_fence' @{ post = 'post' }
+        Set-GftBlock $t $p[0] 2 $p[1] 'gloamingforest:wrought_iron_fence' @{ post = 'capped' }
     }
     if ($n -ge 5) {
-        Set-GftBlock $t $c 1 $c 'twilightforest:brazier' @{ half = 'lower'; light = 'off' }
-        Set-GftBlock $t $c 2 $c 'twilightforest:brazier' @{ half = 'upper'; light = 'off' }
+        Set-GftBlock $t $c 1 $c 'gloamingforest:brazier' @{ half = 'lower'; light = 'off' }
+        Set-GftBlock $t $c 2 $c 'gloamingforest:brazier' @{ half = 'upper'; light = 'off' }
     }
     Save-Gft $t
 
@@ -162,8 +162,8 @@ Save-Gft $t
 $t = New-LichDecor 'water_well' 4
 Set-GftBox $t 0 0 0 2 0 2 'minecraft:cobblestone'
 Set-GftBlock $t 1 0 1 'minecraft:water'
-foreach ($p in @(@(0, 0), @(0, 2), @(2, 0), @(2, 2))) { Set-GftBox $t $p[0] 1 $p[1] $p[0] 2 $p[1] 'twilightforest:canopy_fence' }
-Set-GftBox $t 0 3 0 2 3 2 'twilightforest:canopy_slab' $script:Slab
+foreach ($p in @(@(0, 0), @(0, 2), @(2, 0), @(2, 2))) { Set-GftBox $t $p[0] 1 $p[1] $p[0] 2 $p[1] 'gloamingforest:canopy_fence' }
+Set-GftBox $t 0 3 0 2 3 2 'gloamingforest:canopy_slab' $script:Slab
 Set-GftBlock $t 1 2 1 'minecraft:chain'
 Save-Gft $t
 

@@ -1,6 +1,6 @@
-// U3 trees: the position tints of TF's magic and rainbow oak leaves (F11's leafcolors, which the
+// U3 trees: the position tints of upstream's magic and rainbow oak leaves (F11's leafcolors, which the
 // client mod draws), checked against ColorHandler as Java computes it (a separate translation of
-// TF 4.8's src/main/java/twilightforest/client/event/ColorHandler.java, LGPL-2.1-or-later; part of
+// upstream 4.8's src/main/java/gloamingforest/client/event/ColorHandler.java, LGPL-2.1-or-later; part of
 // GloamingForest under LGPL-3.0-or-later).
 #include <gtest/gtest.h>
 
@@ -62,13 +62,13 @@ TEST(TreesLeafTints, MagicLeavesFadeAsColorHandler) {
 
 TEST(TreesLeafTints, LeafIdsHaveTheirTints) {
     namespace lc = gf::feature::families::leafcolors;
-    for (auto const* id : {"twilightforest:time_leaves", "twilightforest:transformation_leaves", "twilightforest:mining_leaves", "twilightforest:sorting_leaves",
-                           "twilightforest:rainbow_oak_leaves"})
+    for (auto const* id : {"gloamingforest:time_leaves", "gloamingforest:transformation_leaves", "gloamingforest:mining_leaves", "gloamingforest:sorting_leaves",
+                           "gloamingforest:rainbow_oak_leaves"})
         EXPECT_TRUE(lc::of(id).has_value()) << id;
-    EXPECT_TRUE(lc::blendOf("twilightforest:canopy_leaves").has_value());
-    EXPECT_TRUE(lc::blendOf("twilightforest:mangrove_leaves").has_value());
-    EXPECT_FALSE(lc::of("twilightforest:dark_leaves").has_value());
-    EXPECT_FALSE(lc::of("twilightforest:hardened_dark_leaves").has_value());
+    EXPECT_TRUE(lc::blendOf("gloamingforest:canopy_leaves").has_value());
+    EXPECT_TRUE(lc::blendOf("gloamingforest:mangrove_leaves").has_value());
+    EXPECT_FALSE(lc::of("gloamingforest:dark_leaves").has_value());
+    EXPECT_FALSE(lc::of("gloamingforest:hardened_dark_leaves").has_value());
     // CANOPY_COLORIZER / MANGROVE_COLORIZER of the plains foliage 0x77AB2F
     EXPECT_EQ(lc::canopy(0x77AB2F), ((0x77AB2Fu & 0xFEFEFEu) + 0x469A66u) / 2u);
     EXPECT_EQ(lc::mangrove(0x77AB2F), ((0x77AB2Fu & 0xFEFEFEu) + 0xC0E694u) / 2u);

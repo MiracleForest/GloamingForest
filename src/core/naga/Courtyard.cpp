@@ -1,10 +1,10 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/world/components/structures/courtyard/StructureMazeGenerator.java
-//   src/main/java/twilightforest/world/components/structures/courtyard/CourtyardMain.java
-//   src/main/java/twilightforest/enums/Diagonals.java
-//   src/main/java/twilightforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/world/components/structures/courtyard/StructureMazeGenerator.java
+//   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardMain.java
+//   src/main/java/gloamingforest/enums/Diagonals.java
+//   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #include "core/naga/Courtyard.h"
@@ -55,33 +55,33 @@ constexpr int kNone = 0, kCw90 = 1, kCw180 = 2, kCcw90 = 3;
 char const* pieceTypeId(PieceKind kind) {
     switch (kind) {
     case PieceKind::HedgeCap:
-        return "twilightforest:TFNCCp";
+        return "gloamingforest:TFNCCp";
     case PieceKind::HedgeCapPillar:
-        return "twilightforest:TFNCCpP";
+        return "gloamingforest:TFNCCpP";
     case PieceKind::HedgeCorner:
-        return "twilightforest:TFNCCr";
+        return "gloamingforest:TFNCCr";
     case PieceKind::HedgeT:
-        return "twilightforest:TFNCT";
+        return "gloamingforest:TFNCT";
     case PieceKind::HedgeLine:
-        return "twilightforest:TFNCLn";
+        return "gloamingforest:TFNCLn";
     case PieceKind::HedgeIntersection:
-        return "twilightforest:TFNCIs";
+        return "gloamingforest:TFNCIs";
     case PieceKind::HedgePadder:
-        return "twilightforest:TFNCPd";
+        return "gloamingforest:TFNCPd";
     case PieceKind::Terrace:
-        return "twilightforest:TFNCTe";
+        return "gloamingforest:TFNCTe";
     case PieceKind::TerraceHedge:
-        return "twilightforest:TFNCHe";
+        return "gloamingforest:TFNCHe";
     case PieceKind::Path:
-        return "twilightforest:TFNCPa";
+        return "gloamingforest:TFNCPa";
     case PieceKind::Wall:
-        return "twilightforest:TFNCWl";
+        return "gloamingforest:TFNCWl";
     case PieceKind::WallPadder:
-        return "twilightforest:TFNCWP";
+        return "gloamingforest:TFNCWP";
     case PieceKind::WallCornerOuter:
-        return "twilightforest:TFNCWC";
+        return "gloamingforest:TFNCWC";
     case PieceKind::WallCornerInner:
-        return "twilightforest:TFNCWA";
+        return "gloamingforest:TFNCWA";
     }
     return "";
 }

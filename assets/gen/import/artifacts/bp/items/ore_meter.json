@@ -2,9 +2,9 @@
   "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
-      "identifier": "twilightforest:ore_meter",
+      "identifier": "gloamingforest:ore_meter",
       "menu_category": {
-        "category": "equipment"
+        "category": "none"
       }
     },
     "components": {
@@ -14,7 +14,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.twilightforest:ore_meter.name"
+        "value": "item.gloamingforest:ore_meter.name"
       },
       "minecraft:max_stack_size": 1
     }

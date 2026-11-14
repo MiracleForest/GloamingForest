@@ -1,0 +1,123 @@
+{
+  "carvers": {
+    "air": "gloamingforest:tf_caves"
+  },
+  "downfall": 0.9,
+  "effects": {
+    "fog_color": 16161,
+    "foliage_color": 4809015,
+    "grass_color": 6056270,
+    "grass_color_modifier": "gloamingforest:swamp",
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
+    "music": {
+      "max_delay": 12000,
+      "min_delay": 1200,
+      "replace_current_music": true,
+      "sound": "gloamingforest:music.gloamingforest.gloaming_forest"
+    },
+    "sky_color": 8466,
+    "water_color": 9811295,
+    "water_fog_color": 9811295
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "gloamingforest:druid_hut",
+      "gloamingforest:well_placer",
+      "gloamingforest:foundation"
+    ],
+    [],
+    [
+      "minecraft:disk_sand",
+      "minecraft:disk_clay",
+      "minecraft:disk_gravel",
+      "gloamingforest:wood_roots",
+      "gloamingforest:legacy_coal_ore",
+      "gloamingforest:legacy_iron_ore",
+      "gloamingforest:legacy_gold_ore",
+      "gloamingforest:legacy_redstone_ore",
+      "gloamingforest:legacy_diamond_ore",
+      "gloamingforest:legacy_lapis_ore",
+      "gloamingforest:legacy_copper_ore",
+      "gloamingforest:small_andesite",
+      "gloamingforest:small_diorite",
+      "gloamingforest:small_granite"
+    ],
+    [
+      "gloamingforest:plant_roots",
+      "gloamingforest:torch_berries"
+    ],
+    [],
+    [
+      "minecraft:patch_tall_grass",
+      "gloamingforest:patch_grass_badlands",
+      "gloamingforest:patch_grass_savanna",
+      "minecraft:patch_sugar_cane",
+      "gloamingforest:swamp_raspberry_bushes",
+      "gloamingforest:swamp_blackberry_bushes",
+      "minecraft:patch_grass_taiga_2",
+      "gloamingforest:grove_ruins",
+      "gloamingforest:stone_circle",
+      "gloamingforest:outside_stalagmite",
+      "gloamingforest:monolith",
+      "gloamingforest:hollow_stump",
+      "gloamingforest:hollow_log",
+      "gloamingforest:tree/mangrove_tree",
+      "gloamingforest:tree/swampy_oak_tree",
+      "gloamingforest:tree/oak_bush",
+      "minecraft:patch_sugar_cane_swamp",
+      "minecraft:vines",
+      "minecraft:patch_dead_bush",
+      "gloamingforest:mangrove_fallen_log",
+      "gloamingforest:huge_lily_pad",
+      "gloamingforest:huge_water_lily",
+      "minecraft:patch_waterlily"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ],
+  "has_precipitation": true,
+  "spawn_costs": {
+    "minecraft:zombie": {
+      "charge": 0.7,
+      "energy_budget": 0.15
+    },
+    "gloamingforest:mosquito_swarm": {
+      "charge": 0.7,
+      "energy_budget": 0.15
+    }
+  },
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [
+      {
+        "type": "minecraft:zombie",
+        "maxCount": 2,
+        "minCount": 1,
+        "weight": 10
+      },
+      {
+        "type": "gloamingforest:mosquito_swarm",
+        "maxCount": 1,
+        "minCount": 1,
+        "weight": 10
+      }
+    ],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.8
+}

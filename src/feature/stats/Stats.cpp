@@ -1,15 +1,15 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFStats.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
+// Translated from the upstream 4.8 source (commit 9e40a757):
+//   src/main/java/gloamingforest/init/TFStats.java
+// Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The statistics part of contract "data" (F9): the custom statistics (Java's Stats.CUSTOM, the
-// registry minecraft:custom_stat): TF's 10 (TFStats: bugs_squished, uncrafting_table_interactions,
+// registry minecraft:custom_stat): upstream's 10 (TFStats: bugs_squished, uncrafting_table_interactions,
 // trophy_pedestals_activated, e115_slices_eaten, torchberries_harvested, blocks_crumbled,
 // life_charms_activated, keeping_charms_activated, skull_candles_made, tf_shields_broken;
-// StatFormatter.DEFAULT) and Minecraft 1.21.1's 75 (minecraft:open_chest, which TF's chests award,
+// StatFormatter.DEFAULT) and Minecraft 1.21.1's 75 (minecraft:open_chest, which upstream's chests award,
 // minecraft:trigger_trapped_chest, ...), counted per player in the world DB
 // ("gf:stats:<player uuid>" {stat: value}), written at every world save. Bedrock keeps no player
 // statistics a server can award (its statistics screen shows the client's Xbox Live user
@@ -43,10 +43,10 @@ namespace {
 
 /// TFStats in registration order.
 constexpr char const* kTfStats[] = {
-    "twilightforest:bugs_squished",          "twilightforest:uncrafting_table_interactions", "twilightforest:trophy_pedestals_activated",
-    "twilightforest:e115_slices_eaten",      "twilightforest:torchberries_harvested",        "twilightforest:blocks_crumbled",
-    "twilightforest:life_charms_activated",  "twilightforest:keeping_charms_activated",      "twilightforest:skull_candles_made",
-    "twilightforest:tf_shields_broken",
+    "gloamingforest:bugs_squished",          "gloamingforest:uncrafting_table_interactions", "gloamingforest:trophy_pedestals_activated",
+    "gloamingforest:e115_slices_eaten",      "gloamingforest:torchberries_harvested",        "gloamingforest:blocks_crumbled",
+    "gloamingforest:life_charms_activated",  "gloamingforest:keeping_charms_activated",      "gloamingforest:skull_candles_made",
+    "gloamingforest:tf_shields_broken",
 };
 
 /// Minecraft 1.21.1's custom statistics (net.minecraft.stats.Stats, its makeCustomStat calls in
@@ -129,7 +129,7 @@ constexpr char const* kVanillaStats[] = {
     "minecraft:interact_with_smithing_table",
 };
 
-/// The custom statistic registry: TF's statistics and Minecraft's.
+/// The custom statistic registry: upstream's statistics and Minecraft's.
 std::set<std::string> const& registered() {
     static std::set<std::string> const s = [] {
         std::set<std::string> out(std::begin(kTfStats), std::end(kTfStats));
@@ -139,7 +139,7 @@ std::set<std::string> const& registered() {
     return s;
 }
 
-/// The ids award() warned about (once each): neither TF's nor Minecraft's.
+/// The ids award() warned about (once each): neither upstream's nor Minecraft's.
 struct Warned {
     std::mutex            mutex;
     std::set<std::string> ids;
@@ -205,12 +205,12 @@ void sync(Player& player, PlayerStats const& p) {
 void award(Player& player, std::string const& statId, int amount) {
     if (amount == 0) return;
     auto id = fullId(statId);
-    // Stats.CUSTOM.get(id): an id of the custom statistic registry (TF's or Minecraft's) counts
+    // Stats.CUSTOM.get(id): an id of the custom statistic registry (upstream's or Minecraft's) counts
     // silently; any other id counts too, with one warning
     if (!registered().contains(id)) {
         auto&           w = warned();
         std::lock_guard lock(w.mutex);
-        if (w.ids.insert(id).second) log().warn("stats: {} is not a custom statistic of TF or Minecraft", id);
+        if (w.ids.insert(id).second) log().warn("stats: {} is not a custom statistic of upstream or Minecraft", id);
     }
     auto&           s = store();
     std::lock_guard lock(s.mutex);

@@ -2,12 +2,12 @@
   "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
-      "identifier": "twilightforest:torchberry_plant",
+      "identifier": "gloamingforest:torchberry_plant",
       "menu_category": {
-        "category": "construction"
+        "category": "none"
       },
       "states": {
-        "twilightforest:has_torchberries": [false, true]
+        "gloamingforest:has_torchberries": [false, true]
       }
     },
     "components": {
@@ -43,7 +43,7 @@
     },
     "permutations": [
       {
-        "condition": "!q.block_state('twilightforest:has_torchberries')",
+        "condition": "!q.block_state('gloamingforest:has_torchberries')",
         "components": {
           "minecraft:geometry": "geometry.tf.minecraft.block.cross",
           "minecraft:material_instances": {
@@ -63,9 +63,9 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:has_torchberries')",
+        "condition": "q.block_state('gloamingforest:has_torchberries')",
         "components": {
-          "minecraft:geometry": "geometry.tf.twilightforest.block.torchberry_plant",
+          "minecraft:geometry": "geometry.tf.gloamingforest.block.torchberry_plant",
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_torchberry_plant",
@@ -87,7 +87,7 @@
         }
       },
       {
-        "condition": "q.block_state('twilightforest:has_torchberries')",
+        "condition": "q.block_state('gloamingforest:has_torchberries')",
         "components": {
           "minecraft:light_emission": 7
         }
